@@ -674,7 +674,7 @@ async function poolFFJL(list,prog){
         x.d0Date=(rows[rows.length-1]&&rows[rows.length-1][0])||'';
         x.d0Stale=jlPoolFresh(x.d0Date)?0:1;
         x.f5=nets.slice(-5).reduce((a,v)=>a+v,0);x.f10=nets.reduce((a,v)=>a+v,0);
-        x.n10=nets.filter(v=>v>0).length;x.c2=(nets[nets.length-1]>0&&nets[nets.length-2]>0)?1:0;
+        x.n10=nets.filter(v=>v>0).length;x.c2=nets.length>=2&&nets[nets.length-1]>0&&nets[nets.length-2]>0?1:0;
         let st=0;for(let q=nets.length-1;q>=0&&nets[q]<0;q--)st++;x.outStreak=st;
       }else{x.fundSourceValid=false;x.fundStatus='暂缺'}
     }catch(e){x.fundSourceValid=false;x.fundStatus='暂缺'}
