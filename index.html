@@ -631,7 +631,7 @@ function poolObserveGateJL(x){
   if(!x||!jlPoolFresh(x.d))return{ok:false,status:'数据过期',reasons:['日K数据过期'],families:[]};
   const ev=poolEvidenceJL(x),fam=Object.keys(ev);
   if(fam.length>=2)return{ok:true,status:'风险观察',reasons:[fam.map(k=>ev[k][0]).join(' + ')],families:fam,risk:1};
-  if(!jlPoolFresh(x.d0Date))return{ok:true,status:'资金待确认',reasons:['资金日期未确认'],families:fam,watch:1};
+  if(!jlPoolFresh(x.d0Date))return{ok:true,status:'资金待确认',reasons:['资金日期未确认·数据日'+(x.d0Date||'?')+'·门槛日'+jlLastTradeDay()],families:fam,watch:1};
   if(x.f10===undefined||x.d0===undefined||x.fundSourceValid!==true||x.fundStatus==='接口限流'||x.fundStatus==='接口断线'||x.fundStatus==='暂缺')return{ok:true,status:x.fundStatus||'资金暂缺',reasons:[x.fundStatus||'资金字段缺失'],families:fam,watch:1};
   if(x.d0<0)return{ok:true,status:'资金转弱待确认',reasons:['资金转负'],families:fam,watch:1};
   return{ok:true,status:'盘中观察',reasons:[],families:fam,watch:1};
