@@ -4556,6 +4556,7 @@ function applyUrl() {
       // 金粼0913晚: 内嵌默认开 三角/SR/OB/VOL叠加/BSL·SSL流动性; 关掉 ICT 结构标记(ms)——BOS 只留三角突破那一枚(上黄下红, 部署版自带)
       // 金粼0913深夜(口径定案): 每次打开都恢复默认开——隐藏/删除只是本次会话有效, 不做跨会话持久化, 重开必须看到指标在
       if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = true; S.ind.ob = true; S.ind.volMain = true; S.ind.liq = true; S.ind.ms = false; }
+      S.lineMode = false; // 金粼0914: 内嵌大图必须是蜡烛K线——存档里 lineMode=true 会把主图变成蓝色收盘价折线(用户看到的"实时线盖图"), 内嵌强制蜡烛, 可用紧凑条「K/线」切回
       // 金粼0913晚(重打在部署版上): 单行抽屉紧凑条(周期/画线/指标/幅图 + 删除/清空/隐藏/锁定/提醒), 替代☰多行展开
       if (!document.getElementById("ksBarJL")) {
         var bar = document.createElement("div"); bar.id = "ksBarJL";
@@ -4602,6 +4603,7 @@ function applyUrl() {
         }, "隐藏/显示全部画线(只影响显示)");
         mk("锁定", proxy("[data-inds]", "画线"), "画线锁: 锁住后拖不动改不了");
         mk("提醒", function () { var a = document.querySelector("[data-alerts]"); if (a) a.click(); }, "提醒汇总");
+        mk("K/线", function () { S.lineMode = !S.lineMode; this.classList.toggle("on", S.lineMode); draw(); hint(S.lineMode ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         document.body.insertBefore(bar, document.body.firstChild);
       }
     }
