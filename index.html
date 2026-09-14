@@ -702,8 +702,8 @@ async function poolHotIndJL(){
   }catch(e){}
 }
 async function poolUniJL(){
-  try{const r=await fetch('hq-mobile-pages/alla_universe.json?_='+Date.now(),{cache:'no-store'});
-    if(r.ok){const a=await r.json();if(Array.isArray(a)&&a.length>1000)return a.filter(x=>!/ST|退|PT/.test(x[1]))}}catch(e){}
+  try{const r=await fetch('https://fululi.github.io/hq-mobile/alla_universe.json?_='+Date.now(),{cache:'no-store'});
+    if(r.ok){const a=await r.json();if(Array.isArray(a)&&a.length>1000){window.JLPOOL_SRC_OK=true;return a.filter(x=>!/ST|退|PT/.test(x[1]))}}}catch(e){}
   const uni=[],seen=new Set();
   for(const off of [0,60]){
     try{const r=await fetch('https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getBoardRankList?board_code=aStock&sort_type=PriceRatio&direct=down&offset='+off+'&count=60',{cache:'no-store'});
