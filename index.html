@@ -669,7 +669,7 @@ async function poolFFJL(list,prog){
     let d=await jlEmGet(url);if(!(d&&d.data&&d.data.klines&&d.data.klines.length>=2)){d=await jlEmGet(url.replace('push2his.eastmoney.com','push2delay.eastmoney.com'))}if(!(d&&d.data&&d.data.klines&&d.data.klines.length>=2)){await new Promise(r2=>setTimeout(r2,1500));d=await jlEmGet(url)}
     try{
       const rows0=d&&d.data&&d.data.klines?d.data.klines.map(s2=>s2.split(',')):[];const ltd=jlLastTradeDay();const rowsF=rows0.filter(r2=>String(r2[0])<=ltd);const rows=rowsF.length?rowsF:rows0;const nets=rows.map(r=>+r[1]);
-      if(nets.length>=2){
+      if(nets.length>=1){
         x.fundSourceValid=true;x.fundStatus='实时/最近有效';x.d0=nets[nets.length-1];
         x.d0Date=(rows[rows.length-1]&&rows[rows.length-1][0])||'';
         x.d0Stale=jlPoolFresh(x.d0Date)?0:1;
