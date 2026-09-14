@@ -705,7 +705,7 @@ async function poolHotIndJL(){
 async function poolUniJL(){
   const uni=[],seen=new Set();
   const addRow=(code,name)=>{const c=(/^6/.test(code)?'sh':'sz')+code;if(code&&!/ST|退|PT/.test(name)&&!seen.has(c)){seen.add(c);uni.push([c,name])}};
-  const jpage=pn=>new Promise(resolve=>{const cb='jlUni_'+pn+'_'+Date.now();let sc;const tm=setTimeout(()=>{try{resolve(null)}finally{delete window[cb];if(sc)sc.remove()}},9000);window[cb]=d=>{clearTimeout(tm);try{resolve(d)}finally{delete window[cb];if(sc)sc.remove()}};sc=document.createElement('script');sc.src='https://push2.eastmoney.com/api/qt/clist/get?fltt=2&invt=2&po=1&pz=100&pn='+pn+'&np=1&fid=f3&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f12,f14&cb='+cb+'&_='+Date.now();sc.onerror=()=>{clearTimeout(tm);try{resolve(null)}finally{delete window[cb];sc.remove()}};document.head.appendChild(sc)});
+  const jpage=pn=>new Promise(resolve=>{const cb='jlUni_'+pn+'_'+Date.now();let sc;const tm=setTimeout(()=>{try{resolve(null)}finally{delete window[cb];if(sc)sc.remove()}},15000);window[cb]=d=>{clearTimeout(tm);try{resolve(d)}finally{delete window[cb];if(sc)sc.remove()}};sc=document.createElement('script');sc.src='https://push2.eastmoney.com/api/qt/clist/get?fltt=2&invt=2&po=1&pz=100&pn='+pn+'&np=1&fid=f3&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23&fields=f12,f14&cb='+cb+'&_='+Date.now();sc.onerror=()=>{clearTimeout(tm);try{resolve(null)}finally{delete window[cb];sc.remove()}};document.head.appendChild(sc)});
   for(let pn=1;pn<=60;pn++){const d=await jpage(pn),diff=d&&d.data&&d.data.diff;
     if(!diff||!diff.length)break;
     diff.forEach(q=>addRow(String(q.f12||''),String(q.f14||'')));
@@ -714,10 +714,10 @@ async function poolUniJL(){
   return uni;
 }
 async function poolScanJL(){
-  if(JLPOOL_RUN)return;JLPOOL_RUN=true;JLPOOL_PCT=0;JLPOOL_PROG='准备宇宙…';renderWatch();
+  if(JLPOOL_RUN)return;JLPOOL_RUN=true;window.JLPOOL_ABORT='';JLPOOL_PCT=0;JLPOOL_PROG='准备宇宙…';renderWatch();
   const prog=t=>{JLPOOL_PROG=t;renderWatch()};
   try{
-    const UNI=await poolUniJL();
+    const UNI=await poolUniJL();     if(!window.JLPOOL_SRC_OK||UNI.length<500){window.JLPOOL_ABORT='⚠️ 全A源不可用 · 扫描中止 · 无结果（持仓兜底已禁用）';try{toast('⚠️ 全A源不可用，扫描中止')}catch(e){}return}     if(!window.JLPOOL_SRC_OK||UNI.length<500){window.JLPOOL_ABORT='⚠️ 全A源不可用 · 扫描中止 · 无结果（持仓兜底已禁用）';try{toast('⚠️ 全A源不可用，扫描中止')}catch(e){}return}     if(!window.JLPOOL_SRC_OK||UNI.length<500){window.JLPOOL_ABORT='⚠️ 全A源不可用 · 扫描中止 · 无结果（持仓兜底已禁用）';try{toast('⚠️ 全A源不可用，扫描中止')}catch(e){}return}     if(!window.JLPOOL_SRC_OK||UNI.length<500){window.JLPOOL_ABORT='⚠️ 全A源不可用 · 扫描中止 · 无结果（持仓兜底已禁用）';try{toast('⚠️ 全A源不可用，扫描中止')}catch(e){}return}     if(!window.JLPOOL_SRC_OK||UNI.length<500){window.JLPOOL_ABORT='⚠️ 全A源不可用 · 扫描中止 · 无结果（持仓兜底已禁用）';try{toast('⚠️ 全A源不可用，扫描中止')}catch(e){}return}
     try{const r0=await fetch('https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=sh000300,day,,,30,qfq',{cache:'no-store'});
       const d0x=await r0.json(),rw=d0x.data&&d0x.data['sh000300']&&(d0x.data['sh000300'].qfqday||d0x.data['sh000300'].day);
       if(rw&&rw.length>11)JLPOOL_IDX10=(+rw[rw.length-1][2]/+rw[rw.length-11][2]-1)*100}catch(e){}
@@ -759,7 +759,7 @@ async function poolScanJL(){
     JLPOOL={date:jlYMD(new Date()),ts:new Date().toTimeString().slice(0,5),d0,uni:UNI.length,L,OBS,RISK,rejectStats};
     try{localStorage.setItem('jl_pool_v1',JSON.stringify(JLPOOL))}catch(e){}
     JLPOOL_PCT=100;
-  }finally{JLPOOL_RUN=false;JLPOOL_PROG='';renderWatch()}
+  }finally{JLPOOL_RUN=false;JLPOOL_PROG=window.JLPOOL_ABORT||'';renderWatch()}
 }
 function fmtPosJL(x){return (x.pos*100).toFixed(0)+'%'}
 function whyLineJL(x){ // 为什么入选=规则触发条件的客观复述，不带主观指令
