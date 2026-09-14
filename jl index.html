@@ -668,7 +668,7 @@ async function poolFFJL(list,prog){
     const url='https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?lmt=10&klt=101&fields1=f1,f2,f3,f7&fields2=f51,f52&secid='+(x.code.indexOf('sh')===0?'1.':'0.')+x.code.slice(2);
     const d=await jlEmGet(url);
     try{
-      const rows=d&&d.data&&d.data.klines?d.data.klines.map(s2=>s2.split(',')):[];const nets=rows.map(r=>+r[1]);
+      const rows0=d&&d.data&&d.data.klines?d.data.klines.map(s2=>s2.split(',')):[];const ltd=jlLastTradeDay();const rowsF=rows0.filter(r2=>String(r2[0])<=ltd);const rows=rowsF.length?rowsF:rows0;const nets=rows.map(r=>+r[1]);
       if(nets.length>=2){
         x.fundSourceValid=true;x.fundStatus='实时/最近有效';x.d0=nets[nets.length-1];
         x.d0Date=(rows[rows.length-1]&&rows[rows.length-1][0])||'';
