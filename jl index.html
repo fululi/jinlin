@@ -559,7 +559,7 @@ let JLPOOL=null;try{const _jp=JSON.parse(localStorage.getItem('jl_pool_v1'));if(
 let JLPOOL_RUN=false,JLPOOL_IDX10=0,JLPOOL_HOT=new Set(),JLPOOL_PROG='',JLPOOL_PCT=0;
 let JLPOOL_HY={};try{JLPOOL_HY=JSON.parse(localStorage.getItem('jl_hy_v1')||'{}')||{}}catch(e){}
 function jlYMD(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function jlLastTradeDay(){const d=new Date();while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()-1);return jlYMD(d)}
+function jlLastTradeDay(){const d=new Date();if(d.getHours()*60+d.getMinutes()<560)d.setDate(d.getDate()-1);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()-1);return jlYMD(d)}
 function jlPoolFresh(dt){if(!dt)return false;let s=String(dt).slice(0,10);if(/^\d{8}$/.test(s))s=s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8);return s===jlLastTradeDay()}
 function geneScoreJL(g){return Math.min(g||0,4)*5}
 function poolClassifyJL(code,name,rows){
