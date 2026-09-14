@@ -721,16 +721,16 @@ async function poolScanJL(){
     try{const r0=await fetch('https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=sh000300,day,,,30,qfq',{cache:'no-store'});
       const d0x=await r0.json(),rw=d0x.data&&d0x.data['sh000300']&&(d0x.data['sh000300'].qfqday||d0x.data['sh000300'].day);
       if(rw&&rw.length>11)JLPOOL_IDX10=(+rw[rw.length-1][2]/+rw[rw.length-11][2]-1)*100}catch(e){}
-    const cand=[];let done=0,fail=0,idx=0;
+    let cand=[],done=0,fail=0,idx=0;     try{const ck=JSON.parse(localStorage.getItem('jl_scan_ckpt_v1')||'null');const td=new Date().toLocaleDateString('sv-SE');if(ck&&ck.date===td&&ck.uniLen===UNI.length&&Date.now()-(ck.ts||0)<5400000){cand=ck.cand||[];done=ck.done||0;fail=ck.fail||0;idx=ck.idx||0;if(idx>0)prog('⚡ 断点续扫 '+done+'/'+UNI.length)}}catch(e){}
     const fetchK=u2=>{const ac=new AbortController();const tm=setTimeout(()=>ac.abort(),8000);return fetch(u2,{cache:'no-store',signal:ac.signal}).finally(()=>clearTimeout(tm))}; // 0915: 单票8秒超时,防止一只卡死拖住整条工人线
     async function worker(){while(idx<UNI.length){if(window.__JL_HIDDEN){await new Promise(r=>setTimeout(r,2000));continue}const u=UNI[idx++],code=u[0],name=u[1];
       try{const r=await fetchK('https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param='+code+',day,,,300,qfq'); // 0915: 500→300根(分类只需250根涨停基因窗), payload省40%
         const d=await r.json(),node=d&&d.data&&d.data[code],rows=node&&(node.qfqday||node.day);
         if(rows&&rows.length>=120){const hit=poolClassifyJL(code,name,rows);if(hit)cand.push(hit)}else fail++;
       }catch(e){fail++}
-      done++;if(done%15===0||done===UNI.length){JLPOOL_PCT=done/UNI.length*70;prog('扫描 '+done+'/'+UNI.length+(fail?' · 失败'+fail:''))}
+      done++;if(done%300===0){try{localStorage.setItem('jl_scan_ckpt_v1',JSON.stringify({date:new Date().toLocaleDateString('sv-SE'),uniLen:UNI.length,idx,cand,done,fail,ts:Date.now()}))}catch(e){}}if(done%50===0||done===UNI.length){JLPOOL_PCT=done/UNI.length*70;prog('扫描 '+done+'/'+UNI.length+(fail?' · 失败'+fail:''))}
     }}
-    await Promise.all(Array.from({length:12},()=>worker())); // 0915: 6→12 路并发,全A扫描提速约一倍
+    await Promise.all(Array.from({length:8},()=>worker())); /* 0915: 12→8路并发,降内存压力防尾段黑屏 */     try{localStorage.setItem('jl_scan_ckpt_v1',JSON.stringify({date:new Date().toLocaleDateString('sv-SE'),uniLen:UNI.length,idx:UNI.length,cand,done,fail,ts:Date.now(),stage:'scan-done'}))}catch(e){}
     const dc={};cand.forEach(x=>dc[x.d]=(dc[x.d]||0)+1);
     let d0='',mx=0;for(const k in dc)if(dc[k]>mx){mx=dc[k];d0=k}
     JLPOOL_PCT=72;prog('行业映射…');
@@ -758,7 +758,7 @@ async function poolScanJL(){
     for(const k in RISK)RISK[k]=RISK[k].slice(0,20);
     JLPOOL={date:jlYMD(new Date()),ts:new Date().toTimeString().slice(0,5),d0,uni:UNI.length,L,OBS,RISK,rejectStats};
     try{localStorage.setItem('jl_pool_v1',JSON.stringify(JLPOOL))}catch(e){}
-    JLPOOL_PCT=100;
+    JLPOOL_PCT=100;try{localStorage.removeItem('jl_scan_ckpt_v1')}catch(e){}try{localStorage.removeItem('jl_scan_ckpt_v1')}catch(e){}
   }finally{JLPOOL_RUN=false;JLPOOL_PROG=window.JLPOOL_ABORT||'';renderWatch()}
 }
 function fmtPosJL(x){return (x.pos*100).toFixed(0)+'%'}
@@ -1352,4 +1352,4 @@ let homeFrame=0,homeLast=0;function homePulse(){const h=document.getElementById(
 }
 })();
 
-</script></body></html>
+setTimeout(()=>{try{const ck=JSON.parse(localStorage.getItem('jl_scan_ckpt_v1')||'null');if(ck&&ck.date===new Date().toLocaleDateString('sv-SE')&&Date.now()-(ck.ts||0)<5400000&&!JLPOOL_RUN){toast('⚡ 上次扫描中断，自动续扫');poolScanJL()}}catch(e){}},5000); setTimeout(()=>{try{const ck=JSON.parse(localStorage.getItem('jl_scan_ckpt_v1')||'null');if(ck&&ck.date===new Date().toLocaleDateString('sv-SE')&&Date.now()-(ck.ts||0)<5400000&&!JLPOOL_RUN){toast('⚡ 上次扫描中断，自动续扫');poolScanJL()}}catch(e){}},5000); </script></body></html>
