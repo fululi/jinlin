@@ -585,7 +585,7 @@ function restore() {
     if (o.codes && o.codes.length) S.codes = o.codes;
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = normalizeKlt(o.klt);
-    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.atri == null) S.ind.atri = true; if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = true; if (S.ind.lsr == null) S.ind.lsr = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; }
+    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.atri == null) S.ind.atri = true; if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = true; if (S.ind.lsr == null) S.ind.lsr = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
     if (o.drawLock) S.drawLock = true;
@@ -3674,15 +3674,13 @@ function renderCYQ(ctx, v) {
   var L0 = st.last;
   if (L0.avg >= lo && L0.avg <= hi) { ctx.strokeStyle = "rgba(255,210,31,0.75)"; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
     ctx.beginPath(); ctx.moveTo(right - maxW, Yof(L0.avg)); ctx.lineTo(right, Yof(L0.avg)); ctx.stroke(); ctx.setLineDash([]); }
-  var lines = ["平均成本 " + L0.avg.toFixed(2) + " · 获利 " + L0.profit.toFixed(1) + "%",
-    "70%成本 " + L0.p15.toFixed(2) + "~" + L0.p85.toFixed(2),
-    "90%成本 " + L0.p5.toFixed(2) + "~" + L0.p95.toFixed(2) + " · 集中度 " + L0.conc.toFixed(1) + "%",
-    "红=获利盘 青=套牢盘 · " + st.src + " · " + st.series[st.series.length - 1].d];
+  var lines = ["平均成本 " + L0.avg.toFixed(2) + " · 获利 " + L0.profit.toFixed(1) + "% · 集中度 " + L0.conc.toFixed(1) + "%",
+    "70% " + L0.p15.toFixed(2) + "~" + L0.p85.toFixed(2) + " · 90% " + L0.p5.toFixed(2) + "~" + L0.p95.toFixed(2)];
   var tw = 0; for (i = 0; i < lines.length; i++) { var m2 = ctx.measureText(lines[i]).width; if (m2 > tw) tw = m2; }
-  var bx = right - tw - 10, by = v.pTop + 16, bh = lines.length * 11 + 7;
-  ctx.fillStyle = "rgba(5,10,14,0.62)"; ctx.fillRect(bx - 4, by - 3, tw + 14, bh);
+  var bx = Math.max(v.padL + 2, right - tw - 10), by = v.pTop + 30, bh = lines.length * 12 + 7;
+  ctx.fillStyle = "rgba(5,10,14,0.55)"; ctx.fillRect(bx - 4, by - 3, tw + 14, bh);
   ctx.textAlign = "left";
-  for (i = 0; i < lines.length; i++) { ctx.fillStyle = i === 3 ? "rgba(141,151,166,0.8)" : (i === 0 ? "rgba(255,210,31,0.95)" : "rgba(210,237,240,0.92)"); ctx.fillText(lines[i], bx + 3, by + i * 11); }
+  for (i = 0; i < lines.length; i++) { ctx.fillStyle = i === 0 ? "rgba(255,210,31,0.95)" : "rgba(210,237,240,0.92)"; ctx.fillText(lines[i], bx + 3, by + i * 12); }
 }
 /* ================= 强弱T面板（v2 区间位置版） =================
    pos=(收盘-近N根最低)/(近N根最高-最低)*100 —— 价格本身就是标尺: 创区间新高=100贴红线,
