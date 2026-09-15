@@ -631,7 +631,7 @@ function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFix
 var UP = "#ff6f66", DN = "#35d99a", DIM = "#8fa398", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f"; // ks-0907-27: DIM提亮(白底invert后是深灰才看得清)/GRID降噪
 // 金粼0913晚: embed网格细化(0.5px Tiffany青调)——只动网格线, 字/标注颜色一律跟随部署版(房主指令: 字颜色全抄K-STATION)
 function _embMode() { return typeof document !== "undefined" && document.body && document.body.classList.contains("embed"); }
-function gridSt(ctx) { if (_embMode()) { ctx.strokeStyle = "rgba(135,183,196,0.10)"; ctx.lineWidth = 0.5; } else { gridSt(ctx); } }
+function gridSt(ctx) { if (_embMode()) { ctx.strokeStyle = "rgba(135,183,196,0.10)"; ctx.lineWidth = 0.5; } else { ctx.strokeStyle = GRID; ctx.lineWidth = 1; } } /* v.22 修递归炸雷: 原else自调用,非embed即堆栈爆 */
 function maArr(kl, n) {
   var out = new Array(kl.length).fill(null), s = 0;
   for (var i = 0; i < kl.length; i++) {
