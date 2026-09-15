@@ -676,6 +676,7 @@ async function poolFFJL(list,prog){
         x.f5=nets.slice(-5).reduce((a,v)=>a+v,0);x.f10=nets.reduce((a,v)=>a+v,0);
         x.n10=nets.filter(v=>v>0).length;x.c2=nets.length>=2&&nets[nets.length-1]>0&&nets[nets.length-2]>0?1:0;
         let st=0;for(let q=nets.length-1;q>=0&&nets[q]<0;q--)st++;x.outStreak=st;
+        if(x.d0Stale){try{const td2=jlLastTradeDay();const du=await jlEmGet('https://push2delay.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62&secids='+((x.code.indexOf('sh')===0)?'1.':'0.')+x.code.slice(2));const f62=du&&du.data&&du.data.diff&&du.data.diff[0]?+du.data.diff[0].f62:NaN;if(Number.isFinite(f62)){nets.push(f62);x.d0=f62;x.d0Date=td2;x.d0Stale=0;x.fundStatus='实时/当日盘中';x.f5=nets.slice(-5).reduce((a,v)=>a+v,0);x.f10=nets.reduce((a,v)=>a+v,0);x.n10=nets.filter(v=>v>0).length;x.c2=nets.length>=2&&nets[nets.length-1]>0&&nets[nets.length-2]>0?1:0;let st2=0;for(let q2=nets.length-1;q2>=0&&nets[q2]<0;q2--)st2++;x.outStreak=st2}}catch(e){}}
       }else{x.fundSourceValid=false;x.fundStatus='暂缺'}
     }catch(e){x.fundSourceValid=false;x.fundStatus='暂缺'}
     done++;if(prog)prog('资金确认 '+done+'/'+list.length);
