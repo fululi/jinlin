@@ -220,7 +220,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#f58b8e}.deckSB .b{color:#6ad5b4}
-</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.34 0916凌晨 量化审计20条全修: 共振缺失NaN不入合取+温度计量纲 / 斐波上升腿方向+滚动MA20+等幅目标 / 水位calib三档接入+ATR统一Wilder+去todayAmp+双向sticky+删0.5网格+除权检测 / 扫描f10口径+节假日基准+未完成bar+新股gene+排序键+层间归一 + v.33 0916凌晨 龙池资金懒补拉(扫描未确认票渲染时自动拉东财资金流进jl_ff_v1+到账重渲池页) / K线全屏迷你工具条(亮白11px可伸缩: 选股+8周期+画线/删除/清空/隐藏/锁定+指标+提醒+复位+退出,全屏隐藏原工具行) / 画线清空隐藏锁定三新功能(锁=禁拖禁删,藏=全图不画) + v.32 0916凌晨 A2语法降级: 主脚本esbuild转译chrome80/ios13(??=/?.清零)+Array.at/AbortSignal.timeout垫片,老WebView不再解析期全灭 + v.31 0916凌晨 诊断报告P0落地: sw三连环修复(晚到响应入缓存/miss回退原fetch/装失败不删旧缓存) / 水位R1日K谁拉到谁落盘+守卫补票 / R2 jl_dk_永不驱逐白名单 / R4 ladder占位.tsWaitJL自愈 / PATCH1死代码摘除→IIFE内真后台恢复(后台>2分钟回前台全量同步+水位补拉) / ES5独立自救核(主脚本死也活: 错误采集+boot旗6s检+恢复按钮) / reload熔断10分钟1次 + v.30 0916凌晨 K线全屏压chartMode规则真铺满(实测bottom=813)/国家队卡重设计(左大字右红绿柱无粗线)/加入日期/观察股资金行/提醒汇总可删+系统通知/画线复盘入册/持仓详情新闻入口 + v.29 0916凌晨 P0:异动图yd*四函数挂window(点不进去/十字线不动根因)+onerror采集器jl_err_v1 / watchAdd添加钮接线 / 搜股开K线强制同步标题+ks传name / 国家队卡挪首页底部+零轴线细化 / 风险组不再标"主升"(改"风险·派发"+原形态置灰) / 悬浮球资金缺数自动补拉 / 宇宙扫描加源提示 / 清理_c14双插(看门狗体检×2、CSS×2、三角while×2) + v.28 --><main class="stage"><aside class="editorial"><div class="eyebrow">JINLIN / DESIGN EXPLORATION 01</div><h1>让行情<br/>有<em>呼吸感。</em></h1><p class="intro">墨黑玻璃，Tiffany 蓝绿。<br/>让流动的光藏在界面后面，<br/>让正在发生的价格站到前面。</p><div class="rule"></div><div class="notes"><div class="note"><span>01</span><div><b>同一个底板，进入持仓</b><p>手机外框、蓝绿透光与底部导航保持一致。<br/>点「总览」可以查看首页，点「持仓」回到卡片。</p></div></div><div class="note"><span>02</span><div><b>一张舒展，其他留名</b><p>点股票名称，卡片横向舒展。<br/>其他股票收成侧边窄卡，名称始终可见。</p></div></div><div class="note"><span>03</span><div><b>细节在需要时出现</b><p>核心持仓信息先看清，操作细节再展开。<br/>点击有光晕反馈，K 线使用独立入口。</p></div></div></div><div class="swatches"><i style="background:#101922"></i><i style="background:#3074ff"></i><i style="background:#81e6d9"></i><i style="background:#eff9fc"></i></div><div class="caption">持仓交互预览 · 行情来自东财</div></aside><section class="device"><div class="phone"><div class="aurora"></div><div class="orbit"></div><div class="status"><span>09:41</span><div class="island"></div><small>▮▮▮   <button id="themeToggle" class="statusTheme" aria-label="切换昼夜主题">◒</button>   ▰</small></div><header class="header"><div class="brand">金粼<small>JINLIN CAPITAL</small></div><div class="headRight"><button class="round" id="menu" aria-label="预览说明">≡</button></div></header><div class="scroll"><section class="view" id="holds"><div class="pageTitle"><h2>我的持仓</h2><span>PORTFOLIO</span></div><div class="portfolio"><div class="label">持仓市值</div><div class="amount">128,640<span class="minor">.00</span></div><div class="pnlLine"><span>今日盈亏 <strong class="up">+2,186.50</strong></span><span><span id="holdCount">0 只持仓</span></span></div></div><div class="boardHead"><span>持仓一览</span><div class="boardTools"><button class="iconBtn" id="editDeck" aria-label="编辑持仓一览">编辑</button><button class="iconBtn" id="addStock" aria-label="添加持仓">＋</button><small id="count">01 / 03</small></div></div><div class="deckWrap"><div class="deck" id="deck"></div></div><section class="glass"><div class="miniHeading"><span id="holdingName"></span><button id="expandHolding" aria-label="放大持仓K线">⛶</button><button data-holding-style="" aria-label="切换蜡烛图与走势线">▥</button></div><canvas id="holdingChart" class="previewChart" aria-label="当前持仓K线"></canvas><div class="periodBar" data-period-bar=""></div></section><div class="collapse" id="detail"><div><section class="glass"><h3><span id="detailName">持仓详情</span><small>实时数据</small></h3><div class="detailGrid"><span>今日开 · 高 · 低<b data-dayohl="">—</b></span><span>当前水位 / Fib<b data-level="">—</b></span><span>今日接价 · 100股<b data-buy="">—</b></span><span>今日抛价 · 100股<b data-sell="">—</b></span><span>100股净额<b data-net="">—</b></span><span>波段位置<b data-swing="">—</b></span></div><div class="fundFlowJL"><b>今日资金 <small data-ff-date=""></small></b><div class="ffRows"><span class="ffHero">主力净额<strong data-ff-main="">—</strong></span><span>超大单<strong data-ff-sup="">—</strong></span><span>大单<strong data-ff-big="">—</strong></span><span>中单<strong data-ff-mid="">—</strong></span><span>散户<strong data-ff-small="">—</strong></span><span>预判低/高<strong data-ff-pred="">—</strong></span><span>市场温度<strong data-ff-mtemp="">—</strong></span></div></div><div class="resonancePanel"><button type="button" data-resonance="market"><span>市场环境<b data-market-resonance="">市场资金加载中…</b></span></button><span>板块共振<b data-sector-resonance="">所属板块数据加载中…</b></span><span>资金方向<b data-stock-fund-resonance="">个股资金加载中…</b></span><span>量能状态<b data-volume-resonance="">真实成交量加载中…</b></span></div><button type="button" class="newsEntry" id="newsEntryBtn"><i></i><span>新闻 · 打开市场资金与持仓相关资讯</span></button></section></div></div><section class="glass"><h3>账户概览<small>实时数据</small></h3><div class="pnlLine"><span>持仓占比</span><span>64.3%</span></div><div class="track"></div></section><p class="smallPrint">行情、成交量、资金和指标均来自实时接口；接口未返回时显示数据暂缺。</p></section><section class="view" id="home" hidden=""><div class="pageTitle"><h2>市场脉动</h2><span>MARKET PULSE</span></div><div class="indexes" id="indexList"></div><button id="marketFundsEntry" class="marketFundsEntry" type="button" aria-expanded="false"><span><b>市场资金</b><small>沪深 · 深证 · 创业板　点击展开真实主力净额</small></span><strong id="marketFundsSummary">加载中…</strong><span aria-hidden="true">›</span></button><section id="marketFundsPanel" class="marketFundsPanel" hidden="" aria-live="polite"><div class="marketFundsHead"><b>市场资金 · 主力净额</b><small id="marketFundsUpdated">等待东财数据</small></div><div id="marketFundsRows"></div></section><div class="homeQuote"><div class="label">上证指数 · 000001</div><div class="amount">—</div><div class="pnlLine"><span>开 —</span><span>高 —</span><span>低 —</span></div></div><div class="homeViewSw"><button type="button" data-hv="k" class="active">K线</button><button type="button" data-hv="heat">大盘异动</button></div><div class="homeChartWrap"><div class="homeToolsJL"><button type="button" id="homeToolTrend" aria-label="画趋势线">╱</button><button type="button" id="homeToolFib" aria-label="画斐波那契">∿</button><button type="button" id="homeToolFlow" aria-label="强弱T资金幅图">▦</button><button type="button" id="homeToolDel" aria-label="删除最近画线">⌫</button><button type="button" id="homeToolHide" aria-label="隐藏或显示画线">◐</button><button type="button" id="homeToolAlert" aria-label="添加价格提醒">♧</button></div><canvas class="chart" id="homeChart" aria-label="真实K线" role="img"></canvas><canvas id="homeFlowJL" hidden="" aria-label="强弱T资金幅图"></canvas></div><div class="times"><span>09:30</span><span>10:30</span><span>11:30</span></div><div class="periodBar" data-period-bar=""></div><div class="previewActions"><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="expandHomeChart" aria-label="放大当前指数K线">⛶</button></div><div id="yiDongJL" hidden=""><div class="ydHead"><b>大盘异动 · 上证分时</b><small id="ydTmJL"></small></div><div id="ydChartJL"></div><div class="ydTabs" id="ydTabsJL"><b class="on" data-e="all">事件流</b><b data-e="tail">尾盘抢筹</b><b data-e="mine">我的</b><b data-e="zt">涨停池</b></div><div id="ydEvJL"></div><div id="ydFootJL"></div><div id="ydDrillJL" hidden=""></div></div><section class="glass"><h3>今日价格区间</h3><div class="pnlLine"><span>—</span><span>—</span></div><div class="track"></div></section><section class="glass predJL"><h3>大盘预判 · ATR<small>盘前生成 · 触发自动落账</small></h3><div id="predTodayJL">预判生成中…</div><div id="predLogJL"></div></section><section class="glass tempJL"><h3>大盘温度 · 情绪<small id="mtUpdatedJL" role="button" title="点击重新采样">点击采样</small></h3><div class="mtMain"><div class="mtGauge"><div class="mtTrack"><i class="mtArrow" id="mtArrowJL" style="bottom:45%"></i></div><div class="mtScale"><span>100 沸点</span><span>过热</span><span>微热</span><span>50 平</span><span>微冷</span><span>过冷</span><span>0 冰点</span></div></div><div class="mtBody"><div class="mtNow"><b id="mtValJL">—</b><span id="mtZoneJL">待采样</span></div><div class="mtLimit"><span class="up mtd" data-mtd="lu">涨停 <b id="mtLuJL">—</b> ›</span><span class="dn mtd" data-mtd="ld">跌停 <b id="mtLdJL">—</b> ›</span></div><div id="mtDistJL" class="mtDist"></div><div class="mtAmt" id="mtAmtJL">沪深成交 — · 上涨 — · 下跌 —</div><div id="mtDrillJL"></div></div></div></section></section><section class="view" id="chartPage" hidden="">
+</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.35 0916凌晨 方案新算法落地: 2.1 calib跳空anchor(缓存v2重算)+kAdj波动状态0.85/1.20+VPVR量价HVN磁点 / 2.2 zigzag自适应阈值clamp(2.5ATR/C,.08,.25)+腿幅<1.5ATR/C并腿+未确认腿fib不入止损(stopTSrc恒MA10/MA20,fibProv标记,UI示未确认参考) + v.34 0916凌晨 量化审计20条全修: 共振缺失NaN不入合取+温度计量纲 / 斐波上升腿方向+滚动MA20+等幅目标 / 水位calib三档接入+ATR统一Wilder+去todayAmp+双向sticky+删0.5网格+除权检测 / 扫描f10口径+节假日基准+未完成bar+新股gene+排序键+层间归一 + v.33 0916凌晨 龙池资金懒补拉(扫描未确认票渲染时自动拉东财资金流进jl_ff_v1+到账重渲池页) / K线全屏迷你工具条(亮白11px可伸缩: 选股+8周期+画线/删除/清空/隐藏/锁定+指标+提醒+复位+退出,全屏隐藏原工具行) / 画线清空隐藏锁定三新功能(锁=禁拖禁删,藏=全图不画) + v.32 0916凌晨 A2语法降级: 主脚本esbuild转译chrome80/ios13(??=/?.清零)+Array.at/AbortSignal.timeout垫片,老WebView不再解析期全灭 + v.31 0916凌晨 诊断报告P0落地: sw三连环修复(晚到响应入缓存/miss回退原fetch/装失败不删旧缓存) / 水位R1日K谁拉到谁落盘+守卫补票 / R2 jl_dk_永不驱逐白名单 / R4 ladder占位.tsWaitJL自愈 / PATCH1死代码摘除→IIFE内真后台恢复(后台>2分钟回前台全量同步+水位补拉) / ES5独立自救核(主脚本死也活: 错误采集+boot旗6s检+恢复按钮) / reload熔断10分钟1次 + v.30 0916凌晨 K线全屏压chartMode规则真铺满(实测bottom=813)/国家队卡重设计(左大字右红绿柱无粗线)/加入日期/观察股资金行/提醒汇总可删+系统通知/画线复盘入册/持仓详情新闻入口 + v.29 0916凌晨 P0:异动图yd*四函数挂window(点不进去/十字线不动根因)+onerror采集器jl_err_v1 / watchAdd添加钮接线 / 搜股开K线强制同步标题+ks传name / 国家队卡挪首页底部+零轴线细化 / 风险组不再标"主升"(改"风险·派发"+原形态置灰) / 悬浮球资金缺数自动补拉 / 宇宙扫描加源提示 / 清理_c14双插(看门狗体检×2、CSS×2、三角while×2) + v.28 --><main class="stage"><aside class="editorial"><div class="eyebrow">JINLIN / DESIGN EXPLORATION 01</div><h1>让行情<br/>有<em>呼吸感。</em></h1><p class="intro">墨黑玻璃，Tiffany 蓝绿。<br/>让流动的光藏在界面后面，<br/>让正在发生的价格站到前面。</p><div class="rule"></div><div class="notes"><div class="note"><span>01</span><div><b>同一个底板，进入持仓</b><p>手机外框、蓝绿透光与底部导航保持一致。<br/>点「总览」可以查看首页，点「持仓」回到卡片。</p></div></div><div class="note"><span>02</span><div><b>一张舒展，其他留名</b><p>点股票名称，卡片横向舒展。<br/>其他股票收成侧边窄卡，名称始终可见。</p></div></div><div class="note"><span>03</span><div><b>细节在需要时出现</b><p>核心持仓信息先看清，操作细节再展开。<br/>点击有光晕反馈，K 线使用独立入口。</p></div></div></div><div class="swatches"><i style="background:#101922"></i><i style="background:#3074ff"></i><i style="background:#81e6d9"></i><i style="background:#eff9fc"></i></div><div class="caption">持仓交互预览 · 行情来自东财</div></aside><section class="device"><div class="phone"><div class="aurora"></div><div class="orbit"></div><div class="status"><span>09:41</span><div class="island"></div><small>▮▮▮   <button id="themeToggle" class="statusTheme" aria-label="切换昼夜主题">◒</button>   ▰</small></div><header class="header"><div class="brand">金粼<small>JINLIN CAPITAL</small></div><div class="headRight"><button class="round" id="menu" aria-label="预览说明">≡</button></div></header><div class="scroll"><section class="view" id="holds"><div class="pageTitle"><h2>我的持仓</h2><span>PORTFOLIO</span></div><div class="portfolio"><div class="label">持仓市值</div><div class="amount">128,640<span class="minor">.00</span></div><div class="pnlLine"><span>今日盈亏 <strong class="up">+2,186.50</strong></span><span><span id="holdCount">0 只持仓</span></span></div></div><div class="boardHead"><span>持仓一览</span><div class="boardTools"><button class="iconBtn" id="editDeck" aria-label="编辑持仓一览">编辑</button><button class="iconBtn" id="addStock" aria-label="添加持仓">＋</button><small id="count">01 / 03</small></div></div><div class="deckWrap"><div class="deck" id="deck"></div></div><section class="glass"><div class="miniHeading"><span id="holdingName"></span><button id="expandHolding" aria-label="放大持仓K线">⛶</button><button data-holding-style="" aria-label="切换蜡烛图与走势线">▥</button></div><canvas id="holdingChart" class="previewChart" aria-label="当前持仓K线"></canvas><div class="periodBar" data-period-bar=""></div></section><div class="collapse" id="detail"><div><section class="glass"><h3><span id="detailName">持仓详情</span><small>实时数据</small></h3><div class="detailGrid"><span>今日开 · 高 · 低<b data-dayohl="">—</b></span><span>当前水位 / Fib<b data-level="">—</b></span><span>今日接价 · 100股<b data-buy="">—</b></span><span>今日抛价 · 100股<b data-sell="">—</b></span><span>100股净额<b data-net="">—</b></span><span>波段位置<b data-swing="">—</b></span></div><div class="fundFlowJL"><b>今日资金 <small data-ff-date=""></small></b><div class="ffRows"><span class="ffHero">主力净额<strong data-ff-main="">—</strong></span><span>超大单<strong data-ff-sup="">—</strong></span><span>大单<strong data-ff-big="">—</strong></span><span>中单<strong data-ff-mid="">—</strong></span><span>散户<strong data-ff-small="">—</strong></span><span>预判低/高<strong data-ff-pred="">—</strong></span><span>市场温度<strong data-ff-mtemp="">—</strong></span></div></div><div class="resonancePanel"><button type="button" data-resonance="market"><span>市场环境<b data-market-resonance="">市场资金加载中…</b></span></button><span>板块共振<b data-sector-resonance="">所属板块数据加载中…</b></span><span>资金方向<b data-stock-fund-resonance="">个股资金加载中…</b></span><span>量能状态<b data-volume-resonance="">真实成交量加载中…</b></span></div><button type="button" class="newsEntry" id="newsEntryBtn"><i></i><span>新闻 · 打开市场资金与持仓相关资讯</span></button></section></div></div><section class="glass"><h3>账户概览<small>实时数据</small></h3><div class="pnlLine"><span>持仓占比</span><span>64.3%</span></div><div class="track"></div></section><p class="smallPrint">行情、成交量、资金和指标均来自实时接口；接口未返回时显示数据暂缺。</p></section><section class="view" id="home" hidden=""><div class="pageTitle"><h2>市场脉动</h2><span>MARKET PULSE</span></div><div class="indexes" id="indexList"></div><button id="marketFundsEntry" class="marketFundsEntry" type="button" aria-expanded="false"><span><b>市场资金</b><small>沪深 · 深证 · 创业板　点击展开真实主力净额</small></span><strong id="marketFundsSummary">加载中…</strong><span aria-hidden="true">›</span></button><section id="marketFundsPanel" class="marketFundsPanel" hidden="" aria-live="polite"><div class="marketFundsHead"><b>市场资金 · 主力净额</b><small id="marketFundsUpdated">等待东财数据</small></div><div id="marketFundsRows"></div></section><div class="homeQuote"><div class="label">上证指数 · 000001</div><div class="amount">—</div><div class="pnlLine"><span>开 —</span><span>高 —</span><span>低 —</span></div></div><div class="homeViewSw"><button type="button" data-hv="k" class="active">K线</button><button type="button" data-hv="heat">大盘异动</button></div><div class="homeChartWrap"><div class="homeToolsJL"><button type="button" id="homeToolTrend" aria-label="画趋势线">╱</button><button type="button" id="homeToolFib" aria-label="画斐波那契">∿</button><button type="button" id="homeToolFlow" aria-label="强弱T资金幅图">▦</button><button type="button" id="homeToolDel" aria-label="删除最近画线">⌫</button><button type="button" id="homeToolHide" aria-label="隐藏或显示画线">◐</button><button type="button" id="homeToolAlert" aria-label="添加价格提醒">♧</button></div><canvas class="chart" id="homeChart" aria-label="真实K线" role="img"></canvas><canvas id="homeFlowJL" hidden="" aria-label="强弱T资金幅图"></canvas></div><div class="times"><span>09:30</span><span>10:30</span><span>11:30</span></div><div class="periodBar" data-period-bar=""></div><div class="previewActions"><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="expandHomeChart" aria-label="放大当前指数K线">⛶</button></div><div id="yiDongJL" hidden=""><div class="ydHead"><b>大盘异动 · 上证分时</b><small id="ydTmJL"></small></div><div id="ydChartJL"></div><div class="ydTabs" id="ydTabsJL"><b class="on" data-e="all">事件流</b><b data-e="tail">尾盘抢筹</b><b data-e="mine">我的</b><b data-e="zt">涨停池</b></div><div id="ydEvJL"></div><div id="ydFootJL"></div><div id="ydDrillJL" hidden=""></div></div><section class="glass"><h3>今日价格区间</h3><div class="pnlLine"><span>—</span><span>—</span></div><div class="track"></div></section><section class="glass predJL"><h3>大盘预判 · ATR<small>盘前生成 · 触发自动落账</small></h3><div id="predTodayJL">预判生成中…</div><div id="predLogJL"></div></section><section class="glass tempJL"><h3>大盘温度 · 情绪<small id="mtUpdatedJL" role="button" title="点击重新采样">点击采样</small></h3><div class="mtMain"><div class="mtGauge"><div class="mtTrack"><i class="mtArrow" id="mtArrowJL" style="bottom:45%"></i></div><div class="mtScale"><span>100 沸点</span><span>过热</span><span>微热</span><span>50 平</span><span>微冷</span><span>过冷</span><span>0 冰点</span></div></div><div class="mtBody"><div class="mtNow"><b id="mtValJL">—</b><span id="mtZoneJL">待采样</span></div><div class="mtLimit"><span class="up mtd" data-mtd="lu">涨停 <b id="mtLuJL">—</b> ›</span><span class="dn mtd" data-mtd="ld">跌停 <b id="mtLdJL">—</b> ›</span></div><div id="mtDistJL" class="mtDist"></div><div class="mtAmt" id="mtAmtJL">沪深成交 — · 上涨 — · 下跌 —</div><div id="mtDrillJL"></div></div></div></section></section><section class="view" id="chartPage" hidden="">
 <div class="chartHeading"><button id="chartBack" aria-label="返回来源页面">‹</button><div><b id="chartName"></b><small id="chartCode"></small></div><strong id="chartPrice"></strong><div class="chartMeta"><small id="chartDate"></small><small id="chartMarketStatus"></small></div><small>实时</small><button id="pickerOpen" aria-expanded="false">☷ 选股</button></div>
 <div class="periodBar" data-period-bar=""></div>
 <div id="ksMiniJL"><button id="ksMiniHandle" aria-expanded="false">工具</button><div id="ksMiniBody" hidden=""><button data-mb="picker">选股</button><button data-period="1分">1分</button><button data-period="5分">5分</button><button data-period="15分">15分</button><button data-period="30分">30分</button><button data-period="日K">日K</button><button data-period="5日">5日</button><button data-period="周">周</button><button data-period="月">月</button><button data-mb="draw">画线</button><button data-mb="undo">删除</button><button data-mb="clear">清空</button><button data-mb="hide">隐藏</button><button data-mb="lock">锁定</button><button data-mb="ind">指标</button><button data-mb="alert">提醒</button><button data-mb="reset">复位</button><button data-mb="exit">退出全屏</button></div></div>
@@ -2615,7 +2615,7 @@ document.addEventListener("visibilitychange", () => {
       cch = JSON.parse(localStorage.getItem("jinlin_calib_v1") || "{}");
     } catch (e) {
     }
-    if (cch[code] && cch[code].d === td && cch[code].ku3) return cch[code];
+    if (cch[code] && cch[code].d === td && cch[code].ku3 && cch[code].v2) return cch[code];
     const rows = dailyBarsOf(code);
     if (rows.length < 120) return null;
     const R = rows.map((r) => [r.t, r.o, r.h, r.l, r.c]), n = R.length, atrR = new Array(n).fill(0);
@@ -2638,8 +2638,9 @@ document.addEventListener("visibilitychange", () => {
     for (let i = st; i < cut; i++) {
       const pv = R[i - 1][4], a = atrAt(i);
       if (!(a > 0 && pv > 0)) continue;
-      us.push((R[i][2] - pv) / a);
-      ds.push((pv - R[i][3]) / a);
+      const anc = Math.abs(R[i][1] - pv) >= 0.5 * a ? R[i][1] : pv;
+      us.push((R[i][2] - anc) / a);
+      ds.push((anc - R[i][3]) / a);
     }
     const qOf = (arr, q) => {
       if (!arr.length) return 1;
@@ -2661,7 +2662,7 @@ document.addEventListener("visibilitychange", () => {
         DN.push(+((1 - R[i][3] / pc) * 100).toFixed(2));
       }
     }
-    const out = { d: td, kUp: +kUp.toFixed(2), kDn: +kDn.toFixed(2), ku3, kd3, cov: tot ? Math.round(inr / tot * 100) : null, n: tot, UP, DN };
+    const out = { d: td, v2: 1, kUp: +kUp.toFixed(2), kDn: +kDn.toFixed(2), ku3, kd3, cov: tot ? Math.round(inr / tot * 100) : null, n: tot, UP, DN };
     cch[code] = out;
     try {
       localStorage.setItem("jinlin_calib_v1", JSON.stringify(cch));
@@ -4429,6 +4430,47 @@ document.addEventListener("visibilitychange", () => {
   function atr14JL(code) {
     return rmaAtrJL(code);
   }
+  function rmaAtrSeriesJL(rows) {
+    const n = rows.length, outA = new Array(n).fill(0);
+    if (n < 15) return outA;
+    const trs = [];
+    for (let i = 1; i < n; i++) trs.push(Math.max(rows[i].h - rows[i].l, Math.abs(rows[i].h - rows[i - 1].c), Math.abs(rows[i].l - rows[i - 1].c)));
+    let v = 0;
+    for (let j = 0; j < 14; j++) v += trs[j];
+    v /= 14;
+    outA[14] = v;
+    for (let i = 15; i < n; i++) {
+      v = (v * 13 + trs[i - 1]) / 14;
+      outA[i] = v;
+    }
+    return outA;
+  }
+  function zzThJL(rows) {
+    const atS = rmaAtrSeriesJL(rows);
+    return rows.map((r, i) => {
+      const a = atS[i];
+      return a > 0 && r.c > 0 ? Math.min(0.25, Math.max(0.08, 2.5 * a / r.c)) : 0.12;
+    });
+  }
+  function zzMergeSmallLegsJL(zz, rows) {
+    if (!zz || zz.length < 4) return zz;
+    const atS = rmaAtrSeriesJL(rows), out = zz.slice();
+    let merged = true;
+    while (merged && out.length >= 4) {
+      merged = false;
+      for (let i = 0; i + 1 < out.length; i++) {
+        const p1 = out[i].p, p2 = out[i + 1].p, mn = Math.min(p1, p2);
+        if (!(mn > 0)) continue;
+        const idx = rows.findIndex((r) => String(r.t) === out[i + 1].d), a = idx >= 0 ? atS[idx] : 0, c = idx >= 0 ? rows[idx].c : p2, need = a > 0 && c > 0 ? 1.5 * a / c : 0.12;
+        if (Math.abs(p2 - p1) / mn < need) {
+          out.splice(i, 2);
+          merged = true;
+          break;
+        }
+      }
+    }
+    return out;
+  }
   function rmaAtrJL(code) {
     let a = dailyBarsOf(code);
     try {
@@ -4453,6 +4495,26 @@ document.addEventListener("visibilitychange", () => {
     });
     if (db.length) m.push({ v: db.at(-1).h, pri: 2 }, { v: db.at(-1).l, pri: 2 });
     if (leg && leg.hi > 0 && leg.lo > 0) m.push({ v: leg.hi, pri: 2 }, { v: leg.lo, pri: 2 });
+    try {
+      const win = db.slice(-120);
+      if (win.length >= 30) {
+        let pmin = 1e18, pmax = 0;
+        win.forEach((r) => {
+          pmin = Math.min(pmin, r.l);
+          pmax = Math.max(pmax, r.h);
+        });
+        if (pmax > pmin) {
+          const NB = 20, bw = (pmax - pmin) / NB, V = new Array(NB).fill(0);
+          win.forEach((r) => {
+            const tp = (r.h + r.l + r.c) / 3, b = Math.min(NB - 1, Math.floor((tp - pmin) / bw));
+            V[b] += r.v || 0;
+          });
+          const mv = V.reduce((x, y) => x + y, 0) / NB;
+          for (let b = 1; b < NB - 1; b++) V[b] >= 1.5 * mv && V[b] >= V[b - 1] && V[b] >= V[b + 1] && m.push({ v: +(pmin + (b + 0.5) * bw).toFixed(4), pri: 2 });
+        }
+      }
+    } catch (e) {
+    }
     return m;
   }
   function snapLvJL(arr, mags, base, tick2) {
@@ -4518,7 +4580,15 @@ document.addEventListener("visibilitychange", () => {
     const p = Number(stock.base), prev = Number(stock.prevClose) || p, a = rmaAtrJL(stock.code);
     if (!(p > 0 && a > 0)) return null;
     const _nw2 = /* @__PURE__ */ new Date(), planNext = ((m2) => m2 >= 905 || m2 < 545)(_nw2.getHours() * 60 + _nw2.getMinutes()), op = Number(stock.open), hi = Number(stock.high), lo = Number(stock.low), db = dailyBarsOf(stock.code), todayAmp = planNext ? 0 : hi > 0 && lo > 0 ? hi - lo : db.length ? db.at(-1).h - db.at(-1).l : 0, lastTR = db.length > 1 ? Math.max(db.at(-1).h - db.at(-1).l, Math.abs(db.at(-1).h - db.at(-2).c), Math.abs(db.at(-1).l - db.at(-2).c)) : 0, base = Math.max(a * ATR_FLOOR_JL, lastTR * 0.6), anchor = planNext ? p : op > 0 && Math.abs(op - prev) >= 0.5 * a ? op : prev, ap = a / p * 100;
-    const prof2 = calibJL(stock.code), suF = prof2 && prof2.ku3 ? prof2.ku3 : [0.3, 0.6, 0.95], sdF = prof2 && prof2.kd3 ? prof2.kd3 : [0.5, 0.85, 1.2], su = ap >= 5 ? suF : suF.slice(0, ap >= 3 ? 2 : 1), sd = ap >= 5 ? sdF : sdF.slice(0, ap >= 3 ? 2 : 1), tick2 = p < 1 ? 1e-3 : 0.01, lpw = /ST/i.test(stock.name || "") ? 0.05 : /^(30|68)/.test(String(stock.code)) ? 0.2 : /^(8|4|92)/.test(String(stock.code)) ? 0.3 : 0.1, cap = (planNext ? p : prev) * (1 + lpw), flr = (planNext ? p : prev) * (1 - lpw);
+    const _atS2 = rmaAtrSeriesJL(db), _r120 = [], _curA = p > 0 ? a / p : 0;
+    for (let _i2 = Math.max(14, db.length - 120); _i2 < db.length; _i2++) _atS2[_i2] > 0 && db[_i2].c > 0 && _r120.push(_atS2[_i2] / db[_i2].c);
+    let _q2 = 0.5;
+    if (_r120.length >= 30 && _curA > 0) {
+      let _le = 0;
+      for (const _v2 of _r120) _v2 <= _curA && _le++;
+      _q2 = _le / _r120.length;
+    }
+    const kAdj = _q2 < 0.33 ? 0.85 : _q2 > 0.67 ? 1.2 : 1, prof2 = calibJL(stock.code), suF = (prof2 && prof2.ku3 ? prof2.ku3 : [0.3, 0.6, 0.95]).map((k) => +(k * kAdj).toFixed(3)), sdF = (prof2 && prof2.kd3 ? prof2.kd3 : [0.5, 0.85, 1.2]).map((k) => +(k * kAdj).toFixed(3)), su = ap >= 5 ? suF : suF.slice(0, ap >= 3 ? 2 : 1), sd = ap >= 5 ? sdF : sdF.slice(0, ap >= 3 ? 2 : 1), tick2 = p < 1 ? 1e-3 : 0.01, lpw = /ST/i.test(stock.name || "") ? 0.05 : /^(30|68)/.test(String(stock.code)) ? 0.2 : /^(8|4|92)/.test(String(stock.code)) ? 0.3 : 0.1, cap = (planNext ? p : prev) * (1 + lpw), flr = (planNext ? p : prev) * (1 - lpw);
     const mags = magnetsJL(stock.code, anchor, db, legFibJL(stock.code, p));
     let sells = snapLvJL(su.map((k) => Math.min(cap, anchor + k * base)), mags, base, tick2), buys = snapLvJL(sd.map((k) => Math.max(flr, anchor - k * base)), mags, base, tick2);
     sells = sells.map((v) => Math.min(cap, v)).sort((a2, b2) => a2 - b2).filter((v, i, ar) => !i || Math.abs(v - ar[i - 1]) > 1e-6);
@@ -4580,6 +4650,7 @@ document.addEventListener("visibilitychange", () => {
   function zzSegStartJL(rows, th) {
     const n = rows.length;
     if (n < 3) return n ? String(rows[0].t) : "";
+    const thAt = Array.isArray(th) ? (i2) => th[i2] || 0.12 : () => th;
     const H = (i) => rows[i].h, L = (i) => rows[i].l;
     let piv = [0], dir = 0, eH = H(0), eL = L(0), eHi = 0, eLi = 0;
     for (let i = 1; i < n; i++) {
@@ -4589,7 +4660,7 @@ document.addEventListener("visibilitychange", () => {
           eH = h;
           eHi = i;
         }
-        if (eH > 0 && (eH - l) / eH >= th) {
+        if (eH > 0 && (eH - l) / eH >= thAt(i)) {
           piv.push(eHi);
           dir = -1;
           eL = l;
@@ -4601,7 +4672,7 @@ document.addEventListener("visibilitychange", () => {
           eL = l;
           eLi = i;
         }
-        if (eL > 0 && (h - eL) / eL >= th) {
+        if (eL > 0 && (h - eL) / eL >= thAt(i)) {
           piv.push(eLi);
           dir = 1;
           eH = h;
@@ -4615,6 +4686,7 @@ document.addEventListener("visibilitychange", () => {
   function zzPivotsJL(rows, th) {
     const n = rows.length;
     if (n < 3) return [];
+    const thAt = Array.isArray(th) ? (i2) => th[i2] || 0.12 : () => th;
     const H = (i) => rows[i].h, L = (i) => rows[i].l;
     const piv = [];
     let dir = 0, eH = H(0), eL = L(0), eHi = 0, eLi = 0;
@@ -4625,7 +4697,7 @@ document.addEventListener("visibilitychange", () => {
           eH = h;
           eHi = i;
         }
-        if (eH > 0 && (eH - l) / eH >= th) {
+        if (eH > 0 && (eH - l) / eH >= thAt(i)) {
           piv.push({ d: String(rows[eHi].t), p: eH, t: "H" });
           dir = -1;
           eL = l;
@@ -4637,7 +4709,7 @@ document.addEventListener("visibilitychange", () => {
           eL = l;
           eLi = i;
         }
-        if (eL > 0 && (h - eL) / eL >= th) {
+        if (eL > 0 && (h - eL) / eL >= thAt(i)) {
           piv.push({ d: String(rows[eLi].t), p: eL, t: "L" });
           dir = 1;
           eH = h;
@@ -4654,7 +4726,7 @@ document.addEventListener("visibilitychange", () => {
     if (a0.length < 10) return null;
     const now = /* @__PURE__ */ new Date(), td = now.toLocaleDateString("sv-SE"), mins = now.getHours() * 60 + now.getMinutes(), a = a0.at(-1).t === td && mins <= 900 ? a0.slice(0, -1) : a0;
     if (a.length < 10) return null;
-    const baseD = zzSegStartJL(a, 0.12);
+    const baseD = zzSegStartJL(a, zzThJL(a));
     let hi = null, lo = null, hiD = "", loD = "";
     for (const r of a) {
       if (r.t >= baseD) {
@@ -4671,7 +4743,7 @@ document.addEventListener("visibilitychange", () => {
     if (!(hi > lo)) return null;
     const price = Number(p), pos = (price - lo) / (hi - lo), ret = (hi - price) / (hi - lo), upL = hiD > loD, rngL = hi - lo, levels = [0, 0.382, 0.5, 0.618, 0.786, 1, 1.27, 1.618].map((r) => ({ r, v: r <= 1 ? upL ? hi - rngL * r : lo + rngL * r : upL ? lo + rngL * r : hi - rngL * r }));
     const out = { lo, hi, pos, ret, up: hiD > loD, levels, from: loD < hiD ? loD : hiD, to: loD < hiD ? hiD : loD, loD, hiD, baseD };
-    const zz = zzPivotsJL(a, 0.12);
+    const zz = zzMergeSmallLegsJL(zzPivotsJL(a, zzThJL(a)), a);
     let L1 = null, H0 = null, L0 = null;
     for (let i = zz.length - 1; i >= 0; i--) {
       if (zz[i].t === "L") {
@@ -4735,14 +4807,7 @@ document.addEventListener("visibilitychange", () => {
         out.stopTSrc = "MA10";
         out.stopC = ma20v;
         out.stopCSrc = "MA20";
-        if (out.fib382 > ma10v) {
-          out.stopT = out.fib382;
-          out.stopTSrc = "38.2%\u56DE\u64A4";
-        }
-        if (out.fib50 > ma20v) {
-          out.stopC = out.fib50;
-          out.stopCSrc = "50%\u56DE\u64A4";
-        }
+        out.fibProv = 1;
       }
     }
     return out;
@@ -5280,7 +5345,7 @@ document.addEventListener("visibilitychange", () => {
           break;
         }
       }
-      const rl = (z) => z.r === 0 ? "0" : z.r === 1 ? "1" : String(z.r), tag = (z) => z.r === 0 ? f.up ? "\u817F\u9AD8" : "\u817F\u4F4E" : z.r === 1 ? f.up ? "\u817F\u4F4E" : "\u817F\u9AD8" : z.r > 1 ? "\u6269\u5C55" : "\u56DE\u64A4", zone = liveP < lo ? "\u7834\u817F\u4F4E \xB7 \u8D85\u8DCC" : liveP > hi ? "\u7834\u817F\u9AD8 \xB7 \u5F3A\u52BF" : `${rl(a)} ~ ${rl(b)} \u533A\u95F4`, items = [...lv.map((z) => ({ r: rl(z), tg: tag(z), v: z.v })), { r: "now", v: liveP }].sort((x, y) => y.v - x.v), rows = items.map((it) => {
+      const rl = (z) => z.r === 0 ? "0" : z.r === 1 ? "1" : String(z.r), tag = (z) => z.r === 0 ? f.up ? "\u817F\u9AD8" : "\u817F\u4F4E" : z.r === 1 ? f.up ? "\u817F\u4F4E" : "\u817F\u9AD8" : z.r > 1 ? "\u6269\u5C55" : "\u56DE\u64A4", zone = (liveP < lo ? "\u7834\u817F\u4F4E \xB7 \u8D85\u8DCC" : liveP > hi ? "\u7834\u817F\u9AD8 \xB7 \u5F3A\u52BF" : `${rl(a)} ~ ${rl(b)} \u533A\u95F4`) + (f.fibProv ? " \xB7\u672A\u786E\u8BA4\u53C2\u8003" : ""), items = [...lv.map((z) => ({ r: rl(z), tg: tag(z), v: z.v })), { r: "now", v: liveP }].sort((x, y) => y.v - x.v), rows = items.map((it) => {
         if (it.r === "now") return `<div class="fibLv now"><b>\u73B0\u4EF7</b><strong>${liveP.toFixed(2)}</strong><span>\u6BB5\u5185 ${Math.round(posPct)}% \xB7 ${zone}</span></div>`;
         const gap = (it.v / liveP - 1) * 100;
         return `<div class="fibLv${gap > 0 ? " up" : " dn"}"><b>${it.r}</b><strong>${it.v.toFixed(2)}</strong><span>${it.tg} \xB7 ${gap > 0 ? "\u4E0A\u65B9" : "\u4E0B\u65B9"} ${Math.abs(gap).toFixed(1)}%</span></div>`;
