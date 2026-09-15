@@ -1505,7 +1505,4 @@ async function poolRefundJL(btn){
  }catch(e){try{toast('补跑失败：'+(e&&e.message||e))}catch(e2){}console.error('poolRefundJL',e)}
  JLREFUND=false;if(btn){btn.disabled=false;if(oldTxt)btn.textContent=oldTxt}
  try{renderWatch()}catch(e){}
-}
-
-})();
 </script></body></html>
