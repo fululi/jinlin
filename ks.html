@@ -4612,7 +4612,7 @@ function applyUrl() {
       for (var i = 0; i < S.codes.length; i++) {
         if (S.codes[i][0] === code || S.codes[i][0] === code.replace(/^(sh|sz)/, "")) { code = S.codes[i][0]; found = true; break; }
       }
-      if (!found) S.codes.push([code, code]);
+      if (!found) S.codes.push([code, q.get("name") || code]);
       S.active = code;
       S.kl = []; S.end = 0; S.count = 0; S.pending = []; S.selected = -1; S.tool = null; S.yZoom = 1; S.yOff = 0; S.rtflow = []; S.rng = null; S.rngMode = false;
     }
