@@ -222,6 +222,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB .s{color:#f58b8e}.deckSB .b{color:#6ad5b4}
 </style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
+<!-- v.48 0916盘中 涨停穿档不延伸根治: 新增tiersViewJL视图层(现有S1-S5/B1-B5算法不动,三只票水位口径不变)——现价破末档按末档间距追加最多3档延伸档(标签带延), 展示与触及判定统一走它, "已顺延下一档"从谎话变真话; planNext不延伸 -->
 <body><!-- v.45 0916盘中 资金提速: 持仓资金/市场资金5分钟→60秒 + 修'又是14日'(9:20前缓存停昨天误判新鲜跳拉,交易时段改按今日行+60s新鲜度) + ff缓存带时间戳 -->
 <body><!-- v.44 0916盘中 白屏根治: 救援卡显示真错误+安全模式按钮(?safe=1关扫描/筹码)+连死2次自动核大缓存键(持仓台账不动) -->
 <body><!-- v.43 0916盘中 ES5自救核升级: 引擎死亡首次自动硬恢复(注销SW+清缓存+时间戳重载),根治坏缓存死循环; 超时6s→9s防慢机误报 -->
@@ -462,7 +463,7 @@ document.addEventListener("visibilitychange", () => {
           sm.className = cls(s.pct);
         }
       }
-      const t = tierLevelsJL(s), lp = Number(s.base);
+      const t = tiersViewJL(s), lp = Number(s.base);
       let sig = null;
       if (t) {
         const ns = t.sells.length && lp >= t.sells[0] * 0.997, nb = t.buys.length && lp <= t.buys[0] * 1.003;
@@ -2174,7 +2175,7 @@ document.addEventListener("visibilitychange", () => {
     if (fr) {
       let lines2 = "";
       try {
-        const st = byCode(code), t = st && tierLevelsJL(st);
+        const st = byCode(code), t = st && tiersViewJL(st);
         if (t) lines2 = [...t.buys.map((v) => "b" + v.toFixed(2)), ...t.sells.map((v) => "s" + v.toFixed(2))].join(",");
       } catch (e) {
       }
@@ -2708,8 +2709,33 @@ document.addEventListener("visibilitychange", () => {
     return `<div class="resoJL">${chip("\u4E2A\u80A1" + (r.ffD ? "\xB7" + r.ffD : "") + (r.ffStale ? "\u65E7" : ""), r.ownV, "", r.dO)}${chip(r.sec || "\u677F\u5757", r.secV, "", r.dS)}${chip("\u5E02\u573A" + (r.mtLb || ""), r.mtV, r.mtT != null ? `<em>${r.mtT}\xB0</em>` : "", r.dM)}<div class="rsVerdict ${r.vc}">${r.verdict}</div></div>`;
   }
   const ATR_FLOOR_JL = 0.9;
-  function tierStripHTMLJL(s, i) {
+  function tiersViewJL(s) {
     const t = tierLevelsJL(s);
+    if (!t || t.planNext || !t.sells || !t.sells.length || !t.buys || !t.buys.length) return t;
+    const p = Number(s.base);
+    if (!(p > 0) || !freshQuoteJL(s)) return t;
+    const sells = t.sells.slice(), buys = t.buys.slice();
+    const stepS = sells.length >= 2 ? sells[sells.length - 1] - sells[sells.length - 2] : sells[0] - Number(t.anchor) || p * 0.005;
+    const stepB = buys.length >= 2 ? buys[buys.length - 2] - buys[buys.length - 1] : Number(t.anchor) - buys[0] || p * 0.005;
+    let g = 0;
+    while (g < 3 && p >= sells[sells.length - 1]) {
+      const nv = +(sells[sells.length - 1] + Math.max(stepS, p * 0.003)).toFixed(2);
+      if (!(nv > sells[sells.length - 1])) break;
+      sells.push(nv);
+      g++;
+    }
+    g = 0;
+    while (g < 3 && p <= buys[buys.length - 1]) {
+      const nv = +(buys[buys.length - 1] - Math.max(stepB, p * 0.003)).toFixed(2);
+      if (!(nv > 0 && nv < buys[buys.length - 1])) break;
+      buys.push(nv);
+      g++;
+    }
+    if (sells.length === t.sells.length && buys.length === t.buys.length) return t;
+    return Object.assign({}, t, { sells, buys, extS: t.sells.length, extB: t.buys.length });
+  }
+  function tierStripHTMLJL(s, i) {
+    const t = tiersViewJL(s);
     if (!t) {
       if (s && s.code) ensureDailyJL(s.code);
       return '<div class="tsWaitJL" style="font-size:9px;color:#8ea8b9;padding:4px 2px">\u6C34\u4F4D\u7B49\u5F85\u65E5K\u6E90 \xB7 \u81EA\u52A8\u91CD\u8BD5\u4E2D</div>';
@@ -2718,7 +2744,7 @@ document.addEventListener("visibilitychange", () => {
     const p = Number(s.base);
     const nearS = t.sells.length && p >= t.sells[0] * 0.997, nearB = t.buys.length && p <= t.buys[0] * 1.003;
     const sig = nearS ? "\u9AD8\u629B\u533A" : nearB ? "\u4F4E\u5438\u533A" : p >= t.anchor ? "\u504F\u5F3A \xB7 \u6301\u80A1\u5F85\u6DA8" : "\u504F\u5F31 \xB7 \u7B49\u4F4E\u5438";
-    const all = [...t.buys.map((v, k) => ({ v, k: "B" + (k + 1), c: "b" })), ...t.sells.map((v, k) => ({ v, k: "S" + (k + 1), c: "s" }))].sort((a, b2) => a.v - b2.v);
+    const all = [...t.buys.map((v, k) => ({ v, k: "B" + (k + 1) + (k >= (t.extB || 1e9) ? "\u5EF6" : ""), c: "b" })), ...t.sells.map((v, k) => ({ v, k: "S" + (k + 1) + (k >= (t.extS || 1e9) ? "\u5EF6" : ""), c: "s" }))].sort((a, b2) => a.v - b2.v);
     const hi = Number(s.high), lo = Number(s.low);
     const minA = Math.min(...all.map((o) => o.v), p, hi > 0 ? hi : Infinity, lo > 0 ? lo : Infinity), maxA = Math.max(...all.map((o) => o.v), p, hi > 0 ? hi : -Infinity, lo > 0 ? lo : -Infinity), span = maxA - minA || 1, posF = (v) => ((v - minA) / span * 100).toFixed(1);
     return `<div class="tierStripJL" ${dAttr} role="button" aria-label="\u70B9\u5F00${s.name}\u6C34\u4F4D\u8BE6\u60C5"><div class="tsRow tsLvl">${all.map((o) => `<span class="tsTag ${o.c}">${o.k} ${o.v.toFixed(2)}</span>`).join("")}</div><div class="tsBar">${all.map((o) => `<i class="tsTick ${o.c}" style="left:${posF(o.v)}%"></i>`).join("")}<i class="tsNow" style="left:${posF(p)}%" title="\u73B0\u4EF7 ${p.toFixed(2)}"></i>${hi > 0 ? '<i class="tsHiJL" style="left:' + posF(hi) + '%" title="\u5F53\u65E5\u9AD8 ' + hi.toFixed(2) + '">\u25B2</i>' : ""}${lo > 0 ? '<i class="tsLoJL" style="left:' + posF(lo) + '%" title="\u5F53\u65E5\u4F4E ' + lo.toFixed(2) + '">\u25BC</i>' : ""}</div><div class="tsRow"><span class="tsSig ${nearS ? "s" : nearB ? "b" : ""}">${sig} \xB7 ATR ${t.atr.toFixed(2)}</span><span class="tsHL">\u9AD8 ${hi > 0 ? hi.toFixed(2) : "\u2014"} \xB7 \u4F4E ${lo > 0 ? lo.toFixed(2) : "\u2014"}</span></div></div>`;
@@ -2733,7 +2759,7 @@ document.addEventListener("visibilitychange", () => {
     return quoteDay8JL(s) === (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE").replace(/-/g, "");
   }
   function ladderHTMLJL(s, i) {
-    const t = tierLevelsJL(s), dAttr = typeof i === "string" && i.indexOf("w:") === 0 ? 'data-detail-watch="' + i.slice(2) + '"' : 'data-detail="' + i + '"';
+    const t = tiersViewJL(s), dAttr = typeof i === "string" && i.indexOf("w:") === 0 ? 'data-detail-watch="' + i.slice(2) + '"' : 'data-detail="' + i + '"';
     if (!t) {
       if (s && s.code) ensureDailyJL(s.code);
       return '<div class="ladJL tsWaitJL" ' + dAttr + ' style="font-size:9px;color:#8ea8b9;padding:4px 2px">\u6C34\u4F4D\u7B49\u5F85\u65E5K\u6E90 \xB7 \u81EA\u52A8\u91CD\u8BD5\u4E2D</div>';
@@ -2941,7 +2967,7 @@ document.addEventListener("visibilitychange", () => {
     }
     if (st.d !== td) st = { d: td };
     stocks.forEach((s) => {
-      const t = tierLevelsJL(s);
+      const t = tiersViewJL(s);
       if (!t || t.planNext) return;
       if (!freshQuoteJL(s)) return;
       const p = Number(s.base);
@@ -2986,7 +3012,7 @@ document.addEventListener("visibilitychange", () => {
   }
   function renderDeck() {
     $("deck").innerHTML = stocks.map((s, i) => {
-      const on = i === active, t = tierLevelsJL(s), lp = Number(s.base);
+      const on = i === active, t = tiersViewJL(s), lp = Number(s.base);
       let sig = null;
       if (t) {
         const ns = t.sells.length && lp >= t.sells[0] * 0.997, nb = t.buys.length && lp <= t.buys[0] * 1.003;
@@ -5333,7 +5359,7 @@ document.addEventListener("visibilitychange", () => {
       const dg = host.querySelector(".detailGrid");
       dg ? dg.after(fib) : host.appendChild(fib);
     }
-    const liveP = Number(lastBar(series(stock.code, false)).c) || Number(stock.base), t = tierLevelsJL({ ...stock, base: liveP });
+    const liveP = Number(lastBar(series(stock.code, false)).c) || Number(stock.base), t = tiersViewJL({ ...stock, base: liveP });
     if (t && stock.customTiers) {
       t.sells = ["S1", "S2", "S3"].map((k, i) => Number(stock.customTiers[k]) || t.sells[i]);
       t.buys = ["B1", "B2", "B3"].map((k, i) => Number(stock.customTiers[k]) || t.buys[i]);
