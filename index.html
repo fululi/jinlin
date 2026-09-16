@@ -220,7 +220,8 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#f58b8e}.deckSB .b{color:#6ad5b4}
-</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
+</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
+<body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
 <!-- v.48 0916盘中 涨停穿档不延伸根治: 新增tiersViewJL视图层(现有S1-S5/B1-B5算法不动,三只票水位口径不变)——现价破末档按末档间距追加最多3档延伸档(标签带延), 展示与触及判定统一走它, "已顺延下一档"从谎话变真话; planNext不延伸 -->
 <!-- v.49 0916盘中 资金慢根因修复: ensureDDXData写jl_ff_v1只写{rows}把{t,src}抹掉——新鲜度闸cf.t=undefined恒失效,看过K线的票每60s全量重拉资金流,越刷越慢; 补回t=Date.now() -->
@@ -4490,7 +4491,7 @@ document.addEventListener("visibilitychange", () => {
     let a = dailyBarsOf(code);
     try {
       const _nw3 = /* @__PURE__ */ new Date(), _td3 = _nw3.toLocaleDateString("sv-SE");
-      if (a.length && String(a[a.length - 1].t).slice(0, 10) === _td3 && _nw3.getHours() * 60 + _nw3.getMinutes() < 905) a = a.slice(0, -1);
+      if (a.length && String(a[a.length - 1].t).slice(0, 10) === _td3 && _nw3.getHours() * 60 + _nw3.getMinutes() < 910) a = a.slice(0, -1);
     } catch (e) {
     }
     if (a.length < 15) return null;
@@ -4595,7 +4596,7 @@ document.addEventListener("visibilitychange", () => {
     seedPrevJL(stock);
     const p = Number(stock.base), prev = Number(stock.prevClose) || p, a = rmaAtrJL(stock.code);
     if (!(p > 0 && a > 0)) return null;
-    const _nw2 = /* @__PURE__ */ new Date(), planNext = ((m2) => m2 >= 905 || m2 < 545)(_nw2.getHours() * 60 + _nw2.getMinutes()), op = Number(stock.open), hi = Number(stock.high), lo = Number(stock.low), db = dailyBarsOf(stock.code), todayAmp = planNext ? 0 : hi > 0 && lo > 0 ? hi - lo : db.length ? db.at(-1).h - db.at(-1).l : 0, lastTR = db.length > 1 ? Math.max(db.at(-1).h - db.at(-1).l, Math.abs(db.at(-1).h - db.at(-2).c), Math.abs(db.at(-1).l - db.at(-2).c)) : 0, base = Math.max(a * ATR_FLOOR_JL, lastTR * 0.6), anchor = planNext ? p : op > 0 && Math.abs(op - prev) >= 0.5 * a ? op : prev, ap = a / p * 100;
+    const _nw2 = /* @__PURE__ */ new Date(), planNext = ((m2) => m2 >= 905 || m2 < 545)(_nw2.getHours() * 60 + _nw2.getMinutes()), op = Number(stock.open), hi = Number(stock.high), lo = Number(stock.low), db = dailyBarsOf(stock.code), todayAmp = planNext ? 0 : hi > 0 && lo > 0 ? hi - lo : db.length ? db.at(-1).h - db.at(-1).l : 0, lastTR = (() => { const _tdy2 = _nw2.toLocaleDateString("sv-SE"), _intr = db.length && String(db.at(-1).t).slice(0, 10) === _tdy2 && _nw2.getHours() * 60 + _nw2.getMinutes() < 910, b1 = db.at(_intr ? -2 : -1), b0 = db.at(_intr ? -3 : -2); return b1 && b0 ? Math.max(b1.h - b1.l, Math.abs(b1.h - b0.c), Math.abs(b1.l - b0.c)) : 0; })(), base = Math.max(a * ATR_FLOOR_JL, lastTR * 0.6), anchor = planNext ? p : op > 0 && Math.abs(op - prev) >= 0.5 * a ? op : prev, ap = a / p * 100;
     const _atS2 = rmaAtrSeriesJL(db), _r120 = [], _curA = p > 0 ? a / p : 0;
     for (let _i2 = Math.max(14, db.length - 120); _i2 < db.length; _i2++) _atS2[_i2] > 0 && db[_i2].c > 0 && _r120.push(_atS2[_i2] / db[_i2].c);
     let _q2 = 0.5;
