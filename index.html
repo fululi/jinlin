@@ -8289,7 +8289,7 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
     };
-    const refreshFFlowJL = refreshFFlowJL2;
+    window.refreshFFlowJL = refreshFFlowJL2;
     setTimeout(() => refreshFFlowJL2(false), 2500);
     setInterval(() => refreshFFlowJL2(true), 6e4);
     periodBars();
