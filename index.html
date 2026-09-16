@@ -2547,7 +2547,7 @@ document.addEventListener("visibilitychange", () => {
       }
       _calibMJL = cch;
     }
-    if (cch[code] && cch[code].d === td && cch[code].ku3 && cch[code].v3) return cch[code];
+    if (cch[code] && cch[code].d === td && cch[code].v3) return cch[code]; // v.50: 去掉 ku3 非空要求，短历史票当日也只算一次
     const rows = dailyBarsOf(code);
     if (rows.length < 120) return null;
     const R = rows.map((r) => [r.t, r.o, r.h, r.l, r.c]), n = R.length, atrR = new Array(n).fill(0);
@@ -2594,13 +2594,8 @@ document.addEventListener("visibilitychange", () => {
         DN.push(+((1 - R[i][3] / pc) * 100).toFixed(2));
       }
     }
-    const _pv = cch[code];
-    if (_pv && _pv.v3 && Number.isFinite(_pv.kUp)) {
-      kUp = +(0.7 * _pv.kUp + 0.3 * kUp).toFixed(3);
-      kDn = +(0.7 * _pv.kDn + 0.3 * kDn).toFixed(3);
-      if (ku3 && _pv.ku3) ku3 = ku3.map((v, i2) => +(0.7 * _pv.ku3[i2] + 0.3 * v).toFixed(3));
-      if (kd3 && _pv.kd3) kd3 = kd3.map((v, i2) => +(0.7 * _pv.kd3[i2] + 0.3 * v).toFixed(3));
-    }
+    // v.50: 原 EMA 平滑块已删除 —— kUp/kDn/ku3/kd3 是 const，重赋值必抛 TypeError，
+    // 该分支在生产从未成功执行（触发即崩 calibJL→computeTierJL→水位整日定格昨日）。
     const out = { d: td, v3: 1, kUp: +kUp.toFixed(2), kDn: +kDn.toFixed(2), ku3, kd3, cov: tot ? Math.round(inr / tot * 100) : null, n: tot, UP, DN };
     cch[code] = out;
     try {
