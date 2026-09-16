@@ -4436,6 +4436,14 @@ document.addEventListener("visibilitychange", () => {
     if (n) console.log("\u65E5K\u7F13\u5B58\u6062\u590D", n, "\u53EA");
   }
   dkRestoreJL();
+  function ffMergeJL(oldRows, newRows) {
+    if (!oldRows || !oldRows.length) return newRows;
+    if (!newRows || !newRows.length) return oldRows;
+    if (newRows.length >= oldRows.length) return newRows;
+    const mp = new Map(oldRows.map((r) => [String(r.d), r]));
+    newRows.forEach((r) => mp.set(String(r.d), r));
+    return [...mp.values()].sort((a, b) => String(a.d) < String(b.d) ? -1 : 1).slice(-320);
+  }
   function jlSafeSetJL(k, v) {
     try {
       localStorage.setItem(k, v);
@@ -6237,8 +6245,8 @@ document.addEventListener("visibilitychange", () => {
         ddxState.rows = rows;
         ddxState.err = false;
         try {
-          const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}");
-          all[code] = { rows, t: Date.now() };
+          const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), _cur1 = all[code];
+          all[code] = { rows: ffMergeJL(_cur1 && _cur1.rows, rows), t: Date.now() };
           jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
         } catch (e) {
         }
@@ -8196,8 +8204,8 @@ document.addEventListener("visibilitychange", () => {
             const rows = arr.map((r) => ({ d: String(r.opendate), main: +r.r0_net || 0, small: null, mid: null, big: null, sup: null, mainPct: r.r0_ratio != null ? +r.r0_ratio * 100 : null })).sort((a, b) => a.d < b.d ? -1 : 1).slice(-320);
             if (!rows.length) return;
             const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), cur = all[st2.code];
-            if (cur && cur.rows && cur.rows.length && !(String(cur.rows.at(-1).d) < rows.at(-1).d)) return;
-            all[st2.code] = { rows, t: Date.now(), src: "sina" };
+            if (cur && cur.rows && cur.rows.length && cur.rows.length >= rows.length && !(String(cur.rows.at(-1).d) < rows.at(-1).d)) return;
+            all[st2.code] = { rows: ffMergeJL(cur && cur.rows, rows), t: Date.now(), src: "sina" };
             jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
             if (typeof renderDeck === "function") renderDeck();
           } catch (e) {
@@ -8222,8 +8230,8 @@ document.addEventListener("visibilitychange", () => {
       };
       const ffSave = (rows) => {
         try {
-          const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}");
-          all[st2.code] = { rows, t: Date.now() };
+          const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), _cur0 = all[st2.code];
+          all[st2.code] = { rows: ffMergeJL(_cur0 && _cur0.rows, rows), t: Date.now() };
           jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
         } catch (e2) {
         }
