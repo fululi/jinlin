@@ -223,6 +223,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 </style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
 <!-- v.48 0916盘中 涨停穿档不延伸根治: 新增tiersViewJL视图层(现有S1-S5/B1-B5算法不动,三只票水位口径不变)——现价破末档按末档间距追加最多3档延伸档(标签带延), 展示与触及判定统一走它, "已顺延下一档"从谎话变真话; planNext不延伸 -->
+<!-- v.49 0916盘中 资金慢根因修复: ensureDDXData写jl_ff_v1只写{rows}把{t,src}抹掉——新鲜度闸cf.t=undefined恒失效,看过K线的票每60s全量重拉资金流,越刷越慢; 补回t=Date.now() -->
 <body><!-- v.45 0916盘中 资金提速: 持仓资金/市场资金5分钟→60秒 + 修'又是14日'(9:20前缓存停昨天误判新鲜跳拉,交易时段改按今日行+60s新鲜度) + ff缓存带时间戳 -->
 <body><!-- v.44 0916盘中 白屏根治: 救援卡显示真错误+安全模式按钮(?safe=1关扫描/筹码)+连死2次自动核大缓存键(持仓台账不动) -->
 <body><!-- v.43 0916盘中 ES5自救核升级: 引擎死亡首次自动硬恢复(注销SW+清缓存+时间戳重载),根治坏缓存死循环; 超时6s→9s防慢机误报 -->
@@ -6113,7 +6114,7 @@ document.addEventListener("visibilitychange", () => {
         ddxState.err = false;
         try {
           const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}");
-          all[code] = { rows };
+          all[code] = { rows, t: Date.now() };
           jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
         } catch (e) {
         }
