@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="K-STATION" data-page-node-id="eakkpnvZONjpAgIoWJfWXR">
 <meta name="theme-color" content="#0a0e0b" data-page-node-id="G8xVsmyJW6v9vqF1PGoexF">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%230a0e0b'/%3E%3Crect x='30' y='44' width='10' height='40' fill='%23ff6f66'/%3E%3Crect x='48' y='30' width='10' height='54' fill='%2335d99a'/%3E%3Crect x='66' y='52' width='10' height='34' fill='%23ff6f66'/%3E%3Crect x='84' y='38' width='10' height='48' fill='%2335d99a'/%3E%3C/svg%3E" data-page-node-id="xPNcNcdDoerIE4BP3A0aDV">
-<title>K-STATION Mobile · 持仓K线</title><meta name="build" content="ks-0916-51: LIQ去填充框改1px细实线; SR去虚线框/中线只留色带+标签; 「隐藏」开关覆盖副图画线">
+<title>K-STATION Mobile · 持仓K线</title><meta name="build" content="ks-0916-52: 实时主力线零上红/零下绿细线化(原金粗线)+零轴亮白; 档位线已触压暗/下一档同色挑亮实线; 价格轴亮白11px">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -915,8 +915,23 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     if (t === "buy") { ctx.strokeStyle = sel ? SEL : "#ffd21f"; ctx.lineWidth = sel ? 1.3 : 0.9; }
     else if (tag0) { ctx.strokeStyle = sel ? SEL : lc; ctx.lineWidth = sel ? 1.3 : 0.9; }
     var isBS = dg.auto && /^[BS]\d+$/.test(tag0);
-    if (isBS) { ctx.setLineDash([6, 4]); ctx.lineWidth = sel ? 0.9 : 0.65; }
-    ctx.beginPath(); ctx.moveTo(v.padL, pts[0].y); ctx.lineTo(right, pts[0].y); ctx.stroke(); ctx.setLineDash([]);
+    if (isBS) { // v.52 用户0916: 已触档压暗, 现价最近未触档(下一档)同色挑亮+实线
+      var _lc9b = S.kl && S.kl.length ? S.kl[S.kl.length - 1][4] : 0, _p9 = dg.pts[0].p, _isS9 = tag0.charAt(0) === "S";
+      var _tch9 = _lc9b && (_isS9 ? _lc9b >= _p9 : _lc9b <= _p9), _next9 = false;
+      if (!_tch9 && _lc9b) {
+        var _bd9 = 1e18, _bt9 = null;
+        dlist().forEach(function (d9) {
+          if (!(d9.auto && d9.type === "hline" && d9.tag && d9.tag.charAt(0) === tag0.charAt(0) && /^[BS]\d+$/.test(d9.tag))) return;
+          var _q9 = d9.pts[0].p, _t9 = _isS9 ? _lc9b >= _q9 : _lc9b <= _q9;
+          if (!_t9 && Math.abs(_q9 - _lc9b) < _bd9) { _bd9 = Math.abs(_q9 - _lc9b); _bt9 = d9; }
+        });
+        _next9 = _bt9 === dg;
+      }
+      if (_tch9) ctx.globalAlpha = 0.25;
+      if (_next9) { ctx.strokeStyle = _isS9 ? "#ff8a80" : "#5cffb0"; ctx.setLineDash([]); ctx.lineWidth = sel ? 1.3 : 1.5; }
+      else { ctx.setLineDash([6, 4]); ctx.lineWidth = sel ? 0.9 : 0.65; }
+    }
+    ctx.beginPath(); ctx.moveTo(v.padL, pts[0].y); ctx.lineTo(right, pts[0].y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
     if (isBS) return; // ks-0911-49: S/B档位只保留水平线，撤掉S1/S2/S3、B1/B2/B3文字/点/三角
     // 标签放左缘深色胶囊(右缘留给昨/今高低), 加粗放大, 不再被裁切
     var lab = (dg.tag ? dg.tag + " " : (t === "buy" ? "买 " : "")) + (dg.pts[0].p != null ? fwp(dg.pts[0].p) : "");
@@ -1379,7 +1394,7 @@ function drawReal() {
   var kl = S.kl, i0 = v.i0, i1 = v.i1;
   var d2 = dec();
   // 网格 + 右侧价格轴（自适应整数刻度：1/2/2.5/5 步进，约 6-9 条）
-  ctx.font = "10px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.font = "11px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; // v.52: 价格轴字放大
   var range = v.hi - v.lo;
   var raw = range / 12; // hq-mobile请求: 刻度加密, 价位看得准
   var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
@@ -1389,7 +1404,7 @@ function drawReal() {
     var gy = v.Y(gp2);
     gridSt(ctx);
     ctx.beginPath(); ctx.moveTo(v.padL, gy); ctx.lineTo(v.padL + (i1 - i0) * v.step, gy); ctx.stroke();
-    ctx.fillStyle = DIM;
+    ctx.fillStyle = "#f2fbfd"; // v.52: 价格轴不要灰, 亮白(用户0916)
     ctx.fillText(gp2.toFixed(d2), v.padL + (i1 - i0) * v.step + 4, gy);
   }
   // 底部日期轴 + 竖直分隔线（ks-0907-27: 按真实时间分界——日K=每月1号/分钟=每日开盘, 不再等分乱切; 最多6条防拥挤）
@@ -3773,7 +3788,7 @@ function renderRtflow(ctx, v) {
   gridSt(ctx);
   ctx.beginPath(); ctx.moveTo(v.padL, y); ctx.lineTo(right, y); ctx.stroke();
   ctx.fillStyle = DIM; ctx.font = "9px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-  ctx.fillText("主力资金·今日累计（金=主力 橙=超大单）", v.padL + 4, y + 9);
+  ctx.fillText("主力资金·今日累计（零上红=流入 零下绿=流出 橙=超大单）", v.padL + 4, y + 9);
   if (!S.rtflow.length) {
     ctx.fillStyle = DIM; ctx.font = "10px -apple-system, sans-serif";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -3821,7 +3836,8 @@ function renderRtflow(ctx, v) {
   var ZY = function (val) { return y + h / 2 - val / abs * (h / 2 - 10); };
   var XX = function (sl2) { return v.padL + (sl2 + 0.5) / 240 * (right - v.padL); };
   // 零轴
-  ctx.strokeStyle = "rgba(150,180,166,0.7)";
+  ctx.strokeStyle = "rgba(242,251,253,0.8)"; // v.52: 零轴=用户要的"中间一条均线", 提亮白
+  ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(v.padL, ZY(0)); ctx.lineTo(right, ZY(0)); ctx.stroke();
   // 时间刻度
   ctx.fillStyle = DIM; ctx.font = "8.5px Menlo, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "top";
@@ -3832,11 +3848,16 @@ function renderRtflow(ctx, v) {
   ctx.beginPath();
   ctx.moveTo(XX(0), ZY(cum[0]));
   for (i = 1; i <= last; i++) ctx.lineTo(XX(i), ZY(cum[i]));
-  ctx.strokeStyle = "#e6b43c"; ctx.lineWidth = 1.4; ctx.stroke();
   ctx.lineTo(XX(last), ZY(0)); ctx.lineTo(XX(0), ZY(0)); ctx.closePath();
   var cur = cum[last];
   ctx.fillStyle = cur >= 0 ? "rgba(255,111,102,0.12)" : "rgba(53,217,154,0.12)";
   ctx.fill();
+  // v.52 用户0916"光怼黄的太粗不精细": 主线改零上红/零下绿分段1.2细线
+  for (i = 1; i <= last; i++) {
+    ctx.strokeStyle = (cum[i] + cum[i - 1]) / 2 >= 0 ? "#ff6f66" : "#35d99a";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(XX(i - 1), ZY(cum[i - 1])); ctx.lineTo(XX(i), ZY(cum[i])); ctx.stroke();
+  }
   // 超大单累计曲线
   ctx.beginPath();
   ctx.moveTo(XX(0), ZY(cumS[0]));
