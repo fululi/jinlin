@@ -8267,7 +8267,13 @@ document.addEventListener("visibilitychange", () => {
         }
       }, 9e3);
       setTimeout(() => {
-        if (!ffDone) {
+        let _short = true;
+        try {
+          const _c0 = (JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {})[st2.code];
+          _short = !(_c0 && _c0.rows && _c0.rows.length >= 50);
+        } catch (eS) {
+        }
+        if (!ffDone || _short) {
           ffDone = true;
           loadOneFFJL_sina(st2);
           setTimeout(() => {
