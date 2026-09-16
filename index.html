@@ -221,6 +221,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#f58b8e}.deckSB .b{color:#6ad5b4}
 </style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
+<!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
 <body><!-- v.45 0916盘中 资金提速: 持仓资金/市场资金5分钟→60秒 + 修'又是14日'(9:20前缓存停昨天误判新鲜跳拉,交易时段改按今日行+60s新鲜度) + ff缓存带时间戳 -->
 <body><!-- v.44 0916盘中 白屏根治: 救援卡显示真错误+安全模式按钮(?safe=1关扫描/筹码)+连死2次自动核大缓存键(持仓台账不动) -->
 <body><!-- v.43 0916盘中 ES5自救核升级: 引擎死亡首次自动硬恢复(注销SW+清缓存+时间戳重载),根治坏缓存死循环; 超时6s→9s防慢机误报 -->
@@ -1026,7 +1027,6 @@ document.addEventListener("visibilitychange", () => {
     clearTimeout(toast.timer);
     toast.timer = setTimeout(() => $("toast").classList.remove("show"), 3e3);
   }
-  let heatDataJL = { rows: [], updated: "", loading: false };
   let holdSectorJL = { map: {}, at: 0 };
   function loadHoldSectorsJL() {
     const now = Date.now();
@@ -1043,7 +1043,6 @@ document.addEventListener("visibilitychange", () => {
         (Array.isArray(diff) ? diff : Object.values(diff)).forEach((q) => {
           if (q.f12 && q.f100) holdSectorJL.map[String(q.f12)] = String(q.f100);
         });
-        renderHeatmapJL();
       } finally {
         delete window[cb];
         sc.remove();
@@ -1066,120 +1065,6 @@ document.addEventListener("visibilitychange", () => {
     for (const s of stocks) if (holdSectorJL.map[s.code] === name) return "\u6301";
     for (const s of listGroup("watch")) if (holdSectorJL.map[s.code] === name) return "\u89C2";
     return "";
-  }
-  async function loadHeatmapJL() {
-    if (heatDataJL.loading) return;
-    heatDataJL.loading = true;
-    const finish = (tag) => {
-      heatDataJL.updated = (/* @__PURE__ */ new Date()).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) + tag;
-      heatDataJL.loading = false;
-      loadHoldSectorsJL();
-      renderHeatmapJL();
-    };
-    const tUrl = "https://proxy.finance.qq.com/cgi/cgi-bin/rank/hs/getBoardRankList?board_code=aStock&sort_type=Turnover&direct=down&offset=0&count=40";
-    try {
-      let d = null;
-      try {
-        const r = await fetch("/__proxy?url=" + encodeURIComponent(tUrl), { cache: "no-store" });
-        d = await r.json();
-      } catch (e1) {
-        try {
-          const r2 = await fetch(tUrl, { cache: "no-store" });
-          d = await r2.json();
-        } catch (e2) {
-        }
-      }
-      const list = d && d.data && d.data.rank_list || [];
-      if (!list.length) throw new Error("tx empty");
-      heatDataJL.rows = list.map((q) => ({ code: String(q.code || "").replace(/^(sh|sz)/, ""), name: String(q.name || ""), pct: Number(q.zdf), amt: Number(q.zljlr) * 1e4, to: Number(q.turnover) * 1e4 })).filter((r) => r.name && r.to > 0).slice(0, 28);
-      finish(" \xB7 \u817E\u8BAF");
-      return;
-    } catch (e) {
-    }
-    const cb = "jinlinHeat_" + Date.now();
-    window[cb] = (res) => {
-      var _a2;
-      try {
-        const diff = ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.diff) || [];
-        heatDataJL.rows = (Array.isArray(diff) ? diff : Object.values(diff)).map((q) => ({ code: String(q.f12 || ""), name: String(q.f14 || ""), pct: Number(q.f3), amt: Number(q.f62), to: Number(q.f6) })).filter((r) => r.name && r.to > 0).sort((a, b) => b.to - a.to).slice(0, 28);
-      } finally {
-        delete window[cb];
-        sc.remove();
-        finish(" \xB7 \u4E1C\u8D22");
-      }
-    };
-    const sc = document.createElement("script");
-    sc.src = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=40&po=1&np=1&fltt=2&invt=2&fid=f6&fs=m:90+t:2&fields=f12,f14,f3,f62,f6&cb=" + cb + "&_=" + Date.now();
-    sc.onerror = () => {
-      heatDataJL.loading = false;
-      delete window[cb];
-      sc.remove();
-      renderHeatmapJL();
-    };
-    setTimeout(() => {
-      if (window[cb]) sc.onerror();
-    }, 8e3);
-    document.head.appendChild(sc);
-  }
-  function renderHeatmapJL() {
-    const box = $("heatMapJL");
-    if (!box || box.hidden) return;
-    const W = box.clientWidth, H = box.clientHeight;
-    if (W < 10) return;
-    const rows = heatDataJL.rows;
-    if (!rows.length) {
-      box.innerHTML = '<div style="padding:14px;color:#8ea8b9;font-size:10px">\u677F\u5757\u8D44\u91D1\u70ED\u529B \xB7 \u4E1C\u8D22\u6570\u636E\u52A0\u8F7D\u4E2D\u2026</div>';
-      return;
-    }
-    const total = rows.reduce((a, r) => a + r.to, 0), n = rows.length, nr = n <= 12 ? 3 : n <= 20 ? 4 : 5, per = total / nr;
-    let y = 0, i = 0, html = "";
-    while (i < n) {
-      let rw = 0, j = i;
-      while (j < n && (rw < per || j === i)) {
-        rw += rows[j].to;
-        j++;
-      }
-      const hh = j >= n ? H - y : rw / total * H;
-      let x = 0;
-      for (let k = i; k < j; k++) {
-        const r = rows[k], ww = r.to / rw * W, ratio = r.to > 0 ? (r.amt || 0) / r.to : 0, t = Math.max(0, Math.min(1, Math.abs(ratio) / 0.05)), up = (r.amt || 0) >= 0, bgc = up ? "rgb(" + Math.round(70 + 160 * t) + "," + Math.round(58 - 18 * t) + "," + Math.round(70 - 8 * t) + ")" : "rgb(" + Math.round(24 + 6 * (1 - t)) + "," + Math.round(74 + 92 * t) + "," + Math.round(82 + 58 * t) + ")";
-        html += '<div class="hmTile" data-hm="' + r.name + "|" + r.pct + "|" + r.amt + "|" + r.to + "|" + r.code + '" style="left:' + x + "px;top:" + y + "px;width:" + ww + "px;height:" + hh + "px;background:" + bgc + ";" + (heatRelJL(r.name) ? "outline:2px solid #ffd21f;outline-offset:-2px;z-index:2;" : "") + '">' + (heatRelJL(r.name) ? '<i class="hmBd">' + heatRelJL(r.name) + "</i>" : "") + (ww > 46 && hh > 24 ? "<b>" + r.name + "</b>" : "") + (ww > 40 && hh > 20 ? "<small>" + (r.pct >= 0 ? "+" : "") + (r.pct || 0).toFixed(2) + "%</small>" : "") + (ww > 62 && hh > 36 ? "<small>" + fmtFundJL(r.amt) + "</small>" : "") + "</div>";
-        x += ww;
-      }
-      y += hh;
-      i = j;
-    }
-    box.innerHTML = html + '<div class="hmTip"></div>';
-    const tip = box.querySelector(".hmTip");
-    box.onpointermove = (e) => {
-      const tl = e.target.closest(".hmTile");
-      if (!tl) {
-        tip.style.opacity = 0;
-        return;
-      }
-      const p = tl.dataset.hm.split("|"), nm = p[0], pc2 = Number(p[1]);
-      tip.textContent = nm + " \xB7 " + (pc2 >= 0 ? "+" : "") + pc2.toFixed(2) + "% \xB7 \u4E3B\u529B " + fmtFundJL(Number(p[2])) + " \xB7 \u6210\u4EA4 " + fmtFundJL(Number(p[3]));
-      const br = box.getBoundingClientRect();
-      tip.style.left = Math.min(br.width - 160, Math.max(0, e.clientX - br.left + 8)) + "px";
-      tip.style.top = Math.max(0, e.clientY - br.top - 30) + "px";
-      tip.style.opacity = 1;
-    };
-    box.onpointerleave = () => {
-      tip.style.opacity = 0;
-    };
-    box.onclick = (e) => {
-      const tl = e.target.closest(".hmTile");
-      if (!tl) return;
-      const p = tl.dataset.hm.split("|"), cd = String(p[4] || "").replace(/\D/g, "");
-      if (cd.length !== 6) return;
-      if (!byCode(cd)) researchedStocksJL.push({ code: cd, name: p[0], base: 0, pct: Number(p[1]) || 0 });
-      openChart(cd, "home");
-    };
-    const mine = $("hmMineJL");
-    if (mine) {
-      const rel = rows.filter((r) => heatRelJL(r.name));
-      mine.innerHTML = rel.length ? rel.map((r) => '<span class="hmChip ' + ((r.amt || 0) >= 0 ? "up" : "dn") + '">' + heatRelJL(r.name) + " \xB7 " + r.name + " " + (r.pct >= 0 ? "+" : "") + r.pct.toFixed(2) + "% \xB7 \u4E3B\u529B" + fmtFundJL(r.amt || 0) + "</span>").join("") : '<span class="hmChip">\u4F60\u7684\u6301\u4ED3/\u89C2\u5BDF\u677F\u5757\u672A\u8FDB\u4ECA\u65E5\u884C\u4E1A\u6210\u4EA4\u524D28</span>';
-    }
   }
   async function ensurePredDailyJL() {
     var _a2;
@@ -1470,12 +1355,11 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
     }
-    try {
-      const r2 = await fetch("/__proxy?url=" + encodeURIComponent(KBJL[0] + path));
-      if (r2.ok) return r2;
-    } catch (e) {
-    }
     throw new Error("tx_all_channels_fail");
+  }
+  let _ydCbSeq = 0;
+  function ydCbUJL(p) {
+    return p + "_" + Date.now().toString(36) + (++_ydCbSeq) + Math.floor(Math.random() * 1296).toString(36);
   }
   function ydTabJL(t) {
     YDJ.tab = t;
@@ -1508,7 +1392,7 @@ document.addEventListener("visibilitychange", () => {
     dd.innerHTML = h;
     dd.hidden = false;
     if (bk && bk.c) {
-      const cbN = "ydCstCbJL";
+      const cbN = ydCbUJL("ydCstCbJL");
       let got = false;
       const tm = setTimeout(() => {
         if (!got) {
@@ -1579,7 +1463,7 @@ document.addEventListener("visibilitychange", () => {
     YDJ.avg = null;
     YDJ.w50 = null;
     [["1.000001", "avg"], ["1.000016", "w50"]].forEach((cfg, k) => {
-      const cbA = "ydTrCbJL" + k;
+      const cbA = ydCbUJL("ydTrCbJL" + k);
       let ga = false;
       const tma = setTimeout(() => {
         if (!ga) {
@@ -1646,7 +1530,7 @@ document.addEventListener("visibilitychange", () => {
         return false;
       };
       ["push2his", "push2"].forEach((host) => {
-        const cbM = "ydMfCbJL" + host;
+        const cbM = ydCbUJL("ydMfCbJL" + host);
         window[cbM] = (d) => {
           if (!doneM && parseM(d)) {
             doneM = true;
@@ -1671,7 +1555,7 @@ document.addEventListener("visibilitychange", () => {
       }, 9e3);
     }
     {
-      const cbB = "ydBkCbJL";
+      const cbB = ydCbUJL("ydBkCbJL");
       let gb = false;
       const tmb = setTimeout(() => {
         if (!gb) {
@@ -1745,7 +1629,7 @@ document.addEventListener("visibilitychange", () => {
         fillEvHyJL();
       }
     };
-    const cbN = "ydCbJL";
+    const cbN = ydCbUJL("ydCbJL");
     let got = false;
     const tm = setTimeout(() => {
       if (!got) {
@@ -1783,7 +1667,7 @@ document.addEventListener("visibilitychange", () => {
     document.body.appendChild(s);
     YDJ.zt = null;
     const zd = YDJ.line && /^\d{8}$/.test(YDJ.line.date) ? YDJ.line.date : todayJL().replace(/-/g, "");
-    const cbZ = "ydZtCbJL";
+    const cbZ = ydCbUJL("ydZtCbJL");
     let gz = false;
     const tmz = setTimeout(() => {
       if (!gz) {
@@ -1827,7 +1711,7 @@ document.addEventListener("visibilitychange", () => {
     };
     document.body.appendChild(sz2);
     YD_ET.forEach((ty, i) => {
-      const cb2 = "ydEvCbJL" + i;
+      const cb2 = ydCbUJL("ydEvCbJL" + i);
       let g2 = false;
       const tm2 = setTimeout(() => {
         if (!g2) {
@@ -1885,7 +1769,7 @@ document.addEventListener("visibilitychange", () => {
       }
     });
     if (!ids.length) return;
-    const cb = "ydHyCbJL";
+    const cb = ydCbUJL("ydHyCbJL");
     let g = false;
     const tm = setTimeout(() => {
       if (!g) {
@@ -2366,15 +2250,7 @@ document.addEventListener("visibilitychange", () => {
     } catch (e) {
     }
   }
-  window.addEventListener("pagehide", () => {
-    try {
-      const fr = $("ksFrameJL");
-      if (fr && fr.src && fr.src.indexOf("ks.html") >= 0) fr.src = "about:blank";
-      document.body.classList.remove("ksEmbed");
-      document.body.classList.remove("ksFullJL");
-    } catch (e) {
-    }
-  });
+  // v.47: pagehide 不再杀 iframe(诊断报告P1-4)——bfcache自会冻结页面, 杀src是"回前台K-STATION永远空白"的根因
   window.addEventListener("pageshow", (e) => {
     if (e.persisted) setTimeout(__ksGuardJL, 300);
   });
@@ -2657,12 +2533,17 @@ document.addEventListener("visibilitychange", () => {
   selected = ((_d = stocks[0]) == null ? void 0 : _d.code) || "";
   active = Math.min(active, Math.max(0, stocks.length - 1));
   const realCache = /* @__PURE__ */ new Map();
+  let _calibMJL = null;
   function calibJL(code) {
     const td = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE");
-    let cch = {};
-    try {
-      cch = JSON.parse(localStorage.getItem("jinlin_calib_v1") || "{}");
-    } catch (e) {
+    let cch = _calibMJL;
+    if (!cch) {
+      try {
+        cch = JSON.parse(localStorage.getItem("jinlin_calib_v1") || "{}");
+      } catch (e) {
+        cch = {};
+      }
+      _calibMJL = cch;
     }
     if (cch[code] && cch[code].d === td && cch[code].ku3 && cch[code].v3) return cch[code];
     const rows = dailyBarsOf(code);
@@ -2757,13 +2638,19 @@ document.addEventListener("visibilitychange", () => {
     const p = Number(s.base), sw = ttModeJL[s.code] === "sw", leg = sw ? legFibJL(s.code, p) : null, bLo = leg ? leg.lo : pr.lo, bHi = leg ? leg.hi : pr.hi, rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100)), stKey = leg ? p > leg.hi ? "brkH" : p < leg.lo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid" : pr.st, stMap = leg ? { brkH: ["\u25B2\u7834\u6BB5\u9AD8\xB7\u5F3A\u52BF", "r"], brkL: ["\u25BC\u7834\u6BB5\u4F4E\xB7\u7834\u4F4D", "g"], high: ["\u8FD1\u6BB5\u9AD8\xB7\u9632\u56DE\u8C03", "r"], low: ["\u8FD1\u6BB5\u4F4E\xB7\u770B\u652F\u6491", "g"], mid: ["\u6BB5\u5185", ""] } : { brkH: ["\u25B2\u7834\u9884\u5224\u9AD8\xB7\u5F3A\u52BF", "r"], brkL: ["\u25BC\u7834\u9884\u5224\u4F4E\xB7\u7834\u4F4D", "g"], high: ["\u9AD8\u4F4D\xB7\u9632\u56DE\u8C03", "r"], low: ["\u4F4E\u4F4D\xB7\u770B\u652F\u6491", "g"], mid: ["\u4E2D\u6BB5", ""] }, st = stMap[stKey];
     return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? "\u817F " + bLo.toFixed(2) : "\u9884\u5224\u4F4E " + pr.lo.toFixed(2)}</span><button class="prTog" data-tt="${s.code}">${sw ? "\u21C4 \u6CE2\u6BB5" : "\u21C4 \u65E5\u5185"}</button><span>${sw ? "\u9876 " + bHi.toFixed(2) : "\u9884\u5224\u9AD8 " + pr.hi.toFixed(2)}</span></div><div class="prTrack"><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${leg ? `<i class="prTri lo" style="left:${posF(pr.lo).toFixed(1)}%"></i><i class="prTri hi" style="left:${posF(pr.hi).toFixed(1)}%"></i>` : ""}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div><div class="prFoot"><span class="prState ${st[1]}">${st[0]}</span><span>\u4F4D\u7F6E ${Math.round(pos)}% \xB7 \u6807\u5B9A +${pr.ku}/\u2212${pr.kd}\xD7ATR${pr.cal && pr.cal.cov != null ? " \xB7 \u8986\u76D6" + pr.cal.cov + "%" : ""}</span></div></div>`;
   }
+  const _ffMJL = { t: 0, d: null };
   function resoDataJL(s) {
     const sec = { 600105: "\u901A\u4FE1\u8BBE\u5907", 600176: "\u73BB\u7483\u73BB\u7EA4", 603986: "\u534A\u5BFC\u4F53", 515880: "\u901A\u4FE1\u8BBE\u5907" }[s.code];
     if (sec && !sectorFundsJL[sec] && !loadSectorFundsJL.loading) loadSectorFundsJL();
     const pctV = Number(s.pct) || 0, priceUp = pctV > 0, priceFlat = pctV === 0;
     let ff = null;
     try {
-      const cf = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}")[s.code];
+      const _fnw = Date.now();
+      if (!_ffMJL.d || _fnw - _ffMJL.t > 2e3) {
+        _ffMJL.d = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {};
+        _ffMJL.t = _fnw;
+      }
+      const cf = _ffMJL.d[s.code];
       if (cf && cf.rows && cf.rows.length) ff = cf.rows.at(-1);
     } catch (e) {
     }
@@ -2887,14 +2774,18 @@ document.addEventListener("visibilitychange", () => {
     }
     return `<div class="ladJL">${alert}${sRows}${mid}${bRows}<div class="ladFoot">${t.planNext ? "\u660E\u65E5\u8BA1\u5212 \xB7 " : ""}\u951A ${t.anchor.toFixed(2)} \xB1 k\xD7${t.base.toFixed(2)} \xB7 RMA ${t.atr.toFixed(2)}${cal ? ` \xB7 \u6807\u5B9A +${cal.kUp}/\u2212${cal.kDn}\xD7ATR` : " \xB7 \u6807\u5B9A\u4E2D\u2026"}</div></div>`;
   }
+  let _tradesCacheJL = null;
   function tradesLoadJL() {
+    if (_tradesCacheJL) return _tradesCacheJL;
     try {
-      return JSON.parse(localStorage.getItem("jinlin_trades_v1") || "{}");
+      _tradesCacheJL = JSON.parse(localStorage.getItem("jinlin_trades_v1") || "{}");
     } catch (e) {
-      return {};
+      _tradesCacheJL = {};
     }
+    return _tradesCacheJL;
   }
   function tradesSaveJL(d) {
+    _tradesCacheJL = d;
     try {
       localStorage.setItem("jinlin_trades_v1", JSON.stringify(d));
     } catch (e) {
@@ -3471,7 +3362,7 @@ document.addEventListener("visibilitychange", () => {
           res(d);
         }
       };
-      fetch("/__proxy?url=" + encodeURIComponent(url), { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject(0)).then(done).catch(() => {
+      Promise.reject(new Error("no-proxy")).then((r) => r.ok ? r.json() : Promise.reject(0)).then(done).catch(() => {
         const cb = "_jlm" + Math.random().toString(36).slice(2);
         const tm = setTimeout(() => {
           try {
@@ -4193,7 +4084,7 @@ document.addEventListener("visibilitychange", () => {
     e.target.disabled = true;
     const rows = await searchStock(q);
     e.target.disabled = false;
-    searchRows = (rows || []).slice(0, 12).map((r) => ({ Code: String(r.Code || ""), Name: r.Name || "" })).filter((r) => r.Code);
+    searchRows = (rows || []).slice(0, 12).map((r) => ({ Code: String(r.Code || "").replace(/[^0-9A-Za-z]/g, ""), Name: String(r.Name || "").replace(/[<>&"']/g, "") })).filter((r) => r.Code);
     renderPicker();
   });
   $("pickerOpen").onclick = () => {
@@ -4257,7 +4148,7 @@ document.addEventListener("visibilitychange", () => {
       if (!r.ok) throw Error("HTTP " + r.status);
       return r.json();
     });
-    return go(url).catch(() => go("/__eastmoney_kline?url=" + encodeURIComponent(url)));
+    return go(url);
   }
   function normRealRows(data) {
     return (data || []).map((row) => {
@@ -4445,6 +4336,25 @@ document.addEventListener("visibilitychange", () => {
     if (d && d.data) return d;
     throw new Error("em\u53CC\u901A\u9053\u5747\u5931\u8D25");
   }
+  let _sdpT = 0;
+  function scheduleDeckPaintJL() {
+    if (_sdpT) return;
+    _sdpT = setTimeout(() => {
+      _sdpT = 0;
+      try {
+        renderDeck();
+      } catch (e) {
+      }
+      try {
+        renderWatch();
+      } catch (e) {
+      }
+      try {
+        paint();
+      } catch (e) {
+      }
+    }, 400);
+  }
   async function ensureDailyJL(code) {
     const _hv = dailyBarsOf(code);
     if (_hv.length >= 15) {
@@ -4487,9 +4397,7 @@ document.addEventListener("visibilitychange", () => {
         if (rows.length >= 15) {
           realCache.set(code + "|\u65E5K", rows.slice(-320));
           dkSaveJL(code, rows);
-          renderDeck();
-          renderWatch();
-          paint();
+          scheduleDeckPaintJL();
           doneTx = true;
           break;
         }
@@ -4506,9 +4414,7 @@ document.addEventListener("visibilitychange", () => {
       if (rows.length) {
         realCache.set(code + "|\u65E5K", rows.slice(-320));
         dkSaveJL(code, rows);
-        renderDeck();
-        renderWatch();
-        paint();
+        scheduleDeckPaintJL();
       } else throw Error("em-empty");
     } catch (e) {
       console.warn("ATR\u65E5\u7EBF\u52A0\u8F7D\u5931\u8D25", code, e.message);
@@ -4639,25 +4545,26 @@ document.addEventListener("visibilitychange", () => {
   function tierLevelsJL(stock) {
     const M = tierLevelsJL._m || (tierLevelsJL._m = {});
     const td3 = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE");
+    const _db3 = dailyBarsOf(stock.code), dkDay = _db3.length ? String(_db3[_db3.length - 1].t).slice(0, 10) : td3;
     const r = computeTierJL(stock);
     if (r && r.sells && r.sells.length) {
       const m0 = M[stock.code];
-      const ch = !m0 || m0.d !== td3 || JSON.stringify(m0.r.sells) !== JSON.stringify(r.sells) || JSON.stringify(m0.r.buys) !== JSON.stringify(r.buys);
-      M[stock.code] = { d: td3, r };
+      const ch = !m0 || (m0.dk || m0.d) !== dkDay || JSON.stringify(m0.r.sells) !== JSON.stringify(r.sells) || JSON.stringify(m0.r.buys) !== JSON.stringify(r.buys);
+      M[stock.code] = { d: td3, dk: dkDay, r };
       if (ch) try {
         let all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}");
-        if (all.d !== td3) all = { d: td3 };
-        all[stock.code] = { r };
+        all.d = td3;
+        all[stock.code] = { dk: dkDay, r };
         (typeof jlSafeSetJL === "function" ? jlSafeSetJL : (k2, v2) => localStorage.setItem(k2, v2))("jinlin_tier_memo_v1", JSON.stringify(all));
       } catch (e) {
       }
       return r;
     }
     const m2 = M[stock.code];
-    if (m2 && m2.d === td3) return m2.r;
+    if (m2 && (m2.dk || m2.d) === dkDay) return m2.r;
     try {
       const all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}");
-      if (all.d === td3 && all[stock.code] && all[stock.code].r && all[stock.code].r.sells && all[stock.code].r.sells.length) return all[stock.code].r;
+      if (all[stock.code] && all[stock.code].r && all[stock.code].r.sells && all[stock.code].r.sells.length && (all[stock.code].dk === dkDay || !all[stock.code].dk && all.d === td3)) return all[stock.code].r;
     } catch (e) {
     }
     return r;
@@ -5154,6 +5061,7 @@ document.addEventListener("visibilitychange", () => {
     maps.set(c, { X, Y, I, V, R, B, L, T, w, h });
     return { c, x, w, h, bars, count, start, L, R, T, B, min, max, X, Y, I, V, pane, large };
   }
+  const _predLogCacheJL = { t: 0, d: null };
   function drawOverviewChart(c, code, pane = "price", large = false) {
     var _a2, _b2;
     const f = prepareChartFrame(c, code, pane, large);
@@ -5205,7 +5113,11 @@ document.addEventListener("visibilitychange", () => {
     x.restore();
     if (c.id === "homeChart" && pane === "price") {
       try {
-        const lg2 = JSON.parse(localStorage.getItem("jinlin_pred_log_v1") || "{}"), e = lg2[(/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE")];
+        if (!_predLogCacheJL.d || Date.now() - _predLogCacheJL.t > 5e3) {
+          _predLogCacheJL.d = JSON.parse(localStorage.getItem("jinlin_pred_log_v1") || "{}");
+          _predLogCacheJL.t = Date.now();
+        }
+        const lg2 = _predLogCacheJL.d, e = lg2[(/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE")];
         if (e && Number.isFinite(e.lo) && Number.isFinite(e.hi) && e.hi > min && e.lo < max) {
           const yHi = Y(e.hi), yLo = Y(e.lo), liveP = lastBar(bars).c;
           x.fillStyle = "#ffd21f14";
@@ -6721,7 +6633,7 @@ document.addEventListener("visibilitychange", () => {
       delete cyqInflightJL[code];
       done2();
     };
-    fetch("/__proxy?url=" + encodeURIComponent(url), { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject(0)).then(eat).catch(() => {
+    Promise.reject(new Error("no-proxy")).then((r) => r.ok ? r.json() : Promise.reject(0)).then(eat).catch(() => {
       const cb = "_cyq" + Math.random().toString(36).slice(2);
       let fin = false;
       const tm = setTimeout(() => {
@@ -7396,10 +7308,16 @@ document.addEventListener("visibilitychange", () => {
       return;
     }
     try {
-      syncHoldingFunds();
-      renderMarketFundsJL();
-      renderResonanceJL();
-      renderPredJL();
+      const _pt = (fn) => {
+        try {
+          fn();
+        } catch (e) {
+        }
+      };
+      _pt(syncHoldingFunds);
+      _pt(renderMarketFundsJL);
+      _pt(renderResonanceJL);
+      _pt(renderPredJL);
       const ix = byCode(index);
       qa("[data-index]").forEach((b) => b.classList.toggle("active", b.dataset.index === index));
       document.querySelector("#home .label").textContent = ix.name + " \xB7 " + String(ix.code).replace(/^(sh|sz)/, "");
@@ -7411,17 +7329,19 @@ document.addEventListener("visibilitychange", () => {
       }
       document.querySelector("#home .homeQuote .pnlLine").textContent = "\u5F00\u76D8 \xB7 \u6700\u9AD8 \xB7 \u6700\u4F4E \xB7 \u5B9E\u65F6";
       document.querySelector("#home .glass .pnlLine").innerHTML = "<span>\u533A\u95F4</span><span>" + money(ix.base * 0.98) + " \u2014 " + money(ix.base * 1.02) + "</span>";
-      drawOverviewChart($("homeChart"), index);
-      if (homeFlowOn) drawHomeFlowJL();
-      if (stocks.length) {
-        draw($("holdingChart"), stocks[active].code, "price", false, false);
-        renderHoldingQuote();
-      } else {
-        $("holdingName").textContent = "\u6682\u65E0\u6301\u4ED3";
-        $("holdingChart").getContext("2d").clearRect(0, 0, $("holdingChart").width, $("holdingChart").height);
-      }
-      qa("[data-chart-code]").forEach((c) => draw(c, c.dataset.chartCode));
-      qa("[data-chart-code]").forEach(renderWatchQuote);
+      _pt(() => drawOverviewChart($("homeChart"), index));
+      if (homeFlowOn) _pt(drawHomeFlowJL);
+      _pt(() => {
+        if (stocks.length) {
+          draw($("holdingChart"), stocks[active].code, "price", false, false);
+          renderHoldingQuote();
+        } else {
+          $("holdingName").textContent = "\u6682\u65E0\u6301\u4ED3";
+          $("holdingChart").getContext("2d").clearRect(0, 0, $("holdingChart").width, $("holdingChart").height);
+        }
+      });
+      qa("[data-chart-code]").forEach((c) => _pt(() => draw(c, c.dataset.chartCode)));
+      qa("[data-chart-code]").forEach((c) => _pt(() => renderWatchQuote(c)));
       if (page === "chartPage") {
         const s = byCode(selected);
         $("chartName").textContent = s.name;
@@ -7438,10 +7358,10 @@ document.addEventListener("visibilitychange", () => {
         $("chartMarketStatus").textContent = open ? "\u5DF2\u5F00\u76D8 \xB7 \u5B9E\u65F6" : "\u672A\u5F00\u76D8 \xB7 \u5B9E\u65F6";
         $("technicalPeriod").textContent = period;
         $("technicalBody").textContent = s.name + " \xB7 " + s.code + "\u3002\u5B9E\u65F6\u884C\u60C5\u3001ATR14\u3001Fib\u6CE2\u6BB5\u3001DDX\u4E0E\u91CF\u80FD\u72B6\u6001\u5DF2\u63A5\u5165\u3002" + (s.qty ? " \u5B9E\u65F6\u6301\u4ED3 " + s.qty + " \u80A1\uFF0C\u6210\u672C " + money(s.cost) + "\u3002" : "");
-        draw($("bigChart"), selected, "price", true);
-        __realVolumeBars();
-        drawDDXPane();
-        renderSubPanes();
+        _pt(() => draw($("bigChart"), selected, "price", true));
+        _pt(__realVolumeBars);
+        _pt(drawDDXPane);
+        _pt(renderSubPanes);
         const csJL = $("crossSpanJL");
         if (csJL) {
           if (cross) {
@@ -7457,6 +7377,13 @@ document.addEventListener("visibilitychange", () => {
           $("crossReadout").textContent = `${s.name} \xB7 ${crossTime(i)} \xB7 O ${v.o.toFixed(2)} H ${v.h.toFixed(2)} L ${v.l.toFixed(2)} C ${v.c.toFixed(2)}`;
           updateCrossQuote(selected, i);
         } else $("crossReadout").textContent = drawMode ? "\u753B\u7EBF\uFF1A\u5728\u4E3B\u56FE\u6216\u526F\u56FE\u62D6\u51FA\u4E00\u6761\u7EBF" : "\u62D6\u52A8\u5E73\u79FB \xB7 \u53F3\u8F74\u7F29\u653E \xB7 \u53CC\u6307\u634F\u5408 \xB7 \u53CC\u51FB\u590D\u4F4D";
+      }
+    } catch (e) {
+      try {
+        const _el = JSON.parse(localStorage.getItem("jl_err_v1") || "[]");
+        _el.unshift({ t: Date.now(), m: "paint: " + (e && e.message || e) });
+        localStorage.setItem("jl_err_v1", JSON.stringify(_el.slice(0, 20)));
+      } catch (e2) {
       }
     } finally {
       try {
@@ -8176,7 +8103,6 @@ document.addEventListener("visibilitychange", () => {
     }, 9e4);
     window.addEventListener("resize", () => {
       paint();
-      renderHeatmapJL();
     });
     (function breathLoopJL() {
       let last = 0;
