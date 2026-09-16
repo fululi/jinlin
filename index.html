@@ -86,7 +86,7 @@
 .mtDr .dn,.mtd .dn{color:#63e4d4}
 #ksFrameJL{display:none;width:100%;height:100%;border:0;background:var(--ink)}
 body.ksEmbed #chartPage .plots{height:560px;position:relative}
-body.ksEmbed #chartPage .plots .mainPlot,body.ksEmbed #chartPage .plots .volumePlot,body.ksEmbed #chartPage .plots #subPanes,body.ksEmbed #chartPage .plots #crossSpanJL{display:none}body.ksEmbed #chartPage .plots .ddxPlot{display:block;position:absolute;left:0;right:0;bottom:0;height:102px;background:var(--panel);border-top:1px solid var(--edge);z-index:2}body.ksFullJL.ksEmbed #chartPage .plots .ddxPlot{display:none}
+body.ksEmbed #chartPage .plots .mainPlot,body.ksEmbed #chartPage .plots .volumePlot,body.ksEmbed #chartPage .plots #subPanes,body.ksEmbed #chartPage .plots #crossSpanJL{display:none}body.ksEmbed #chartPage .plots .ddxPlot{display:block;position:absolute;left:0;right:0;bottom:0;height:102px;background:var(--panel);border-top:1px solid var(--edge);z-index:2}body.ksFullJL.ksEmbed #chartPage .plots .ddxPlot{display:none}body.ksEmbed.ddxOffJL #chartPage .plots .ddxPlot{display:none}body.ksEmbed.ddxOffJL #chartPage #ksFrameJL{bottom:0}#ddxReopenJL{display:none;position:absolute;left:8px;bottom:6px;z-index:5;font-size:9px;padding:4px 9px;border:1px solid var(--edge);border-radius:8px;background:var(--panel);color:var(--secondary)}body.ksEmbed.ddxOffJL #chartPage .plots #ddxReopenJL{display:block}#ddxCloseJL{position:absolute;top:3px;right:6px;z-index:3;font-size:12px;line-height:1;padding:2px 6px;background:transparent;border:0;color:var(--secondary);cursor:pointer}
 body.ksEmbed #chartPage #ksFrameJL{display:block;position:absolute;inset:0;bottom:102px}body.ksFullJL.ksEmbed #chartPage #ksFrameJL{bottom:0}
 body.ksEmbed #chartPage .chartActions,body.ksEmbed #chartPage .periodBar,body.ksEmbed #chartPage #indBar{display:none}
 body.ksEmbed #chartPage .chartHeading{padding-top:4px;padding-bottom:0}
@@ -232,7 +232,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
-</style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --></head><body><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+</style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --></head><body><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
 <body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
@@ -247,7 +247,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 <div class="periodBar" data-period-bar=""></div>
 <div id="ksMiniJL"><button id="ksMiniHandle" aria-expanded="false">工具</button><div id="ksMiniBody" hidden=""><button data-mb="picker">选股</button><button data-period="1分">1分</button><button data-period="5分">5分</button><button data-period="15分">15分</button><button data-period="30分">30分</button><button data-period="日K">日K</button><button data-period="5日">5日</button><button data-period="周">周</button><button data-period="月">月</button><button data-mb="draw">画线</button><button data-mb="undo">删除</button><button data-mb="clear">清空</button><button data-mb="hide">隐藏</button><button data-mb="lock">锁定</button><button data-mb="ind">指标</button><button data-mb="alert">提醒</button><button data-mb="reset">复位</button><button data-mb="exit">退出全屏</button></div></div>
 <div class="chartActions"><button id="drawMode" aria-pressed="false">╱ 画线</button><button id="undoLine">⌫ 删除</button><button id="ksToggle" aria-pressed="true">◈ 指标</button><button id="resetChart">⊙ 复位</button><button id="alertOpen">♧ 提醒</button><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="chartAdd" aria-label="添加股票">＋ 股票</button></div>
-<div class="indBar" id="indBar"></div><div class="plots"><div class="mainPlot"><canvas id="bigChart" tabindex="0" aria-label="K线主图，拖动平移、右侧价格轴缩放、捏合缩放"></canvas><button class="panArrow l" aria-label="向左平移K线">‹</button><button class="panArrow r" aria-label="向右平移K线">›</button></div><div class="volumePlot"><canvas id="volumeChart" tabindex="0" aria-label="成交量副图，可画线"></canvas></div><div class="ddxPlot"><span>主力净额 · 资金</span><canvas id="ddxChart" aria-label="DDX主力资金副图"></canvas></div><div id="subPanes"></div><div id="crossSpanJL"></div><iframe id="ksFrameJL" title="K-STATION 大图"></iframe></div>
+<div class="indBar" id="indBar"></div><div class="plots"><div class="mainPlot"><canvas id="bigChart" tabindex="0" aria-label="K线主图，拖动平移、右侧价格轴缩放、捏合缩放"></canvas><button class="panArrow l" aria-label="向左平移K线">‹</button><button class="panArrow r" aria-label="向右平移K线">›</button></div><div class="volumePlot"><canvas id="volumeChart" tabindex="0" aria-label="成交量副图，可画线"></canvas></div><div class="ddxPlot"><span>主力净额 · 资金</span><button id="ddxCloseJL" type="button" aria-label="关闭主力净额附图">×</button><canvas id="ddxChart" aria-label="DDX主力资金副图"></canvas></div><div id="subPanes"></div><div id="crossSpanJL"></div><iframe id="ksFrameJL" title="K-STATION 大图"></iframe><button id="ddxReopenJL" type="button">主力净额附图已隐藏（资金未到位/已手动关闭）· 点我展开</button></div>
 <div id="crossReadout">拖动图表平移 · 拖动右轴缩放 · 双击复位</div>
 <div class="chartFooter"><details id="technical"><summary>技术摘要 <span id="technicalPeriod"></span></summary><div id="technicalBody"></div></details></div>
 </section><section class="view" id="watchPage" hidden=""><div class="pageTitle"><h2>市场池</h2><span>WATCH &amp; LEADERS</span></div><div class="watchTabs"><button data-watch="watch" class="active">观察自选</button><button data-watch="leaders">龙头股池</button><button type="button" id="watchAdd">＋ 添加</button><button type="button" id="dragonScan">⟳ 龙池扫描</button></div><div id="watchList"></div><button type="button" class="newsEntry" data-open-news=""><i></i><span>新闻入口 · 市场资金异动与持仓相关资讯</span></button><p class="smallPrint">龙头池口径照搬 hq-mobile 跑测版：分层=控盘×位置×涨停基因×缩量×量比，资格门先验日K+资金新鲜度，评分只排合格集合；旧数据日整池标注，不装活。</p></section>
@@ -2270,6 +2270,29 @@ document.addEventListener("visibilitychange", () => {
     show("chartPage");
     loadRealKlines();
     document.body.classList.add("ksEmbed");
+    try {
+      const _dc = $("ddxCloseJL"), _dr = $("ddxReopenJL");
+      if (_dc) _dc.onclick = () => {
+        try {
+          localStorage.setItem("jl_ddx_off_v1", "1");
+        } catch (e) {
+        }
+        syncDdxPaneJL(false);
+      };
+      if (_dr) _dr.onclick = () => {
+        try {
+          localStorage.setItem("jl_ddx_off_v1", "0");
+        } catch (e) {
+        }
+        syncDdxPaneJL(ddxAvailJL());
+        try {
+          paint();
+        } catch (e) {
+        }
+      };
+      syncDdxPaneJL(ddxAvailJL());
+    } catch (e) {
+    }
     const fr = $("ksFrameJL");
     if (fr) {
       let lines2 = "";
@@ -2306,7 +2329,7 @@ document.addEventListener("visibilitychange", () => {
             }
           }
         }, 12e3);
-        fr.src = "ks.html?embed=1&v=0916a&code=" + encodeURIComponent(code) + "&name=" + encodeURIComponent((byCode(code) || {}).name || code) + (lines2 ? "&lines=" + encodeURIComponent(lines2) : "");
+        fr.src = "ks.html?embed=1&v=0917a&code=" + encodeURIComponent(code) + "&name=" + encodeURIComponent((byCode(code) || {}).name || code) + (lines2 ? "&lines=" + encodeURIComponent(lines2) : "");
       }
       const cr = $("crossReadout");
       if (cr) cr.textContent = "K-STATION \u5F15\u64CE \xB7 \u56FE\u5185\u5DE5\u5177\u884C\uFF1A\u5468\u671F/\u6307\u6807/\u753B\u7EBF/\u63D0\u9192\uFF08\u672A\u5F00\u76D8\u4E3A\u6700\u8FD1\u4EA4\u6613\u65E5\u6570\u636E\uFF09";
@@ -3467,6 +3490,7 @@ document.addEventListener("visibilitychange", () => {
     if (x.f10 === void 0 || x.d0 === void 0 || x.fundSourceValid !== true || x.fundStatus === "\u63A5\u53E3\u9650\u6D41" || x.fundStatus === "\u63A5\u53E3\u65AD\u7EBF" || x.fundStatus === "\u6682\u7F3A") return { ok: false, status: "\u8BC1\u636E\u4E0D\u8DB3", reasons: [x.fundStatus || "\u8D44\u91D1\u5B57\u6BB5\u7F3A\u5931"], families: [] };
     const ev = poolEvidenceJL(x), fam = Object.keys(ev);
     if (fam.length >= 2) return { ok: false, status: "\u6D3E\u53D1\u98CE\u9669", reasons: [fam.map((k) => ev[k][0]).join(" + ")], families: fam };
+    if (Number.isFinite(x.d0) && x.d0 < 1e7) return { ok: false, status: "\u8D44\u91D1\u91CF\u7EA7\u4E0D\u8DB3", reasons: ["\u5F53\u65E5\u4E3B\u529B " + fmtFundJL(x.d0) + " \u4F4E\u4E8E1000\u4E07\u95E8\u69DB"], families: [] };
     if (x.d0 < 0) reasons.push("\u5F53\u65E5\u4E3B\u529B\u51C0\u6D41\u51FA");
     return { ok: true, status: reasons.length ? "\u6570\u636E\u51B2\u7A81" : "\u5408\u683C", reasons, families: fam };
   }
@@ -4095,7 +4119,7 @@ document.addEventListener("visibilitychange", () => {
   function poolJxDataJL() {
     if (!POOLJX) {
       try {
-        POOLJX = JSON.parse(localStorage.getItem("jl_jx_v1") || "null");
+        POOLJX = JSON.parse(localStorage.getItem("jl_jx_v2") || "null");
       } catch (e) {
       }
     }
@@ -4104,13 +4128,13 @@ document.addEventListener("visibilitychange", () => {
       fetch("https://fululi.github.io/hq-mobile/alla_confirmed.json?_=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((d) => {
         const F2 = d && d.final || {}, picks = [];
         [["start", "刚启动", "#ff9f6e"], ["zs", "主升", "#ff5f56"], ["eb", "二波", "#e8c568"]].forEach((L2) => {
-          const x = (F2[L2[0]] || [])[0];
-          if (x) picks.push({ layer: L2[1], color: L2[2], code: String(x.code || "").slice(2), name: x.name || "", close: +x.close || 0, f5: +x.f5 || 0, date: x.date || "" });
+          const arr = F2[L2[0]] || [], x = arr.find((c2) => +c2.d0 >= 1e7) || null;
+          if (x) picks.push({ layer: L2[1], color: L2[2], code: String(x.code || "").slice(2), name: x.name || "", close: +x.close || 0, f5: +x.f5 || 0, d0: +x.d0 || 0, date: x.date || "" });
         });
         if (picks.length) {
           POOLJX = { picks, date: picks[0].date };
           try {
-            localStorage.setItem("jl_jx_v1", JSON.stringify(POOLJX));
+            localStorage.setItem("jl_jx_v2", JSON.stringify(POOLJX));
           } catch (e) {
           }
           if (watchMode === "leaders") renderPoolJL();
@@ -4125,7 +4149,7 @@ document.addEventListener("visibilitychange", () => {
     if (!jx || !jx.picks || !jx.picks.length) return "";
     return '<div class="poolLayerHead" id="plh_jx" style="scroll-margin-top:46px"><b style="color:#ffd21f">今日精选 · 全A管道终榜</b><span class="plhN">' + jx.picks.length + '</span><small>' + jx.date + ' · 雷达=值得看非买入指令</small></div><div class="poolPicks">' + jx.picks.map((x) => {
       const held = stocks.some((s2) => s2.code === x.code);
-      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + x.color + '">' + x.layer + '</span></div><div class="ppSub">' + x.code + " · " + money(x.close) + (x.f5 ? ' · <i style="font-style:normal;color:#8ea8b9">5日主力 ' + fmtFundJL(x.f5) + "</i>" : "") + "</div>" + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.close + '">＋ 加观察</button>') + "</div>";
+      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + x.color + '">' + x.layer + '</span></div><div class="ppSub">' + x.code + " · " + money(x.close) + (x.d0 ? ' · <i style="font-style:normal;color:' + (x.d0 >= 0 ? "#ff9d97" : "#5fe3b8") + '">当日主力 ' + fmtFundJL(x.d0) + "</i>" : "") + (x.f5 ? ' · <i style="font-style:normal;color:#8ea8b9">5日 ' + fmtFundJL(x.f5) + "</i>" : "") + "</div>" + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.close + '">＋ 加观察</button>') + "</div>";
     }).join("") + "</div>";
   }
   function renderPoolJL() {
@@ -7538,7 +7562,31 @@ document.addEventListener("visibilitychange", () => {
     x.font = "8px monospace";
     x.fillText("MACD\xB712/26/9", L + 2, T + 8);
   }
+  function ddxAvailJL() {
+    try {
+      if (noFundJL(selected)) return false;
+      const isDay = period === "\u65E5K", isMin = ["1\u5206", "5\u5206", "15\u5206", "30\u5206"].includes(period);
+      if (!isDay && !isMin) return false;
+      const r = ddxState.rows;
+      if (isDay) return !!(r && r.length >= 65);
+      return !!(r && r.length >= 2);
+    } catch (e) {
+      return true;
+    }
+  }
+  function syncDdxPaneJL(has) {
+    try {
+      let manual = false;
+      try {
+        manual = localStorage.getItem("jl_ddx_off_v1") === "1";
+      } catch (e) {
+      }
+      document.body.classList.toggle("ddxOffJL", document.body.classList.contains("ksEmbed") && (manual || has === false));
+    } catch (e) {
+    }
+  }
   function drawDDXPane() {
+    syncDdxPaneJL(ddxAvailJL());
     const c = $("ddxChart");
     if (!c || !c.getClientRects().length) return;
     const w = c.clientWidth, h = c.clientHeight;
@@ -7604,11 +7652,13 @@ document.addEventListener("visibilitychange", () => {
       x.fillText(t, L + 8, T + 10);
     };
     if (noFundJL(selected)) {
+      syncDdxPaneJL(false);
       note("\u8BE5\u57FA\u91D1/\u6307\u6570\u65E0\u8D44\u91D1\u6D41\u6570\u636E");
       return;
     }
     const isDay = period === "\u65E5K", isMin = ["1\u5206", "5\u5206", "15\u5206", "30\u5206"].includes(period);
     if (!isDay && !isMin) {
+      syncDdxPaneJL(false);
       note("DDX\u4EC5\u65E5\u7EBF/\u5206\u949F\u5468\u671F\u51FA \xB7 \u5468\u67085\u65E5\u6682\u65E0");
       return;
     }
@@ -7682,6 +7732,7 @@ document.addEventListener("visibilitychange", () => {
       }
     }
     const ok = ddx && drawDdxLineJL(x, { X, padL: L }, ddx, Math.max(isDay ? 59 : 19, start), end + 1, B, B - T, T, R, tag);
+    syncDdxPaneJL(!!ok);
     if (src) {
       x.font = "8.5px Menlo, monospace";
       x.textAlign = "right";
@@ -8613,6 +8664,7 @@ document.addEventListener("visibilitychange", () => {
     }, 6e4);
     setInterval(() => {
       if (page === "home" && $("marketFundsPanel") && !$("marketFundsPanel").hidden) loadMarketFundsJL();
+      if (page === "home") loadGjdJL();
     }, 6e4);
     setInterval(() => {
       if (page === "home" && $("yiDongJL") && !$("yiDongJL").hidden) loadYidongJL();
@@ -10536,6 +10588,13 @@ document.addEventListener("visibilitychange", () => {
     const S = gjdStateJL(), now = Date.now();
     if (S.loading || now - S.at < 3e5) return;
     S.loading = true;
+    if (!S.rows) {
+      try {
+        const c = JSON.parse(localStorage.getItem("jl_gjd_rows_v1") || "null");
+        if (c && c.length) S.rows = c;
+      } catch (e) {
+      }
+    }
     try {
       renderGjdJL();
     } catch (e) {
@@ -10544,10 +10603,24 @@ document.addEventListener("visibilitychange", () => {
       const d = await emFetchJL("/api/qt/stock/fflow/daykline/get?secid=1.510300&ut=" + JL_UT + "&lmt=25&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52");
       const k = d && d.data && d.data.klines || [];
       if (k.length) {
-        S.rows = k.map((r2) => {
-          const a = String(r2).split(",");
-          return { d: a[0], m: +a[1] / 1e8 };
-        }).filter((r2) => Number.isFinite(r2.m));
+        let hist = {};
+        try {
+          hist = JSON.parse(localStorage.getItem("jl_gjd_hist_v1") || "{}") || {};
+        } catch (e) {
+        }
+        (S.rows || []).forEach((r2) => {
+          if (r2 && r2.d && Number.isFinite(r2.m)) hist[r2.d] = r2.m;
+        });
+        k.forEach((r2) => {
+          const a = String(r2).split(","), m2 = +a[1] / 1e8;
+          if (a[0] && Number.isFinite(m2)) hist[a[0]] = m2;
+        });
+        S.rows = Object.keys(hist).sort().slice(-60).map((d2) => ({ d: d2, m: hist[d2] }));
+        try {
+          jlSafeSetJL("jl_gjd_hist_v1", JSON.stringify(hist));
+          jlSafeSetJL("jl_gjd_rows_v1", JSON.stringify(S.rows));
+        } catch (e) {
+        }
         S.at = Date.now();
         S.rt = 0;
       }
@@ -10565,12 +10638,19 @@ document.addEventListener("visibilitychange", () => {
     const S = gjdStateJL(), rows = S.rows, ltd = typeof jlLastTradeDay === "function" ? jlLastTradeDay() : "";
     if (!rows || !rows.length) {
       g.innerHTML = '<div class="marketFundsHead"><b>\u5927\u8D44\u91D1 \xB7 \u56FD\u5BB6\u961F<small style="font-weight:400;color:#a8c4cf;margin-left:6px">\u6CAA\u6DF1300ETF\u4E3B\u529B\u53E3\u5F84</small></b><small>' + (S.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u4E1C\u8D22\u901A\u9053\u6682\u7F3A \xB7 \u81EA\u52A8\u91CD\u8BD5") + "</small></div>";
-      if (!S.loading && S.rt < 3) {
-        S.rt++;
-        setTimeout(() => {
-          S.at = 0;
-          loadGjdJL();
-        }, 2e4);
+      if (!S.loading) {
+        const now2 = Date.now();
+        if (now2 - (S.rtWin || 0) > 6e5) {
+          S.rtWin = now2;
+          S.rt = 0;
+        }
+        if (S.rt < 4) {
+          S.rt++;
+          setTimeout(() => {
+            S.at = 0;
+            loadGjdJL();
+          }, Math.min(2e4 * S.rt, 8e4));
+        }
       }
       return;
     }

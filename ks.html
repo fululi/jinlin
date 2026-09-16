@@ -710,7 +710,7 @@ function view() {
   var ddxH = 0;
   var zlyyH = S.ind.zlyy && !noFund(S.active) ? Math.round(avail * 0.11) : 0; // ks-0907-02: 副图加高,不再挤成一条线
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0; // ks-0907-02: 资金控盘(真钱口径),同上加高
-  var rtH = S.ind.rtflow && !noFund(S.active) ? Math.round(avail * 0.10) : 0;
+  var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0; // ks-0917: 限流断线收成窄条不占屏
   var tqsH = S.ind.tqs ? Math.round(avail * 0.12) : 0; // 强弱T面板(零轴柱状,全周期可读)
   if (S.bigPane === "vol") volH = Math.round(avail * 0.32);
   else if (S.bigPane === "macd" && macdH) macdH = Math.round(avail * 0.32);
