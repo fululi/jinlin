@@ -1967,7 +1967,8 @@ cv.addEventListener("touchmove", function (e) {
   }
   if (T.mode === "drag") { dragBy(T, pt); return; }
   if (T.mode === "draw") {
-    S.ghost = anchorAt(pt);
+    var _gh = anchorAt(pt);
+    if (_gh) { S.ghost = _gh; T.moved = true; }
     draw();
     return;
   }
@@ -1993,21 +1994,24 @@ cv.addEventListener("touchmove", function (e) {
     T.moved = true;
     if (T.lp) { clearTimeout(T.lp); T.lp = null; }
     T.mode = "pan";
+    T.axis = Math.abs(pt.x - T.x0) >= Math.abs(pt.y - T.y0) ? "h" : "v";
   }
   if (T.mode === "pan") {
     var v = view(); if (!v) return;
-    var shift = Math.round((pt.x - T.lx) / v.step);
-    if (shift) {
-      var n = S.kl.length;
-      S.end = Math.max(Math.min(S.count, n), Math.min(n, S.end - shift));
-      T.lx = pt.x;
+    if (T.axis !== "v") {
+      var shift = Math.round((pt.x - T.lx) / v.step);
+      if (shift) {
+        var n = S.kl.length;
+        S.end = Math.max(Math.min(S.count, n), Math.min(n, S.end - shift));
+        T.lx = pt.x;
+      }
     }
-    // 竖直拖图：图随手走（上下）
+    // 竖直拖图：图随手走（上下）· ks-0916-52 方向锁:横拖不动纵轴
     var dyy = T.ly - pt.y;
-    if (Math.abs(dyy) > 1.5) {
+    if (T.axis !== "h" && Math.abs(dyy) > 1.5) {
       S.yOff -= dyy / v.priceH * (v.hi - v.lo);
-      T.ly = pt.y;
     }
+    T.ly = pt.y;
     draw();
   }
 }, { passive: false });
@@ -2020,7 +2024,25 @@ cv.addEventListener("touchend", function (e) {
     else { S.selected = T.idx; hint("已选中画线 · 按住可拖动 · 「删选」删除"); syncTools(); }
     draw();
   }
-  else if (T.mode === "draw") { S.ghost = null; draw(); }
+  else if (T.mode === "draw") {
+    // ks-0916-52: 拖动落点松手即提交第二锚点(此前虚影消失要再点一次)
+    if (T.moved && S.ghost && S.tool) {
+      var _gp2 = S.pending.slice();
+      _gp2.push(S.ghost);
+      var _need2 = needPts(S.tool);
+      if (_gp2.length >= _need2) {
+        dlist().push({ type: S.tool, pts: _gp2 });
+        S.selected = dlist().length - 1;
+        S.pending = []; S.tool = null;
+        hint("「" + toolName(S.tool) + "」已完成 · 按住画线可整体拖动 · 拖锚点(黄点)微调 · 「删选」删除");
+        syncTools(); store();
+      } else {
+        S.pending = _gp2;
+        hint("「" + toolName(S.tool) + "」还差 " + (_need2 - S.pending.length) + " 个点 · 点「撤点」回退 / 再点工具取消");
+      }
+    }
+    S.ghost = null; draw();
+  }
   else if (T.mode === "roller") { rollerDo(T.rid); }
   else if (T.mode === "free") {
     if (S.pending.length >= 2) {
@@ -4523,7 +4545,7 @@ function buildInds() {
   // 画线锁: 锁住后画图工具不生效、已有画线拖不动, 防手滑误碰(买卖线/画线全部冻住)
   var lk = document.createElement("button");
   lk.className = "btn tabbtn" + (S.drawLock ? " on" : "");
-  lk.type = "button"; lk.textContent = S.drawLock ? "🔒画线锁" : "🔓画线";
+  lk.type = "button"; lk.id = "ksDrawLockBtn"; lk.textContent = S.drawLock ? "🔒画线锁" : "🔓画线";
   lk.addEventListener("click", function () {
     S.drawLock = !S.drawLock;
     if (S.drawLock) { S.tool = null; S.pending = []; S.ghost = null; S.selected = -1; }
@@ -4614,7 +4636,13 @@ function applyUrl() {
           S.linesHidden = !S.linesHidden; this.classList.toggle("on", S.linesHidden);
           draw(); hint(S.linesHidden ? "画线已隐藏 · 再点恢复" : "画线已恢复显示");
         }, "隐藏/显示全部画线(只影响显示)");
-        mk("锁定", proxy("[data-inds]", "画线"), "画线锁: 锁住后拖不动改不了");
+        var _lkBtn = mk("锁定", function () {
+          var lk2 = document.getElementById("ksDrawLockBtn");
+          if (lk2) lk2.click();
+          this.textContent = S.drawLock ? "已锁🔒" : "锁定";
+          this.classList.toggle("on", !!S.drawLock);
+        }, "画线锁: 锁住后拖不动改不了");
+        if (_lkBtn) { _lkBtn.style.minWidth = "48px"; _lkBtn.style.fontWeight = "700"; _lkBtn.style.color = "#ffd21f"; }
         mk("提醒", function () { var a = document.querySelector("[data-alerts]"); if (a) a.click(); }, "提醒汇总");
         mk("K/线", function () { S.lineMode = !S.lineMode; this.classList.toggle("on", S.lineMode); draw(); hint(S.lineMode ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         document.body.insertBefore(bar, document.body.firstChild);
@@ -4677,12 +4705,14 @@ function applyUrl() {
       if (!document.getElementById("lockFab")) {
         var lf = document.createElement("button");
         lf.id = "lockFab"; lf.type = "button";
-        lf.style.cssText = "position:fixed;right:10px;bottom:88px;z-index:60;width:40px;height:40px;border-radius:20px;border:1px solid #2a3240;background:#161b24;color:#e8c568;font-size:17px;opacity:.92;padding:0";
+        lf.style.cssText = "position:fixed;right:10px;bottom:88px;z-index:60;width:54px;height:54px;border-radius:27px;border:2px solid #e8c56888;background:#161b24;color:#e8c568;font-size:23px;opacity:.96;padding:0;box-shadow:0 2px 12px #0009";
         lf.textContent = S.drawLock ? "🔒" : "🔓";
         lf.addEventListener("click", function () {
           S.drawLock = !S.drawLock;
           if (S.drawLock) { S.tool = null; S.pending = []; S.ghost = null; S.selected = -1; }
           lf.textContent = S.drawLock ? "🔒" : "🔓";
+          lf.style.borderColor = S.drawLock ? "#f58b8e" : "#e8c56888";
+          lf.style.color = S.drawLock ? "#f58b8e" : "#e8c568";
           store(); buildInds(); syncTools(); draw();
           hint(S.drawLock ? "画线已锁定 · 买卖线拖不动" : "画线已解锁 · 可拖动画线");
         });
