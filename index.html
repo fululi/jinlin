@@ -2585,6 +2585,16 @@ document.addEventListener("visibilitychange", () => {
   } catch {
   }
   try {
+    if (!localStorage.getItem("jl_zy_seed_v1")) {
+      localStorage.setItem("jl_zy_seed_v1", "1");
+      if (!stocks.some((x) => x && x.code === "603986")) {
+        stocks.push({ code: "603986", name: "\u5146\u6613\u521B\u65B0", base: 0, pct: 0, qty: 0, cost: null, pnl: 0 });
+        persistStocks();
+      }
+    }
+  } catch (eZ) {
+  }
+  try {
     if (!localStorage.getItem("jl_purge_0916")) {
       const _dead = { "600875": 1, "000547": 1 };
       const _n0 = stocks.length;
