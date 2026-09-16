@@ -232,7 +232,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
-</style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --></head><body><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+</style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --></head><body><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
 <body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
@@ -1704,6 +1704,20 @@ document.addEventListener("visibilitychange", () => {
       if (--left <= 0) {
         evs.sort((a, b) => b.tm - a.tm);
         YDJ.ev = evs;
+        try {
+          const cc0 = JSON.parse(localStorage.getItem("jinlin_yd_v1") || "null");
+          if (cc0 && cc0.date === todayJL() && cc0.ev && cc0.ev.length && evs.length) {
+            const mg = {};
+            cc0.ev.forEach((e0) => {
+              mg[e0.c + "_" + e0.t + "_" + e0.tm] = e0;
+            });
+            evs.forEach((e0) => {
+              mg[e0.c + "_" + e0.t + "_" + e0.tm] = e0;
+            });
+            YDJ.ev = Object.keys(mg).map((k2) => mg[k2]).sort((a, b) => b.tm - a.tm).slice(0, 1200);
+          }
+        } catch (e) {
+        }
         if (!evs.length) {
           try {
             const cc = JSON.parse(localStorage.getItem("jinlin_yd_v1") || "null");
@@ -1721,7 +1735,7 @@ document.addEventListener("visibilitychange", () => {
         }
         if (YDJ.ev.length || YDJ.bk || YDJ.zt) {
           try {
-            localStorage.setItem("jinlin_yd_v1", JSON.stringify({ date: todayJL(), ev: YDJ.ev.slice(0, 300), bk: YDJ.bk, dt: YDJ.dt, zt: YDJ.zt }));
+            localStorage.setItem("jinlin_yd_v1", JSON.stringify({ date: todayJL(), ev: YDJ.ev.slice(0, 1200), bk: YDJ.bk, dt: YDJ.dt, zt: YDJ.zt }));
           } catch (e) {
           }
         }
@@ -2104,7 +2118,7 @@ document.addEventListener("visibilitychange", () => {
           x = Math.max(PL + tw / 2, Math.min(W - PR - tw / 2, x));
           let by = i % 2 === 0 ? yv - 16 : yv + 14;
           by = Math.max(PT + 7, Math.min(H - PB - 8, by));
-          const cc = b.up ? "#ff5459" : "#1fdc93";
+          const cc = (bki && bki.pct != null ? bki.pct >= 0 : b.up) ? "#ff5459" : "#1fdc93";
           bub += `<g style="cursor:pointer" onclick="ydBubbleTapJL('` + b.hy + `')"><line x1="` + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + yv.toFixed(1) + '" y2="' + by.toFixed(1) + '" stroke="' + cc + '" stroke-width="0.6" stroke-dasharray="1.5,1.5" opacity="0.55"/><rect x="' + (x - tw / 2).toFixed(1) + '" y="' + (by - 6).toFixed(1) + '" width="' + tw + '" height="12" rx="3" fill="#0a1a2a" stroke="' + cc + '" stroke-width="0.7" opacity="0.92"/><text x="' + x.toFixed(1) + '" y="' + (by + 3).toFixed(1) + '" font-size="8.5" fill="' + cc + '" text-anchor="middle">' + label + "</text></g>";
         });
       }
@@ -3490,7 +3504,7 @@ document.addEventListener("visibilitychange", () => {
     if (x.f10 === void 0 || x.d0 === void 0 || x.fundSourceValid !== true || x.fundStatus === "\u63A5\u53E3\u9650\u6D41" || x.fundStatus === "\u63A5\u53E3\u65AD\u7EBF" || x.fundStatus === "\u6682\u7F3A") return { ok: false, status: "\u8BC1\u636E\u4E0D\u8DB3", reasons: [x.fundStatus || "\u8D44\u91D1\u5B57\u6BB5\u7F3A\u5931"], families: [] };
     const ev = poolEvidenceJL(x), fam = Object.keys(ev);
     if (fam.length >= 2) return { ok: false, status: "\u6D3E\u53D1\u98CE\u9669", reasons: [fam.map((k) => ev[k][0]).join(" + ")], families: fam };
-    if (Number.isFinite(x.d0) && x.d0 < 1e7) return { ok: false, status: "\u8D44\u91D1\u91CF\u7EA7\u4E0D\u8DB3", reasons: ["\u5F53\u65E5\u4E3B\u529B " + fmtFundJL(x.d0) + " \u4F4E\u4E8E1000\u4E07\u95E8\u69DB"], families: [] };
+    if (!(x.d0 >= 1e7 || x.f10 >= 1.5e8 && x.d0 > -5e7)) return { ok: false, status: "\u8D44\u91D1\u91CF\u7EA7\u4E0D\u8DB3", reasons: ["\u5F53\u65E5 " + fmtFundJL(x.d0) + " / 10\u65E5 " + fmtFundJL(x.f10) + " \u672A\u8FC7\u95E8\u69DB(\u5F53\u65E5\u22651000\u4E07 \u6216 10\u65E5\u22651.5\u4EBF\u4E14\u5F53\u65E5\u4E0D\u5927\u51FA)"], families: [] };
     if (x.d0 < 0) reasons.push("\u5F53\u65E5\u4E3B\u529B\u51C0\u6D41\u51FA");
     return { ok: true, status: reasons.length ? "\u6570\u636E\u51B2\u7A81" : "\u5408\u683C", reasons, families: fam };
   }
@@ -3863,6 +3877,24 @@ document.addEventListener("visibilitychange", () => {
         JLPOOL_PROG = "\u79BB\u7EBF\u7EC8\u699C\u4E3A\u7A7A";
         return;
       }
+      try {
+        await new Promise((res) => {
+          emJsonp("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f100&secids=" + cand.map((x) => secidJL(x.code)).join(","), (e2, dd) => {
+            try {
+              const m2 = {};
+              ((dd && dd.data && dd.data.diff) || []).forEach((r) => {
+                m2[String(r.f12)] = r.f100 || "";
+              });
+              cand.forEach((x) => {
+                x.hy = m2[x.code.slice(2)] || "";
+              });
+            } catch (e3) {
+            }
+            res();
+          }, 9e3);
+        });
+      } catch (e2) {
+      }
       const dFile = cand[0].d;
       window.__jlPoolAsOf = dFile;
       try {
@@ -4040,6 +4072,7 @@ document.addEventListener("visibilitychange", () => {
   }
   function evChipsJL(x) {
     const arr = [["\u63A7\u76D8", x.ctrl], ["\u03945\u65E5", (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0)], ["\u4F4D\u7F6E", fmtPosJL(x)], ["\u6DA8\u505C\u57FA\u56E0", x.gene], ["\u7F29\u91CF", x.wash + "\u5929"], ["\u91CF\u6BD4", x.vr.toFixed(2) + "\xD7"], ["\u91CF\u4F4D120\u65E5", x.volPct120 != null ? (x.volPct120 * 100).toFixed(0) + "%" : "\u2014"]];
+    if (x.hy) arr.push(["\u884C\u4E1A", x.hy]);
     const cq = cyqEvJL(x.code);
     if (cq) arr.push(["\u83B7\u5229", cq.profit], ["\u96C6\u4E2D\u5EA6", cq.conc]);
     return arr.map((c) => '<i class="evChip">' + c[0] + "<b>" + c[1] + "</b></i>").join("");
@@ -4169,7 +4202,7 @@ document.addEventListener("visibilitychange", () => {
       fetch("https://fululi.github.io/hq-mobile/alla_confirmed.json?_=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((d) => {
         const F2 = d && d.final || {}, picks = [];
         [["start", "刚启动", "#ff9f6e"], ["zs", "主升", "#ff5f56"], ["eb", "二波", "#e8c568"]].forEach((L2) => {
-          const arr = F2[L2[0]] || [], x = arr.find((c2) => +c2.d0 >= 1e7) || null;
+          const arr = F2[L2[0]] || [], x = arr.find((c2) => +c2.d0 >= 1e7 || +c2.f10 >= 1.5e8 && +c2.d0 > -5e7) || null;
           if (x) picks.push({ layer: L2[1], color: L2[2], code: String(x.code || "").slice(2), name: x.name || "", close: +x.close || 0, f5: +x.f5 || 0, d0: +x.d0 || 0, date: x.date || "" });
         });
         if (picks.length) {
@@ -4184,6 +4217,45 @@ document.addEventListener("visibilitychange", () => {
       });
     }
     return POOLJX;
+  }
+  let POOLZT = null, POOLZT_AT = 0;
+  function poolZtDataJL() {
+    if (!POOLZT) {
+      try {
+        POOLZT = JSON.parse(localStorage.getItem("jl_zt_v1") || "null");
+      } catch (e) {
+      }
+    }
+    if (Date.now() - POOLZT_AT > 6e5) {
+      POOLZT_AT = Date.now();
+      const dt = jlLastTradeDay().replace(/-/g, "");
+      emJsonp("https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt&Pageindex=0&pagesize=200&sort=fbt%3Aasc&date=" + dt, (err, d) => {
+        if (err || !d || !d.data || !d.data.pool) return;
+        const rows = d.data.pool.map((x) => ({ code: String(x.c), name: x.n, price: x.p / 1000, pct: +x.zdp, lbc: x.lbc || 0, fund: x.fund || 0, fbt: x.fbt, zbc: x.zbc || 0, hy: x.hybk || "", days: x.zttj && x.zttj.days || 0, ct: x.zttj && x.zttj.ct || 0 }));
+        POOLZT = { date: String(d.data.qdate || dt), total: d.data.tc || rows.length, rows };
+        try {
+          jlSafeSetJL("jl_zt_v1", JSON.stringify(POOLZT));
+        } catch (e) {
+        }
+        if (watchMode === "leaders") renderPoolJL();
+      }, 12e3);
+    }
+    return POOLZT;
+  }
+  function poolZtHTMLJL() {
+    const zt = poolZtDataJL();
+    if (!zt || !zt.rows || !zt.rows.length) return "";
+    const hot = zt.rows.filter((x) => x.fund >= 2e7 || x.lbc >= 2).sort((a, b) => b.fund - a.fund).slice(0, 30);
+    if (!hot.length) return "";
+    const fmtT = (t) => {
+      const s2 = String(t).padStart(6, "0");
+      return s2.slice(0, 2) + ":" + s2.slice(2, 4);
+    };
+    const dS = zt.date.length === 8 ? zt.date.slice(4, 6) + "-" + zt.date.slice(6) : zt.date;
+    return '<div class="poolLayerHead" id="plh_zt" style="scroll-margin-top:46px"><b style="color:#ff7a59">\u6DA8\u505C\u98CE\u53E3 \xB7 ' + dS + '</b><span class="plhN">' + hot.length + "/" + zt.total + '</span><small>\u5C01\u5355\u22652000\u4E07\u6216\u8FDE\u677F\u22652 \xB7 \u6309\u5C01\u5355\u989D\u6392 \xB7 \u4E1C\u8D22\u6DA8\u505C\u6C60</small></div><div class="poolPicks">' + hot.map((x) => {
+      const held = stocks.some((s2) => s2.code === x.code);
+      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:#ff7a59">' + (x.lbc >= 2 ? x.lbc + "\u8FDE\u677F" : "\u9996\u677F") + '</span></div><div class="ppSub">' + x.code + " \xB7 " + money(x.price) + ' \xB7 <i style="font-style:normal;color:#ff9d97">\u5C01\u5355 ' + fmtFundJL(x.fund) + "</i>" + (x.hy ? ' \xB7 <i style="font-style:normal;color:#8ea8b9">' + x.hy + "</i>" : "") + "</div>" + '<div class="ppSub">' + (x.days ? x.days + "\u5929" + x.ct + "\u677F \xB7 " : "") + "\u9996\u5C01 " + fmtT(x.fbt) + (x.zbc ? " \xB7 \u70B8\u677F" + x.zbc + "\u6B21" : " \xB7 \u672A\u70B8\u677F") + "</div>" + '<div class="poolRowActJL" style="margin-top:6px"><button type="button" data-pl-k="' + x.code + '" data-n="' + x.name + '">K\u7EBF \u203A</button>' + (held ? '<span class="heldTag">\u5DF2\u6301\u4ED3</span>' : '<button type="button" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.price + '">\uFF0B\u89C2\u5BDF</button>') + "</div></div>";
+    }).join("") + "</div>";
   }
   function poolJxHTMLJL() {
     const jx = poolJxDataJL();
@@ -4233,7 +4305,7 @@ document.addEventListener("visibilitychange", () => {
       return;
     }
     const fresh = jlPoolFresh(JLPOOL.d0);
-    let html = poolJxHTMLJL() + poolNavHTMLJL(JLPOOL, "", false);
+    let html = poolJxHTMLJL() + poolZtHTMLJL() + poolNavHTMLJL(JLPOOL, "", false);
     html += '<div class="poolConsole"><div class="pcRow"><b>\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \xB7 " + JLPOOL.ts + "\u626B \xB7 \u5B87\u5B99" + JLPOOL.uni + "\u53EA" + (JLPOOL.src === "offline" ? " \xB7 \u79BB\u7EBF\u7EC8\u699C" : "") + "</b><span>" + JLPOOL_LAYERS.map((l) => l[1] + (JLPOOL.L[l[0]] || []).length).join(" \xB7 ") + "</span></div>" + (JLPOOL.rejectStats ? '<div class="pcRow" style="margin-top:4px"><span>\u8D44\u683C\u95E8\u62E6\u622A\uFF1A\u8FC7\u671F' + JLPOOL.rejectStats.stale + " \xB7 \u6D3E\u53D1\u98CE\u9669" + JLPOOL.rejectStats.risk + " \xB7 \u8BC1\u636E\u4E0D\u8DB3" + JLPOOL.rejectStats.insufficient + " \xB7 \u8F6C\u89C2\u5BDF" + JLPOOL.rejectStats.observe + "</span></div>" : "") + "</div>";
     if (!fresh) html += '<div class="poolStale">\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \u2260 \u6700\u8FD1\u4EA4\u6613\u65E5\uFF08" + jlLastTradeDay() + "\uFF09\xB7 \u65E7\u699C\u5B58\u6863\u5C55\u793A\xB7\u4E0D\u4F5C\u4E3A\u4ECA\u65E5\u4F9D\u636E \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>";
     if (fresh) html += '<div class="poolConsole" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button type="button" id="plRefundJL" style="' + PL_NAV_BTN + ';min-height:28px;padding:4px 10px;font-size:10px">\u8D44\u91D1\u8865\u8DD1</button><span style="font-size:9px;color:#8ea8b9">\u53EA\u8865\u5408\u683C\u6C60+\u89C2\u5BDF\u6C60\u8D44\u91D1\uFF0C\u4E0D\u91CD\u626B\u5F62\u6001</span></div>';
