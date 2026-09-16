@@ -2334,6 +2334,10 @@ document.addEventListener("visibilitychange", () => {
     try {
       importTencentQuotes();
       loadRealKlines();
+      try {
+        refreshFFlowJL2(true);
+      } catch (eV) {
+      }
       stocks.forEach((s) => {
         try {
           ensureDailyJL(s.code);
@@ -8285,6 +8289,7 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
     };
+    const refreshFFlowJL = refreshFFlowJL2;
     setTimeout(() => refreshFFlowJL2(false), 2500);
     setInterval(() => refreshFFlowJL2(true), 6e4);
     periodBars();
