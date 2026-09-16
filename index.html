@@ -220,7 +220,8 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#f58b8e}.deckSB .b{color:#6ad5b4}
-</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.45 0916盘中 资金提速: 持仓资金/市场资金5分钟→60秒 + 修'又是14日'(9:20前缓存停昨天误判新鲜跳拉,交易时段改按今日行+60s新鲜度) + ff缓存带时间戳 -->
+</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
+<body><!-- v.45 0916盘中 资金提速: 持仓资金/市场资金5分钟→60秒 + 修'又是14日'(9:20前缓存停昨天误判新鲜跳拉,交易时段改按今日行+60s新鲜度) + ff缓存带时间戳 -->
 <body><!-- v.44 0916盘中 白屏根治: 救援卡显示真错误+安全模式按钮(?safe=1关扫描/筹码)+连死2次自动核大缓存键(持仓台账不动) -->
 <body><!-- v.43 0916盘中 ES5自救核升级: 引擎死亡首次自动硬恢复(注销SW+清缓存+时间戳重载),根治坏缓存死循环; 超时6s→9s防慢机误报 -->
 <body><!-- v.42 0916盘中 修正公式B15: H1改zz确认H pivot(剔除实时混入,进行中腿不出fib档,杜绝重绘); tgt等幅/1.618公式原样不封顶 -->
@@ -8021,6 +8022,39 @@ document.addEventListener("visibilitychange", () => {
         else if (page === "chartPage" && !$("alerts").open) show(origin);
       }
     });
+    const loadOneFFJL_sina = (st2) => {
+      try {
+        const c6 = String(st2.code).replace(/^(sh|sz)/, ""), bare = /^[65]/.test(c6) ? "sh" + c6 : "sz" + c6;
+        const cb = "_snff" + Math.random().toString(36).slice(2);
+        const sc = document.createElement("script");
+        const kill = () => {
+          try {
+            delete window[cb];
+          } catch (e) {
+          }
+          sc.remove();
+        };
+        const t2 = setTimeout(kill, 1e4);
+        window[cb] = (arr) => {
+          clearTimeout(t2);
+          kill();
+          try {
+            if (!arr || !arr.length) return;
+            const rows = arr.map((r) => ({ d: String(r.opendate), main: +r.r0_net || 0, small: null, mid: null, big: null, sup: null, mainPct: r.r0_ratio != null ? +r.r0_ratio * 100 : null })).sort((a, b) => a.d < b.d ? -1 : 1).slice(-320);
+            if (!rows.length) return;
+            const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), cur = all[st2.code];
+            if (cur && cur.rows && cur.rows.length && !(String(cur.rows.at(-1).d) < rows.at(-1).d)) return;
+            all[st2.code] = { rows, t: Date.now(), src: "sina" };
+            jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
+            if (typeof renderDeck === "function") renderDeck();
+          } catch (e) {
+          }
+        };
+        sc.src = "https://vip.stock.finance.sina.com.cn/quotes_service/api/jsonp_v2.php/" + cb + "/MoneyFlow.ssl_qsfx_zjlrqs?daima=" + bare + "&num=320";
+        document.head.appendChild(sc);
+      } catch (e) {
+      }
+    };
     const loadOneFFJL = (st2, tryN) => {
       tryN = tryN || 0;
       const sec = "secid=" + secidJL(st2.code) + "&ut=" + JL_UT;
@@ -8074,6 +8108,7 @@ document.addEventListener("visibilitychange", () => {
       setTimeout(() => {
         if (!ffDone) {
           ffDone = true;
+          loadOneFFJL_sina(st2);
           setTimeout(() => {
             try {
               const c2 = (JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {})[st2.code];
