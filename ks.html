@@ -1084,6 +1084,7 @@ function renderDrawings(ctx, v) {
 }
 /* ---- ks-0906-16: 副图画线通道 + 触线提醒 —— 在所有副图之后渲染(不被柱子/曲线盖住, 不被主图裁切剪掉) ---- */
 function renderPaneDrawings(ctx, v) {
+  if (S.linesHidden) return; // ks-0916-51: 「隐藏」开关覆盖副图画线通道(原只盖主图)
   var im = idxMap(v), dl = S.simple ? [] : visList(); // ks-0909-30: 触线提醒同样对跨周期价位线生效; 副图通道仍按pane过滤不受影响; ks-0910-42: simple/内嵌跳过本机画线
   // 触线提醒: 主图画线被最新价贴近(±0.3%)/穿越时, 线右端亮⚡标记, 不用盯盘
   if (S.kl.length) {
@@ -3150,12 +3151,9 @@ function renderICT(ctx, v) {
       var isB = L.side === "BSL";
       var col = isB ? "#ffd21f" : "#ff6f66";
       var y = v.Y(L.p), x0 = Math.max(v.padL, v.X(L.i));
-      var bh2 = Math.max(2, v.Y(L.p - kl[n - 1][4] * 0.003) - y); // 带半高≈0.3%价格
-      ctx.fillStyle = isB ? "rgba(255,210,31,0.15)" : "rgba(255,111,102,0.13)";
-      ctx.fillRect(x0, y - bh2, right - x0, bh2 * 2);
-      ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.setLineDash([5, 4]);
+      // ks-0916-51: 用户"LIQ框换细横线"——删填充色带, 1.8虚线改1px细实线
+      ctx.strokeStyle = col; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(right, y); ctx.stroke();
-      ctx.setLineDash([]);
       ctx.fillStyle = col; ctx.font = "bold 8.5px Menlo, monospace";
       ctx.textAlign = "left"; ctx.textBaseline = "bottom";
       ctx.fillText((isB ? "B LIQ " : "S LIQ ") + L.p.toFixed(d2), x0 + 2, y - 2);
@@ -3486,21 +3484,17 @@ function renderDynSupRes(ctx, v, kl, i0, i1) {
   res.forEach(function (q, ri) {
     var y = v.Y(q); if (y < v.pTop || y > v.pTop + v.priceH) return;
     var yT = v.Y(q + halfBand), yB = v.Y(q - halfBand);
-    ctx.fillStyle = "rgba(255,111,102,0.08)";
+    ctx.fillStyle = "rgba(255,111,102,0.10)";
     ctx.fillRect(v.padL, yT, right - v.padL, Math.max(2, yB - yT));
-    ctx.strokeStyle = "rgba(255,111,102,0.42)"; ctx.lineWidth = 0.8; ctx.setLineDash([6, 4]);
-    ctx.strokeRect(v.padL, yT, right - v.padL, Math.max(2, yB - yT));
-    ctx.beginPath(); ctx.moveTo(v.padL, y); ctx.lineTo(right, y); ctx.stroke(); ctx.setLineDash([]);
+    // ks-0916-51: 用户"密密麻麻曲线难受"——SR只留底色带+标签, 虚线框/中线全删
     ctx.fillStyle = "#ff8a80"; ctx.textAlign = "left"; ctx.fillText("S" + (ri + 1) + " " + fwp(q), v.padL + 4, y - 3);
   });
   sup.forEach(function (q, si) {
     var y = v.Y(q); if (y < v.pTop || y > v.pTop + v.priceH) return;
     var yT = v.Y(q + halfBand), yB = v.Y(q - halfBand);
-    ctx.fillStyle = "rgba(53,217,154,0.08)";
+    ctx.fillStyle = "rgba(53,217,154,0.10)";
     ctx.fillRect(v.padL, yT, right - v.padL, Math.max(2, yB - yT));
-    ctx.strokeStyle = "rgba(53,217,154,0.42)"; ctx.lineWidth = 0.8; ctx.setLineDash([6, 4]);
-    ctx.strokeRect(v.padL, yT, right - v.padL, Math.max(2, yB - yT));
-    ctx.beginPath(); ctx.moveTo(v.padL, y); ctx.lineTo(right, y); ctx.stroke(); ctx.setLineDash([]);
+    // ks-0916-51: 同上, 只留底色带+标签
     ctx.fillStyle = "#4fd79b"; ctx.textAlign = "left"; ctx.fillText("B" + (si + 1) + " " + fwp(q), v.padL + 4, y + 10);
   });
 }
