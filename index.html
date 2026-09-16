@@ -220,7 +220,8 @@ body.ksEmbed #chartPage .plots{height:640px}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#f58b8e}.deckSB .b{color:#6ad5b4}
-</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
+</style><script src="https://www.kimi.com/sdk-seed.js" defer="" data-kimi-disable-watermark="false" data-kimi-analytics="true" data-kimi-website-id="1a0a552e-d362-886f-8000-000070157841" data-kimi-website-env="published"></script></head><body><!-- v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+<body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实锤,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
 <!-- v.48 0916盘中 涨停穿档不延伸根治: 新增tiersViewJL视图层(现有S1-S5/B1-B5算法不动,三只票水位口径不变)——现价破末档按末档间距追加最多3档延伸档(标签带延), 展示与触及判定统一走它, "已顺延下一档"从谎话变真话; planNext不延伸 -->
@@ -612,6 +613,17 @@ document.addEventListener("visibilitychange", () => {
     }).join("");
     const _rs = sectors.map((r, ridx) => ({ r, i: ridx })).filter((o) => typeof heatRelJL === "function" && heatRelJL(o.r.name));
     if (_rs.length) html += '<div class="marketFundRow" style="grid-template-columns:1fr;border-bottom:0"><span style="color:#ffd21f;font-size:11px">\u5171\u632F\u63D0\u9192 \xB7 \u4F60\u7684\u6301\u4ED3/\u89C2\u5BDF\u677F\u5757\u5728\u4E3B\u529BTop5\uFF1A' + _rs.map((o) => o.r.name + " " + fmtFundJL(o.r.amt) + "\uFF08\u7B2C" + (o.i + 1) + "\uFF09\xB7" + (o.r.amt >= 0 ? "\u504F\u591A" : "\u504F\u7A7A")).join("\uFF0C") + "</span></div>";
+    const _hist = marketFundsJL.hist || function() {
+      try {
+        return (JSON.parse(localStorage.getItem("jl_mf_hist_v1") || "{}") || {}).hist;
+      } catch (e) {
+        return null;
+      }
+    }() || {}, _hks = Object.keys(_hist).filter((k) => _hist[k] && _hist[k].length);
+    if (_hks.length) html += '<div class="marketFundRow" style="grid-template-columns:1fr;border-bottom:0;margin-top:4px"><span style="font-size:10px;color:#a8c4cf">近5日主力净额：' + _hks.map((k) => {
+      const s5 = _hist[k].slice(-5).reduce((a, r) => a + (r.main || 0), 0);
+      return k + ' <b style="color:' + (s5 >= 0 ? "#f58b8e" : "#6ad5b4") + '">' + fmtFundJL(s5) + "</b>";
+    }).join(" · ") + "</span></div>";
     box.innerHTML = html;
     tm.textContent = marketFundsJL.updated ? "\u66F4\u65B0 " + marketFundsJL.updated : "\u4E1C\u8D22\u5B9E\u65F6\u53E3\u5F84";
   }
@@ -629,7 +641,7 @@ document.addEventListener("visibilitychange", () => {
     marketFundsJL.error = false;
     renderMarketFundsJL();
     const stamp = Date.now(), wanted = { "000001": "\u4E0A\u8BC1\u6307\u6570", "399001": "\u6DF1\u8BC1\u6210\u6307", "399006": "\u521B\u4E1A\u677F\u6307", "000300": "\u6CAA\u6DF1300" }, out = { rows: [], sectors: [] };
-    let left = 2;
+    let left = 3;
     const finish = () => {
       if (--left > 0) return;
       marketFundsJL.rows = out.rows;
@@ -690,6 +702,42 @@ document.addEventListener("visibilitychange", () => {
       finish();
     };
     document.body.appendChild(sc2);
+    const histCodes = [["1.000001", "上证"], ["0.399001", "深成"], ["0.399006", "创业"], ["1.000300", "沪深300"]], hist = {};
+    let hLeft = histCodes.length, hFired = false;
+    const hDone = () => {
+      if (hFired) return;
+      if (--hLeft > 0) return;
+      hFired = true;
+      marketFundsJL.hist = hist;
+      try {
+        localStorage.setItem("jl_mf_hist_v1", JSON.stringify({ d: jlLastTradeDay(), hist }));
+      } catch (e) {
+      }
+      finish();
+    };
+    histCodes.forEach((hc) => {
+      try {
+        emJsonp("https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?secid=" + hc[0] + "&lmt=10&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52", (e, d) => {
+          try {
+            const k2 = d && d.data && d.data.klines;
+            if (!e && k2 && k2.length) hist[hc[1]] = k2.map((row) => {
+              const p = row.split(",");
+              return { d: p[0], main: +p[1] };
+            });
+          } catch (e2) {
+          }
+          hDone();
+        }, 8e3);
+      } catch (e3) {
+        hDone();
+      }
+    });
+    setTimeout(() => {
+      if (!hFired) {
+        hLeft = 1;
+        hDone();
+      }
+    }, 9e3);
     setTimeout(() => {
       if (window[cb]) {
         delete window[cb];
@@ -3700,7 +3748,7 @@ document.addEventListener("visibilitychange", () => {
           const u = UNI[idx++], code = u[0], name = u[1];
           try {
             const r = await fetchK("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + code + ",day,,,300,qfq");
-            const d = await r.json(), node = d && d.data && d.data[code], rows = node && (node.qfqday || node.day);
+            const d = await r.json(), node = d && d.data && d.data[code], rows = node && node.qfqday;
             if (rows && rows.length >= 120) {
               const hit = poolClassifyJL(code, name, rows);
               if (hit) cand.push(hit);
@@ -3928,6 +3976,43 @@ document.addEventListener("visibilitychange", () => {
     btns += '<button type="button" data-pl-all="1" style="' + PL_NAV_BTN + ';margin-left:auto">\u5168\u6536/\u5168\u5C55</button>';
     return '<div class="poolNavJL" style="position:sticky;top:0;z-index:6;display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 2px;margin-bottom:4px;background:#0b1b29f5;border-bottom:1px solid #81e6d922;backdrop-filter:blur(6px)">' + btns + "</div>";
   }
+  let POOLJX = null, POOLJX_AT = 0;
+  function poolJxDataJL() {
+    if (!POOLJX) {
+      try {
+        POOLJX = JSON.parse(localStorage.getItem("jl_jx_v1") || "null");
+      } catch (e) {
+      }
+    }
+    if (Date.now() - POOLJX_AT > 6e5) {
+      POOLJX_AT = Date.now();
+      fetch("https://fululi.github.io/hq-mobile/alla_confirmed.json?_=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((d) => {
+        const F2 = d && d.final || {}, picks = [];
+        [["start", "刚启动", "#ff9f6e"], ["zs", "主升", "#ff5f56"], ["eb", "二波", "#e8c568"]].forEach((L2) => {
+          const x = (F2[L2[0]] || [])[0];
+          if (x) picks.push({ layer: L2[1], color: L2[2], code: String(x.code || "").slice(2), name: x.name || "", close: +x.close || 0, f5: +x.f5 || 0, date: x.date || "" });
+        });
+        if (picks.length) {
+          POOLJX = { picks, date: picks[0].date };
+          try {
+            localStorage.setItem("jl_jx_v1", JSON.stringify(POOLJX));
+          } catch (e) {
+          }
+          if (watchMode === "leaders") renderPoolJL();
+        }
+      }).catch(() => {
+      });
+    }
+    return POOLJX;
+  }
+  function poolJxHTMLJL() {
+    const jx = poolJxDataJL();
+    if (!jx || !jx.picks || !jx.picks.length) return "";
+    return '<div class="poolLayerHead" id="plh_jx" style="scroll-margin-top:46px"><b style="color:#ffd21f">今日精选 · 全A管道终榜</b><span class="plhN">' + jx.picks.length + '</span><small>' + jx.date + ' · 雷达=值得看非买入指令</small></div><div class="poolPicks">' + jx.picks.map((x) => {
+      const held = stocks.some((s2) => s2.code === x.code);
+      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + x.color + '">' + x.layer + '</span></div><div class="ppSub">' + x.code + " · " + money(x.close) + (x.f5 ? ' · <i style="font-style:normal;color:#8ea8b9">5日主力 ' + fmtFundJL(x.f5) + "</i>" : "") + "</div>" + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.close + '">＋ 加观察</button>') + "</div>";
+    }).join("") + "</div>";
+  }
   function renderPoolJL() {
     const box = $("watchList");
     if (!box) return;
@@ -3961,14 +4046,14 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
       if (prev && prev.L) {
-        box.innerHTML = '<div class="poolStale">' + (prev.d0 || prev.date || "?") + " \u65E7\u699C\u5B58\u6863 \xB7 \u65B0\u4EA4\u6613\u65E5\u5C1A\u672A\u626B\u51FA\u65B0\u699C \xB7 \u4EC5\u56DE\u987E\u4E0D\u88C5\u6D3B \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>" + poolNavHTMLJL(prev, "", false) + poolLayersHTMLJL(prev, "", true);
+        box.innerHTML = poolJxHTMLJL() + '<div class="poolStale">' + (prev.d0 || prev.date || "?") + " \u65E7\u699C\u5B58\u6863 \xB7 \u65B0\u4EA4\u6613\u65E5\u5C1A\u672A\u626B\u51FA\u65B0\u699C \xB7 \u4EC5\u56DE\u987E\u4E0D\u88C5\u6D3B \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>" + poolNavHTMLJL(prev, "", false) + poolLayersHTMLJL(prev, "", true);
         return;
       }
-      box.innerHTML = '<div class="poolConsole"><div class="pcRow"><b>\u9F99\u5934\u80A1\u6C60 \xB7 \u91D1\u9F99\u6C60\u53E3\u5F84</b><span>\u672A\u626B\u63CF</span></div><div class="poolWhy" style="padding:8px 0 2px">\u4E94\u5C42\u7B5B\u9009\u7167\u642C hq-mobile \u8DD1\u6D4B\u7248\uFF1A' + JLPOOL_LAYERS.map((l) => l[1]).join(" / ") + "\u3002\u70B9\u4E0A\u65B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u8DD1\u5168A\uFF08\u7EA64\u5343\u53EA\uFF0C\u9700\u51E0\u5206\u949F\uFF09\uFF0C\u7ED3\u679C\u53EA\u8BA4\u6700\u8FD1\u4EA4\u6613\u65E5\uFF0C\u65E7\u699C\u4E0D\u88C5\u6D3B\u3002</div></div>";
+      box.innerHTML = poolJxHTMLJL() + '<div class="poolConsole"><div class="pcRow"><b>\u9F99\u5934\u80A1\u6C60 \xB7 \u91D1\u9F99\u6C60\u53E3\u5F84</b><span>\u672A\u626B\u63CF</span></div><div class="poolWhy" style="padding:8px 0 2px">\u4E94\u5C42\u7B5B\u9009\u7167\u642C hq-mobile \u8DD1\u6D4B\u7248\uFF1A' + JLPOOL_LAYERS.map((l) => l[1]).join(" / ") + "\u3002\u70B9\u4E0A\u65B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u8DD1\u5168A\uFF08\u7EA64\u5343\u53EA\uFF0C\u9700\u51E0\u5206\u949F\uFF09\uFF0C\u7ED3\u679C\u53EA\u8BA4\u6700\u8FD1\u4EA4\u6613\u65E5\uFF0C\u65E7\u699C\u4E0D\u88C5\u6D3B\u3002</div></div>";
       return;
     }
     const fresh = jlPoolFresh(JLPOOL.d0);
-    let html = poolNavHTMLJL(JLPOOL, "", false);
+    let html = poolJxHTMLJL() + poolNavHTMLJL(JLPOOL, "", false);
     html += '<div class="poolConsole"><div class="pcRow"><b>\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \xB7 " + JLPOOL.ts + "\u626B \xB7 \u5B87\u5B99" + JLPOOL.uni + "\u53EA</b><span>" + JLPOOL_LAYERS.map((l) => l[1] + (JLPOOL.L[l[0]] || []).length).join(" \xB7 ") + "</span></div>" + (JLPOOL.rejectStats ? '<div class="pcRow" style="margin-top:4px"><span>\u8D44\u683C\u95E8\u62E6\u622A\uFF1A\u8FC7\u671F' + JLPOOL.rejectStats.stale + " \xB7 \u6D3E\u53D1\u98CE\u9669" + JLPOOL.rejectStats.risk + " \xB7 \u8BC1\u636E\u4E0D\u8DB3" + JLPOOL.rejectStats.insufficient + " \xB7 \u8F6C\u89C2\u5BDF" + JLPOOL.rejectStats.observe + "</span></div>" : "") + "</div>";
     if (!fresh) html += '<div class="poolStale">\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \u2260 \u6700\u8FD1\u4EA4\u6613\u65E5\uFF08" + jlLastTradeDay() + "\uFF09\xB7 \u65E7\u699C\u5B58\u6863\u5C55\u793A\xB7\u4E0D\u4F5C\u4E3A\u4ECA\u65E5\u4F9D\u636E \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>";
     if (fresh) html += '<div class="poolConsole" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button type="button" id="plRefundJL" style="' + PL_NAV_BTN + ';min-height:28px;padding:4px 10px;font-size:10px">\u8D44\u91D1\u8865\u8DD1</button><span style="font-size:9px;color:#8ea8b9">\u53EA\u8865\u5408\u683C\u6C60+\u89C2\u5BDF\u6C60\u8D44\u91D1\uFF0C\u4E0D\u91CD\u626B\u5F62\u6001</span></div>';
@@ -4414,7 +4499,7 @@ document.addEventListener("visibilitychange", () => {
         clearTimeout(tm);
         const td2 = await tr.json();
         const node = td2 && td2.data && td2.data[pfx];
-        const rw = node && (node.qfqday || node.day);
+        const _isIdx = /^(sh000|sz399)/.test(pfx), rw = node && (node.qfqday || (_isIdx ? node.day : null));
         if (!rw || !rw.length) continue;
         const rows = rw.map((x) => ({ t: String(x[0]).slice(0, 10), o: +x[1], c: +x[2], h: +x[3], l: +x[4], v: +x[5] })).filter((x) => x.t && [x.o, x.c, x.h, x.l, x.v].every(Number.isFinite));
         if (rows.length >= 15) {
@@ -9120,7 +9205,7 @@ document.addEventListener("visibilitychange", () => {
   const HF_Q = {};
   async function hfBatchQuoteJL(holds) {
     try {
-      const url = "https://push2delay.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62,f21&secids=" + holds.map((s) => secidJL(s.code)).join(",");
+      const url = "https://push2delay.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62,f21,f72,f78,f84&secids=" + holds.map((s) => secidJL(s.code)).join(",");
       const r = await fetch(url, { cache: "no-store" });
       const d = await r.json();
       let arr = d && d.data && (d.data.diff || d.data);
@@ -9129,7 +9214,7 @@ document.addEventListener("visibilitychange", () => {
         if (q && q.f12) {
           let L = +q.f21 || 0;
           if (L > 0 && L < 1e7) L *= 1e8;
-          HF_Q[String(q.f12)] = { ltsz: L, rt: +q.f62 || 0 };
+          HF_Q[String(q.f12)] = { ltsz: L, rt: +q.f62 || 0, big: +q.f72 || 0, mid: +q.f78 || 0, sml: +q.f84 || 0, hasB: q.f72 != null || q.f78 != null || q.f84 != null };
         }
       });
     } catch (e) {
@@ -10115,7 +10200,8 @@ document.addEventListener("visibilitychange", () => {
         sum += main;
         has = true;
       }
-      rows.push({ i: i2, name: s2.name, code: s2.code, main, day });
+      const hq2 = typeof HF_Q !== "undefined" ? HF_Q[s2.code] : null, bkt = hq2 && hq2.hasB ? { big: hq2.big, mid: hq2.mid, small: hq2.sml } : day ? { big: +day.big || NaN, mid: +day.mid || NaN, small: +day.small || NaN } : null;
+      rows.push({ i: i2, name: s2.name, code: s2.code, main, day, bkt });
     });
     return { rows, sum, has };
   }
@@ -10135,7 +10221,7 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
     }
-    if (st.open) h += '<div class="ffbPanel"><div class="ffbHead">\u6301\u4ED3\u4E3B\u529B\u8D44\u91D1 \xB7 \u5927\u4E2D\u5C0F\u5355<small>' + (D.has ? "\u5B9E\u65F6/\u5F53\u65E5" : "\u7B49\u5F85\u6570\u636E") + "</small></div>" + D.rows.map((r2) => '<div class="ffbRow" data-ffb-i="' + r2.i + '"><span class="ffbNm">' + r2.name + '</span><b class="' + (Number.isFinite(r2.main) ? r2.main >= 0 ? "up" : "dn" : "") + '">' + ffBallFmtJL(r2.main) + "</b><small>" + (r2.day ? "\u5927 " + ffBallFmtJL(+r2.day.big || NaN) + " \xB7 \u4E2D " + ffBallFmtJL(+r2.day.mid || NaN) + " \xB7 \u5C0F " + ffBallFmtJL(+r2.day.small || NaN) : "\u5927\u4E2D\u5C0F\u5355\u7B49\u5F85\u8D44\u91D1\u6E90") + "</small></div>").join("") + '<div class="ffbFoot">\u70B9\u884C\u8DF3\u6301\u4ED3\u5361 \xB7 \u4E3B=\u4E3B\u529B\u51C0\u989D(\u5B9E\u65F6\u4F18\u5148) \xB7 60\u79D2\u81EA\u52A8\u5237\u65B0</div></div>';
+    if (st.open) h += '<div class="ffbPanel"><div class="ffbHead">\u6301\u4ED3\u4E3B\u529B\u8D44\u91D1 \xB7 \u5927\u4E2D\u5C0F\u5355<small>' + (D.has ? "\u5B9E\u65F6/\u5F53\u65E5" : "\u7B49\u5F85\u6570\u636E") + "</small></div>" + D.rows.map((r2) => '<div class="ffbRow" data-ffb-i="' + r2.i + '"><span class="ffbNm">' + r2.name + '</span><b class="' + (Number.isFinite(r2.main) ? r2.main >= 0 ? "up" : "dn" : "") + '">' + ffBallFmtJL(r2.main) + "</b><small>" + (r2.bkt ? "\u5927 " + ffBallFmtJL(r2.bkt.big) + " \xB7 \u4E2D " + ffBallFmtJL(r2.bkt.mid) + " \xB7 \u5C0F " + ffBallFmtJL(r2.bkt.small) : "\u5927\u4E2D\u5C0F\u5355\u7B49\u5F85\u8D44\u91D1\u6E90") + "</small></div>").join("") + '<div class="ffbFoot">\u70B9\u884C\u8DF3\u6301\u4ED3\u5361 \xB7 \u4E3B=\u4E3B\u529B\u51C0\u989D(\u5B9E\u65F6\u4F18\u5148) \xB7 60\u79D2\u81EA\u52A8\u5237\u65B0</div></div>';
     h += '<button type="button" class="ffbPill" id="ffbPillJL"><span>\u4E3B\u529B</span><b class="' + (D.has ? D.sum >= 0 ? "up" : "dn" : "") + '">' + (D.has ? ffBallFmtJL(D.sum) : "\u2014") + "</b><i>" + (st.open ? "\u25BE" : "\u25B8") + "</i></button>";
     el.innerHTML = h;
     const pill = $("ffbPillJL");
