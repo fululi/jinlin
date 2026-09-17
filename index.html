@@ -824,6 +824,15 @@ document.addEventListener("visibilitychange", () => {
         });
         loadSectorFundsJL.failAt = 0;
         loadSectorFundsJL._alt = 0;
+        try {
+          const _sf = JSON.parse(localStorage.getItem("jl_sector_ff_v1") || "{}") || {};
+          Object.keys(sectorFundsJL).forEach((k2) => {
+            const v2 = sectorFundsJL[k2];
+            if (v2 && Number.isFinite(v2.amt)) _sf[k2] = { amt: v2.amt, pct: v2.pct, d: typeof jlYMD === "function" ? jlYMD(new Date()) : "" };
+          });
+          jlSafeSetJL("jl_sector_ff_v1", JSON.stringify(_sf));
+        } catch (e2) {}
+
       } finally {
         clearTimeout(timer);
         loadSectorFundsJL.loading = false;
@@ -860,9 +869,15 @@ document.addEventListener("visibilitychange", () => {
     if (st && !sectorFundsJL[sector] && !loadSectorFundsJL.loading) loadSectorFundsJL();
     const se = document.querySelector("[data-sector-resonance]");
     if (se) {
-      const idx = sectorFundsJL[sector];
+      let idx = sectorFundsJL[sector];
+      if (!(idx && Number.isFinite(idx.amt))) {
+        try {
+          const _c2 = (JSON.parse(localStorage.getItem("jl_sector_ff_v1") || "{}") || {})[sector];
+          if (_c2 && Number.isFinite(+_c2.amt)) idx = { amt: +_c2.amt, pct: +_c2.pct, name: sector, _d: _c2.d };
+        } catch (e2) {}
+      }
       se.classList.toggle("dimPendJL", !(idx && Number.isFinite(idx.amt)));
-      se.textContent = idx && Number.isFinite(idx.amt) ? `${sector} \xB7 ${idx.pct >= 0 ? "+" : ""}${idx.pct.toFixed(2)}% \xB7 ${idx.amt >= 0 ? "\u8D44\u91D1\u6D41\u5165" : "\u8D44\u91D1\u6D41\u51FA"} ${fmtFundJL(idx.amt)}` : `${sector} \xB7 \u677F\u5757\u8D44\u91D1${loadSectorFundsJL.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u6682\u7F3A"}`;
+      se.textContent = idx && Number.isFinite(idx.amt) ? `${sector} \xB7 ${idx.pct >= 0 ? "+" : ""}${idx.pct.toFixed(2)}% \xB7 ${idx.amt >= 0 ? "\u8D44\u91D1\u6D41\u5165" : "\u8D44\u91D1\u6D41\u51FA"} ${fmtFundJL(idx.amt)}${idx._d && idx._d !== jlLastTradeDay() ? " ·昨" : ""}` : `${sector} \xB7 \u677F\u5757\u8D44\u91D1${loadSectorFundsJL.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u6682\u7F3A"}`;
     }
     const rv = (q, v) => {
       const e = document.querySelector(q);
@@ -3604,6 +3619,38 @@ document.addEventListener("visibilitychange", () => {
     let idx = 0, done = 0;
     async function one(x) {
       const off = await jlFfOffLoadJL(), oe = off && off.d[x.code.slice(2)];
+      if (window.__jlPoolRT) {
+        try {
+          const _sec = (x.code.indexOf("sh") === 0 ? "1." : "0.") + x.code.slice(2);
+          let _rt = await jlEmGet("https://push2his.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=f51,f52&secid=" + _sec);
+          let _kl = _rt && _rt.data && _rt.data.klines;
+          if (!(_kl && _kl.length)) {
+            _rt = await jlEmGet("https://push2delay.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=f51,f52&secid=" + _sec);
+            _kl = _rt && _rt.data && _rt.data.klines;
+          }
+          const _la = _kl && _kl.length ? _kl[_kl.length - 1].split(",") : null, _net = _la ? +_la[1] : NaN;
+          if (Number.isFinite(_net)) {
+            const _dt = String(_la[0] || "").slice(0, 10), _tdy = (typeof jlYMD === "function" ? jlYMD(new Date()) : _dt);
+            const _offN = (oe && oe[1] || []).filter((v) => typeof v === "number");
+            const _nets = _offN.slice(-9).concat([_net]);
+            x.fundSourceValid = true;
+            x.fundStatus = _dt === _tdy ? "实时·盘中" : "实时·" + _dt.slice(5);
+            x.d0 = _net;
+            x.d0Date = _dt;
+            x.d0Stale = _dt === _tdy ? 0 : 1;
+            x.f5 = _nets.slice(-5).reduce((a, v) => a + v, 0);
+            x.f10 = _nets.reduce((a, v) => a + v, 0);
+            x.n10 = _nets.filter((v) => v > 0).length;
+            x.c2 = _nets.length >= 2 && _nets[_nets.length - 1] > 0 && _nets[_nets.length - 2] > 0 ? 1 : 0;
+            let _st = 0;
+            for (let q0 = _nets.length - 1; q0 >= 0 && _nets[q0] < 0; q0--) _st++;
+            x.outStreak = _st;
+            done++;
+            if (prog) prog("资金确认 " + done + "/" + list.length + " ·实时");
+            return;
+          }
+        } catch (e) {}
+      }
       if (oe) {
         const nets = (oe[1] || []).filter((v) => typeof v === "number").slice(-10);
         if (nets.length) {
@@ -4003,6 +4050,7 @@ document.addEventListener("visibilitychange", () => {
     JLPOOL_RUN = true;
     window.JLPOOL_ABORT = "";
     window.__jlFfOffUsed = false;
+    window.__jlPoolRT = true;
     JLPOOL_PCT = 0;
     JLPOOL_PROG = "\u51C6\u5907\u5B87\u5B99\u2026";
     renderWatch();
