@@ -9025,7 +9025,7 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
     });
-    if (!__OFF("q")) setInterval(importTencentQuotes, 3e4);
+    if (!__OFF("q")) (function qLoopJL() { importTencentQuotes(); const d = new Date(), wd = d.getDay(), t = d.getHours() * 60 + d.getMinutes(), live = wd >= 1 && wd <= 5 && t >= 552 && t <= 902; setTimeout(qLoopJL, live ? 8e3 : 3e4); })();
     if (!__OFF("k")) setInterval(() => {
       if (document.body.classList.contains("ksEmbed")) return;
       loadRealKlines();
