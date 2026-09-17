@@ -220,7 +220,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 
 .fundJL{margin-top:8px;border:1px solid #81e6d92b;border-radius:10px;background:#081a27aa;overflow:hidden}
 .fundTglJL{display:flex;justify-content:space-between;align-items:center;width:100%;padding:7px 9px;background:none;border:0;color:#c7e3e8;font-size:10.5px;cursor:pointer;min-height:34px}
-.fundTglJL b{color:#81e6d9;font-weight:500;font-size:10.5px;flex:none;white-space:nowrap}.fundTglJL{gap:6px}.fundTglJL .fundLiveJL{white-space:nowrap;margin-left:auto}
+.fundTglJL b{color:#81e6d9;font-weight:500;font-size:10.5px;flex:none;white-space:nowrap}.fundTglJL{gap:6px;flex-wrap:wrap}.fundTglJL .fundLiveJL{white-space:nowrap;margin-left:auto}
 .fundLiveJL{font-size:12px;font-weight:600}.fundNetJL{font-style:normal;font-size:9.5px;white-space:nowrap}
 .fundLiveJL.up{color:#ff5459}.fundLiveJL.dn{color:#1fdc93}
 .fundBodyJL{padding:2px 9px 9px}
@@ -228,7 +228,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .fundGridJL canvas{width:100%;height:88px;display:block;background:#050f18;border-radius:8px}
 .fundTxtJL{margin-top:6px;font-size:11px;color:#c7e3e8;line-height:1.6}
 .fundTxtJL i{color:#bcd6e1;font-style:normal;font-size:9px}
-.fundNetJL{font-size:10.5px;font-weight:600;font-style:normal;margin-left:auto}
+.fundNetJL{font-size:10.5px;font-weight:600;font-style:normal;margin-left:auto;white-space:normal}
 .deckSB{display:none}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
@@ -10556,21 +10556,49 @@ document.addEventListener("visibilitychange", () => {
         } else if (oMode !== "min") {
           const d2 = await emFetchJL(base + "&lmt=20&klt=101");
           const kl2 = d2 && d2.data && d2.data.klines || [];
-          if (kl2.length) {
-            mode = "\u8FD120\u65E5";
+          const cRows = (() => {
+            try {
+              const _all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {}, _cf = _all[code] || _all[String(code).replace(/^(sh|sz)/, "")];
+              return _cf && _cf.rows || [];
+            } catch (e2) {
+              return [];
+            }
+          })();
+          const m20 = {};
+          cRows.slice(-20).forEach((r2) => {
+            if (r2 && r2.d != null && Number.isFinite(+r2.main)) m20[String(r2.d)] = +r2.main / 1e8;
+          });
+          kl2.forEach((t) => {
+            const a = t.split(",");
+            if (a[0] && Number.isFinite(+a[1])) m20[String(a[0])] = +a[1] / 1e8;
+          });
+          const days = Object.keys(m20).sort().slice(-20);
+          if (days.length) {
+            mode = "近20日";
             let cm = 0;
-            bars = kl2.map((t) => +t.split(",")[1] / 1e8);
-            times = kl2.map((t) => t.split(",")[0]);
+            bars = days.map((k2) => m20[k2]);
+            times = days;
             ddx = bars.map((v) => {
               cm += v;
               return ltsz > 0 ? cm * 1e8 / ltsz * 100 : null;
             });
-            const la = kl2[kl2.length - 1].split(",");
-            lastM = +la[1] / 1e8;
-            lastS = +la[5] / 1e8;
-            lastB = +la[4] / 1e8;
-            lastMid = +la[3] / 1e8;
-            lastSml = +la[2] / 1e8;
+            if (kl2.length) {
+              const la = kl2[kl2.length - 1].split(",");
+              lastM = +la[1] / 1e8;
+              lastS = +la[5] / 1e8;
+              lastB = +la[4] / 1e8;
+              lastMid = +la[3] / 1e8;
+              lastSml = +la[2] / 1e8;
+            } else {
+              const lr = cRows[cRows.length - 1];
+              if (lr) {
+                lastM = +lr.main / 1e8;
+                lastB = +lr.big / 1e8;
+                lastMid = +lr.mid / 1e8;
+                lastSml = +lr.small / 1e8;
+                lastS = Number.isFinite(+lr.sup) ? +lr.sup / 1e8 : NaN;
+              }
+            }
           }
         }
       } catch (e) {
