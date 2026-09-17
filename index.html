@@ -793,11 +793,19 @@ document.addEventListener("visibilitychange", () => {
   const sectorFundsJL = {};
   function loadSectorFundsJL() {
     if (loadSectorFundsJL.loading) return;
-    if (Date.now() - (loadSectorFundsJL.failAt || 0) < 6e5) return;
+    if (Date.now() - (loadSectorFundsJL.failAt || 0) < 6e4) return;
     loadSectorFundsJL.loading = true;
     const cb = "jinlinSector_" + Date.now();
     const bail = () => {
       loadSectorFundsJL.loading = false;
+      if (!loadSectorFundsJL._alt) {
+        loadSectorFundsJL._alt = 1;
+        delete window[cb];
+        sc.remove();
+        loadSectorFundsJL();
+        return;
+      }
+      loadSectorFundsJL._alt = 0;
       loadSectorFundsJL.failAt = Date.now();
       delete window[cb];
       sc.remove();
@@ -814,6 +822,7 @@ document.addEventListener("visibilitychange", () => {
           if (names[k]) sectorFundsJL[names[k]] = { amt: Number(r.f62), pct: Number(r.f3), name: names[k] };
         });
         loadSectorFundsJL.failAt = 0;
+        loadSectorFundsJL._alt = 0;
       } finally {
         clearTimeout(timer);
         loadSectorFundsJL.loading = false;
@@ -823,7 +832,7 @@ document.addEventListener("visibilitychange", () => {
       }
     };
     const sc = document.createElement("script");
-    sc.src = "https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f3,f12,f14,f62&secids=90.BK0448,90.BK1036,90.BK0546&cb=" + cb + "&_=" + Date.now();
+    sc.src = (loadSectorFundsJL._alt ? "https://push2delay.eastmoney.com" : "https://push2.eastmoney.com") + "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f3,f12,f14,f62&secids=90.BK0448,90.BK1036,90.BK0546&cb=" + cb + "&_=" + Date.now();
     sc.onerror = bail;
     const timer = setTimeout(bail, 8e3);
     document.body.appendChild(sc);
