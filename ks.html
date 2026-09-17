@@ -151,6 +151,9 @@
   body.embed #ksBarJL::-webkit-scrollbar { display: none; }
   body.embed #ksBarJL button { flex: none; font-family: inherit; font-size: 10px; line-height: 1.6; padding: 2px 7px; border-radius: 7px; border: 1px solid #87b7c43d; background: transparent; color: #a0b9c6; cursor: pointer; }
   body.embed #ksBarJL button.on { color: #81e6d9; border-color: #81e6d9; }
+  #ksBarJL button#ksBarLockBtn.on { background: #ffd21f30; border-color: #ffd21f; color: #ffd21f; }
+  #ksBarJL button#ksBarLockBtn.lkFlash { animation: lkFl .45s ease-in-out 4; }
+  @keyframes lkFl { 50% { background: #ffd21f88; box-shadow: 0 0 12px #ffd21faa; } }
   body.embed #ksBarJL i.sep { width: 1px; height: 14px; background: #87b7c433; flex: none; margin: 0 2px; }
   /* ks-0906-22: 主题三态挂html根元素(body背景会穿透到页面画布层,filter管不着=字变板不变的根因); invert(1)全量反色不灰蒙蒙, hue-rotate(180)保红涨绿跌; 纯黑(默认)/外黑内白(只反画布)/纯白(整页反色) */
   html.theme-lc [data-chart] { filter: invert(1) hue-rotate(180deg); }
@@ -2464,7 +2467,7 @@ function buildTools() {
         S.tool = null;
       }
       else {
-        if (S.drawLock) { hint("画线已锁定 · 先点指标行「🔒画线锁」解锁"); }
+        if (S.drawLock) { hint("画线已锁定 · 点顶部「已锁\uD83D\uDD12」一键解锁"); var _lb = document.getElementById("ksBarLockBtn"); if (_lb) { _lb.classList.remove("lkFlash"); void _lb.offsetWidth; _lb.classList.add("lkFlash"); } }
         else { S.tool = t[0]; S.pending = []; S.selected = -1;
         hint("「" + t[1] + "」已激活 · 依次点 " + t[2] + " 个点（主图/副图都能落点）"); }
       }
@@ -4642,7 +4645,7 @@ function applyUrl() {
           this.textContent = S.drawLock ? "已锁🔒" : "锁定";
           this.classList.toggle("on", !!S.drawLock);
         }, "画线锁: 锁住后拖不动改不了");
-        if (_lkBtn) { _lkBtn.style.minWidth = "48px"; _lkBtn.style.fontWeight = "700"; _lkBtn.style.color = "#ffd21f"; }
+        if (_lkBtn) { _lkBtn.id = "ksBarLockBtn"; _lkBtn.style.minWidth = "48px"; _lkBtn.style.fontWeight = "700"; _lkBtn.style.color = "#ffd21f"; _lkBtn.textContent = S.drawLock ? "已锁\uD83D\uDD12" : "锁定"; _lkBtn.classList.toggle("on", !!S.drawLock); }
         mk("提醒", function () { var a = document.querySelector("[data-alerts]"); if (a) a.click(); }, "提醒汇总");
         mk("K/线", function () { S.lineMode = !S.lineMode; this.classList.toggle("on", S.lineMode); draw(); hint(S.lineMode ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         document.body.insertBefore(bar, document.body.firstChild);
