@@ -4702,6 +4702,19 @@ document.addEventListener("visibilitychange", () => {
     if (d && d.data) return d;
     d = await one("https://push2delay.eastmoney.com");
     if (d && d.data) return d;
+    if (typeof emJsonp === "function") {
+      const jp = (host) => new Promise((res) => {
+        try {
+          emJsonp(host + path, (e2, d2) => res(!e2 && d2 && d2.data ? d2 : null), 9e3);
+        } catch (e3) {
+          res(null);
+        }
+      });
+      d = await jp("https://push2his.eastmoney.com");
+      if (d && d.data) return d;
+      d = await jp("https://push2delay.eastmoney.com");
+      if (d && d.data) return d;
+    }
     throw new Error("em\u53CC\u901A\u9053\u5747\u5931\u8D25");
   }
   let _sdpT = 0;
@@ -10574,7 +10587,7 @@ document.addEventListener("visibilitychange", () => {
           });
           const days = Object.keys(m20).sort().slice(-70);
           if (days.length) {
-            mode = "近20日";
+            mode = "近70日";
             let cm = 0;
             bars = days.map((k2) => m20[k2]);
             times = days;
