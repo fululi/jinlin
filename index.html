@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .22</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .23</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -2828,6 +2828,29 @@ document.addEventListener("visibilitychange", () => {
     const ffD0 = ff ? String(ff.d || "") : "", ffStale0 = ff ? ffD0.slice(0, 10) !== jlLastTradeDay() : false;
     const sf = sec ? sectorFundsJL[sec] : null, mt = mtempJL.data, ownV = ff && !ffStale0 ? ff.main : null, secV = sf && Number.isFinite(sf.amt) ? sf.amt : null, mtV = mt && Number.isFinite(mt.fund) ? mt.fund : null, dir = (v) => v == null || !Number.isFinite(v) ? NaN : v > 0 ? 1 : v < 0 ? -1 : 0, dO = dir(ownV), dS = dir(secV), dM = dir(mtV);
     let verdict, vc, short;
+    let ffStreak = 0;
+    try {
+      const _rows2 = (_ffMJL.d[s.code] || {}).rows || [];
+      for (let _i = _rows2.length - 1; _i >= 0; _i--) {
+        const _v = Number(_rows2[_i].main) || 0, _s2 = _v > 0 ? 1 : _v < 0 ? -1 : 0;
+        if (!_s2) break;
+        if (!ffStreak) ffStreak = _s2;
+        else if (ffStreak > 0 === _s2 > 0) ffStreak += _s2;
+        else break;
+      }
+    } catch (e) {
+    }
+    let pos60 = null;
+    try {
+      const _b6 = dailyBarsOf(s.code);
+      if (_b6 && _b6.length >= 60) {
+        const _w = _b6.slice(-60);
+        let _hh = -1e18, _ll = 1e18;
+        for (const _x of _w) { if (_x.h > _hh) _hh = _x.h; if (_x.l < _ll) _ll = _x.l; }
+        if (_hh > _ll) pos60 = (_w[_w.length - 1].c - _ll) / (_hh - _ll);
+      }
+    } catch (e) {
+    }
     if (priceFlat) {
       verdict = "平盘 · 等方向选择";
       short = "平盘";
@@ -2858,6 +2881,21 @@ document.addEventListener("visibilitychange", () => {
       vc = "am";
     }
     const ffD = ff ? String(ff.d || "").slice(5) : "", ffStale = ff ? String(ff.d || "").slice(0, 10) !== jlLastTradeDay() : false;
+    if (ffStreak >= 5) {
+      verdict = "连入" + ffStreak + "天 · 强势确认(趋势延续拿着别动)｜" + verdict;
+      short = "连入" + ffStreak + "天";
+      vc = "r";
+    } else if (ffStreak <= -3 && pos60 != null && pos60 > 0.8) {
+      verdict = "高位连出" + -ffStreak + "天 · 降档收紧止盈(非清仓信号)｜" + verdict;
+      short = "高位连出" + -ffStreak;
+      vc = "am";
+    } else if (ffStreak <= -5) {
+      verdict = "连出" + -ffStreak + "天 · 持续走弱｜" + verdict;
+      short = "连出" + -ffStreak;
+    } else if (ffStreak >= 3 && pos60 != null && pos60 < 0.3) {
+      verdict = "低位连入" + ffStreak + "天 · 中继风险慎接｜" + verdict;
+      short = "低位连入" + ffStreak;
+    }
     if (ffStale) {
       verdict = "\u8D44\u91D1\u6570\u636E\u622A\u81F3" + ffD + "\uFF08\u975E\u5F53\u65E5\uFF09\xB7 " + verdict;
     }
@@ -2866,7 +2904,7 @@ document.addEventListener("visibilitychange", () => {
     if (mtDt && mtLb.indexOf("\u65E7") > 0) {
       verdict = "\u5E02\u573A\u8D44\u91D1\u6570\u636E\u4E3A" + mtLb.slice(1, 6) + "\uFF08\u975E\u5F53\u65E5\uFF09\xB7 " + verdict;
     }
-    return { sec, ownV, secV, mtV, mtT: mt ? mt.t : null, dO, dS, dM, verdict, vc, short, ffD, ffStale, mtLb };
+    return { sec, ownV, secV, mtV, mtT: mt ? mt.t : null, dO, dS, dM, verdict, vc, short, ffD, ffStale, mtLb, ffStreak, pos60 };
   }
   function resoMiniJL(s) {
     const r = resoDataJL(s);
