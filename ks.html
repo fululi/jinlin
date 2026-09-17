@@ -591,7 +591,7 @@ function restore() {
     if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.atri == null) S.ind.atri = true; if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = true; if (S.ind.lsr == null) S.ind.lsr = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
-    if (o.drawLock) S.drawLock = true;
+    if (o.drawLock) S.drawLock = true; var _slb = document.getElementById("ksBarLockBtn"); if (_slb) { _slb.textContent = S.drawLock ? "已锁\uD83D\uDD12" : "锁定"; _slb.classList.toggle("on", !!S.drawLock); }
     if (o.monOpen != null) S.monOpen = !!o.monOpen;
     if (o.draw) DRAW = o.draw;
     if (o.collapsed != null) S.collapsed = !!o.collapsed;
