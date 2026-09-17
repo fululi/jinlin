@@ -838,8 +838,9 @@ function anchorXY(v, im, a) {
   }
   return { x: v.X(i), y: yOfPane(v, a.pane, a.p), i: i };
 }
-var FIB_R = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618, 2.618];
-var FIB_C = { "0": "#f2f5f3", "0.236": "#8fa9c9", "0.382": "#57a7ff", "0.5": "#c792ea", "0.618": "#ffd21f", "0.786": "#ff9a5c", "1": "#f2f5f3", "1.272": "#9db8d2", "1.618": "#b48ee8", "2.618": "#7e96b8" }; // ks-0906-20d: 去红化——端点白/0.382亮蓝(与绿强反差)/0.5紫/0.618金/0.786橙/扩展位冷灰蓝, 不与红涨绿跌打架
+var FIB_R = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.414, 1.618, 2.618];
+var FIB_C = { "0": "#f2f5f3", "0.236": "#8fa9c9", "0.382": "#57a7ff", "0.5": "#c792ea", "0.618": "#ffd21f", "0.786": "#ff9a5c", "1": "#f2f5f3", "1.272": "#6ee7ff", "1.414": "#3ddc97", "1.618": "#b48ee8", "2.618": "#dfe9f2" };
+var FIB_N = { "0.382": "接回·浅", "0.5": "接回·半", "0.618": "接回·深", "0.786": "接回·极限", "1.272": "冲刺一", "1.414": "冲刺二", "1.618": "冲刺·主", "2.618": "冲刺·尾" }; // ks-0906-20d: 去红化——端点白/0.382亮蓝(与绿强反差)/0.5紫/0.618金/0.786橙/扩展位冷灰蓝, 不与红涨绿跌打架
 function ptsOf(v, im, pts) {
   var out = [];
   for (var k = 0; k < pts.length; k++) {
@@ -971,6 +972,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   else if (t === "fib") {
     var p1 = dg.pts[0].p, p2 = dg.pts[1].p;
     var fx0 = Math.min(pts[0].x, pts[1].x);
+    window.__fibLastY = -99;
     for (var fi = 0; fi < FIB_R.length; fi++) {
       var r = FIB_R[fi], pr = p1 + (p2 - p1) * r, yy = yOfPane(v, dg.pts[0].pane, pr);
       if (dg.pts[0].pane !== "tqs" && (yy < v.pTop - 30 || yy > v.pTop + v.priceH + 30)) continue;
@@ -979,10 +981,18 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
       ctx.setLineDash(dg.dash ? [7, 5] : (r > 1 ? [4, 4] : []));
       ctx.beginPath(); ctx.moveTo(fx0, yy); ctx.lineTo(right, yy); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = ctx.strokeStyle;
-      ctx.font = "bold 10px Menlo, monospace";
-      ctx.fillText(r + "  " + fwp(pr), fx0 + 3, yy - 7);
-      ctx.font = "10px -apple-system, sans-serif";
+      if (yy - window.__fibLastY >= 12) {
+        window.__fibLastY = yy;
+        var _nm2 = FIB_N[String(r)] || "";
+        var _tx2 = (_nm2 ? _nm2 + " " : "") + r + "  " + fwp(pr);
+        ctx.font = "bold 10px Menlo, monospace";
+        var _tw4 = ctx.measureText(_tx2).width;
+        ctx.fillStyle = "rgba(6,10,8,0.88)";
+        ctx.fillRect(right - _tw4 - 8, yy - 12, _tw4 + 8, 13);
+        ctx.fillStyle = FIB_C[String(r)] || "#d5e0d8";
+        ctx.fillText(_tx2, right - _tw4 - 4, yy - 2);
+        ctx.font = "10px -apple-system, sans-serif";
+      }
     }
   }
   else if (t === "pct") {

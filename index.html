@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .23</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .24</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -126,7 +126,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .legBandJL .legTgt b{color:#ffd21f;font-weight:600}
 .legBandJL .legTgt i,.legBandJL .legStop i{color:#c2dae4;font-style:normal;font-size:8.5px;margin-left:4px}
 .legBandJL .legStop{flex:1 0 100%;color:#e2f2f7}
-.legBandJL .legStop b{color:#ff5459}.pbJL{margin:-4px 0 8px;padding:6px 8px;border:1px solid #81e6d922;border-radius:10px;background:#081a2766;font-size:9.5px;color:#c7e3e8}.pbJL.hot{border-color:#ffd21f66;background:#ffd21f0d}.pbRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:2px 0}.pbRow span{color:#8fb2bd;font-size:8.5px}.pbRow b{font-weight:500;color:#dcebef;font-size:9.5px}.pbRow i{color:#8fb2bd;font-size:8px;font-style:normal}.pbAlert{font-size:10px;font-weight:600;color:#ffd21f;padding:1px 0 3px}.pbAlert b{color:#ff5459}
+.legBandJL .legStop b{color:#ff5459}.pbJL{margin:-4px 0 8px;padding:6px 8px;border:1px solid #81e6d922;border-radius:10px;background:#081a2766;font-size:9.5px;color:#c7e3e8}.pbJL.hot{border-color:#ffd21f66;background:#ffd21f0d}.pbRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:2px 0}.pbRow span{color:#8fb2bd;font-size:8.5px}.pbRow b{font-weight:500;color:#dcebef;font-size:9.5px}.pbRow i{color:#8fb2bd;font-size:8px;font-style:normal}.pbAlert{font-size:10px;font-weight:600;color:#ffd21f;padding:1px 0 3px}.pbAlert b{color:#ff5459}.pbLv{font-weight:600;padding:0 2px;border-radius:4px}.pbLv i{font-style:normal;color:#9fc3cf;font-size:8px;margin-left:2px}.pbLv.hot{background:#ffd21f26;box-shadow:inset 0 0 0 1px #ffd21f88}.pbLv.c382{color:#57a7ff}.pbLv.c50{color:#c792ea}.pbLv.c618{color:#ffd21f}.pbLv.c786{color:#ff9a5c}.pbLv.e1272{color:#6ee7ff}.pbLv.e1414{color:#3ddc97}.pbLv.e1618{color:#ffd21f}.pbLv.e20{color:#ff6fb5}.pbLv.e2618{color:#f2f7fa}.pbCap{font-size:9.5px;font-weight:600;color:#e8f4f8;padding:1px 0 3px}.pbCap.zone{color:#57a7ff}.pbCap.zone2{color:#6ee7ff}.pbCap.warn{color:#ff9a5c}.pbCap.brk{color:#ff5459}.pbCap.top{color:#ffd21f}.pbNote{font-size:8px;color:#b8a46a;padding-top:2px}
 .legBandJL .legLo b{color:#63e4d4}
 .legBandJL .legHi b{color:#ff5459}
 .legBandJL .legPos{font-size:8.5px;padding:2px 6px;border-radius:6px;background:#87b7c422}
@@ -2946,10 +2946,25 @@ document.addEventListener("visibilitychange", () => {
     if (!leg || !(leg.L1 > 0) || !(leg.H1 > leg.L1)) return "";
     const lp = Number(s.base) || 0, hi0 = Number(s.high) || 0, hh = Math.max(leg.H1, lp, hi0), rng = hh - leg.L1;
     if (!(rng > 0)) return "";
-    const f = (r) => (hh - rng * r).toFixed(2), ext = (r) => (leg.L1 + rng * r).toFixed(2);
+    const bk = (r) => hh - rng * r, ex = (r) => leg.L1 + rng * r;
     const hiExp = leg.pos > 0.9 && typeof leg.run5 === "number" && leg.run5 > 0.1;
-    const stop = hiExp && leg.swing ? '<div class="pbAlert">\u9AD8\u655E\u53E3 \xB7 \u6B62\u76C8\u6536\u7D27 MA10 <b>' + leg.stopT.toFixed(2) + '</b> \xB7 \u7834\u4F4D\u5148\u51CF</div>' : "";
-    return '<div class="pbJL' + (hiExp ? " hot" : "") + '">' + stop + '<div class="pbRow"><span>\u63A5\u56DE\u6863</span><b>0.382 ' + f(0.382) + '</b><b>0.50 ' + f(0.5) + '</b><b>0.618 ' + f(0.618) + '</b><b>0.786 ' + f(0.786) + '</b></div><div class="pbRow"><span>\u51B2\u523A\u4F4D</span><b>1.272 ' + ext(1.272) + '</b><b>1.618 ' + ext(1.618) + '</b><i>\u817F\u4F4E ' + leg.L1.toFixed(2) + ' \u2192 \u6D3B\u9AD8 ' + hh.toFixed(2) + (hh > leg.H1 ? ' \xB7 \u5DF2\u91CD\u951A' : "") + '</i></div></div>';
+    const stop = hiExp && leg.swing ? '<div class="pbAlert">高敞口 · 止盈收紧 MA10 <b>' + leg.stopT.toFixed(2) + "</b> · 破位先减</div>" : "";
+    const cell = (nm, r, cl, v) => {
+      const hot = lp > 0 && Math.abs(v - lp) / lp < 0.005 ? " hot" : "", ds = lp > 0 ? (v - lp) / lp * 100 : 0;
+      return '<b class="pbLv ' + cl + hot + '">' + nm + " " + r + " " + v.toFixed(2) + "<i>" + (ds >= 0 ? "+" : "") + ds.toFixed(1) + "%</i></b>";
+    };
+    const back = [["接回·浅", "0.382", "c382", bk(0.382)], ["接回·半", "0.50", "c50", bk(0.5)], ["接回·深", "0.618", "c618", bk(0.618)], ["接回·极限", "0.786", "c786", bk(0.786)]];
+    const race = [["冲刺一", "1.272", "e1272", ex(1.272)], ["冲刺二", "1.414", "e1414", ex(1.414)], ["冲刺·主", "1.618", "e1618", ex(1.618)], ["冲刺四", "2.0", "e20", ex(2)], ["冲刺·尾", "2.618", "e2618", ex(2.618)]];
+    let cap = "", capCls = "";
+    const pull = lp > 0 ? (hh - lp) / rng : 0, offH = lp > 0 && hh > 0 ? (hh - lp) / hh * 100 : 0;
+    if (lp > 0 && lp < leg.L1) { cap = "已破腿起点 " + leg.L1.toFixed(2) + " · 旧接回档作废"; capCls = "brk"; }
+    else if (pull > 0.786) { cap = "回吐 " + (pull * 100).toFixed(0) + "% · 逼近腿起点 " + leg.L1.toFixed(2); capCls = "warn"; }
+    else if (pull >= 0.45) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐 " + (pull * 100).toFixed(0) + "% · 到深接回区(0.5~0.618)"; capCls = "zone"; }
+    else if (pull >= 0.3) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐 " + (pull * 100).toFixed(0) + "% · 到浅接回区(0.382附近)"; capCls = "zone2"; }
+    else if (lp >= ex(1.618) * 0.98) { cap = "到冲刺主目标区 " + ex(1.618).toFixed(2) + " · 落点参考"; capCls = "top"; }
+    else if (pull > 0.02) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐涨幅 " + (pull * 100).toFixed(0) + "%"; capCls = ""; }
+    const capH = cap ? '<div class="pbCap ' + capCls + '">' + cap + "</div>" : "";
+    return '<div class="pbJL' + (hiExp ? " hot" : "") + '">' + stop + capH + '<div class="pbRow"><span>接回档</span>' + back.map((o) => cell(o[0], o[1], o[2], o[3])).join("") + '</div><div class="pbRow"><span>冲刺位</span>' + race.map((o) => cell(o[0], o[1], o[2], o[3])).join("") + "<i>腿低 " + leg.L1.toFixed(2) + " → 活高 " + hh.toFixed(2) + (hh > leg.H1 ? " · 已重锚" : "") + (leg.h1Prov ? " · 未确认参考" : "") + "</i></div>" + '<div class="pbNote">fib刻度无统计边缘(0909严测) · 落点提示非信号</div></div>';
   }
   function tierStripHTMLJL(s, i) {
     const t = tiersViewJL(s);
@@ -3241,7 +3256,7 @@ document.addEventListener("visibilitychange", () => {
         if (pr.st === "brkL") sig = ["\u25BC\u7834\u4F4D", "g"];
         else if (pr.st === "brkH") sig = ["\u25B2\u5F3A\u52BF", "s"];
       }
-      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(i + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s.addedAt ? " \xB7 " + String(s.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s.base)}<small class="${cls(s.pct)}">${pct(s.pct)}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legLo">\u6CE2\u6BB5\u4F4E <b>${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span><span class="legPos ${leg.up ? "up" : "dn"}">${leg.up ? "\u4E0A\u884C\u817F" : "\u4E0B\u884C\u817F"} ${(leg.pos * 100).toFixed(0)}%${leg.bigUp ? " \xB7 \u4F4E\u70B9\u62AC\u9AD8" : ""}</span><span class="legHi">\u6CE2\u6BB5\u9AD8 <b>${(leg.H1 || leg.hi).toFixed(2)}</b><i>${leg.hiD ? leg.hiD.slice(5) : ""}</i></span>${leg.tgt2 ? `<span class="legTgt">\u4E2D\u6CE2\u6BB5\u76EE\u6807 <b>${leg.tgt1.toFixed(2)}</b> / <b>${leg.tgt2.toFixed(2)}</b><i>\u7B49\u5E45/1.618 \xB7 \u73B0\u4EF7\u8DDD\u76EE\u68072 ${((leg.tgt2 - lp) / lp * 100).toFixed(1)}%</i></span>` : ""}${leg.swing ? `<span class="legStop">\u6B62\u76C8 <b>${leg.stopT.toFixed(2)}</b><i>${leg.stopTSrc}</i> \xB7 \u6E05\u4ED3 <b>${leg.stopC.toFixed(2)}</b><i>${leg.stopCSrc}</i></span>` : ""}</div>` : ""}${leg ? playbookHTMLJL(s, leg) : ""}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
+      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(i + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s.addedAt ? " \xB7 " + String(s.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s.base)}<small class="${cls(s.pct)}">${pct(s.pct)}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legLo">\u6CE2\u6BB5\u4F4E <b>${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span><span class="legPos ${leg.up ? "up" : "dn"}">${leg.up ? "\u4E0A\u884C\u817F" : "\u4E0B\u884C\u817F"} ${(leg.pos * 100).toFixed(0)}%${leg.bigUp ? " \xB7 \u4F4E\u70B9\u62AC\u9AD8" : ""}</span><span class="legHi">\u6CE2\u6BB5\u9AD8 <b>${(leg.H1 || leg.hi).toFixed(2)}</b><i>${leg.hiD ? leg.hiD.slice(5) : ""}</i></span>${leg.tgt2 ? `<span class="legTgt">中波段目标 <b>${leg.tgt1.toFixed(2)}</b> / <b>${leg.tgt2.toFixed(2)}</b>${leg.tgt3 ? ` / <b>${leg.tgt3.toFixed(2)}</b>` : ""}<i>等幅/1.618/2.618 · 现价距目标2 ${((leg.tgt2 - lp) / lp * 100).toFixed(1)}%</i></span>` : leg.L1 ? `<span class="legTgt"><i>中波段目标待出 · 上一腿枢轴不足</i></span>` : ""}${leg.swing ? `<span class="legStop">\u6B62\u76C8 <b>${leg.stopT.toFixed(2)}</b><i>${leg.stopTSrc}</i> \xB7 \u6E05\u4ED3 <b>${leg.stopC.toFixed(2)}</b><i>${leg.stopCSrc}</i></span>` : ""}</div>` : ""}${leg ? playbookHTMLJL(s, leg) : ""}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
     }).join("");
     $("count").textContent = stocks.length ? `${String(active + 1).padStart(2, "0")} / ${String(stocks.length).padStart(2, "0")}` : "00 / 00";
     const hc = document.getElementById("holdCount");
@@ -5297,7 +5312,7 @@ document.addEventListener("visibilitychange", () => {
   function legFibJL(code, p) {
     const a0 = dailyBarsOf(code);
     if (a0.length < 10) return null;
-    const now = /* @__PURE__ */ new Date(), td = now.toLocaleDateString("sv-SE"), mins = now.getHours() * 60 + now.getMinutes(), a = a0.at(-1).t === td && mins <= 900 ? a0.slice(0, -1) : a0;
+    const now = /* @__PURE__ */ new Date(), td = now.toLocaleDateString("sv-SE"), mins = now.getHours() * 60 + now.getMinutes(), a = a0.at(-1).t === td && mins < 910 ? a0.slice(0, -1) : a0;
     if (a.length < 10) return null;
     const baseD = zzSegStartJL(a, zzThJL(a));
     let hi = null, lo = null, hiD = "", loD = "";
@@ -5314,7 +5329,7 @@ document.addEventListener("visibilitychange", () => {
       }
     }
     if (!(hi > lo)) return null;
-    const price = Number(p), pos = (price - lo) / (hi - lo), ret = (hi - price) / (hi - lo), upL = hiD > loD, rngL = hi - lo, levels = [0, 0.382, 0.5, 0.618, 0.786, 1, 1.27, 1.618].map((r) => ({ r, v: r <= 1 ? upL ? hi - rngL * r : lo + rngL * r : upL ? lo + rngL * r : hi - rngL * r }));
+    const price = Number(p), pos = (price - lo) / (hi - lo), ret = (hi - price) / (hi - lo), upL = hiD > loD, rngL = hi - lo, levels = [0, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.414, 1.618, 2.618].map((r) => ({ r, v: r <= 1 ? upL ? hi - rngL * r : lo + rngL * r : upL ? lo + rngL * r : hi - rngL * r }));
     const out = { lo, hi, pos, ret, up: hiD > loD, levels, from: loD < hiD ? loD : hiD, to: loD < hiD ? hiD : loD, loD, hiD, baseD };
     const zz = zzMergeSmallLegsJL(zzPivotsJL(a, zzThJL(a)), a);
     let L1 = null, H0 = null, L0 = null;
@@ -5358,6 +5373,11 @@ document.addEventListener("visibilitychange", () => {
         }
       }
     }
+    let h1Prov = 0;
+    if (L1 && !(H1 > L1.p)) {
+      const _hf1 = Math.max(hi || 0, price || 0);
+      if (_hf1 > L1.p) { H1 = _hf1; h1Prov = 1; }
+    }
     let upDays = 0;
     for (let i = cl.length - 1; i >= 19; i--) {
       let mv = 0;
@@ -5370,7 +5390,7 @@ document.addEventListener("visibilitychange", () => {
       const rng = H1 - L1.p;
       out.L1 = L1.p;
       out.L1d = L1.d;
-      out.H1 = H1;
+      out.H1 = H1; out.h1Prov = h1Prov;
       out.fib382 = H1 - rng * 0.382;
       out.fib50 = H1 - rng * 0.5;
       out.fib618 = H1 - rng * 0.618;
@@ -5379,8 +5399,9 @@ document.addEventListener("visibilitychange", () => {
       if (H0 && L0 && H0.p > L0.p) {
         const amp = H0.p / L0.p - 1;
         out.prevAmp = amp;
-        out.tgt1 = L1.p + (H0.p - L0.p);
-        out.tgt2 = L1.p + 1.618 * (H0.p - L0.p);
+        out.tgt1 = L1.p * (1 + amp);
+        out.tgt2 = L1.p * (1 + 1.618 * amp);
+        out.tgt3 = L1.p * (1 + 2.618 * amp);
       }
       if (upDays >= 2) {
         out.swing = true;
@@ -5524,6 +5545,41 @@ document.addEventListener("visibilitychange", () => {
     }
     if (large && pane === "price" && ksOn) renderKsOverlays(x, code, bars, startSafe, endSafe, count, L, R, T, B, X, Y);
     x.restore();
+    if (pane === "price" && period === "日K" && (large || c.id === "holdingChart")) {
+      try {
+        const _lp2 = bars.length ? Number(bars[bars.length - 1].c) || 0 : 0, _lg2 = _lp2 > 0 ? legFibJL(code, _lp2) : null;
+        if (_lg2 && _lg2.L1 > 0 && _lg2.H1 > _lg2.L1) {
+          const _hh3 = Math.max(_lg2.H1, _lp2), _rg3 = _hh3 - _lg2.L1;
+          if (_rg3 > 0) {
+            const _fl3 = [["接回·半 0.5", _hh3 - _rg3 * 0.5, "#c792ea"], ["接回·深 0.618", _hh3 - _rg3 * 0.618, "#ffd21f"], ["冲刺·主 1.618", _lg2.L1 + _rg3 * 1.618, "#e8c568"]];
+            x.font = "8px monospace";
+            let _ly3 = -99;
+            _fl3.forEach((o) => {
+              const _yy = Y(o[1]);
+              if (_yy < T + 6 || _yy > B - 6) return;
+              x.strokeStyle = o[2] + "73";
+              x.setLineDash([4, 3]);
+              x.lineWidth = 0.8;
+              x.beginPath();
+              x.moveTo(L, _yy);
+              x.lineTo(R, _yy);
+              x.stroke();
+              x.setLineDash([]);
+              if (_yy - _ly3 < 11) return;
+              _ly3 = _yy;
+              const _t3 = o[0] + " " + o[1].toFixed(2), _tw3 = x.measureText(_t3).width;
+              x.fillStyle = "rgba(4,16,24,0.85)";
+              x.fillRect(R - _tw3 - 6, _yy - 11, _tw3 + 6, 11);
+              x.fillStyle = o[2];
+              x.textAlign = "right";
+              x.fillText(_t3, R - 4, _yy - 2);
+              x.textAlign = "left";
+            });
+          }
+        }
+      } catch (e) {
+      }
+    }
     if (large && pane === "price" && ksOn && ovOn.tdhl) renderDailyLevelsJL(x, { Y, padL: L, pTop: T, priceH: B - T }, ksStructs(code, bars).kl, R);
     if (large && pane === "price" && window.__volEmbedJL !== false) {
       const vv = visible.map((b) => Number(b.v) || 0), vmx = Math.max(...vv, 1), vbw = Math.max(2, (R - L) / count * 0.5);
@@ -5828,21 +5884,29 @@ document.addEventListener("visibilitychange", () => {
         x.lineTo(X(line.b.i), Y(line.b.v));
         x.stroke();
         if (line.fib) {
-          const dv = line.b.v - line.a.v;
+          const dv = line.b.v - line.a.v, FIBD = [[0, "#8fb2bd", "0"], [0.236, "#8fb2bd", "0.236"], [0.382, "#57a7ff", "接回·浅 0.382"], [0.5, "#c792ea", "接回·半 0.5"], [0.618, "#ffd21f", "接回·深 0.618"], [0.786, "#ff9a5c", "接回·极限 0.786"], [1, "#8fb2bd", "1"], [1.272, "#6ee7ff", "冲刺一 1.272"], [1.618, "#e8c568", "冲刺·主 1.618"]];
+          let lastLy = -99;
           x.lineWidth = 0.8;
-          [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618].forEach((r2) => {
-            const v2 = line.a.v + dv * r2, y2 = Y(v2);
+          FIBD.forEach((fd) => {
+            const v2 = line.a.v + dv * fd[0], y2 = Y(v2);
             if (y2 < T || y2 > B) return;
-            x.strokeStyle = "#e8c56866";
+            x.strokeStyle = fd[1] + "66";
             x.setLineDash([4, 3]);
             x.beginPath();
             x.moveTo(L, y2);
             x.lineTo(R, y2);
             x.stroke();
             x.setLineDash([]);
-            x.fillStyle = "#e8c568";
+            if (y2 - lastLy < 11) return;
+            lastLy = y2;
             x.font = "8px monospace";
-            x.fillText((r2 * 100).toFixed(1) + "% " + v2.toFixed(2), L + 3, y2 - 2);
+            const _t2 = fd[2] + " " + v2.toFixed(2), _tw2 = x.measureText(_t2).width;
+            x.fillStyle = "rgba(4,16,24,0.85)";
+            x.fillRect(R - _tw2 - 6, y2 - 11, _tw2 + 6, 11);
+            x.fillStyle = fd[1];
+            x.textAlign = "right";
+            x.fillText(_t2, R - 4, y2 - 2);
+            x.textAlign = "left";
           });
         }
         x.restore();
