@@ -3986,6 +3986,16 @@ document.addEventListener("visibilitychange", () => {
           JLPOOL = snap;
           window.__jlPoolAsOf = String(snap.d0);
           jlSafeSetJL("jl_pool_v1", JSON.stringify(snap));
+          try {
+            const _all = [];
+            ["L", "OBS", "RISK"].forEach((b) => {
+              const bb = snap[b] || {};
+              Object.keys(bb).forEach((k) => (bb[k] || []).forEach((x) => {
+                if (x && x.code && !x.ind) _all.push(x);
+              }));
+            });
+            if (_all.length) await poolIndJL(_all);
+          } catch (e) {}
           JLPOOL_PCT = 100;
           JLPOOL_PROG = "";
           try {
@@ -4395,7 +4405,7 @@ document.addEventListener("visibilitychange", () => {
     if (!jx || !jx.picks || !jx.picks.length) return "";
     return '<div class="poolLayerHead" id="plh_jx" style="scroll-margin-top:46px"><b style="color:#ffd21f">今日精选 · 全A管道终榜</b><span class="plhN">' + jx.picks.length + '</span><small>' + jx.date + ' · 雷达=值得看非买入指令</small></div><div class="poolPicks">' + jx.picks.map((x) => {
       const held = stocks.some((s2) => s2.code === x.code);
-      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + x.color + '">' + x.layer + '</span></div><div class="ppSub">' + x.code + " · " + money(x.close) + (x.d0 ? ' · <i style="font-style:normal;color:' + (x.d0 >= 0 ? "#ff9d97" : "#5fe3b8") + '">当日主力 ' + fmtFundJL(x.d0) + "</i>" : "") + (x.f5 ? ' · <i style="font-style:normal;color:#8ea8b9">5日 ' + fmtFundJL(x.f5) + "</i>" : "") + "</div>" + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.close + '">＋ 加观察</button>') + "</div>";
+      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + x.color + '">' + x.layer + '</span></div><div class="ppSub">' + x.code + " · " + money(x.close) + (x.d0 ? ' · <i style="font-style:normal;color:' + (x.d0 >= 0 ? "#ff9d97" : "#5fe3b8") + '">当日主力 ' + fmtFundJL(x.d0) + "</i>" : "") + (x.f5 ? ' · <i style="font-style:normal;color:#8ea8b9">5\u65E5 ' + fmtFundJL(x.f5) + "</i>" : "") + ((x.ind || JLPOOL_HY[x.code] || JLPOOL_HY["sh" + x.code] || JLPOOL_HY["sz" + x.code]) ? ' · <i style="font-style:normal;color:#8ea8b9">' + (x.ind || JLPOOL_HY[x.code] || JLPOOL_HY["sh" + x.code] || JLPOOL_HY["sz" + x.code]) + "</i>" : "") + "</div>" + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.close + '">＋ 加观察</button>') + "</div>";
     }).join("") + "</div>";
   }
   function renderPoolJL() {
