@@ -581,7 +581,7 @@ document.addEventListener("visibilitychange", () => {
       day.title = "\u6309\u5F53\u524D\u6301\u4ED3\u80A1\u6570 \xD7\uFF08\u73B0\u4EF7\u2212\u6628\u6536\uFF09\uFF1B\u4E0D\u542B\u76D8\u4E2D\u4EA4\u6613\u53CA\u8D39\u7528";
     }
     const count = $("holdCount");
-    if (count) count.textContent = stocks.length + " \u53EA\u6301\u4ED3";
+    if (count) count.textContent = stocks.filter((x) => x.qty > 0 || researchedStocksJL.some((r) => r && r.code === x.code)).length + " \u53EA\u6301\u4ED3";
   }
   function importEastmoneyQuotes() {
     const cb = "jinlinEast_" + Date.now();
