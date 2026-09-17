@@ -556,7 +556,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: true, hma: false, lsr: true, ctrl: false, volMain: false, vp: false, cyq: true }, // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元)
+  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: true, hma: false, lsr: true, ctrl: false, volMain: false, vp: false, cyq: true, zz: true }, // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawLock: false, pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式
   favs: [], favPick: false, favHide: false, // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
@@ -588,7 +588,7 @@ function restore() {
     if (o.codes && o.codes.length) S.codes = o.codes;
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = normalizeKlt(o.klt);
-    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.atri == null) S.ind.atri = true; if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = true; if (S.ind.lsr == null) S.ind.lsr = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
+    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.atri == null) S.ind.atri = true; if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = true; if (S.ind.lsr == null) S.ind.lsr = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
     if (o.drawLock) S.drawLock = true; var _slb = document.getElementById("ksBarLockBtn"); if (_slb) { _slb.textContent = S.drawLock ? "已锁\uD83D\uDD12" : "锁定"; _slb.classList.toggle("on", !!S.drawLock); }
@@ -599,7 +599,7 @@ function restore() {
     if (o.favs && o.favs.length) S.favs = o.favs;
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
-    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: true, hma: false, lsr: true };
+    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: true, hma: false, lsr: true, zz: true };
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
@@ -701,6 +701,37 @@ function macdArr(kl) {
   }
   return { dif: dif, dea: de, bar: bar };
 }
+// ks-0918-zz: 共振追涨(用户实盘验证口径照搬勿改): M1=500*(EMA(C,6)-EMA(C,18))/EMA(C,18)+2, M2=EMA(M1,3); 背景红绿=DEMA(VAR1,2,2)对VAR6; M1>2出紫柱,共振紫需DEMA>VAR6
+var _zzCache = { k: null, v: null };
+function zzArr(kl) {
+  if (_zzCache.k === kl) return _zzCache.v;
+  var n = kl.length, i, j;
+  var C = [], O = [], H = [], L = [];
+  for (i = 0; i < n; i++) { O.push(kl[i][1]); H.push(kl[i][2]); L.push(kl[i][3]); C.push(kl[i][4]); }
+  function ema2(arr, m) {
+    var a = 2 / (m + 1), out = new Array(arr.length), e = arr[0];
+    for (var q = 0; q < arr.length; q++) { e = q === 0 ? arr[0] : a * arr[q] + (1 - a) * e; out[q] = e; }
+    return out;
+  }
+  function llv(s2, m, q) {
+    var r = s2[Math.max(0, q - m + 1)];
+    for (var q2 = Math.max(0, q - m + 1); q2 <= q; q2++) if (s2[q2] < r) r = s2[q2];
+    return r;
+  }
+  var V1 = [], V2, V4 = [], V6 = [], V7, V8, M1 = [], M2, DE, bg = [], purple = [];
+  for (i = 0; i < n; i++) V1.push((3 * C[i] + H[i] + L[i] + O[i]) / 6);
+  V2 = ema2(V1, 35);
+  for (i = 0; i < n; i++) V4.push((llv(V2, 10, i) + llv(V2, 30, i) + llv(V2, 90, i)) / 3);
+  for (i = 0; i < n; i++) V6.push((llv(V4, 5, i) + llv(V4, 15, i) + llv(V4, 30, i)) / 3);
+  V7 = ema2(C, 6); V8 = ema2(C, 18);
+  for (i = 0; i < n; i++) M1.push(500 * (V7[i] - V8[i]) / V8[i] + 2);
+  M2 = ema2(M1, 3);
+  DE = ema2(ema2(V1, 2), 2);
+  for (i = 0; i < n; i++) { bg.push(DE[i] > V6[i] ? 1 : 0); purple.push(M1[i] > 2 ? (bg[i] ? 2 : 1) : 0); }
+  var r = { M1: M1, M2: M2, bg: bg, purple: purple };
+  _zzCache = { k: kl, v: r };
+  return r;
+}
 function view() {
   var n = S.kl.length;
   if (!n) return null;
@@ -710,6 +741,7 @@ function view() {
   var avail = hh - padT - padB;
   var volH = (S.ind.volMain && S.bigPane !== "vol") ? 0 : Math.round(avail * 0.085); // ks-0906-13: VOL叠加主图时不占副图位(点VOL放大仍出大副图)
   var macdH = S.ind.macd === false ? 0 : Math.round(avail * 0.13);
+  var zzH = S.ind.zz ? Math.round(avail * 0.11) : 0; // ks-0918-zz: 共振追涨副图,跟在MACD下面
   var ddxH = 0;
   var zlyyH = S.ind.zlyy && !noFund(S.active) ? Math.round(avail * 0.11) : 0; // ks-0907-02: 副图加高,不再挤成一条线
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0; // ks-0907-02: 资金控盘(真钱口径),同上加高
@@ -717,12 +749,13 @@ function view() {
   var tqsH = S.ind.tqs ? Math.round(avail * 0.12) : 0; // 强弱T面板(零轴柱状,全周期可读)
   if (S.bigPane === "vol") volH = Math.round(avail * 0.32);
   else if (S.bigPane === "macd" && macdH) macdH = Math.round(avail * 0.32);
+  else if (S.bigPane === "zz" && zzH) zzH = Math.round(avail * 0.32);
   else if (S.bigPane === "zlyy" && zlyyH) zlyyH = Math.round(avail * 0.32);
   else if (S.bigPane === "ctrl" && ctrlH) ctrlH = Math.round(avail * 0.32);
   else if (S.bigPane === "rt" && rtH) rtH = Math.round(avail * 0.32);
   else if (S.bigPane === "tqs" && tqsH) tqsH = Math.round(avail * 0.32);
-  var subN = (volH ? 1 : 0) + (macdH ? 1 : 0) + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0);
-  var priceH = avail - volH - macdH - ddxH - zlyyH - ctrlH - rtH - tqsH - 6 * subN;
+  var subN = (volH ? 1 : 0) + (macdH ? 1 : 0) + (zzH ? 1 : 0) + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0);
+  var priceH = avail - volH - macdH - zzH - ddxH - zlyyH - ctrlH - rtH - tqsH - 6 * subN;
   if (!S.count) S.count = loadZoom(); // ks-0910-39: 先回忆上次手动缩放,没有再走默认
   if (!S.count) { // ks-0906-7: 分钟级默认从当日开盘看起(1日窗口), 日周月仍按屏宽自适应
     if (S.klt === "101" || S.klt === "102") S.count = Math.max(30, Math.round(plotW / 6.5));
@@ -749,15 +782,16 @@ function view() {
   var step = plotW / (i1 - i0);
   var pTop = S.ind.paneTop ? padT + (avail - priceH) : padT;
   var volY = S.ind.paneTop ? padT : padT + priceH + 6, macdY = volY + volH + 6;
-  var rtY = macdY + macdH + 6;
+  var zzY = macdY + macdH + 6;
+  var rtY = zzY + (zzH ? zzH + 6 : 0);
   var ddxY = rtY + (rtH ? rtH + 6 : 0);
   var zlyyY = ddxY + (ddxH ? ddxH + 6 : 0);
   var ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0);
   var tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0);
-  var bottom = S.ind.paneTop ? pTop + priceH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (ddxH ? ddxY + ddxH : (rtH ? rtY + rtH : macdY + macdH)))));
+  var bottom = S.ind.paneTop ? pTop + priceH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (ddxH ? ddxY + ddxH : (rtH ? rtY + rtH : (zzH ? zzY + zzH : macdY + macdH))))));
   return {
     w: w, hh: hh, i0: i0, i1: i1, n: n, step: step, padL: padL, padR: padR, padT: padT,
-    priceH: priceH, pTop: pTop, volY: volY, volH: volH, macdY: macdY, macdH: macdH, vMax: vMax,
+    priceH: priceH, pTop: pTop, volY: volY, volH: volH, macdY: macdY, macdH: macdH, zzY: zzY, zzH: zzH, vMax: vMax,
     rtY: rtY, rtH: rtH,
     ddxY: ddxY, ddxH: ddxH, zlyyY: zlyyY, zlyyH: zlyyH, ctrlY: ctrlY, ctrlH: ctrlH, tqsY: tqsY, tqsH: tqsH, bottom: bottom,
     X: function (i) { return padL + (i - i0 + 0.5) * step; },
@@ -777,6 +811,7 @@ function paneLabelAt(v, x, y) {
   function inLbl(py, ph) { return ph && y >= py && y <= py + Math.min(15, ph) && x <= v.padL + 210; }
   if (inLbl(v.volY, v.volH)) return "vol";
   if (v.macdH && inLbl(v.macdY, v.macdH)) return "macd";
+  if (v.zzH && inLbl(v.zzY, v.zzH)) return "zz";
   if (v.rtH && inLbl(v.rtY, v.rtH)) return "rt";
   if (v.zlyyH && inLbl(v.zlyyY, v.zlyyH)) return "zlyy";
   if (v.ctrlH && inLbl(v.ctrlY, v.ctrlH)) return "ctrl";
@@ -788,6 +823,7 @@ function paneAt(v, y) {
   if (!v) return null;
   if (v.volH && y >= v.volY && y <= v.volY + v.volH) return "vol";
   if (v.macdH && y >= v.macdY && y <= v.macdY + v.macdH) return "macd";
+  if (v.zzH && y >= v.zzY && y <= v.zzY + v.zzH) return "zz";
   if (v.rtH && y >= v.rtY && y <= v.rtY + v.rtH) return "rt";
   if (v.zlyyH && y >= v.zlyyY && y <= v.zlyyY + v.zlyyH) return "zlyy";
   if (v.ctrlH && y >= v.ctrlY && y <= v.ctrlY + v.ctrlH) return "ctrl";
@@ -813,6 +849,7 @@ function paneRectOf(v, pn) {
   var y, h;
   if (pn === "vol") { y = v.volY; h = v.volH; }
   else if (pn === "macd") { y = v.macdY; h = v.macdH; }
+  else if (pn === "zz") { y = v.zzY; h = v.zzH; }
   else if (pn === "rt") { y = v.rtY; h = v.rtH; }
   else if (pn === "zlyy") { y = v.zlyyY; h = v.zlyyH; }
   else if (pn === "ctrl") { y = v.ctrlY; h = v.ctrlH; }
@@ -1140,7 +1177,7 @@ function renderPaneDrawings(ctx, v) {
     }
   }
   // 副图画线通道(泛化): 强弱T/VOL/MACD/实时主力/主力净额/控盘, 按比例锚渲染, 裁在各自副图区
-  ["tqs", "vol", "macd", "rt", "zlyy", "ctrl"].forEach(function (pn) {
+  ["tqs", "vol", "macd", "zz", "rt", "zlyy", "ctrl"].forEach(function (pn) {
     var rc = paneRectOf(v, pn);
     if (!rc) return;
     var _hasP = false;
@@ -1660,6 +1697,47 @@ function drawReal() {
     ctx.stroke();
   });
   }
+  // ks-0918-zz: 共振追涨副图(M1黄/M2蓝/红绿背景/M1>2紫柱,实心亮紫=共振)
+  if (v.zzH) {
+  var zz = zzArr(kl);
+  var z0 = v.zzY, zLo = -2, zHi = 2;
+  for (i = i0; i < i1; i++) { zLo = Math.min(zLo, zz.M1[i], zz.M2[i]); zHi = Math.max(zHi, zz.M1[i], zz.M2[i]); }
+  var zPd = (zHi - zLo) * 0.08; zHi += zPd; zLo -= zPd;
+  var ZY = function (val) { return z0 + (zHi - val) / (zHi - zLo) * v.zzH; };
+  gridSt(ctx);
+  ctx.beginPath(); ctx.moveTo(v.padL, z0); ctx.lineTo(v.padL + (i1 - i0) * v.step, z0); ctx.stroke();
+  ctx.fillStyle = "#9fb0a6"; ctx.font = "10px -apple-system, sans-serif";
+  ctx.fillText("共振追涨 M1/M2", v.padL + 4, z0 + 8);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#ffd21f";
+  ctx.fillText("M1 " + zz.M1[i1 - 1].toFixed(2), v.padL + (i1 - i0) * v.step - 4, z0 + 8);
+  ctx.fillStyle = "#4a9eff";
+  ctx.fillText("M2 " + zz.M2[i1 - 1].toFixed(2), v.padL + (i1 - i0) * v.step - 4, z0 + 19);
+  ctx.textAlign = "left";
+  var zbw = Math.max(1, v.step * 0.62);
+  var zy2 = ZY(2), zy_2 = ZY(-2);
+  for (i = i0; i < i1; i++) {
+    ctx.fillStyle = zz.bg[i] ? "rgba(224,82,82,0.16)" : "rgba(63,168,96,0.16)";
+    ctx.fillRect(v.X(i) - zbw / 2, Math.min(zy2, zy_2), zbw, Math.max(1, Math.abs(zy_2 - zy2)));
+  }
+  ctx.strokeStyle = "rgba(154,186,197,0.4)"; ctx.lineWidth = 1;
+  [0, 2].forEach(function (lv) { ctx.beginPath(); ctx.moveTo(v.padL, ZY(lv)); ctx.lineTo(v.padL + (i1 - i0) * v.step, ZY(lv)); ctx.stroke(); });
+  for (i = i0; i < i1; i++) {
+    if (!zz.purple[i]) continue;
+    ctx.fillStyle = zz.purple[i] === 2 ? "#d94fd9" : "rgba(217,79,217,0.45)";
+    var zyt = ZY(zz.M1[i]);
+    ctx.fillRect(v.X(i) - zbw / 2, Math.min(zyt, zy2), zbw, Math.max(1, Math.abs(zy2 - zyt)));
+  }
+  [["M1", "#ffd21f"], ["M2", "#4a9eff"]].forEach(function (pr) {
+    ctx.strokeStyle = pr[1]; ctx.lineWidth = 1.4; ctx.beginPath();
+    var st = false;
+    for (var j2 = i0; j2 < i1; j2++) {
+      if (!st) { ctx.moveTo(v.X(j2), ZY(zz[pr[0]][j2])); st = true; }
+      else ctx.lineTo(v.X(j2), ZY(zz[pr[0]][j2]));
+    }
+    ctx.stroke();
+  });
+  }
   // ICT 叠加层 + 昨高低 + 监测面板（同样裁切在主图区内）
   ctx.save();
   ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
@@ -1718,6 +1796,7 @@ function drawReal() {
       { y: v.pTop, h: v.priceH, id: "main" },
       { y: v.volY, h: v.volH, id: "vol" },
       { y: v.macdY, h: v.macdH, id: "macd" },
+      { y: v.zzY, h: v.zzH, id: "zz" },
       { y: v.rtY, h: v.rtH, id: "rt" },
       { y: v.ddxY, h: v.ddxH, id: "ddx" },
       { y: v.zlyyY, h: v.zlyyH, id: "zlyy" },
@@ -1755,6 +1834,7 @@ function drawReal() {
       if (curP.id === "main") lab = v.P(ry).toFixed(d2);
       else if (curP.id === "vol") lab = "量 " + (ck[5] >= 1e4 ? (ck[5] / 1e4).toFixed(1) + "万" : ck[5]);
       else if (curP.id === "macd") { var xmd = macdArr(kl); lab = "DIF " + xmd.dif[ci].toFixed(3) + " DEA " + xmd.dea[ci].toFixed(3); }
+      else if (curP.id === "zz") { var xzz = zzArr(kl); lab = "M1 " + xzz.M1[ci].toFixed(2) + " M2 " + xzz.M2[ci].toFixed(2); }
       else if (curP.id === "tqs" && S._tqs && S._tqs.pos) lab = "强弱T " + S._tqs.pos[ci].toFixed(0) + (S._tqs.pos[ci] >= 80 ? " 高位" : (S._tqs.pos[ci] <= 20 ? " 低位" : ""));
       if (lab != null) {
         ctx.font = "10px Menlo, monospace";
@@ -4484,7 +4564,7 @@ function renderExtraPanes(ctx, v) {
   }
 }
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["macd", "MACD"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
