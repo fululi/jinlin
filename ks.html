@@ -973,8 +973,9 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     var p1 = dg.pts[0].p, p2 = dg.pts[1].p;
     var fx0 = Math.min(pts[0].x, pts[1].x);
     window.__fibLastY = -99;
-    for (var fi = 0; fi < FIB_R.length; fi++) {
-      var r = FIB_R[fi], pr = p1 + (p2 - p1) * r, yy = yOfPane(v, dg.pts[0].pane, pr);
+    var FIB_SEQ = p2 >= p1 ? FIB_R.slice().reverse() : FIB_R; // v.89: 低→高画线时yy随档位递减,防撞只吃递增序会跳光标签;按屏幕自上而下贴签
+    for (var fi = 0; fi < FIB_SEQ.length; fi++) {
+      var r = FIB_SEQ[fi], pr = p1 + (p2 - p1) * r, yy = yOfPane(v, dg.pts[0].pane, pr);
       if (dg.pts[0].pane !== "tqs" && (yy < v.pTop - 30 || yy > v.pTop + v.priceH + 30)) continue;
       ctx.strokeStyle = FIB_C[String(r)] || "#d5e0d8";
       ctx.lineWidth = r === 0 || r === 1 ? 1 : (r === 0.618 || r === 0.382 ? 0.9 : 0.7);
