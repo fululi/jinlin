@@ -5957,6 +5957,20 @@ document.addEventListener("visibilitychange", () => {
     } else target.innerHTML = cardQuote(stock, c, null) + " <small></small>";
   }
   function emJsonp(url, cb, ms) {
+    const Q = emJsonp._q || (emJsonp._q = []);
+    Q.push([url, cb, ms || 12e3]);
+    if (emJsonp._pump) return;
+    emJsonp._pump = setInterval(() => {
+      const it = Q.shift();
+      if (!it) {
+        clearInterval(emJsonp._pump);
+        emJsonp._pump = null;
+        return;
+      }
+      emJsonp._fire(it[0], it[1], it[2]);
+    }, 110);
+  }
+  emJsonp._fire = function (url, cb, ms) {
     const name = "emcb_" + Date.now() + "_" + Math.round(Math.random() * 1e9);
     const sc = document.createElement("script");
     let done = false;
@@ -5976,7 +5990,7 @@ document.addEventListener("visibilitychange", () => {
     sc.src = url + (url.indexOf("?") >= 0 ? "&" : "?") + "cb=" + name;
     document.head.appendChild(sc);
     setTimeout(() => fin(new Error("\u8BF7\u6C42\u8D85\u65F6")), ms || 12e3);
-  }
+  };
   function secidJL(code) {
     const b = String(code).replace(/^(sh|sz)/, "");
     return /^[569]/.test(b) ? "1." + b : "0." + b;
