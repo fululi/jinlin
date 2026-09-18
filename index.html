@@ -446,12 +446,12 @@ document.addEventListener("visibilitychange", () => {
   function vpEnd(vp, len) {
     return vp.end < 0 ? len - 1 : Math.min(vp.end, len - 1);
   }
-  const hldVpJL = { count: 160, end: -1, ys: 1, offset: 0 };
+  const hldVpJL = { count: 240, end: -1, ys: 1, offset: 0 };
   const _pvVpMapJL = /* @__PURE__ */ new Map();
   function pvVpJL(c2) {
     let v = _pvVpMapJL.get(c2);
     if (!v) {
-      v = { count: 160, end: -1, ys: 1, offset: 0 };
+      v = { count: 240, end: -1, ys: 1, offset: 0 };
       _pvVpMapJL.set(c2, v);
     }
     return v;
@@ -4966,7 +4966,13 @@ document.addEventListener("visibilitychange", () => {
           }
         }
         if (rows.length >= 2) {
-          realCache.set(st.code + "|" + period, rows.slice(-320));
+          const _prevK = realCache.get(st.code + "|" + period);
+          let _mrg = rows;
+          if (_prevK && _prevK.length && rows.length) {
+            const _cut = _prevK.findIndex((r) => String(r.t) >= String(rows[0].t));
+            if (_cut > 0) _mrg = _prevK.slice(0, _cut).concat(rows);
+          }
+          realCache.set(st.code + "|" + period, _mrg.slice(-1920));
           if (klt === 101 && rows.length >= 15) dkSaveJL(st.code, rows);
           cache.delete(st.code + "|" + period);
           loadRealKlines._dirty = true;
@@ -4981,6 +4987,50 @@ document.addEventListener("visibilitychange", () => {
       paint();
     }
     __mk("k.done");
+  }
+  const _olderBusyJL = /* @__PURE__ */ new Set(), _olderDoneJL = /* @__PURE__ */ new Set();
+  async function loadOlderJL(code) {
+    const key = code + "|" + period;
+    if (_olderBusyJL.has(key) || _olderDoneJL.has(key)) return;
+    const rows = realCache.get(key);
+    if (!rows || rows.length < 2 || rows.length >= 1920) return;
+    _olderBusyJL.add(key);
+    try {
+      const klt = realKlt(), cd = code.startsWith("sh") || code.startsWith("sz") ? code : (/^6/.test(code) || /^5/.test(code) ? "sh" : "sz") + code, sec = cd.startsWith("sh") ? "1." : "0.", t0 = String(rows[0].t || "");
+      const dt = new Date(+t0.slice(0, 4), +t0.slice(5, 7) - 1, +t0.slice(8, 10));
+      dt.setDate(dt.getDate() - 1);
+      const end = String(dt.getFullYear()) + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0");
+      let older = [];
+      try {
+        const res = await loadKlineJSONP("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + sec + cd.slice(2) + "&klt=" + klt + "&fqt=1&lmt=320&end=" + end + "&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56");
+        older = normRealRows(res && res.data && res.data.klines);
+      } catch (e) {
+      }
+      if (!older.length && klt >= 101) {
+        try {
+          const per = klt === 101 ? "day" : klt === 102 ? "week" : "month";
+          const r = await fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + cd + "," + per + ",," + end + ",320,qfq", { cache: "no-store", signal: AbortSignal.timeout(1e4) });
+          const d = await r.json(), nn = d && d.data && d.data[cd], a = nn && (nn["qfq" + per] || nn[per]) || [];
+          older = a.map((x2) => ({ t: x2[0], o: +x2[1], c: +x2[2], h: +x2[3], l: +x2[4], v: +x2[5] })).filter((x2) => x2.t && [x2.o, x2.c, x2.h, x2.l, x2.v].every(Number.isFinite));
+        } catch (e) {
+        }
+      }
+      const add = older.filter((r) => String(r.t) < t0);
+      if (!add.length) {
+        _olderDoneJL.add(key);
+        return;
+      }
+      realCache.set(key, add.concat(rows).slice(-1920));
+      const shift = (v) => {
+        if (v && v.end >= 0) v.end += add.length;
+      };
+      shift(hldVpJL);
+      _pvVpMapJL.forEach(shift);
+      paint();
+    } catch (e) {
+    } finally {
+      _olderBusyJL.delete(key);
+    }
   }
   const cache = /* @__PURE__ */ new Map();
   function lastBar(bars) {
@@ -8125,7 +8175,7 @@ document.addEventListener("visibilitychange", () => {
     const purple = M1.map((v, i) => v > 2 ? bg[i] ? 2 : 1 : 0);
     return { M1, M2, bg, purple };
   }
-  function zzPaneDrawJL(c, code, vp) {
+  function zzPaneDrawJL(c, code, vp, cx) {
     if (!c || !c.getClientRects().length) return;
     const w = c.clientWidth, h = c.clientHeight;
     if (w < 10 || h < 10) return;
@@ -8195,6 +8245,16 @@ document.addEventListener("visibilitychange", () => {
     };
     line(zz.M1, "#ffd21f");
     line(zz.M2, "#4a9eff");
+    if (cx != null) {
+      x.strokeStyle = "#81e6d966";
+      x.setLineDash([3, 3]);
+      x.lineWidth = 1;
+      x.beginPath();
+      x.moveTo(cx, T);
+      x.lineTo(cx, B);
+      x.stroke();
+      x.setLineDash([]);
+    }
     x.fillStyle = "#c9dfe8";
     x.font = "8px monospace";
     x.fillText("共振·M1 " + zz.M1[end].toFixed(2) + " M2 " + zz.M2[end].toFixed(2), L + 2, T + 8);
@@ -8208,7 +8268,7 @@ document.addEventListener("visibilitychange", () => {
     } catch (e) {
     }
     if (subMode === "zz") {
-      zzPaneDrawJL(c, stocks[active].code, hldVpJL);
+      zzPaneDrawJL(c, stocks[active].code, hldVpJL, holdingCross ? holdingCross.x : null);
       return;
     }
     if (!c.getClientRects().length) return;
@@ -8572,7 +8632,8 @@ document.addEventListener("visibilitychange", () => {
       qa("[data-chart-code]").forEach((c) => _pt(() => renderWatchQuote(c)));
       qa("[data-sub-code]").forEach((c) => _pt(() => {
         const mc = document.querySelector('[data-chart-code="' + c.dataset.subCode + '"]');
-        zzPaneDrawJL(c, c.dataset.subCode, mc ? pvVpJL(mc) : pvVpJL(c));
+        const _cr = mc ? miniCross.get(mc) : null;
+        zzPaneDrawJL(c, c.dataset.subCode, mc ? pvVpJL(mc) : pvVpJL(c), _cr ? _cr.x : null);
       }));
       if (page === "chartPage") {
         const s = byCode(selected);
@@ -9576,13 +9637,20 @@ document.addEventListener("visibilitychange", () => {
       if (cm) {
         const r0 = cm.getBoundingClientRect();
         miniCross.set(cm, { x: e.clientX - r0.left, y: e.clientY - r0.top });
+      } else {
+        const sb = e.target.closest("[data-sub-code]");
+        const mc2 = sb ? pvMainOfJL(sb) : null;
+        if (mc2) {
+          const r0 = mc2.getBoundingClientRect();
+          miniCross.set(mc2, { x: e.clientX - r0.left, y: clamp(e.clientY - r0.top, 0, r0.height - 1) });
+        }
       }
       if (pvPan) {
         const el = pvPan.el, c2 = pvPan.c;
         const r = el.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
         const v = pvVpJL(c2), m = maps.get(c2), n2 = series(c2.dataset.chartCode, false).length;
         if (!pvPan.axis && Math.hypot(p.x - pvPan.x, p.y - pvPan.y) > 9) pvPan.axis = Math.abs(p.x - pvPan.x) >= Math.abs(p.y - pvPan.y) ? "h" : "v";
-        if (m && pvPan.axis === "h") v.end = clamp(pvPan.end - (p.x - pvPan.x) / (m.R - m.L) * (v.count - 1), v.count - 1, Math.max(v.count - 1, n2 - 1));
+        if (m && pvPan.axis === "h") { v.end = clamp(pvPan.end - (p.x - pvPan.x) / (m.R - m.L) * (v.count - 1), v.count - 1, Math.max(v.count - 1, n2 - 1)); if (vpEnd(v, n2) - v.count + 1 <= 12) loadOlderJL(c2.dataset.chartCode); }
         if (m && pvPan.axis === "v") v.offset = pvPan.offset + (m.V(pvPan.y) - m.V(p.y));
       }
       paint();
@@ -9590,7 +9658,7 @@ document.addEventListener("visibilitychange", () => {
     for (const event of ["pointerout", "pointerup", "pointercancel"]) $("watchList").addEventListener(event, (e) => {
       const wasPan = !!pvPan;
       pvPan = null;
-      const c2 = e.target.closest("[data-chart-code]");
+      const c2 = e.target.closest("[data-chart-code]") || pvMainOfJL(e.target);
       if (c2) miniCross.delete(c2);
       if (c2 || wasPan) paint();
     });
@@ -9599,7 +9667,7 @@ document.addEventListener("visibilitychange", () => {
       if (!c2) return;
       e.preventDefault();
       const v = pvVpJL(c2), n2 = series(c2.dataset.chartCode, false).length;
-      v.count = clamp(Math.round(v.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(320, n2)));
+      v.count = clamp(Math.round(v.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(960, n2)));
       v.end = clamp(vpEnd(v, n2), v.count - 1, Math.max(v.count - 1, n2 - 1));
       paint();
     }, { passive: false });
@@ -9626,7 +9694,7 @@ document.addEventListener("visibilitychange", () => {
           if (same.length === 2) {
             const d1 = Math.hypot(same[0].x - same[1].x, same[0].y - same[1].y);
             const v = pvVpJL(pvPinchJL.c), n2 = series(pvPinchJL.c.dataset.chartCode, false).length;
-            v.count = clamp(Math.round(pvPinchJL.c0 * pvPinchJL.d0 / Math.max(20, d1)), 12, Math.max(12, Math.min(320, n2)));
+            v.count = clamp(Math.round(pvPinchJL.c0 * pvPinchJL.d0 / Math.max(20, d1)), 12, Math.max(12, Math.min(960, n2)));
             v.end = clamp(vpEnd(v, n2), v.count - 1, Math.max(v.count - 1, n2 - 1));
             paint();
           }
@@ -9924,7 +9992,7 @@ document.addEventListener("visibilitychange", () => {
       if (hPan) {
         const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
         if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
-        if (m && hPan.axis === "h") hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
+        if (m && hPan.axis === "h") { hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1)); if (stocks[active] && vpEnd(hldVpJL, n2) - hldVpJL.count + 1 <= 12) loadOlderJL(stocks[active].code); }
         if (m && hPan.axis === "v") hldVpJL.offset = hPan.offset + (m.V(hPan.y) - m.V(p.y));
       }
       paint();
@@ -9976,7 +10044,7 @@ document.addEventListener("visibilitychange", () => {
         if (hPan) {
           const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
           if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
-          if (m && hPan.axis === "h") hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
+          if (m && hPan.axis === "h") { hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1)); if (stocks[active] && vpEnd(hldVpJL, n2) - hldVpJL.count + 1 <= 12) loadOlderJL(stocks[active].code); }
           if (m && hPan.axis === "v") hldVpJL.offset = hPan.offset + (m.V(hPan.y) - m.V(p.y));
         }
         paint();
@@ -9996,7 +10064,7 @@ document.addEventListener("visibilitychange", () => {
         e.preventDefault();
         const n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
         if (!n2) return;
-        hldVpJL.count = clamp(Math.round(hldVpJL.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(320, n2)));
+        hldVpJL.count = clamp(Math.round(hldVpJL.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(960, n2)));
         hldVpJL.end = clamp(vpEnd(hldVpJL, n2), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
         paint();
       }, { passive: false });
@@ -10004,7 +10072,7 @@ document.addEventListener("visibilitychange", () => {
     hldZoomJL(hc);
     hldZoomJL(hsc);
     hc.ondblclick = () => {
-      Object.assign(hldVpJL, { count: 160, end: -1, ys: 1, offset: 0 });
+      Object.assign(hldVpJL, { count: 240, end: -1, ys: 1, offset: 0 });
       holdingCross = null;
       paint();
     };
@@ -10028,7 +10096,7 @@ document.addEventListener("visibilitychange", () => {
           const d1 = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
           const n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
           if (!n2) return;
-          hldVpJL.count = clamp(Math.round(hPinchJL.c0 * hPinchJL.d0 / Math.max(20, d1)), 12, Math.max(12, Math.min(320, n2)));
+          hldVpJL.count = clamp(Math.round(hPinchJL.c0 * hPinchJL.d0 / Math.max(20, d1)), 12, Math.max(12, Math.min(960, n2)));
           hldVpJL.end = clamp(vpEnd(hldVpJL, n2), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
           paint();
         }
