@@ -10101,6 +10101,9 @@ document.addEventListener("visibilitychange", () => {
         const k = hldKeyJL(hldActJL.pane);
         (lines[k] = lines[k] || []).push({ a: hldActJL.a, b: hldActJL.cur, fib: hldToolJL === "fib" });
         save();
+        hldToolJL = null;
+        const hdb2 = $("hldDrawBarJL");
+        if (hdb2) hdb2.querySelectorAll("[data-hd=line],[data-hd=fib]").forEach((x2) => x2.classList.remove("on"));
       } else save();
       hldActJL = null;
       paint();
