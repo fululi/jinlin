@@ -10008,6 +10008,7 @@ document.addEventListener("visibilitychange", () => {
           if (!(rg > 0)) return;
           const FR = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618];
           x.font = "8px monospace";
+          let lastLy = -99;
           FR.forEach((r2) => {
             const pv = lo + rg * r2, fy = mm.Y(pv);
             if (fy < mm.T - 2 || fy > mm.B + 2) return;
@@ -10019,8 +10020,15 @@ document.addEventListener("visibilitychange", () => {
             x.lineTo(mm.R, fy);
             x.stroke();
             x.setLineDash([]);
+            if (fy - lastLy < 10) return;
+            lastLy = fy;
+            const _ft = r2 + " " + pv.toFixed(2), _fw = x.measureText(_ft).width;
+            x.fillStyle = "rgba(4,16,24,0.85)";
+            x.fillRect(mm.R - _fw - 6, fy - 8, _fw + 6, 10);
             x.fillStyle = col;
-            x.fillText(r2 + " " + pv.toFixed(2), mm.R + 2, fy + 3);
+            x.textAlign = "right";
+            x.fillText(_ft, mm.R - 4, fy + 2);
+            x.textAlign = "left";
           });
           return;
         }
