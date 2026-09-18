@@ -10002,28 +10002,36 @@ document.addEventListener("visibilitychange", () => {
       if (hldHiddenJL || typeof mm.X !== "function") return;
       const yOf = (pt) => pane === "sub" ? mm.T + pt.pr * (mm.B - mm.T) : mm.Y(pt.v);
       const draw1 = (ln, sel) => {
+        const col = sel ? "#ffd21f" : light ? "#9056c1" : "#d5b5ff";
+        if (ln.fib && pane === "price") {
+          const lo = Math.min(ln.a.v, ln.b.v), hi = Math.max(ln.a.v, ln.b.v), rg = hi - lo;
+          if (!(rg > 0)) return;
+          const FR = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618];
+          x.font = "8px monospace";
+          FR.forEach((r2) => {
+            const pv = lo + rg * r2, fy = mm.Y(pv);
+            if (fy < mm.T - 2 || fy > mm.B + 2) return;
+            x.strokeStyle = col + (sel ? "cc" : "77");
+            x.lineWidth = sel ? 1.2 : 0.7;
+            x.setLineDash([4, 3]);
+            x.beginPath();
+            x.moveTo(mm.L, fy);
+            x.lineTo(mm.R, fy);
+            x.stroke();
+            x.setLineDash([]);
+            x.fillStyle = col;
+            x.fillText(r2 + " " + pv.toFixed(2), mm.R + 2, fy + 3);
+          });
+          return;
+        }
         const ax = mm.X(ln.a.i), ay = yOf(ln.a), bx = mm.X(ln.b.i), by = yOf(ln.b);
-        x.strokeStyle = sel ? "#ffd21f" : light ? "#9056c1" : "#d5b5ff";
+        const sl = (by - ay) / (bx - ax || 1e-9);
+        x.strokeStyle = col;
         x.lineWidth = sel ? 2 : 1.2;
         x.beginPath();
-        x.moveTo(ax, ay);
-        x.lineTo(bx, by);
+        x.moveTo(mm.L, ay + sl * (mm.L - ax));
+        x.lineTo(mm.R, ay + sl * (mm.R - ax));
         x.stroke();
-        if (ln.fib && pane === "price") {
-          const FR = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618];
-          x.lineWidth = 0.7;
-          x.setLineDash([3, 3]);
-          x.strokeStyle = sel ? "#ffd21f88" : "#d5b5ff66";
-          FR.forEach((r2) => {
-            const fy = ay + (by - ay) * r2;
-            if (fy < mm.T || fy > mm.B) return;
-            x.beginPath();
-            x.moveTo(Math.min(ax, bx), fy);
-            x.lineTo(Math.max(ax, bx), fy);
-            x.stroke();
-          });
-          x.setLineDash([]);
-        }
       };
       (lines[hldKeyJL(pane)] || []).forEach((ln, li) => draw1(ln, !!(hldSelJL && hldSelJL.pane === pane && hldSelJL.li === li)));
       if (hldActJL && hldActJL.mode === "create" && hldActJL.pane === pane && hldActJL.cur) draw1({ a: hldActJL.a, b: hldActJL.cur, fib: hldToolJL === "fib" }, false);
@@ -10034,7 +10042,7 @@ document.addEventListener("visibilitychange", () => {
       (lines[hldKeyJL(pane)] || []).forEach((ln, li) => {
         const ax = m.X(ln.a.i), ay = pane === "sub" ? m.T + ln.a.pr * (m.B - m.T) : m.Y(ln.a.v), bx = m.X(ln.b.i), by = pane === "sub" ? m.T + ln.b.pr * (m.B - m.T) : m.Y(ln.b.v);
         const da = Math.hypot(p.x - ax, p.y - ay), db = Math.hypot(p.x - bx, p.y - by);
-        if (da <= 14 || db <= 14) {
+        if (da <= 24 || db <= 24) {
           const d0 = Math.min(da, db);
           if (!best || d0 < best.d) best = { li, part: da <= db ? "a" : "b", d: d0 };
           return;
