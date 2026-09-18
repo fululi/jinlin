@@ -8175,7 +8175,7 @@ document.addEventListener("visibilitychange", () => {
     const purple = M1.map((v, i) => v > 2 ? bg[i] ? 2 : 1 : 0);
     return { M1, M2, bg, purple };
   }
-  function zzPaneDrawJL(c, code, vp, cx) {
+  function zzPaneDrawJL(c, code, vp, cx, cy) {
     if (!c || !c.getClientRects().length) return;
     const w = c.clientWidth, h = c.clientHeight;
     if (w < 10 || h < 10) return;
@@ -8253,6 +8253,13 @@ document.addEventListener("visibilitychange", () => {
       x.moveTo(cx, T);
       x.lineTo(cx, B);
       x.stroke();
+      if (cy != null) {
+        const yy = clamp(cy, T, B);
+        x.beginPath();
+        x.moveTo(L, yy);
+        x.lineTo(R, yy);
+        x.stroke();
+      }
       x.setLineDash([]);
     }
     x.fillStyle = "#c9dfe8";
@@ -8268,7 +8275,7 @@ document.addEventListener("visibilitychange", () => {
     } catch (e) {
     }
     if (subMode === "zz") {
-      zzPaneDrawJL(c, stocks[active].code, hldVpJL, holdingCross ? holdingCross.x : null);
+      zzPaneDrawJL(c, stocks[active].code, hldVpJL, holdingCross ? holdingCross.x : null, holdingCross && holdingCross.sub ? holdingCross.y : null);
       return;
     }
     if (!c.getClientRects().length) return;
@@ -8359,6 +8366,13 @@ document.addEventListener("visibilitychange", () => {
       x.moveTo(holdingCross.x, T);
       x.lineTo(holdingCross.x, B);
       x.stroke();
+      if (holdingCross.sub) {
+        const yy = clamp(holdingCross.y, T, B);
+        x.beginPath();
+        x.moveTo(L, yy);
+        x.lineTo(R, yy);
+        x.stroke();
+      }
       x.setLineDash([]);
     }
     x.fillStyle = "#c9dfe8";
@@ -8633,7 +8647,7 @@ document.addEventListener("visibilitychange", () => {
       qa("[data-sub-code]").forEach((c) => _pt(() => {
         const mc = document.querySelector('[data-chart-code="' + c.dataset.subCode + '"]');
         const _cr = mc ? miniCross.get(mc) : null;
-        zzPaneDrawJL(c, c.dataset.subCode, mc ? pvVpJL(mc) : pvVpJL(c), _cr ? _cr.x : null);
+        zzPaneDrawJL(c, c.dataset.subCode, mc ? pvVpJL(mc) : pvVpJL(c), _cr ? _cr.x : null, null);
       }));
       if (page === "chartPage") {
         const s = byCode(selected);
@@ -9999,7 +10013,6 @@ document.addEventListener("visibilitychange", () => {
     });
     for (const event of ["pointerleave", "pointerup", "pointercancel"]) hc.addEventListener(event, () => {
       hPan = null;
-      holdingCross = null;
       paint();
     });
     const hstJL = $("hldSubToggleJL");
@@ -10039,7 +10052,7 @@ document.addEventListener("visibilitychange", () => {
         }
       });
       hsc.addEventListener("pointermove", (e) => {
-        const r = hsc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
+        const r = hsc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top, sub: 1 };
         holdingCross = p;
         if (hPan) {
           const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
@@ -10051,7 +10064,6 @@ document.addEventListener("visibilitychange", () => {
       });
       for (const event of ["pointerleave", "pointerup", "pointercancel"]) hsc.addEventListener(event, () => {
         hPan = null;
-        holdingCross = null;
         paint();
       });
     }
