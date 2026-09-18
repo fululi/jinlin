@@ -12266,6 +12266,303 @@ document.addEventListener("visibilitychange", () => {
     } catch (e) {
     }
   }, 25e3);
+
+  // ==================== v.99 三联: 信号审判 / 盘前情绪 / 产业链链图 ====================
+  function _jGet99(k, dft) {
+    try {
+      const v = JSON.parse(localStorage.getItem(k) || "");
+      return v == null ? dft : v;
+    } catch (e) {
+      return dft;
+    }
+  }
+  function _gtimg99(codes, cb) {
+    if (!codes.length) {
+      cb({});
+      return;
+    }
+    const sc = document.createElement("script");
+    sc.charset = "GBK";
+    let done = false;
+    const fin = (ok) => {
+      if (done) return;
+      done = true;
+      clearTimeout(t9);
+      sc.remove();
+      const out = {};
+      if (ok) codes.forEach((c) => {
+        const a = String(window["v_" + c] || "").split("~");
+        if (a.length > 5 && +a[3] > 0 && +a[4] > 0) out[c] = { name: a[1], p: +a[3], pv: +a[4], op: +a[5], t: a[30] || "" };
+      });
+      cb(out);
+    };
+    const t9 = setTimeout(() => fin(false), 9e3);
+    sc.onload = () => fin(true);
+    sc.onerror = () => fin(false);
+    sc.src = "https://qt.gtimg.cn/q=" + codes.join(",") + "&_=" + Date.now();
+    document.head.appendChild(sc);
+  }
+  // ---------- C 信号审判报告 ----------
+  const JUDGE_BASE99 = 41.7;
+  function _judgeV99(wr, n) {
+    if (n < 30) return ["积累中", "#8fa8b3"];
+    if (wr >= JUDGE_BASE99 + 3) return ["存活", "#1fdc93"];
+    if (wr < JUDGE_BASE99) return ["考虑退役", "#ff5459"];
+    return ["观察", "#ffd21f"];
+  }
+  function judgeCsv99() {
+    try {
+      const bl = _jGet99("jl_band_ledger_v1", {});
+      let csv = "# 预测带台账\n日期,代码,名称,带下沿,带上沿,ATR14,ku,kd,实际低,实际高,收盘,判定\n" + Object.keys(bl).sort().map((k) => {
+        const r = bl[k];
+        return [r.d, r.code, r.name, r.blo, r.bhi, r.atr, r.ku, r.kd, r.alo, r.ahi, r.c, r.st].join(",");
+      }).join("\n");
+      const pl = _jGet99("jl_pool_picks_v1", {});
+      csv += "\n\n# 龙池主推\n日期,代码,名称,层,分,收盘,T1,T3\n" + Object.keys(pl).sort().map((d) => ((pl[d] || {}).picks || []).map((x) => [d, x.code, x.name, x.layer, x.score, x.close, x.r1 == null ? "" : x.r1, x.r3 == null ? "" : x.r3].join(",")).join("\n")).filter((x) => x).join("\n");
+      const fr = _jGet99("jl_fund_review_v1", {});
+      csv += "\n\n# 资金背离(v.78起连2日同向门槛)\n日期,代码,名称,类型,昨日净额,当日涨跌\n" + Object.keys(fr).sort().map((k) => {
+        const r = fr[k];
+        return [r.d, r.code, r.name, r.typ, r.ym, r.tpc].join(",");
+      }).join("\n");
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(csv).then(() => toast("审判CSV已复制（三段台账）"), () => toast("复制失败"));
+      else toast("当前浏览器不支持自动复制");
+    } catch (e) {
+      toast("导出失败");
+    }
+  }
+  function judgeRender99() {
+    try {
+      const rp = $("reviewPage");
+      if (!rp) return;
+      let sec = $("judgeJL");
+      if (!sec) {
+        sec = document.createElement("section");
+        sec.id = "judgeJL";
+        sec.className = "glass";
+        rp.insertBefore(sec, $("bandLedgerJL") || null);
+      }
+      const bl = _jGet99("jl_band_ledger_v1", {});
+      const rows = Object.keys(bl).sort().map((k) => bl[k]);
+      const bn = rows.length, inN = rows.filter((r) => r.st === "带内").length;
+      const brk = [["下影破带", 0], ["崩出带外", 0], ["上影冲带", 0], ["冲出带上", 0]];
+      rows.forEach((r) => {
+        const f = brk.find((b) => b[0] === r.st);
+        if (f) f[1]++;
+      });
+      const perC = {};
+      rows.forEach((r) => {
+        const o = perC[r.code] || (perC[r.code] = { name: r.name, n: 0, bad: 0 });
+        o.n++;
+        if (r.st !== "带内") o.bad++;
+      });
+      const top3 = Object.values(perC).filter((o) => o.n >= 2 && o.bad > 0).sort((a, b) => b.bad / b.n - a.bad / a.n).slice(0, 3);
+      const pl = _jGet99("jl_pool_picks_v1", {});
+      const t1 = [], byL = {}, hiS = [], loS = [];
+      let pd0 = "", pd1 = "";
+      Object.keys(pl).sort().forEach((d) => {
+        ((pl[d] || {}).picks || []).forEach((x) => {
+          if (x.r1 == null || !Number.isFinite(+x.r1)) return;
+          const v = +x.r1;
+          t1.push(v);
+          if (!pd0) pd0 = d;
+          pd1 = d;
+          (byL[x.layer || "未分层"] = byL[x.layer || "未分层"] || []).push(v);
+          if (+x.score >= 80) hiS.push(v);
+          else if (+x.score >= 60) loS.push(v);
+        });
+      });
+      const win = (a) => a.length ? +(100 * a.filter((v) => v > 0).length / a.length).toFixed(1) : null;
+      const pn = t1.length, pw = win(t1);
+      const frN = Object.keys(_jGet99("jl_fund_review_v1", {})).length;
+      const row = (t, body) => '<div style="font-size:11.5px;color:#f2fbfd;padding:6px 0;border-bottom:1px solid #81e6d914;line-height:1.8"><b style="color:#8fe9d9">' + t + "</b> " + body + "</div>";
+      let h = '<h3>信号审判 · 自动统计<small> · 基准 ' + JUDGE_BASE99 + "%（8/27–9/16 全市场 T+1 实测·弱市窗口）· 判定规则：n≥30 且胜率≥基准+3pp=存活，&lt;基准=考虑退役，n&lt;30=积累中</small></h3>";
+      h += row("① 预测带", bn ? "n=" + bn + " · 带内覆盖率 <b style=\"color:#ffd21f\">" + (100 * inN / bn).toFixed(1) + "%</b> · 破带：" + brk.map((b) => b[0] + " " + b[1]).join(" / ") + (top3.length ? " · 破带率Top3：" + top3.map((o) => o.name + " " + (100 * o.bad / o.n).toFixed(0) + "%(" + o.bad + "/" + o.n + ")").join("、") : "") : "暂无样本");
+      let poolH = "暂无带T+1样本";
+      if (pn) {
+        const vd = _judgeV99(pw, pn);
+        poolH = "n=" + pn + "（" + pd0.slice(5) + "→" + pd1.slice(5) + "）· 胜率 <b style=\"color:#ffd21f\">" + pw + '%</b> <u style="text-decoration:none;color:' + vd[1] + '">' + vd[0] + "</u> · 分层：" + Object.keys(byL).map((L) => L + " " + win(byL[L]) + "%(" + byL[L].length + ")").join(" / ") + " · 区分度：≥80分 " + (win(hiS) == null ? "—" : win(hiS) + "%(" + hiS.length + ")") + " vs 60-79分 " + (win(loS) == null ? "—" : win(loS) + "%(" + loS.length + ")");
+      }
+      h += row("② 龙池主推 T+1", poolH);
+      h += row("③ 资金背离", frN + " 条 · v.78 起连续2日同向才入册 · 实测单日资金无预测力，仅作背景记录");
+      h += '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" id="judgeRe99" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">重算</button><button type="button" id="judgeCsv99" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">复制CSV（三段台账）</button></div><p style="font-size:9px;color:#8fabb9;margin-top:8px;line-height:1.8">审判只读本地台账自动统计，不构成操作建议；样本不足时不判定。</p>';
+      sec.innerHTML = h;
+      $("judgeRe99").onclick = judgeRender99;
+      $("judgeCsv99").onclick = judgeCsv99;
+    } catch (e) {
+    }
+  }
+  // ---------- B 盘前情绪预判卡 ----------
+  const PM99 = { loading: false, at: 0 };
+  function pmDom99() {
+    const home = $("home");
+    if (!home) return null;
+    let g = $("premarketJL");
+    if (!g) {
+      g = document.createElement("section");
+      g.id = "premarketJL";
+      g.className = "glass";
+      g.style.margin = "0 0 10px";
+      const t = home.querySelector(".pageTitle");
+      home.insertBefore(g, t ? t.nextSibling : home.firstChild);
+    }
+    return g;
+  }
+  function pmPaint99(R) {
+    const g = pmDom99();
+    if (!g) return;
+    const pc = (v) => (v >= 0 ? "+" : "") + v + "%", cc = (v) => v > 0 ? "#ff5459" : v < 0 ? "#1fdc93" : "#e0f2f6";
+    const row = (t, body) => '<div style="font-size:11.5px;color:#f2fbfd;padding:5px 0;border-bottom:1px solid #81e6d914;line-height:1.7"><b style="color:#8fe9d9">' + t + "</b> " + body + "</div>";
+    let h = '<h3>盘前情绪 · 条件预判<small> · ' + (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5) + " 更新</small></h3>";
+    h += row("隔夜外盘", R.fx ? R.fx.map((x) => x.nm + ' <b style="color:' + cc(x.pct) + '">' + pc(x.pct) + "</b>").join(" · ") : '<i style="font-style:normal;color:#8fa8b3">数据未到</i>');
+    h += row("昨涨停股(" + R.poolD.slice(5) + "涨停池)", R.zt ? "n=" + R.zt.n + " · 平均溢价 <b style=\"color:" + cc(R.zt.avg) + '">' + pc(R.zt.avg) + "</b> · 高开占比 " + (R.zt.ho == null ? '<i style="font-style:normal;color:#8fa8b3">竞价未出</i>' : R.zt.ho + "%") : '<i style="font-style:normal;color:#8fa8b3">涨停池数据未到</i>');
+    h += row("国家队(沪深300ETF口径)", R.gjd ? R.gjd.d.slice(5) + " 净" + (R.gjd.m >= 0 ? '<b style="color:#ff5459">流入' : '<b style="color:#1fdc93">流出') + " " + Math.abs(R.gjd.m).toFixed(1) + "亿</b>" : '<i style="font-style:normal;color:#8fa8b3">存档暂缺</i>');
+    const conds = [];
+    if (R.fx && R.fx.length === 3) {
+      const up = R.fx.filter((x) => x.pct > 0).length;
+      conds.push(up === 3 ? "外盘普涨 → 开盘情绪有支撑" : up === 0 ? "外盘普跌 → 开盘情绪承压" : "外盘分化 → 情绪中性");
+    }
+    if (R.zt) {
+      conds.push(R.zt.avg < 0 ? "昨涨停股平均溢价为负 → 情绪退潮倾向" : R.zt.avg >= 1 ? "昨涨停股有溢价 → 赚钱效应延续倾向" : "昨涨停股溢价平淡");
+      if (R.zt.ho != null && R.zt.ho < 40) conds.push("竞价高开占比 " + R.zt.ho + "% 偏低 → 谨慎倾向");
+    }
+    h += '<div style="font-size:12px;color:#ffd21f;padding:7px 0 2px;line-height:1.7">预判：' + (conds.length ? conds.join("；") : "数据未到 · 不给预判") + "</div>";
+    h += '<div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button type="button" id="pmRe99" style="min-height:34px;padding:0 14px;border:1px solid #81e6d955;border-radius:8px;background:#81e6d914;color:#bcefeb;font-size:11px">刷新</button><span style="font-size:9px;color:#8fabb9;line-height:1.6">状态描述，不构成操作建议 · 涨停股样本非全市场 · 外盘为隔夜收盘</span></div>';
+    g.innerHTML = h;
+    $("pmRe99").onclick = () => pmLoad99();
+  }
+  function pmLoad99() {
+    const g = pmDom99();
+    if (!g || PM99.loading) return;
+    PM99.loading = true;
+    const now = /* @__PURE__ */ new Date(), mins = now.getHours() * 60 + now.getMinutes();
+    let poolD = typeof jlLastTradeDay === "function" ? jlLastTradeDay() : now.toLocaleDateString("sv-SE");
+    if (mins >= 560) {
+      const d = new Date(poolD + "T00:00:00");
+      do {
+        d.setDate(d.getDate() - 1);
+      } while (d.getDay() === 0 || d.getDay() === 6);
+      poolD = jlYMD(d);
+    }
+    const R = { fx: null, zt: null, gjd: null, poolD };
+    const hist = _jGet99("jl_gjd_hist_v1", {}) || {};
+    const hd = Object.keys(hist).sort();
+    if (hd.length && Number.isFinite(+hist[hd[hd.length - 1]])) R.gjd = { d: hd[hd.length - 1], m: +hist[hd[hd.length - 1]] };
+    let left = 2;
+    const done = () => {
+      if (--left === 0) {
+        PM99.loading = false;
+        PM99.at = Date.now();
+        pmPaint99(R);
+      }
+    };
+    _gtimg99(["usDJI", "usIXIC", "usINX"], (m) => {
+      const nm = { usDJI: "道指", usIXIC: "纳指", usINX: "标普" };
+      const rr = Object.keys(nm).filter((k) => m[k]).map((k) => ({ nm: nm[k], pct: +((m[k].p / m[k].pv - 1) * 100).toFixed(2) }));
+      if (rr.length) R.fx = rr;
+      done();
+    });
+    const cb = "__pmZt" + Date.now();
+    let zDone = false;
+    const zFin = (pool) => {
+      if (zDone) return;
+      zDone = true;
+      try {
+        delete window[cb];
+      } catch (e) {
+      }
+      sj.remove();
+      clearTimeout(zt9);
+      const codes = (pool || []).map((z) => quoteSymbol(String(z.c)));
+      if (!codes.length) {
+        done();
+        return;
+      }
+      _gtimg99(codes.slice(0, 60), (m) => {
+        const arr = Object.values(m).filter((q) => q.pv > 0);
+        if (arr.length) {
+          const avg = +(arr.map((q) => (q.p / q.pv - 1) * 100).reduce((a, b) => a + b, 0) / arr.length).toFixed(2);
+          const ops = arr.filter((q) => q.op > 0);
+          R.zt = { n: arr.length, avg, ho: ops.length ? +(100 * ops.filter((q) => q.op > q.pv).length / ops.length).toFixed(0) : null };
+        }
+        done();
+      });
+    };
+    window[cb] = (d) => zFin(d && d.data && d.data.pool);
+    const zt9 = setTimeout(() => zFin(null), 9e3);
+    const sj = document.createElement("script");
+    sj.src = "https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt&Pageindex=0&pagesize=100&sort=fbt:asc&date=" + poolD.replace(/-/g, "") + "&cb=" + cb + "&_=" + Date.now();
+    sj.onerror = () => zFin(null);
+    document.body.appendChild(sj);
+  }
+  // ---------- A 产业链链图(静态可编辑) ----------
+  const JL_CHAIN_MAP = {
+    "600105": { up: ["光芯片", "DSP芯片", "光纤预制棒"], down: ["北美云厂商资本开支", "英伟达财报指引", "微软资本开支", "谷歌资本开支", "运营商光通信集采"] },
+    "600176": { up: ["纯碱价格", "石英砂价格", "天然气价格"], down: ["风电装机", "汽车轻量化", "PCB电子布", "玻纤价格"] },
+    "603986": { up: ["晶圆代工价格", "DRAM现货价DXI", "三星海力士减产"], down: ["消费电子出货", "服务器需求", "汽车电子芯片"] },
+    "600489": { up: ["伦敦金", "美国实际利率", "美联储议息"], down: ["金饰消费", "央行购金"] },
+    "515880": { up: ["光模块出货", "光芯片"], down: ["运营商资本开支", "云厂商资本开支"] }
+  };
+  function chainRender99() {
+    try {
+      const deck = $("deck");
+      if (!deck) return;
+      let g = $("chainJL");
+      if (!g) {
+        g = document.createElement("section");
+        g.id = "chainJL";
+        g.className = "glass";
+        g.style.margin = "10px 0 0";
+        deck.insertAdjacentElement("afterend", g);
+      }
+      const list = [];
+      (typeof stocks !== "undefined" ? stocks : []).forEach((s2) => {
+        if (Number(s2.qty) > 0) list.push(s2);
+      });
+      (typeof researchedStocksJL !== "undefined" ? researchedStocksJL : []).forEach((s2) => {
+        if (s2 && !list.some((x) => x.code === s2.code)) list.push(s2);
+      });
+      if (!list.length) {
+        g.innerHTML = '<h3>产业链 · 持仓链图</h3><p style="font-size:11px;color:#8fa8b3">暂无持仓</p>';
+        return;
+      }
+      const chip = (q) => '<a href="https://news.baidu.com/ns?word=' + encodeURIComponent(q) + '" target="_blank" rel="noopener" style="display:inline-block;margin:3px 4px 0 0;padding:3px 9px;border:1px solid #81e6d944;border-radius:8px;color:#bcefeb;font-size:10.5px;text-decoration:none">' + q + "</a>";
+      const tag = (t) => '<i style="font-style:normal;color:#8fa8b3;font-size:10px;margin-right:2px">' + t + "</i>";
+      let h = '<h3>产业链 · 持仓链图<small> · 节点=搜索直达 · 链图在源码 JL_CHAIN_MAP 可编辑</small></h3>';
+      list.forEach((s2) => {
+        const bare = String(s2.code).replace(/^(sh|sz)/, "");
+        const c = JL_CHAIN_MAP[bare];
+        h += '<div style="padding:7px 0;border-bottom:1px solid #81e6d914"><b style="color:#f2fbfd;font-size:12px">' + s2.name + '</b> <a href="https://so.eastmoney.com/news/s?keyword=' + encodeURIComponent(s2.name) + '" target="_blank" rel="noopener" style="font-size:10px;color:#8fe9d9;text-decoration:none">东财个股搜索 ↗</a><div style="margin-top:3px">' + (c ? tag("上游") + c.up.map(chip).join("") + '<div style="margin-top:2px">' + tag("下游") + c.down.map(chip).join("") + "</div>" : chip(s2.name) + chip(s2.name + " 公告")) + "</div></div>";
+      });
+      g.innerHTML = h;
+    } catch (e) {
+    }
+  }
+  setTimeout(() => {
+    try {
+      judgeRender99();
+    } catch (e) {
+    }
+  }, 3e3);
+  setTimeout(() => {
+    try {
+      pmLoad99();
+    } catch (e) {
+    }
+  }, 3600);
+  setTimeout(() => {
+    try {
+      chainRender99();
+      const dk = $("deck");
+      if (dk) {
+        let tm = 0;
+        new MutationObserver(() => {
+          clearTimeout(tm);
+          tm = setTimeout(chainRender99, 600);
+        }).observe(dk, { childList: true });
+      }
+    } catch (e) {
+    }
+  }, 4200);
   function ffBallStateJL() {
     return window.__v27ffb || (window.__v27ffb = { open: false });
   }
