@@ -235,7 +235,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 #yiDongJL .yel.u,#yiDongJL .ydc.u{color:#ff8a80}
 #yiDongJL .yel.d,#yiDongJL .ydc.d{color:#2ee6cf}
 #yiDongJL .ydc{display:inline-block;margin:0 6px 6px 0;padding:7px 11px;border:1px solid #81e6d922;border-radius:9px;font-size:10.5px;color:#c7e3e8;cursor:pointer}#yiDongJL .ydc:active{border-color:var(--accent);color:var(--accent)}
-.homeChartWrap{position:relative}#homeChart{touch-action:none}#holdingSubJL,.pvSubJL{display:block;width:100%;height:96px;touch-action:none}.subWrapJL{position:relative;margin:2px 0}.subToggleJL{position:absolute;right:4px;top:4px;z-index:2;background:#1c232dcc;border:1px solid #37404d;color:#9aa7b5;font-size:10px;padding:1px 7px;border-radius:5px;cursor:pointer}.subToggleJL:active{border-color:var(--accent);color:var(--accent)}#holdingChart,.previewChart{touch-action:none}.fundModeJL{display:flex;gap:6px;margin:2px 0 4px}.fundModeJL button{font-size:9px;padding:2px 8px;border-radius:6px;border:1px solid #81e6d944;background:transparent;color:#c9dfe8}.fundModeJL button.on{color:#041018;background:#81e6d9}
+.homeChartWrap{position:relative}#homeChart{touch-action:none}#holdingSubJL{display:block;width:100%;height:64px;touch-action:none}#holdingChart,.previewChart{touch-action:none}.fundModeJL{display:flex;gap:6px;margin:2px 0 4px}.fundModeJL button{font-size:9px;padding:2px 8px;border-radius:6px;border:1px solid #81e6d944;background:transparent;color:#c9dfe8}.fundModeJL button.on{color:#041018;background:#81e6d9}
 .homeToolsJL{position:absolute;top:6px;right:56px;z-index:6;display:flex;gap:4px}
 .homeToolsJL button{border:1px solid var(--edge);border-radius:7px;background:#081a27d9;color:var(--secondary);font-size:10px;padding:3px 7px;backdrop-filter:blur(6px);cursor:pointer}
 .homeToolsJL button.on{border-color:var(--accent);color:var(--accent)}
@@ -299,8 +299,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 <body><!-- v.44 0916盘中 白屏根治: 救援卡显示真错误+安全模式按钮(?safe=1关扫描/筹码)+连死2次自动核大缓存键(持仓台账不动) -->
 <body><!-- v.43 0916盘中 ES5自救核升级: 引擎死亡首次自动硬恢复(注销SW+清缓存+时间戳重载),根治坏缓存死循环; 超时6s→9s防慢机误报 -->
 <body><!-- v.42 0916盘中 修正公式B15: H1改zz确认H pivot(剔除实时混入,进行中腿不出fib档,杜绝重绘); tgt等幅/1.618公式原样不封顶 -->
-<body><!-- v.94 0918 共振追涨附图进持仓(右上MACD/共振切换)+观察小图,96px高,公式实盘验证口径 / 小图默认160根(原48)画细 / 附图自身可左右拖+上下挪+双指捏合+滚轮缩放+十字联动,主副图视口联动 / 观察详情展开失灵根治(温度条顶位) -->
-<!-- v.92 他05:19定稿: 卡面=大波段行(L/H+▲BOS红)+温度计原样(日内预判默认,⇄波段=15分带高跟随)+亮白fib刻度行(7档跟波段) / 详情=接回冲刺面板(活高重锚)+中波段15分低高+判定行 / 无MA止盈无免责行 --><!-- v.91 日内预判BS水位恢复(页脚一行,非第二支温度计) / 判定行: 破中波高→走高波大波段高还差X%,没破→回调看中波低跌X% --><!-- v.90 大波段高跟着突破走: max(日K段内高,今日盘中高,现价),温度计+卡面+详情回撤位同源,突破标'盘中' --><!-- v.89 温度计只要日K大波段+15分中波段: 日内预判/切换钮/标定覆盖全砍,页脚只留现价+位置 --><!-- v.88b 温度计默认波段模式(日K大波段腿低→腿高,针=现价),点切换才看日内预判 --><!-- v.88 详情Fib人话版: 波段高/波段低/回撤到0.382=价/突破后目标/现价卡在哪两位之间+比现价高低% / 小波段15分一行低高+两回撤价 / 标签列44→88px --><!-- v.87 收拾: 卡面只有posRuler一支温度计 / legBand=大波段低高纯数字(无MA文字) / 白字墙全杀 / posRuler下小波段15分副带(低高纯数字,无回吐签无喘气) / m15缓存改内存-only(配额守卫不再误删筹码cyq) --><!-- v.86 真温度计(绿黄红渐变带+白点现价+锚价入带+日期入tag,hq温度带式) / 详情改短句判定去段落 --><!-- v.85c 人话日期正则误吃年份尾巴(26月8日→8月18日) --><!-- v.85b m15拉取失败退避2分钟(防弱网请求风暴) --><!-- v.85 0918凌晨 双层波段尺(日K大波段+15分中波段hq同口径m15LegCalc,同一价格轴+现价针穿两尺) / fib档位号全撤改回吐五档色(浅中深逼近破 绿绿黄橙红 hq v5.183) / 详情人话版 / 中波段目标tgt展示撤下 --><!-- v.58 0917\u51cc\u6668 E\u6279: \u767D\u5C4F\u9632\u5FA1 / \u5F71\u7EBF\u63D0\u4EAE+\u753B\u7EBF\u8DE8\u5468\u671F\u5165\u7EB5\u8F74 / \u6301\u4ED3+\u89C2\u5BDF\u5C0F\u56FE\u62D6\u62BDpan+\u6301\u4ED3MACD\u9644\u56FE / \u8D44\u91D1\u5361DDX\u4EAE\u767D\u7EC6\u7EBF+\u5206\u65F6/\u8FD120\u65E5\u5207\u6362 / \u6DA8\u505C\u94BB\u53D6\u81EA\u52A8\u91CD\u91C7\u6837 --><body><!-- v.57 0916深夜 D批: 龙池K线按钮根治(openChart要求byCode,池票不在持仓=静默return点不动→不在池先自动加观察再跳) / K线页embed模式露出原生DDX附图(iframe底留102px,全屏仍隐藏,paint补画)  持仓卡资金图重做(细柱MACD式/DDX 1.2px红绿分段无阴影/底部时间轴分时HH:MM日级MM-DD/口径标签亮白) / 首页斐波水平档位线可抓拖(原只能抓斜脊=拖不动) / 首页纵轴纳入画线范围(1.5倍span内不隐藏,4000+水位可见) / 全站红绿饱和化: --red #ff5459 --green #1fdc93(褪色#f58b8e/#6ad5b4退役,蒂芙尼青accent保留) <body><!-- v.52 0916午后 盘中批: 兆易钉住(研究股持久化jinlin_research_v1+持仓deck带上+可删) / 共振+市场资金卡占位文案缩小变灰 / 市场资金口径标清(四指数合计·非全市场 vs 板块全市场口径) / 内联DDX黄MA改白细 + v.51 0916午后 K线四修: Kimi品牌球全站隐藏(挡放大钮) / 全屏不再藏K-STATION真工具条(原全屏画线删除清空全死=迷你条死按钮,embed下已隐藏) / SR+SR带去虚线只留色带 / LIQ框改细横线 / 全屏钮36→44px + v.41 0916盘前 假已触根治: 触及/顺延/落档判定过freshQuoteJL闸(报价日期=今天才算,腾讯a30/东财f124归一)——盘前昨天hi/lo不再把今天买卖档全标已触 + 东财fields补f124 + 盘前现价改标昨收(用户0916盘前怒报buy档全假已触) + v.40 0916早晨 持仓删除复活根治: 硬编码默认名单剔除600875/000547 + 空数组视为合法用户状态(删光不再复活) + 持仓双写备份键主键丢失自愈 + 一次性迁移jl_purge_0916清除已存两票(用户0916亲述删多次仍复活,根因=localStorage缺失/空时回落脚本内旧默认名单) + v.39 0916上午 止血: ensureDDXData全局单槽状态改per-key映射+失败60s冷却——修东财不可达时 paint→B码重置A码守卫→重抓→lose→paint 死循环(主线程100%卡死=黑屏/救援卡/ATR水位渲染不出变通用, CDP采样实锤) + v.38 0916早晨 三修复: dk缓存160→320根(修纯缓存冷启动标定样本84<100静默退回kUp=1) / calib系数EMA平滑k=0.7k昨+0.3k新(治窗口边缘单日抖动) / jlTradeDayObs持久化jl_tdo_v1(节后首日冷启动也识真实基准日) + v.37 0916早晨 三档分位方向修正: 触及率p档=深度CDF(1-p)分位→[.45,.65,.80]升序浅→深(v.35按字面Q.55/.35/.20致深浅颠倒,缓存v3重算) + v.36 0916早晨 方案2.4统一闸门: 上市<60日显式剔除+停牌零成交+一字板(开收高低同价且涨幅近限)剔除+20日日均成交额<5000万剔除(v*100*typPrice估) / 温度计涨停加c==h封板确认(东财f2/f15) + v.35 0916凌晨 方案新算法落地: 2.1 calib跳空anchor(缓存v2重算)+kAdj波动状态0.85/1.20+VPVR量价HVN磁点 / 2.2 zigzag自适应阈值clamp(2.5ATR/C,.08,.25)+腿幅<1.5ATR/C并腿+未确认腿fib不入止损(stopTSrc恒MA10/MA20,fibProv标记,UI示未确认参考) + v.34 0916凌晨 量化审计20条全修: 共振缺失NaN不入合取+温度计量纲 / 斐波上升腿方向+滚动MA20+等幅目标 / 水位calib三档接入+ATR统一Wilder+去todayAmp+双向sticky+删0.5网格+除权检测 / 扫描f10口径+节假日基准+未完成bar+新股gene+排序键+层间归一 + v.33 0916凌晨 龙池资金懒补拉(扫描未确认票渲染时自动拉东财资金流进jl_ff_v1+到账重渲池页) / K线全屏迷你工具条(亮白11px可伸缩: 选股+8周期+画线/删除/清空/隐藏/锁定+指标+提醒+复位+退出,全屏隐藏原工具行) / 画线清空隐藏锁定三新功能(锁=禁拖禁删,藏=全图不画) + v.32 0916凌晨 A2语法降级: 主脚本esbuild转译chrome80/ios13(??=/?.清零)+Array.at/AbortSignal.timeout垫片,老WebView不再解析期全灭 + v.31 0916凌晨 诊断报告P0落地: sw三连环修复(晚到响应入缓存/miss回退原fetch/装失败不删旧缓存) / 水位R1日K谁拉到谁落盘+守卫补票 / R2 jl_dk_永不驱逐白名单 / R4 ladder占位.tsWaitJL自愈 / PATCH1死代码摘除→IIFE内真后台恢复(后台>2分钟回前台全量同步+水位补拉) / ES5独立自救核(主脚本死也活: 错误采集+boot旗6s检+恢复按钮) / reload熔断10分钟1次 + v.30 0916凌晨 K线全屏压chartMode规则真铺满(实测bottom=813)/国家队卡重设计(左大字右红绿柱无粗线)/加入日期/观察股资金行/提醒汇总可删+系统通知/画线复盘入册/持仓详情新闻入口 + v.29 0916凌晨 P0:异动图yd*四函数挂window(点不进去/十字线不动根因)+onerror采集器jl_err_v1 / watchAdd添加钮接线 / 搜股开K线强制同步标题+ks传name / 国家队卡挪首页底部+零轴线细化 / 风险组不再标"主升"(改"风险·派发"+原形态置灰) / 悬浮球资金缺数自动补拉 / 宇宙扫描加源提示 / 清理_c14双插(看门狗体检×2、CSS×2、三角while×2) + v.28 --><main class="stage"><aside class="editorial"><div class="eyebrow">JINLIN / DESIGN EXPLORATION 01</div><h1>让行情<br/>有<em>呼吸感。</em></h1><p class="intro">墨黑玻璃，Tiffany 蓝绿。<br/>让流动的光藏在界面后面，<br/>让正在发生的价格站到前面。</p><div class="rule"></div><div class="notes"><div class="note"><span>01</span><div><b>同一个底板，进入持仓</b><p>手机外框、蓝绿透光与底部导航保持一致。<br/>点「总览」可以查看首页，点「持仓」回到卡片。</p></div></div><div class="note"><span>02</span><div><b>一张舒展，其他留名</b><p>点股票名称，卡片横向舒展。<br/>其他股票收成侧边窄卡，名称始终可见。</p></div></div><div class="note"><span>03</span><div><b>细节在需要时出现</b><p>核心持仓信息先看清，操作细节再展开。<br/>点击有光晕反馈，K 线使用独立入口。</p></div></div></div><div class="swatches"><i style="background:#101922"></i><i style="background:#3074ff"></i><i style="background:#81e6d9"></i><i style="background:#eff9fc"></i></div><div class="caption">持仓交互预览 · 行情来自东财</div></aside><section class="device"><div class="phone"><div class="aurora"></div><div class="orbit"></div><div class="status"><span>09:41</span><div class="island"></div><small>▮▮▮   <button id="themeToggle" class="statusTheme" aria-label="切换昼夜主题">◒</button>   ▰</small></div><header class="header"><div class="brand">金粼<small>JINLIN CAPITAL</small></div><div class="brandClkJL" id="brandClkJL"><b id="bcTimeJL">--:--:--</b><span id="bcDateJL">--</span></div><div class="headRight"><button class="round" id="menu" aria-label="预览说明">≡</button></div></header><div class="scroll"><section class="view" id="holds"><div class="pageTitle"><h2>我的持仓</h2><span>PORTFOLIO</span></div><div class="portfolio"><div class="label">持仓市值</div><div class="amount">128,640<span class="minor">.00</span></div><div class="pnlLine"><span>今日盈亏 <strong class="up">+2,186.50</strong></span><span><span id="holdCount">0 只持仓</span></span></div></div><div class="boardHead"><span>持仓一览</span><div class="boardTools"><button class="iconBtn" id="editDeck" aria-label="编辑持仓一览">编辑</button><button class="iconBtn" id="addStock" aria-label="添加持仓">＋</button><small id="count">01 / 03</small></div></div><div class="deckWrap"><div class="deck" id="deck"></div></div><section class="glass"><div class="miniHeading"><span id="holdingName"></span><button id="expandHolding" aria-label="放大持仓K线">⛶</button><button data-holding-style="" aria-label="切换蜡烛图与走势线">▥</button></div><canvas id="holdingChart" class="previewChart" aria-label="当前持仓K线"></canvas><div class="subWrapJL"><canvas id="holdingSubJL" aria-label="持仓MACD/共振追涨附图"></canvas><button type="button" class="subToggleJL" id="hldSubToggleJL" aria-label="切换MACD与共振追涨附图">MACD</button></div><div class="periodBar" data-period-bar=""></div></section><div class="collapse" id="detail"><div><section class="glass"><h3><span id="detailName">持仓详情</span><small>实时数据</small></h3><div class="detailGrid"><span>今日开 · 高 · 低<b data-dayohl="">—</b></span><span>当前水位 / Fib<b data-level="">—</b></span><span>今日接价 · 100股<b data-buy="">—</b></span><span>今日抛价 · 100股<b data-sell="">—</b></span><span>100股净额<b data-net="">—</b></span><span>波段位置<b data-swing="">—</b></span></div><div class="fundFlowJL"><b>今日资金 <small data-ff-date=""></small></b><div class="ffRows"><span class="ffHero">主力净额<strong data-ff-main="">—</strong></span><span>超大单<strong data-ff-sup="">—</strong></span><span>大单<strong data-ff-big="">—</strong></span><span>中单<strong data-ff-mid="">—</strong></span><span>散户<strong data-ff-small="">—</strong></span><span>预判低/高<strong data-ff-pred="">—</strong></span><span>市场温度<strong data-ff-mtemp="">—</strong></span></div></div><div class="resonancePanel"><button type="button" data-resonance="market"><span>市场环境<b data-market-resonance="">市场资金加载中…</b></span></button><span>板块共振<b data-sector-resonance="">所属板块数据加载中…</b></span><span>资金方向<b data-stock-fund-resonance="">个股资金加载中…</b></span><span>量能状态<b data-volume-resonance="">真实成交量加载中…</b></span></div><button type="button" class="newsEntry" id="newsEntryBtn"><i></i><span>新闻 · 打开市场资金与持仓相关资讯</span></button></section></div></div><section class="glass"><h3>账户概览<small>实时数据</small></h3><div class="pnlLine"><span>持仓占比</span><span>64.3%</span></div><div class="track"></div></section><p class="smallPrint">行情、成交量、资金和指标均来自实时接口；接口未返回时显示数据暂缺。</p></section><section class="view" id="home" hidden=""><div class="pageTitle"><h2>市场脉动</h2><span>MARKET PULSE</span></div><div class="indexes" id="indexList"></div><button id="marketFundsEntry" class="marketFundsEntry" type="button" aria-expanded="false"><span><b>市场资金</b><small>沪深 · 深证 · 创业板　点击展开真实主力净额</small></span><strong id="marketFundsSummary">加载中…</strong><span aria-hidden="true">›</span></button><section id="marketFundsPanel" class="marketFundsPanel" hidden="" aria-live="polite"><div class="marketFundsHead"><b>市场资金 · 主力净额</b><small id="marketFundsUpdated">等待东财数据</small></div><div id="marketFundsRows"></div></section><div class="homeQuote"><div class="label">上证指数 · 000001</div><div class="amount">—</div><div class="pnlLine"><span>开 —</span><span>高 —</span><span>低 —</span></div></div><div class="homeViewSw"><button type="button" data-hv="k" class="active">K线</button><button type="button" data-hv="heat">大盘异动</button></div><div class="homeChartWrap"><div class="homeToolsJL"><button type="button" id="homeToolTrend" aria-label="画趋势线">╱</button><button type="button" id="homeToolFib" aria-label="画斐波那契">∿</button><button type="button" id="homeToolFlow" aria-label="强弱T资金幅图">▦</button><button type="button" id="homeToolDel" aria-label="删除最近画线">⌫</button><button type="button" id="homeToolHide" aria-label="隐藏或显示画线">◐</button><button type="button" id="homeToolAlert" aria-label="添加价格提醒">♧</button></div><canvas class="chart" id="homeChart" aria-label="真实K线" role="img"></canvas><canvas id="homeFlowJL" hidden="" aria-label="强弱T资金幅图"></canvas></div><div class="times"><span>09:30</span><span>10:30</span><span>11:30</span></div><div class="periodBar" data-period-bar=""></div><div class="previewActions"><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="expandHomeChart" aria-label="放大当前指数K线">⛶</button></div><div id="yiDongJL" hidden=""><div class="ydHead"><b>大盘异动 · 上证分时</b><small id="ydTmJL"></small></div><div id="ydChartJL"></div><div class="ydTabs" id="ydTabsJL"><b class="on" data-e="all">事件流</b><b data-e="tail">尾盘抢筹</b><b data-e="mine">我的</b><b data-e="zt">涨停池</b></div><div id="ydEvJL"></div><div id="ydFootJL"></div><div id="ydDrillJL" hidden=""></div></div><section class="glass"><h3>今日价格区间</h3><div class="pnlLine"><span>—</span><span>—</span></div><div class="track"></div></section><section class="glass predJL"><h3>大盘预判 · ATR<small>盘前生成 · 触发自动落账</small></h3><div id="predTodayJL">预判生成中…</div><div id="predLogJL"></div></section><section class="glass tempJL"><h3>大盘温度 · 情绪<small id="mtUpdatedJL" role="button" title="点击重新采样">点击采样</small></h3><div class="mtMain"><div class="mtGauge"><div class="mtTrack"><i class="mtArrow" id="mtArrowJL" style="bottom:45%"></i></div><div class="mtScale"><span>100 沸点</span><span>过热</span><span>微热</span><span>50 平</span><span>微冷</span><span>过冷</span><span>0 冰点</span></div></div><div class="mtBody"><div class="mtNow"><b id="mtValJL">—</b><span id="mtZoneJL">待采样</span></div><div class="mtLimit"><span class="up mtd" data-mtd="lu">涨停 <b id="mtLuJL">—</b> ›</span><span class="dn mtd" data-mtd="ld">跌停 <b id="mtLdJL">—</b> ›</span></div><div id="mtDistJL" class="mtDist"></div><div class="mtAmt" id="mtAmtJL">沪深成交 — · 上涨 — · 下跌 —</div><div id="mtDrillJL"></div></div></div></section></section><section class="view" id="chartPage" hidden="">
+<body><!-- v.92 他05:19定稿: 卡面=大波段行(L/H+▲BOS红)+温度计原样(日内预判默认,⇄波段=15分带高跟随)+亮白fib刻度行(7档跟波段) / 详情=接回冲刺面板(活高重锚)+中波段15分低高+判定行 / 无MA止盈无免责行 --><!-- v.91 日内预判BS水位恢复(页脚一行,非第二支温度计) / 判定行: 破中波高→走高波大波段高还差X%,没破→回调看中波低跌X% --><!-- v.90 大波段高跟着突破走: max(日K段内高,今日盘中高,现价),温度计+卡面+详情回撤位同源,突破标'盘中' --><!-- v.89 温度计只要日K大波段+15分中波段: 日内预判/切换钮/标定覆盖全砍,页脚只留现价+位置 --><!-- v.88b 温度计默认波段模式(日K大波段腿低→腿高,针=现价),点切换才看日内预判 --><!-- v.88 详情Fib人话版: 波段高/波段低/回撤到0.382=价/突破后目标/现价卡在哪两位之间+比现价高低% / 小波段15分一行低高+两回撤价 / 标签列44→88px --><!-- v.87 收拾: 卡面只有posRuler一支温度计 / legBand=大波段低高纯数字(无MA文字) / 白字墙全杀 / posRuler下小波段15分副带(低高纯数字,无回吐签无喘气) / m15缓存改内存-only(配额守卫不再误删筹码cyq) --><!-- v.86 真温度计(绿黄红渐变带+白点现价+锚价入带+日期入tag,hq温度带式) / 详情改短句判定去段落 --><!-- v.85c 人话日期正则误吃年份尾巴(26月8日→8月18日) --><!-- v.85b m15拉取失败退避2分钟(防弱网请求风暴) --><!-- v.85 0918凌晨 双层波段尺(日K大波段+15分中波段hq同口径m15LegCalc,同一价格轴+现价针穿两尺) / fib档位号全撤改回吐五档色(浅中深逼近破 绿绿黄橙红 hq v5.183) / 详情人话版 / 中波段目标tgt展示撤下 --><!-- v.58 0917\u51cc\u6668 E\u6279: \u767D\u5C4F\u9632\u5FA1 / \u5F71\u7EBF\u63D0\u4EAE+\u753B\u7EBF\u8DE8\u5468\u671F\u5165\u7EB5\u8F74 / \u6301\u4ED3+\u89C2\u5BDF\u5C0F\u56FE\u62D6\u62BDpan+\u6301\u4ED3MACD\u9644\u56FE / \u8D44\u91D1\u5361DDX\u4EAE\u767D\u7EC6\u7EBF+\u5206\u65F6/\u8FD120\u65E5\u5207\u6362 / \u6DA8\u505C\u94BB\u53D6\u81EA\u52A8\u91CD\u91C7\u6837 --><body><!-- v.57 0916深夜 D批: 龙池K线按钮根治(openChart要求byCode,池票不在持仓=静默return点不动→不在池先自动加观察再跳) / K线页embed模式露出原生DDX附图(iframe底留102px,全屏仍隐藏,paint补画)  持仓卡资金图重做(细柱MACD式/DDX 1.2px红绿分段无阴影/底部时间轴分时HH:MM日级MM-DD/口径标签亮白) / 首页斐波水平档位线可抓拖(原只能抓斜脊=拖不动) / 首页纵轴纳入画线范围(1.5倍span内不隐藏,4000+水位可见) / 全站红绿饱和化: --red #ff5459 --green #1fdc93(褪色#f58b8e/#6ad5b4退役,蒂芙尼青accent保留) <body><!-- v.52 0916午后 盘中批: 兆易钉住(研究股持久化jinlin_research_v1+持仓deck带上+可删) / 共振+市场资金卡占位文案缩小变灰 / 市场资金口径标清(四指数合计·非全市场 vs 板块全市场口径) / 内联DDX黄MA改白细 + v.51 0916午后 K线四修: Kimi品牌球全站隐藏(挡放大钮) / 全屏不再藏K-STATION真工具条(原全屏画线删除清空全死=迷你条死按钮,embed下已隐藏) / SR+SR带去虚线只留色带 / LIQ框改细横线 / 全屏钮36→44px + v.41 0916盘前 假已触根治: 触及/顺延/落档判定过freshQuoteJL闸(报价日期=今天才算,腾讯a30/东财f124归一)——盘前昨天hi/lo不再把今天买卖档全标已触 + 东财fields补f124 + 盘前现价改标昨收(用户0916盘前怒报buy档全假已触) + v.40 0916早晨 持仓删除复活根治: 硬编码默认名单剔除600875/000547 + 空数组视为合法用户状态(删光不再复活) + 持仓双写备份键主键丢失自愈 + 一次性迁移jl_purge_0916清除已存两票(用户0916亲述删多次仍复活,根因=localStorage缺失/空时回落脚本内旧默认名单) + v.39 0916上午 止血: ensureDDXData全局单槽状态改per-key映射+失败60s冷却——修东财不可达时 paint→B码重置A码守卫→重抓→lose→paint 死循环(主线程100%卡死=黑屏/救援卡/ATR水位渲染不出变通用, CDP采样实锤) + v.38 0916早晨 三修复: dk缓存160→320根(修纯缓存冷启动标定样本84<100静默退回kUp=1) / calib系数EMA平滑k=0.7k昨+0.3k新(治窗口边缘单日抖动) / jlTradeDayObs持久化jl_tdo_v1(节后首日冷启动也识真实基准日) + v.37 0916早晨 三档分位方向修正: 触及率p档=深度CDF(1-p)分位→[.45,.65,.80]升序浅→深(v.35按字面Q.55/.35/.20致深浅颠倒,缓存v3重算) + v.36 0916早晨 方案2.4统一闸门: 上市<60日显式剔除+停牌零成交+一字板(开收高低同价且涨幅近限)剔除+20日日均成交额<5000万剔除(v*100*typPrice估) / 温度计涨停加c==h封板确认(东财f2/f15) + v.35 0916凌晨 方案新算法落地: 2.1 calib跳空anchor(缓存v2重算)+kAdj波动状态0.85/1.20+VPVR量价HVN磁点 / 2.2 zigzag自适应阈值clamp(2.5ATR/C,.08,.25)+腿幅<1.5ATR/C并腿+未确认腿fib不入止损(stopTSrc恒MA10/MA20,fibProv标记,UI示未确认参考) + v.34 0916凌晨 量化审计20条全修: 共振缺失NaN不入合取+温度计量纲 / 斐波上升腿方向+滚动MA20+等幅目标 / 水位calib三档接入+ATR统一Wilder+去todayAmp+双向sticky+删0.5网格+除权检测 / 扫描f10口径+节假日基准+未完成bar+新股gene+排序键+层间归一 + v.33 0916凌晨 龙池资金懒补拉(扫描未确认票渲染时自动拉东财资金流进jl_ff_v1+到账重渲池页) / K线全屏迷你工具条(亮白11px可伸缩: 选股+8周期+画线/删除/清空/隐藏/锁定+指标+提醒+复位+退出,全屏隐藏原工具行) / 画线清空隐藏锁定三新功能(锁=禁拖禁删,藏=全图不画) + v.32 0916凌晨 A2语法降级: 主脚本esbuild转译chrome80/ios13(??=/?.清零)+Array.at/AbortSignal.timeout垫片,老WebView不再解析期全灭 + v.31 0916凌晨 诊断报告P0落地: sw三连环修复(晚到响应入缓存/miss回退原fetch/装失败不删旧缓存) / 水位R1日K谁拉到谁落盘+守卫补票 / R2 jl_dk_永不驱逐白名单 / R4 ladder占位.tsWaitJL自愈 / PATCH1死代码摘除→IIFE内真后台恢复(后台>2分钟回前台全量同步+水位补拉) / ES5独立自救核(主脚本死也活: 错误采集+boot旗6s检+恢复按钮) / reload熔断10分钟1次 + v.30 0916凌晨 K线全屏压chartMode规则真铺满(实测bottom=813)/国家队卡重设计(左大字右红绿柱无粗线)/加入日期/观察股资金行/提醒汇总可删+系统通知/画线复盘入册/持仓详情新闻入口 + v.29 0916凌晨 P0:异动图yd*四函数挂window(点不进去/十字线不动根因)+onerror采集器jl_err_v1 / watchAdd添加钮接线 / 搜股开K线强制同步标题+ks传name / 国家队卡挪首页底部+零轴线细化 / 风险组不再标"主升"(改"风险·派发"+原形态置灰) / 悬浮球资金缺数自动补拉 / 宇宙扫描加源提示 / 清理_c14双插(看门狗体检×2、CSS×2、三角while×2) + v.28 --><main class="stage"><aside class="editorial"><div class="eyebrow">JINLIN / DESIGN EXPLORATION 01</div><h1>让行情<br/>有<em>呼吸感。</em></h1><p class="intro">墨黑玻璃，Tiffany 蓝绿。<br/>让流动的光藏在界面后面，<br/>让正在发生的价格站到前面。</p><div class="rule"></div><div class="notes"><div class="note"><span>01</span><div><b>同一个底板，进入持仓</b><p>手机外框、蓝绿透光与底部导航保持一致。<br/>点「总览」可以查看首页，点「持仓」回到卡片。</p></div></div><div class="note"><span>02</span><div><b>一张舒展，其他留名</b><p>点股票名称，卡片横向舒展。<br/>其他股票收成侧边窄卡，名称始终可见。</p></div></div><div class="note"><span>03</span><div><b>细节在需要时出现</b><p>核心持仓信息先看清，操作细节再展开。<br/>点击有光晕反馈，K 线使用独立入口。</p></div></div></div><div class="swatches"><i style="background:#101922"></i><i style="background:#3074ff"></i><i style="background:#81e6d9"></i><i style="background:#eff9fc"></i></div><div class="caption">持仓交互预览 · 行情来自东财</div></aside><section class="device"><div class="phone"><div class="aurora"></div><div class="orbit"></div><div class="status"><span>09:41</span><div class="island"></div><small>▮▮▮   <button id="themeToggle" class="statusTheme" aria-label="切换昼夜主题">◒</button>   ▰</small></div><header class="header"><div class="brand">金粼<small>JINLIN CAPITAL</small></div><div class="brandClkJL" id="brandClkJL"><b id="bcTimeJL">--:--:--</b><span id="bcDateJL">--</span></div><div class="headRight"><button class="round" id="menu" aria-label="预览说明">≡</button></div></header><div class="scroll"><section class="view" id="holds"><div class="pageTitle"><h2>我的持仓</h2><span>PORTFOLIO</span></div><div class="portfolio"><div class="label">持仓市值</div><div class="amount">128,640<span class="minor">.00</span></div><div class="pnlLine"><span>今日盈亏 <strong class="up">+2,186.50</strong></span><span><span id="holdCount">0 只持仓</span></span></div></div><div class="boardHead"><span>持仓一览</span><div class="boardTools"><button class="iconBtn" id="editDeck" aria-label="编辑持仓一览">编辑</button><button class="iconBtn" id="addStock" aria-label="添加持仓">＋</button><small id="count">01 / 03</small></div></div><div class="deckWrap"><div class="deck" id="deck"></div></div><section class="glass"><div class="miniHeading"><span id="holdingName"></span><button id="expandHolding" aria-label="放大持仓K线">⛶</button><button data-holding-style="" aria-label="切换蜡烛图与走势线">▥</button></div><canvas id="holdingChart" class="previewChart" aria-label="当前持仓K线"></canvas><canvas id="holdingSubJL" aria-label="持仓MACD附图"></canvas><div class="periodBar" data-period-bar=""></div></section><div class="collapse" id="detail"><div><section class="glass"><h3><span id="detailName">持仓详情</span><small>实时数据</small></h3><div class="detailGrid"><span>今日开 · 高 · 低<b data-dayohl="">—</b></span><span>当前水位 / Fib<b data-level="">—</b></span><span>今日接价 · 100股<b data-buy="">—</b></span><span>今日抛价 · 100股<b data-sell="">—</b></span><span>100股净额<b data-net="">—</b></span><span>波段位置<b data-swing="">—</b></span></div><div class="fundFlowJL"><b>今日资金 <small data-ff-date=""></small></b><div class="ffRows"><span class="ffHero">主力净额<strong data-ff-main="">—</strong></span><span>超大单<strong data-ff-sup="">—</strong></span><span>大单<strong data-ff-big="">—</strong></span><span>中单<strong data-ff-mid="">—</strong></span><span>散户<strong data-ff-small="">—</strong></span><span>预判低/高<strong data-ff-pred="">—</strong></span><span>市场温度<strong data-ff-mtemp="">—</strong></span></div></div><div class="resonancePanel"><button type="button" data-resonance="market"><span>市场环境<b data-market-resonance="">市场资金加载中…</b></span></button><span>板块共振<b data-sector-resonance="">所属板块数据加载中…</b></span><span>资金方向<b data-stock-fund-resonance="">个股资金加载中…</b></span><span>量能状态<b data-volume-resonance="">真实成交量加载中…</b></span></div><button type="button" class="newsEntry" id="newsEntryBtn"><i></i><span>新闻 · 打开市场资金与持仓相关资讯</span></button></section></div></div><section class="glass"><h3>账户概览<small>实时数据</small></h3><div class="pnlLine"><span>持仓占比</span><span>64.3%</span></div><div class="track"></div></section><p class="smallPrint">行情、成交量、资金和指标均来自实时接口；接口未返回时显示数据暂缺。</p></section><section class="view" id="home" hidden=""><div class="pageTitle"><h2>市场脉动</h2><span>MARKET PULSE</span></div><div class="indexes" id="indexList"></div><button id="marketFundsEntry" class="marketFundsEntry" type="button" aria-expanded="false"><span><b>市场资金</b><small>沪深 · 深证 · 创业板　点击展开真实主力净额</small></span><strong id="marketFundsSummary">加载中…</strong><span aria-hidden="true">›</span></button><section id="marketFundsPanel" class="marketFundsPanel" hidden="" aria-live="polite"><div class="marketFundsHead"><b>市场资金 · 主力净额</b><small id="marketFundsUpdated">等待东财数据</small></div><div id="marketFundsRows"></div></section><div class="homeQuote"><div class="label">上证指数 · 000001</div><div class="amount">—</div><div class="pnlLine"><span>开 —</span><span>高 —</span><span>低 —</span></div></div><div class="homeViewSw"><button type="button" data-hv="k" class="active">K线</button><button type="button" data-hv="heat">大盘异动</button></div><div class="homeChartWrap"><div class="homeToolsJL"><button type="button" id="homeToolTrend" aria-label="画趋势线">╱</button><button type="button" id="homeToolFib" aria-label="画斐波那契">∿</button><button type="button" id="homeToolFlow" aria-label="强弱T资金幅图">▦</button><button type="button" id="homeToolDel" aria-label="删除最近画线">⌫</button><button type="button" id="homeToolHide" aria-label="隐藏或显示画线">◐</button><button type="button" id="homeToolAlert" aria-label="添加价格提醒">♧</button></div><canvas class="chart" id="homeChart" aria-label="真实K线" role="img"></canvas><canvas id="homeFlowJL" hidden="" aria-label="强弱T资金幅图"></canvas></div><div class="times"><span>09:30</span><span>10:30</span><span>11:30</span></div><div class="periodBar" data-period-bar=""></div><div class="previewActions"><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="expandHomeChart" aria-label="放大当前指数K线">⛶</button></div><div id="yiDongJL" hidden=""><div class="ydHead"><b>大盘异动 · 上证分时</b><small id="ydTmJL"></small></div><div id="ydChartJL"></div><div class="ydTabs" id="ydTabsJL"><b class="on" data-e="all">事件流</b><b data-e="tail">尾盘抢筹</b><b data-e="mine">我的</b><b data-e="zt">涨停池</b></div><div id="ydEvJL"></div><div id="ydFootJL"></div><div id="ydDrillJL" hidden=""></div></div><section class="glass"><h3>今日价格区间</h3><div class="pnlLine"><span>—</span><span>—</span></div><div class="track"></div></section><section class="glass predJL"><h3>大盘预判 · ATR<small>盘前生成 · 触发自动落账</small></h3><div id="predTodayJL">预判生成中…</div><div id="predLogJL"></div></section><section class="glass tempJL"><h3>大盘温度 · 情绪<small id="mtUpdatedJL" role="button" title="点击重新采样">点击采样</small></h3><div class="mtMain"><div class="mtGauge"><div class="mtTrack"><i class="mtArrow" id="mtArrowJL" style="bottom:45%"></i></div><div class="mtScale"><span>100 沸点</span><span>过热</span><span>微热</span><span>50 平</span><span>微冷</span><span>过冷</span><span>0 冰点</span></div></div><div class="mtBody"><div class="mtNow"><b id="mtValJL">—</b><span id="mtZoneJL">待采样</span></div><div class="mtLimit"><span class="up mtd" data-mtd="lu">涨停 <b id="mtLuJL">—</b> ›</span><span class="dn mtd" data-mtd="ld">跌停 <b id="mtLdJL">—</b> ›</span></div><div id="mtDistJL" class="mtDist"></div><div class="mtAmt" id="mtAmtJL">沪深成交 — · 上涨 — · 下跌 —</div><div id="mtDrillJL"></div></div></div></section></section><section class="view" id="chartPage" hidden="">
 <div class="chartHeading"><button id="chartBack" aria-label="返回来源页面">‹</button><div><b id="chartName"></b><small id="chartCode"></small></div><strong id="chartPrice"></strong><div class="chartMeta"><small id="chartDate"></small><small id="chartMarketStatus"></small></div><small>实时</small><button id="pickerOpen" aria-expanded="false">☷ 选股</button></div>
 <div class="periodBar" data-period-bar=""></div>
 <div id="ksMiniJL"><button id="ksMiniHandle" aria-expanded="false">工具</button><div id="ksMiniBody" hidden=""><button data-mb="picker">选股</button><button data-period="1分">1分</button><button data-period="5分">5分</button><button data-period="15分">15分</button><button data-period="30分">30分</button><button data-period="日K">日K</button><button data-period="5日">5日</button><button data-period="周">周</button><button data-period="月">月</button><button data-mb="draw">画线</button><button data-mb="undo">删除</button><button data-mb="clear">清空</button><button data-mb="hide">隐藏</button><button data-mb="lock">锁定</button><button data-mb="ind">指标</button><button data-mb="alert">提醒</button><button data-mb="reset">复位</button><button data-mb="exit">退出全屏</button></div></div>
@@ -446,12 +445,12 @@ document.addEventListener("visibilitychange", () => {
   function vpEnd(vp, len) {
     return vp.end < 0 ? len - 1 : Math.min(vp.end, len - 1);
   }
-  const hldVpJL = { count: 160, end: -1, ys: 1, offset: 0 };
+  const hldVpJL = { count: 48, end: -1, ys: 1, offset: 0 };
   const _pvVpMapJL = /* @__PURE__ */ new Map();
   function pvVpJL(c2) {
     let v = _pvVpMapJL.get(c2);
     if (!v) {
-      v = { count: 160, end: -1, ys: 1, offset: 0 };
+      v = { count: 48, end: -1, ys: 1, offset: 0 };
       _pvVpMapJL.set(c2, v);
     }
     return v;
@@ -4217,7 +4216,7 @@ document.addEventListener("visibilitychange", () => {
     try {
       const _pk = [];
       ["start", "zs", "eb"].forEach((k) => {
-        (L[k] || []).filter((x) => x.score != null && x.score >= 60).slice(0, 2).forEach((x) => _pk.push({ code: x.code, name: x.name, layer: x.layer, score: x.score, close: x.close, hy: x.hy || "", d0: x.d0 != null ? +x.d0.toFixed(0) : null, f5: x.f5 != null ? +x.f5.toFixed(0) : null, pos: x.pos, ctrl: x.ctrl != null ? +x.ctrl.toFixed(0) : null }));
+        (L[k] || []).filter((x) => x.score != null && x.score >= 60).slice(0, 3).forEach((x) => _pk.push({ code: x.code, name: x.name, layer: x.layer, score: x.score, close: x.close, hy: x.ind || JLPOOL_HY[x.code] || "", d0: x.d0 != null ? +x.d0.toFixed(0) : null, f5: x.f5 != null ? +x.f5.toFixed(0) : null, pos: x.pos, ctrl: x.ctrl != null ? +x.ctrl.toFixed(0) : null }));
       });
       if (_pk.length) {
         const _lg = JSON.parse(localStorage.getItem("jl_pool_picks_v1") || "{}");
@@ -4717,13 +4716,13 @@ document.addEventListener("visibilitychange", () => {
     {
       const picks = [];
       ["start", "zs", "eb"].forEach((k) => {
-        (JLPOOL.L[k] || []).filter((x) => x.score != null && x.score >= 60).slice(0, 2).forEach((x) => picks.push(x));
+        (JLPOOL.L[k] || []).filter((x) => x.score != null && x.score >= 60).slice(0, 3).forEach((x) => picks.push(x));
       });
       if (picks.length) {
         hasPicks = true;
-        html += '<div class="poolLayerHead" id="plh_pick" style="scroll-margin-top:46px"><b style="color:#ffd21f">' + (fresh ? "\u4ECA\u65E5\u4E3B\u63A8" : JLPOOL.d0 + " \u4E3B\u63A8\u5B58\u6863") + '</b><span class="plhN">' + picks.length + '</span><small>\u4E09\u5C42\u5404\u53D6\u8FC7\u95E8\u4E14\u5206\u226560\u7684\u524D2 \xB7 \u503C\u5F97\u770B\u2260\u4E70\u5165\u6307\u4EE4</small></div><div class="poolPicks">' + picks.map((x) => {
+        html += '<div class="poolLayerHead" id="plh_pick" style="scroll-margin-top:46px"><b style="color:#ffd21f">' + (fresh ? "\u4ECA\u65E5\u4E3B\u63A8" : JLPOOL.d0 + " \u4E3B\u63A8\u5B58\u6863") + '</b><span class="plhN">' + picks.length + '</span><small>\u4E09\u5C42\u5404\u53D6\u8FC7\u95E8\u4E14\u5206\u226560\u7684\u524D3 \xB7 \u503C\u5F97\u770B\u2260\u4E70\u5165\u6307\u4EE4</small></div><div class="poolPicks">' + picks.map((x) => {
           const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer), bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
-          return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + meta[2] + '">' + x.score + '<small>\u5206</small></span></div><div class="ppSub">' + bare + " \xB7 " + meta[1] + " \xB7 " + money(x.close) + ' <i class="' + cls(x.pct) + '">' + pct(x.pct) + '</i></div><div class="poolFund" style="padding:4px 0 0">' + fundLineJL(x) + '</div><div class="poolWhy" style="padding:4px 0 0">' + whyLineJL(x) + "</div>" + cyqLineHTMLJL({ code: x.code, base: x.close }) + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '">\uFF0B \u52A0\u89C2\u5BDF</button>') + "</div>";
+          return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + meta[2] + '">' + x.score + '<small>\u5206</small></span></div><div class="ppSub">' + bare + " \xB7 " + meta[1] + ((x.ind || JLPOOL_HY[x.code]) ? " \xB7 " + (x.ind || JLPOOL_HY[x.code]) : "") + " \xB7 " + money(x.close) + ' <i class="' + cls(x.pct) + '">' + pct(x.pct) + '</i></div><div class="poolFund" style="padding:4px 0 0">' + fundLineJL(x) + '</div><div class="poolWhy" style="padding:4px 0 0">' + whyLineJL(x) + "</div>" + cyqLineHTMLJL({ code: x.code, base: x.close }) + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '">\uFF0B \u52A0\u89C2\u5BDF</button>') + "</div>";
         }).join("") + "</div>";
       }
     }
@@ -4747,7 +4746,7 @@ document.addEventListener("visibilitychange", () => {
       const wf = typeof watchFundHTMLJL === "function" ? watchFundHTMLJL(s2) : "";
       const plMeta = pl && JLPOOL_LAYERS.find((l) => l[0] === pl.layer);
       const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + "</div>" : "";
-      return `<article class="watchItem" style="position:relative">${s2.qty > 0 ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s2.addedAt ? " \xB7 " + String(s2.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}</article>`;
+      return `<article class="watchItem" style="position:relative">${s2.qty > 0 ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s2.addedAt ? " \xB7 " + String(s2.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}</article>`;
     };
     const obs = rows.filter((s2) => !(s2.qty > 0));
     $("watchList").innerHTML = obs.length ? '<div class="dragonGroup"><b>\u89C2\u5BDF ' + obs.length + "</b></div>" + obs.map(card).join("") : "";
@@ -4811,8 +4810,7 @@ document.addEventListener("visibilitychange", () => {
     if (b) {
       e.preventDefault();
       e.stopPropagation();
-      const detail = b.parentElement.querySelector(".watchDetail");
-      if (!detail) return;
+      const detail = b.nextElementSibling;
       detail.hidden = !detail.hidden;
       b.setAttribute("aria-expanded", String(!detail.hidden));
       paint();
@@ -5645,9 +5643,8 @@ document.addEventListener("visibilitychange", () => {
     const lo = pane === "vol" ? 0 : axisVisible.length ? Math.min(...axisVisible.map((v) => v.l)) : 0, hi = pane === "vol" ? axisVisible.length ? Math.max(...axisVisible.map((v) => v.v || 0)) : 1 : axisVisible.length ? Math.max(...axisVisible.map((v) => v.h)) : 1;
     const center = (hi + lo) / 2 + (large && pane === "price" ? viewport.offset : pv2 && pane === "price" ? pv2.offset : 0), span = (hi - lo) * 1.22 / (large && pane === "price" ? viewport.ys : pv2 && pane === "price" ? pv2.ys || 1 : 1);
     const min = center - span / 2, max = center + span / 2;
-    const thinJL = c.id === "holdingChart" || c.hasAttribute("data-chart-code");
-    const candleW = Math.max(thinJL ? 1 : 2, (R - L) / count * 0.6);
-    const wickW = thinJL ? 1 : 1.6;
+    const candleW = Math.max(2, (R - L) / count * 0.6);
+    const wickW = 1.6;
     const X = (i) => L + (i - start) / (count - 1) * (R - L), Y = (v) => T + (max - v) / span * (B - T), I = (px) => start + (px - L) / (R - L) * (count - 1), V = (py) => max - (py - T) / (B - T) * span;
     maps.set(c, { X, Y, I, V, R, B, L, T, w, h });
     x.font = "9px monospace";
@@ -8096,121 +8093,9 @@ document.addEventListener("visibilitychange", () => {
       el.appendChild(b);
     });
   }
-  // 共振追涨公式(用户实盘验证口径照搬勿改): M1=500*(EMA(C,6)-EMA(C,18))/EMA(C,18)+2, M2=EMA(M1,3); 背景红绿=DEMA(VAR1,2,2)对VAR6; M1>2出紫柱,共振紫需DEMA>VAR6
-  function zzComputeJL(bars) {
-    const ema2 = (arr, n) => {
-      const a = 2 / (n + 1), out = new Array(arr.length);
-      let e = arr[0];
-      for (let i = 0; i < arr.length; i++) {
-        e = i === 0 ? arr[0] : a * arr[i] + (1 - a) * e;
-        out[i] = e;
-      }
-      return out;
-    };
-    const llv = (s2, n, i) => {
-      let m = s2[Math.max(0, i - n + 1)];
-      for (let j = Math.max(0, i - n + 1); j <= i; j++) if (s2[j] < m) m = s2[j];
-      return m;
-    };
-    const C = bars.map((b) => b.c), O = bars.map((b) => b.o), H = bars.map((b) => b.h), L2 = bars.map((b) => b.l);
-    const V1 = C.map((c2, i) => (3 * c2 + H[i] + L2[i] + O[i]) / 6);
-    const V2 = ema2(V1, 35);
-    const V4 = V2.map((_, i) => (llv(V2, 10, i) + llv(V2, 30, i) + llv(V2, 90, i)) / 3);
-    const V6 = V4.map((_, i) => (llv(V4, 5, i) + llv(V4, 15, i) + llv(V4, 30, i)) / 3);
-    const V7 = ema2(C, 6), V8 = ema2(C, 18);
-    const M1 = V7.map((v, i) => 500 * (v - V8[i]) / V8[i] + 2);
-    const M2 = ema2(M1, 3);
-    const DE = ema2(ema2(V1, 2), 2);
-    const bg = DE.map((v, i) => v > V6[i] ? 1 : 0);
-    const purple = M1.map((v, i) => v > 2 ? bg[i] ? 2 : 1 : 0);
-    return { M1, M2, bg, purple };
-  }
-  function zzPaneDrawJL(c, code, vp) {
-    if (!c || !c.getClientRects().length) return;
-    const w = c.clientWidth, h = c.clientHeight;
-    if (w < 10 || h < 10) return;
-    const d = Math.min(devicePixelRatio || 1, 2);
-    if (c.width !== Math.round(w * d) || c.height !== Math.round(h * d)) {
-      c.width = Math.round(w * d);
-      c.height = Math.round(h * d);
-    }
-    const x = c.getContext("2d");
-    x.setTransform(d, 0, 0, d, 0, 0);
-    x.clearRect(0, 0, w, h);
-    const bars = series(code, false);
-    if (bars.length < 95) {
-      x.fillStyle = "#8fa8b3";
-      x.font = "9px sans-serif";
-      x.textAlign = "center";
-      x.fillText("共振数据加载中…", w / 2, h / 2);
-      x.textAlign = "left";
-      return;
-    }
-    const zz = zzComputeJL(bars);
-    const n = bars.length, count = vp.count, end = vpEnd(vp, n), start = Math.max(0, end - count + 1);
-    const L = 8, R = w - 55, T = 4, B = h - 10;
-    const X = (i) => L + (i - start) / (count - 1) * (R - L);
-    let lo = -2, hi = 2;
-    for (let i = start; i <= end; i++) {
-      lo = Math.min(lo, zz.M1[i], zz.M2[i]);
-      hi = Math.max(hi, zz.M1[i], zz.M2[i]);
-    }
-    const pd = (hi - lo) * 0.08;
-    hi += pd;
-    lo -= pd;
-    const Y = (v) => T + (hi - v) / (hi - lo) * (B - T);
-    const bw = Math.max(1, (R - L) / count * 0.62);
-    for (let i = start; i <= end; i++) {
-      x.fillStyle = zz.bg[i] ? "rgba(224,82,82,0.16)" : "rgba(63,168,96,0.16)";
-      const yA = Y(2), yB = Y(-2);
-      x.fillRect(X(i) - bw / 2, Math.min(yA, yB), bw, Math.max(1, Math.abs(yB - yA)));
-    }
-    x.strokeStyle = "rgba(154,186,197,0.4)";
-    x.lineWidth = 1;
-    [0, 2].forEach((lv) => {
-      x.beginPath();
-      x.moveTo(L, Y(lv));
-      x.lineTo(R, Y(lv));
-      x.stroke();
-    });
-    for (let i = start; i <= end; i++) {
-      if (!zz.purple[i]) continue;
-      x.fillStyle = zz.purple[i] === 2 ? "#d94fd9" : "rgba(217,79,217,0.45)";
-      const yt = Y(zz.M1[i]), y2 = Y(2);
-      x.fillRect(X(i) - bw / 2, Math.min(yt, y2), bw, Math.max(1, Math.abs(y2 - yt)));
-    }
-    const line = (arr, col) => {
-      x.strokeStyle = col;
-      x.lineWidth = 1.4;
-      x.beginPath();
-      let st = false;
-      for (let i = start; i <= end; i++) {
-        const px = X(i), py = Y(arr[i]);
-        if (!st) {
-          x.moveTo(px, py);
-          st = true;
-        } else x.lineTo(px, py);
-      }
-      x.stroke();
-    };
-    line(zz.M1, "#ffd21f");
-    line(zz.M2, "#4a9eff");
-    x.fillStyle = "#c9dfe8";
-    x.font = "8px monospace";
-    x.fillText("共振·M1 " + zz.M1[end].toFixed(2) + " M2 " + zz.M2[end].toFixed(2), L + 2, T + 8);
-  }
   function drawHoldingSubJL() {
     const c = $("holdingSubJL");
     if (!c || !stocks[active]) return;
-    let subMode = "macd";
-    try {
-      subMode = localStorage.getItem("jinlin_hldsub_v1") || "macd";
-    } catch (e) {
-    }
-    if (subMode === "zz") {
-      zzPaneDrawJL(c, stocks[active].code, hldVpJL);
-      return;
-    }
     if (!c.getClientRects().length) return;
     const w = c.clientWidth, h = c.clientHeight;
     if (w < 10 || h < 10) return;
@@ -8269,7 +8154,7 @@ document.addEventListener("visibilitychange", () => {
     x.moveTo(L, Y(0));
     x.lineTo(R, Y(0));
     x.stroke();
-    const bw = Math.max(1, (R - L) / count * 0.5);
+    const bw = Math.max(1.5, (R - L) / count * 0.5);
     for (let i = Math.max(start, s0); i <= end; i++) {
       const v = macdA[i - s0], y0 = Y(0), y1 = Y(v);
       x.fillStyle = v >= 0 ? "#ff5459" : "#1fdc93";
@@ -8570,10 +8455,6 @@ document.addEventListener("visibilitychange", () => {
       });
       qa("[data-chart-code]").forEach((c) => _pt(() => draw(c, c.dataset.chartCode)));
       qa("[data-chart-code]").forEach((c) => _pt(() => renderWatchQuote(c)));
-      qa("[data-sub-code]").forEach((c) => _pt(() => {
-        const mc = document.querySelector('[data-chart-code="' + c.dataset.subCode + '"]');
-        zzPaneDrawJL(c, c.dataset.subCode, mc ? pvVpJL(mc) : pvVpJL(c));
-      }));
       if (page === "chartPage") {
         const s = byCode(selected);
         $("chartName").textContent = s.name;
@@ -9551,35 +9432,22 @@ document.addEventListener("visibilitychange", () => {
       hb.addEventListener("pointerleave", () => tip.style.opacity = 0);
     })();
     let pvPan = null;
-    const pvMainOfJL = (t) => {
-      let c2 = t.closest("[data-chart-code]");
-      if (!c2) {
-        const sub = t.closest("[data-sub-code]");
-        if (sub) c2 = $("watchList").querySelector('[data-chart-code="' + sub.dataset.subCode + '"]');
-      }
-      return c2;
-    };
     $("watchList").addEventListener("pointerdown", (e) => {
-      const el = e.target.closest("[data-chart-code],[data-sub-code]");
-      if (!el || e.pointerType === "mouse" && e.button !== 0) return;
-      const c2 = el.hasAttribute("data-chart-code") ? el : $("watchList").querySelector('[data-chart-code="' + el.dataset.subCode + '"]');
-      if (!c2) return;
-      const r = el.getBoundingClientRect(), v = pvVpJL(c2), n2 = series(c2.dataset.chartCode, false).length;
-      pvPan = { c: c2, el, x: e.clientX - r.left, y: e.clientY - r.top, end: vpEnd(v, n2), offset: v.offset, axis: null };
+      const c2 = e.target.closest("[data-chart-code]");
+      if (!c2 || e.pointerType === "mouse" && e.button !== 0) return;
+      const r = c2.getBoundingClientRect(), v = pvVpJL(c2), n2 = series(c2.dataset.chartCode, false).length;
+      pvPan = { c: c2, x: e.clientX - r.left, y: e.clientY - r.top, end: vpEnd(v, n2), offset: v.offset, axis: null };
       try {
-        el.setPointerCapture(e.pointerId);
+        c2.setPointerCapture(e.pointerId);
       } catch (e2) {
       }
     });
     $("watchList").addEventListener("pointermove", (e) => {
-      const cm = e.target.closest("[data-chart-code]");
-      if (cm) {
-        const r0 = cm.getBoundingClientRect();
-        miniCross.set(cm, { x: e.clientX - r0.left, y: e.clientY - r0.top });
-      }
-      if (pvPan) {
-        const el = pvPan.el, c2 = pvPan.c;
-        const r = el.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
+      const c2 = e.target.closest("[data-chart-code]");
+      if (!c2) return;
+      const r = c2.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
+      miniCross.set(c2, p);
+      if (pvPan && pvPan.c === c2) {
         const v = pvVpJL(c2), m = maps.get(c2), n2 = series(c2.dataset.chartCode, false).length;
         if (!pvPan.axis && Math.hypot(p.x - pvPan.x, p.y - pvPan.y) > 9) pvPan.axis = Math.abs(p.x - pvPan.x) >= Math.abs(p.y - pvPan.y) ? "h" : "v";
         if (m && pvPan.axis === "h") v.end = clamp(pvPan.end - (p.x - pvPan.x) / (m.R - m.L) * (v.count - 1), v.count - 1, Math.max(v.count - 1, n2 - 1));
@@ -9588,55 +9456,13 @@ document.addEventListener("visibilitychange", () => {
       paint();
     });
     for (const event of ["pointerout", "pointerup", "pointercancel"]) $("watchList").addEventListener(event, (e) => {
-      const wasPan = !!pvPan;
-      pvPan = null;
       const c2 = e.target.closest("[data-chart-code]");
-      if (c2) miniCross.delete(c2);
-      if (c2 || wasPan) paint();
+      pvPan = null;
+      if (c2) {
+        miniCross.delete(c2);
+        paint();
+      }
     });
-    $("watchList").addEventListener("wheel", (e) => {
-      const c2 = pvMainOfJL(e.target);
-      if (!c2) return;
-      e.preventDefault();
-      const v = pvVpJL(c2), n2 = series(c2.dataset.chartCode, false).length;
-      v.count = clamp(Math.round(v.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(320, n2)));
-      v.end = clamp(vpEnd(v, n2), v.count - 1, Math.max(v.count - 1, n2 - 1));
-      paint();
-    }, { passive: false });
-    {
-      const pvPtsJL = /* @__PURE__ */ new Map();
-      let pvPinchJL = null;
-      $("watchList").addEventListener("pointerdown", (e) => {
-        const c2 = pvMainOfJL(e.target);
-        if (!c2) return;
-        pvPtsJL.set(e.pointerId, { c: c2, x: e.clientX, y: e.clientY });
-        const same = [...pvPtsJL.values()].filter((p) => p.c === c2);
-        if (same.length === 2) {
-          pvPinchJL = { c: c2, d0: Math.max(20, Math.hypot(same[0].x - same[1].x, same[0].y - same[1].y)), c0: pvVpJL(c2).count };
-          pvPan = null;
-        }
-      });
-      $("watchList").addEventListener("pointermove", (e) => {
-        const rec = pvPtsJL.get(e.pointerId);
-        if (!rec) return;
-        rec.x = e.clientX;
-        rec.y = e.clientY;
-        if (pvPinchJL && rec.c === pvPinchJL.c) {
-          const same = [...pvPtsJL.values()].filter((p) => p.c === pvPinchJL.c);
-          if (same.length === 2) {
-            const d1 = Math.hypot(same[0].x - same[1].x, same[0].y - same[1].y);
-            const v = pvVpJL(pvPinchJL.c), n2 = series(pvPinchJL.c.dataset.chartCode, false).length;
-            v.count = clamp(Math.round(pvPinchJL.c0 * pvPinchJL.d0 / Math.max(20, d1)), 12, Math.max(12, Math.min(320, n2)));
-            v.end = clamp(vpEnd(v, n2), v.count - 1, Math.max(v.count - 1, n2 - 1));
-            paint();
-          }
-        }
-      });
-      for (const event of ["pointerup", "pointercancel", "pointerout"]) $("watchList").addEventListener(event, (e) => {
-        pvPtsJL.delete(e.pointerId);
-        if (pvPinchJL && ![...pvPtsJL.values()].some((p) => p.c === pvPinchJL.c)) pvPinchJL = null;
-      });
-    }
     {
       const c2 = $("homeChart");
       if (c2) {
@@ -9934,116 +9760,6 @@ document.addEventListener("visibilitychange", () => {
       holdingCross = null;
       paint();
     });
-    const hstJL = $("hldSubToggleJL");
-    if (hstJL) {
-      const syncHstJL = () => {
-        let m2 = "macd";
-        try {
-          m2 = localStorage.getItem("jinlin_hldsub_v1") || "macd";
-        } catch (e) {
-        }
-        hstJL.textContent = m2 === "zz" ? "共振" : "MACD";
-      };
-      syncHstJL();
-      hstJL.onclick = () => {
-        let m2 = "macd";
-        try {
-          m2 = localStorage.getItem("jinlin_hldsub_v1") || "macd";
-        } catch (e) {
-        }
-        try {
-          localStorage.setItem("jinlin_hldsub_v1", m2 === "zz" ? "macd" : "zz");
-        } catch (e) {
-        }
-        syncHstJL();
-        paint();
-      };
-    }
-    const hsc = $("holdingSubJL");
-    if (hsc) {
-      hsc.addEventListener("pointerdown", (e) => {
-        if (e.pointerType === "mouse" && e.button !== 0) return;
-        const r = hsc.getBoundingClientRect(), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
-        hPan = { x: e.clientX - r.left, y: e.clientY - r.top, end: vpEnd(hldVpJL, n2), offset: hldVpJL.offset, axis: null };
-        try {
-          hsc.setPointerCapture(e.pointerId);
-        } catch (e2) {
-        }
-      });
-      hsc.addEventListener("pointermove", (e) => {
-        const r = hsc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
-        holdingCross = p;
-        if (hPan) {
-          const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
-          if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
-          if (m && hPan.axis === "h") hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
-          if (m && hPan.axis === "v") hldVpJL.offset = hPan.offset + (m.V(hPan.y) - m.V(p.y));
-        }
-        paint();
-      });
-      for (const event of ["pointerleave", "pointerup", "pointercancel"]) hsc.addEventListener(event, () => {
-        hPan = null;
-        holdingCross = null;
-        paint();
-      });
-    }
-    document.addEventListener("gesturestart", (e) => {
-      e.preventDefault();
-    }, { passive: false });
-    const hldZoomJL = (el) => {
-      if (!el) return;
-      el.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
-        if (!n2) return;
-        hldVpJL.count = clamp(Math.round(hldVpJL.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(320, n2)));
-        hldVpJL.end = clamp(vpEnd(hldVpJL, n2), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
-        paint();
-      }, { passive: false });
-    };
-    hldZoomJL(hc);
-    hldZoomJL(hsc);
-    hc.ondblclick = () => {
-      Object.assign(hldVpJL, { count: 160, end: -1, ys: 1, offset: 0 });
-      holdingCross = null;
-      paint();
-    };
-    {
-      const hPtsJL = /* @__PURE__ */ new Map();
-      let hPinchJL = null;
-      const hPinchDown = (e) => {
-        hPtsJL.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (hPtsJL.size === 2) {
-          const a = [...hPtsJL.values()];
-          hPinchJL = { d0: Math.max(20, Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y)), c0: hldVpJL.count };
-          hPan = null;
-          holdingCross = null;
-        }
-      };
-      const hPinchMove = (e) => {
-        if (!hPtsJL.has(e.pointerId)) return;
-        hPtsJL.set(e.pointerId, { x: e.clientX, y: e.clientY });
-        if (hPinchJL && hPtsJL.size === 2) {
-          const a = [...hPtsJL.values()];
-          const d1 = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-          const n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
-          if (!n2) return;
-          hldVpJL.count = clamp(Math.round(hPinchJL.c0 * hPinchJL.d0 / Math.max(20, d1)), 12, Math.max(12, Math.min(320, n2)));
-          hldVpJL.end = clamp(vpEnd(hldVpJL, n2), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
-          paint();
-        }
-      };
-      const hPinchUp = (e) => {
-        hPtsJL.delete(e.pointerId);
-        if (hPtsJL.size < 2) hPinchJL = null;
-      };
-      [hc, hsc].forEach((el) => {
-        if (!el) return;
-        el.addEventListener("pointerdown", hPinchDown);
-        el.addEventListener("pointermove", hPinchMove);
-        for (const event of ["pointerup", "pointercancel", "pointerleave"]) el.addEventListener(event, hPinchUp);
-      });
-    }
     setInterval(() => {
       if (document.hidden) return;
       tick++;
@@ -10177,6 +9893,32 @@ document.addEventListener("visibilitychange", () => {
         return;
       }
       let h = "<h3>\u9F99\u6C60\u63A8\u8350\u53F0\u8D26 \xB7 \u81EA\u52A8\u8DDF\u8E2A</h3>";
+      const _bk = {};
+      Object.keys(log).sort().forEach((d) => {
+        (log[d].picks || []).forEach((x) => {
+          const key = String(x.code);
+          const b = _bk[key] || (_bk[key] = { code: key, name: x.name, layer: x.layer, times: 0, firstD: d, lastD: d, best: 0, hy: x.hy || "", firstClose: +x.close || 0, lastClose: +x.close || 0, r1: [], r3: [], bad: 0 });
+          b.times++; b.lastD = d; b.layer = x.layer;
+          if (x.score > b.best) b.best = x.score;
+          if (x.hy && !b.hy) b.hy = x.hy;
+          if (!b.hy && typeof JLPOOL_HY !== "undefined" && JLPOOL_HY[key]) b.hy = JLPOOL_HY[key];
+          b.lastClose = +x.close || b.lastClose;
+          if (x.r1 != null) b.r1.push(x.r1);
+          if (x.r3 != null) b.r3.push(x.r3);
+          if (x.r1 != null && x.r1 <= -8 || x.r2 != null && x.r2 <= -12) b.bad++;
+        });
+      });
+      const _avg = (a) => a.length ? +(a.reduce((p, q) => p + q, 0) / a.length).toFixed(1) : null;
+      const _rows = Object.values(_bk).map((b) => ({ b: b, a1: _avg(b.r1), a3: _avg(b.r3) })).sort((x, y) => y.b.times - x.b.times || (y.b.lastD > x.b.lastD ? 1 : -1));
+      if (_rows.length) {
+        const _fw = (v) => v == null ? '<b style="color:#8fa8b3">\u2014</b>' : '<b style="color:' + (v > 0 ? "#ff5459" : v < 0 ? "#1fdc93" : "#e0f2f6") + '">' + (v > 0 ? "+" : "") + v + "%</b>";
+        h += '<div style="font-size:11px;color:#8fe9d9;padding:8px 0 3px">\u7D2F\u8BA1\u7BEE\u5B50 \xB7 \u6309\u4EE3\u7801\u6C47\u603B(' + _rows.length + '\u53EA) \xB7 \u63A8\u8350\u6B21\u6570\u964D\u5E8F \xB7 \u4EC5\u5C55\u793A\u4E0D\u6784\u6210\u64CD\u4F5C\u5EFA\u8BAE</div>';
+        _rows.forEach((o) => {
+          const b = o.b, bare2 = b.code.replace(/^(sh|sz)/, "");
+          const held2 = typeof stocks !== "undefined" && stocks.some((s2) => s2.code === bare2 || s2.code === b.code);
+          h += '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;font-size:11.5px;color:#f2fbfd;padding:5px 0;border-bottom:1px solid #81e6d914;align-items:baseline"><span>' + b.name + ' <i style="font-style:normal;color:#b9d9e2">' + bare2 + " \xB7 " + b.layer + " \u6700\u9AD8" + b.best + "\u5206" + (b.hy ? " \xB7 " + b.hy : "") + " \xB7 \u63A8" + b.times + "\u6B21(" + b.firstD.slice(5) + "\u2192" + b.lastD.slice(5) + ")" + (b.times > 1 && b.firstClose > 0 ? " \xB7 \u9996\u63A8@" + b.firstClose + "\u2192" + b.lastClose : "") + (b.bad ? ' <u style="color:#ff8a80;text-decoration:none">\u8E29\u96F7' + b.bad + "\u6B21</u>" : "") + '</i></span><span>T1\u5747 ' + _fw(o.a1) + '</span><span>T3\u5747 ' + _fw(o.a3) + "</span><span>" + (held2 ? '<i style="font-style:normal;color:#8fa8b3">\u5DF2\u5728\u89C2\u5BDF</i>' : '<button type="button" data-watch-add="' + bare2 + '" data-name="' + b.name + '" data-price="' + b.lastClose + '" style="min-height:26px;padding:0 8px;border:1px solid #81e6d955;border-radius:7px;background:#81e6d914;color:#bcefeb;font-size:10px">\uFF0B\u89C2\u5BDF</button>') + "</span></div>";
+        });
+      }
       ds.forEach((d) => {
         const e = log[d];
         h += '<div style="font-size:11px;color:#ffd21f;padding:8px 0 3px">' + d + " \xB7 \u6570\u636E\u65E5 " + String(e.d0 || "").slice(5) + "</div>" + (e.picks || []).map((x) => {
