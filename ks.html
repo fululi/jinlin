@@ -414,7 +414,12 @@ function fetchFFlow(code, cb) {
     S.fflow = rows; S.fflowErr = false; S.fflowStale = false; S.fflowCode = code;
     try { // ks-0907-14: 成功即落缓存(限流/凌晨关闸时兜底用)
       var allF = JSON.parse(localStorage.getItem("ks_ff_v1") || "{}");
-      allF[code] = { rows: rows };
+      allF[code] = { rows: rows, _t: Date.now() };
+      var _fks = Object.keys(allF); // ks-0920-39: 超40只按写入时间淘汰最旧,防localStorage胀爆
+      if (_fks.length > 40) {
+        _fks.sort(function (a, b) { return (allF[a]._t || 0) - (allF[b]._t || 0); });
+        for (var _fi = 0; _fi < _fks.length - 40; _fi++) delete allF[_fks[_fi]];
+      }
       localStorage.setItem("ks_ff_v1", JSON.stringify(allF));
     } catch (e) {}
     if (cb) cb(null);
@@ -2731,8 +2736,11 @@ document.querySelector("[data-collapse]").addEventListener("click", function () 
   S.collapsed = !S.collapsed; store(); syncCollapse();
 });
 // 自动刷新：报价 30 秒一次（纯公开接口，不耗 token）；K线/资金流盘中 60 秒、盘后 5 分钟
+// ks-0920-39: inSession() 移进回调内逐 tick 判定——定时器间隔在加载时一次性算死，跨午休/收盘后频率不自适应
+var _quoteTick = 0;
 setInterval(function () {
   if (document.hidden) return;
+  if (!inSession() && (++_quoteTick % 10)) return; // 非交易时段降为 5 分钟一次
   var _rqCode = S.active; // ks-0920-37: 快照防换票串数据
   fetchQuote(_rqCode, function (err, q) {
     if (_rqCode !== S.active) return;
@@ -2745,8 +2753,10 @@ setInterval(function () {
     }
   });
 }, 30000);
+var _klineTick = 0;
 setInterval(function () {
   if (document.hidden) return;
+  if (!inSession() && (++_klineTick % 5)) return; // 非交易时段 5 分钟一次
   if (T || M || S.tool) return; // ks-0907-26: 画线/触摸/鼠标会话中暂停K线刷新——刷新换数据+draw()就是"画图时背景K线突然窜"的根因
   var _rkCode = S.active, _rkKlt = normalizeKlt(S.klt); // ks-0920-37: 快照防换票/换周期串数据
   fetchKline(_rkCode, S.klt, function (err, kl) {
@@ -2764,7 +2774,7 @@ setInterval(function () {
     if (S.klt === "101") fetchFFlow(S.active, function () { if (!T && !M && !S.tool) draw(); });
     if (S.ind.rtflow) fetchFFlowMin(S.active, function () { if (!T && !M && !S.tool) draw(); });
   }
-}, inSession() ? 60000 : 300000);
+}, 60000);
 window.addEventListener("resize", draw);
 /* ================= ICT 叠加（FVG / 流动性BSL·SSL / 结构BOS·CHoCH / 订单块，简化口径） ================= */
 function smaNulls(arr, n) {
@@ -3799,10 +3809,32 @@ function ensureCyqKS(code) {
     var arr = !err && d && d.data && d.data.klines || [];
     var rows = arr.map(function (s2) { var a = s2.split(","); return { d: a[0], o: +a[1], c: +a[2], h: +a[3], l: +a[4], v: +a[5], turn: +a[6] }; })
       .filter(function (r) { return isFinite(r.c) && r.c > 0 && isFinite(r.turn); });
-    if (rows.length < 60) { CYQ_STORE[code] = { date: cyqTodayKS(), err: "数据不足或通道被封", chips: null }; delete CYQ_INFLIGHT[code]; draw(); return; }
-    CYQ_STORE[code] = cyqBuildKS(rows, "东财·前复权·真实换手");
-    try { localStorage.setItem("jl_cyq2_" + code, JSON.stringify(CYQ_STORE[code])); } catch (e) {}
-    delete CYQ_INFLIGHT[code]; draw();
+    if (rows.length >= 60) {
+      CYQ_STORE[code] = cyqBuildKS(rows, "东财·前复权·真实换手");
+      try { localStorage.setItem("jl_cyq2_" + code, JSON.stringify(CYQ_STORE[code])); } catch (e) {}
+      delete CYQ_INFLIGHT[code]; draw(); return;
+    }
+    // ks-0920-39: 东财被封时腾讯兜底(qfq日K800根+qt.gtimg流通市值估算换手率,源标签注明估算)
+    var tc = txPrefix(code, true);
+    Promise.all([
+      fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq").then(function (r) { return r.json(); }),
+      fetch("https://qt.gtimg.cn/q=" + tc).then(function (r) { return r.arrayBuffer(); })
+    ]).then(function (rs) {
+      var kd = rs[0], nn = kd && kd.data && kd.data[tc];
+      var arr2 = (nn && (nn.qfqday || nn.day)) || [];
+      var f = String(new TextDecoder("gbk").decode(rs[1])).split("~");
+      var fmv = parseFloat(f[44]) || 0, px = parseFloat(f[3]) || 0;
+      var shares = fmv > 0 && px > 0 ? fmv * 1e8 / px : 0;
+      var rows2 = arr2.map(function (x2) { return { d: x2[0], o: +x2[1], c: +x2[2], h: +x2[3], l: +x2[4], v: +x2[5], turn: shares > 0 ? +x2[5] * 100 / shares * 100 : NaN }; })
+        .filter(function (r2) { return isFinite(r2.c) && r2.c > 0 && isFinite(r2.turn); });
+      if (rows2.length < 60) throw new Error("tx-cyq-short");
+      CYQ_STORE[code] = cyqBuildKS(rows2, "腾讯·前复权·估算换手");
+      try { localStorage.setItem("jl_cyq2_" + code, JSON.stringify(CYQ_STORE[code])); } catch (e2) {}
+      delete CYQ_INFLIGHT[code]; draw();
+    }).catch(function () {
+      CYQ_STORE[code] = { date: cyqTodayKS(), err: "数据不足或通道被封", chips: null };
+      delete CYQ_INFLIGHT[code]; draw();
+    });
   }, 9000);
 }
 function renderCYQ(ctx, v) {

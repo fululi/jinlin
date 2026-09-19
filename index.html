@@ -295,7 +295,10 @@ body.ksEmbed #chartPage .plots{height:640px}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
 </style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
-</head><body><!-- .38 P1七修: ①涨停风口层加连板赛道分(高度/封单/首封/炸板)+资金门过/未过标注(离线快照口径,涨停池不再纯展示) ②双证据族一票否决改扣分制(start/zs/eb每族-12分,zs主升豁免position高位族;trend/top维持原拒绝进RISK) ③量/价两族改3日确认(近3日≥2日命中才计族,治单日噪音误杀) ④资金复盘头部硬编码%加[历史回测背景·非实时]前缀 ⑤破带率Top3门槛n≥2→n≥5 ⑥龙池T+1胜率/审判胜率同票多日推荐去重(每股计最近一次,样本不再虚高) ⑦删d0<0双重惩罚×0.7(score+回放同步)+删n<60死代码+资格门拦截标签改准(资金量级/证据不足) : ①筹码取数fqt=0→fqt=1前复权,与K线图同口径(东财App/自家图获利比例不再差十几个点),缓存键jl_cyq2_升版旧缓存作废 ②ks换票/换周期守卫: fetchKline/fetchQuote四处回调快照code+klt,晚到旧数据丢弃(治张冠李戴) ③loadRealKlines批次快照periodSnap+过期批次整批丢弃(治切周期缓存写串) ④ensureDDXData win/lose加ddxState.key校验+period改写try/finally ⑤poolFindJL双定义合一+兼容sh/sz前缀(v.25地雷拆除) ⑥复盘近5日改close-to-close(6根K线)+剔除15:10前未完成盘中bar,量比口径同步不再失真 ⑦龙池T+1基准价改前复权K线收盘(跨除权日不再失真)+盘中未完成bar不计T+N 持仓小图五修: ①左%轴与右价同口径(refPrev优先用报价base/(1+pct)反推昨收,盘后/周末seedPrevJL把prevClose改写成最近收盘导致图%与卡%两个口径;十字线左%改固定昨收映射与右价tag配对) ②v.96补拉t0按字符串slice解析,腾讯12位数字时间戳(202609171342)被切成月91日13→end算出2033年,东财返回最新320根与缓存全量重叠,时间轴从10:55来回跳/整列重复;改一律barTime归一化再解析再比较 ③周期刷新合并_cut按原始字符串比较,东财带横杠与腾讯数字格式混排恒判错,且_cut=-1(全新数据)时丢弃已补拉旧K线;改barTime归一化比较+-1时尾部拼接 ④资金卡分时/近70日随单次拉取成败来回切模式(时间轴10:55↔日期跳)+空帧覆盖好帧;改当天有过分钟数据即锁分时模式+取不到新数据保留上一帧 ⑤图动起bug均为上述乱序/整列替换/空帧覆盖所致,随①-④根治 --><!-- v.30 0920凌晨 复盘汇总: 复盘卡加全部持仓汇总块(deckListJL口径,每只:做T+近5日涨跌+主力净额+结论,点行=证据区切到该股+当前行高亮) / 进复盘页强制刷新renderResonanceJL / 标题small改汇总口径说明 —— 日复盘从单股改全持仓一览,单股证据区保留 --><!-- v.29 0919深夜 四联: ①异动密度标注补口径(次数非金额,解绿柱多vs资金红疑问) ②龙池轨迹risk行透出命中族(高位/量异常/承接失败/连续流出)+注脚写明单日形态敏感非隔日指令 ③龙头股池tab入history(pushState#pool,手机返回键可退回观察自选,此前返回无效) ④复盘卡标题亮当前股名+跟随持仓选中股标注 --><!-- v.28 0919凌晨 八联: ①持仓股可同步进自选观察(watch旗标,此前'已在池里'静默拒绝) ②持仓页码按实际渲染卡数(01/09假象修复)+滑动/选中/计数统一走deckListJL ③撤展开详情自动上滚(.27引入回归) ④大盘异动:删.27重复图题+异动密度柱加标注加高 ⑤盘前情绪卡默认收起明细只留预判行 ⑥全局玻璃卡透亮化(.27只改了持仓卡)+浮层面板降不透明 ⑦新闻面板:pushState手机返回可关+iframe内返回改关面板+数据日亮出过期提示+持仓股名focus定位修复 ⑧复盘证据区加小结行 --><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+</head><body><!-- .39 P2六修: ①筹码东财通道失败腾讯兜底(fqkline前复权800日+qt实时流通股本估算换手,<60行仍报错) ②涨跌停夹板先判板块再判ST(创业板/科创板ST=20%不再被误夹5%) ③水位档位复用旧memo时头部标注"档位基于M月D日数据"(琥珀小字,不再假装是今天算的) ④jl index.html标记旧版备份(顶部注释+页面横幅,算法不再同步) ⑤sinaNewsJL三连重复删两份+资金流分钟图对象重复键c显式化(死增量字段摘除)+jlEmGet删no-proxy死分支+jl_ff_v1/ks_ff_v1缓存超40只淘汰最旧+ks双定时器改回调内按inSession自适应(午休/收盘后不再频率卡死)+sw.js HTTP错误回退缓存 ⑥jlLastTradeDay长假误算局限注释存档 -->
+<!-- .38 P1七修: ①涨停风口层加连板赛道分(高度/封单/首封/炸板)+资金门过/未过标注(离线快照口径,涨停池不再纯展示) ②双证据族一票否决改扣分制(start/zs/eb每族-12分,zs主升豁免position高位族;trend/top维持原拒绝进RISK) ③量/价两族改3日确认(近3日≥2日命中才计族,治单日噪音误杀) ④资金复盘头部硬编码%加[历史回测背景·非实时]前缀 ⑤破带率Top3门榿n≥2→n≥5 ⑥龙池T+1胜率/审判胜率同票多日推荐去重(每股计最近一次,样本不再虚高) ⑦删d0<0双重惩罚×0.7(score+回放同步)+删n<60死代码+资格门拦截标签改准(资金量级/证据不足) -->
+<!-- .37 P0七修: ①筹码取数fqt=0→fqt=1前复权,与K线图同口径(东财App/自家图获利比例不再差十几个点),缓存键jl_cyq2_升版旧缓存作废 ②ks换票/换周期守卫: fetchKline/fetchQuote四处回调快照code+klt,晚到旧数据丢弃(治张冠李戴) ③loadRealKlines批次快照periodSnap+过期批次整批丢弃(治切周期缓存写串) ④ensureDDXData win/lose加ddxState.key校验+period改写try/finally ⑤poolFindJL双定义合一+兼容sh/sz前缀(v.25地雷拆除) ⑥复盘近5日改close-to-close(6根K线)+剔除15:10前未完成盘中bar,量比口径同步不再失真 ⑦龙池T+1基准价改前复权K线收盘(跨除权日不再失真)+盘中未完成bar不计T+N -->
+<!-- .36 持仓小图五修: ①左%轴与右价同口径(refPrev优先用报价base/(1+pct)反推昨收,盘后/周末seedPrevJL把prevClose改写成最近收盘导致图%与卡%两个口径;十字线左%改固定昨收映射与右价tag配对) ②v.96补拉t0按字符串slice解析,腾讯12位数字时间戳(202609171342)被切成月91日13→end算出2033年,东财返回最新320根与缓存全量重叠,时间轴从10:55来回跳/整列重复;改一律barTime归一化再解析再比较 ③周期刷新合并_cut按原始字符串比较,东财带横杠与腾讯数字格式混排恒判错,且_cut=-1(全新数据)时丢弃已补拉旧K线;改barTime归一化比较+-1时尾部拼接 ④资金卡分时/近70日随单次拉取成败来回切模式(时间轴10:55↔日期跳)+空帧覆盖好帧;改当天有过分钟数据即锁分时模式+取不到新数据保留上一帧 ⑤图动起bug均为上述乱序/整列替换/空帧覆盖所致,随①-④根治 --><!-- v.30 0920凌晨 复盘汇总: 复盘卡加全部持仓汇总块(deckListJL口径,每只:做T+近5日涨跌+主力净额+结论,点行=证据区切到该股+当前行高亮) / 进复盘页强制刷新renderResonanceJL / 标题small改汇总口径说明 —— 日复盘从单股改全持仓一览,单股证据区保留 --><!-- v.29 0919深夜 四联: ①异动密度标注补口径(次数非金额,解绿柱多vs资金红疑问) ②龙池轨迹risk行透出命中族(高位/量异常/承接失败/连续流出)+注脚写明单日形态敏感非隔日指令 ③龙头股池tab入history(pushState#pool,手机返回键可退回观察自选,此前返回无效) ④复盘卡标题亮当前股名+跟随持仓选中股标注 --><!-- v.28 0919凌晨 八联: ①持仓股可同步进自选观察(watch旗标,此前'已在池里'静默拒绝) ②持仓页码按实际渲染卡数(01/09假象修复)+滑动/选中/计数统一走deckListJL ③撤展开详情自动上滚(.27引入回归) ④大盘异动:删.27重复图题+异动密度柱加标注加高 ⑤盘前情绪卡默认收起明细只留预判行 ⑥全局玻璃卡透亮化(.27只改了持仓卡)+浮层面板降不透明 ⑦新闻面板:pushState手机返回可关+iframe内返回改关面板+数据日亮出过期提示+持仓股名focus定位修复 ⑧复盘证据区加小结行 --><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
 <body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实证,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
@@ -1071,122 +1074,6 @@ document.addEventListener("visibilitychange", () => {
     mfSetOpenJL(open);
     if (open) loadMarketFundsJL();
   };
-  function sinaNewsJL(fr, empty) {
-    if (fr.dataset.sinaTried === "1") {
-      fr.hidden = true;
-      empty.hidden = false;
-      return;
-    }
-    fr.dataset.sinaTried = "1";
-    const cb = "jlNews_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
-    let sc;
-    const fail = () => {
-      fr.hidden = true;
-      empty.hidden = false;
-    };
-    const tm = setTimeout(() => {
-      try {
-        fail();
-      } finally {
-        delete window[cb];
-        if (sc) sc.remove();
-      }
-    }, 12e3);
-    window[cb] = (d) => {
-      clearTimeout(tm);
-      try {
-        const items = (d && d.result && d.result.data || []).slice(0, 60);
-        if (!items.length) {
-          fail();
-          return;
-        }
-        const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        const rows = items.map((it) => {
-          const ts = it.ctime ? new Date(it.ctime * 1e3) : null;
-          const hm = ts ? ts.getMonth() + 1 + "/" + ts.getDate() + " " + String(ts.getHours()).padStart(2, "0") + ":" + String(ts.getMinutes()).padStart(2, "0") : "";
-          return '<div style="padding:12px 16px;border-bottom:1px solid #16222e"><div style="font-size:10px;color:#6f899b;margin-bottom:5px">' + esc(hm) + ' \xB7 \u65B0\u6D6A7x24</div><a href="' + esc(it.url || "#") + '" target="_blank" rel="noopener" style="color:#eff9fc;font-size:13px;line-height:1.65;text-decoration:none">' + esc(it.title || it.intro || "") + "</a>" + (it.intro && it.title ? '<div style="color:#849bab;font-size:11px;line-height:1.6;margin-top:5px">' + esc(String(it.intro).slice(0, 120)) + "</div>" : "") + "</div>";
-        }).join("");
-        fr.hidden = false;
-        empty.hidden = true;
-        fr.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>body{margin:0;background:#060d15;font-family:-apple-system,PingFang SC,sans-serif}</style></head><body><div style="padding:12px 16px;font-size:12px;color:#f5b76e">\u26A0\uFE0F \u65E9\u665A\u62A5\u6E90\u4E0D\u53EF\u8FBE \xB7 \u4EE5\u4E0B\u4E3A\u65B0\u6D6A7x24\u5B9E\u65F6\u6D41\uFF08\u515C\u5E95\uFF09</div>' + rows + "</body></html>";
-      } catch (e) {
-        fail();
-      } finally {
-        delete window[cb];
-        if (sc) sc.remove();
-      }
-    };
-    sc = document.createElement("script");
-    sc.src = "https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&num=60&page=1&callback=" + cb;
-    sc.onerror = () => {
-      clearTimeout(tm);
-      try {
-        fail();
-      } finally {
-        delete window[cb];
-        sc.remove();
-      }
-    };
-    document.head.appendChild(sc);
-  }
-  function sinaNewsJL(fr, empty) {
-    if (fr.dataset.sinaTried === "1") {
-      fr.hidden = true;
-      empty.hidden = false;
-      return;
-    }
-    fr.dataset.sinaTried = "1";
-    const cb = "jlNews_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
-    let sc;
-    const fail = () => {
-      fr.hidden = true;
-      empty.hidden = false;
-    };
-    const tm = setTimeout(() => {
-      try {
-        fail();
-      } finally {
-        delete window[cb];
-        if (sc) sc.remove();
-      }
-    }, 12e3);
-    window[cb] = (d) => {
-      clearTimeout(tm);
-      try {
-        const items = (d && d.result && d.result.data || []).slice(0, 60);
-        if (!items.length) {
-          fail();
-          return;
-        }
-        const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        const rows = items.map((it) => {
-          const ts = it.ctime ? new Date(it.ctime * 1e3) : null;
-          const hm = ts ? ts.getMonth() + 1 + "/" + ts.getDate() + " " + String(ts.getHours()).padStart(2, "0") + ":" + String(ts.getMinutes()).padStart(2, "0") : "";
-          return '<div style="padding:12px 16px;border-bottom:1px solid #16222e"><div style="font-size:10px;color:#6f899b;margin-bottom:5px">' + esc(hm) + ' \xB7 \u65B0\u6D6A7x24</div><a href="' + esc(it.url || "#") + '" target="_blank" rel="noopener" style="color:#eff9fc;font-size:13px;line-height:1.65;text-decoration:none">' + esc(it.title || it.intro || "") + "</a>" + (it.intro && it.title ? '<div style="color:#849bab;font-size:11px;line-height:1.6;margin-top:5px">' + esc(String(it.intro).slice(0, 120)) + "</div>" : "") + "</div>";
-        }).join("");
-        fr.hidden = false;
-        empty.hidden = true;
-        fr.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>body{margin:0;background:#060d15;font-family:-apple-system,PingFang SC,sans-serif}</style></head><body><div style="padding:12px 16px;font-size:12px;color:#f5b76e">\u26A0\uFE0F \u65E9\u665A\u62A5\u6E90\u4E0D\u53EF\u8FBE \xB7 \u4EE5\u4E0B\u4E3A\u65B0\u6D6A7x24\u5B9E\u65F6\u6D41\uFF08\u515C\u5E95\uFF09</div>' + rows + "</body></html>";
-      } catch (e) {
-        fail();
-      } finally {
-        delete window[cb];
-        if (sc) sc.remove();
-      }
-    };
-    sc = document.createElement("script");
-    sc.src = "https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2516&num=60&page=1&callback=" + cb;
-    sc.onerror = () => {
-      clearTimeout(tm);
-      try {
-        fail();
-      } finally {
-        delete window[cb];
-        sc.remove();
-      }
-    };
-    document.head.appendChild(sc);
-  }
   function sinaNewsJL(fr, empty) {
     if (fr.dataset.sinaTried === "1") {
       fr.hidden = true;
@@ -3151,7 +3038,7 @@ document.addEventListener("visibilitychange", () => {
   function posRulerJL(s) {
     const p = Number(s.base), prev = Number(s.prevClose) || p, a = atr14JL(s.code);
     if (!(p > 0 && a > 0)) return null;
-    const cal = calibJL(s.code), ku = cal && cal.kUp || 1, kd = cal && cal.kDn || 1, lpw = /ST/i.test(s.name || "") ? 0.05 : /^(30|68)/.test(String(s.code)) ? 0.2 : /^(8|4|92)/.test(String(s.code)) ? 0.3 : 0.1, lo = Math.max(prev * (1 - lpw), prev - kd * a), hi = Math.min(prev * (1 + lpw), prev + ku * a);
+    const cal = calibJL(s.code), ku = cal && cal.kUp || 1, kd = cal && cal.kDn || 1, lpw = /^(30|68)/.test(String(s.code)) ? 0.2 : /^(8|4|92)/.test(String(s.code)) ? 0.3 : /ST/i.test(s.name || "") ? 0.05 : 0.1, lo = Math.max(prev * (1 - lpw), prev - kd * a), hi = Math.min(prev * (1 + lpw), prev + ku * a);
     if (!(hi > lo)) return null;
     const pos = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
     let st = "mid";
@@ -3948,6 +3835,8 @@ document.addEventListener("visibilitychange", () => {
     jlTradeDayObs = localStorage.getItem("jl_tdo_v1") || "";
   } catch (e) {
   }
+  // jl-0920-39 已知局限: 只跳过周末+9:20前回退一天, 不接交易所日历——法定长假(国庆/春节)后的"最近交易日"会误算成假期内的周五,
+  // 影响 jlPoolFresh 的新鲜度判定(长假期间可能把假期前数据误判为不新鲜)。根治需接交易日历表, 改动大收益小, 暂记于此。
   function jlLastTradeDay() {
     const d = /* @__PURE__ */ new Date();
     if (d.getHours() * 60 + d.getMinutes() < 560) d.setDate(d.getDate() - 1);
@@ -4144,7 +4033,7 @@ document.addEventListener("visibilitychange", () => {
           res(d);
         }
       };
-      Promise.reject(new Error("no-proxy")).then((r) => r.ok ? r.json() : Promise.reject(0)).then(done).catch(() => {
+      {
         const cb = "_jlm" + Math.random().toString(36).slice(2);
         const tm = setTimeout(() => {
           try {
@@ -4173,7 +4062,7 @@ document.addEventListener("visibilitychange", () => {
         };
         sc.onload = () => sc.remove();
         document.head.appendChild(sc);
-      });
+      }
     });
   }
   let JLPOOL_FFOFF = null, JLPOOL_FFOFF_ASOF = "", _jlFfOffP = null;
@@ -5636,7 +5525,17 @@ document.addEventListener("visibilitychange", () => {
     if (n) console.log("\u65E5K\u7F13\u5B58\u6062\u590D", n, "\u53EA");
   }
   dkRestoreJL();
-  function ffMergeJL(oldRows, newRows) {
+  function jlFfEvictJL(all) { // jl-0920-39: 资金流缓存超40只按写入时间淘汰最旧,防localStorage胀爆
+  try {
+    const ks2 = Object.keys(all || {});
+    if (ks2.length <= 40) return all;
+    ks2.sort((a, b) => (all[a] && all[a].t || 0) - (all[b] && all[b].t || 0));
+    for (let i2 = 0; i2 < ks2.length - 40; i2++) delete all[ks2[i2]];
+  } catch (e) {
+  }
+  return all;
+}
+function ffMergeJL(oldRows, newRows) {
     if (!oldRows || !oldRows.length) return newRows;
     if (!newRows || !newRows.length) return oldRows;
     /* v.72 去长度捷径: 320=320全量替换会抹掉盘中今日行(资金卡一会出现一会消失的根因) → 一律按日期合并,同日新行覆盖,今日盘中行保留 */
@@ -5936,10 +5835,10 @@ document.addEventListener("visibilitychange", () => {
       return r;
     }
     const m2 = M[stock.code];
-    if (m2 && (m2.dk || m2.d) === dkDay) return m2.r;
+    if (m2 && (m2.dk || m2.d) === dkDay) return Object.assign({}, m2.r, { _stale: m2.dk || m2.d });
     try {
       const all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}");
-      if (all[stock.code] && all[stock.code].r && all[stock.code].r.sells && all[stock.code].r.sells.length && (all[stock.code].dk === dkDay || !all[stock.code].dk && all.d === td3)) return all[stock.code].r;
+      if (all[stock.code] && all[stock.code].r && all[stock.code].r.sells && all[stock.code].r.sells.length && (all[stock.code].dk === dkDay || !all[stock.code].dk && all.d === td3)) return Object.assign({}, all[stock.code].r, { _stale: all[stock.code].dk || all.d });
     } catch (e) {
     }
     return r;
@@ -5957,7 +5856,7 @@ document.addEventListener("visibilitychange", () => {
       for (const _v2 of _r120) _v2 <= _curA && _le++;
       _q2 = _le / _r120.length;
     }
-    const kAdj = _q2 < 0.33 ? 0.85 : _q2 > 0.67 ? 1.2 : 1, prof2 = calibJL(stock.code), suF = (prof2 && prof2.ku3 ? prof2.ku3 : [0.3, 0.6, 0.95]).map((k) => +(k * kAdj).toFixed(3)), sdF = (prof2 && prof2.kd3 ? prof2.kd3 : [0.5, 0.85, 1.2]).map((k) => +(k * kAdj).toFixed(3)), su = ap >= 5 ? suF : suF.slice(0, ap >= 3 ? 2 : 1), sd = ap >= 5 ? sdF : sdF.slice(0, ap >= 3 ? 2 : 1), tick2 = p < 1 ? 1e-3 : 0.01, lpw = /ST/i.test(stock.name || "") ? 0.05 : /^(30|68)/.test(String(stock.code)) ? 0.2 : /^(8|4|92)/.test(String(stock.code)) ? 0.3 : 0.1, cap = (planNext ? p : prev) * (1 + lpw), flr = (planNext ? p : prev) * (1 - lpw);
+    const kAdj = _q2 < 0.33 ? 0.85 : _q2 > 0.67 ? 1.2 : 1, prof2 = calibJL(stock.code), suF = (prof2 && prof2.ku3 ? prof2.ku3 : [0.3, 0.6, 0.95]).map((k) => +(k * kAdj).toFixed(3)), sdF = (prof2 && prof2.kd3 ? prof2.kd3 : [0.5, 0.85, 1.2]).map((k) => +(k * kAdj).toFixed(3)), su = ap >= 5 ? suF : suF.slice(0, ap >= 3 ? 2 : 1), sd = ap >= 5 ? sdF : sdF.slice(0, ap >= 3 ? 2 : 1), tick2 = p < 1 ? 1e-3 : 0.01, lpw = /^(30|68)/.test(String(stock.code)) ? 0.2 : /^(8|4|92)/.test(String(stock.code)) ? 0.3 : /ST/i.test(stock.name || "") ? 0.05 : 0.1, cap = (planNext ? p : prev) * (1 + lpw), flr = (planNext ? p : prev) * (1 - lpw);
     const mags = magnetsJL(stock.code, anchor, db, legFibJL(stock.code, p));
     let sells = snapLvJL(su.map((k) => Math.min(cap, anchor + k * base)), mags, base, tick2), buys = snapLvJL(sd.map((k) => Math.max(flr, anchor - k * base)), mags, base, tick2);
     sells = sells.map((v) => Math.min(cap, v)).sort((a2, b2) => a2 - b2).filter((v, i, ar) => !i || Math.abs(v - ar[i - 1]) > 1e-6);
@@ -6808,7 +6707,7 @@ document.addEventListener("visibilitychange", () => {
       t.buys = ["B1", "B2", "B3"].map((k, i) => Number(stock.customTiers[k]) || t.buys[i]);
     }
     const f = legFibJL(stock.code, liveP);
-    tier.innerHTML = t ? `<b>\u771F\u5B9E ATR14 ${t.atr.toFixed(2)}</b> \xB7 \u951A ${t.anchor.toFixed(2)} \xB7 <span class="down">S ${t.sells.map((v) => v.toFixed(2)).join(" / ")}</span> \xB7 <span class="up">B ${t.buys.map((v) => v.toFixed(2)).join(" / ")}</span><details class="tierEdit"><summary>\u81EA\u5B9A\u4E49\u6C34\u4F4D</summary><div class="tierInputs">${["S1", "S2", "S3", "B1", "B2", "B3"].map((lb, i) => {
+    tier.innerHTML = t ? `<b>\u771F\u5B9E ATR14 ${t.atr.toFixed(2)}</b>${t._stale ? ` <small style="color:#e8a33d">\u6863\u4F4D\u57FA\u4E8E ${String(t._stale).slice(5).replace("-", "\u6708")}\u65E5\u6570\u636E</small>` : ""} \xB7 \u951A ${t.anchor.toFixed(2)} \xB7 <span class="down">S ${t.sells.map((v) => v.toFixed(2)).join(" / ")}</span> \xB7 <span class="up">B ${t.buys.map((v) => v.toFixed(2)).join(" / ")}</span><details class="tierEdit"><summary>\u81EA\u5B9A\u4E49\u6C34\u4F4D</summary><div class="tierInputs">${["S1", "S2", "S3", "B1", "B2", "B3"].map((lb, i) => {
       var _a2, _b2;
       return `<label>${lb}<input type="number" step="0.001" data-tier-edit="${lb}" value="${Number((_b2 = (_a2 = stock.customTiers) == null ? void 0 : _a2[lb]) != null ? _b2 : i < 3 ? t.sells[i] : t.buys[i - 3])}"></label>`;
     }).join("")}</div><button type="button" data-tier-save>\u4FDD\u5B58\u6C34\u4F4D</button><button type="button" data-tier-reset>\u6062\u590D\u81EA\u52A8</button></details>` : "\u771F\u5B9E\u65E5\u7EBF ATR \u52A0\u8F7D\u4E2D\u2026";
@@ -7592,7 +7491,7 @@ document.addEventListener("visibilitychange", () => {
         try {
           const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), _cur1 = all[code];
           all[code] = { rows: ffMergeJL(_cur1 && _cur1.rows, rows), t: Date.now() };
-          jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
+          jlSafeSetJL("jl_ff_v1", JSON.stringify(jlFfEvictJL(all)));
         } catch (e) {
         }
         if (ddxState.key !== key) return; // jl-0920-37: 已切票/切周期, 只留缓存不落全局状态(治A票数据写进B票图)
@@ -8179,9 +8078,33 @@ document.addEventListener("visibilitychange", () => {
       done2();
     };
     emFetchJL(url).then(eat).catch(() => {
-      cyqInflightJL[code] = 0;
-      if (!cyqStoreJL[code]) cyqStoreJL[code] = { date: cyqTodayJL(), err: "\u63A5\u53E3\u65AD\u7EBF", chips: null };
-      done2();
+      // jl-0920-39: 东财通道被封时腾讯兜底(qfq日K800根+qt.gtimg流通市值估算换手率,源标签注明估算)
+      const tc = (/^[569]/.test(code) ? "sh" : "sz") + code;
+      Promise.all([
+        fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq", { cache: "no-store" }).then((r) => r.json()),
+        fetch("https://qt.gtimg.cn/q=" + tc, { cache: "no-store" }).then((r) => r.text())
+      ]).then((rs) => {
+        const kd = rs[0], qt = rs[1];
+        const nn = kd && kd.data && kd.data[tc];
+        const arr2 = (nn && (nn.qfqday || nn.day)) || [];
+        const parts = String(qt).split("~");
+        const fmv = +parts[44] || 0, px = +parts[3] || 0;
+        const shares = fmv > 0 && px > 0 ? fmv * 1e8 / px : 0;
+        const rows2 = arr2.map((x2) => ({ d: x2[0], o: +x2[1], c: +x2[2], h: +x2[3], l: +x2[4], v: +x2[5], turn: shares > 0 ? +x2[5] * 100 / shares * 100 : NaN }))
+          .filter((r2) => isFinite(r2.c) && r2.c > 0 && isFinite(r2.turn));
+        if (rows2.length < 60) throw new Error("tx-cyq-short");
+        cyqStoreJL[code] = cyqBuildJL(code, rows2, "\u817E\u8BAF\xB7\u524D\u590D\u6743\xB7\u4F30\u7B97\u6362\u624B");
+        try {
+          localStorage.setItem("jl_cyq2_" + code, JSON.stringify(cyqStoreJL[code]));
+        } catch (e2) {
+        }
+        delete cyqInflightJL[code];
+        done2();
+      }).catch(() => {
+        cyqInflightJL[code] = 0;
+        if (!cyqStoreJL[code]) cyqStoreJL[code] = { date: cyqTodayJL(), err: "\u63A5\u53E3\u65AD\u7EBF", chips: null };
+        done2();
+      });
     });
   }
   function cyqLineHTMLJL(s) {
@@ -9891,7 +9814,7 @@ document.addEventListener("visibilitychange", () => {
             const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), cur = all[st2.code];
             if (cur && cur.rows && cur.rows.length && cur.rows.length >= rows.length && !(String(cur.rows.at(-1).d) < rows.at(-1).d)) return;
             all[st2.code] = { rows: ffMergeJL(cur && cur.rows, rows), t: Date.now(), src: "sina" };
-            jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
+            jlSafeSetJL("jl_ff_v1", JSON.stringify(jlFfEvictJL(all)));
             if (typeof renderDeck === "function") renderDeck();
           } catch (e) {
           }
@@ -9917,7 +9840,7 @@ document.addEventListener("visibilitychange", () => {
         try {
           const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}"), _cur0 = all[st2.code];
           all[st2.code] = { rows: ffMergeJL(_cur0 && _cur0.rows, rows), t: Date.now() };
-          jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
+          jlSafeSetJL("jl_ff_v1", JSON.stringify(jlFfEvictJL(all)));
         } catch (e2) {
         }
         if (typeof renderDeck === "function") renderDeck();
@@ -9994,7 +9917,7 @@ document.addEventListener("visibilitychange", () => {
           try {
             const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {};
             all[st2.code] = { rows: ffMergeJL(all[st2.code] && all[st2.code].rows, [{ d: _tdy, main, small: +la[2] || null, mid: +la[3] || null, big: +la[4] || null, sup: +la[5] || null, mainPct: null }]), t: Date.now(), src: "em-min" };
-            jlSafeSetJL("jl_ff_v1", JSON.stringify(all));
+            jlSafeSetJL("jl_ff_v1", JSON.stringify(jlFfEvictJL(all)));
           } catch (e2) {
           }
           scheduleDeckPaintJL();
@@ -11389,12 +11312,11 @@ document.addEventListener("visibilitychange", () => {
       if (mrows.length > 30) {
         mode = "\u76D8\u4E2D\u5206\u949F";
         rows = [];
-        let pz = 0, pc = 0;
+        let pz = 0;
         mrows.forEach((a, i2) => {
           const z = +a[1] / 1e8, c = +a[5] / 1e8;
-          rows.push({ t: a[0].slice(11, 16), m: z - pz, c: c - pc, z, c });
+          rows.push({ t: a[0].slice(11, 16), m: z - pz, z, c });
           pz = z;
-          pc = c;
         });
       } else if (drows.length) {
         mode = "\u8FD1" + drows.length + "\u65E5(\u5206\u949F\u6570\u636E\u4EC5\u76D8\u4E2D)";
