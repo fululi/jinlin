@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .35</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .36</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -295,7 +295,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
 </style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
-</head><body><!-- v.30 0920凌晨 复盘汇总: 复盘卡加全部持仓汇总块(deckListJL口径,每只:做T+近5日涨跌+主力净额+结论,点行=证据区切到该股+当前行高亮) / 进复盘页强制刷新renderResonanceJL / 标题small改汇总口径说明 —— 日复盘从单股改全持仓一览,单股证据区保留 --><!-- v.29 0919深夜 四联: ①异动密度标注补口径(次数非金额,解绿柱多vs资金红疑问) ②龙池轨迹risk行透出命中族(高位/量异常/承接失败/连续流出)+注脚写明单日形态敏感非隔日指令 ③龙头股池tab入history(pushState#pool,手机返回键可退回观察自选,此前返回无效) ④复盘卡标题亮当前股名+跟随持仓选中股标注 --><!-- v.28 0919凌晨 八联: ①持仓股可同步进自选观察(watch旗标,此前'已在池里'静默拒绝) ②持仓页码按实际渲染卡数(01/09假象修复)+滑动/选中/计数统一走deckListJL ③撤展开详情自动上滚(.27引入回归) ④大盘异动:删.27重复图题+异动密度柱加标注加高 ⑤盘前情绪卡默认收起明细只留预判行 ⑥全局玻璃卡透亮化(.27只改了持仓卡)+浮层面板降不透明 ⑦新闻面板:pushState手机返回可关+iframe内返回改关面板+数据日亮出过期提示+持仓股名focus定位修复 ⑧复盘证据区加小结行 --><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+</head><body><!-- .36 持仓小图五修: ①左%轴与右价同口径(refPrev优先用报价base/(1+pct)反推昨收,盘后/周末seedPrevJL把prevClose改写成最近收盘导致图%与卡%两个口径;十字线左%改固定昨收映射与右价tag配对) ②v.96补拉t0按字符串slice解析,腾讯12位数字时间戳(202609171342)被切成月91日13→end算出2033年,东财返回最新320根与缓存全量重叠,时间轴从10:55来回跳/整列重复;改一律barTime归一化再解析再比较 ③周期刷新合并_cut按原始字符串比较,东财带横杠与腾讯数字格式混排恒判错,且_cut=-1(全新数据)时丢弃已补拉旧K线;改barTime归一化比较+-1时尾部拼接 ④资金卡分时/近70日随单次拉取成败来回切模式(时间轴10:55↔日期跳)+空帧覆盖好帧;改当天有过分钟数据即锁分时模式+取不到新数据保留上一帧 ⑤图动起bug均为上述乱序/整列替换/空帧覆盖所致,随①-④根治 --><!-- v.30 0920凌晨 复盘汇总: 复盘卡加全部持仓汇总块(deckListJL口径,每只:做T+近5日涨跌+主力净额+结论,点行=证据区切到该股+当前行高亮) / 进复盘页强制刷新renderResonanceJL / 标题small改汇总口径说明 —— 日复盘从单股改全持仓一览,单股证据区保留 --><!-- v.29 0919深夜 四联: ①异动密度标注补口径(次数非金额,解绿柱多vs资金红疑问) ②龙池轨迹risk行透出命中族(高位/量异常/承接失败/连续流出)+注脚写明单日形态敏感非隔日指令 ③龙头股池tab入history(pushState#pool,手机返回键可退回观察自选,此前返回无效) ④复盘卡标题亮当前股名+跟随持仓选中股标注 --><!-- v.28 0919凌晨 八联: ①持仓股可同步进自选观察(watch旗标,此前'已在池里'静默拒绝) ②持仓页码按实际渲染卡数(01/09假象修复)+滑动/选中/计数统一走deckListJL ③撤展开详情自动上滚(.27引入回归) ④大盘异动:删.27重复图题+异动密度柱加标注加高 ⑤盘前情绪卡默认收起明细只留预判行 ⑥全局玻璃卡透亮化(.27只改了持仓卡)+浮层面板降不透明 ⑦新闻面板:pushState手机返回可关+iframe内返回改关面板+数据日亮出过期提示+持仓股名focus定位修复 ⑧复盘证据区加小结行 --><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
 <body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实证,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
@@ -5476,8 +5476,10 @@ document.addEventListener("visibilitychange", () => {
           const _prevK = realCache.get(st.code + "|" + period);
           let _mrg = rows;
           if (_prevK && _prevK.length && rows.length) {
-            const _cut = _prevK.findIndex((r) => String(r.t) >= String(rows[0].t));
+            const _r0 = barTime(rows[0].t);
+            const _cut = _prevK.findIndex((r) => barTime(r.t) >= _r0);
             if (_cut > 0) _mrg = _prevK.slice(0, _cut).concat(rows);
+            else if (_cut < 0) _mrg = _prevK.concat(rows);
           }
           realCache.set(st.code + "|" + period, _mrg.slice(-1920));
           if (klt === 101 && rows.length >= 15) dkSaveJL(st.code, rows);
@@ -5503,7 +5505,7 @@ document.addEventListener("visibilitychange", () => {
     if (!rows || rows.length < 2 || rows.length >= 1920) return;
     _olderBusyJL.add(key);
     try {
-      const klt = realKlt(), cd = code.startsWith("sh") || code.startsWith("sz") ? code : (/^6/.test(code) || /^5/.test(code) ? "sh" : "sz") + code, sec = cd.startsWith("sh") ? "1." : "0.", t0 = String(rows[0].t || "");
+      const klt = realKlt(), cd = code.startsWith("sh") || code.startsWith("sz") ? code : (/^6/.test(code) || /^5/.test(code) ? "sh" : "sz") + code, sec = cd.startsWith("sh") ? "1." : "0.", t0 = barTime(rows[0].t || "");
       const dt = new Date(+t0.slice(0, 4), +t0.slice(5, 7) - 1, +t0.slice(8, 10));
       dt.setDate(dt.getDate() - 1);
       const end = String(dt.getFullYear()) + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0");
@@ -5522,7 +5524,7 @@ document.addEventListener("visibilitychange", () => {
         } catch (e) {
         }
       }
-      const add = older.filter((r) => String(r.t) < t0);
+      const add = older.filter((r) => barTime(r.t) < t0);
       if (!add.length) {
         _olderDoneJL.add(key);
         return;
@@ -6408,7 +6410,7 @@ document.addEventListener("visibilitychange", () => {
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "9px monospace";
       x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
-      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x)))), baseP = Number((_a2 = bars[li - 1]) == null ? void 0 : _a2.c) || Number((_b2 = bars[li]) == null ? void 0 : _b2.o) || Number(lastBar(bars).o) || 1, pctP = crossPercent(bars, li, cv, code);
+      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x)))), baseP = Number((_a2 = bars[li - 1]) == null ? void 0 : _a2.c) || Number((_b2 = bars[li]) == null ? void 0 : _b2.o) || Number(lastBar(bars).o) || 1, pctP = (() => { const rf = refPrev(bars, li, code); return Number.isFinite(cv) && rf > 0 ? (cv - rf) / rf * 100 : 0; })();
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(1, tagY, 48, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
@@ -6850,7 +6852,7 @@ document.addEventListener("visibilitychange", () => {
     target.classList.remove("up", "down");
     const cur = miniCross.get(c);
     if (cur) {
-      const m = maps.get(c), bars = series(stock.code, false), idx = m ? Math.max(0, Math.min(bars.length - 1, Math.round(m.I(cur.x)))) : bars.length - 1, price = m ? m.V(cur.y) : ((_b2 = bars.at(-1)) == null ? void 0 : _b2.c) || stock.base, p = crossPercent(bars, idx, price, stock.code), sign = p >= 0 ? "+" : "";
+      const m = maps.get(c), bars = series(stock.code, false), idx = m ? Math.max(0, Math.min(bars.length - 1, Math.round(m.I(cur.x)))) : bars.length - 1, price = m ? m.V(cur.y) : ((_b2 = bars.at(-1)) == null ? void 0 : _b2.c) || stock.base, _rf = refPrev(bars, idx, stock.code), p = Number.isFinite(price) && _rf > 0 ? (price - _rf) / _rf * 100 : 0, sign = p >= 0 ? "+" : "";
       target.innerHTML = Number(price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 }) + " " + sign + p.toFixed(2) + "% <small></small>";
     } else target.innerHTML = cardQuote(stock, c, null) + " <small></small>";
   }
@@ -9377,6 +9379,7 @@ document.addEventListener("visibilitychange", () => {
     let t = String(value || "").trim().replace("T", " ");
     let d = t.replace(/[- :]/g, "");
     if (/^\d{12,14}$/.test(d)) t = d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8) + " " + d.slice(8, 10) + ":" + d.slice(10, 12);
+    else if (/^\d{8}$/.test(d)) t = d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8);
     return t.slice(0, 16);
   }
   const crossTime = (i, code = selected) => {
@@ -9384,9 +9387,11 @@ document.addEventListener("visibilitychange", () => {
     return v ? barTime(v.t) : "--";
   };
   function refPrev(bars, idx, code) {
-    const st = byCode(code), p = Number(st && st.prevClose);
-    if (Number.isFinite(p) && p > 0) return p;
+    const st = byCode(code);
     const q = Number(st && st.base) / (1 + Number(st && st.pct || 0) / 100);
+    if (st && st.quoteReady === true && Number.isFinite(q) && q > 0) return q;
+    const p = Number(st && st.prevClose);
+    if (Number.isFinite(p) && p > 0) return p;
     if (Number.isFinite(q) && q > 0) return q;
     const i = Math.max(0, Math.min((bars || []).length - 1, Math.round(idx))), a = Number(bars && bars[i - 1] && bars[i - 1].c);
     if (Number.isFinite(a) && a > 0) return a;
@@ -12320,7 +12325,10 @@ document.addEventListener("visibilitychange", () => {
         FUND_CACHE_JL[code] = { t: Date.now(), loading: false };
         return;
       }
-      if (!chipOnly) drawFundPriceJL(body.querySelector(".fc1"), pts, pre);
+      if (!chipOnly) {
+        if (pts && pts.length >= 5) { body.dataset.fpOk = "1"; drawFundPriceJL(body.querySelector(".fc1"), pts, pre); }
+        else if (body.dataset.fpOk !== "1") drawFundPriceJL(body.querySelector(".fc1"), pts, pre);
+      }
       let bars = null, ddx = [], times = [], lastM = NaN, lastS = NaN, lastB = NaN, lastMid = NaN, lastSml = NaN, mode = "";
       try {
         const base = "/api/qt/stock/fflow/kline/get?secid=" + secidJL(code) + "&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56";
@@ -12335,6 +12343,9 @@ document.addEventListener("visibilitychange", () => {
             return "";
           }
         })();
+        let _tdF = "";
+        try { _tdF = code + "|" + new Date().toLocaleDateString("sv-SE"); fundBodyJL._minOK = fundBodyJL._minOK || {}; if (kl1.length > 30) fundBodyJL._minOK[_tdF] = 1; } catch (e2) {}
+        const _stayMin = oMode !== "day" && !!(fundBodyJL._minOK && fundBodyJL._minOK[_tdF]);
         if (kl1.length > 30 && oMode !== "day") {
           mode = "\u5206\u65F6";
           let pz = 0;
@@ -12353,7 +12364,7 @@ document.addEventListener("visibilitychange", () => {
           lastB = +la[4] / 1e8;
           lastMid = +la[3] / 1e8;
           lastSml = +la[2] / 1e8;
-        } else if (oMode !== "min") {
+        } else if (oMode !== "min" && !_stayMin) {
           const d2 = await emFetchJL(base + "&lmt=70&klt=101");
           const kl2 = d2 && d2.data && d2.data.klines || [];
           const cRows = (() => {
@@ -12407,11 +12418,14 @@ document.addEventListener("visibilitychange", () => {
         FUND_CACHE_JL[code] = { t: Date.now(), loading: false };
         return;
       }
-      if (!chipOnly) drawFundFlowJL(body.querySelector(".fc2"), bars, ddx, times, mode);
+      if (!chipOnly) {
+        if (bars && bars.length) { body.dataset.ffOk = "1"; drawFundFlowJL(body.querySelector(".fc2"), bars, ddx, times, mode); }
+        else if (body.dataset.ffOk !== "1") drawFundFlowJL(body.querySelector(".fc2"), bars, ddx, times, mode);
+      }
       if (!chipOnly) qa('[data-fm-code="' + code + '"]').forEach((b2) => b2.classList.toggle("on", b2.dataset.fm === (mode === "\u8FD170\u65E5" ? "day" : "min")));
       const fm = (v) => Number.isFinite(v) ? (v >= 0 ? "+" : "") + v.toFixed(2) + "\u4EBF" : "\u2014";
       const vals = ddx.filter((v) => v != null && Number.isFinite(v)), dLast = vals.length ? vals[vals.length - 1] : null;
-      if (!chipOnly) body.querySelector(".fundTxtJL").innerHTML = bars ? '\u4E3B\u529B <b style="color:' + (lastM >= 0 ? "#ff5459" : "#1fdc93") + '">' + fm(lastM) + "</b> \xB7 \u8D85\u5927 " + fm(lastS) + (dLast != null ? ' \xB7 <b style="color:#ffd21f">DDX ' + (dLast >= 0 ? "+" : "") + dLast.toFixed(2) + "</b>" : "") + " <i>" + mode + " \xB7 \u4E1C\u8D22</i>" : '<span style="color:#c9dfe8">\u8D44\u91D1\u6D41\u6682\u65E0(ETF\u6216\u4E1C\u8D22\u9650\u6D41) \xB7 \u4EF7\u683C\u8D70\u52BF\u4E3A\u817E\u8BAF\u5B9E\u65F6</span>';
+      if (!chipOnly && (bars || body.dataset.ffOk !== "1")) body.querySelector(".fundTxtJL").innerHTML = bars ? '\u4E3B\u529B <b style="color:' + (lastM >= 0 ? "#ff5459" : "#1fdc93") + '">' + fm(lastM) + "</b> \xB7 \u8D85\u5927 " + fm(lastS) + (dLast != null ? ' \xB7 <b style="color:#ffd21f">DDX ' + (dLast >= 0 ? "+" : "") + dLast.toFixed(2) + "</b>" : "") + " <i>" + mode + " \xB7 \u4E1C\u8D22</i>" : '<span style="color:#c9dfe8">\u8D44\u91D1\u6D41\u6682\u65E0(ETF\u6216\u4E1C\u8D22\u9650\u6D41) \xB7 \u4EF7\u683C\u8D70\u52BF\u4E3A\u817E\u8BAF\u5B9E\u65F6</span>';
       try {
         const ne = document.querySelector('[data-fund-net="' + code + '"]');
         if (ne) {
