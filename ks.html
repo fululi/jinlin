@@ -2633,7 +2633,9 @@ function setFresh(ok) {
 function loadAll(reset) {
   if (alBtn) { alBtn.style.display = "none"; _alHov = null; } // ks-0909-33: 审计A1——换股/换周期/跳转都走这里,统一收按钮清悬停,杜绝给新股挂旧价提醒
   hint("加载K线数据…");
-  fetchKline(S.active, S.klt, function (err, kl, name) {
+  var _lkCode = S.active, _lkKlt = normalizeKlt(S.klt); // ks-0920-37: 快照请求时的票/周期, 回调校验防换票张冠李戴
+  fetchKline(_lkCode, S.klt, function (err, kl, name) {
+    if (_lkCode !== S.active || _lkKlt !== normalizeKlt(S.klt)) return; // ks-0920-37: 换票/换周期后晚到的旧K线直接丢弃(照fetchFFlowMinK同款守卫)
     if (err) { setFresh(false); hint("K线加载失败：" + err.message + " · 点「刷新」重试 <span class=dim>（检查网络）</span>"); draw(); return; }
     var atEnd = !S.kl.length || S.end >= S.kl.length;
     S.kl = kl;
@@ -2662,7 +2664,8 @@ function loadAll(reset) {
     setFresh(true);
     syncTop(); draw();
   });
-  fetchQuote(S.active, function (err, q) {
+  fetchQuote(_lkCode, function (err, q) {
+    if (_lkCode !== S.active) return; // ks-0920-37: 换票后晚到的旧报价丢弃
     if (!err && q) {
       S.quote = q;
       if (q.name) {
@@ -2730,7 +2733,9 @@ document.querySelector("[data-collapse]").addEventListener("click", function () 
 // 自动刷新：报价 30 秒一次（纯公开接口，不耗 token）；K线/资金流盘中 60 秒、盘后 5 分钟
 setInterval(function () {
   if (document.hidden) return;
-  fetchQuote(S.active, function (err, q) {
+  var _rqCode = S.active; // ks-0920-37: 快照防换票串数据
+  fetchQuote(_rqCode, function (err, q) {
+    if (_rqCode !== S.active) return;
     if (!err && q) {
       S.quote = q;
       if (q.floatMV) S.floatMV = q.floatMV;
@@ -2743,7 +2748,9 @@ setInterval(function () {
 setInterval(function () {
   if (document.hidden) return;
   if (T || M || S.tool) return; // ks-0907-26: 画线/触摸/鼠标会话中暂停K线刷新——刷新换数据+draw()就是"画图时背景K线突然窜"的根因
-  fetchKline(S.active, S.klt, function (err, kl) {
+  var _rkCode = S.active, _rkKlt = normalizeKlt(S.klt); // ks-0920-37: 快照防换票/换周期串数据
+  fetchKline(_rkCode, S.klt, function (err, kl) {
+    if (_rkCode !== S.active || _rkKlt !== normalizeKlt(S.klt)) return;
     if (err) { setFresh(false); return; }
     var atEnd = S.end >= S.kl.length;
     S.kl = kl;
@@ -3753,7 +3760,7 @@ function renderVP(ctx, v) {
 /* ================= ks-0914-cyq: 筹码分布 CYQ（火焰山） =================
    模型: 每日换手 t 比例旧筹码衰减, 当日新增筹码按三角分布铺在 低~高 区间(峰值=(h+l+c)/3) —— 通达信同源算法,
    已对账: 600105 70%成本区间 38.11~41.64 vs 通达信 38.04~41.65(误差≤0.07元), 获利比例 93.6% vs 93.15%。
-   数据: 东财 push2his 日K fqt=0(不复权) lmt=800 fields2 含 f61=换手率; 本机被墙时读 localStorage jl_cyq_<code> 缓存(父页注入真数据)。
+   数据: 东财 push2his 日K fqt=1(前复权) lmt=800 fields2 含 f61=换手率; 本机被墙时读 localStorage jl_cyq2_<code> 缓存(父页注入真数据)。
    红=获利盘(现价以下) 青=套牢盘(现价以上) 金虚线=平均成本; 仅日K周期出图。 */
 var CYQ_STORE = {}, CYQ_INFLIGHT = {};
 function cyqTodayKS() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
@@ -3784,17 +3791,17 @@ function cyqBuildKS(rows, src) {
 function ensureCyqKS(code) {
   if (CYQ_STORE[code] || CYQ_INFLIGHT[code]) return;
   CYQ_INFLIGHT[code] = 1;
-  try { var cch = JSON.parse(localStorage.getItem("jl_cyq_" + code) || "null");
+  try { var cch = JSON.parse(localStorage.getItem("jl_cyq2_" + code) || "null");
     if (cch && cch.chips) { CYQ_STORE[code] = cch; if (cch.date === cyqTodayKS()) { delete CYQ_INFLIGHT[code]; draw(); return; } draw(); } } catch (e) {} // ks-0914-cyq: 当日缓存直接用; 隔日缓存先顶着画, 后台照样拉新, 拉到就覆盖
   var url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + secidOf(code) +
-    "&klt=101&fqt=0&lmt=800&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56,f61&ut=7eea3edcaed734bea9cbfc24409ed989"; // ks-0920-35: 筹码日线对齐jinlin已验证通道(全局UT对该接口取空)
+    "&klt=101&fqt=1&lmt=800&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56,f61&ut=7eea3edcaed734bea9cbfc24409ed989"; // ks-0920-35: 筹码日线对齐jinlin已验证通道(全局UT对该接口取空)
   jsonp(url, function (err, d) {
     var arr = !err && d && d.data && d.data.klines || [];
     var rows = arr.map(function (s2) { var a = s2.split(","); return { d: a[0], o: +a[1], c: +a[2], h: +a[3], l: +a[4], v: +a[5], turn: +a[6] }; })
       .filter(function (r) { return isFinite(r.c) && r.c > 0 && isFinite(r.turn); });
     if (rows.length < 60) { CYQ_STORE[code] = { date: cyqTodayKS(), err: "数据不足或通道被封", chips: null }; delete CYQ_INFLIGHT[code]; draw(); return; }
-    CYQ_STORE[code] = cyqBuildKS(rows, "东财·不复权·真实换手");
-    try { localStorage.setItem("jl_cyq_" + code, JSON.stringify(CYQ_STORE[code])); } catch (e) {}
+    CYQ_STORE[code] = cyqBuildKS(rows, "东财·前复权·真实换手");
+    try { localStorage.setItem("jl_cyq2_" + code, JSON.stringify(CYQ_STORE[code])); } catch (e) {}
     delete CYQ_INFLIGHT[code]; draw();
   }, 9000);
 }
