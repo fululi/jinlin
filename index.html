@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .24</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .25</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -270,6 +270,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .poolWhy{padding:0 12px 9px;font-size:9px;color:#d5e9f0;line-height:1.55}
 .poolWhy i{display:block;font-style:normal;color:#ffd21f;margin-top:2px}
 .poolCard.dim{opacity:.72}
+.streakTagJL{font-style:normal;color:#ffd21f;font-size:9px;white-space:nowrap}.trajBtnJL{border:1px solid #81e6d944;border-radius:6px;background:#81e6d90d;color:#bcefeb;font-size:10px;padding:2px 8px;min-height:24px;margin-left:6px}.trajBoxJL{margin:4px 0 2px;padding:6px 8px;border:1px solid #81e6d922;border-radius:8px;background:#0e2233}.trajRowJL{display:flex;gap:6px;align-items:baseline;font-size:10px;padding:2px 0;border-bottom:1px dashed #81e6d911;flex-wrap:nowrap;overflow:hidden}.trajRowJL b{min-width:40px;font-weight:400;color:#9fc3d0;flex:none}.trajRowJL .tl{min-width:30px;flex:none}.trajRowJL .ts{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c8dde6}.trajRowJL .tf{flex:none;font-family:ui-monospace,monospace;color:#9fc3d0}.trajNoteJL{font-size:9px;color:#7d99a8;margin-top:4px;line-height:1.5}.trajLoadJL,.trajErrJL{font-size:10px;color:#9fc3d0;padding:4px 0}.poolLinkOff{opacity:.78}
 .poolScore{font-family:ui-monospace,monospace;font-size:17px;font-weight:700;line-height:1;text-align:right;flex:none}
 .poolScore small{font-size:8px;font-weight:400;color:#d5e9f0;margin-left:1px}
 .poolLink{margin:0 12px 8px;padding:5px 8px;border:1px dashed #81e6d944;border-radius:8px;font-size:9px;color:#81e6d9;line-height:1.5}
@@ -289,7 +290,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
 </style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
-</head><body><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+</head><body><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
 <body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实证,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
@@ -4212,8 +4213,13 @@ document.addEventListener("visibilitychange", () => {
     for (const k in L) L[k] = L[k].slice(0, 10);
     for (const k in OBS) OBS[k] = OBS[k].slice(0, 20);
     for (const k in RISK) RISK[k] = RISK[k].slice(0, 20);
+    const _prevD0tr = JLPOOL && JLPOOL.d0 || "";
     if (JLPOOL && JLPOOL.L) jlSafeSetJL("jl_pool_prev_v1", JSON.stringify(JLPOOL));
     JLPOOL = { date: jlYMD(/* @__PURE__ */ new Date()), ts: (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5), d0, uni: uniN, L, OBS, RISK, rejectStats, src: srcTag || "live" };
+    try {
+      poolTrackUpdJL(d0, _prevD0tr);
+    } catch (eTr) {
+    }
     try {
       const _pk = [];
       ["start", "zs", "eb"].forEach((k) => {
@@ -4505,15 +4511,15 @@ document.addEventListener("visibilitychange", () => {
     if (!P) return null;
     for (const k in P.L || {}) {
       const f = (P.L[k] || []).find((x) => x.code.slice(2) === bare);
-      if (f) return { x: f, b: "L" };
+      if (f) return { x: f, b: "L", layer: k, bucket: "L" };
     }
     for (const k in P.OBS || {}) {
       const f = (P.OBS[k] || []).find((x) => x.code.slice(2) === bare);
-      if (f) return { x: f, b: "OBS" };
+      if (f) return { x: f, b: "OBS", layer: k, bucket: "OBS" };
     }
     for (const k in P.RISK || {}) {
       const f = (P.RISK[k] || []).find((x) => x.code.slice(2) === bare);
-      if (f) return { x: f, b: "RISK" };
+      if (f) return { x: f, b: "RISK", layer: k, bucket: "RISK" };
     }
     return null;
   }
@@ -4521,7 +4527,7 @@ document.addEventListener("visibilitychange", () => {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
     const color = bucket === "RISK" ? "#ff5459" : meta[2], g = bucket === "L" ? x.gate : x.obsGate;
     const bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
-    return '<div class="poolRowDetailJL"><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + '</div><div class="poolRowActJL"><button type="button" data-pl-k="' + bare + '" data-n="' + x.name + '">K\u7EBF \u203A</button>' + (held ? '<span class="heldTag">\u5DF2\u6301\u4ED3</span>' : '<button type="button" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '">\uFF0B\u89C2\u5BDF</button>') + (x.score != null ? '<span class="poolScore" style="color:' + color + ';margin-left:auto">' + x.score + "<small>\u5206</small></span>" : "") + "</div></div>";
+    return '<div class="poolRowDetailJL"><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + '</div><div class="poolRowActJL"><button type="button" data-pl-k="' + bare + '" data-n="' + x.name + '">K\u7EBF \u203A</button><button type="button" class="trajBtnJL" data-traj="' + bare + '" data-tn="' + x.name + '">\u8F68\u8FF9</button>' + (held ? '<span class="heldTag">\u5DF2\u6301\u4ED3</span>' : '<button type="button" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '">\uFF0B\u89C2\u5BDF</button>') + (x.score != null ? '<span class="poolScore" style="color:' + color + ';margin-left:auto">' + x.score + "<small>\u5206</small></span>" : "") + '</div><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div></div>';
   }
   function poolRowJL(x, bucket) {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
@@ -4536,7 +4542,7 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
     }
-    const row = '<button type="button" class="poolRowJL" data-pl-row="' + bare + '"><span class="prL"><b>' + x.name + '</b><i class="dgTag" style="color:' + color + ";border-color:" + color + "66;background:" + color + '14">' + (bucket === "RISK" ? "\u98CE\u9669" : bucket === "OBS" ? "\u89C2\u5BDF" : meta[1]) + '</i><small>' + bare + (x.ind ? " \xB7 " + x.ind : "") + '</small></span><span class="prPct ' + cls(x.pct) + '">' + pct(x.pct) + '</span><span class="prPx">' + money(x.close) + '</span><span class="prFd ' + (fund == null ? "" : fund >= 0 ? "up" : "dn") + '">' + (fund == null ? "\u2014" : fmtFundJL(fund)) + "</span></button>";
+    const row = '<button type="button" class="poolRowJL" data-pl-row="' + bare + '"><span class="prL"><b>' + x.name + '</b><i class="dgTag" style="color:' + color + ";border-color:" + color + "66;background:" + color + '14">' + (bucket === "RISK" ? "\u98CE\u9669" : bucket === "OBS" ? "\u89C2\u5BDF" : meta[1]) + '</i><small>' + bare + (x.ind ? " \xB7 " + x.ind : "") + poolStreakTagJL(x.code, JLPOOL && JLPOOL.d0) + '</small></span><span class="prPct ' + cls(x.pct) + '">' + pct(x.pct) + '</span><span class="prPx">' + money(x.close) + '</span><span class="prFd ' + (fund == null ? "" : fund >= 0 ? "up" : "dn") + '">' + (fund == null ? "\u2014" : fmtFundJL(fund)) + "</span></button>";
     return '<div class="poolRowWrapJL">' + row + (poolRowOpenJL.has(bare) ? poolRowDetailHTMLJL(x, bucket) : "") + "</div>";
   }
   function poolCardJL(x, bucket) {
@@ -4545,6 +4551,182 @@ document.addEventListener("visibilitychange", () => {
     const bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
     return '<article class="watchItem poolCard' + (bucket !== "L" ? " dim" : "") + '"><div class="watchRow"><span><b>' + x.name + '<i class="dgTag" style="color:' + color + ";border-color:" + color + "66;background:" + color + '14">' + (bucket === "RISK" ? "\u98CE\u9669 \xB7 \u6D3E\u53D1" : bucket === "OBS" ? "\u89C2\u5BDF \xB7 " : "") + (bucket === "RISK" ? "" : meta[1]) + "</i></b><small>" + bare + (x.ind ? " \xB7 " + x.ind : "") + (x.ind && JLPOOL_HOT.has(x.ind) ? " \u98CE\u53E3" : "") + (x.emaDays >= 3 ? " \xB7 \u8D8B\u52BF" + x.emaDays + "\u5929" : "") + (x.upDays >= 2 ? " \xB7 \u8FDE\u6DA8" + x.upDays + "\u5929" : "") + (bucket === "RISK" ? " \xB7 \u539F\u5F62\u6001" + meta[1] : "") + " \xB7 \u65E5K " + String(x.d || "").slice(5) + "</small></span>" + (x.score != null ? '<span class="poolScore" style="color:' + color + '">' + x.score + "<small>\u5206</small></span>" : "") + "<strong>" + money(x.close) + '<small class="' + cls(x.pct) + '">' + pct(x.pct) + "</small></strong>" + (held ? "" : '<button class="dgAdd" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '" aria-label="\u52A0\u89C2\u5BDF">\uFF0B</button>') + '</div><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + "</div></article>";
   }
+  const POOL_LAYER_SHORT_JL = { start: "启动", zs: "主升", eb: "二波", trend: "趋势", top: "到顶" };
+  function poolTrackReadJL() {
+    try {
+      return JSON.parse(localStorage.getItem("jl_pool_track_v1") || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function poolTrackUpdJL(d0, prevD0) {
+    try {
+      const tr = poolTrackReadJL(), today = {};
+      ["L", "OBS", "RISK"].forEach((b) => {
+        Object.keys(JLPOOL[b] || {}).forEach((k) => (JLPOOL[b][k] || []).forEach((x) => {
+          const tag = b === "L" ? k : (b === "OBS" ? "obs:" : "risk:") + k;
+          if (!today[x.code] || b === "L") today[x.code] = tag;
+        }));
+      });
+      const gapOK = (a, b) => {
+        if (!a || !b) return false;
+        const t = new Date(a + "T00:00:00") - new Date(b + "T00:00:00");
+        return t > 0 && t <= 4 * 864e5;
+      };
+      Object.keys(today).forEach((c) => {
+        const p = tr[c] || { s: 0, h: {} };
+        if (p.last === d0) p.s = p.s || 1;
+        else p.s = gapOK(d0, p.last) ? (p.s || 0) + 1 : 1;
+        p.last = d0;
+        p.h[d0] = today[c];
+        const ks = Object.keys(p.h).sort();
+        while (ks.length > 12) delete p.h[ks.shift()];
+        tr[c] = p;
+      });
+      Object.keys(tr).forEach((c) => {
+        if (today[c]) return;
+        const t = new Date(d0 + "T00:00:00") - new Date((tr[c].last || d0) + "T00:00:00");
+        if (t > 30 * 864e5) delete tr[c];
+      });
+      jlSafeSetJL("jl_pool_track_v1", JSON.stringify(tr));
+    } catch (e) {
+    }
+  }
+  function poolStreakTagJL(code, d0) {
+    try {
+      const tr = poolTrackReadJL();
+      const bare = String(code).replace(/^(sh|sz)/, "");
+      let p = tr[code] || tr[bare];
+      if (!p) {
+        const hit = Object.keys(tr).find((k) => k.slice(2) === bare);
+        if (hit) p = tr[hit];
+      }
+      if (!p || !p.s || p.s < 2) return "";
+      if (!d0 || p.last !== d0) return "";
+      const ks = Object.keys(p.h).sort();
+      const prevD = ks.filter((k) => k < p.last).pop();
+      let y = "";
+      if (prevD) {
+        const cur = (p.h[p.last] || "").split(":").pop(), prv = (p.h[prevD] || "").split(":").pop();
+        if (prv && cur && prv !== cur) y = "·昨" + (POOL_LAYER_SHORT_JL[prv] || prv);
+      }
+      return ' <i class="streakTagJL">连榜' + p.s + "天" + y + "</i>";
+    } catch (e) {
+      return "";
+    }
+  }
+  function poolScoreReplayJL(x) {
+    let sc = 0;
+    if (x.layer === "start") sc = (x.c2 ? 40 : x.f5 > 0 ? 20 : 0) + geneScoreJL(x.gene) + (x.pos < 0.4 ? 20 : x.pos < 0.5 ? 12 : 6) + (x.vr >= 1.5 ? 12 : 0);
+    else if (x.layer === "zs") sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 25 : x.f10 > 0 ? 15 : 0) + (x.p20 >= 30 ? 25 : x.p20 >= 20 ? 18 : 12) + geneScoreJL(x.gene);
+    else if (x.layer === "eb") sc = (x.f5 > 0 ? 40 : 0) + geneScoreJL(x.gene) + (x.wash >= 5 ? 20 : 10);
+    else return null;
+    sc = Math.round(sc / ({ start: 112, zs: 100, eb: 95 })[x.layer] * 100);
+    if (x.d0 < 0) sc = Math.round(sc * 0.7);
+    return sc;
+  }
+  const poolTrajCacheJL = {};
+  async function poolTrajDataJL(bare, name) {
+    const key = bare + "|" + jlLastTradeDay();
+    if (poolTrajCacheJL[key]) return poolTrajCacheJL[key];
+    const pre = bare[0] === "6" ? "sh" : "sz", code = pre + bare;
+    let rows = null;
+    try {
+      const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 9e3);
+      const r = await fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + code + ",day,,,300,qfq", { cache: "no-store", signal: ac.signal });
+      clearTimeout(tm);
+      const d = await r.json(), node = d && d.data && d.data[code];
+      rows = node && (node.qfqday || node.day) || null;
+    } catch (e) {
+    }
+    if (!rows || rows.length < 120) {
+      const err = { err: "日K拉取失败或不足120根 · 请重试" };
+      poolTrajCacheJL[key] = err;
+      return err;
+    }
+    let nets = null;
+    try {
+      const ffUrl = (h) => "https://" + h + "/api/qt/stock/fflow/daykline/get?lmt=15&klt=101&fields1=f1,f2,f3,f7&fields2=f51,f52&secid=" + (pre === "sh" ? "1." : "0.") + bare + "&ut=" + JL_UT;
+      let d = await jlEmGet(ffUrl("push2his.eastmoney.com"));
+      if (!(d && d.data && d.data.klines && d.data.klines.length >= 2)) d = await jlEmGet(ffUrl("push2delay.eastmoney.com"));
+      if (d && d.data && d.data.klines) {
+        nets = {};
+        d.data.klines.forEach((s2) => {
+          const a = s2.split(",");
+          nets[String(a[0]).slice(0, 10)] = +a[1];
+        });
+      }
+    } catch (e) {
+    }
+    const days = [...new Set(rows.map((x) => String(x[0]).slice(0, 10)))];
+    const T5 = days.slice(-5);
+    const out = [];
+    for (const T of T5) {
+      const slice = rows.filter((r) => String(r[0]).slice(0, 10) <= T).slice(-300);
+      const hit = poolClassifyJL(code, name, slice.map((r) => r.slice()));
+      const ndates = nets ? Object.keys(nets).filter((k2) => k2 <= T).sort() : [];
+      const n10 = ndates.slice(-10).map((k2) => nets[k2]);
+      const d0v = n10.length ? n10[n10.length - 1] : null;
+      const d0fresh = ndates.length > 0 && ndates[ndates.length - 1] === T;
+      const f10 = n10.reduce((a, v) => a + v, 0), f5 = n10.slice(-5).reduce((a, v) => a + v, 0);
+      let st = 0;
+      for (let q = n10.length - 1; q >= 0 && n10[q] < 0; q--) st++;
+      const row = { d: T, layer: hit ? hit.layer : null, close: hit ? hit.close : +slice[slice.length - 1][2], pct: hit ? hit.pct : null, d0: d0v, status: "", sc: null };
+      if (!hit) row.status = "out";
+      else {
+        const x = Object.assign({}, hit, { d0: d0v, f10, f5, outStreak: st, n10: n10.filter((v) => v > 0).length, c2: n10.length >= 2 && n10[n10.length - 1] > 0 && n10[n10.length - 2] > 0 ? 1 : 0 });
+        const fam = Object.keys(poolEvidenceJL(x));
+        if (fam.length >= 2) row.status = "risk";
+        else if (!nets || !d0fresh) row.status = "noff";
+        else if (d0v >= 1e7 || f10 >= 1.5e8 && d0v > -5e7) {
+          row.status = "ok";
+          row.sc = poolScoreReplayJL(x);
+        } else row.status = "obs";
+      }
+      out.push(row);
+    }
+    const res = { rows: out, noff: !nets };
+    poolTrajCacheJL[key] = res;
+    return res;
+  }
+  function poolTrajHTMLJL(bare, name, d) {
+    if (d.err) return '<div class="trajErrJL">' + d.err + "</div>";
+    const STATUS = { ok: ["合格·过资金门", "#5fe3b8"], obs: ["观察·资金未过门", "#e8c568"], risk: ["风险·派发信号", "#ff5459"], noff: ["资金日期未确认", "#9db9c4"], out: ["出池·当日无分层", "#8d97a6"] };
+    const now = /* @__PURE__ */ new Date(), mn = now.getHours() * 60 + now.getMinutes(), tdy = jlYMD(now);
+    let h = "";
+    d.rows.forEach((r) => {
+      const meta = r.layer ? JLPOOL_LAYERS.find((l) => l[0] === r.layer) : null;
+      const st = STATUS[r.status] || ["?", "#9db9c4"];
+      const live = r.d === tdy && mn >= 560 && mn < 905 ? "·盘中" : "";
+      h += '<div class="trajRowJL"><b>' + r.d.slice(5) + '</b><span class="tl" style="color:' + (meta ? meta[2] : "#8d97a6") + '">' + (meta ? meta[1].replace("刚", "") : "—") + '</span><span class="ts" style="color:' + st[1] + '">' + st[0] + live + '</span><span class="tf">' + (r.d0 == null ? "—" : fmtFundJL(r.d0)) + '</span><span class="tf">' + (r.sc == null ? "—" : r.sc + "分") + "</span></div>";
+    });
+    h += '<div class="trajNoteJL">轨迹=按现算法逐日回放 · 分数不含风口行业加分(比实盘榜可能低15~20分) · 资金=东财主力净额 · "出池"指当日五层条件均不满足' + (d.noff ? " · 资金接口未返回,资金列缺失" : "") + "</div>";
+    return h;
+  }
+  document.addEventListener("click", (e) => {
+    const tb = e.target.closest("[data-traj]");
+    if (!tb) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const bare = tb.getAttribute("data-traj"), nm = tb.getAttribute("data-tn") || bare;
+    const scope = tb.closest(".poolRowDetailJL, .poolPick, .watchItem");
+    const target = scope ? scope.querySelector('[data-traj-box="' + bare + '"]') : document.querySelector('[data-traj-box="' + bare + '"]');
+    if (!target) return;
+    if (!target.hidden && target.dataset.done === "1") {
+      target.hidden = true;
+      return;
+    }
+    target.hidden = false;
+    if (target.dataset.done === "1") return;
+    target.innerHTML = '<div class="trajLoadJL">轨迹回放中 · 拉取日K与资金历史…</div>';
+    poolTrajDataJL(bare, nm).then((d) => {
+      target.dataset.done = "1";
+      target.innerHTML = poolTrajHTMLJL(bare, nm, d);
+    }).catch(() => {
+      target.innerHTML = '<div class="trajErrJL">轨迹生成失败 · 点我再试</div>';
+      delete target.dataset.done;
+    });
+  });
   const PL_NAV_BTN = "border:1px solid #81e6d938;border-radius:6px;background:transparent;color:#e2f4f8;font-size:10px;padding:2px 8px;min-height:26px";
   function poolLayersHTMLJL(P, pfx, forceClosed) {
     let PCOL = {};
@@ -4723,7 +4905,7 @@ document.addEventListener("visibilitychange", () => {
         hasPicks = true;
         html += '<div class="poolLayerHead" id="plh_pick" style="scroll-margin-top:46px"><b style="color:#ffd21f">' + (fresh ? "\u4ECA\u65E5\u4E3B\u63A8" : JLPOOL.d0 + " \u4E3B\u63A8\u5B58\u6863") + '</b><span class="plhN">' + picks.length + '</span><small>\u4E09\u5C42\u5404\u53D6\u8FC7\u95E8\u4E14\u5206\u226560\u7684\u524D3 \xB7 \u503C\u5F97\u770B\u2260\u4E70\u5165\u6307\u4EE4</small></div><div class="poolPicks">' + picks.map((x) => {
           const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer), bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
-          return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + meta[2] + '">' + x.score + '<small>\u5206</small></span></div><div class="ppSub">' + bare + " \xB7 " + meta[1] + ((x.ind || JLPOOL_HY[x.code]) ? " \xB7 " + (x.ind || JLPOOL_HY[x.code]) : "") + " \xB7 " + money(x.close) + ' <i class="' + cls(x.pct) + '">' + pct(x.pct) + '</i></div><div class="poolFund" style="padding:4px 0 0">' + fundLineJL(x) + '</div><div class="poolWhy" style="padding:4px 0 0">' + whyLineJL(x) + "</div>" + cyqLineHTMLJL({ code: x.code, base: x.close }) + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '">\uFF0B \u52A0\u89C2\u5BDF</button>') + "</div>";
+          return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:' + meta[2] + '">' + x.score + '<small>\u5206</small></span></div><div class="ppSub">' + bare + " \xB7 " + meta[1] + ((x.ind || JLPOOL_HY[x.code]) ? " \xB7 " + (x.ind || JLPOOL_HY[x.code]) : "") + " \xB7 " + money(x.close) + ' <i class="' + cls(x.pct) + '">' + pct(x.pct) + '</i>' + poolStreakTagJL(x.code, JLPOOL.d0) + '</div><div class="poolFund" style="padding:4px 0 0">' + fundLineJL(x) + '</div><div class="poolWhy" style="padding:4px 0 0">' + whyLineJL(x) + "</div>" + cyqLineHTMLJL({ code: x.code, base: x.close }) + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + bare + '" data-name="' + x.name + '" data-price="' + x.close + '">\uFF0B \u52A0\u89C2\u5BDF</button>') + '<button type="button" class="trajBtnJL" style="width:100%;margin-top:4px" data-traj="' + bare + '" data-tn="' + x.name + '">\u8F68\u8FF9 \xB7 \u8FD1\u65E5\u5728\u699C</button><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div>' + "</div>";
         }).join("") + "</div>";
       }
     }
@@ -4746,8 +4928,8 @@ document.addEventListener("visibilitychange", () => {
       const pl = poolFindJL(s2.code);
       const wf = typeof watchFundHTMLJL === "function" ? watchFundHTMLJL(s2) : "";
       const plMeta = pl && JLPOOL_LAYERS.find((l) => l[0] === pl.layer);
-      const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + "</div>" : "";
-      return `<article class="watchItem" style="position:relative">${s2.qty > 0 ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s2.addedAt ? " \xB7 " + String(s2.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}</article>`;
+      const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
+      return `<article class="watchItem" style="position:relative">${s2.qty > 0 ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s2.addedAt ? " \xB7 " + String(s2.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
     };
     const obs = rows.filter((s2) => !(s2.qty > 0));
     $("watchList").innerHTML = obs.length ? '<div class="dragonGroup"><b>\u89C2\u5BDF ' + obs.length + "</b></div>" + obs.map(card).join("") : "";
