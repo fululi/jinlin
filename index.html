@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .38</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .39</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -3329,7 +3329,7 @@ document.addEventListener("visibilitychange", () => {
     try {
       let rows = [];
       try {
-        const d = await emFetchJL("/api/qt/stock/kline/get?secid=" + jlSecidJL(code) + "&klt=15&fqt=1&lmt=320&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56"), a = d && d.data && d.data.klines || [];
+        const d = await emFetchJL("/api/qt/stock/kline/get?secid=" + jlSecidJL(code) + "&klt=15&fqt=0&lmt=320&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56"), a = d && d.data && d.data.klines || [];
         rows = a.map((x) => {
           const x2 = String(x).split(",");
           return { t: x2[0], o: +x2[1], c: +x2[2], h: +x2[3], l: +x2[4], v: +x2[5] };
@@ -5449,7 +5449,7 @@ document.addEventListener("visibilitychange", () => {
     const list = allMarketSymbolsJL(), klt = realKlt();
     await Promise.all(list.map(async (st) => {
       var _a2, _b2, _c2;
-      const code = st.code.startsWith("sh") || st.code.startsWith("sz") ? st.code : (/^6/.test(st.code) || /^5/.test(st.code) ? "sh" : "sz") + st.code, sec = code.startsWith("sh") ? "1." : "0.", url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + sec + code.slice(2) + "&klt=" + klt + "&fqt=1&lmt=320&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56";
+      const code = st.code.startsWith("sh") || st.code.startsWith("sz") ? st.code : (/^6/.test(st.code) || /^5/.test(st.code) ? "sh" : "sz") + st.code, sec = code.startsWith("sh") ? "1." : "0.", url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + sec + code.slice(2) + "&klt=" + klt + "&fqt=" + (klt >= 101 ? 1 : 0) + "&lmt=320&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56";
       try {
         let rows = [];
         if (klt >= 101) {
@@ -5512,7 +5512,7 @@ document.addEventListener("visibilitychange", () => {
       const end = String(dt.getFullYear()) + String(dt.getMonth() + 1).padStart(2, "0") + String(dt.getDate()).padStart(2, "0");
       let older = [];
       try {
-        const res = await loadKlineJSONP("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + sec + cd.slice(2) + "&klt=" + klt + "&fqt=1&lmt=320&end=" + end + "&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56");
+        const res = await loadKlineJSONP("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + sec + cd.slice(2) + "&klt=" + klt + "&fqt=" + (klt >= 101 ? 1 : 0) + "&lmt=320&end=" + end + "&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56");
         older = normRealRows(res && res.data && res.data.klines);
       } catch (e) {
       }
@@ -5555,6 +5555,30 @@ document.addEventListener("visibilitychange", () => {
     const key = code + "|" + period;
     const real = realCache.get(key);
     if (!real) return [];
+    try {
+      const _q = byCode(code), _qp = _q && (Number(_q.base) || Number(_q.prevClose));
+      if (_qp > 0 && real.length) {
+        const _lc = Number(real[real.length - 1].c), _bc = String(code).replace(/^(sh|sz)/, ""), _lm = /ST/i.test(_q.name || "") ? 0.08 : /^(30|68)/.test(_bc) ? 0.26 : /^(8|4|92)/.test(_bc) ? 0.36 : 0.13;
+        if (_lc > 0 && Math.abs(_lc - _qp) / _qp > _lm) {
+          const _bd = series._bd || (series._bd = {});
+          if (!_bd[key]) {
+            _bd[key] = 1;
+            realCache.delete(key);
+            try {
+              cache.delete(key);
+            } catch (e2) {
+            }
+            const _nw3 = Date.now();
+            if (!series._rlAt || _nw3 - series._rlAt > 3e3) {
+              series._rlAt = _nw3;
+              loadRealKlines();
+            }
+            return [];
+          }
+        }
+      }
+    } catch (e) {
+    }
     return real.map((x) => ({ ...x }));
   }
   function dailyBarsOf(code) {
