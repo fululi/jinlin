@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .27</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .28</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -12,10 +12,10 @@
 .poolRowActJL{display:flex;gap:8px;align-items:center;margin-top:6px}
 .poolRowActJL button{border:1px solid #81e6d955;border-radius:8px;background:#81e6d912;color:#dff0f6;font-size:11px;padding:5px 14px;min-height:32px}
 .heldTag{color:#c9dfe8;font-size:10px}
-.poolNavJL button{font-weight:600}.poolConsole .pcRow span{color:#cfe8ee}button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}.stage{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:110px;padding:62px 60px;position:relative;isolation:isolate;overflow:hidden}.stage:before{content:'';position:absolute;width:1200px;height:1100px;z-index:-1;right:-160px;top:-70px;background:radial-gradient(ellipse at 60% 48%,#12676233,transparent 40%),radial-gradient(ellipse at 35% 55%,#1648a735,transparent 55%)}.editorial{width:450px}.eyebrow{font-size:11px;letter-spacing:4px;color:var(--mint)}h1{font-size:66px;font-weight:450;line-height:1.18;letter-spacing:-3px;margin:26px 0}h1 em{font-style:normal;color:var(--mint)}.intro{font-size:16px;line-height:1.9;color:#9eafbf;max-width:390px}.rule{height:1px;background:linear-gradient(90deg,#61748155,transparent);margin:32px 0}.notes{display:grid;gap:24px}.note{display:flex;gap:17px}.note>span{font:11px monospace;color:#72b0bd;padding-top:4px}.note b{font-size:14px;font-weight:550}.note p{font-size:12px;color:#849bab;line-height:1.7;margin:7px 0 0}.swatches{display:flex;gap:10px;margin-top:30px}.swatches i{width:36px;height:9px;border-radius:20px}.caption{font-size:10px;color:#bcd6e1;letter-spacing:1px;margin-top:16px}.device{width:416px;flex-shrink:0;padding:7px;border-radius:46px;background:linear-gradient(145deg,#5d757a,#1c2932 20%,#17212b 80%,#556e74);box-shadow:0 50px 100px #000b,0 0 100px #29a2b014}.phone{height:860px;border-radius:39px;position:relative;isolation:isolate;overflow:hidden;background:#060d15}.aurora{position:absolute;inset:-50px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 80% 39%,#22bcb75c,transparent 37%),radial-gradient(ellipse at 5% 49%,#2667ff61,transparent 44%),radial-gradient(ellipse at 45% 103%,#08698444,transparent 43%);filter:blur(22px);animation:breathe 10s ease-in-out infinite alternate}.orbit{position:absolute;z-index:-1;width:590px;height:220px;border-radius:50%;border-top:1px solid #6ee4d247;transform:rotate(-44deg);left:-90px;top:295px;pointer-events:none}.status{height:43px;display:flex;align-items:center;justify-content:space-between;padding:0 25px;font-size:11px;font-weight:650}.island{position:absolute;left:50%;transform:translateX(-50%);top:11px;width:99px;height:23px;background:#03070b;border-radius:20px}.status small{font-size:10px;letter-spacing:1px}.header{display:flex;align-items:center;justify-content:space-between;padding:12px 23px 17px}.brand{font-size:21px;font-weight:550;letter-spacing:4px}.brand small{display:block;font-size:7px;letter-spacing:2.4px;color:#85a5b7;margin-top:4px}.headRight{display:flex;gap:12px;align-items:center}.{font-size:9px;color:#b8e6e1;border:1px solid #81e6d929;background:#081923aa;padding:5px 9px;border-radius:30px;transition:background .35s,border-color .35s,box-shadow .35s}.:hover{background:#81e6d91c;border-color:#81e6d96b;box-shadow:0 0 18px #81e6d929}.round{border:1px solid #9bc3d629;border-radius:50%;width:33px;height:33px;background:#b1dfef08;font-size:18px}.scroll{height:calc(100% - 181px);overflow-y:auto;scrollbar-width:none;padding:0 18px 35px}.scroll::-webkit-scrollbar{display:none}.pageTitle{display:flex;align-items:center;justify-content:space-between;margin:7px 4px 19px}.pageTitle h2{font-size:23px;font-weight:520;letter-spacing:1px;margin:0}.pageTitle span{font-size:9px;color:#9bb3bf;letter-spacing:2px}.portfolio{padding:4px 5px 23px}.label{color:#a7c0cb;font-size:11px}.amount{font-size:42px;letter-spacing:-1.3px;font-weight:400;font-variant-numeric:tabular-nums;margin:8px 0}.pnlLine{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#9ab5c3}.up{color:var(--red)}.down{color:var(--green)}.minor{font-size:11px;letter-spacing:0}.boardHead{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin:0 3px 12px}.boardTools{display:flex;gap:6px}.iconBtn{width:auto;min-width:28px;height:28px;border:1px solid #8bd7e233;border-radius:9px;background:#84d9d50d;color:#bcefeb;font-size:18px;line-height:1;display:grid;place-items:center}.iconBtn:hover{border-color:#81e6d988;background:#81e6d91c}.tierLiveJL{display:none!important}.tsHiJL{position:absolute;top:-8px;transform:translateX(-50%);font-size:8px;line-height:1;color:#ff7a85;font-style:normal;pointer-events:none;text-shadow:0 0 4px #000}.tsLoJL{position:absolute;bottom:-8px;transform:translateX(-50%);font-size:8px;line-height:1;color:#3ff0d8;font-style:normal;pointer-events:none;text-shadow:0 0 4px #000}.resonancePanel{display:none!important}.cardRemove{position:absolute;right:12px;top:12px;width:24px;height:24px;border:1px solid #ff545944;border-radius:8px;background:#ff54590d;color:#f7a4a5;font-size:15px;line-height:1;z-index:2}.cardRemove:hover{background:#ff545922;border-color:#ff545988}.day .iconBtn{color:#075e62;background:#d7ecec;border-color:#79aeb366}.day .cardRemove{color:#a33d47;background:#fde8e8;border-color:#d88a8e}.boardHead small{font-size:9px;color:#91afbc}.deck{display:flex;gap:7px;height:336px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding-bottom:2px;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none}.stock{flex:0 0 36px;min-width:0;border:1px solid #b9e5ee33;border-radius:17px;background:linear-gradient(145deg,#1a314252,#0b1a285e);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(14px);position:relative;overflow:hidden;transition:flex-basis .48s cubic-bezier(.2,.8,.2,1),flex-grow .48s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .3s;box-shadow:inset 0 1px #edffff0a}.stock.removing{opacity:.35;transform:scale(.96);transition:opacity .2s,transform .2s}.stock.active{flex:0 0 260px;border-color:#88e7dd69;box-shadow:0 12px 35px #0004,0 0 35px #55bebb19,inset 0 1px #dcfff720}.stock:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 0,#58d5ca20,transparent 60%);pointer-events:none}.stock:hover{border-color:#81e6d989}.rail{position:absolute;inset:0;width:100%;background:transparent;border:0;display:flex;align-items:center;flex-direction:column;padding:16px 0;gap:22px}.rail .num{font:9px monospace;color:#8ba8b8}.rail .name{writing-mode:vertical-rl;letter-spacing:4px;font-size:13px;color:#cfe4ea;margin-top:auto;margin-bottom:12px}.active .rail{height:58px;inset:0 0 auto;flex-direction:row;justify-content:space-between;padding:14px 15px;gap:4px}.active .rail .name{writing-mode:horizontal-tb;letter-spacing:.04em;font-size:16px;margin:0;order:-1;color:#f1fbfc}.stockContent{position:absolute;inset:58px 0 0;width:100%;min-width:216px;padding:0 15px 15px;opacity:0;visibility:hidden;transition:opacity .2s ease;pointer-events:none}.active .stockContent{opacity:1;visibility:visible;transition:opacity .28s .15s;pointer-events:auto}.stockCode{font:9px monospace;color:#d0e6ee;letter-spacing:1px}.stockPrice{display:flex;align-items:baseline;justify-content:space-between;margin-top:13px}.stockPrice b{font-size:30px;letter-spacing:-.8px;font-weight:450}.stockPrice span{font-size:11px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:13px 8px;margin-top:19px;padding:15px 0;border-top:1px solid #c6e8e21c}.facts small{font-size:9px;color:#9fb9c7;display:block;margin-bottom:5px}.facts strong{font-size:13px;font-weight:500}.risk{padding:7px 9px;background:#bddcf508;border:1px solid #b7d9e216;border-radius:8px;color:#a9bfcc;font-size:9px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{border:1px solid #95d8df37;background:#8ed2dd0a;border-radius:9px;padding:8px 9px;font-size:10px;flex:1}.actions button:hover{background:#81e6d91b}.glass.compact{padding:10px;margin-top:8px}.glass.compact .detailGrid{gap:8px}.glass{border:1px solid #c0e4ef24;border-radius:18px;background:linear-gradient(120deg,#b7d4e30c,#06101d99);backdrop-filter:blur(22px);padding:15px;margin-top:14px}#holds .glass{background:linear-gradient(120deg,#b7d4e308,#06101d59);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)}.glass h3{font-size:12px;font-weight:500;margin:0 0 12px;display:flex;justify-content:space-between}.glass h3 small{font-size:9px;color:#92aebc}.detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.detailGrid span{font-size:9px;color:#9bb7c5}.detailGrid b{display:block;font-size:14px;font-weight:400;color:#dceaf0;margin-top:5px}.detailFoot{font-size:9px;color:#c9dfe8;border-top:1px solid #a2cad21b;padding-top:12px;margin-top:14px;line-height:1.8}.collapse{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease,opacity .3s;opacity:0}.collapse.open{grid-template-rows:1fr;opacity:1}.collapse>div{overflow:hidden}.smallPrint{font-size:9px;line-height:1.8;color:#8fabb9;margin:17px 3px}.navigation{position:absolute;bottom:0;left:0;right:0;height:76px;border-top:1px solid #bdd6e619;background:#060d17dc;backdrop-filter:blur(25px);display:flex;justify-content:space-around;padding:12px 7px 20px}.navigation button{border:0;background:transparent;color:#839aaa;font-size:10px;display:grid;gap:3px;justify-items:center;align-content:center;padding:0 13px;flex:1}.navigation svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.5}.navigation button.active{color:var(--mint)}.homebar{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:112px;height:4px;border-radius:10px;background:#bdd3dc9c}.toast{position:absolute;left:25px;right:25px;bottom:90px;background:#142b3af5;border:1px solid #81e6d94a;padding:13px;border-radius:13px;font-size:11px;line-height:1.6;opacity:0;pointer-events:none;transition:opacity .2s}.toast.show{opacity:1}.ripple{position:absolute;border-radius:50%;width:30px;height:30px;background:#b9fff02a;pointer-events:none;animation:ripple .6s ease-out forwards}.pulseHost{position:relative;overflow:hidden}@keyframes ripple{to{transform:scale(15);opacity:0}}@keyframes breathe{from{transform:translate(-12px,10px)}to{transform:translate(20px,-15px) scale(1.12)}}.indexes{display:flex;gap:6px;margin-bottom:20px}.indexes button{flex:1;background:#09101b4d;border:1px solid #8bd7e216;border-radius:12px;padding:9px 3px;font-size:10px;color:#9cafc0;line-height:1.7}.indexes .active{border-color:#8af3df58;color:#e1fff9;background:#84efdf12}.indexes small{display:block;font:10px monospace;color:var(--red)}.homeQuote{padding:0 5px}.homeQuote .amount{font-size:44px}.chart{width:100%;height:270px;display:block;margin-top:14px}.periods{display:flex;gap:8px;margin:14px 2px}.periods button{border:0;border-radius:7px;background:none;color:#9eb6c7;font-size:10px;padding:7px 10px}.periods button.active{background:#9acddb17;color:#dbfff9}.times{display:flex;justify-content:space-between;font:8px monospace;color:#7994a6}.track{height:3px;margin:16px 0 4px;background:linear-gradient(90deg,#3074ff,#81e6d9);position:relative}.track:after{content:'';position:absolute;left:75%;height:11px;width:4px;top:-4px;background:#ecfff9;box-shadow:0 0 10px #81e6d9}.view[hidden]{display:none}.view{animation:enter .42s cubic-bezier(.2,.8,.2,1)}.view.switching{animation:viewFlow .62s cubic-bezier(.2,.8,.2,1)}.phone.flowing .aurora{animation:breathe 1.8s ease-in-out 1 alternate}.phone.flowing .orbit{animation:orbitFlow .8s ease-out 1}@keyframes enter{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}@keyframes viewFlow{0%{opacity:.25;transform:translateY(12px) scale(.985);filter:blur(2px)}55%{opacity:1;transform:translateY(-2px) scale(1.005);filter:blur(0)}100%{transform:none}}@keyframes orbitFlow{from{transform:rotate(-44deg) translateX(-35px);opacity:.2}to{transform:rotate(-44deg) translateX(0);opacity:1}}@media(prefers-reduced-motion:reduce){*,*:before{animation:none!important;transition:none!important}}@media(max-width:960px){.stage{gap:45px;padding:35px}.editorial{width:330px}h1{font-size:50px}}@media(max-width:740px){.stage{padding:0;display:block}.editorial{display:none}.device{width:100%;padding:0;background:none;border-radius:0}.phone{border-radius:0;height:100svh;min-height:680px;max-width:490px;margin:auto}.status{height:43px}.island{display:none}.stockContent{min-width:190px}.deck{height:342px}.stock{flex-basis:32px}}
+.poolNavJL button{font-weight:600}.poolConsole .pcRow span{color:#cfe8ee}button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}.stage{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:110px;padding:62px 60px;position:relative;isolation:isolate;overflow:hidden}.stage:before{content:'';position:absolute;width:1200px;height:1100px;z-index:-1;right:-160px;top:-70px;background:radial-gradient(ellipse at 60% 48%,#12676233,transparent 40%),radial-gradient(ellipse at 35% 55%,#1648a735,transparent 55%)}.editorial{width:450px}.eyebrow{font-size:11px;letter-spacing:4px;color:var(--mint)}h1{font-size:66px;font-weight:450;line-height:1.18;letter-spacing:-3px;margin:26px 0}h1 em{font-style:normal;color:var(--mint)}.intro{font-size:16px;line-height:1.9;color:#9eafbf;max-width:390px}.rule{height:1px;background:linear-gradient(90deg,#61748155,transparent);margin:32px 0}.notes{display:grid;gap:24px}.note{display:flex;gap:17px}.note>span{font:11px monospace;color:#72b0bd;padding-top:4px}.note b{font-size:14px;font-weight:550}.note p{font-size:12px;color:#849bab;line-height:1.7;margin:7px 0 0}.swatches{display:flex;gap:10px;margin-top:30px}.swatches i{width:36px;height:9px;border-radius:20px}.caption{font-size:10px;color:#bcd6e1;letter-spacing:1px;margin-top:16px}.device{width:416px;flex-shrink:0;padding:7px;border-radius:46px;background:linear-gradient(145deg,#5d757a,#1c2932 20%,#17212b 80%,#556e74);box-shadow:0 50px 100px #000b,0 0 100px #29a2b014}.phone{height:860px;border-radius:39px;position:relative;isolation:isolate;overflow:hidden;background:#060d15}.aurora{position:absolute;inset:-50px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 80% 39%,#22bcb75c,transparent 37%),radial-gradient(ellipse at 5% 49%,#2667ff61,transparent 44%),radial-gradient(ellipse at 45% 103%,#08698444,transparent 43%);filter:blur(22px);animation:breathe 10s ease-in-out infinite alternate}.orbit{position:absolute;z-index:-1;width:590px;height:220px;border-radius:50%;border-top:1px solid #6ee4d247;transform:rotate(-44deg);left:-90px;top:295px;pointer-events:none}.status{height:43px;display:flex;align-items:center;justify-content:space-between;padding:0 25px;font-size:11px;font-weight:650}.island{position:absolute;left:50%;transform:translateX(-50%);top:11px;width:99px;height:23px;background:#03070b;border-radius:20px}.status small{font-size:10px;letter-spacing:1px}.header{display:flex;align-items:center;justify-content:space-between;padding:12px 23px 17px}.brand{font-size:21px;font-weight:550;letter-spacing:4px}.brand small{display:block;font-size:7px;letter-spacing:2.4px;color:#85a5b7;margin-top:4px}.headRight{display:flex;gap:12px;align-items:center}.{font-size:9px;color:#b8e6e1;border:1px solid #81e6d929;background:#081923aa;padding:5px 9px;border-radius:30px;transition:background .35s,border-color .35s,box-shadow .35s}.:hover{background:#81e6d91c;border-color:#81e6d96b;box-shadow:0 0 18px #81e6d929}.round{border:1px solid #9bc3d629;border-radius:50%;width:33px;height:33px;background:#b1dfef08;font-size:18px}.scroll{height:calc(100% - 181px);overflow-y:auto;scrollbar-width:none;padding:0 18px 35px}.scroll::-webkit-scrollbar{display:none}.pageTitle{display:flex;align-items:center;justify-content:space-between;margin:7px 4px 19px}.pageTitle h2{font-size:23px;font-weight:520;letter-spacing:1px;margin:0}.pageTitle span{font-size:9px;color:#9bb3bf;letter-spacing:2px}.portfolio{padding:4px 5px 23px}.label{color:#a7c0cb;font-size:11px}.amount{font-size:42px;letter-spacing:-1.3px;font-weight:400;font-variant-numeric:tabular-nums;margin:8px 0}.pnlLine{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#9ab5c3}.up{color:var(--red)}.down{color:var(--green)}.minor{font-size:11px;letter-spacing:0}.boardHead{display:flex;align-items:center;justify-content:space-between;font-size:12px;margin:0 3px 12px}.boardTools{display:flex;gap:6px}.iconBtn{width:auto;min-width:28px;height:28px;border:1px solid #8bd7e233;border-radius:9px;background:#84d9d50d;color:#bcefeb;font-size:18px;line-height:1;display:grid;place-items:center}.iconBtn:hover{border-color:#81e6d988;background:#81e6d91c}.tierLiveJL{display:none!important}.tsHiJL{position:absolute;top:-8px;transform:translateX(-50%);font-size:8px;line-height:1;color:#ff7a85;font-style:normal;pointer-events:none;text-shadow:0 0 4px #000}.tsLoJL{position:absolute;bottom:-8px;transform:translateX(-50%);font-size:8px;line-height:1;color:#3ff0d8;font-style:normal;pointer-events:none;text-shadow:0 0 4px #000}.resonancePanel{display:none!important}.cardRemove{position:absolute;right:12px;top:12px;width:24px;height:24px;border:1px solid #ff545944;border-radius:8px;background:#ff54590d;color:#f7a4a5;font-size:15px;line-height:1;z-index:2}.cardRemove:hover{background:#ff545922;border-color:#ff545988}.day .iconBtn{color:#075e62;background:#d7ecec;border-color:#79aeb366}.day .cardRemove{color:#a33d47;background:#fde8e8;border-color:#d88a8e}.boardHead small{font-size:9px;color:#91afbc}.deck{display:flex;gap:7px;height:336px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding-bottom:2px;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none}.stock{flex:0 0 36px;min-width:0;border:1px solid #b9e5ee33;border-radius:17px;background:linear-gradient(145deg,#1a314252,#0b1a285e);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(14px);position:relative;overflow:hidden;transition:flex-basis .48s cubic-bezier(.2,.8,.2,1),flex-grow .48s cubic-bezier(.2,.8,.2,1),border-color .25s,box-shadow .3s;box-shadow:inset 0 1px #edffff0a}.stock.removing{opacity:.35;transform:scale(.96);transition:opacity .2s,transform .2s}.stock.active{flex:0 0 260px;border-color:#88e7dd69;box-shadow:0 12px 35px #0004,0 0 35px #55bebb19,inset 0 1px #dcfff720}.stock:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 0,#58d5ca20,transparent 60%);pointer-events:none}.stock:hover{border-color:#81e6d989}.rail{position:absolute;inset:0;width:100%;background:transparent;border:0;display:flex;align-items:center;flex-direction:column;padding:16px 0;gap:22px}.rail .num{font:9px monospace;color:#8ba8b8}.rail .name{writing-mode:vertical-rl;letter-spacing:4px;font-size:13px;color:#cfe4ea;margin-top:auto;margin-bottom:12px}.active .rail{height:58px;inset:0 0 auto;flex-direction:row;justify-content:space-between;padding:14px 15px;gap:4px}.active .rail .name{writing-mode:horizontal-tb;letter-spacing:.04em;font-size:16px;margin:0;order:-1;color:#f1fbfc}.stockContent{position:absolute;inset:58px 0 0;width:100%;min-width:216px;padding:0 15px 15px;opacity:0;visibility:hidden;transition:opacity .2s ease;pointer-events:none}.active .stockContent{opacity:1;visibility:visible;transition:opacity .28s .15s;pointer-events:auto}.stockCode{font:9px monospace;color:#d0e6ee;letter-spacing:1px}.stockPrice{display:flex;align-items:baseline;justify-content:space-between;margin-top:13px}.stockPrice b{font-size:30px;letter-spacing:-.8px;font-weight:450}.stockPrice span{font-size:11px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:13px 8px;margin-top:19px;padding:15px 0;border-top:1px solid #c6e8e21c}.facts small{font-size:9px;color:#9fb9c7;display:block;margin-bottom:5px}.facts strong{font-size:13px;font-weight:500}.risk{padding:7px 9px;background:#bddcf508;border:1px solid #b7d9e216;border-radius:8px;color:#a9bfcc;font-size:9px}.actions{display:flex;gap:8px;margin-top:14px}.actions button{border:1px solid #95d8df37;background:#8ed2dd0a;border-radius:9px;padding:8px 9px;font-size:10px;flex:1}.actions button:hover{background:#81e6d91b}.glass.compact{padding:10px;margin-top:8px}.glass.compact .detailGrid{gap:8px}.glass{border:1px solid #c0e4ef24;border-radius:18px;background:linear-gradient(120deg,#b7d4e308,#06101d59);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);padding:15px;margin-top:14px}#holds .glass{background:linear-gradient(120deg,#b7d4e308,#06101d59);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)}.glass h3{font-size:12px;font-weight:500;margin:0 0 12px;display:flex;justify-content:space-between}.glass h3 small{font-size:9px;color:#92aebc}.detailGrid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.detailGrid span{font-size:9px;color:#9bb7c5}.detailGrid b{display:block;font-size:14px;font-weight:400;color:#dceaf0;margin-top:5px}.detailFoot{font-size:9px;color:#c9dfe8;border-top:1px solid #a2cad21b;padding-top:12px;margin-top:14px;line-height:1.8}.collapse{display:grid;grid-template-rows:0fr;transition:grid-template-rows .35s ease,opacity .3s;opacity:0}.collapse.open{grid-template-rows:1fr;opacity:1}.collapse>div{overflow:hidden}.smallPrint{font-size:9px;line-height:1.8;color:#8fabb9;margin:17px 3px}.navigation{position:absolute;bottom:0;left:0;right:0;height:76px;border-top:1px solid #bdd6e619;background:#060d17dc;backdrop-filter:blur(25px);display:flex;justify-content:space-around;padding:12px 7px 20px}.navigation button{border:0;background:transparent;color:#839aaa;font-size:10px;display:grid;gap:3px;justify-items:center;align-content:center;padding:0 13px;flex:1}.navigation svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.5}.navigation button.active{color:var(--mint)}.homebar{position:absolute;bottom:7px;left:50%;transform:translateX(-50%);width:112px;height:4px;border-radius:10px;background:#bdd3dc9c}.toast{position:absolute;left:25px;right:25px;bottom:90px;background:#142b3af5;border:1px solid #81e6d94a;padding:13px;border-radius:13px;font-size:11px;line-height:1.6;opacity:0;pointer-events:none;transition:opacity .2s}.toast.show{opacity:1}.ripple{position:absolute;border-radius:50%;width:30px;height:30px;background:#b9fff02a;pointer-events:none;animation:ripple .6s ease-out forwards}.pulseHost{position:relative;overflow:hidden}@keyframes ripple{to{transform:scale(15);opacity:0}}@keyframes breathe{from{transform:translate(-12px,10px)}to{transform:translate(20px,-15px) scale(1.12)}}.indexes{display:flex;gap:6px;margin-bottom:20px}.indexes button{flex:1;background:#09101b4d;border:1px solid #8bd7e216;border-radius:12px;padding:9px 3px;font-size:10px;color:#9cafc0;line-height:1.7}.indexes .active{border-color:#8af3df58;color:#e1fff9;background:#84efdf12}.indexes small{display:block;font:10px monospace;color:var(--red)}.homeQuote{padding:0 5px}.homeQuote .amount{font-size:44px}.chart{width:100%;height:270px;display:block;margin-top:14px}.periods{display:flex;gap:8px;margin:14px 2px}.periods button{border:0;border-radius:7px;background:none;color:#9eb6c7;font-size:10px;padding:7px 10px}.periods button.active{background:#9acddb17;color:#dbfff9}.times{display:flex;justify-content:space-between;font:8px monospace;color:#7994a6}.track{height:3px;margin:16px 0 4px;background:linear-gradient(90deg,#3074ff,#81e6d9);position:relative}.track:after{content:'';position:absolute;left:75%;height:11px;width:4px;top:-4px;background:#ecfff9;box-shadow:0 0 10px #81e6d9}.view[hidden]{display:none}.view{animation:enter .42s cubic-bezier(.2,.8,.2,1)}.view.switching{animation:viewFlow .62s cubic-bezier(.2,.8,.2,1)}.phone.flowing .aurora{animation:breathe 1.8s ease-in-out 1 alternate}.phone.flowing .orbit{animation:orbitFlow .8s ease-out 1}@keyframes enter{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}@keyframes viewFlow{0%{opacity:.25;transform:translateY(12px) scale(.985);filter:blur(2px)}55%{opacity:1;transform:translateY(-2px) scale(1.005);filter:blur(0)}100%{transform:none}}@keyframes orbitFlow{from{transform:rotate(-44deg) translateX(-35px);opacity:.2}to{transform:rotate(-44deg) translateX(0);opacity:1}}@media(prefers-reduced-motion:reduce){*,*:before{animation:none!important;transition:none!important}}@media(max-width:960px){.stage{gap:45px;padding:35px}.editorial{width:330px}h1{font-size:50px}}@media(max-width:740px){.stage{padding:0;display:block}.editorial{display:none}.device{width:100%;padding:0;background:none;border-radius:0}.phone{border-radius:0;height:100svh;min-height:680px;max-width:490px;margin:auto}.status{height:43px}.island{display:none}.stockContent{min-width:190px}.deck{height:342px}.stock{flex-basis:32px}}
 .day{--ink:#eef3f4;color:#10202a}.day .stage{background:linear-gradient(145deg,#eef4f5,#dfeaec)}.day .phone{background:#edf4f5;color:#10202a}.day .aurora{opacity:.55}.day .navigation{background:#eaf2f3dd;border-color:#96b9bf66}.day .navigation button{color:#4c6974}.day .navigation button.active{color:#087f7c}.day .stock{background:linear-gradient(145deg,#ffffffd9,#dbe8eacc);border-color:#8bbbc055}.day .stockContent,.day .active .rail .name{color:#10202a}.day .{color:#075e62;background:#d9eeed;border-color:#75bdb8}.day .glass{background:linear-gradient(120deg,#ffffffb8,#d7e6e899);border-color:#8eb6bd55}.day .homebar{background:#6f8e98}.day .label,.day .pnlLine,.day .smallPrint{color:#496673}.day .editorial h1,.day .brand,.day .pageTitle h2,.day .boardHead,.day .stockPrice b,.day .facts strong,.day .glass h3,.day .detailGrid b,.day .day .intro,.day .note p,.day .caption,.day .label,.day .pnlLine,.day .smallPrint,.day .pageTitle span,.day .boardHead small,.day .stockCode,.day .facts small,.day .risk,.day .detailGrid span,.day .detailFoot,.day .day .brand small,.day .rail .num,.day .rail .name{color:#35616b}.day .indexes button,.day .periods button{background:#d8e7e9aa;border-color:#8bb8be66}.day .indexes .active,.day .periods button.active{color:#075e62;background:#b8e1df;border-color:#4ea7a366}.day .actions button,.day .day .actions button:hover,.day .day .track{background:linear-gradient(90deg,#2467c7,#168f87)}.day .orbit{border-color:#198f8b55}.day .chart{filter:saturate(.85)}.day .round{color:#12313b;background:#d7e9ea99;border-color:#6c9da566}.day .navigation svg{stroke:currentColor}.day .toast{color:#12313b;background:#e7f1f2f5;border-color:#4c9c9a66}.day .swatches i{border:1px solid #78939a}
 /* One chart workspace; colors inherit the approved day/night shell. */
-.phone{--panel:#0b1b29ee;--fg:#e8f6fa;--secondary:#a0b9c6;--edge:#87b7c43d;--accent:#81e6d9}.day .phone{--panel:#eef5f7f5;--fg:#122d38;--secondary:#41616d;--edge:#56899b66;--accent:#08776f}[hidden]{display:none!important}.navigation{z-index:30}.navigation button{padding:0 6px}.phone button{cursor:pointer}.chartHeading button,.chartActions button,.chartFooter button,.miniHeading button,.previewActions button,#picker button,#alerts button{border:1px solid var(--edge);border-radius:8px;background:var(--panel);color:var(--fg);padding:7px 10px;font:11px inherit}.periodBar{display:flex;gap:3px;overflow-x:auto;padding:5px 0;flex-shrink:0}.periodBar button{flex:1;min-width:30px;white-space:nowrap;background:transparent;color:var(--secondary);border:1px solid transparent;border-radius:7px;padding:7px 2px;font-size:10px}.periodBar .active,.chartActions [aria-pressed=true]{color:var(--accent)!important;border-color:var(--accent)!important;background:#279a8a18!important}.previewActions{display:flex;justify-content:flex-end;gap:8px;margin:8px 0}.previewChart{height:140px;width:100%;display:block}.miniHeading{display:flex;justify-content:space-between;align-items:center;color:var(--secondary);font-size:11px}.indexes{gap:4px}.indexes button{font-size:9px}
+.phone{--panel:#0b1b29c9;--fg:#e8f6fa;--secondary:#a0b9c6;--edge:#87b7c43d;--accent:#81e6d9}.day .phone{--panel:#eef5f7f5;--fg:#122d38;--secondary:#41616d;--edge:#56899b66;--accent:#08776f}[hidden]{display:none!important}.navigation{z-index:30}.navigation button{padding:0 6px}.phone button{cursor:pointer}.chartHeading button,.chartActions button,.chartFooter button,.miniHeading button,.previewActions button,#picker button,#alerts button{border:1px solid var(--edge);border-radius:8px;background:var(--panel);color:var(--fg);padding:7px 10px;font:11px inherit}.periodBar{display:flex;gap:3px;overflow-x:auto;padding:5px 0;flex-shrink:0}.periodBar button{flex:1;min-width:30px;white-space:nowrap;background:transparent;color:var(--secondary);border:1px solid transparent;border-radius:7px;padding:7px 2px;font-size:10px}.periodBar .active,.chartActions [aria-pressed=true]{color:var(--accent)!important;border-color:var(--accent)!important;background:#279a8a18!important}.previewActions{display:flex;justify-content:flex-end;gap:8px;margin:8px 0}.previewChart{height:140px;width:100%;display:block}.miniHeading{display:flex;justify-content:space-between;align-items:center;color:var(--secondary);font-size:11px}.indexes{gap:4px}.indexes button{font-size:9px}
 .chartHeading{display:flex;align-items:center;gap:8px;flex-shrink:0;color:var(--fg);padding:4px 0}.chartHeading>div{flex:1}.chartHeading b{font-size:16px}.chartHeading small{color:var(--secondary);display:block;font-size:9px}.chartHeading strong{font-size:18px;font-variant-numeric:tabular-nums}.chartActions{display:flex;gap:4px;padding:4px 0 7px;flex-shrink:0}.chartActions button{font-size:10px;padding:6px 8px}.plots{flex:1;min-height:220px;display:flex;flex-direction:column;border:1px solid var(--edge);border-radius:12px;background:var(--panel);overflow:hidden}.mainPlot{flex:1;min-height:230px;position:relative}
 .panArrow{position:absolute;top:42%;z-index:6;width:30px;height:46px;border-radius:9px;border:1px solid var(--edge);background:#0d1b24b8;color:#dff0f6;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;opacity:.5;cursor:pointer;touch-action:manipulation}
 .panArrow:active{opacity:1;background:#16303f}
@@ -290,7 +290,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
 </style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
-</head><body><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
+</head><body><!-- v.28 0919凌晨 八联: ①持仓股可同步进自选观察(watch旗标,此前'已在池里'静默拒绝) ②持仓页码按实际渲染卡数(01/09假象修复)+滑动/选中/计数统一走deckListJL ③撤展开详情自动上滚(.27引入回归) ④大盘异动:删.27重复图题+异动密度柱加标注加高 ⑤盘前情绪卡默认收起明细只留预判行 ⑥全局玻璃卡透亮化(.27只改了持仓卡)+浮层面板降不透明 ⑦新闻面板:pushState手机返回可关+iframe内返回改关面板+数据日亮出过期提示+持仓股名focus定位修复 ⑧复盘证据区加小结行 --><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
 <body><!-- v.47 0916午 修正公式补漏: ATR/lastTR盘中(15:10前)一律不含今日未完成bar——ATR与买卖档全天固定(用户'不能固定吗水位'),收盘后自动切换;此前9:05后即混入致日内漂移 -->
 <body><!-- v.46 0916盘中 资金缺流兜底: 东财双主机9.5s全灭→新浪MoneyFlow JSONP(家庭WiFi push2his/push2被墙实证,新浪通),仅新于缓存才落库不覆盖东财今日盘中行 -->
 <!-- v.47 0916盘中 诊断报告剩余bug全修: R3水位memo按最近日K日期判活(跨零点/盘前不再废) / P1-6 paint子任务独立try+catch留证 / P1-5 日K到达三连渲染→400ms防抖+逐帧parse改缓存+trades/calib/ff parse memo / P1-4 pagehide不杀iframe / P2-7 JSONP回调唯一名+死代理回退摘除 / P2-8 死热力图链删除 / C2 搜股结果消毒+ydEvCbJL第8处回调唯一名 -->
@@ -943,7 +943,15 @@ document.addEventListener("visibilitychange", () => {
         }
       } catch (e3) {
       }
-      box.innerHTML = '<div style="color:#8fe9d9;padding:2px 0">' + st.name + " \xB7 \u8FD1" + b5.length + "\u65E5 K\u7EBF</div>" + kH + '<div style="color:#8fe9d9;padding:6px 0 2px">DDX \xB7 \u8FD1' + ddL.length + "\u65E5\u4E3B\u529B\u51C0\u989D</div>" + ddH + '<div style="color:#8fe9d9;padding:6px 0 2px">Fib \xB7 \u65E5K\u6CE2\u6BB5\u4F4D</div>' + fibH;
+      let sumH = "";
+      try {
+        const _lb = b5.length ? b5[b5.length - 1] : null, _fb = b5.length ? b5[0] : null;
+        const _chg = _lb && _fb && +_fb.o ? (+_lb.c / +_fb.o - 1) * 100 : null;
+        const _ds = ddL.reduce((a2, r3) => a2 + (Number(r3.main) || 0), 0);
+        sumH = '<div style="padding:2px 0 6px;color:#f2fbfd">小结 · ' + (_chg != null ? "近" + b5.length + "日 " + (_chg >= 0 ? "+" : "") + _chg.toFixed(1) + "%" : "K线暂缺") + (ddL.length ? " · 近" + ddL.length + "日主力 " + (_ds >= 0 ? "净流入 " : "净流出 ") + fmtFundJL(Math.abs(_ds)) : "") + "</div>";
+      } catch (e4) {
+      }
+      box.innerHTML = sumH + '<div style="color:#8fe9d9;padding:2px 0">' + st.name + " \xB7 \u8FD1" + b5.length + "\u65E5 K\u7EBF</div>" + kH + '<div style="color:#8fe9d9;padding:6px 0 2px">DDX \xB7 \u8FD1' + ddL.length + "\u65E5\u4E3B\u529B\u51C0\u989D</div>" + ddH + '<div style="color:#8fe9d9;padding:6px 0 2px">Fib \xB7 \u65E5K\u6CE2\u6BB5\u4F4D</div>' + fibH;
     } catch (e2) {
     }
   }
@@ -1243,7 +1251,16 @@ document.addEventListener("visibilitychange", () => {
       }
     });
     if (focus) {
-      const el = d.querySelector('.jlNewsStock[data-code="' + focus + '"]');
+      let el = d.querySelector('.jlNewsStock[data-code="' + focus + '"]');
+      if (!el && focus.length >= 2) {
+        const _all2 = d.querySelectorAll(".jlNewsStock");
+        for (let _i2 = 0; _i2 < _all2.length; _i2++) {
+          if ((_all2[_i2].textContent || "").trim() === focus) {
+            el = _all2[_i2];
+            break;
+          }
+        }
+      }
       if (el) {
         el.style.background = "#ffd21f33";
         el.style.borderRadius = "3px";
@@ -1267,8 +1284,19 @@ document.addEventListener("visibilitychange", () => {
     shade.hidden = false;
     fr.hidden = false;
     empty.hidden = true;
-    fr.src = rel + "?_=" + Date.now();
+    try {
+      fr.contentWindow.location.replace(rel + "?_=" + Date.now());
+    } catch (e5) {
+      fr.src = rel + "?_=" + Date.now();
+    }
     full.href = rel;
+    try {
+      if (!openNewsJL._ps) {
+        history.pushState({ jlNews: 1 }, "", "#news");
+        openNewsJL._ps = 1;
+      }
+    } catch (e0) {
+    }
     qa("[data-news]").forEach((b) => b.classList.toggle("active", b.dataset.news === mode));
     fr.onload = () => {
       try {
@@ -1284,6 +1312,21 @@ document.addEventListener("visibilitychange", () => {
             sinaNewsJL(fr, empty);
             return;
           }
+          const _hb = panel.querySelector("header b");
+          if (_hb) {
+            let _ds = dm && dm[0];
+            if (!_ds) {
+              try {
+                const m3 = (d.body.innerText || "").slice(0, 500).match(/(\d{2})-(\d{2})/);
+                if (m3) _ds = (/* @__PURE__ */ new Date()).getFullYear() + "-" + m3[1] + "-" + m3[2];
+              } catch (e7) {
+              }
+            }
+            if (_ds) {
+              const _ltd = typeof jlLastTradeDay === "function" ? jlLastTradeDay() : "";
+              _hb.innerHTML = "新闻 / 产业链 · 数据日 " + _ds.slice(5) + (_ltd && _ds < _ltd ? ' <i style="font-style:normal;color:#ffd21f">非最近交易日 ' + _ltd.slice(5) + " · 报表未更新</i>" : "");
+            }
+          }
         } catch (e2) {
         }
         d.querySelectorAll("a[href]").forEach((a) => {
@@ -1293,6 +1336,17 @@ document.addEventListener("visibilitychange", () => {
         try {
           newsLinkifyJL(d, focus);
         } catch (e3) {
+        }
+        try {
+          d.querySelectorAll("a.back").forEach((a2) => {
+            a2.removeAttribute("onclick");
+            a2.addEventListener("click", (e2) => {
+              e2.preventDefault();
+              e2.stopPropagation();
+              closeNewsJL();
+            });
+          });
+        } catch (e6) {
         }
       } catch (e) {
         sinaNewsJL(fr, empty);
@@ -1313,6 +1367,25 @@ document.addEventListener("visibilitychange", () => {
     if ($("newsPanel")) $("newsPanel").hidden = true;
     if ($("newsShade")) $("newsShade").hidden = true;
   }
+  window.addEventListener("popstate", () => {
+    try {
+      openNewsJL._ps = 0;
+      if ($("newsPanel") && !$("newsPanel").hidden) closeNewsJL();
+    } catch (e) {
+    }
+  });
+  window.addEventListener("hashchange", () => {
+    try {
+      if (location.hash !== "#news") {
+        openNewsJL._ps = 0;
+        if ($("newsPanel") && !$("newsPanel").hidden) closeNewsJL();
+      }
+    } catch (e) {
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.closest && e.target.closest("[data-view]")) closeNewsJL();
+  });
   (_a = $("newsEntryBtn")) == null ? void 0 : _a.addEventListener("click", () => openNewsJL(newsModeJL, stocks[active] ? String(stocks[active].code) : ""));
   (_b = $("newsClose")) == null ? void 0 : _b.addEventListener("click", closeNewsJL);
   (_c = $("newsShade")) == null ? void 0 : _c.addEventListener("click", closeNewsJL);
@@ -2280,12 +2353,13 @@ document.addEventListener("visibilitychange", () => {
         Object.keys(buck).forEach((k2) => {
           const bb = buck[k2], xx = XT(k2);
           if (xx < PL + AW - 1 || xx > W - PR) return;
-          const hu = +(bb.u / dmx * 6).toFixed(1), hd = +(bb.d / dmx * 6).toFixed(1);
+          const hu = +(bb.u / dmx * 9).toFixed(1), hd = +(bb.d / dmx * 9).toFixed(1);
           const hyT = Object.keys(bb.hys).sort((a, b2) => bb.hys[b2] - bb.hys[a]).slice(0, 2).map((h2) => h2 + "\xD7" + bb.hys[h2]).join(" ");
           const tip = k2.slice(0, 2) + ":" + k2.slice(2) + " \u4E0A\u5411\u5F02\u52A8" + bb.u + "\u6B21/\u4E0B\u5411" + bb.d + "\u6B21" + (hyT ? " \xB7 " + hyT : "");
           if (bb.u) dens += '<rect x="' + (xx - 1.3).toFixed(1) + '" y="' + (H - PB - hu).toFixed(1) + '" width="2.6" height="' + hu + '" fill="rgba(244,101,95,.95)"><title>' + tip + "</title></rect>";
           if (bb.d) dens += '<rect x="' + (xx - 1.3).toFixed(1) + '" y="' + (H - PB) + '" width="2.6" height="' + hd + '" fill="rgba(46,189,127,.95)"><title>' + tip + "</title></rect>";
         });
+        dens += '<text x="' + (W - 2) + '" y="' + (H - PB - 4) + '" font-size="8" fill="#8d97a6" text-anchor="end">异动密度 · 红上绿下</text>';
       }
       let bub = "";
       {
@@ -2388,7 +2462,7 @@ document.addEventListener("visibilitychange", () => {
         });
         const cpl = YDJ.mf.map((m, i) => XT(m[0]).toFixed(1) + "," + YC(cums[i]).toFixed(1)).join(" ");
         const cumEnd = cums[cums.length - 1];
-        mfsvg = '<svg viewBox="0 0 ' + W + " " + H2 + '" style="width:100%;display:block;margin-top:8px;border-top:1px solid #81e6d91c;padding-top:4px"><text x="' + PL + '" y="11" font-size="9" fill="#c9dfe8">\u4E3B\u529B\u51C0\u6D41\u5165 \xB7 \u5206\u949F\u67F1 + \u7D2F\u8BA1\u7EBF</text><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + YB(0) + '" y2="' + YB(0) + '" stroke="#4a5462" stroke-width="1"/>' + bars + '<polyline points="' + cpl + '" fill="none" stroke="#e8c568" stroke-width="1.6"/><text x="' + (PL + AW + 2) + '" y="' + (PT2 + 2) + '" font-size="11" fill="#a7b5c4">\u4E3B\u529B\u51C0\u6D41\u5165\xB7\u5206\u949F\u67F1 <tspan fill="#e8c568">\u2014\u7D2F\u8BA1</tspan></text><text x="' + (W - 2) + '" y="' + (PT2 + 2) + '" font-size="13" font-weight="700" fill="' + (cumEnd >= 0 ? "#ff5459" : "#1fdc93") + '" text-anchor="end">\u7D2F\u8BA1' + (cumEnd >= 0 ? "+" : "") + cumEnd.toFixed(1) + "\u4EBF</text></svg>";
+        mfsvg = '<svg viewBox="0 0 ' + W + " " + H2 + '" style="width:100%;display:block;margin-top:8px;border-top:1px solid #81e6d91c;padding-top:4px"><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + YB(0) + '" y2="' + YB(0) + '" stroke="#4a5462" stroke-width="1"/>' + bars + '<polyline points="' + cpl + '" fill="none" stroke="#e8c568" stroke-width="1.6"/><text x="' + (PL + AW + 2) + '" y="' + (PT2 + 2) + '" font-size="11" fill="#a7b5c4">\u4E3B\u529B\u51C0\u6D41\u5165\xB7\u5206\u949F\u67F1 <tspan fill="#e8c568">\u2014\u7D2F\u8BA1</tspan></text><text x="' + (W - 2) + '" y="' + (PT2 + 2) + '" font-size="13" font-weight="700" fill="' + (cumEnd >= 0 ? "#ff5459" : "#1fdc93") + '" text-anchor="end">\u7D2F\u8BA1' + (cumEnd >= 0 ? "+" : "") + cumEnd.toFixed(1) + "\u4EBF</text></svg>";
       } else if (svg) mfsvg = '<div class="ydsub" style="margin-top:8px;border-top:1px solid #81e6d91c;padding-top:8px">\u4E3B\u529B\u8D44\u91D1\u6D41\u6682\u7F3A\uFF08\u4E1C\u8D22\u901A\u9053\uFF0C\u76D8\u4E2D\u81EA\u52A8\u91CD\u8BD5\uFF09</div>';
     }
     const yc = $("ydChartJL");
@@ -2767,12 +2841,14 @@ document.addEventListener("visibilitychange", () => {
   };
   function selectHolding(i) {
     active = i;
-    qa(".stock").forEach((c, j) => {
-      c.classList.toggle("active", j === i);
-      c.querySelector(".rail").setAttribute("aria-expanded", j === i);
-      c.querySelector(".stockContent").inert = j !== i;
+    qa(".stock").forEach((c) => {
+      const _di = +c.dataset.stock;
+      c.classList.toggle("active", _di === i);
+      c.querySelector(".rail").setAttribute("aria-expanded", _di === i);
+      c.querySelector(".stockContent").inert = _di !== i;
     });
-    $("count").textContent = stocks.length ? `${String(i + 1).padStart(2, "0")} / ${String(stocks.length).padStart(2, "0")}` : "00 / 00";
+    const _dl2 = deckListJL(), _dp2 = _dl2.findIndex((o) => o.i === i);
+    $("count").textContent = _dl2.length ? `${String((_dp2 < 0 ? 0 : _dp2) + 1).padStart(2, "0")} / ${String(_dl2.length).padStart(2, "0")}` : "00 / 00";
     $("detail").classList.remove("open");
     qa("[data-detail]").forEach((b) => {
       b.textContent = "\u5C55\u5F00\u8BE6\u60C5";
@@ -2793,7 +2869,11 @@ document.addEventListener("visibilitychange", () => {
     swipe = null;
     if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
       blockClick = true;
-      selectHolding((active + (dx < 0 ? 1 : 2)) % stocks.length);
+      const _dl3 = deckListJL();
+      if (_dl3.length > 1) {
+        const _cur3 = _dl3.findIndex((o) => o.i === active), _nx3 = _dl3[((_cur3 < 0 ? 0 : _cur3) + (dx < 0 ? 1 : _dl3.length - 1)) % _dl3.length];
+        selectHolding(_nx3.i);
+      }
     }
   });
   window.addEventListener("pointercancel", () => swipe = null);
@@ -2823,12 +2903,6 @@ document.addEventListener("visibilitychange", () => {
         detailBtn.textContent = on ? "\u6536\u8D77\u8BE6\u60C5" : "\u5C55\u5F00\u8BE6\u60C5";
         detailBtn.setAttribute("aria-expanded", on);
       }
-      if (on) setTimeout(() => {
-        try {
-          $("detail").scrollIntoView({ behavior: "smooth", block: "start" });
-        } catch (e2) {
-        }
-      }, 80);
       return;
     }
     const rail = e.target.closest(".rail");
@@ -3572,8 +3646,11 @@ document.addEventListener("visibilitychange", () => {
       if (tmp.firstChild) el.replaceWith(tmp.firstChild);
     });
   }
+  function deckListJL() {
+    return stocks.map((s, i) => ({ s, i })).filter((o) => o.s.qty > 0 || researchedStocksJL.some((r) => r && r.code === o.s.code));
+  }
   function renderDeck() {
-    const _deckList = stocks.map((s, i) => ({ s, i })).filter((o) => o.s.qty > 0 || researchedStocksJL.some((r) => r && r.code === o.s.code));
+    const _deckList = deckListJL();
     $("deck").innerHTML = _deckList.map((o) => { const s = o.s, i = o.i;
       const on = i === active, t = tiersViewJL(s), lp = Number(s.base);
       let sig = null;
@@ -3588,7 +3665,8 @@ document.addEventListener("visibilitychange", () => {
       }
       return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(i + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s.addedAt ? " \xB7 " + String(s.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s.base)}<small class="${cls(s.pct)}">${pct(s.pct)}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news="${s.code}" style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legHi">大波段 <b>H ${legEffHiJL(s, leg).toFixed(2)}</b><i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? "盘中" : leg.hiD ? leg.hiD.slice(5) : ""}</i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? `<em class="legBos ${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "" : "dn"}">${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "▲" : "▼"}BOS</em>` : ""}</span><span class="legLo"><b>L ${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span></div>` : ""}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
     }).join("");
-    $("count").textContent = stocks.length ? `${String(active + 1).padStart(2, "0")} / ${String(stocks.length).padStart(2, "0")}` : "00 / 00";
+    const _dp = _deckList.findIndex((o) => o.i === active);
+    $("count").textContent = _deckList.length ? `${String((_dp < 0 ? 0 : _dp) + 1).padStart(2, "0")} / ${String(_deckList.length).padStart(2, "0")}` : "00 / 00";
     const hc = document.getElementById("holdCount");
     if (hc) hc.textContent = _deckList.length + " \u53EA\u6301\u4ED3";
     sbOrbEnsureJL();
@@ -5084,9 +5162,9 @@ document.addEventListener("visibilitychange", () => {
       const wf = typeof watchFundHTMLJL === "function" ? watchFundHTMLJL(s2) : "";
       const plMeta = pl && JLPOOL_LAYERS.find((l) => l[0] === pl.layer);
       const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
-      return `<article class="watchItem" style="position:relative">${s2.qty > 0 ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s2.addedAt ? " \xB7 " + String(s2.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
+      return `<article class="watchItem" style="position:relative">${s2.qty > 0 && !s2.watch ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${s2.addedAt ? " \xB7 " + String(s2.addedAt).slice(5).replace("-", "/") + "\u5165" : ""}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
     };
-    const obs = rows.filter((s2) => !(s2.qty > 0));
+    const obs = rows.filter((s2) => !(s2.qty > 0) || s2.watch);
     $("watchList").innerHTML = obs.length ? '<div class="dragonGroup"><b>\u89C2\u5BDF ' + obs.length + "</b></div>" + obs.map(card).join("") : "";
     periodBars($("watchList"));
   }
@@ -5210,11 +5288,15 @@ document.addEventListener("visibilitychange", () => {
       const code = String(add.dataset.add), name = add.dataset.name || code;
       let st = stocks.find((x) => x.code === code);
       if (!st) {
-        st = { code, name, base: 0, pct: 0, qty: 0, cost: null, pnl: 0, addedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") };
+        st = { code, name, base: 0, pct: 0, qty: 0, cost: null, pnl: 0, watch: window.__pickerFrom === "watch" ? 1 : 0, addedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") };
         stocks.push(st);
         persistStocks();
-        active = stocks.length - 1;
+        if (window.__pickerFrom !== "watch") active = stocks.length - 1;
         renderDeck();
+        renderWatch();
+      } else if (window.__pickerFrom === "watch" && !st.watch) {
+        st.watch = 1;
+        persistStocks();
         renderWatch();
       }
       selected = code;
@@ -9978,12 +10060,19 @@ document.addEventListener("visibilitychange", () => {
       if (!add) return;
       e.stopPropagation();
       const code = String(add.dataset.watchAdd), name = add.dataset.name || code;
-      if (!stocks.find((x) => x.code === code)) {
-        stocks.push({ code, name, base: Number(add.dataset.price) || 0, pct: 0, qty: 0, cost: null, pnl: 0, addedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") });
+      const _ex = stocks.find((x) => x.code === code);
+      if (!_ex) {
+        stocks.push({ code, name, base: Number(add.dataset.price) || 0, pct: 0, qty: 0, cost: null, pnl: 0, watch: 1, addedAt: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") });
         persistStocks();
         renderDeck();
-        toast(name + " \u5DF2\u52A0\u5165\u89C2\u5BDF\u81EA\u9009");
-      } else toast(name + " \u5DF2\u5728\u6C60\u91CC");
+        renderWatch();
+        toast(name + " 已加入观察自选");
+      } else if (_ex.qty > 0 && !_ex.watch) {
+        _ex.watch = 1;
+        persistStocks();
+        renderWatch();
+        toast(name + " 已同步到自选观察（持仓保留）");
+      } else toast(name + " 已在池里");
     });
     (function() {
       const hb = document.querySelector(".heatbar");
@@ -11153,6 +11242,14 @@ document.addEventListener("visibilitychange", () => {
       const i2 = stocks.findIndex((x) => x.code === code);
       if (i2 < 0) return;
       const nm = stocks[i2].name;
+      if (stocks[i2].qty > 0) {
+        delete stocks[i2].watch;
+        persistStocks();
+        renderDeck();
+        renderWatch();
+        toast(nm + " 已移出观察（持仓保留）");
+        return;
+      }
       stocks.splice(i2, 1);
       persistStocks();
       renderDeck();
@@ -12792,7 +12889,9 @@ document.addEventListener("visibilitychange", () => {
     if (!g) return;
     const pc = (v) => (v >= 0 ? "+" : "") + v + "%", cc = (v) => v > 0 ? "#ff5459" : v < 0 ? "#1fdc93" : "#e0f2f6";
     const row = (t, body) => '<div style="font-size:11.5px;color:#f2fbfd;padding:5px 0;border-bottom:1px solid #81e6d914;line-height:1.7"><b style="color:#8fe9d9">' + t + "</b> " + body + "</div>";
-    let h = '<h3>盘前情绪 · 条件预判<small> · ' + (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5) + " 更新</small></h3>";
+    const _pmCol = _jGet99("jl_pm_col_v1", true);
+    let h = '<h3 data-pm-toggle="1" style="cursor:pointer;user-select:none"><span data-pm-arrow>' + (_pmCol ? "▸" : "▾") + '</span> 盘前情绪 · 条件预判<small> · ' + (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5) + " 更新 · 点标题" + (_pmCol ? "展开明细" : "收起明细") + "</small></h3>";
+    h += '<div data-pm-body style="display:' + (_pmCol ? "none" : "block") + '">';
     h += row("隔夜外盘", R.fx ? R.fx.map((x) => x.nm + ' <b style="color:' + cc(x.pct) + '">' + pc(x.pct) + "</b>").join(" · ") : '<i style="font-style:normal;color:#8fa8b3">数据未到</i>');
     h += row("昨涨停股(" + R.poolD.slice(5) + "涨停池)", R.zt ? "n=" + R.zt.n + " · 平均溢价 <b style=\"color:" + cc(R.zt.avg) + '">' + pc(R.zt.avg) + "</b> · 高开占比 " + (R.zt.ho == null ? '<i style="font-style:normal;color:#8fa8b3">竞价未出</i>' : R.zt.ho + "%") : '<i style="font-style:normal;color:#8fa8b3">涨停池数据未到</i>');
     h += row("国家队(沪深300ETF口径)", R.gjd ? R.gjd.d.slice(5) + " 净" + (R.gjd.m >= 0 ? '<b style="color:#ff5459">流入' : '<b style="color:#1fdc93">流出') + " " + Math.abs(R.gjd.m).toFixed(1) + "亿</b>" : '<i style="font-style:normal;color:#8fa8b3">存档暂缺</i>');
@@ -12805,10 +12904,22 @@ document.addEventListener("visibilitychange", () => {
       conds.push(R.zt.avg < 0 ? "昨涨停股平均溢价为负 → 情绪退潮倾向" : R.zt.avg >= 1 ? "昨涨停股有溢价 → 赚钱效应延续倾向" : "昨涨停股溢价平淡");
       if (R.zt.ho != null && R.zt.ho < 40) conds.push("竞价高开占比 " + R.zt.ho + "% 偏低 → 谨慎倾向");
     }
+    h += "</div>";
     h += '<div style="font-size:12px;color:#ffd21f;padding:7px 0 2px;line-height:1.7">预判：' + (conds.length ? conds.join("；") : "数据未到 · 不给预判") + "</div>";
     h += '<div style="display:flex;gap:8px;margin-top:8px;align-items:center"><button type="button" id="pmRe99" style="min-height:34px;padding:0 14px;border:1px solid #81e6d955;border-radius:8px;background:#81e6d914;color:#bcefeb;font-size:11px">刷新</button><span style="font-size:9px;color:#8fabb9;line-height:1.6">状态描述，不构成操作建议 · 涨停股样本非全市场 · 外盘为隔夜收盘</span></div>';
     g.innerHTML = h;
     $("pmRe99").onclick = () => pmLoad99();
+    const _pmT = g.querySelector("[data-pm-toggle]");
+    if (_pmT) _pmT.onclick = () => {
+      const bd = g.querySelector("[data-pm-body]"), open = bd && bd.style.display === "none";
+      if (bd) bd.style.display = open ? "block" : "none";
+      try {
+        localStorage.setItem("jl_pm_col_v1", JSON.stringify(!open));
+      } catch (e2) {
+      }
+      const ar = _pmT.querySelector("[data-pm-arrow]");
+      if (ar) ar.textContent = open ? "▾" : "▸";
+    };
   }
   function pmLoad99() {
     const g = pmDom99();
