@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .34</title><style>
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 .35</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -174,13 +174,13 @@ body.ksEmbed #chartPage .plots{height:640px}
 .sbOrbJL.hit{animation:sbFloat 5.2s ease-in-out infinite,sbOrbGlow 1.7s ease-out infinite}
 @keyframes sbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes sbOrbGlow{0%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 0 #ff545955}70%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 16px #ff545900}100%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 0 #ff545900}}
-.brandClkJL{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;margin-left:14px;margin-right:auto;padding:7px 14px;border-radius:12px;border:1px solid #81e6d94d;background:linear-gradient(150deg,#16334199,#0a1a26b8);box-shadow:inset 0 1px 0 #ffffff1c,inset 0 -6px 12px #0005,0 8px 20px #0007;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.brandClkJL b{font-size:22px;font-weight:700;color:#eafffd;letter-spacing:2.5px;font-family:ui-monospace,Menlo,monospace;text-shadow:0 0 14px #81e6d9aa,0 0 38px #81e6d94d;line-height:1.15}
-.brandClkJL span{font-size:9.5px;color:#8fb9c4;letter-spacing:.8px;margin-top:3px;display:flex;align-items:center;gap:5px}
-.brandClkJL b small{font-size:12px;font-weight:500;color:#8fd0ca;margin-left:1px;letter-spacing:0}
-.brandClkJL span em{font-style:normal;color:#d5f7f1}
-.bcSt{font-style:normal;padding:1px 7px;border-radius:20px;border:1px solid #81e6d93d;color:#7fa8b3;font-size:8.5px;letter-spacing:1px}
-.brandClkJL span.on .bcSt{border-color:#1fdc9359;color:#1fdc93}
+.brandClkJL{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;margin-left:12px;margin-right:auto;padding:2px 0 0}
+.brandClkJL b{font-size:17px;font-weight:650;color:#eafffd;letter-spacing:1.5px;font-family:ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums;font-feature-settings:"tnum";text-shadow:0 0 10px #81e6d955;line-height:1.2}
+.brandClkJL span{font-size:9.5px;color:#d7edf2;letter-spacing:.6px;margin-top:2px;display:flex;align-items:center;gap:5px}
+.brandClkJL b small{font-size:10.5px;font-weight:500;color:#8fd0ca;margin-left:1px;letter-spacing:0}
+.brandClkJL span em{font-style:normal;color:#9fd8d2}
+.bcSt{font-style:normal;color:#7fa8b3;font-size:8.5px;letter-spacing:1px}
+.brandClkJL span.on .bcSt{color:#1fdc93}
 .brandClkJL span.on .bcSt::before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;background:#1fdc93;margin-right:4px;box-shadow:0 0 6px #1fdc93;animation:bcPulseJL 2s ease-in-out infinite}
 @keyframes bcPulseJL{50%{opacity:.4}}
 .legBandJL .legTgt{flex:1 0 100%;border-top:1px solid #81e6d914;padding-top:4px;margin-top:2px;color:#cfe4ea}
@@ -8154,7 +8154,9 @@ document.addEventListener("visibilitychange", () => {
   function cyqLineHTMLJL(s) {
     const bare = String(s.code).replace(/^(sh|sz)/, "");
     let o = null;
-    try {
+    try { if (cyqStoreJL[bare]) o = cyqStoreJL[bare]; } catch (e) {
+    }
+    if (!o) try {
       const c2 = JSON.parse(localStorage.getItem("jl_cyq_" + bare) || "null");
       if (c2 && c2.chips) o = c2;
     } catch (e) {

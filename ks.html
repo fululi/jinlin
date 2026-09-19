@@ -1196,17 +1196,23 @@ function renderPaneDrawings(ctx, v) {
     }
   });
   // ks-0907-21: 已挂提醒的🔔标记——主图线按价位,强弱T附图线按0-100值;灰=已触发
+  S._alHits = [];
   var _alArr = ALERTS[S.active];
   if (_alArr && _alArr.length && !S.simple) {
     ctx.font = "10px -apple-system, sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
     var _rt3 = v.padL + (v.i1 - v.i0) * v.step;
-    _alArr.forEach(function (a) {
+    _alArr.forEach(function (a, ai) {
       var y, loB, hiB;
       if (a.kind === "tqs") { var rcA = paneRectOf(v, "tqs"); if (!rcA) return; y = yOfPane(v, "tqs", a.val); loB = rcA.y - 6; hiB = rcA.y + rcA.h + 6; }
       else { y = v.Y(a.val); loB = v.pTop - 6; hiB = v.pTop + v.priceH + 6; }
       if (y < loB || y > hiB) return;
-      ctx.fillStyle = a.armed ? "#4aa3ff" : "rgba(120,130,145,0.6)";
-      ctx.fillText("🔔" + (a.note ? " " + a.note : ""), _rt3 - 3, y - 6);
+      var _at = "🔔" + (a.note ? " " + a.note : "");
+      if (!isFinite(y)) return; // ks-0920-35: 无视图/空K线时不画不记
+      var _asel = S.alSel && S.alSel.ai === ai;
+      ctx.fillStyle = _asel ? "#ffd166" : (a.armed ? "#4aa3ff" : "rgba(120,130,145,0.6)");
+      ctx.fillText(_at, _rt3 - 3, y - 6);
+      var _atw = ctx.measureText(_at).width; // ks-0920-35: 记录铃铛命中区, 点选后按「删除」移除
+      S._alHits.push({ ai: ai, x0: _rt3 - 9 - _atw, x1: _rt3 + 8, y0: y - 18, y1: y + 6 });
     });
   }
 }
@@ -1856,6 +1862,11 @@ function distSeg(px, py, a, b) {
   var qx = a.x + t * dx, qy = a.y + t * dy;
   return Math.sqrt((px - qx) * (px - qx) + (py - qy) * (py - qy));
 }
+function alHitAt(pt) { // ks-0920-35: 铃铛命中检测
+  var hs = S._alHits || [];
+  for (var i = hs.length - 1; i >= 0; i--) { var h = hs[i]; if (pt.x >= h.x0 && pt.x <= h.x1 && pt.y >= h.y0 && pt.y <= h.y1) return h; }
+  return null;
+}
 function hitTest(pt) {
   var v = view(); if (!v) return -1;
   var im = idxMap(v);
@@ -2014,6 +2025,15 @@ cv.addEventListener("touchstart", function (e) {
   // 右侧价格轴：上下拖动 = 纵向缩放（不影响画图和平移）
   if (pt.x > cv.clientWidth - 64) { T = { mode: "yzoom", ly: pt.y, z0: S.yZoom }; hint(""); return; }
   if (S.rngMode) { T = { mode: "rng", x0: pt.x }; var _vr0 = view(); if (_vr0) { var _ir0 = _vr0.I(pt.x); S.rng = { a: _ir0, b: _ir0 }; } draw(); return; } // ks-0909-31: 区间统计拖选
+  var _ab0 = alHitAt(pt); // ks-0920-35: 点铃铛=选中提醒(变黄), 再点「删除」移除; 点别处取消
+  if (_ab0) {
+    if (S.alSel && S.alSel.ai === _ab0.ai) { S.alSel = null; hint(""); }
+    else { S.alSel = { ai: _ab0.ai }; S.selected = -1; hint("已选中提醒 · 点「删除」移除"); }
+    syncTools(); draw();
+    T = { mode: "idle", x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: true };
+    return;
+  }
+  if (S.alSel) { S.alSel = null; draw(); }
   var hit0 = hitTest(pt);
   if (hit0 >= 0) {
     S.selected = hit0;
@@ -2190,6 +2210,9 @@ cv.addEventListener("mousedown", function (e) {
   if (S.tool && !S.drawLock) { placeAnchor(pt); return; }
   if (pt.x > cv.clientWidth - 64) { M = { yzoom: true, ly: pt.y, z0: S.yZoom }; hint(""); return; }
   if (S.rngMode) { M = { rng: true, x0: pt.x }; var _vm0 = view(); if (_vm0) { var _im0 = _vm0.I(pt.x); S.rng = { a: _im0, b: _im0 }; } draw(); return; } // ks-0909-31
+  var _ab0 = alHitAt(pt); // ks-0920-35: 鼠标同触屏, 点铃铛选中/取消
+  if (_ab0) { if (S.alSel && S.alSel.ai === _ab0.ai) S.alSel = null; else { S.alSel = { ai: _ab0.ai }; S.selected = -1; hint("已选中提醒 · 点「删除」移除"); } syncTools(); draw(); return; }
+  if (S.alSel) { S.alSel = null; draw(); }
   var hit0 = hitTest(pt);
   if (hit0 >= 0) {
     S.selected = hit0;
@@ -3764,7 +3787,7 @@ function ensureCyqKS(code) {
   try { var cch = JSON.parse(localStorage.getItem("jl_cyq_" + code) || "null");
     if (cch && cch.chips) { CYQ_STORE[code] = cch; if (cch.date === cyqTodayKS()) { delete CYQ_INFLIGHT[code]; draw(); return; } draw(); } } catch (e) {} // ks-0914-cyq: 当日缓存直接用; 隔日缓存先顶着画, 后台照样拉新, 拉到就覆盖
   var url = "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + secidOf(code) +
-    "&klt=101&fqt=0&lmt=800&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f61&ut=" + UT;
+    "&klt=101&fqt=0&lmt=800&end=20500101&fields1=f1,f2,f3,f4&fields2=f51,f52,f53,f54,f55,f56,f61&ut=7eea3edcaed734bea9cbfc24409ed989"; // ks-0920-35: 筹码日线对齐jinlin已验证通道(全局UT对该接口取空)
   jsonp(url, function (err, d) {
     var arr = !err && d && d.data && d.data.klines || [];
     var rows = arr.map(function (s2) { var a = s2.split(","); return { d: a[0], o: +a[1], c: +a[2], h: +a[3], l: +a[4], v: +a[5], turn: +a[6] }; })
@@ -3779,10 +3802,10 @@ function renderCYQ(ctx, v) {
   if (!S.ind.cyq || !v.priceH) return;
   ctx.font = "8.5px Menlo, monospace"; ctx.textAlign = "right"; ctx.textBaseline = "top";
   var right = v.padL + (v.i1 - v.i0) * v.step;
-  if (S.klt !== "101") { if (/^(1|5|15|30|60)$/.test(String(S.klt))) { ctx.fillStyle = "rgba(141,151,166,0.7)"; ctx.fillText("筹码分布仅日K周期", right - 4, v.pTop + 2); } return; }
+  if (S.klt !== "101") { if (/^(1|5|15|30|60)$/.test(String(S.klt))) { ctx.fillStyle = "rgba(198,212,226,0.95)"; ctx.fillText("筹码分布仅日K周期", right - 4, v.pTop + 2); } return; }
   var st = CYQ_STORE[S.active];
-  if (!st) { ensureCyqKS(S.active); ctx.fillStyle = "rgba(141,151,166,0.7)"; ctx.fillText("筹码分布计算中…", right - 4, v.pTop + 2); return; }
-  if (!st.chips) { ctx.fillStyle = "rgba(141,151,166,0.7)"; ctx.fillText("筹码数据暂缺·" + (st.err || ""), right - 4, v.pTop + 2); return; }
+  if (!st) { ensureCyqKS(S.active); ctx.fillStyle = "rgba(198,212,226,0.95)"; ctx.fillText("筹码分布计算中…", right - 4, v.pTop + 2); return; }
+  if (!st.chips) { ctx.fillStyle = "rgba(198,212,226,0.95)"; ctx.fillText("筹码数据暂缺·" + (st.err || ""), right - 4, v.pTop + 2); return; }
   var lo = v.lo, hi = v.hi;
   if (!(hi > lo)) return;
   var rows = 40, span = hi - lo, agg = new Float64Array(rows), i;
@@ -4710,8 +4733,13 @@ function applyUrl() {
         // 金粼0913深夜: 删除/清空不再代理找按钮, 直接调引擎内部(同页上下文), 且必给反馈——无可清内容也明说, 档位水位线(S.urlLines)保留
         mk("删除", function () {
           if (S.selected >= 0 && dlist()[S.selected]) { dlist().splice(S.selected, 1); S.selected = -1; store(); hint("已删除选中的画线"); syncTools(); draw(); }
-          else hint("先轻点选中一条画线，再点「删除」");
-        }, "删除选中的画线");
+          else if (S.alSel && ALERTS[S.active] && ALERTS[S.active][S.alSel.ai]) { // ks-0920-35: 铃铛选中态兜底删除
+            ALERTS[S.active].splice(S.alSel.ai, 1);
+            if (!ALERTS[S.active].length) delete ALERTS[S.active];
+            S.alSel = null; storeAlerts(); buildAlList(); syncAlBadge(); hint("已删除选中的提醒"); syncTools(); draw();
+          }
+          else hint("先轻点选中一条画线或🔔提醒，再点「删除」");
+        }, "删除选中的画线或提醒");
         mk("清空", function () {
           var had = dlist().length, swept = 0, pre = S.active + ":";
           Object.keys(DRAW).forEach(function (k) {
