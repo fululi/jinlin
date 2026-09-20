@@ -1,10 +1,10 @@
-/* jinlin sw v.31 — 网络优先 3.5s 封顶回缓存。三连环修复(2026-09-16):
+/* jinlin sw v.34 — 网络优先 3.5s 封顶回缓存。三连环修复(2026-09-16):
    (a) 缓存写入挂回 fetch 本体,晚到响应照常入缓存,弱网不再永远写不进
    (b) 缓存全 miss 时回退等待原始 fetch,不再 respondWith(undefined) 抛 TypeError
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
-const C = 'jinlin-shell-v31';
-const KEEP = ['jinlin-shell-v31', 'jinlin-shell-v23'];
+const C = 'jinlin-shell-v35';
+const KEEP = ['jinlin-shell-v35', 'jinlin-shell-v34'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
