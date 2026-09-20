@@ -4,7 +4,7 @@
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
 const C = 'jinlin-shell-v40';
-const KEEP = ['jinlin-shell-v40', 'jinlin-shell-v40'];
+const KEEP = ['jinlin-shell-v40', 'jinlin-shell-v39'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
