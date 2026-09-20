@@ -295,7 +295,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .stock.active .stockContent .deckSB{display:flex;gap:10px;font-size:10px;line-height:1.4;margin:0 26px 5px 2px;justify-content:flex-end}
 .deckSB .s{color:#ff5459}.deckSB .b{color:#1fdc93}
 </style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
-</head><body><!-- .39 P2六修: ①筹码东财通道失败腾讯兜底(fqkline前复权800日+qt实时流通股本估算换手,<60行仍报错) ②涨跌停夹板先判板块再判ST(创业板/科创板ST=20%不再被误夹5%) ③水位档位复用旧memo时头部标注"档位基于M月D日数据"(琥珀小字,不再假装是今天算的) ④jl index.html标记旧版备份(顶部注释+页面横幅,算法不再同步) ⑤sinaNewsJL三连重复删两份+资金流分钟图对象重复键c显式化(死增量字段摘除)+jlEmGet删no-proxy死分支+jl_ff_v1/ks_ff_v1缓存超40只淘汰最旧+ks双定时器改回调内按inSession自适应(午休/收盘后不再频率卡死)+sw.js HTTP错误回退缓存 ⑥jlLastTradeDay长假误算局限注释存档 -->
+</head><body><!-- .39 P2六修: ①筹码东财通道失败腾讯兜底(fqkline前复权800日+qt实时流通股本估算换手,<60行仍报错) ②涨跌停夹板先判板块再判ST(创业板/科创板ST=20%不再被误夹5%) ③水位档位复用旧memo时头部标注"档位基于M月D日数据"(琥珀小字,不再假装是今天算的) ④jl index.html标记旧版备份(顶部注释+页面横幅,算法不再同步) ⑤sinaNewsJL三连重复删两份+资金流分钟图对象重复键c显式化(死增量字段摘除)+jlEmGet删no-proxy死分支+jl_ff_v1/ks_ff_v1缓存超40只淘汰最旧+ks双定时器改回调内按inSession自适应(午休/收盘后不再频率卡死)+sw.js HTTP错误回退缓存 ⑥jlLastTradeDay长假误算局限注释存档 --><!-- .40 0920救机批: ①开机一次性清洗老版本写入的脏K线/旧筹码缓存(jl_purge_0920旗标,清jl_dk_*/jl_cyq_*——手机上所有图全坏的根因: 代码早修对但脏缓存没清,旧版mergebug写入的乱序/整列重复/僵尸柱被新版照画) ②K线缓存入库体检jlBarsSaneJL(时间严格升序+开收高低全为正,dkRestore/dailyBarsOf双闸,脏数据永不入场) ③筹码兜底砍成单请求(fqkline响应内置qt对象取价/流通市值,少一个跨域host弱网更稳) ④总览图09:30-15:00分钟刻度只在分钟周期显示(日K/周/月不再挂分钟假轴) ⑤实测: 脏缓存环境+全新环境双过,持仓/观察/总览图全部恢复正常 -->
 <!-- .38 P1七修: ①涨停风口层加连板赛道分(高度/封单/首封/炸板)+资金门过/未过标注(离线快照口径,涨停池不再纯展示) ②双证据族一票否决改扣分制(start/zs/eb每族-12分,zs主升豁免position高位族;trend/top维持原拒绝进RISK) ③量/价两族改3日确认(近3日≥2日命中才计族,治单日噪音误杀) ④资金复盘头部硬编码%加[历史回测背景·非实时]前缀 ⑤破带率Top3门榿n≥2→n≥5 ⑥龙池T+1胜率/审判胜率同票多日推荐去重(每股计最近一次,样本不再虚高) ⑦删d0<0双重惩罚×0.7(score+回放同步)+删n<60死代码+资格门拦截标签改准(资金量级/证据不足) -->
 <!-- .37 P0七修: ①筹码取数fqt=0→fqt=1前复权,与K线图同口径(东财App/自家图获利比例不再差十几个点),缓存键jl_cyq2_升版旧缓存作废 ②ks换票/换周期守卫: fetchKline/fetchQuote四处回调快照code+klt,晚到旧数据丢弃(治张冠李戴) ③loadRealKlines批次快照periodSnap+过期批次整批丢弃(治切周期缓存写串) ④ensureDDXData win/lose加ddxState.key校验+period改写try/finally ⑤poolFindJL双定义合一+兼容sh/sz前缀(v.25地雷拆除) ⑥复盘近5日改close-to-close(6根K线)+剔除15:10前未完成盘中bar,量比口径同步不再失真 ⑦龙池T+1基准价改前复权K线收盘(跨除权日不再失真)+盘中未完成bar不计T+N -->
 <!-- .36 持仓小图五修: ①左%轴与右价同口径(refPrev优先用报价base/(1+pct)反推昨收,盘后/周末seedPrevJL把prevClose改写成最近收盘导致图%与卡%两个口径;十字线左%改固定昨收映射与右价tag配对) ②v.96补拉t0按字符串slice解析,腾讯12位数字时间戳(202609171342)被切成月91日13→end算出2033年,东财返回最新320根与缓存全量重叠,时间轴从10:55来回跳/整列重复;改一律barTime归一化再解析再比较 ③周期刷新合并_cut按原始字符串比较,东财带横杠与腾讯数字格式混排恒判错,且_cut=-1(全新数据)时丢弃已补拉旧K线;改barTime归一化比较+-1时尾部拼接 ④资金卡分时/近70日随单次拉取成败来回切模式(时间轴10:55↔日期跳)+空帧覆盖好帧;改当天有过分钟数据即锁分时模式+取不到新数据保留上一帧 ⑤图动起bug均为上述乱序/整列替换/空帧覆盖所致,随①-④根治 --><!-- v.30 0920凌晨 复盘汇总: 复盘卡加全部持仓汇总块(deckListJL口径,每只:做T+近5日涨跌+主力净额+结论,点行=证据区切到该股+当前行高亮) / 进复盘页强制刷新renderResonanceJL / 标题small改汇总口径说明 —— 日复盘从单股改全持仓一览,单股证据区保留 --><!-- v.29 0919深夜 四联: ①异动密度标注补口径(次数非金额,解绿柱多vs资金红疑问) ②龙池轨迹risk行透出命中族(高位/量异常/承接失败/连续流出)+注脚写明单日形态敏感非隔日指令 ③龙头股池tab入history(pushState#pool,手机返回键可退回观察自选,此前返回无效) ④复盘卡标题亮当前股名+跟随持仓选中股标注 --><!-- v.28 0919凌晨 八联: ①持仓股可同步进自选观察(watch旗标,此前'已在池里'静默拒绝) ②持仓页码按实际渲染卡数(01/09假象修复)+滑动/选中/计数统一走deckListJL ③撤展开详情自动上滚(.27引入回归) ④大盘异动:删.27重复图题+异动密度柱加标注加高 ⑤盘前情绪卡默认收起明细只留预判行 ⑥全局玻璃卡透亮化(.27只改了持仓卡)+浮层面板降不透明 ⑦新闻面板:pushState手机返回可关+iframe内返回改关面板+数据日亮出过期提示+持仓股名focus定位修复 ⑧复盘证据区加小结行 --><!-- v.27 0919深夜 十一联: ①复盘证据区真填充(近5日K线+近3日DDX+日K波段Fib,原来只有静态说明) ②尾盘抢筹剔ST/*ST/退(北交所8/4/92此前已剔) ③产业链节点百度空链→东财搜索直达 ④龙池主推卡加K线按钮+残缺条目过滤+筹码缓存缺last兜底(治空卡点不动) ⑤龙池灰字提亮(evChip/prL small/poolFund/poolWhy/层标题/精选风口行业字) ⑥大盘异动主力幅图110→170加高+口径标签 ⑦涨停风口层可折叠默认收起 ⑧层标题行业分布统计+池行行业JLPOOL_HY兜底 ⑨持仓详情重组:fib框下接产业链紧凑块+新闻链接块(早报/晚报focus+东财/百度直链),独立链卡撤除 ⑩持仓卡背景透亮化(透出极光波纹,stock透明度8f/99→52/5e+blur14→9,#holds glass同步) ⑪展开详情后自动滚动到详情区 --><!-- v.26 0919晚 三联: ①市场资金卡可折叠瘦身(面板限高46vh内滚+底部收起钮+展开/收起提示语切换,mfSetOpenJL统一开关) ②总览K线正常蜡烛化(默认周期5分→日K;呼吸抖动限交易时段9:25-15:10周一~五,闭市/周末价格不再假动,频率140ms→1000ms复原0914.11验收值) ③新闻链接化(早报/晚报iframe内:持仓+自选股名/代码自动高亮可点→站内K线,快讯条目可点→百度搜索新开页,持仓卡新闻钮带定位focus滚动到该股提及处;早报存档宽限4天——周末/周一9:26前不再误切新浪7x24兜底) --><!-- v.25 0919 在榜三件套: 连榜留痕(jl_pool_track_v1,poolFinalizeJL后更新,日历gap≤4天算连续,长假会断) + 单票轨迹(腾讯日K300根+东财fflow15日逐日回放近5个交易日的分层/资金门/评分,懒加载,分数不含风口加分) + 观察票龙池联动修复(poolFindJL双定义后者覆盖前者且返回缺layer/bucket,renderWatch的plMeta恒undefined联动行永不显示→补字段复活) + 未在榜观察票显示"龙池·未在榜·轨迹查原因" --><!-- v.76 0917午后 龙池加观察不再跑进持仓: deck只渲染qty>0真实持仓+研究钉住股(兆易豁免),观察票只留自选页;持仓计数同步 --><!-- v.75 0917午后 持仓下拉跳回根治: renderDeck重建瞬间内容塌空高度缩→滚动被钳回顶 → 重建前后锚住scrollY,偏移>100px自动还原(持仓页) --><!-- v.74 0917上午 资金卡空窗根治: renderDeck每30s重建deck把资金体冲空,45s缓存闸又拒绝重注入=按钮一会有一会没有 → 体为空(dataset.sk未标记)时无视缓存闸必注入 --><!-- v.73 0917上午 5分15分死按钮根治(fmAgg注册块从渲染分支剪到顶层,页面加载即注册) + fmAggJL画布优先.fc2(不再画到持仓卡价格图) --><!-- v.72 0917上午 ffMergeJL去长度捷径(320=320全量替换抹掉盘中今日行=资金闪烁根因,改一律按日期Map合并) --><!-- v.71b 0917上午 资金总修: emFetchJL按路径路由主机(分钟资金push2优先/日K日资金仅push2his免空等) + 盘中klt=1三主机竞速写今日行进jl_ff_v1(持仓实时主力净额,治"个股资金暂缺") + DDX日级新浪兜底 + 龙池RT三主机 --><!-- v.61 0917晨 风口批: 资金门槛口径修正(当日1000万 或 10日≥1.5亿且当日不大出——长江通信类持续流入风口票回榜,安琪类照拦) / 龙池新增涨停风口层(东财涨停池:连板/封单额/首封时间/行业/炸板,门槛封单2000万或连板≥2,按封单排Top30,K线/加观察直按) / 离线终榜批量补行业(f100,evChips显示) --><!-- v.60 0917晨 B3全A扫描离线化: 点按龙池扫描=alla离线终榜秒载(start/zs/eb全量走同一资格门+1000万门槛+评分) / 长按600ms+确认=实盘重扫(防4000只请求风暴down机) / poolFinalizeJL抽出live/offline共用 / jlPoolFresh加__jlPoolAsOf豁免(页面仍标真实数据日) --><!-- v.59 0917凌晨: K线DDX附图治理(资金未到位自动隐藏不挡强弱T/可手动关闭记忆/点我展开) / 国家队资金本地历史累积+重试不死(B1) / 龙池精选当日主力>=1000万硬门槛+卡片显示当日主力(拦安琪酵母类几百万垃圾票) / ks.html限流断线收窄条 --><!-- v.51 0916午后 K线四连: 摘Kimi悬浮球(挡按钮) / 全屏画线删除清空隐藏锁定接通ks iframe(原打在被盖住的原生图=没反应) / 全屏钮44px / ks.html: SR虚线群删只留底色带+LIQ框改1px细横线+副图画线随隐藏 + v.48 0916午 五连: 龙池顶部注入今日精选(hq终榜start/zs/eb各一,10分缓存) / 市场资金卡近5日主力净额(4指数10日历史) / qfq缺失拒绝静默退回不复权(个股,指数豁免) / 悬浮球大中小单改实时四桶f72/f78/f84(被墙网络也通) -->
@@ -2485,7 +2485,7 @@ document.addEventListener("visibilitychange", () => {
     if (hc) hc.hidden = heat;
     if (yd) yd.hidden = !heat;
     const tm = document.querySelector("#home .times");
-    if (tm) tm.hidden = heat;
+    if (tm) tm.hidden = heat || !/\u5206/.test(period); // jl-0920-40: 09:30-15:00静态分时标签只在分钟周期显示
     const pb = document.querySelector("#home .periodBar"), pa = document.querySelector("#home .previewActions"), ht = document.querySelector("#home .homeToolsJL"), hf = $("homeFlowJL");
     if (pb) pb.hidden = heat;
     if (pa) pa.hidden = heat;
@@ -2751,6 +2751,10 @@ document.addEventListener("visibilitychange", () => {
     paint();
   };
   $("menu").onclick = () => toast("\u884C\u60C5\u6765\u81EA\u817E\u8BAF/\u4E1C\u8D22\u5B9E\u65F6\u63A5\u53E3\uFF0C30\u79D2\u81EA\u5237\uFF1B\u753B\u7EBF\u548C\u63D0\u9192\u4EC5\u4FDD\u5B58\u5728\u6B64\u6D4F\u89C8\u5668\u3002");
+  { // jl-0920-40: 启动默认日K,静态分时标签先藏起来
+    const _tm0 = document.querySelector("#home .times");
+    if (_tm0) _tm0.hidden = !/\u5206/.test(period);
+  }
   function periodBars(root = document) {
     root.querySelectorAll("[data-period-bar]").forEach((b) => {
       const homeBar = !!b.closest("#home");
@@ -2766,6 +2770,8 @@ document.addEventListener("visibilitychange", () => {
     const nextPeriod = b.dataset.period;
     if (!periods.includes(nextPeriod)) return;
     period = nextPeriod;
+    const _tmH = document.querySelector("#home .times");
+    if (_tmH) _tmH.hidden = !/\u5206/.test(period); // jl-0920-40: 同上,切周期同步显隐
     cross = null;
     draft = null;
     Object.assign(hvp, { count: 48, end: -1, ys: 1, offset: 0 });
@@ -5474,6 +5480,7 @@ document.addEventListener("visibilitychange", () => {
       const c = JSON.parse(localStorage.getItem("jl_dk_" + code) || "null");
       if (Array.isArray(c) && c.length >= 15) {
         const rows = c.map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] }));
+        if (!jlBarsSaneJL(rows)) return [];
         realCache.set(code + "|\u65E5K", rows);
         return rows;
       }
@@ -5513,7 +5520,7 @@ document.addEventListener("visibilitychange", () => {
           const a = JSON.parse(localStorage.getItem(k2) || "[]");
           if (!Array.isArray(a) || a.length < 15) return;
           const rows = a.map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })).filter((x) => x.t && [x.o, x.c, x.h, x.l, x.v].every(Number.isFinite));
-          if (rows.length >= 15 && !realCache.has(k2.slice(6) + "|\u65E5K")) {
+          if (rows.length >= 15 && jlBarsSaneJL(rows) && !realCache.has(k2.slice(6) + "|\u65E5K")) {
             realCache.set(k2.slice(6) + "|\u65E5K", rows);
             n++;
           }
@@ -5523,6 +5530,32 @@ document.addEventListener("visibilitychange", () => {
     } catch (e) {
     }
     if (n) console.log("\u65E5K\u7F13\u5B58\u6062\u590D", n, "\u53EA");
+  }
+  function jlBarsSaneJL(rows) { // jl-0920-40: 缓存K线入库体检——时间严格升序+价格为正, 挡住老版本写入的乱序/整列重复/僵尸柱脏缓存
+    if (!rows || rows.length < 2) return false;
+    let _pt = "";
+    for (let i2 = 0; i2 < rows.length; i2++) {
+      const _r = rows[i2], _t = barTime(_r && _r.t);
+      if (!_t || _t <= _pt) return false;
+      _pt = _t;
+      if (!(_r.c > 0 && _r.o > 0 && _r.h > 0 && _r.l > 0)) return false;
+    }
+    return true;
+  }
+  try { // jl-0920-40: 一次性清洗老版本写入的脏K线/旧筹码缓存——代码修对了但手机端脏缓存不清,图照样按脏数据画(所有图全坏的根因)
+    if (localStorage.getItem("jl_purge_0920") !== "1") {
+      const _pk = [];
+      for (let _i = 0; _i < localStorage.length; _i++) {
+        const _k = localStorage.key(_i);
+        if (_k && (/^jl_dk_/.test(_k) || /^jl_cyq_/.test(_k))) _pk.push(_k);
+      }
+      _pk.forEach((_k) => {
+        try { localStorage.removeItem(_k); } catch (e2) {
+        }
+      });
+      localStorage.setItem("jl_purge_0920", "1");
+    }
+  } catch (e) {
   }
   dkRestoreJL();
   function jlFfEvictJL(all) { // jl-0920-39: 资金流缓存超40只按写入时间淘汰最旧,防localStorage胀爆
@@ -8080,14 +8113,10 @@ function ffMergeJL(oldRows, newRows) {
     emFetchJL(url).then(eat).catch(() => {
       // jl-0920-39: 东财通道被封时腾讯兜底(qfq日K800根+qt.gtimg流通市值估算换手率,源标签注明估算)
       const tc = (/^[569]/.test(code) ? "sh" : "sz") + code;
-      Promise.all([
-        fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq", { cache: "no-store" }).then((r) => r.json()),
-        fetch("https://qt.gtimg.cn/q=" + tc, { cache: "no-store" }).then((r) => r.text())
-      ]).then((rs) => {
-        const kd = rs[0], qt = rs[1];
+      fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq", { cache: "no-store" }).then((r) => r.json()).then((kd) => {
         const nn = kd && kd.data && kd.data[tc];
         const arr2 = (nn && (nn.qfqday || nn.day)) || [];
-        const parts = String(qt).split("~");
+        const parts = nn && nn.qt && nn.qt[tc] || []; // jl-0920-40: 报价走fqkline响应内置qt对象,不再单独跨域qt.gtimg.cn
         const fmv = +parts[44] || 0, px = +parts[3] || 0;
         const shares = fmv > 0 && px > 0 ? fmv * 1e8 / px : 0;
         const rows2 = arr2.map((x2) => ({ d: x2[0], o: +x2[1], c: +x2[2], h: +x2[3], l: +x2[4], v: +x2[5], turn: shares > 0 ? +x2[5] * 100 / shares * 100 : NaN }))
