@@ -10774,6 +10774,22 @@ function ffMergeJL(oldRows, newRows) {
       if (hldDrawDownJL(e, "price")) return;
       const r = hc.getBoundingClientRect(), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
       hPan = { x: e.clientX - r.left, y: e.clientY - r.top, end: vpEnd(hldVpJL, n2), offset: hldVpJL.offset, axis: null };
+      hc._sx = e.clientX - r.left;
+      hc._sy = e.clientY - r.top;
+      hc._moved = false;
+      hc._mode = null;
+      {
+        const _m0 = maps.get(hc), _cd0 = stocks[active] ? stocks[active].code : "";
+        if (_m0 && _cd0 && hc._sx > _m0.R) {
+          hc._mode = "yscale";
+          hPan = null;
+          if (!hldVpJL.axManual || hldVpJL.axKey !== _cd0 + "|" + period) { hldVpJL.axManual = { lo: _m0.lo, hi: _m0.hi }; hldVpJL.axKey = _cd0 + "|" + period; }
+        }
+      }
+      clearTimeout(hc._lt);
+      hc._lt = setTimeout(() => {
+        if (!hc._moved && !hc._mode) { hc._mode = "cross"; holdingCross = { x: hc._sx, y: hc._sy }; try { navigator.vibrate && navigator.vibrate(12); } catch (_) {} paint(); }
+      }, 350);
       try {
         hc.setPointerCapture(e.pointerId);
       } catch (e2) {
@@ -10781,19 +10797,33 @@ function ffMergeJL(oldRows, newRows) {
     });
     hc.addEventListener("pointermove", (e) => {
       const r = hc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top };
-      holdingCross = p;
+      if (hc._mode === "yscale") {
+        const am = hldVpJL.axManual;
+        if (am) { const dyl = p.y - hc._sy; hc._sy = p.y; const mid = (am.lo + am.hi) / 2, half = Math.max(1e-6, (am.hi - am.lo) / 2 * (1 + dyl * 0.004)); am.lo = mid - half; am.hi = mid + half; }
+        hldPaintSoonJL();
+        return;
+      }
+      if (hc._mode === "cross") { holdingCross = p; hldPaintSoonJL(); return; }
+      if (!hc._moved && (Math.abs(p.x - hc._sx) > 12 || Math.abs(p.y - hc._sy) > 12)) { hc._moved = true; clearTimeout(hc._lt); }
       if (hldDrawMoveJL(p, "price")) return;
       if (hPan) {
         const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
         if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
         if (m && hPan.axis === "h") { hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1)); if (stocks[active] && vpEnd(hldVpJL, n2) - hldVpJL.count + 1 <= 12) loadOlderJL(stocks[active].code); }
-        if (m && hPan.axis === "v") hldVpJL.offset = hPan.offset + (m.V(hPan.y) - m.V(p.y));
+        ;
       }
       hldPaintSoonJL();
     });
-    for (const event of ["pointerleave", "pointerup", "pointercancel"]) hc.addEventListener(event, () => {
+    for (const event of ["pointerleave", "pointerup", "pointercancel"]) hc.addEventListener(event, (ev) => {
+      clearTimeout(hc._lt);
+      if (hc._upTs === ev.timeStamp && hc._upTy === ev.type) return;
+      hc._upTs = ev.timeStamp;
+      hc._upTy = ev.type;
+      const _wasCross = hc._mode === "cross", _wasTap = hc._mode === null && !hc._moved && ev.type === "pointerup";
       hPan = null;
-      holdingCross = null;
+      hc._mode = null;
+      if (_wasTap) holdingCross = holdingCross ? null : { x: hc._sx, y: hc._sy };
+      else if (!_wasCross) holdingCross = null;
       hldDrawUpJL();
       paint();
     });
@@ -10836,19 +10866,23 @@ function ffMergeJL(oldRows, newRows) {
       });
       hsc.addEventListener("pointermove", (e) => {
         const r = hsc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top, sub: 1 };
-        holdingCross = p;
+        if (hc._mode === "cross") { holdingCross = p; hldPaintSoonJL(); return; }
+        if (!holdingCross || hc._mode !== "cross") holdingCross = null;
         if (hldDrawMoveJL(p, "sub")) return;
         if (hPan) {
           const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
           if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
           if (m && hPan.axis === "h") { hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1)); if (stocks[active] && vpEnd(hldVpJL, n2) - hldVpJL.count + 1 <= 12) loadOlderJL(stocks[active].code); }
-          if (m && hPan.axis === "v") hldVpJL.offset = hPan.offset + (m.V(hPan.y) - m.V(p.y));
+          ;
         }
         hldPaintSoonJL();
       });
-      for (const event of ["pointerleave", "pointerup", "pointercancel"]) hsc.addEventListener(event, () => {
+      for (const event of ["pointerleave", "pointerup", "pointercancel"]) hsc.addEventListener(event, (ev) => {
+        if (hsc._upTs === ev.timeStamp && hsc._upTy === ev.type) return;
+        hsc._upTs = ev.timeStamp;
+        hsc._upTy = ev.type;
         hPan = null;
-        holdingCross = null;
+        if (hc._mode !== "cross") holdingCross = null;
         hldDrawUpJL();
         paint();
       });
@@ -10887,6 +10921,8 @@ function ffMergeJL(oldRows, newRows) {
     { const el = $("hldZoomResetJL"); if (el) el.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); Object.assign(hldVpJL, { count: 60, end: -1, ys: 1, offset: 0, axLock: null, axManual: null, axKey: "" }); holdingCross = null; paint(); }); }
     hc.ondblclick = () => {
       Object.assign(hldVpJL, { count: 60, end: -1, ys: 1, offset: 0, axLock: null, axManual: null, axKey: "" });
+      hc._mode = null;
+      clearTimeout(hc._lt);
       holdingCross = null;
       paint();
     };
