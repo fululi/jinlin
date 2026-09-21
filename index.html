@@ -5160,7 +5160,7 @@ document.addEventListener("visibilitychange", () => {
         return;
       }
       box.dataset.plRun = "1";
-      let under = "";
+      let under = poolZtHTMLJL();
       const P0 = JLPOOL || function() {
         try {
           return JSON.parse(localStorage.getItem("jl_pool_prev_v1") || "null");
@@ -12010,6 +12010,9 @@ function ffMergeJL(oldRows, newRows) {
       console.error(e);
     }
   }, 9e3);
+  setTimeout(() => {
+    try { poolZtDataJL(); } catch (eZP) {}
+  }, 4e3);
   let JLREFUND = false;
   async function poolRefundJL(btn) {
     if (JLREFUND) return;
