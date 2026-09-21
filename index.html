@@ -5063,22 +5063,53 @@ document.addEventListener("visibilitychange", () => {
       const dt = jlLastTradeDay().replace(/-/g, "");
       emJsonp("https://push2ex.eastmoney.com/getTopicZTPool?ut=7eea3edcaed734bea9cbfc24409ed989&dpt=wz.ztzt&Pageindex=0&pagesize=200&sort=fbt%3Aasc&date=" + dt, (err, d) => {
         if (err || !d || !d.data || !d.data.pool) return;
-        const rows = d.data.pool.map((x) => ({ code: String(x.c), name: x.n, price: x.p / 1000, pct: +x.zdp, lbc: x.lbc || 0, fund: x.fund || 0, fbt: x.fbt, zbc: x.zbc || 0, hy: x.hybk || "", days: x.zttj && x.zttj.days || 0, ct: x.zttj && x.zttj.ct || 0 }));
+        const rows = d.data.pool.map((x) => ({ code: String(x.c), name: x.n, price: x.p / 1000, pct: +x.zdp, lbc: x.lbc || 0, fund: x.fund || 0, fbt: x.fbt, zbc: x.zbc || 0, hy: x.hybk || "", days: x.zttj && x.zttj.days || 0, ct: x.zttj && x.zttj.ct || 0, hs: +x.hs || 0, amount: +x.amount || 0, ltsz: +x.ltsz || 0 }));
         POOLZT = { date: String(d.data.qdate || dt), total: d.data.tc || rows.length, rows };
         try {
           jlSafeSetJL("jl_zt_v1", JSON.stringify(POOLZT));
         } catch (e) {
+        }
+        try {
+          const _zh = JSON.parse(localStorage.getItem("jl_zt_hist_v1") || "{}");
+          _zh[POOLZT.date] = { d: POOLZT.date, n: POOLZT.total, r: rows.map((q) => [q.code, q.name, q.lbc, q.fund, q.zbc, q.fbt, q.hs, q.amount, q.ltsz, q.hy, q.days, q.ct, q.price, q.pct]) };
+          const _zk = Object.keys(_zh).sort();
+          while (_zk.length > 40) delete _zh[_zk.shift()];
+          jlSafeSetJL("jl_zt_hist_v1", JSON.stringify(_zh));
+        } catch (eH) {
         }
         if (watchMode === "leaders") renderPoolJL();
       }, 12e3);
     }
     return POOLZT;
   }
+  function ztRiskJL(x, hyN) {
+    let d = 0;
+    const why = [], veto = [];
+    const fb = String(x.fbt || "").padStart(6, "0"), fbtMin = (+fb.slice(0, 2)) * 60 + (+fb.slice(2, 4));
+    const fr = x.ltsz > 0 ? (x.fund || 0) / x.ltsz : 0;
+    if (x.zbc >= 2) { d += 35; why.push("\u70B8\u677F" + x.zbc + "\u6B21"); } else if (x.zbc === 1) { d += 15; why.push("\u70B8\u677F1\u6B21"); }
+    if (fr > 0 && fr < 0.001) { d += 30; why.push("\u5C01\u5355/\u6D41\u901A<0.1%"); } else if (fr > 0 && fr < 0.005) { d += 10; why.push("\u5C01\u5355/\u6D41\u901A<0.5%"); }
+    if (fbtMin >= 870) { d += 30; why.push("\u5C3E\u76D8\u677F"); } else if (fbtMin >= 630) { d += 15; why.push("\u5348\u540E\u677F"); } else if (fbtMin >= 575) { d += 5; why.push("\u975E\u65E9\u677F"); }
+    if (x.lbc >= 7) { d += 40; why.push(x.lbc + "\u677F\u6781\u9AD8"); } else if (x.lbc >= 5) { d += 25; why.push(x.lbc + "\u677F\u9AD8\u4F4D"); } else if (x.lbc >= 3) { d += 10; why.push(x.lbc + "\u677F\u4E2D\u4F4D"); }
+    if (x.days > 0 && x.ct > 0 && x.ct < x.days) { d += 10; why.push("\u7A97\u53E3\u5185\u6709\u65AD\u677F"); }
+    if (x.hs > 0 && x.hs < 3) { d += 25; why.push("\u6362\u624B<3%"); } else if (x.hs > 25) { d += 20; why.push("\u6362\u624B>25%"); }
+    if (x.amount > 0 && x.amount < 5e7) { d += 20; why.push("\u6210\u4EA4<5000\u4E07"); }
+    if (x.ltsz > 0 && x.ltsz < 2e9) { d += 15; why.push("\u6D41\u901A<20\u4EBF"); }
+    if (hyN === 1) { d += 25; why.push("\u5B64\u677F"); } else if (hyN === 2) { d += 10; why.push("\u677F\u5757\u4EC52\u5BB6"); }
+    if (x.zbc >= 2 && fr > 0 && fr < 0.001) veto.push("\u53CD\u590D\u70B8\u677F\u4E14\u5C01\u5355\u8584");
+    if (fbtMin >= 870 && x.lbc >= 3) veto.push("\u9AD8\u4F4D\u5C3E\u76D8\u677F");
+    if (x.hs > 0 && x.hs < 1 && x.pct >= 9.8) veto.push("\u8FD1\u4E00\u5B57\u65E0\u6362\u624B");
+    return { d, why, veto };
+  }
   function poolZtHTMLJL() {
     try { if (!JLPOOL_FFOFF) jlFfOffLoadJL().then(() => { if (JLPOOL_FFOFF && watchMode === "leaders") renderPoolJL(); }); } catch (eZ0) {} // jl-0920-38: 涨停池资金门标注用离线快照
     const zt = poolZtDataJL();
     if (!zt || !zt.rows || !zt.rows.length) return "";
-    const hot = zt.rows.filter((x) => x.fund >= 2e7 || x.lbc >= 2).sort((a, b) => b.fund - a.fund).slice(0, 30);
+    const _hyN = {};
+    zt.rows.forEach((x) => { if (x.hy) _hyN[x.hy] = (_hyN[x.hy] || 0) + 1; });
+    const _cand = zt.rows.filter((x) => x.fund >= 2e7 || x.lbc >= 2);
+    const _veto = _cand.filter((x) => ztRiskJL(x, _hyN[x.hy] || 1).veto.length);
+    const hot = _cand.filter((x) => !ztRiskJL(x, _hyN[x.hy] || 1).veto.length).sort((a, b) => b.fund - a.fund).slice(0, 30);
     if (!hot.length) return "";
     const fmtT = (t) => {
       const s2 = String(t).padStart(6, "0");
@@ -5090,10 +5121,14 @@ document.addEventListener("visibilitychange", () => {
       _ztCol = JSON.parse(localStorage.getItem("jl_pool_col_v1") || "{}");
     } catch (eZ) {
     }
-    const _ztOpen = _ztCol.zt != null ? !!_ztCol.zt : false;
-    return '<div class="poolLayerHead" id="plh_zt" data-pl-toggle="zt" role="button" style="cursor:pointer;scroll-margin-top:46px"><b style="color:#ff7a59">' + (_ztOpen ? "\u25BE " : "\u25B8 ") + '\u6DA8\u505C\u98CE\u53E3 \xB7 ' + dS + '</b><span class="plhN">' + hot.length + "/" + zt.total + '</span><small>\u5C01\u5355\u22652000\u4E07\u6216\u8FDE\u677F\u22652 \xB7 \u6309\u5C01\u5355\u989D\u6392 \xB7 \u8D5B\u9053\u5206=\u8FDE\u677F\u9AD8\u5EA6/\u5C01\u5355/\u9996\u5C01/\u70B8\u677F \xB7 \u8D44\u91D1\u95E8=\u79BB\u7EBF\u5FEB\u7167\u53E3\u5F84 \xB7 \u9ED8\u8BA4\u6536\u8D77</small></div><div class="poolPicks" data-pl-body="zt" style="display:' + (_ztOpen ? "flex" : "none") + '">' + hot.map((x) => {
+    const _ztOpen = _ztCol.zt != null ? !!_ztCol.zt : true;
+    return '<div class="poolLayerHead" id="plh_zt" data-pl-toggle="zt" role="button" style="cursor:pointer;scroll-margin-top:46px"><b style="color:#ff7a59">' + (_ztOpen ? "\u25BE " : "\u25B8 ") + '\u6DA8\u505C\u98CE\u53E3 \xB7 ' + dS + '</b><span class="plhN">' + hot.length + "/" + zt.total + (_veto.length ? " \xB7 \u98CE\u9669\u5254" + _veto.length : "") + '</span><small>\u5C01\u5355\u22652000\u4E07\u6216\u8FDE\u677F\u22652 \xB7 \u6309\u5C01\u5355\u989D\u6392 \xB7 \u8D5B\u9053\u5206=\u8FDE\u677F\u9AD8\u5EA6/\u5C01\u5355/\u9996\u5C01/\u70B8\u677F \xB7 \u98CE\u9669=\u5C01\u677F\u8D28\u91CF+\u9AD8\u5EA6+\u6362\u624B+\u8EAB\u4F4D\u56DB\u5C42\u6263\u5206(\u2264 20\u4F4E/21-45\u4E2D/>45\u9AD8) \xB7 \u4E00\u7968\u5426\u51B3\u5DF2\u5254 \xB7 \u9608\u503C\u5F85\u56DE\u6D4B\u6807\u5B9A</small></div><div class="poolPicks" data-pl-body="zt" style="display:' + (_ztOpen ? "flex" : "none") + '">' + hot.map((x) => {
       const _hc = String(x.code).slice(2), _hs = stocks.find((s2) => s2.code === _hc || s2.code === x.code), held = !!_hs, heldQty = !!(_hs && _hs.qty > 0);
       const _lb8 = Math.max(0, Math.min(100, (x.lbc >= 2 ? x.lbc * 20 : 8) + Math.min(30, Math.round((x.fund || 0) / 1e7) * 2) + (x.fbt && +String(x.fbt).padStart(6, "0").slice(0, 2) < 10 ? 15 : 0) + (x.zbc ? -Math.min(30, x.zbc * 10) : 15))); // jl-0920-38: 连板赛道分(高度/封单/首封/炸板)
+      const _rk = ztRiskJL(x, _hyN[x.hy] || 1);
+      const _rkT = _rk.d <= 20 ? ["\u4F4E", "#1fdc93"] : _rk.d <= 45 ? ["\u4E2D", "#ffd21f"] : ["\u9AD8", "#ff5459"];
+      const _rkAct = _rk.d <= 20 ? "\u53EF\u8FDB\u4E3B\u63A8" : _rk.d <= 45 ? "\u4EC5\u89C2\u5BDF\xB7\u4E0D\u7ED9\u52A0\u4ED3\u6863" : "\u5F52RISK\u5C42\xB7\u53EA\u7ED9\u51CF\u6863";
+      const _rkHtml = '<div class="ppSub"><i style="font-style:normal;color:' + _rkT[1] + '">\u98CE\u9669 ' + _rkT[0] + ' \xB7 \u6263' + _rk.d + '</i> <i style="font-style:normal;color:#8fa8b3">' + _rkAct + '</i>' + (_rk.why.length ? '<br><i style="font-style:normal;color:#c9dfe8">' + _rk.why.slice(0, 4).join(" \xB7 ") + '</i>' : '') + '</div>';
       let _ff8 = "";
       try {
         const _fo8 = JLPOOL_FFOFF && JLPOOL_FFOFF.d ? JLPOOL_FFOFF.d[_hc] : null;
@@ -5103,7 +5138,7 @@ document.addEventListener("visibilitychange", () => {
           _ff8 = ' \xB7 <i style="font-style:normal;color:' + (_pass8 ? "#ffd21f" : "#8fa8b3") + '">\u8D44\u91D1\u95E8' + (_pass8 ? "\u8FC7" : "\u672A\u8FC7") + '(\u5FEB\u7167' + String(JLPOOL_FFOFF_ASOF || "").slice(5) + ' \u5F53\u65E5' + fmtFundJL(_d08) + ")</i>";
         }
       } catch (e8) {}
-      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:#ff7a59">' + (x.lbc >= 2 ? x.lbc + "\u8FDE\u677F" : "\u9996\u677F") + ' <i style="font-style:normal;color:#ffd21f">\u8D5B\u9053' + _lb8 + '</i></span></div><div class="ppSub">' + x.code + " \xB7 " + money(x.price) + ' \xB7 <i style="font-style:normal;color:#ff9d97">\u5C01\u5355 ' + fmtFundJL(x.fund) + "</i>" + (x.hy ? ' \xB7 <i style="font-style:normal;color:#c9dfe8">' + x.hy + "</i>" : "") + "</div>" + '<div class="ppSub">' + (x.days ? x.days + "\u5929" + x.ct + "\u677F \xB7 " : "") + "\u9996\u5C01 " + fmtT(x.fbt) + (x.zbc ? " \xB7 \u70B8\u677F" + x.zbc + "\u6B21" : " \xB7 \u672A\u70B8\u677F") + _ff8 + "</div>" + '<div class="poolRowActJL" style="margin-top:6px"><button type="button" data-pl-k="' + x.code + '" data-n="' + x.name + '">K\u7EBF \u203A</button>' + (held ? '<span class="heldTag">' + (heldQty ? '\u5DF2\u6301\u4ED3' : '\u5DF2\u89C2\u5BDF') + '</span>' : '<button type="button" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.price + '">\uFF0B\u89C2\u5BDF</button>') + "</div></div>";
+      return '<div class="poolPick"><div class="ppTop"><b>' + x.name + '</b><span class="poolScore" style="color:#ff7a59">' + (x.lbc >= 2 ? x.lbc + "\u8FDE\u677F" : "\u9996\u677F") + ' <i style="font-style:normal;color:#ffd21f">\u8D5B\u9053' + _lb8 + '</i></span></div>' + _rkHtml + '<div class="ppSub">' + x.code + " \xB7 " + money(x.price) + ' \xB7 <i style="font-style:normal;color:#ff9d97">\u5C01\u5355 ' + fmtFundJL(x.fund) + "</i>" + (x.hy ? ' \xB7 <i style="font-style:normal;color:#c9dfe8">' + x.hy + "</i>" : "") + "</div>" + '<div class="ppSub">' + (x.days ? x.days + "\u5929" + x.ct + "\u677F \xB7 " : "") + "\u9996\u5C01 " + fmtT(x.fbt) + (x.zbc ? " \xB7 \u70B8\u677F" + x.zbc + "\u6B21" : " \xB7 \u672A\u70B8\u677F") + _ff8 + "</div>" + '<div class="poolRowActJL" style="margin-top:6px"><button type="button" data-pl-k="' + x.code + '" data-n="' + x.name + '">K\u7EBF \u203A</button>' + (held ? '<span class="heldTag">' + (heldQty ? '\u5DF2\u6301\u4ED3' : '\u5DF2\u89C2\u5BDF') + '</span>' : '<button type="button" data-watch-add="' + x.code + '" data-name="' + x.name + '" data-price="' + x.price + '">\uFF0B\u89C2\u5BDF</button>') + "</div></div>";
     }).join("") + "</div>";
   }
   function poolJxHTMLJL() {
@@ -5147,10 +5182,10 @@ document.addEventListener("visibilitychange", () => {
       } catch (e) {
       }
       if (prev && prev.L) {
-        box.innerHTML = poolJxHTMLJL() + '<div class="poolStale">' + (prev.d0 || prev.date || "?") + " \u65E7\u699C\u5B58\u6863 \xB7 \u65B0\u4EA4\u6613\u65E5\u5C1A\u672A\u626B\u51FA\u65B0\u699C \xB7 \u4EC5\u56DE\u987E\u4E0D\u88C5\u6D3B \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>" + poolNavHTMLJL(prev, "", false) + poolLayersHTMLJL(prev, "", true);
+        box.innerHTML = poolJxHTMLJL() + poolZtHTMLJL() + '<div class="poolStale">' + (prev.d0 || prev.date || "?") + " \u65E7\u699C\u5B58\u6863 \xB7 \u65B0\u4EA4\u6613\u65E5\u5C1A\u672A\u626B\u51FA\u65B0\u699C \xB7 \u4EC5\u56DE\u987E\u4E0D\u88C5\u6D3B \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>" + poolNavHTMLJL(prev, "", false) + poolLayersHTMLJL(prev, "", true);
         return;
       }
-      box.innerHTML = poolJxHTMLJL() + '<div class="poolConsole"><div class="pcRow"><b>\u9F99\u5934\u80A1\u6C60 \xB7 \u91D1\u9F99\u6C60\u53E3\u5F84</b><span>\u672A\u626B\u63CF</span></div><div class="poolWhy" style="padding:8px 0 2px">\u4E94\u5C42\u7B5B\u9009\u7167\u642C hq-mobile \u8DD1\u6D4B\u7248\uFF1A' + JLPOOL_LAYERS.map((l) => l[1]).join(" / ") + "\u3002\u70B9\u4E0A\u65B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u8DD1\u5168A\uFF08\u7EA64\u5343\u53EA\uFF0C\u9700\u51E0\u5206\u949F\uFF09\uFF0C\u7ED3\u679C\u53EA\u8BA4\u6700\u8FD1\u4EA4\u6613\u65E5\uFF0C\u65E7\u699C\u4E0D\u88C5\u6D3B\u3002</div></div>";
+      box.innerHTML = poolJxHTMLJL() + poolZtHTMLJL() + '<div class="poolConsole"><div class="pcRow"><b>\u9F99\u5934\u80A1\u6C60 \xB7 \u91D1\u9F99\u6C60\u53E3\u5F84</b><span>\u672A\u626B\u63CF</span></div><div class="poolWhy" style="padding:8px 0 2px">\u4E94\u5C42\u7B5B\u9009\u7167\u642C hq-mobile \u8DD1\u6D4B\u7248\uFF1A' + JLPOOL_LAYERS.map((l) => l[1]).join(" / ") + "\u3002\u70B9\u4E0A\u65B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u8DD1\u5168A\uFF08\u7EA64\u5343\u53EA\uFF0C\u9700\u51E0\u5206\u949F\uFF09\uFF0C\u7ED3\u679C\u53EA\u8BA4\u6700\u8FD1\u4EA4\u6613\u65E5\uFF0C\u65E7\u699C\u4E0D\u88C5\u6D3B\u3002</div></div>";
       return;
     }
     const fresh = jlPoolFresh(JLPOOL.d0);
