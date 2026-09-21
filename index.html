@@ -8219,12 +8219,7 @@ function ffMergeJL(oldRows, newRows) {
         const a = s2.split(",");
         return { d: a[0], o: +a[1], c: +a[2], h: +a[3], l: +a[4], v: +a[5], turn: +a[6] };
       }).filter((r) => isFinite(r.c) && r.c > 0 && isFinite(r.turn));
-      if (rows.length < 60) {
-        cyqInflightJL[code] = 0;
-        if (!cyqStoreJL[code]) cyqStoreJL[code] = { date: cyqTodayJL(), err: "\u6570\u636E\u4E0D\u8DB3", chips: null };
-        done2();
-        return;
-      }
+      if (rows.length < 60) return false;
       cyqStoreJL[code] = cyqBuildJL(code, rows, "\u4E1C\u8D22\xB7\u524D\u590D\u6743\xB7\u771F\u5B9E\u6362\u624B");
       try {
         localStorage.setItem("jl_cyq2_" + code, JSON.stringify(cyqStoreJL[code]));
@@ -8232,8 +8227,14 @@ function ffMergeJL(oldRows, newRows) {
       }
       delete cyqInflightJL[code];
       done2();
+      return true;
     };
-    emFetchJL(url).then(eat).catch(() => {
+    emFetchJL(url).then((d) => {
+      if (!eat(d)) txFbJL();
+    }).catch(() => {
+      txFbJL();
+    });
+    function txFbJL() {
       // jl-0920-39: 东财通道被封时腾讯兜底(qfq日K800根+qt.gtimg流通市值估算换手率,源标签注明估算)
       const tc = (/^[569]/.test(code) ? "sh" : "sz") + code;
       fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq", { cache: "no-store" }).then((r) => r.json()).then((kd) => {
@@ -8244,7 +8245,11 @@ function ffMergeJL(oldRows, newRows) {
         const shares = fmv > 0 && px > 0 ? fmv * 1e8 / px : 0;
         const rows2 = arr2.map((x2) => ({ d: x2[0], o: +x2[1], c: +x2[2], h: +x2[3], l: +x2[4], v: +x2[5], turn: shares > 0 ? +x2[5] * 100 / shares * 100 : NaN }))
           .filter((r2) => isFinite(r2.c) && r2.c > 0 && isFinite(r2.turn));
-        if (rows2.length < 60) throw new Error("tx-cyq-short");
+        if (rows2.length < 60) {
+          const _eS = new Error("tx-cyq-short");
+          _eS.n = rows2.length;
+          throw _eS;
+        }
         cyqStoreJL[code] = cyqBuildJL(code, rows2, "\u817E\u8BAF\xB7\u524D\u590D\u6743\xB7\u4F30\u7B97\u6362\u624B");
         try {
           localStorage.setItem("jl_cyq2_" + code, JSON.stringify(cyqStoreJL[code]));
@@ -8252,12 +8257,14 @@ function ffMergeJL(oldRows, newRows) {
         }
         delete cyqInflightJL[code];
         done2();
-      }).catch(() => {
+      }).catch((eC) => {
         cyqInflightJL[code] = 0;
-        if (!cyqStoreJL[code]) cyqStoreJL[code] = { date: cyqTodayJL(), err: "\u63A5\u53E3\u65AD\u7EBF", chips: null };
+        const _isShort = !!(eC && eC.message === "tx-cyq-short");
+        const _msg = _isShort ? "\u4E0A\u5E02\u4E0D\u8DB360\u4E2A\u4EA4\u6613\u65E5\xB7\u5F53\u524D" + ((eC && eC.n) || 0) + "\u6839\xB7\u7B79\u7801\u4E0D\u7B97" : "\u63A5\u53E3\u65AD\u7EBF";
+        if (!cyqStoreJL[code]) cyqStoreJL[code] = { date: cyqTodayJL(), err: _msg, chips: null };
         done2();
       });
-    });
+    }
   }
   function cyqLineHTMLJL(s) {
     const bare = String(s.code).replace(/^(sh|sz)/, "");
