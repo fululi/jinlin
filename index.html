@@ -1,4 +1,8 @@
-<!DOCTYPE html><html lang="zh-CN"><head><script id="jlVerJL" data-ver="0.75.0" data-sw="jinlin-shell-v51"></script><script>(function () {
+<!DOCTYPE html><html lang="zh-CN"><head>
+<script>
+!(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
+</script>
+<script id="jlVerJL" data-ver="0.75.2" data-sw="jinlin-shell-v53"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -2801,6 +2805,10 @@ document.addEventListener("visibilitychange", () => {
     cross = null;
     draft = null;
     Object.assign(hvp, { count: 48, end: -1, ys: 1, offset: 0 });
+    /* jl-0921-fix2: 原代码只重置首页视口 hvp,持仓小图 hldVpJL 与观察小图全部漏掉 */
+    Object.assign(hldVpJL, { count: 60, end: -1, ys: 1, offset: 0, axLock: null, axManual: null, axKey: "" });
+    holdingCross = null;
+    try { _pvVpMapJL.forEach((v) => Object.assign(v, { count: 60, end: -1, ys: 1, offset: 0 })); } catch (e) {}
     homeSel = null;
     const bar = b.closest("[data-period-bar]");
     if (bar) {
@@ -2849,6 +2857,9 @@ document.addEventListener("visibilitychange", () => {
   };
   function selectHolding(i) {
     active = i;
+    /* jl-0921-fix1: 切票必须清视口。hldVpJL 是全局单例,不清则上一只票的 end/offset/axManual 会带到新票上 */
+    Object.assign(hldVpJL, { count: 60, end: -1, ys: 1, offset: 0, axLock: null, axManual: null, axKey: "" });
+    holdingCross = null;
     qa(".stock").forEach((c) => {
       const _di = +c.dataset.stock;
       c.classList.toggle("active", _di === i);
@@ -5531,8 +5542,16 @@ document.addEventListener("visibilitychange", () => {
       const shift = (v) => {
         if (v && v.end >= 0) v.end += add.length;
       };
-      shift(hldVpJL);
-      _pvVpMapJL.forEach(shift);
+      /* jl-0921-fix6: 原来无条件 shift。晚到的回填(比如永鼎的历史数据)完成时,屏幕上显示的
+         可能是另一只票,照样把它的 end 顶偏,还把"所有"观察小图一起顶偏。
+         现在只 shift 属于本次回填 code 的视口。 */
+      const _shCur = (typeof stocks !== "undefined" && stocks[active]) ? stocks[active].code === code : false;
+      if (_shCur) shift(hldVpJL);
+      try {
+        _pvVpMapJL.forEach((v, cvEl) => {
+          if (cvEl && cvEl.getAttribute && cvEl.getAttribute("data-chart-code") === code) shift(v);
+        });
+      } catch (e) {}
       paint();
     } catch (e) {
     } finally {
@@ -6292,6 +6311,10 @@ function ffMergeJL(oldRows, newRows) {
       x.textAlign = "center";
       x.fillText("K\u7EBF\u6570\u636E\u52A0\u8F7D\u4E2D\u2026", w / 2, h / 2);
       x.textAlign = "left";
+      /* jl-0921-fix4: 早退发生在 maps.set 之前 → 旧映射会残留。此时 yscale 捕获处会把
+         上一只票的 lo/hi 用当前票的 axKey 焊进 axManual,轴就永久变成别的票的范围。
+         删掉映射后,捕获处的 if (_m0 && _cd0 && ...) 守卫自然不写 axManual。 */
+      try { maps.delete(c); } catch (e) {}
       return;
     }
     const startSafe = Math.max(0, Math.min(start, bars.length - 1)), endSafe = Math.max(startSafe, Math.min(end, bars.length - 1));
@@ -6313,7 +6336,10 @@ function ffMergeJL(oldRows, newRows) {
     const candleW = Math.max(thinJL ? 1 : 2, (R - L) / count * 0.6);
     const wickW = thinJL ? 1 : 1.6;
     const X = (i) => L + (i - start) / (count - 1) * (R - L), Y = (v) => T + (max - v) / span * (B - T), I = (px) => start + (px - L) / (R - L) * (count - 1), V = (py) => max - (py - T) / (B - T) * span;
-    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo, hi });
+    /* jl-0921-fix3: 原来存 visible 的 lo/hi,而渲染用的是 _axL(最近60根)。两者不同源 →
+       手指一碰价格轴,axManual 抓到的是 visible 范围,轴当场从"最近60根"跳到"可见窗口"。
+       消费者只有两处(yscale 捕获写 axManual / 双指写 axLock),都应当拿"实际画出来的范围"。 */
+    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo: _axL.lo, hi: _axL.hi, loVisible: lo, hiVisible: hi });
     x.font = "9px monospace";
     x.fillStyle = fg;
     const gridN = pane === "vol" ? 4 : 8;
@@ -6505,17 +6531,30 @@ function ffMergeJL(oldRows, newRows) {
       x.beginPath();
       x.moveTo(localCross.x, T);
       x.lineTo(localCross.x, B);
-      x.moveTo(L, localCross.y);
-      x.lineTo(R, localCross.y);
+      /* jl-0921-fix7: 十字线标签吸附到"那根K线",不再用手指Y反算价。
+         原 cv = max-(localCross.y-T)/(B-T)*(max-min) 是手指纵坐标反算出的任意价位,
+         与卡面"这根K线涨跌"不同源 → 卡面 +1.92% 而图内 +18.01%,两个数永远对不上。
+         fix5 只换了分母没换分子,所以照旧错。吸附后横线/右价/左% 全部来自 bars[li]。 */
+      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x))));
+      const snapBar = bars[li] || lastBar(bars);
+      const snapC = Number(snapBar && snapBar.c);
+      const snapOk = Number.isFinite(snapC) && snapC > 0;
+      const snapY = snapOk ? Math.max(T, Math.min(B, Y(snapC))) : localCross.y;
+      x.moveTo(L, snapY);
+      x.lineTo(R, snapY);
       x.stroke();
       x.setLineDash([]);
-      const cv = max - (localCross.y - T) / (B - T) * (max - min), tagY = Math.max(T, Math.min(B - 16, localCross.y - 8));
+      const tagY = Math.max(T, Math.min(B - 16, snapY - 8));
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(R + 1, tagY, 50, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "9px monospace";
-      x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
-      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x)))), baseP = Number((_a2 = bars[li - 1]) == null ? void 0 : _a2.c) || Number((_b2 = bars[li]) == null ? void 0 : _b2.o) || Number(lastBar(bars).o) || 1, pctP = (() => { const rf = refPrev(bars, li, code); return Number.isFinite(cv) && rf > 0 ? (cv - rf) / rf * 100 : 0; })();
+      x.fillText(snapOk ? snapC.toFixed(2) : "--", R + 4, tagY + 11);
+      /* jl-0921-fix7: 锚与 cardQuote 完全一致 —— 历史根用该根前收,末根用 refPrev(当日昨收)。
+         不再按周期分叉,否则图内与卡面又会各说一套。 */
+      const isHistBar = li < bars.length - 1;
+      const anchorP = (isHistBar ? Number(bars[li - 1] && bars[li - 1].c) : 0) || refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
+      const pctP = snapOk && anchorP > 0 ? (snapC - anchorP) / anchorP * 100 : 0;
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(1, tagY, 48, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
@@ -13613,6 +13652,17 @@ function ffMergeJL(oldRows, newRows) {
     } catch (e) {
     }
   }, 3e4);
+  try {
+    window.__jlDbg = {
+      get stocks() { return stocks; },
+      get active() { return active; }, set active(v) { active = v; },
+      get period() { return period; }, set period(v) { period = v; },
+      get holdingCross() { return holdingCross; }, set holdingCross(v) { holdingCross = v; },
+      hldVpJL: hldVpJL, maps: maps, realCache: realCache, cache: cache, pvMap: _pvVpMapJL,
+      series: series, draw: draw, selectHolding: selectHolding, paint: paint, refPrev: refPrev, vpEnd: vpEnd,
+      hc: function () { return document.getElementById("holdingChart"); }
+    };
+  } catch (e) { window.__jlDbgErr = String(e); }
   window.__jlBootOK = 1;
 })();
 </script>
