@@ -8271,6 +8271,21 @@ function ffMergeJL(oldRows, newRows) {
     let o = null;
     try { if (cyqStoreJL[bare]) o = cyqStoreJL[bare]; } catch (e) {
     }
+    try {
+      if (o && !o.err && bare) {
+        const _cdJL = cyqTodayJL(), _hJL = JSON.parse(localStorage.getItem("jl_cyq_hist_v1") || "{}");
+        if (!_hJL[_cdJL]) _hJL[_cdJL] = {};
+        if (!_hJL[_cdJL][bare]) {
+          const _cJL = Object.assign({}, o);
+          delete _cJL.chips;
+          _hJL[_cdJL][bare] = _cJL;
+          const _kJL = Object.keys(_hJL).sort();
+          while (_kJL.length > 40) delete _hJL[_kJL.shift()];
+          (typeof jlSafeSetJL === "function" ? jlSafeSetJL : (k2, v2) => localStorage.setItem(k2, v2))("jl_cyq_hist_v1", JSON.stringify(_hJL));
+        }
+      }
+    } catch (eHC) {
+    }
     if (!o) try {
       const c2 = JSON.parse(localStorage.getItem("jl_cyq2_" + bare) || "null");
       if (c2 && c2.chips) o = c2;
