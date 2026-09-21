@@ -4616,7 +4616,7 @@ document.addEventListener("visibilitychange", () => {
           try {
             const r = await fetchK("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + code + ",day,,,300,qfq");
             const d = await r.json(), node = d && d.data && d.data[code], rows = node && (node.qfqday || (/^(sh5|sz1|sh000|sz399)/.test(code) ? node.day : null));
-            if (rows && rows.length >= 120) {
+            if (rows && rows.length >= 81) {
               const hit = poolClassifyJL(code, name, rows);
               if (hit) cand.push(hit);
             } else fail++;
@@ -6779,7 +6779,11 @@ function ffMergeJL(oldRows, newRows) {
     document.querySelectorAll(sel).forEach((e) => e.textContent = value);
   }
   function renderHoldingQuote() {
-    const stock = stocks[active], html = cardQuote(stock, $("holdingChart"), holdingCross), daily = dailyBarsOf(stock.code), today = daily.at(-1) || {}, live = lastBar(series(stock.code, false)), cur = Number(live.c) || Number(stock.base) || Number(today.c) || 0, op = Number(stock.open) || Number(today.o), high = Number(stock.high) || Number(today.h), low = Number(stock.low) || Number(today.l), t = tierLevelsJL({ ...stock, base: cur }), f = legFibJL(stock.code, cur);
+    const stock = stocks[active], html = cardQuote(stock, $("holdingChart"), holdingCross), daily = dailyBarsOf(stock.code), today = daily.at(-1) || {}, live = lastBar(series(stock.code, false)), cur = Number(live.c) || Number(stock.base) || Number(today.c) || 0, _opT = Number(stock.open) || Number(today.o), _hiT = Number(stock.high) || Number(today.h), _loT = Number(stock.low) || Number(today.l), t = tierLevelsJL({ ...stock, base: cur }), f = legFibJL(stock.code, cur);
+    const _srsH = series(stock.code, false), _mpH = maps.get($("holdingChart"));
+    const _crH = holdingCross && _mpH && _srsH.length ? Math.max(0, Math.min(_srsH.length - 1, Math.round(_mpH.I(holdingCross.x)))) : -1;
+    const _histH = _crH >= 0 && _crH < _srsH.length - 1, _rbH = _crH >= 0 ? _srsH[_crH] : null;
+    const op = _histH && _rbH && Number(_rbH.o) > 0 ? Number(_rbH.o) : _opT, high = _histH && _rbH && Number(_rbH.h) > 0 ? Number(_rbH.h) : _hiT, low = _histH && _rbH && Number(_rbH.l) > 0 ? Number(_rbH.l) : _loT;
     const heading = $("holdingName");
     heading.classList.remove("up", "down");
     heading.innerHTML = `${stock.name} \xB7 ${period} \xB7 ${html}`;
@@ -6792,10 +6796,10 @@ function ffMergeJL(oldRows, newRows) {
     });
     renderTierFibDetail(stock);
     const sells = t ? t.sells.filter(Number.isFinite).sort((a, b) => a - b) : [], buys = t ? t.buys.filter(Number.isFinite).sort((a, b) => b - a) : [], nextBuy = buys.find((v) => v <= cur) || buys[0], nextSell = sells.find((v) => v >= cur) || sells.at(-1), net = Number.isFinite(nextSell) && Number.isFinite(nextBuy) ? (nextSell - nextBuy) * 100 : null, nearest = f ? f.levels.reduce((a, z) => Math.abs(z.v - cur) < Math.abs(a.v - cur) ? z : a) : null;
-    setTextJL("[data-dayohl]", op > 0 && high > 0 && low > 0 ? `${op.toFixed(2)} \xB7 ${high.toFixed(2)} \xB7 ${low.toFixed(2)}` : "\u6570\u636E\u6682\u7F3A");
+    setTextJL("[data-dayohl]", _opT > 0 && _hiT > 0 && _loT > 0 ? `${_opT.toFixed(2)} \xB7 ${_hiT.toFixed(2)} \xB7 ${_loT.toFixed(2)}` : "\u6570\u636E\u6682\u7F3A");
     setTextJL("[data-level]", nearest ? `${nearest.r} \xB7 ${nearest.v.toFixed(2)}` : "\u6570\u636E\u6682\u7F3A");
-    setTextJL("[data-buy]", Number.isFinite(nextBuy) ? `${nextBuy.toFixed(2)} \xB7 B\u89E6\u8FBE${low > 0 && low <= nextBuy ? "\u662F" : "\u5426"}` : "\u6570\u636E\u6682\u7F3A");
-    setTextJL("[data-sell]", Number.isFinite(nextSell) ? `${nextSell.toFixed(2)} \xB7 S\u89E6\u8FBE${high > 0 && high >= nextSell ? "\u662F" : "\u5426"}` : "\u6570\u636E\u6682\u7F3A");
+    setTextJL("[data-buy]", Number.isFinite(nextBuy) ? `${nextBuy.toFixed(2)} \xB7 B\u89E6\u8FBE${_loT > 0 && _loT <= nextBuy ? "\u662F" : "\u5426"}` : "\u6570\u636E\u6682\u7F3A");
+    setTextJL("[data-sell]", Number.isFinite(nextSell) ? `${nextSell.toFixed(2)} \xB7 S\u89E6\u8FBE${_hiT > 0 && _hiT >= nextSell ? "\u662F" : "\u5426"}` : "\u6570\u636E\u6682\u7F3A");
     setTextJL("[data-net]", Number.isFinite(net) ? `${net >= 0 ? "+" : ""}${net.toFixed(2)}` : "\u6570\u636E\u6682\u7F3A");
     setTextJL("[data-swing]", f ? `${Math.round(Math.max(0, Math.min(1, f.pos)) * 100)}% \xB7 \u8FD1 ${nearest.r}` : "\u6570\u636E\u6682\u7F3A");
     setTextJL("[data-swing-low]", f ? f.lo.toFixed(2) : "\u2014");
