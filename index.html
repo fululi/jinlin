@@ -8276,8 +8276,7 @@ function ffMergeJL(oldRows, newRows) {
         const _cdJL = cyqTodayJL(), _hJL = JSON.parse(localStorage.getItem("jl_cyq_hist_v1") || "{}");
         if (!_hJL[_cdJL]) _hJL[_cdJL] = {};
         if (!_hJL[_cdJL][bare]) {
-          const _cJL = Object.assign({}, o);
-          delete _cJL.chips;
+          const _cJL = { date: o.date, src: o.src, last: o.last };
           _hJL[_cdJL][bare] = _cJL;
           const _kJL = Object.keys(_hJL).sort();
           while (_kJL.length > 40) delete _hJL[_kJL.shift()];
