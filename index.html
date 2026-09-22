@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.76.1" data-sw="jinlin-shell-v62"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.76.2" data-sw="jinlin-shell-v63"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6340,6 +6340,21 @@ function ffMergeJL(oldRows, newRows) {
       var _nudgeKey = code + "|" + period;
       if (window.__jlNudgeKey !== _nudgeKey) {
         window.__jlNudgeKey = _nudgeKey;
+        /* jl-0922-fix16a: 换票/换周期时强制重新分配 canvas 后备存储。
+           诊断实证: 用户机上 grid=281.41~899.07(正确)、绘=137(draw 确实跑了),
+           但屏幕刻度恒为卡0永鼎的 24.89~71.72,刷新无效、fix15 的 translateZ 提升也无效
+           → backing store 与上屏内容脱钩。重新赋值 width/height 会丢弃旧后备存储、
+           重建并强制重新栅格化,比 transform nudge 更硬。此处尚未画任何内容,
+           重设尺寸后必须重新应用 dpr 变换再清一次,后续绘制不受影响。
+           只在 code|period 变化时做一次,每帧不触发。 */
+        try {
+          var _d2 = Math.min(devicePixelRatio || 1, 2);
+          var _w2 = c.clientWidth, _h2 = c.clientHeight;
+          c.width = Math.round(_w2 * _d2);
+          c.height = Math.round(_h2 * _d2);
+          x.setTransform(_d2, 0, 0, _d2, 0, 0);
+          x.clearRect(0, 0, _w2, _h2);
+        } catch (eRz) {}
         try {
           c.style.transform = "translateZ(1px)";
           void c.offsetWidth;
@@ -9434,6 +9449,19 @@ function ffMergeJL(oldRows, newRows) {
                 + " \u00B7 cnt=" + _vp.count + " ys=" + _f2(_vp.ys) + " off=" + _f2(_vp.offset)
                 + " \u00B7 vp=" + (_vp.vpCode || "?") + " sel=" + _sel + (_sel !== _st.code ? "!" : "")
                 + " \u00B7 cross=" + (holdingCross ? Math.round(holdingCross.x) + "," + Math.round(holdingCross.y) : "\u65E0")
+  /* jl-0922-fix16b: 加三个字段区分"有东西盖在上面/重复id/合成层不刷新"。
+     cvs=文档内 canvas 总数  dup=id为holdingChart的元素数(>1 即重复节点)
+     atPos=持仓图中心点最上层的元素(若不是 CANVAS#holdingChart,说明有覆盖物) */
+  + " \u00B7 cvs=" + document.getElementsByTagName("canvas").length
+  + " dup=" + document.querySelectorAll('[id="holdingChart"]').length
+  + " atPos=" + (function () {
+      try {
+        var _r = _cv.getBoundingClientRect();
+        if (!_r.width || !_r.height) return "\u9690\u85CF";
+        var _e = document.elementFromPoint(_r.left + _r.width / 2, _r.top + _r.height / 2);
+        return _e ? (_e.tagName + (_e.id ? "#" + _e.id : "") + (_e.className && typeof _e.className === "string" ? "." + _e.className.split(" ")[0] : "")) : "null";
+      } catch (eP) { return "err"; }
+    })()
   + " \u00B7 \u7ED8=" + (window.__jlDrawN || 0) + " " + new Date().toLocaleTimeString("zh-CN");
             }
           } catch (eD) {
