@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.76.3" data-sw="jinlin-shell-v64"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.77.0" data-sw="jinlin-shell-v65"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6400,11 +6400,12 @@ function ffMergeJL(oldRows, newRows) {
         else { pv2.axManual = null; pv2.axLock = null; pv2.axKey = ""; }
       }
       if (!(pv2.axManual && pv2.axKey === code + "|" + period)) {
-        /* jl-0922-fix9: 轴参考窗口跟可见窗口走。原代码 refN 全代码从未赋值,恒为 60,
-           导致放大/缩小钮只改横向间距,价格轴纹丝不动——点 + 等于没点。
-           现在用 visible(正在画的那段),放大时轴自动收窄到可见范围,近期波动能填满图。
-           FIX47-A 的原始设计就是 visible-window,v67 把它改成硬编码 60 时是回归,这里修回去。 */
-        const _refJL = visible.filter((v) => v && Number.isFinite(v.l) && Number.isFinite(v.h));
+        /* jl-0922-fix18a: 撤回 fix9。用户口径(与首页K线图/大K线图一致):
+           "背景不动,K线收放自如" —— 轴锁定为该票最近 refN(默认60)根的范围,
+           缩放(count)与平移(end)都不得改变轴。fix9 让轴跟可见窗口走,方向正好做反了。
+           手动拖轴仍可锁定(axManual 优先级更高),那是用户显式操作,不算背景乱动。 */
+        const _rnJL = pv2.refN || 60;
+        const _refJL = bars.slice(Math.max(0, bars.length - _rnJL)).filter((v) => v && Number.isFinite(v.l) && Number.isFinite(v.h));
         if (_refJL.length >= 2) _axL = { lo: Math.min.apply(null, _refJL.map((v) => v.l)), hi: Math.max.apply(null, _refJL.map((v) => v.h)) };
       }
     }
@@ -6611,30 +6612,28 @@ function ffMergeJL(oldRows, newRows) {
       x.beginPath();
       x.moveTo(localCross.x, T);
       x.lineTo(localCross.x, B);
-      /* jl-0921-fix7: 十字线标签吸附到"那根K线",不再用手指Y反算价。
-         原 cv = max-(localCross.y-T)/(B-T)*(max-min) 是手指纵坐标反算出的任意价位,
-         与卡面"这根K线涨跌"不同源 → 卡面 +1.92% 而图内 +18.01%,两个数永远对不上。
-         fix5 只换了分母没换分子,所以照旧错。吸附后横线/右价/左% 全部来自 bars[li]。 */
-      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x))));
-      const snapBar = bars[li] || lastBar(bars);
-      const snapC = Number(snapBar && snapBar.c);
-      const snapOk = Number.isFinite(snapC) && snapC > 0;
-      const snapY = snapOk ? Math.max(T, Math.min(B, Y(snapC))) : localCross.y;
-      x.moveTo(L, snapY);
-      x.lineTo(R, snapY);
+      /* jl-0922-fix18b: 撤回 fix7 的吸附。用户口径: 十字线要跟手自由上下左右移动,
+         用来量任意价位(例如今天的高点/低点);吸附到K线收盘就量不了了。
+         恢复与首页 homeChart 完全相同的口径:
+           竖线 = 手指 x,横线 = 手指 y
+           右价标签 = 手指 y 反算的价位 cv
+           左%标签 = (cv - 锚)/锚,锚 = refPrev(当日昨收,全图统一)
+         左右同锚同源 → "左右百分比和价格对得上"。
+         卡面是另一套语义(十字线 x 所在那根K线的 收/开/高/低/涨跌幅 + 日期),两者不冲突:
+         卡面答"这根K线涨跌多少",十字线答"我指的这个价位相对昨收涨跌多少"。 */
+      x.moveTo(L, localCross.y);
+      x.lineTo(R, localCross.y);
       x.stroke();
       x.setLineDash([]);
-      const tagY = Math.max(T, Math.min(B - 16, snapY - 8));
+      const cv = max - (localCross.y - T) / (B - T) * (max - min), tagY = Math.max(T, Math.min(B - 16, localCross.y - 8));
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(R + 1, tagY, 50, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "9px monospace";
-      x.fillText(snapOk ? snapC.toFixed(2) : "--", R + 4, tagY + 11);
-      /* jl-0921-fix7: 锚与 cardQuote 完全一致 —— 历史根用该根前收,末根用 refPrev(当日昨收)。
-         不再按周期分叉,否则图内与卡面又会各说一套。 */
-      const isHistBar = li < bars.length - 1;
-      const anchorP = (isHistBar ? Number(bars[li - 1] && bars[li - 1].c) : 0) || refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
-      const pctP = snapOk && anchorP > 0 ? (snapC - anchorP) / anchorP * 100 : 0;
+      x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
+      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x))));
+      const anchorP = refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
+      const pctP = Number.isFinite(cv) && anchorP > 0 ? (cv - anchorP) / anchorP * 100 : 0;
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(1, tagY, 48, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
