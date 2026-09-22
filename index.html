@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.77.1" data-sw="jinlin-shell-v66"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.77.2" data-sw="jinlin-shell-v67"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -4991,8 +4991,13 @@ document.addEventListener("visibilitychange", () => {
     d.rows.forEach((r) => {
       const meta = r.layer ? JLPOOL_LAYERS.find((l) => l[0] === r.layer) : null;
       const st = STATUS[r.status] || ["?", "#9db9c4"];
+      /* jl-0922-fix20: 风险触发时形态标签置灰。v.29 设计意图"风险组不再标'主升'(改'风险·派发'+原形态置灰)",
+         但实现里形态层颜色一直用 meta[2]，没有置灰逻辑 → 截图里"趋势中 + 风险·派发信号"看起来自相矛盾。
+         现在 risk 触发时形态层强制灰色 #8d97a6（与"出池·当日无分层"同色），视觉上表达"被风险覆盖"。
+         纯样式改动，不碰数据/计算逻辑。 */
+      const tlColorJL = r.status === "risk" ? "#8d97a6" : (meta ? meta[2] : "#8d97a6");
       const live = r.d === tdy && mn >= 560 && mn < 905 ? "·盘中" : "";
-      h += '<div class="trajRowJL"><b>' + r.d.slice(5) + '</b><span class="tl" style="color:' + (meta ? meta[2] : "#8d97a6") + '">' + (meta ? meta[1].replace("刚", "") : "—") + '</span><span class="ts" style="color:' + st[1] + '">' + st[0] + live + '</span><span class="tf">' + (r.d0 == null ? "—" : fmtFundJL(r.d0)) + '</span><span class="tf">' + (r.sc == null ? "—" : r.sc + "分") + "</span></div>" + (r.why ? '<div class="trajWhyJL">' + r.why + "</div>" : "");
+      h += '<div class="trajRowJL"><b>' + r.d.slice(5) + '</b><span class="tl" style="color:' + tlColorJL + '">' + (meta ? meta[1].replace("刚", "") : "—") + '</span><span class="ts" style="color:' + st[1] + '">' + st[0] + live + '</span><span class="tf">' + (r.d0 == null ? "—" : fmtFundJL(r.d0)) + '</span><span class="tf">' + (r.sc == null ? "—" : r.sc + "分") + "</span></div>" + (r.why ? '<div class="trajWhyJL">' + r.why + "</div>" : "");
     });
     h += '<div class="trajNoteJL">轨迹=按现算法逐日回放 · 分数不含风口行业加分(比实盘榜可能低15~20分) · 资金=东财主力净额 · "出池"指当日五层条件均不满足 · 风险=当日命中≥2类派发证据(高位/量异常/承接失败/连续流出)·单日形态敏感非隔日指令' + (d.noff ? " · 资金接口未返回,资金列缺失" : "") + "</div>";
     return h;
