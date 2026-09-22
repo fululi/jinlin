@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.75.3" data-sw="jinlin-shell-v54"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.75.4" data-sw="jinlin-shell-v55"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6331,7 +6331,11 @@ function ffMergeJL(oldRows, newRows) {
     if (pv2 && pane === "price") {
       if (pv2.axManual && pv2.axKey === code + "|" + period) _axL = { lo: pv2.axManual.lo, hi: pv2.axManual.hi };
       else {
-        const _rnJL = pv2.refN || 60, _refJL = bars.slice(Math.max(0, bars.length - _rnJL)).filter((v) => v && Number.isFinite(v.l) && Number.isFinite(v.h));
+        /* jl-0922-fix9: 轴参考窗口跟可见窗口走。原代码 refN 全代码从未赋值,恒为 60,
+           导致放大/缩小钮只改横向间距,价格轴纹丝不动——点 + 等于没点。
+           现在用 visible(正在画的那段),放大时轴自动收窄到可见范围,近期波动能填满图。
+           FIX47-A 的原始设计就是 visible-window,v67 把它改成硬编码 60 时是回归,这里修回去。 */
+        const _refJL = visible.filter((v) => v && Number.isFinite(v.l) && Number.isFinite(v.h));
         if (_refJL.length >= 2) _axL = { lo: Math.min.apply(null, _refJL.map((v) => v.l)), hi: Math.max.apply(null, _refJL.map((v) => v.h)) };
       }
     }
