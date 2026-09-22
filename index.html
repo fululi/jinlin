@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.78.1" data-sw="jinlin-shell-v71"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.78.2" data-sw="jinlin-shell-v72"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6430,7 +6430,7 @@ function ffMergeJL(oldRows, newRows) {
         } catch (eNg) {}
       }
     }
-    const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = c.id === "holdingChart" ? 44 : 8, R = w - 55, T = 18, B = h - 24;  /* jl-0922-fix24b: 持仓图左gutter 8→44 放涨幅%列 */
+    const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = c.id === "holdingChart" ? 48 : 8, R = w - 55, T = 18, B = h - 24;  /* jl-0922-fix24b: 持仓图左gutter 8→44 放涨幅%列 */
     if (bars.length < 2) {
       x.fillStyle = fg;
       x.font = "11px sans-serif";
@@ -6507,11 +6507,16 @@ function ffMergeJL(oldRows, newRows) {
            涨红跌绿沿用全站色。ref<=0(报价未就绪)时整列不画,不显示假百分比。 */
         if (axRefJL > 0 && c.id === "holdingChart") {
           const _gp = gridPairJL(min, max, T, B, y, axRefJL);
-          const _ps = (_gp.pct >= 0 ? "+" : "") + _gp.pct.toFixed(2) + "%";
+          /* jl-0922-fix25b: 8px + |pct|>=1000 时不留小数。
+             实测 9px 时 "+129.52%" 宽 43.3px，右对齐画在 x=L-5 会超出画布左边界被裁 4.3px。 */
+          const _pn = Math.abs(_gp.pct) >= 1000 ? _gp.pct.toFixed(0) : _gp.pct.toFixed(2);
+          const _ps = (_gp.pct >= 0 ? "+" : "") + _pn + "%";
           x.textAlign = "right";
+          x.font = "8px monospace";
           x.fillStyle = _gp.pct >= 0 ? (light ? "#b7394c" : "#ff8a8e") : (light ? "#087b6d" : "#6ad5b4");
           x.fillText(_ps, L - 5, y + 3);
           x.textAlign = "left";
+          x.font = "9px monospace";
           x.fillStyle = fg;
         }
       }
@@ -6530,10 +6535,10 @@ function ffMergeJL(oldRows, newRows) {
         x.lineTo(R, _y0);
         x.stroke();
         x.setLineDash([]);
-        x.font = "9px monospace";
+        x.font = "8px monospace";   /* jl-0922-fix25c: 9px 时 "昨收 0.00%" 宽 50.5px 会被裁 11.5px */
         x.textAlign = "right";
         x.fillStyle = light ? "#5b7c89" : "#8fa8b3";
-        x.fillText("\u6628\u6536 0.00%", L - 5, Math.max(T + 9, Math.min(B - 2, _y0 - 3)));
+        x.fillText("\u6628\u65360.00%", L - 5, Math.max(T + 9, Math.min(B - 2, _y0 - 3)));
         x.textAlign = "left";
         x.restore();
       }
@@ -6746,7 +6751,9 @@ function ffMergeJL(oldRows, newRows) {
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(1, tagY, Math.max(30, L - 3), 16);   /* jl-0922-fix24e: 宽度跟左gutter走,持仓图44→41px */
       x.fillStyle = light ? "#10202a" : "#eef9fc";
-      x.fillText((pctP >= 0 ? "+" : "") + pctP.toFixed(2) + "%", 4, tagY + 11);
+      x.font = "8px monospace";   /* jl-0922-fix25d: 与左轴%列同字号同精度规则，避免溢出标签框 */
+      x.fillText((pctP >= 0 ? "+" : "") + (Math.abs(pctP) >= 1000 ? pctP.toFixed(0) : pctP.toFixed(2)) + "%", 4, tagY + 11);
+      x.font = "9px monospace";
       const ci = li, time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 112, snapXJL - 56)); /* jl-0922-fix23c: 时间标签跟着吸附后的竖线走 */
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(tx, B + 1, 112, 15);
