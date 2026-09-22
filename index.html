@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.76.2" data-sw="jinlin-shell-v63"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.76.3" data-sw="jinlin-shell-v64"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -263,7 +263,13 @@ body.ksEmbed #chartPage .plots{height:640px}
 #yiDongJL .yel.u,#yiDongJL .ydc.u{color:#ff8a80}
 #yiDongJL .yel.d,#yiDongJL .ydc.d{color:#2ee6cf}
 #yiDongJL .ydc{display:inline-block;margin:0 6px 6px 0;padding:7px 11px;border:1px solid #81e6d922;border-radius:9px;font-size:10.5px;color:#c7e3e8;cursor:pointer}#yiDongJL .ydc:active{border-color:var(--accent);color:var(--accent)}
-.homeChartWrap{position:relative}#homeChart{touch-action:none}#holdingSubJL,.pvSubJL{display:block;width:100%;height:96px;touch-action:none}.subWrapJL{position:relative;margin:2px 0}.subToggleJL{position:absolute;right:4px;top:4px;z-index:2;background:#1c232dcc;border:1px solid #37404d;color:#9aa7b5;font-size:10px;padding:1px 7px;border-radius:5px;cursor:pointer}.subToggleJL:active{border-color:var(--accent);color:var(--accent)}#holdingChart,.previewChart{touch-action:none}.fundModeJL{display:flex;gap:6px;margin:2px 0 4px}.fundModeJL button{font-size:9px;padding:2px 8px;border-radius:6px;border:1px solid #81e6d944;background:transparent;color:#c9dfe8}.fundModeJL button.on{color:#041018;background:#81e6d9}
+.homeChartWrap{position:relative}#homeChart{touch-action:none}#holdingSubJL,.pvSubJL{display:block;width:100%;height:96px;touch-action:none}.subWrapJL{position:relative;margin:2px 0}.subToggleJL{position:absolute;right:4px;top:4px;z-index:2;background:#1c232dcc;border:1px solid #37404d;color:#9aa7b5;font-size:10px;padding:1px 7px;border-radius:5px;cursor:pointer}.subToggleJL:active{border-color:var(--accent);color:var(--accent)}#holdingChart,/* jl-0922-fix17a: 禁掉 iOS 长按呼叫菜单与文本选择。
+   十字线要求"按住不动 350ms",而 iOS 的文本选择/呼叫菜单同样由长按触发,
+   系统会抢先接管手势并发 pointercancel → app 的十字线定时器永远等不到(诊断行 cross=无),
+   同时弹出「拷贝/查找所选内容/查询/翻译」菜单、手感卡死。
+   只作用于图表 canvas 与其容器,不影响别处(诊断行等)的文本选择。 */
+canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
+.previewChart{touch-action:none}.fundModeJL{display:flex;gap:6px;margin:2px 0 4px}.fundModeJL button{font-size:9px;padding:2px 8px;border-radius:6px;border:1px solid #81e6d944;background:transparent;color:#c9dfe8}.fundModeJL button.on{color:#041018;background:#81e6d9}
 .homeToolsJL{position:absolute;top:6px;right:56px;z-index:6;display:flex;gap:4px}
 .homeToolsJL button{border:1px solid var(--edge);border-radius:7px;background:#081a27d9;color:var(--secondary);font-size:10px;padding:3px 7px;backdrop-filter:blur(6px);cursor:pointer}
 .homeToolsJL button.on{border-color:var(--accent);color:var(--accent)}
@@ -11092,6 +11098,14 @@ function ffMergeJL(oldRows, newRows) {
       });
     };
     const hc = $("holdingChart");
+    /* jl-0922-fix17b: 长按在部分 WebView 上走 contextmenu 而非 touch-callout,
+       不拦掉同样会打断 pointer 流。委托在 document 上,只对 canvas 生效。 */
+    document.addEventListener("contextmenu", (e) => {
+      try {
+        const t = e.target;
+        if (t && (t.tagName === "CANVAS" || (t.closest && t.closest(".subWrapJL,.homeChartWrap,.glass")))) e.preventDefault();
+      } catch (e2) {}
+    }, { passive: false });
     let hPan = null;
     hc.addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -11115,6 +11129,8 @@ function ffMergeJL(oldRows, newRows) {
       clearTimeout(hc._lt);
       hc._lt = setTimeout(() => {
         if (!hc._moved && !hc._mode) { hc._mode = "cross"; holdingCross = { x: hc._sx, y: hc._sy }; try { navigator.vibrate && navigator.vibrate(12); } catch (_) {} paint(); }
+        /* jl-0922-fix17c: 进了十字线模式后立刻重绘一次(轻量),不等系统手势裁决 */
+        else if (hc._mode === "cross") { try { hldLitePaintJL(); } catch (eL) {} }
       }, 350);
       try {
         hc.setPointerCapture(e.pointerId);
