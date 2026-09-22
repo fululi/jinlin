@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.78.2" data-sw="jinlin-shell-v72"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.78.5" data-sw="jinlin-shell-v75"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6430,7 +6430,7 @@ function ffMergeJL(oldRows, newRows) {
         } catch (eNg) {}
       }
     }
-    const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = c.id === "holdingChart" ? 48 : 8, R = w - 55, T = 18, B = h - 24;  /* jl-0922-fix24b: 持仓图左gutter 8→44 放涨幅%列 */
+    const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = 8, R = w - 55, T = 18, B = h - 24;  /* jl-0922-fix24b: 持仓图左gutter 8→44 放涨幅%列 */
     if (bars.length < 2) {
       x.fillStyle = fg;
       x.font = "11px sans-serif";
@@ -6500,49 +6500,12 @@ function ffMergeJL(oldRows, newRows) {
       x.moveTo(L, y);
       x.lineTo(R, y);
       x.stroke();
-      if (pane !== "vol") {
-        x.fillText(val.toFixed(2), R + 4, y + 3);
-        /* jl-0922-fix24c: 券商口径——每条网格线左轴同步标"该价位相对昨收的涨幅%"。
-           与右价同一个 y、同一个 ref(昨收),由 gridPairJL 同一套算式保证成对。
-           涨红跌绿沿用全站色。ref<=0(报价未就绪)时整列不画,不显示假百分比。 */
-        if (axRefJL > 0 && c.id === "holdingChart") {
-          const _gp = gridPairJL(min, max, T, B, y, axRefJL);
-          /* jl-0922-fix25b: 8px + |pct|>=1000 时不留小数。
-             实测 9px 时 "+129.52%" 宽 43.3px，右对齐画在 x=L-5 会超出画布左边界被裁 4.3px。 */
-          const _pn = Math.abs(_gp.pct) >= 1000 ? _gp.pct.toFixed(0) : _gp.pct.toFixed(2);
-          const _ps = (_gp.pct >= 0 ? "+" : "") + _pn + "%";
-          x.textAlign = "right";
-          x.font = "8px monospace";
-          x.fillStyle = _gp.pct >= 0 ? (light ? "#b7394c" : "#ff8a8e") : (light ? "#087b6d" : "#6ad5b4");
-          x.fillText(_ps, L - 5, y + 3);
-          x.textAlign = "left";
-          x.font = "9px monospace";
-          x.fillStyle = fg;
-        }
-      }
+      /* jl-0923-fix27a: 左轴固定百分比列已删除（fix24c 加的，用户判定多余、"静态的、后面画的"）。
+         只保留右侧价格刻度。会移动的那一对标签（十字线左% + 右价）保留，见 fix28。 */
+      if (pane !== "vol") x.fillText(val.toFixed(2), R + 4, y + 3);
     }
-    /* jl-0922-fix24d: 昨收基准线 + 0.00% 标记(券商那条灰虚线)。
-       没有它,用户看不出%在哪里翻正负,就会觉得"往上拉还是负的"。 */
-    if (axRefJL > 0 && c.id === "holdingChart" && pane === "price") {
-      const _y0 = Y(axRefJL);
-      if (_y0 > T - 1 && _y0 < B + 1) {
-        x.save();
-        x.strokeStyle = light ? "#5b7c8988" : "#9abac566";
-        x.setLineDash([2, 3]);
-        x.lineWidth = 1;
-        x.beginPath();
-        x.moveTo(L, _y0);
-        x.lineTo(R, _y0);
-        x.stroke();
-        x.setLineDash([]);
-        x.font = "8px monospace";   /* jl-0922-fix25c: 9px 时 "昨收 0.00%" 宽 50.5px 会被裁 11.5px */
-        x.textAlign = "right";
-        x.fillStyle = light ? "#5b7c89" : "#8fa8b3";
-        x.fillText("\u6628\u65360.00%", L - 5, Math.max(T + 9, Math.min(B - 2, _y0 - 3)));
-        x.textAlign = "left";
-        x.restore();
-      }
-    }
+    /* jl-0922-fix26a: 昨收虚线与"昨收0.00%"标记已撤销（用户判定画蛇添足、与收盘K线对不上）。
+       左轴%列的锚仍是当日昨收(refPrev)，与十字线左%同锚，只是不再画那条线和那个标签。 */
     if (large) {
       for (let g = 1; g < 5; g++) {
         const gx = Math.round(L + (R - L) * g / 5) + 0.5;
@@ -6736,7 +6699,15 @@ function ffMergeJL(oldRows, newRows) {
       x.lineTo(R, localCross.y);
       x.stroke();
       x.setLineDash([]);
-      const anchorP = refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
+      /* jl-0923-fix28: 十字线左% 的锚 = 竖线吸附那根K线自己的前收（不再是"今日昨收"）。
+         这才是用户要的"移动但正确"：
+           · 手指正好压在那根收盘上 → 左% == 卡面涨跌幅（同一个数，不再打架）
+           · 手指往上拉 → 立刻变正（原来锚是今日昨收，在60根日K里手指怎么拉都在昨收下方，恒为负）
+           · 手指往下拉 → 变小、过前收才转负
+         末根(li=0 时无前一根)回落到 refPrev，与卡面口径一致。
+         右价仍 = 手指价位，与左% 由 gridPairJL 同一个 y 算出，严格配对。 */
+      const anchorP = (li > 0 ? Number(bars[li - 1] && bars[li - 1].c) : 0)
+        || refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
       const _pairJL = gridPairJL(min, max, T, B, localCross.y, anchorP);
       const cv = _pairJL.price, pctP = _pairJL.pct;
       const tagY = Math.max(T, Math.min(B - 16, localCross.y - 8));
@@ -6749,7 +6720,7 @@ function ffMergeJL(oldRows, newRows) {
          且文字过长被画布裁切(实测渲染到 "收41.11 -0." 就断了)、黑底压蜡烛。
          该根 OHLC 与涨跌幅由卡面负责,图上不再重复一遍。 */
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
-      x.fillRect(1, tagY, Math.max(30, L - 3), 16);   /* jl-0922-fix24e: 宽度跟左gutter走,持仓图44→41px */
+      x.fillRect(1, tagY, 48, 16);   /* jl-0923-fix27c */
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "8px monospace";   /* jl-0922-fix25d: 与左轴%列同字号同精度规则，避免溢出标签框 */
       x.fillText((pctP >= 0 ? "+" : "") + (Math.abs(pctP) >= 1000 ? pctP.toFixed(0) : pctP.toFixed(2)) + "%", 4, tagY + 11);
@@ -11260,6 +11231,15 @@ function ffMergeJL(oldRows, newRows) {
         hldLitePaintJL();  /* jl-0922-fix12 */
         return;
       }
+      /* jl-0922-fix26b: 十字线留在屏上后，再次拖动必须继续移动十字线。
+         原缺陷: 抬手时 holdingCross 保留(十字线留在松手处)，但 hc._mode 被重置为 null，
+         于是下一次拖动落进 hPan 的 pan 分支 → 变成平移K线，十字线再也拖不动。
+         用户报的"K线又无法被十字线往上下左右拖移"就是这个。
+         现在: 只要十字线在屏上且不是从价格轴起手的(yscale)，位移超过 6px 就接管为 cross；
+         6px 阈值是为了不破坏"轻点=收起十字线"(轻点位移为0，仍走 _wasTap 分支)。 */
+      if (holdingCross && hc._mode !== "cross" && hc._mode !== "yscale") {
+        if (Math.abs(p.x - hc._sx) > 6 || Math.abs(p.y - hc._sy) > 6) hc._mode = "cross";
+      }
       if (hc._mode === "cross") { holdingCross = p; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
       if (!hc._moved && (Math.abs(p.x - hc._sx) > 12 || Math.abs(p.y - hc._sy) > 12)) { hc._moved = true; clearTimeout(hc._lt); }
       if (hldDrawMoveJL(p, "price")) return;
@@ -11324,7 +11304,16 @@ function ffMergeJL(oldRows, newRows) {
       });
       hsc.addEventListener("pointermove", (e) => {
         const r = hsc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top, sub: 1 };
-        if (hc._mode === "cross") { holdingCross = p; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
+        /* jl-0922-fix26b: 十字线留在屏上后，再次拖动必须继续移动十字线。
+         原缺陷: 抬手时 holdingCross 保留(十字线留在松手处)，但 hc._mode 被重置为 null，
+         于是下一次拖动落进 hPan 的 pan 分支 → 变成平移K线，十字线再也拖不动。
+         用户报的"K线又无法被十字线往上下左右拖移"就是这个。
+         现在: 只要十字线在屏上且不是从价格轴起手的(yscale)，位移超过 6px 就接管为 cross；
+         6px 阈值是为了不破坏"轻点=收起十字线"(轻点位移为0，仍走 _wasTap 分支)。 */
+      if (holdingCross && hc._mode !== "cross" && hc._mode !== "yscale") {
+        if (Math.abs(p.x - hc._sx) > 6 || Math.abs(p.y - hc._sy) > 6) hc._mode = "cross";
+      }
+      if (hc._mode === "cross") { holdingCross = p; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
         if (!holdingCross || hc._mode !== "cross") holdingCross = null;
         if (hldDrawMoveJL(p, "sub")) return;
         if (hPan) {
