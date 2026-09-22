@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.77.4" data-sw="jinlin-shell-v69"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.78.0" data-sw="jinlin-shell-v70"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6374,6 +6374,16 @@ function ffMergeJL(oldRows, newRows) {
   function keyFor(pane) {
     return selected + "|" + period + "|" + pane;
   }
+  /* jl-0922-fix23a: 恢复 gridPairJL —— 同一个 y、同一套 min/max、同一个 ref 同时算出
+     价格与涨跌幅，结构上保证左右标签永远配对（券商分时图口径：0% 精确落在昨收线上）。
+     验算(东财截图): 昨收23.61 → 23.84 得 +0.97%、24.23 得 +2.63%、22.99 得 -2.63%，分毫不差。
+     此函数原先存在(FIX47-C)，在某次重构里连同注释标记一起被删，锁它的 T3 断言随之全红且无人报警。 */
+  function gridPairJL(min, max, T, B, y, ref) {
+    const span = (max - min) || 1;
+    const price = max - (y - T) / (B - T) * span;
+    const pct = ref > 0 ? (price - ref) / ref * 100 : 0;
+    return { price: price, pct: pct };
+  }
   function draw(c, code, pane = "price", large = false, animate = true) {
     var _a2, _b2;
     if (!c || !c.getClientRects().length) return;
@@ -6662,35 +6672,57 @@ function ffMergeJL(oldRows, newRows) {
       x.setLineDash([3, 3]);
       x.lineWidth = 1;
       x.beginPath();
-      x.moveTo(localCross.x, T);
-      x.lineTo(localCross.x, B);
-      /* jl-0922-fix18b: 撤回 fix7 的吸附。用户口径: 十字线要跟手自由上下左右移动,
-         用来量任意价位(例如今天的高点/低点);吸附到K线收盘就量不了了。
-         恢复与首页 homeChart 完全相同的口径:
-           竖线 = 手指 x,横线 = 手指 y
-           右价标签 = 手指 y 反算的价位 cv
-           左%标签 = (cv - 锚)/锚,锚 = refPrev(当日昨收,全图统一)
-         左右同锚同源 → "左右百分比和价格对得上"。
-         卡面是另一套语义(十字线 x 所在那根K线的 收/开/高/低/涨跌幅 + 日期),两者不冲突:
-         卡面答"这根K线涨跌多少",十字线答"我指的这个价位相对昨收涨跌多少"。 */
+      /* jl-0922-fix23: 按券商/hq-mobile 口径重做十字线（手势判定一行未动）。
+         ① 竖线吸附到 X(li) —— 券商与 hq-mobile 都吸附，金粼原来跟手指原始 x
+         ② 横线继续跟手指 y（保留 fix18b，可量任意价位）
+         ③ 左右标签统一由 gridPairJL 从同一个 y、同一个 ref 算出 → 结构上不可能对不上
+         ④ 新增左上角信息条：吸附那根的 日期/开/高/低/收/涨跌%
+            两个百分比各归各位、不再打架：
+            信息条答"这根K线涨跌多少"(锚=该根前收，与卡面同口径)
+            十字线左%答"我指的这个价位相对昨收多少"(锚=昨收，与右价严格配对) */
+      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x))));
+      const snapXJL = X(li);
+      x.moveTo(snapXJL, T);
+      x.lineTo(snapXJL, B);
       x.moveTo(L, localCross.y);
       x.lineTo(R, localCross.y);
       x.stroke();
       x.setLineDash([]);
-      const cv = max - (localCross.y - T) / (B - T) * (max - min), tagY = Math.max(T, Math.min(B - 16, localCross.y - 8));
+      const anchorP = refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
+      const _pairJL = gridPairJL(min, max, T, B, localCross.y, anchorP);
+      const cv = _pairJL.price, pctP = _pairJL.pct;
+      const tagY = Math.max(T, Math.min(B - 16, localCross.y - 8));
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(R + 1, tagY, 50, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "9px monospace";
       x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
-      const li = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x))));
-      const anchorP = refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
-      const pctP = Number.isFinite(cv) && anchorP > 0 ? (cv - anchorP) / anchorP * 100 : 0;
+      /* jl-0922-fix23d: 左上角信息条（hq-mobile 第4265行 / 东财左上角同款） */
+      try {
+        const _ib = bars[li];
+        if (_ib) {
+          const _ipv = li > 0 ? Number(bars[li - 1] && bars[li - 1].c) : Number(_ib.o);
+          const _ichg = _ipv > 0 ? (Number(_ib.c) - _ipv) / _ipv * 100 : 0;
+          const _itxt = String(barTime(_ib.t)).slice(5, 10) + " \u5F00" + Number(_ib.o).toFixed(2)
+            + " \u9AD8" + Number(_ib.h).toFixed(2) + " \u4F4E" + Number(_ib.l).toFixed(2)
+            + " \u6536" + Number(_ib.c).toFixed(2) + " ";
+          const _ipct = (_ichg >= 0 ? "+" : "") + _ichg.toFixed(2) + "%";
+          x.font = "9px monospace";
+          x.textAlign = "left";
+          const _iw = x.measureText(_itxt).width + x.measureText(_ipct).width + 10;
+          x.fillStyle = "rgba(4,16,24,0.90)";
+          x.fillRect(L + 2, T + 2, _iw, 14);
+          x.fillStyle = light ? "#10202a" : "#d2edf0";
+          x.fillText(_itxt, L + 6, T + 12);
+          x.fillStyle = _ichg >= 0 ? (light ? "#b7394c" : "#ff5459") : (light ? "#087b6d" : "#1fdc93");
+          x.fillText(_ipct, L + 6 + x.measureText(_itxt).width, T + 12);
+        }
+      } catch (eIb) {}
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(1, tagY, 48, 16);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.fillText((pctP >= 0 ? "+" : "") + pctP.toFixed(2) + "%", 4, tagY + 11);
-      const ci = Math.max(0, Math.min(bars.length - 1, Math.round(I(localCross.x)))), time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 112, localCross.x - 56));
+      const ci = li, time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 112, snapXJL - 56)); /* jl-0922-fix23c: 时间标签跟着吸附后的竖线走 */
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(tx, B + 1, 112, 15);
       x.fillStyle = light ? "#10202a" : "#eef9fc";
@@ -13864,7 +13896,7 @@ function ffMergeJL(oldRows, newRows) {
       get holdingCross() { return holdingCross; }, set holdingCross(v) { holdingCross = v; },
       get hldVpJL() { return hldVpJL; }, set hldVpJL(v) { hldVpJL = v; },
       hldVpOfJL: hldVpOfJL, hldVpMap: _hldVpMapJL,
-      sinceAddedPctJL: sinceAddedPctJL, addedTagJL: addedTagJL, dailyBarsOf: dailyBarsOf,
+      sinceAddedPctJL: sinceAddedPctJL, addedTagJL: addedTagJL, dailyBarsOf: dailyBarsOf, gridPairJL: gridPairJL,
       maps: maps, realCache: realCache, cache: cache, pvMap: _pvVpMapJL,
       series: series, draw: draw, selectHolding: selectHolding, paint: paint, refPrev: refPrev, vpEnd: vpEnd,
       hc: function () { return document.getElementById("holdingChart"); }
