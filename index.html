@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.75.7" data-sw="jinlin-shell-v58"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.75.8" data-sw="jinlin-shell-v59"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -9327,6 +9327,7 @@ function ffMergeJL(oldRows, newRows) {
     if (!ok) note(ddxState.loading ? "DDX\u52A0\u8F7D\u4E2D\u2026" : ddxState.err ? "DDX\u672A\u53D6\u5230 \xB7 \u4E1C\u8D22\u9650\u6D41\u65F6\u70B9\u5237\u65B0\u6216\u6362\u5468\u671F\u91CD\u8BD5" : "DDX\u6570\u636E\u4E0D\u8DB3 \xB7 \u6512\u591F65\u65E5\u8D44\u91D1\u6D41\u624D\u51FA");
   }
   function paint() {
+    try { window.__jlPaintN = (window.__jlPaintN || 0) + 1; } catch (e) {}
     try {
       renderIndexesJL(); // jl-0920-42: 报价更新后小卡同步(4个按钮,开销忽略)
     } catch (e) {
@@ -11005,6 +11006,25 @@ function ffMergeJL(oldRows, newRows) {
         paint();
       });
     };
+    /* jl-0922-fix12: 十字线/轴拖动用轻量重绘——只画持仓大图 + 持仓副图 + 头部卡。
+       原 hldPaintSoonJL 调全量 paint(): 每帧重绘 4 个指数卡、首页大图、首页副图、
+       所有观察小图(data-chart-code)、所有小图副图(data-sub-code)、DDX 附图、大图页。
+       手机上十字线上下拖因此掉帧到"咔咔咔"、手感像拖不动。
+       十字线只影响持仓大图与其头部,其余一律不必重绘。 */
+    let _hldLiteRafJL = 0;
+    const hldLitePaintJL = () => {
+      if (_hldLiteRafJL) return;
+      _hldLiteRafJL = requestAnimationFrame(() => {
+        _hldLiteRafJL = 0;
+        try { window.__jlLiteN = (window.__jlLiteN || 0) + 1; } catch (e) {}
+        try {
+          if (!stocks.length) return;
+          draw($("holdingChart"), stocks[active].code, "price", false, false);
+          try { drawHoldingSubJL(); } catch (e) {}
+          try { renderHoldingQuote(); } catch (e2) {}
+        } catch (e3) {}
+      });
+    };
     const hc = $("holdingChart");
     let hPan = null;
     hc.addEventListener("pointerdown", (e) => {
@@ -11040,10 +11060,10 @@ function ffMergeJL(oldRows, newRows) {
       if (hc._mode === "yscale") {
         const am = hldVpJL.axManual;
         if (am) { const dyl = p.y - hc._sy; hc._sy = p.y; const mid = (am.lo + am.hi) / 2, half = Math.max(1e-6, (am.hi - am.lo) / 2 * (1 + dyl * 0.004)); am.lo = mid - half; am.hi = mid + half; }
-        hldPaintSoonJL();
+        hldLitePaintJL();  /* jl-0922-fix12 */
         return;
       }
-      if (hc._mode === "cross") { holdingCross = p; hldPaintSoonJL(); return; }
+      if (hc._mode === "cross") { holdingCross = p; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
       if (!hc._moved && (Math.abs(p.x - hc._sx) > 12 || Math.abs(p.y - hc._sy) > 12)) { hc._moved = true; clearTimeout(hc._lt); }
       if (hldDrawMoveJL(p, "price")) return;
       if (hPan) {
@@ -11051,7 +11071,7 @@ function ffMergeJL(oldRows, newRows) {
         if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
         if (m && hPan.axis === "h") { holdingCross = null; hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1)); if (stocks[active] && vpEnd(hldVpJL, n2) - hldVpJL.count + 1 <= 12) loadOlderJL(stocks[active].code); }
         // jl-0922: 图身竖向拖动 = 进十字线(原为空语句,造成"按住上拉什么都不动"的死角)
-        if (m && hPan.axis === "v") { hc._mode = "cross"; holdingCross = p; hPan = null; }
+        if (m && hPan.axis === "v") { hc._mode = "cross"; holdingCross = p; hPan = null; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
       }
       hldPaintSoonJL();
     });
@@ -11107,7 +11127,7 @@ function ffMergeJL(oldRows, newRows) {
       });
       hsc.addEventListener("pointermove", (e) => {
         const r = hsc.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top, sub: 1 };
-        if (hc._mode === "cross") { holdingCross = p; hldPaintSoonJL(); return; }
+        if (hc._mode === "cross") { holdingCross = p; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
         if (!holdingCross || hc._mode !== "cross") holdingCross = null;
         if (hldDrawMoveJL(p, "sub")) return;
         if (hPan) {
