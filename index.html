@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.77.3" data-sw="jinlin-shell-v68"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.77.4" data-sw="jinlin-shell-v69"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -13870,6 +13870,27 @@ function ffMergeJL(oldRows, newRows) {
       hc: function () { return document.getElementById("holdingChart"); }
     };
   } catch (e) { window.__jlDbgErr = String(e); }
+  /* jl-0922-fix22: 一次性回填 addedAt（口径 B：统一从今天起算）。
+     现有持仓/观察票大多没有 addedAt —— 该字段只在通过搜股/添加钮新增时才写入,
+     所以"自加入起"对所有老票都是空白。此处给缺 addedAt 的票写入今天作为【起算点】,
+     用 jl_addedat_seed_v1 标记保证只跑一次;之后新加的票仍按真实加入日记录。
+     注意: 这个日期是起算点,不是真实加入日,标签上显示为 MM/DD入。
+     沿用 jl_purge_0920b 同款一次性迁移写法,全程 try 包裹,失败不影响启动。 */
+  try {
+    if (localStorage.getItem("jl_addedat_seed_v1") !== "1") {
+      var _todaySeedJL = jlYMD(new Date()), _seededJL = 0;
+      (typeof stocks !== "undefined" && stocks ? stocks : []).forEach(function (st) {
+        if (st && !st.addedAt) { st.addedAt = _todaySeedJL; _seededJL++; }
+      });
+      if (_seededJL > 0) { try { persistStocks(); } catch (ePs) {} }
+      try { localStorage.setItem("jl_addedat_seed_v1", "1"); } catch (eFl) {}
+      try { window.__jlSeededN = _seededJL; } catch (eDb) {}
+      if (_seededJL > 0) {
+        try { renderDeck(); } catch (eRd) {}
+        try { renderWatch(); } catch (eRw) {}
+      }
+    }
+  } catch (eSeed) {}
   window.__jlBootOK = 1;
 })();
 </script>
