@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.75.9" data-sw="jinlin-shell-v60"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.76.0" data-sw="jinlin-shell-v61"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6324,7 +6324,11 @@ function ffMergeJL(oldRows, newRows) {
     x.setTransform(d, 0, 0, d, 0, 0);
     x.clearRect(0, 0, w, h);
     const light = document.body.classList.contains("day"), fg = light ? "#1c4b57" : "#d2edf0", up = light ? "#b7394c" : "#ff5459", dn = light ? "#087b6d" : "#1fdc93", accent = light ? "#086f83" : "#81e6d9";
-    if (c.id === "holdingChart" && code) hldVpJL = hldVpOfJL(code); /* jl-0922-fix11b */
+    if (c.id === "holdingChart" && code) {
+      hldVpJL = hldVpOfJL(code); /* jl-0922-fix11b */
+      hldVpJL.vpCode = code;     /* jl-0922-fix14b: 这份视口属于哪只票 */
+      try { window.__jlDrawN = (window.__jlDrawN || 0) + 1; } catch (eN) {}
+    }
     const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = 8, R = w - 55, T = 18, B = h - 24;
     if (bars.length < 2) {
       x.fillStyle = fg;
@@ -6376,7 +6380,7 @@ function ffMergeJL(oldRows, newRows) {
        消费者只有两处(yscale 捕获写 axManual / 双指写 axLock),都应当拿"实际画出来的范围"。 */
     /* jl-0922-fix10a: 映射打归属标签。读 maps 的地方必须先校验 code/period,
        否则"上一次成功绘制的别的票"的 lo/hi 会被当成当前票的轴焊进 axManual/axLock。 */
-    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo: _axL.lo, hi: _axL.hi, loVisible: lo, hiVisible: hi, code: code, period: period });
+    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo: _axL.lo, hi: _axL.hi, min: min, max: max, span: span, loVisible: lo, hiVisible: hi, code: code, period: period });
     x.font = "9px monospace";
     x.fillStyle = fg;
     const gridN = pane === "vol" ? 4 : 8;
@@ -9398,7 +9402,21 @@ function ffMergeJL(oldRows, newRows) {
               const _vv = (() => { try { return document.getElementById("jlVerJL").getAttribute("data-ver"); } catch (e) { return "?"; } })();
               /* jl-0922-fix13b: 加"末根日期/收盘 vs 实时报价"。两者量级不符 = K线数据不是这只票的 */
               var _lb = null; try { var _bs = series(_st.code, false); _lb = _bs.length ? _bs[_bs.length - 1] : null; } catch (eL) {}
-              _dbg.textContent = "v" + _vv + " \u00B7 \u5361" + active + " " + _st.name + " " + _st.code + " \u00B7 " + period + " \u00B7 bars=" + _bn + " \u00B7 \u672B\u6839=" + (_lb ? String(_lb.t).slice(0, 10) + " \u6536" + Number(_lb.c).toFixed(2) : "\u65E0") + " \u00B7 \u62A5\u4EF7=" + (Number(_st.base) > 0 ? Number(_st.base).toFixed(2) : "\u672A\u5230") + " \u00B7 \u8F74=" + (_mp && Number.isFinite(_mp.lo) ? _mp.lo.toFixed(2) + "~" + _mp.hi.toFixed(2) : "\u65E0\u6620\u5C04") + (_mp && _mp.axMan ? " \u00B7 \u624B\u52A8\u8F74" : "") + " \u00B7 cross=" + (holdingCross ? Math.round(holdingCross.x) + "," + Math.round(holdingCross.y) : "\u65E0");
+              /* jl-0922-fix14c: 诊断行升级。axL=算出来的轴, grid=真正画网格用的 min/max(经 ys/offset 变换)。
+                 两者不一致即 bug 所在。sel=画线取键用的 selected,与 active 脱钩会给当前票画别的票的线(标!)。 */
+              var _sel = (typeof selected !== "undefined") ? selected : "?";
+              var _vp = (typeof hldVpJL !== "undefined" && hldVpJL) || {};
+              var _f2 = function (v) { return Number.isFinite(Number(v)) ? Number(v).toFixed(2) : String(v); };
+              _dbg.textContent = "v" + _vv + " \u00B7 \u5361" + active + " " + _st.name + " " + _st.code
+                + " \u00B7 " + period + " \u00B7 bars=" + _bn
+                + " \u00B7 \u672B\u6839=" + (_lb ? String(_lb.t).slice(0, 10) + " \u6536" + Number(_lb.c).toFixed(2) : "\u65E0")
+                + " \u00B7 \u62A5\u4EF7=" + (Number(_st.base) > 0 ? Number(_st.base).toFixed(2) : "\u672A\u5230")
+                + " \u00B7 axL=" + (_mp && Number.isFinite(_mp.lo) ? _f2(_mp.lo) + "~" + _f2(_mp.hi) : "\u65E0")
+                + " \u00B7 grid=" + (_mp && Number.isFinite(_mp.min) ? _f2(_mp.min) + "~" + _f2(_mp.max) : "\u65E0")
+                + " \u00B7 cnt=" + _vp.count + " ys=" + _f2(_vp.ys) + " off=" + _f2(_vp.offset)
+                + " \u00B7 vp=" + (_vp.vpCode || "?") + " sel=" + _sel + (_sel !== _st.code ? "!" : "")
+                + " \u00B7 cross=" + (holdingCross ? Math.round(holdingCross.x) + "," + Math.round(holdingCross.y) : "\u65E0")
+  + " \u00B7 \u7ED8=" + (window.__jlDrawN || 0) + " " + new Date().toLocaleTimeString("zh-CN");
             }
           } catch (eD) {
           }
