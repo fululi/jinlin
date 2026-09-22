@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.75.4" data-sw="jinlin-shell-v55"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.75.5" data-sw="jinlin-shell-v56"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6329,8 +6329,20 @@ function ffMergeJL(oldRows, newRows) {
     const lo = pane === "vol" ? 0 : axisVisible.length ? Math.min(...axisVisible.map((v) => v.l)) : 0, hi = pane === "vol" ? axisVisible.length ? Math.max(...axisVisible.map((v) => v.v || 0)) : 1 : axisVisible.length ? Math.max(...axisVisible.map((v) => v.h)) : 1;
     let _axL = { lo, hi };
     if (pv2 && pane === "price") {
-      if (pv2.axManual && pv2.axKey === code + "|" + period) _axL = { lo: pv2.axManual.lo, hi: pv2.axManual.hi };
-      else {
+      /* jl-0922-fix10b: 自愈闸。axManual 即便键名匹配,若与当前可见窗口完全不相交,
+         说明它是别的票在 maps 未更新时焊进来的残留 → 直接丢弃并按可见窗口重算。
+         这条是兜底:无论哪条路径把外来范围写进来,渲染时都会被拦掉,且状态被就地清干净。 */
+      const _refJL0 = visible.filter((v) => v && Number.isFinite(v.l) && Number.isFinite(v.h));
+      const _vLo0 = _refJL0.length ? Math.min.apply(null, _refJL0.map((v) => v.l)) : NaN;
+      const _vHi0 = _refJL0.length ? Math.max.apply(null, _refJL0.map((v) => v.h)) : NaN;
+      if (pv2.axManual && pv2.axKey === code + "|" + period) {
+        const _am0 = pv2.axManual;
+        const _canCheck = Number.isFinite(_vLo0) && Number.isFinite(_vHi0) && _refJL0.length >= 2;
+        const _overlap = !_canCheck || (_am0.hi >= _vLo0 && _am0.lo <= _vHi0);
+        if (_overlap) { _axL = { lo: _am0.lo, hi: _am0.hi }; }
+        else { pv2.axManual = null; pv2.axLock = null; pv2.axKey = ""; }
+      }
+      if (!(pv2.axManual && pv2.axKey === code + "|" + period)) {
         /* jl-0922-fix9: 轴参考窗口跟可见窗口走。原代码 refN 全代码从未赋值,恒为 60,
            导致放大/缩小钮只改横向间距,价格轴纹丝不动——点 + 等于没点。
            现在用 visible(正在画的那段),放大时轴自动收窄到可见范围,近期波动能填满图。
@@ -6348,7 +6360,9 @@ function ffMergeJL(oldRows, newRows) {
     /* jl-0921-fix3: 原来存 visible 的 lo/hi,而渲染用的是 _axL(最近60根)。两者不同源 →
        手指一碰价格轴,axManual 抓到的是 visible 范围,轴当场从"最近60根"跳到"可见窗口"。
        消费者只有两处(yscale 捕获写 axManual / 双指写 axLock),都应当拿"实际画出来的范围"。 */
-    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo: _axL.lo, hi: _axL.hi, loVisible: lo, hiVisible: hi });
+    /* jl-0922-fix10a: 映射打上归属标签。任何读 maps 的地方都必须先校验 code/period,
+       否则"上一次成功绘制的别的票"的 lo/hi 会被当成当前票的轴焊进 axManual/axLock。 */
+    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo: _axL.lo, hi: _axL.hi, loVisible: lo, hiVisible: hi, code: code, period: period });
     x.font = "9px monospace";
     x.fillStyle = fg;
     const gridN = pane === "vol" ? 4 : 8;
@@ -6617,7 +6631,7 @@ function ffMergeJL(oldRows, newRows) {
         return null;
       }
     })() : null, lo2 = homeRangePadJL(c, pane, predPad ? Math.min(lo, predPad.lo) : lo, predPad ? Math.max(hi, predPad.hi) : hi, code)[0], hi2 = homeRangePadJL(c, pane, predPad ? Math.min(lo, predPad.lo) : lo, predPad ? Math.max(hi, predPad.hi) : hi, code)[1], center = (lo2 + hi2) / 2 + (vp2 && pane === "price" ? vp2.offset : 0), span = (hi2 - lo2) * 1.22 / (vp2 && pane === "price" ? vp2.ys : 1), min = center - span / 2, max = center + span / 2, X = (i) => L + (i - start) / (count - 1) * (R - L), Y = (v) => T + (max - v) / span * (B - T), I = (px) => start + (px - L) / (R - L) * (count - 1), V = (py) => max - (py - T) / (B - T) * span;
-    maps.set(c, { X, Y, I, V, R, B, L, T, w, h });
+    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, code: code, period: period });
     return { c, x, w, h, bars, count, start, L, R, T, B, min, max, X, Y, I, V, pane, large };
   }
   function homeRangePadJL(c, pane, lo2, hi2, code2) {
@@ -10486,7 +10500,7 @@ function ffMergeJL(oldRows, newRows) {
       e.preventDefault();
       const v = pvVpJL(c2), n2 = series(c2.dataset.chartCode, false).length;
       const _mwv = maps.get(c2);
-      if (_mwv && !v.axLock) { v.axLock = { lo: _mwv.lo, hi: _mwv.hi }; v.axKey = c2.dataset.chartCode + "|" + period; }
+      if (_mwv && _mwv.code === c2.dataset.chartCode && !v.axLock) { v.axLock = { lo: _mwv.lo, hi: _mwv.hi }; v.axKey = c2.dataset.chartCode + "|" + period; }  /* jl-0922-fix10d */
       v.count = clamp(Math.round(v.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(960, n2)));
       v.end = clamp(vpEnd(v, n2), v.count - 1, Math.max(v.count - 1, n2 - 1));
       paint();
@@ -10979,7 +10993,9 @@ function ffMergeJL(oldRows, newRows) {
       hc._mode = null;
       {
         const _m0 = maps.get(hc), _cd0 = stocks[active] ? stocks[active].code : "";
-        if (_m0 && _cd0 && hc._sx > _m0.R) {
+        /* jl-0922-fix10c: 必须校验映射归属。原来只判 _m0 存在,导致 maps 还停在上一只票时,
+           把上一只票的 lo/hi 用当前票的 axKey 写进 axManual → 轴永久变成别的票(兆易显示永鼎轴)。 */
+        if (_m0 && _cd0 && _m0.code === _cd0 && _m0.period === period && hc._sx > _m0.R) {
           hc._mode = "yscale";
           hPan = null;
           if (!hldVpJL.axManual || hldVpJL.axKey !== _cd0 + "|" + period) { hldVpJL.axManual = { lo: _m0.lo, hi: _m0.hi }; hldVpJL.axKey = _cd0 + "|" + period; }
@@ -11096,7 +11112,7 @@ function ffMergeJL(oldRows, newRows) {
         const n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
         if (!n2) return;
         const _mw0 = maps.get(el), _mc0 = stocks[active] ? stocks[active].code : "";
-        if (_mw0 && _mc0 && !hldVpJL.axLock) { hldVpJL.axLock = { lo: _mw0.lo, hi: _mw0.hi }; hldVpJL.axKey = _mc0 + "|" + period; }
+        if (_mw0 && _mc0 && _mw0.code === _mc0 && _mw0.period === period && !hldVpJL.axLock) { hldVpJL.axLock = { lo: _mw0.lo, hi: _mw0.hi }; hldVpJL.axKey = _mc0 + "|" + period; }  /* jl-0922-fix10d */
         hldVpJL.count = clamp(Math.round(hldVpJL.count * Math.exp(e.deltaY * 2e-3)), 12, Math.max(12, Math.min(960, n2)));
         hldVpJL.end = clamp(vpEnd(hldVpJL, n2), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
         paint();
@@ -11108,7 +11124,7 @@ function ffMergeJL(oldRows, newRows) {
       const n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
       if (!n2) return;
       const m0 = maps.get(hc), c0 = stocks[active].code;
-      if (m0 && !hldVpJL.axLock) { hldVpJL.axLock = { lo: m0.lo, hi: m0.hi }; hldVpJL.axKey = c0 + "|" + period; }
+      if (m0 && m0.code === c0 && m0.period === period && !hldVpJL.axLock) { hldVpJL.axLock = { lo: m0.lo, hi: m0.hi }; hldVpJL.axKey = c0 + "|" + period; }  /* jl-0922-fix10d */
       hldVpJL.count = clamp(Math.round(hldVpJL.count * k), 12, Math.max(12, Math.min(960, n2)));
       hldVpJL.end = clamp(vpEnd(hldVpJL, n2), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1));
       paint();
@@ -11136,7 +11152,7 @@ function ffMergeJL(oldRows, newRows) {
           hPan = null;
           holdingCross = null;
           const _mp0 = maps.get(hc), _mpc = stocks[active] ? stocks[active].code : "";
-          if (_mp0 && _mpc && !hldVpJL.axLock) { hldVpJL.axLock = { lo: _mp0.lo, hi: _mp0.hi }; hldVpJL.axKey = _mpc + "|" + period; }
+          if (_mp0 && _mpc && _mp0.code === _mpc && _mp0.period === period && !hldVpJL.axLock) { hldVpJL.axLock = { lo: _mp0.lo, hi: _mp0.hi }; hldVpJL.axKey = _mpc + "|" + period; }  /* jl-0922-fix10d */
         }
       };
       const hPinchMove = (e) => {
