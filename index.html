@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.78.0" data-sw="jinlin-shell-v70"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.78.1" data-sw="jinlin-shell-v71"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6430,7 +6430,7 @@ function ffMergeJL(oldRows, newRows) {
         } catch (eNg) {}
       }
     }
-    const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = 8, R = w - 55, T = 18, B = h - 24;
+    const bars = series(code, animate && c.id !== "bigChart" && c.id !== "volumeChart" && !c.hasAttribute("data-chart-code")), pv2 = c.id === "holdingChart" ? hldVpJL : c.hasAttribute("data-chart-code") ? pvVpJL(c) : null, count = large ? viewport.count : pv2 ? pv2.count : 48, end = large ? vpEnd(viewport, bars.length) : pv2 ? vpEnd(pv2, bars.length) : bars.length - 1, start = Math.max(0, end - count + 1), L = c.id === "holdingChart" ? 44 : 8, R = w - 55, T = 18, B = h - 24;  /* jl-0922-fix24b: 持仓图左gutter 8→44 放涨幅%列 */
     if (bars.length < 2) {
       x.fillStyle = fg;
       x.font = "11px sans-serif";
@@ -6482,7 +6482,14 @@ function ffMergeJL(oldRows, newRows) {
        消费者只有两处(yscale 捕获写 axManual / 双指写 axLock),都应当拿"实际画出来的范围"。 */
     /* jl-0922-fix10a: 映射打归属标签。读 maps 的地方必须先校验 code/period,
        否则"上一次成功绘制的别的票"的 lo/hi 会被当成当前票的轴焊进 axManual/axLock。 */
-    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, lo: _axL.lo, hi: _axL.hi, min: min, max: max, span: span, loVisible: lo, hiVisible: hi, code: code, period: period });
+    /* jl-0922-fix24: 左轴%的锚 = 当日昨收(refPrev),与十字线左%同一个锚 → 全图一个基准 */
+    let axRefJL = 0;
+    try {
+      if (c.id === "holdingChart" && pane === "price") {
+        axRefJL = Number(refPrev(bars, bars.length - 1, code)) || Number(lastBar(bars).c) || 0;
+      }
+    } catch (eRef) { axRefJL = 0; }
+    maps.set(c, { X, Y, I, V, R, B, L, T, w, h, axRef: axRefJL, lo: _axL.lo, hi: _axL.hi, min: min, max: max, span: span, loVisible: lo, hiVisible: hi, code: code, period: period });
     x.font = "9px monospace";
     x.fillStyle = fg;
     const gridN = pane === "vol" ? 4 : 8;
@@ -6493,7 +6500,43 @@ function ffMergeJL(oldRows, newRows) {
       x.moveTo(L, y);
       x.lineTo(R, y);
       x.stroke();
-      if (pane !== "vol") x.fillText(val.toFixed(2), R + 4, y + 3);
+      if (pane !== "vol") {
+        x.fillText(val.toFixed(2), R + 4, y + 3);
+        /* jl-0922-fix24c: 券商口径——每条网格线左轴同步标"该价位相对昨收的涨幅%"。
+           与右价同一个 y、同一个 ref(昨收),由 gridPairJL 同一套算式保证成对。
+           涨红跌绿沿用全站色。ref<=0(报价未就绪)时整列不画,不显示假百分比。 */
+        if (axRefJL > 0 && c.id === "holdingChart") {
+          const _gp = gridPairJL(min, max, T, B, y, axRefJL);
+          const _ps = (_gp.pct >= 0 ? "+" : "") + _gp.pct.toFixed(2) + "%";
+          x.textAlign = "right";
+          x.fillStyle = _gp.pct >= 0 ? (light ? "#b7394c" : "#ff8a8e") : (light ? "#087b6d" : "#6ad5b4");
+          x.fillText(_ps, L - 5, y + 3);
+          x.textAlign = "left";
+          x.fillStyle = fg;
+        }
+      }
+    }
+    /* jl-0922-fix24d: 昨收基准线 + 0.00% 标记(券商那条灰虚线)。
+       没有它,用户看不出%在哪里翻正负,就会觉得"往上拉还是负的"。 */
+    if (axRefJL > 0 && c.id === "holdingChart" && pane === "price") {
+      const _y0 = Y(axRefJL);
+      if (_y0 > T - 1 && _y0 < B + 1) {
+        x.save();
+        x.strokeStyle = light ? "#5b7c8988" : "#9abac566";
+        x.setLineDash([2, 3]);
+        x.lineWidth = 1;
+        x.beginPath();
+        x.moveTo(L, _y0);
+        x.lineTo(R, _y0);
+        x.stroke();
+        x.setLineDash([]);
+        x.font = "9px monospace";
+        x.textAlign = "right";
+        x.fillStyle = light ? "#5b7c89" : "#8fa8b3";
+        x.fillText("\u6628\u6536 0.00%", L - 5, Math.max(T + 9, Math.min(B - 2, _y0 - 3)));
+        x.textAlign = "left";
+        x.restore();
+      }
     }
     if (large) {
       for (let g = 1; g < 5; g++) {
@@ -6697,29 +6740,11 @@ function ffMergeJL(oldRows, newRows) {
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "9px monospace";
       x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
-      /* jl-0922-fix23d: 左上角信息条（hq-mobile 第4265行 / 东财左上角同款） */
-      try {
-        const _ib = bars[li];
-        if (_ib) {
-          const _ipv = li > 0 ? Number(bars[li - 1] && bars[li - 1].c) : Number(_ib.o);
-          const _ichg = _ipv > 0 ? (Number(_ib.c) - _ipv) / _ipv * 100 : 0;
-          const _itxt = String(barTime(_ib.t)).slice(5, 10) + " \u5F00" + Number(_ib.o).toFixed(2)
-            + " \u9AD8" + Number(_ib.h).toFixed(2) + " \u4F4E" + Number(_ib.l).toFixed(2)
-            + " \u6536" + Number(_ib.c).toFixed(2) + " ";
-          const _ipct = (_ichg >= 0 ? "+" : "") + _ichg.toFixed(2) + "%";
-          x.font = "9px monospace";
-          x.textAlign = "left";
-          const _iw = x.measureText(_itxt).width + x.measureText(_ipct).width + 10;
-          x.fillStyle = "rgba(4,16,24,0.90)";
-          x.fillRect(L + 2, T + 2, _iw, 14);
-          x.fillStyle = light ? "#10202a" : "#d2edf0";
-          x.fillText(_itxt, L + 6, T + 12);
-          x.fillStyle = _ichg >= 0 ? (light ? "#b7394c" : "#ff5459") : (light ? "#087b6d" : "#1fdc93");
-          x.fillText(_ipct, L + 6 + x.measureText(_itxt).width, T + 12);
-        }
-      } catch (eIb) {}
+      /* jl-0922-fix24a: 信息条已撤销——日期/开/高/低/收 五个字段与卡面 100% 重复,
+         且文字过长被画布裁切(实测渲染到 "收41.11 -0." 就断了)、黑底压蜡烛。
+         该根 OHLC 与涨跌幅由卡面负责,图上不再重复一遍。 */
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
-      x.fillRect(1, tagY, 48, 16);
+      x.fillRect(1, tagY, Math.max(30, L - 3), 16);   /* jl-0922-fix24e: 宽度跟左gutter走,持仓图44→41px */
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.fillText((pctP >= 0 ? "+" : "") + pctP.toFixed(2) + "%", 4, tagY + 11);
       const ci = li, time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 112, snapXJL - 56)); /* jl-0922-fix23c: 时间标签跟着吸附后的竖线走 */
