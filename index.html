@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.79.1" data-sw="jinlin-shell-v77"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.79.2" data-sw="jinlin-shell-v78"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -281,6 +281,12 @@ body.ksEmbed #chartPage .plots{height:640px}
    系统会抢先接管手势并发 pointercancel → app 的十字线定时器永远等不到(诊断行 cross=无),
    同时弹出「拷贝/查找所选内容/查询/翻译」菜单、手感卡死。
    只作用于图表 canvas 与其容器,不影响别处(诊断行等)的文本选择。 */
+/* jl-0923-fix31a: fix17a 只覆盖了 canvas 与图表容器，漏了按钮——
+   龙池"长按600ms实盘重扫"在 iOS 上被系统呼叫菜单抢走(发 pointercancel)，定时器被清，
+   于是 poolScanJL() 永远不执行 = 用户报的"根本就刷不了"。这里扩到全站可点元素。
+   诊断行单独恢复可选中，方便复制排障。 */
+html,body,button,[role="button"],a,.poolNavJL,.poolConsole,.watchItem,.stock{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#jlDbgJL{-webkit-user-select:text;user-select:text}
 canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}
 .previewChart{touch-action:none}.fundModeJL{display:flex;gap:6px;margin:2px 0 4px}.fundModeJL button{font-size:9px;padding:2px 8px;border-radius:6px;border:1px solid #81e6d944;background:transparent;color:#c9dfe8}.fundModeJL button.on{color:#041018;background:#81e6d9}
 .homeToolsJL{position:absolute;top:6px;right:56px;z-index:6;display:flex;gap:4px}
@@ -10619,7 +10625,10 @@ function ffMergeJL(oldRows, newRows) {
         if (confirm("\u5B9E\u76D8\u5168A\u626B\u63CF\u22484000\u53EA\xD7K\u7EBF\u8BF7\u6C42\uFF0C\u53EF\u80FD\u5361\u6B7B/\u9650\u6D41\u3002\u786E\u5B9A\u91CD\u626B\uFF1F")) poolScanJL();
       }, 600);
     });
-    ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => _ds.addEventListener(ev, () => clearTimeout(_dsT)));
+    /* jl-0923-fix31b: pointercancel 不再清定时器。iOS 长按弹系统菜单时发的就是 pointercancel,
+       原来它和 pointerup 一起清掉 600ms 定时器 → 长按永远触发不了实盘重扫。
+       保留 pointerup/pointerleave 清除(那是真的松手/移出)，confirm 二次确认仍是防误触的闸。 */
+    ["pointerup", "pointerleave"].forEach((ev) => _ds.addEventListener(ev, () => clearTimeout(_dsT)));
     const _waJL = $("watchAdd");
     if (_waJL) _waJL.onclick = () => {
       window.__pickerFrom = "watch";
@@ -14005,6 +14014,11 @@ function ffMergeJL(oldRows, newRows) {
       get hldVpJL() { return hldVpJL; }, set hldVpJL(v) { hldVpJL = v; },
       hldVpOfJL: hldVpOfJL, hldVpMap: _hldVpMapJL,
       sinceAddedPctJL: sinceAddedPctJL, addedTagJL: addedTagJL, dailyBarsOf: dailyBarsOf, gridPairJL: gridPairJL,
+      /* jl-0923-fix31c: 暴露龙池扫描状态与入口，用于定位"刷不动"卡在准备宇宙/分页/逐票哪一步 */
+      poolScanJL: poolScanJL, poolOfflineJL: poolOfflineJL,
+      get poolRun() { return typeof JLPOOL_RUN !== "undefined" ? JLPOOL_RUN : null; },
+      get poolProg() { return typeof JLPOOL_PROG !== "undefined" ? JLPOOL_PROG : null; },
+      get poolPct() { return typeof JLPOOL_PCT !== "undefined" ? JLPOOL_PCT : null; },
       maps: maps, realCache: realCache, cache: cache, pvMap: _pvVpMapJL,
       series: series, draw: draw, selectHolding: selectHolding, paint: paint, refPrev: refPrev, vpEnd: vpEnd,
       hc: function () { return document.getElementById("holdingChart"); }
