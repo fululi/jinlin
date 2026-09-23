@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.79.0" data-sw="jinlin-shell-v76"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.79.1" data-sw="jinlin-shell-v77"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -12475,15 +12475,36 @@ function ffMergeJL(oldRows, newRows) {
       } catch (e) {
       }
       if (p && p.date && p.date !== td) {
+        /* jl-0923-fix30: 新交易日真正触发实盘重扫，不再只弹提示。
+           原缺陷两条:
+             ① 只 toast 不扫 —— 用户报"龙池扫描每次都是9.21"，因为点按走的是
+                fetch("./pool_latest.json") 静态快照，而该文件最后一次生成是 09-21 15:16，
+                只有长按(第10619行 confirm 后调 poolScanJL)才会实盘重扫。
+             ② 提示文案说"手动点扫描" —— 点按根本不会扫，文案本身就是错的。
+           保守约束: 仅交易日、仅收盘后(>=15:10，扫出来才是完整一天)、每天最多尝试2次、
+           页面不可见不扫、复用已有的限流与断点续扫(jl_scan_ckpt_v1)。
+           扫描成功后 jl_pool_v1.date 会等于今天，本分支自然不再触发。 */
+        const _nwA = new Date(), _mnA = _nwA.getHours() * 60 + _nwA.getMinutes(), _dowA = _nwA.getDay();
+        let _tryA = 0;
         try {
-          toast("\u65B0\u4EA4\u6613\u65E5 \xB7 \u9F99\u6C60\u699C\u5355\u5F85\u66F4\u65B0 \xB7 \u5230\u81EA\u9009\u9875\u624B\u52A8\u70B9\u626B\u63CF");
-        } catch (e2) {
-        }
-        try {
-          // jl-0921 ⑦B: 不再写脏标记。原来只 toast 不真扫却把 jl_autoscan_d 标成今天,
-          // 导致同一天再开页面连"榜单待更新"的提示都没有,用户误以为已经扫过了。
-          // 真扫完成后 jl_pool_v1 的 date 会等于今天,此分支自然不再触发,不会刷屏。
-        } catch (e3) {
+          const _tv = localStorage.getItem("jl_autoscan_try_v1") || "";
+          if (_tv.indexOf(td + "|") === 0) _tryA = parseInt(_tv.split("|")[1] || "0", 10) || 0;
+        } catch (eT) { _tryA = 0; }
+        const _canAuto = _dowA >= 1 && _dowA <= 5 && _mnA >= 910 && _tryA < 2 && !document.hidden;
+        if (_canAuto) {
+          try { localStorage.setItem("jl_autoscan_try_v1", td + "|" + (_tryA + 1)); } catch (eS) {}
+          try { toast("\u65B0\u4EA4\u6613\u65E5 \xB7 \u81EA\u52A8\u5F00\u59CB\u5B9E\u76D8\u91CD\u626B \xB7 \u53EF\u8FB9\u626B\u8FB9\u770B"); } catch (e2) {}
+          setTimeout(() => {
+            try {
+              if (typeof JLPOOL_RUN !== "undefined" && JLPOOL_RUN) return;
+              if (document.hidden) return;
+              if (typeof poolScanJL === "function") poolScanJL();
+            } catch (eRun) {}
+          }, 2e4);   // 再等 20s，让开机那批报价/日K先落地，避免和初始加载抢带宽
+        } else {
+          try {
+            toast("\u65B0\u4EA4\u6613\u65E5 \xB7 \u9F99\u6C60\u699C\u5355\u5F85\u66F4\u65B0 \xB7 \u5230\u81EA\u9009\u9875\u3010\u957F\u6309\u3011\u626B\u63CF\u94AE\u5B9E\u76D8\u91CD\u626B");
+          } catch (e2) {}
         }
       }
     } catch (e) {
