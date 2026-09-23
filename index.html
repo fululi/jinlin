@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.79.2" data-sw="jinlin-shell-v78"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.79.3" data-sw="jinlin-shell-v79"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -4629,6 +4629,9 @@ document.addEventListener("visibilitychange", () => {
     if (JLPOOL_RUN) return;
     JLPOOL_RUN = true;
     window.JLPOOL_ABORT = "";
+    /* jl-0923-fix32a: 原来 JLPOOL_SRC_OK 从不重置，一次成功后永远为 true，
+       下次宇宙拉空也会绕过 "!JLPOOL_SRC_OK" 这半个守卫。每次扫描都从 false 起。 */
+    window.JLPOOL_SRC_OK = false;
     window.__jlFfOffUsed = false;
     window.__jlPoolRT = true;
     JLPOOL_PCT = 0;
@@ -4640,6 +4643,10 @@ document.addEventListener("visibilitychange", () => {
     };
     try {
       const UNI = await poolUniJL();
+      /* jl-0923-fix32b: 把宇宙规模与来源亮出来。原来这一步之后直接进逐票循环，
+         中途一旦抛异常，用户和我都看不出到底走到了哪、宇宙有几只。 */
+      try { window.__jlUniN = UNI ? UNI.length : 0; } catch (eU) {}
+      prog("\u5B87\u5B99 " + (UNI ? UNI.length : 0) + " \u53EA \u00B7 \u6E90" + (window.JLPOOL_SRC_OK ? "OK" : "\u4E0D\u53EF\u7528"));
       if (!window.JLPOOL_SRC_OK || UNI.length < 500) {
         window.JLPOOL_ABORT = "\u26A0\uFE0F \u5168A\u6E90\u4E0D\u53EF\u7528 \xB7 \u626B\u63CF\u4E2D\u6B62 \xB7 \u65E0\u7ED3\u679C\uFF08\u6301\u4ED3\u515C\u5E95\u5DF2\u7981\u7528\uFF09";
         try {
@@ -4736,6 +4743,21 @@ document.addEventListener("visibilitychange", () => {
         localStorage.removeItem("jl_scan_ckpt_v1");
       } catch (e) {
       }
+    } catch (eScan) {
+      /* jl-0923-fix32c: 这个 try 原来【没有 catch】。任何一步抛异常，finally 会先把
+         JLPOOL_PROG 清成 ""（因为 JLPOOL_ABORT 只在"全A源不可用"分支被写），
+         异常再冒泡成 unhandled promise rejection —— 它不触发 window.onerror/pageerror，
+         所以页面不报、控制台不报、进度条直接消失。这就是"刷不动且什么都不告诉你"。
+         现在把原因写进 JLPOOL_ABORT，finally 会把它显示在进度条上，并 toast 一次。 */
+      try {
+        const _em = (eScan && (eScan.message || eScan.name)) ? (eScan.message || eScan.name) : String(eScan);
+        window.JLPOOL_ABORT = "\u26A0\uFE0F \u626B\u63CF\u5F02\u5E38\u4E2D\u6B62 \u00B7 " + String(_em).slice(0, 90)
+          + " \u00B7 \u5B87\u5B99" + (window.__jlUniN || 0) + "\u53EA \u00B7 \u8FDB\u5EA6" + (Math.round(JLPOOL_PCT) || 0) + "%";
+        window.__jlPoolErr = String(eScan && eScan.stack || eScan || "").slice(0, 600);
+      } catch (eF) {
+        window.JLPOOL_ABORT = "\u26A0\uFE0F \u626B\u63CF\u5F02\u5E38\u4E2D\u6B62";
+      }
+      try { toast("\u26A0\uFE0F \u9F99\u6C60\u626B\u63CF\u5F02\u5E38\u4E2D\u6B62 \u00B7 \u8BE6\u60C5\u89C1\u699C\u5355\u8FDB\u5EA6\u6761"); } catch (eT) {}
     } finally {
       JLPOOL_RUN = false;
       JLPOOL_PROG = window.JLPOOL_ABORT || "";
@@ -14019,6 +14041,9 @@ function ffMergeJL(oldRows, newRows) {
       get poolRun() { return typeof JLPOOL_RUN !== "undefined" ? JLPOOL_RUN : null; },
       get poolProg() { return typeof JLPOOL_PROG !== "undefined" ? JLPOOL_PROG : null; },
       get poolPct() { return typeof JLPOOL_PCT !== "undefined" ? JLPOOL_PCT : null; },
+      get uniN() { return window.__jlUniN != null ? window.__jlUniN : null; },
+      get poolErr() { return window.__jlPoolErr || null; },
+      get abort() { return window.JLPOOL_ABORT || ""; },
       maps: maps, realCache: realCache, cache: cache, pvMap: _pvVpMapJL,
       series: series, draw: draw, selectHolding: selectHolding, paint: paint, refPrev: refPrev, vpEnd: vpEnd,
       hc: function () { return document.getElementById("holdingChart"); }
