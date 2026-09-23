@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.79.3" data-sw="jinlin-shell-v79"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.79.4" data-sw="jinlin-shell-v80"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -432,8 +432,29 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js");
     navigator.serviceWorker.addEventListener("controllerchange", () => { // jl-0920-41: 新版sw接管=服务器有新代码,经10分钟熔断器自动刷新一次换新,不再要求用户手动关标签
       try {
-        if (window.__jlFusedReload) window.__jlFusedReload();
-        else location.reload();
+        /* jl-0923-fix33b: 龙池实盘扫描进行中不得自动刷新。
+           扫描状态(JLPOOL_RUN/UNI/cand/JLPOOL_PCT)全在内存，刷新即全丢 → 用户报"刷不动"。
+           实测证据: 调 poolScanJL 后 0ms run=true prog="准备宇宙…"，5s 后 run=false prog=""
+           且 JLPOOL_SRC_OK=undefined —— 而 fix32a 在函数开头就把它设成了 false，
+           只有整页重载才会让它变回 undefined，故确证是 controllerchange→fusedReload 干的。
+           现在: 扫描中每 10s 复查，最多等 20 分钟；扫完再刷新换新版本。到点照刷，不无限期占旧版。 */
+        var _doRlJL = function () {
+          try { if (window.__jlFusedReload) window.__jlFusedReload(); else location.reload(); } catch (e3) {}
+        };
+        var _wtJL = 0;
+        var _tickJL = function () {
+          var running = false;
+          try { running = window.__jlPoolRunning === true; } catch (e4) { running = false; }
+          if (!running) { _doRlJL(); return; }
+          if (++_wtJL > 120) {
+            try { window.__jlReloadDeferred = (window.__jlReloadDeferred || 0); toast("\u9F99\u6C60\u626B\u63CF\u8D85\u65F6 \u00B7 \u5DF2\u5237\u65B0\u6362\u65B0\u7248"); } catch (e5) {}
+            _doRlJL();
+            return;
+          }
+          try { window.__jlReloadDeferred = (window.__jlReloadDeferred || 0) + 1; } catch (e6) {}
+          setTimeout(_tickJL, 1e4);
+        };
+        _tickJL();
       } catch (e2) {
       }
     });
@@ -4544,7 +4565,7 @@ document.addEventListener("visibilitychange", () => {
   }
   async function poolOfflineJL() {
     if (JLPOOL_RUN) return;
-    JLPOOL_RUN = true;
+    JLPOOL_RUN = true; window.__jlPoolRunning = true;   /* jl-0923-fix33a */
     JLPOOL_PCT = 0;
     JLPOOL_PROG = "\u8BFB\u53D6\u79BB\u7EBF\u7EC8\u699C\u2026";
     renderWatch();
@@ -4621,13 +4642,13 @@ document.addEventListener("visibilitychange", () => {
     } catch (e) {
       JLPOOL_PROG = "\u79BB\u7EBF\u7EC8\u699C\u8F7D\u5165\u5931\u8D25";
     } finally {
-      JLPOOL_RUN = false;
+      JLPOOL_RUN = false; window.__jlPoolRunning = false;  /* jl-0923-fix33a */
       renderWatch();
     }
   }
   async function poolScanJL() {
     if (JLPOOL_RUN) return;
-    JLPOOL_RUN = true;
+    JLPOOL_RUN = true; window.__jlPoolRunning = true;   /* jl-0923-fix33a */
     window.JLPOOL_ABORT = "";
     /* jl-0923-fix32a: 原来 JLPOOL_SRC_OK 从不重置，一次成功后永远为 true，
        下次宇宙拉空也会绕过 "!JLPOOL_SRC_OK" 这半个守卫。每次扫描都从 false 起。 */
@@ -4759,7 +4780,7 @@ document.addEventListener("visibilitychange", () => {
       }
       try { toast("\u26A0\uFE0F \u9F99\u6C60\u626B\u63CF\u5F02\u5E38\u4E2D\u6B62 \u00B7 \u8BE6\u60C5\u89C1\u699C\u5355\u8FDB\u5EA6\u6761"); } catch (eT) {}
     } finally {
-      JLPOOL_RUN = false;
+      JLPOOL_RUN = false; window.__jlPoolRunning = false;  /* jl-0923-fix33a */
       JLPOOL_PROG = window.JLPOOL_ABORT || "";
       renderWatch();
     }
