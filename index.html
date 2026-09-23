@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.78.5" data-sw="jinlin-shell-v75"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.79.0" data-sw="jinlin-shell-v76"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -6695,8 +6695,12 @@ function ffMergeJL(oldRows, newRows) {
       const snapXJL = X(li);
       x.moveTo(snapXJL, T);
       x.lineTo(snapXJL, B);
-      x.moveTo(L, localCross.y);
-      x.lineTo(R, localCross.y);
+      /* jl-0923-fix29g: 十字线可能只在副图上(y 为 null)，此时主图只画竖线，不画横线与左右标签 */
+      const _mainYJL = Number.isFinite(localCross.y) ? localCross.y : null;
+      if (_mainYJL !== null) {
+        x.moveTo(L, _mainYJL);
+        x.lineTo(R, _mainYJL);
+      }
       x.stroke();
       x.setLineDash([]);
       /* jl-0923-fix28: 十字线左% 的锚 = 竖线吸附那根K线自己的前收（不再是"今日昨收"）。
@@ -6710,21 +6714,26 @@ function ffMergeJL(oldRows, newRows) {
         || refPrev(bars, li, code) || Number(lastBar(bars).o) || 1;
       const _pairJL = gridPairJL(min, max, T, B, localCross.y, anchorP);
       const cv = _pairJL.price, pctP = _pairJL.pct;
-      const tagY = Math.max(T, Math.min(B - 16, localCross.y - 8));
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
-      x.fillRect(R + 1, tagY, 50, 16);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
-      x.font = "9px monospace";
-      x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
+      const tagY = Math.max(T, Math.min(B - 16, (Number.isFinite(localCross.y) ? localCross.y : (T + B) / 2) - 8));
+      const _hasMainYJL = Number.isFinite(localCross.y);
+      if (_hasMainYJL) {
+        x.fillStyle = light ? "#d9e4e7" : "#26333d";
+        x.fillRect(R + 1, tagY, 50, 16);
+        x.fillStyle = light ? "#10202a" : "#eef9fc";
+        x.font = "9px monospace";
+        x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
+      }
       /* jl-0922-fix24a: 信息条已撤销——日期/开/高/低/收 五个字段与卡面 100% 重复,
          且文字过长被画布裁切(实测渲染到 "收41.11 -0." 就断了)、黑底压蜡烛。
          该根 OHLC 与涨跌幅由卡面负责,图上不再重复一遍。 */
+      if (_hasMainYJL) {   /* jl-0923-fix29h: 十字线只在副图上时，主图不画左%标签 */
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(1, tagY, 48, 16);   /* jl-0923-fix27c */
       x.fillStyle = light ? "#10202a" : "#eef9fc";
       x.font = "8px monospace";   /* jl-0922-fix25d: 与左轴%列同字号同精度规则，避免溢出标签框 */
       x.fillText((pctP >= 0 ? "+" : "") + (Math.abs(pctP) >= 1000 ? pctP.toFixed(0) : pctP.toFixed(2)) + "%", 4, tagY + 11);
       x.font = "9px monospace";
+      }
       const ci = li, time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 112, snapXJL - 56)); /* jl-0922-fix23c: 时间标签跟着吸附后的竖线走 */
       x.fillStyle = light ? "#d9e4e7" : "#26333d";
       x.fillRect(tx, B + 1, 112, 15);
@@ -9133,6 +9142,24 @@ function ffMergeJL(oldRows, newRows) {
     x.font = "8px monospace";
     x.fillText("共振·M1 " + zz.M1[end].toFixed(2) + " M2 " + zz.M2[end].toFixed(2), L + 2, T + 8);
   }
+  /* jl-0923-fix29d: 副图十字线状态构造。
+     x 主副共用(两图 L=8/R=w-55/X 公式完全一致，已核)；
+     y 主图用、subY 副图用——两图画布高度不同(主 140: T=18,B=116 / 副 96: T=4,B=86)，
+     共用一个 y 会让副图横线错位、主图左%与右价算错。
+     主图的 y 取"竖线吸附那根K线的收盘"在主图上的位置，于是从副图起手时主图也有合理的横线。 */
+  function jlSubCrossJL(px, py) {
+    let mainY = (holdingCross && Number.isFinite(holdingCross.y)) ? holdingCross.y : null;
+    try {
+      const mh = maps.get($("holdingChart"));
+      const bs = stocks[active] ? series(stocks[active].code, false) : [];
+      if (mh && bs.length) {
+        const li = Math.max(0, Math.min(bs.length - 1, Math.round(mh.I(px))));
+        const cc = Number(bs[li] && bs[li].c);
+        if (Number.isFinite(cc) && cc > 0) mainY = mh.Y(cc);
+      }
+    } catch (e) {}
+    return { x: px, y: mainY, subY: py };
+  }
   function drawHoldingSubJL() {
     const c = $("holdingSubJL");
     if (!c || !stocks[active]) return;
@@ -9142,7 +9169,7 @@ function ffMergeJL(oldRows, newRows) {
     } catch (e) {
     }
     if (subMode === "zz") {
-      zzPaneDrawJL(c, stocks[active].code, hldVpJL, holdingCross ? holdingCross.x : null, holdingCross && holdingCross.sub ? holdingCross.y : null);
+      zzPaneDrawJL(c, stocks[active].code, hldVpJL, holdingCross ? holdingCross.x : null, holdingCross && Number.isFinite(holdingCross.subY) ? holdingCross.subY : null); /* jl-0923-fix29f */
       return;
     }
     if (!c.getClientRects().length) return;
@@ -9233,12 +9260,26 @@ function ffMergeJL(oldRows, newRows) {
       x.moveTo(holdingCross.x, T);
       x.lineTo(holdingCross.x, B);
       x.stroke();
-      if (holdingCross.sub) {
-        const yy = clamp(holdingCross.y, T, B);
+      /* jl-0923-fix29e: 原来判 holdingCross.sub，而该字段全文件零处写入 → 副图横线永远画不出来。
+         改用 subY，并补一个数值标签(Y 可精确反解: v = mx*(1 - 2*(y-T)/(B-T)))。 */
+      if (Number.isFinite(holdingCross.subY)) {
+        const yy = clamp(holdingCross.subY, T, B);
         x.beginPath();
         x.moveTo(L, yy);
         x.lineTo(R, yy);
         x.stroke();
+        try {
+          const _mv = mx * (1 - 2 * (yy - T) / (B - T));
+          const _mt = (_mv >= 0 ? "+" : "") + _mv.toFixed(3);
+          x.setLineDash([]);
+          x.font = "8px monospace";
+          const _mw = Math.max(34, x.measureText(_mt).width + 6);
+          x.fillStyle = "#26333d";
+          x.fillRect(R + 1, Math.max(T, Math.min(B - 14, yy - 7)), _mw, 14);
+          x.fillStyle = _mv >= 0 ? "#ff8a8e" : "#6ad5b4";
+          x.textAlign = "left";
+          x.fillText(_mt, R + 4, Math.max(T, Math.min(B - 14, yy - 7)) + 10);
+        } catch (eMv) {}
       }
       x.setLineDash([]);
     }
@@ -11297,6 +11338,21 @@ function ffMergeJL(oldRows, newRows) {
         if (hldDrawDownJL(e, "sub")) return;
         const r = hsc.getBoundingClientRect(), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
         hPan = { x: e.clientX - r.left, y: e.clientY - r.top, end: vpEnd(hldVpJL, n2), offset: hldVpJL.offset, axis: null };
+        /* jl-0923-fix29a: 副图补上与主图同一套的长按激活。
+           原缺陷: 副图 pointerdown 只建 hPan，既无长按定时器也无 _sx/_sy/_moved 记账，
+           所以在副图上长按是死手势——必须先在主图激活十字线再回副图拖才行。 */
+        hc._sx = e.clientX - r.left;
+        hc._sy = e.clientY - r.top;
+        hc._moved = false;
+        clearTimeout(hc._lt);
+        hc._lt = setTimeout(() => {
+          if (!hc._moved && !hc._mode) {
+            hc._mode = "cross";
+            holdingCross = jlSubCrossJL(hc._sx, hc._sy);
+            try { navigator.vibrate && navigator.vibrate(12); } catch (_) {}
+            hldLitePaintJL();
+          }
+        }, 350);
         try {
           hsc.setPointerCapture(e.pointerId);
         } catch (e2) {
@@ -11313,14 +11369,19 @@ function ffMergeJL(oldRows, newRows) {
       if (holdingCross && hc._mode !== "cross" && hc._mode !== "yscale") {
         if (Math.abs(p.x - hc._sx) > 6 || Math.abs(p.y - hc._sy) > 6) hc._mode = "cross";
       }
-      if (hc._mode === "cross") { holdingCross = p; hldLitePaintJL(); return; }  /* jl-0922-fix12 */
+      /* jl-0923-fix29b: 副图的十字线分支。y 用 subY 存(副图坐标系 T=4/B=h-10)，
+         主图的 y 另存，两图共用 x（两图 L/R/X 公式完全一致，已核）。 */
+      if (!hc._moved && (Math.abs(p.x - hc._sx) > 12 || Math.abs(p.y - hc._sy) > 12)) { hc._moved = true; clearTimeout(hc._lt); }
+      if (hc._mode === "cross") { holdingCross = jlSubCrossJL(p.x, p.y); hldLitePaintJL(); return; }
         if (!holdingCross || hc._mode !== "cross") holdingCross = null;
         if (hldDrawMoveJL(p, "sub")) return;
         if (hPan) {
           const m = maps.get(hc), n2 = stocks[active] ? series(stocks[active].code, false).length : 0;
           if (!hPan.axis && Math.hypot(p.x - hPan.x, p.y - hPan.y) > 9) hPan.axis = Math.abs(p.x - hPan.x) >= Math.abs(p.y - hPan.y) ? "h" : "v";
           if (m && hPan.axis === "h") { holdingCross = null; hldVpJL.end = clamp(hPan.end - (p.x - hPan.x) / (m.R - m.L) * (hldVpJL.count - 1), hldVpJL.count - 1, Math.max(hldVpJL.count - 1, n2 - 1)); if (stocks[active] && vpEnd(hldVpJL, n2) - hldVpJL.count + 1 <= 12) loadOlderJL(stocks[active].code); }
-          ;
+          /* jl-0923-fix29b: 副图竖向拖动 = 进十字线。主图有这条(jl-0922)，副图原来完全没有，
+             所以在副图上竖拖是彻底的空手势。 */
+          if (m && hPan.axis === "v") { hc._mode = "cross"; holdingCross = jlSubCrossJL(p.x, p.y); hPan = null; hldLitePaintJL(); return; }
         }
         hldPaintSoonJL();
       });
@@ -11328,8 +11389,13 @@ function ffMergeJL(oldRows, newRows) {
         if (hsc._upTs === ev.timeStamp && hsc._upTy === ev.type) return;
         hsc._upTs = ev.timeStamp;
         hsc._upTy = ev.type;
+        /* jl-0923-fix29c: 与主图一致——轻点=放/收十字线，拖动过则保留在松手处 */
+        const _wasCrossS = hc._mode === "cross", _wasTapS = hc._mode === null && !hc._moved && ev.type === "pointerup";
         hPan = null;
-        if (hc._mode !== "cross") holdingCross = null;
+        hc._mode = null;
+        clearTimeout(hc._lt);
+        if (_wasTapS) holdingCross = holdingCross ? null : jlSubCrossJL(hc._sx, hc._sy);
+        else if (!_wasCrossS) holdingCross = null;
         hldDrawUpJL();
         paint();
       });
