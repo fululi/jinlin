@@ -2,7 +2,7 @@
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
-<script id="jlVerJL" data-ver="0.79.4" data-sw="jinlin-shell-v80"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.80.0" data-sw="jinlin-shell-v81"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -963,6 +963,29 @@ document.addEventListener("visibilitychange", () => {
     }, 8e3);
   }
   const sectorFundsJL = {};
+  /* jl-0924-fix34d: 行业名归一 + 个股行业解析链。
+     原来只有一张 4 只票的硬编码 sectorMap，其余一律落到字面量"所属板块"，
+     而 sectorFundsJL 里永远不会有"所属板块"这个键 → 必然显示"板块资金暂缺"。
+     现在复用代码里早已存在的行业基础设施(第1476行 holdSectorJL.map、第3944/4360行 JLPOOL_HY、
+     第2216行 HYJL、第2295行既有解析链)，硬编码表降为最后一档兜底。 */
+  function sectorNameNormJL(v) {
+    return String(v == null ? "" : v).replace(/[\u2160\u2161\u2162]+$/g, "").trim();
+  }
+  function sectorOfJL(st) {
+    try {
+      if (!st || !st.code) return "";
+      const bare = String(st.code).replace(/^(sh|sz|bj)/, "");
+      let hy = "";
+      try { if (typeof holdSectorJL !== "undefined" && holdSectorJL.map && holdSectorJL.map[bare]) hy = holdSectorJL.map[bare]; } catch (e1) {}
+      if (!hy) { try { if (typeof holdSectorJL !== "undefined" && holdSectorJL.map && holdSectorJL.map[String(st.code)]) hy = holdSectorJL.map[String(st.code)]; } catch (e1b) {} }
+      if (!hy) hy = st.ind || st.hy || "";
+      if (!hy) { try { if (typeof JLPOOL_HY !== "undefined") hy = JLPOOL_HY[st.code] || JLPOOL_HY[bare] || ""; } catch (e2) {} }
+      if (!hy) { try { if (typeof HYJL !== "undefined") hy = HYJL[bare] || ""; } catch (e3) {} }
+      const _legacy = { "600105": "\u901A\u4FE1\u8BBE\u5907", "600176": "\u73BB\u7483\u73BB\u7EA4", "603986": "\u534A\u5BFC\u4F53", "515880": "\u901A\u4FE1\u8BBE\u5907" };
+      if (!hy) hy = _legacy[bare] || "";
+      return sectorNameNormJL(hy);
+    } catch (e) { return ""; }
+  }
   function loadSectorFundsJL() {
     if (loadSectorFundsJL.loading) return;
     if (Date.now() - (loadSectorFundsJL.failAt || 0) < 6e4) return;
@@ -970,8 +993,10 @@ document.addEventListener("visibilitychange", () => {
     const cb = "jinlinSector_" + Date.now();
     const bail = () => {
       loadSectorFundsJL.loading = false;
-      if (!loadSectorFundsJL._alt) {
-        loadSectorFundsJL._alt = 1;
+      /* jl-0924-fix34c: 降级链 0→1→2。第 2 档退回原来的 ulist 三板块请求，
+         保证 clist 全行业接口不可用时不比改动前更差。 */
+      if ((loadSectorFundsJL._alt || 0) < 2) {
+        loadSectorFundsJL._alt = (loadSectorFundsJL._alt || 0) + 1;
         delete window[cb];
         sc.remove();
         loadSectorFundsJL();
@@ -988,11 +1013,18 @@ document.addEventListener("visibilitychange", () => {
       try {
         let a = ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.diff) || (res == null ? void 0 : res.data) || [];
         if (!Array.isArray(a)) a = Object.values(a);
-        const names = { "BK0448": "\u901A\u4FE1\u8BBE\u5907", "BK1036": "\u534A\u5BFC\u4F53", "BK0546": "\u73BB\u7483\u73BB\u7EA4" };
+        /* jl-0924-fix34b: 以响应里的 f14(行业名) 为准建表；硬编码 names 只作 _alt=2 兜底路径的补名。
+           行业名两侧都做 Ⅰ/Ⅱ/Ⅲ 后缀归一(与第2241行既有口径一致)，否则"半导体Ⅱ"匹配不上"半导体"。 */
+        const _legacyNames = { "BK0448": "\u901A\u4FE1\u8BBE\u5907", "BK1036": "\u534A\u5BFC\u4F53", "BK0546": "\u73BB\u7483\u73BB\u7EA4" };
         a.forEach((r) => {
           const k = String(r.f12 || r.code || "");
-          if (names[k]) sectorFundsJL[names[k]] = { amt: Number(r.f62), pct: Number(r.f3), name: names[k] };
+          const nm = sectorNameNormJL(r.f14) || _legacyNames[k] || "";
+          if (!nm) return;
+          const _amt = Number(r.f62);
+          if (!Number.isFinite(_amt)) return;
+          sectorFundsJL[nm] = { amt: _amt, pct: Number(r.f3), name: nm, bk: k };
         });
+        try { window.__jlSectorN = Object.keys(sectorFundsJL).length; } catch (eSn) {}
         loadSectorFundsJL.failAt = 0;
         loadSectorFundsJL._alt = 0;
         try {
@@ -1013,7 +1045,15 @@ document.addEventListener("visibilitychange", () => {
       }
     };
     const sc = document.createElement("script");
-    sc.src = (loadSectorFundsJL._alt ? "https://push2delay.eastmoney.com" : "https://push2.eastmoney.com") + "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f3,f12,f14,f62&secids=90.BK0448,90.BK1036,90.BK0546&cb=" + cb + "&_=" + Date.now();
+    /* jl-0924-fix34a: 主路改为一次拉【全部行业板块】(约86个)，按 f14 行业名建表。
+         原来只请求 3 个硬编码 BK 码(0448/1036/0546)，于是任何不属于这 3 个行业的持仓股
+         都必然显示"所属板块 · 板块资金暂缺"——用户报的 589420/600489 暂缺就是这个。
+         响应本来就带 f14(行业名)，原代码却把它扔掉、改用硬编码 names 表。
+         降级链: _alt=0 clist@push2 → _alt=1 clist@push2delay → _alt=2 原 ulist 三板块@push2。 */
+        sc.src = (loadSectorFundsJL._alt === 1 ? "https://push2delay.eastmoney.com" : "https://push2.eastmoney.com")
+          + (loadSectorFundsJL._alt >= 2
+              ? "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f3,f12,f14,f62&secids=90.BK0448,90.BK1036,90.BK0546&cb=" + cb + "&_=" + Date.now()
+              : "/api/qt/clist/get?pn=1&pz=300&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:90+t:2&fields=f12,f14,f3,f62&cb=" + cb + "&_=" + Date.now());
     sc.onerror = bail;
     const timer = setTimeout(bail, 8e3);
     document.body.appendChild(sc);
@@ -1130,8 +1170,9 @@ document.addEventListener("visibilitychange", () => {
       }
     }
     if (sf) { sf.classList.toggle("dimPendJL", !(dr && Number.isFinite(Number(dr.main)))); sf.textContent = dr && Number.isFinite(Number(dr.main)) ? `主力净额 ${Number(dr.main) >= 0 ? "+" : ""}${Number(dr.main).toFixed(2)} \xB7 ${Number(dr.main) >= 0 ? "\u4E3B\u529B\u51C0\u6D41\u5165" : "\u4E3B\u529B\u51C0\u6D41\u51FA"} \xB7 ${String(dr.d || "").slice(5)}${String(dr.d || "").slice(0, 10) !== jlLastTradeDay() ? "\xB7\u6700\u8FD1\u4EA4\u6613\u65E5" : ""}` : "\u4E2A\u80A1\u8D44\u91D1\u6570\u636E\u6682\u7F3A"; }
-    const sectorMap = { 600105: "\u901A\u4FE1\u8BBE\u5907", 600176: "\u73BB\u7483\u73BB\u7EA4", 603986: "\u534A\u5BFC\u4F53", 515880: "\u901A\u4FE1\u8BBE\u5907" }, sector = sectorMap[st == null ? void 0 : st.code] || "\u6240\u5C5E\u677F\u5757";
-    if (st && !sectorFundsJL[sector] && !loadSectorFundsJL.loading) loadSectorFundsJL();
+    /* jl-0924-fix34e: 行业名改为动态解析(见 sectorOfJL)，不再只有 4 只票的硬编码表 */
+    const sector = sectorOfJL(st);
+    if (st && sector && !sectorFundsJL[sector] && !loadSectorFundsJL.loading) loadSectorFundsJL();
     const se = document.querySelector("[data-sector-resonance]");
     if (se) {
       let idx = sectorFundsJL[sector];
@@ -1142,7 +1183,7 @@ document.addEventListener("visibilitychange", () => {
         } catch (e2) {}
       }
       se.classList.toggle("dimPendJL", !(idx && Number.isFinite(idx.amt)));
-      se.textContent = idx && Number.isFinite(idx.amt) ? `${sector} \xB7 ${idx.pct >= 0 ? "+" : ""}${idx.pct.toFixed(2)}% \xB7 ${idx.amt >= 0 ? "\u8D44\u91D1\u6D41\u5165" : "\u8D44\u91D1\u6D41\u51FA"} ${fmtFundJL(idx.amt)}${idx._d && idx._d !== jlLastTradeDay() ? " ·昨" : ""}` : `${sector} \xB7 \u677F\u5757\u8D44\u91D1${loadSectorFundsJL.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u6682\u7F3A"}`;
+      se.textContent = idx && Number.isFinite(idx.amt) ? `${sector} \xB7 ${idx.pct >= 0 ? "+" : ""}${idx.pct.toFixed(2)}% \xB7 ${idx.amt >= 0 ? "\u8D44\u91D1\u6D41\u5165" : "\u8D44\u91D1\u6D41\u51FA"} ${fmtFundJL(idx.amt)}${idx._d && idx._d !== jlLastTradeDay() ? " ·昨" : ""}` : (sector ? `${sector} \xB7 \u677F\u5757\u8D44\u91D1${loadSectorFundsJL.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u6682\u7F3A"}` : `\u6240\u5C5E\u884C\u4E1A\u672A\u8BC6\u522B \xB7 \u957F\u6309\u9F99\u6C60\u626B\u63CF\u540E\u81EA\u52A8\u8865\u5168`);
     }
     const rv = (q, v) => {
       const e = document.querySelector(q);
@@ -4575,7 +4616,14 @@ document.addEventListener("visibilitychange", () => {
         const snap = rs.ok ? await rs.json() : null;
         if (snap && snap.L && snap.d0) {
           JLPOOL = snap;
-          window.__jlPoolAsOf = String(snap.d0);
+          /* jl-0924-fix35: 原来这里把快照自己的 d0 写进 __jlPoolAsOf，而 jlPoolFresh 的第三个
+             判定分支正是 "s === window.__jlPoolAsOf" —— 等于快照自己证明自己新鲜。
+             后果: 第5305行 fresh=true → 陈旧警告横幅不显示; 第12579行"新交易日待更新"判定被绕过。
+             用户点按龙池看到 09-21 的旧榜却毫无提示，就是"点了没动静"。
+             现在改用独立标记 __jlPoolOfflineD0，不再污染新鲜度豁免；__jlPoolAsOf 留给
+             实盘扫描+离线资金表那条路径(第4760行)使用，那条的豁免是有理由的。 */
+          window.__jlPoolOfflineD0 = String(snap.d0 || snap.date || "");
+          try { window.__jlPoolAsOf = ""; } catch (eAo) {}
           jlSafeSetJL("jl_pool_v1", JSON.stringify(snap));
           try {
             const _all = [];
@@ -5303,6 +5351,18 @@ document.addEventListener("visibilitychange", () => {
       return;
     }
     const fresh = jlPoolFresh(JLPOOL.d0);
+    /* jl-0924-fix35b: 离线终榜必须显式标出数据日与"点按/长按"的区别。
+       原来 fresh 被 __jlPoolAsOf 豁免成 true，陈旧横幅整条不显示，用户无从判断榜是哪天的。 */
+    if (!fresh && window.__jlPoolOfflineD0) {
+      try {
+        const _od = String(window.__jlPoolOfflineD0);
+        const _td = jlLastTradeDay();
+        if (_od && _od !== _td) {
+          html += '<div class="poolStale">\u79BB\u7EBF\u7EC8\u699C \xB7 \u6570\u636E\u65E5 ' + _od + ' \u2260 \u6700\u8FD1\u4EA4\u6613\u65E5 ' + _td
+            + ' \u00B7 \u70B9\u6309=\u79D2\u8F7D\u6B64\u65E7\u699C \u00B7 \u957F\u6309\u626B\u63CF\u94AE=\u5B9E\u76D8\u91CD\u626B</div>';
+        }
+      } catch (eOff) {}
+    }
     let html = poolJxHTMLJL() + poolZtHTMLJL() + poolNavHTMLJL(JLPOOL, "", false);
     html += '<div class="poolConsole"><div class="pcRow"><b>\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \xB7 " + JLPOOL.ts + "\u626B \xB7 \u5B87\u5B99" + JLPOOL.uni + "\u53EA" + (JLPOOL.src === "offline" ? " \xB7 \u79BB\u7EBF\u7EC8\u699C" : JLPOOL.src === "snap" ? " \xB7 \u79BB\u7EBF\u5FEB\u7167" : JLPOOL.src === "ffoff" ? " \xB7 \u79BB\u7EBF\u8D44\u91D1" + JLPOOL_FFOFF_ASOF.slice(5) : "") + "</b><span>" + JLPOOL_LAYERS.map((l) => l[1] + (JLPOOL.L[l[0]] || []).length).join(" \xB7 ") + "</span></div>" + (JLPOOL.rejectStats ? '<div class="pcRow" style="margin-top:4px"><span>\u8D44\u683C\u95E8\u62E6\u622A\uFF1A\u8FC7\u671F' + JLPOOL.rejectStats.stale + " \xB7 \u6D3E\u53D1\u98CE\u9669" + JLPOOL.rejectStats.risk + " \xB7 \u8D44\u91D1\u91CF\u7EA7/\u8BC1\u636E\u4E0D\u8DB3" + JLPOOL.rejectStats.insufficient + " \xB7 \u8F6C\u89C2\u5BDF" + JLPOOL.rejectStats.observe + "</span></div>" : "") + "</div>";
     if (!fresh) html += '<div class="poolStale">\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \u2260 \u6700\u8FD1\u4EA4\u6613\u65E5\uFF08" + jlLastTradeDay() + "\uFF09\xB7 \u65E7\u699C\u5B58\u6863\u5C55\u793A\xB7\u4E0D\u4F5C\u4E3A\u4ECA\u65E5\u4F9D\u636E \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>";
@@ -14065,6 +14125,10 @@ function ffMergeJL(oldRows, newRows) {
       get uniN() { return window.__jlUniN != null ? window.__jlUniN : null; },
       get poolErr() { return window.__jlPoolErr || null; },
       get abort() { return window.JLPOOL_ABORT || ""; },
+      sectorOfJL: sectorOfJL, sectorNameNormJL: sectorNameNormJL,
+      get sectorFunds() { return typeof sectorFundsJL !== "undefined" ? sectorFundsJL : null; },
+      get sectorN() { return window.__jlSectorN != null ? window.__jlSectorN : null; },
+      get poolOfflineD0() { return window.__jlPoolOfflineD0 || ""; },
       maps: maps, realCache: realCache, cache: cache, pvMap: _pvVpMapJL,
       series: series, draw: draw, selectHolding: selectHolding, paint: paint, refPrev: refPrev, vpEnd: vpEnd,
       hc: function () { return document.getElementById("holdingChart"); }
