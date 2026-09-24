@@ -1038,8 +1038,11 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
       ctx.setLineDash([]);
       if (yy - window.__fibLastY >= 12) {
         window.__fibLastY = yy;
-        var _nm2 = FIB_N[String(r)] || "";
-        var _tx2 = (_nm2 ? _nm2 + " " : "") + r + "  " + fwp(pr);
+        /* ks-0924-2: 用户"feibo前面的字删掉吧"——去掉 FIB_N 中文前缀
+           (接回·浅 / 接回·半 / 接回·深 / 接回·极限 / 冲刺一 / 冲刺二 / 冲刺·主 / 冲刺·尾)，
+           标签只留「档位  价格」，例如 0.618  394.95。
+           FIB_N 表本身保留不删（便于回滚，且不影响任何其它逻辑）。 */
+        var _tx2 = r + "  " + fwp(pr);
         ctx.font = "bold 10px Menlo, monospace";
         var _tw4 = ctx.measureText(_tx2).width;
         /* ks-0924-1: 删掉 rgba(6,10,8,0.88) 近黑底片，改字形光环（透明底） */
