@@ -636,6 +636,20 @@ function hint(t) { hintEl.innerHTML = t || ""; if (_hintT) clearTimeout(_hintT);
 function cls(p) { return p == null || isNaN(p) ? "flat" : (p > 0 ? "up" : (p < 0 ? "down" : "flat")); }
 function dec() { var t = typeOf(S.active); var b = S.active.replace(/^(sh|sz)/, ""); return (t === "ETF" || t === "FJ" || /^(51|15|16|58)/.test(b)) ? 3 : 2; } // ks-0906-26: ETF/基金按代码段判3位小数, 不再写死单一代码
 function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFixed(d2); }
+  /* ks-0924-1: 用户"斐波那契数字后面干嘛还要黑色背景，明明应该是透明的"。
+     原来每档标签都垫一块近黑矩形(rgba(6,10,8,0.88) / rgba(8,12,10,0.85))，直接删掉会在
+     K线、网格、色带上糊成一片看不清。改为【字形描边光环】：沿文字轮廓描一层半透明深色再填色，
+     没有任何矩形块 = 视觉上就是透明底，同时保留在复杂背景上的可读性。 */
+  function ksHaloTextJL(ctx, txt, x, y, color, halo) {
+    var _lw = ctx.lineWidth, _sj = ctx.lineJoin, _ml = ctx.miterLimit, _ss = ctx.strokeStyle;
+    ctx.lineJoin = "round"; ctx.miterLimit = 2; ctx.lineWidth = 2.6;
+    ctx.strokeStyle = halo || "rgba(4,8,6,0.6)";
+    ctx.strokeText(txt, x, y);
+    ctx.fillStyle = color;
+    ctx.fillText(txt, x, y);
+    ctx.lineWidth = _lw; ctx.lineJoin = _sj; ctx.miterLimit = _ml; ctx.strokeStyle = _ss;
+  }
+
 var UP = "#ff6f66", DN = "#35d99a", DIM = "#8fa398", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f"; // ks-0907-27: DIM提亮(白底invert后是深灰才看得清)/GRID降噪
 // 金粼0913晚: embed网格细化(0.5px Tiffany青调)——只动网格线, 字/标注颜色一律跟随部署版(房主指令: 字颜色全抄K-STATION)
 function _embMode() { return typeof document !== "undefined" && document.body && document.body.classList.contains("embed"); }
@@ -998,10 +1012,8 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     ctx.font = "bold 10px Menlo, monospace"; // hq-mobile请求: 小字
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
     var tw = ctx.measureText(lab).width;
-    ctx.fillStyle = "rgba(8,12,10,0.85)";
-    ctx.fillRect(v.padL + 3, ly - 12, tw + 8, 14);
-    ctx.fillStyle = sel ? SEL : (t === "buy" ? "#ffd21f" : lc);
-    ctx.fillText(lab, v.padL + 8, ly - 5);
+    /* ks-0924-1: 同上，删掉 rgba(8,12,10,0.85) 近黑底片，改字形光环（透明底） */
+    ksHaloTextJL(ctx, lab, v.padL + 8, ly - 5, sel ? SEL : (t === "buy" ? "#ffd21f" : lc));
   }
   else if (t === "rect") {
     var x0 = Math.min(pts[0].x, pts[1].x), x1 = Math.max(pts[0].x, pts[1].x);
@@ -1030,10 +1042,8 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
         var _tx2 = (_nm2 ? _nm2 + " " : "") + r + "  " + fwp(pr);
         ctx.font = "bold 10px Menlo, monospace";
         var _tw4 = ctx.measureText(_tx2).width;
-        ctx.fillStyle = "rgba(6,10,8,0.88)";
-        ctx.fillRect(right - _tw4 - 8, yy - 12, _tw4 + 8, 13);
-        ctx.fillStyle = FIB_C[String(r)] || "#d5e0d8";
-        ctx.fillText(_tx2, right - _tw4 - 4, yy - 2);
+        /* ks-0924-1: 删掉 rgba(6,10,8,0.88) 近黑底片，改字形光环（透明底） */
+        ksHaloTextJL(ctx, _tx2, right - _tw4 - 4, yy - 2, FIB_C[String(r)] || "#d5e0d8");
         ctx.font = "10px -apple-system, sans-serif";
       }
     }
