@@ -1,4 +1,8 @@
-/* jinlin sw v.76 — 2026-10-01: 缓存名 →v106, 配合龙池资金确认计数+补拉轮+mfsvg审计修复批(index v0.82.10:
+/* jinlin sw v.77 — 2026-10-01: 缓存名 →v107, 配合持仓详情15分波段判定行五修(index v0.82.11:
+   F5 m15缓存永不刷新根治(用户实证:跌穿31.18仍显示31.18) / F1 判定与显示统一用l15hi0 /
+   F2 破位加0.2%滞后带+按票记忆+换腿作废 / F3 回调看改指本腿接回档0.382-0.5(原指腿起点=100%回撤) /
+   F4 补「已破15分波段起点·接回档作废」失效态 / F6 修「还差0.0%」退化改指冲刺档)。
+   jinlin sw v.76 — 2026-10-01: 缓存名 →v106, 配合龙池资金确认计数+补拉轮+mfsvg审计修复批(index v0.82.10:
    P12 资金确认240/172根治(4处进度调用收敛单一出口+补拉轮不再全量重跑+百分比与文字同源+离线表停更明示) /
    P13 mfsvg白框丢失·口径标签·NaN守卫 / P14 撤ydFdCvJL重复图+超大单累计并入mfsvg上栏)。
    jinlin sw v.75 — 2026-10-01: 缓存名 →v105, 配合大盘异动主力流入/流出副图加大批(index v0.82.9:
@@ -26,8 +30,8 @@
    (b) 缓存全 miss 时回退等待原始 fetch,不再 respondWith(undefined) 抛 TypeError
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
-const C = 'jinlin-shell-v106';
-const KEEP = ['jinlin-shell-v106', 'jinlin-shell-v105'];
+const C = 'jinlin-shell-v107';
+const KEEP = ['jinlin-shell-v107', 'jinlin-shell-v106'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

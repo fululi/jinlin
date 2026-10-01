@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.82.10" data-sw="jinlin-shell-v106"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.82.11" data-sw="jinlin-shell-v107"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -29,7 +29,7 @@
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paint); else paint();
   })();</script>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.82.10</title><style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.82.11</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -3617,7 +3617,10 @@ document.addEventListener("visibilitychange", () => {
     if (!pr) return "";
     const p = Number(s.base), sw = ttModeJL[s.code] === "sw";
     const _leg15 = legM15JL(s.code);
-    if (!_leg15) ensureM15JL(s.code);
+    /* v0.82.11-F5: 原来只在腿算不出来时才拉数据 -> 腿一旦算出来，m15CacheJL 就再也不会刷新，
+       行 3827 的 15 分钟 TTL 在成功路径上是死代码，l15lo/l15hi0 冻结在首次抓取那一刻。
+       改为无条件调用：ensureM15JL 自带 TTL + in-flight 双闸，常态开销只是一次查表。 */
+    ensureM15JL(s.code);
     const _l15lo = _leg15 ? Math.min(_leg15.a, _leg15.b) : 0, _l15hi0 = _leg15 ? Math.max(_leg15.a, _leg15.b) : 0;
     const _l15hi = _leg15 ? Math.max(_l15hi0, p, Number(s.high) || 0) : 0;
     const legF = sw && !_leg15 ? legFibJL(s.code, p) : null, hasLeg = !!(_leg15 || legF), useLeg = sw && hasLeg;
@@ -3854,6 +3857,11 @@ document.addEventListener("visibilitychange", () => {
       delete ensureM15JL._fly[code];
     }
   }
+  /* v0.82.11-F2: 15分波段高破位状态(按票)。做滞后带用，避免 liveP 在阈值附近来回穿时
+     判定行在「已破·冲刺」与「没破·回调」之间高频翻转、红绿交替。
+     _l15BrkHiJL 记住判定时的 l15hi0：腿换了(变动 >0.5%)就把状态作废重判，
+     防止旧的破位状态跨腿残留。两者都只活在内存，刷新页面即重置(与波段本身同源)。 */
+  const _l15BrkJL = {}, _l15BrkHiJL = {};
   function legM15JL(code) {
     const kl = jlM15BarsOf(code);
     if (!kl || kl.length < 10) return null;
@@ -7870,15 +7878,58 @@ function ffMergeJL(oldRows, newRows) {
     fib.innerHTML = f ? (() => {
       const panel = playbookHTMLJL(stock, f);
       const l15 = legM15JL(stock.code);
-      if (!l15) ensureM15JL(stock.code);
+      /* v0.82.11-F5: 同 posRulerHTMLJL —— 无条件刷新，否则详情面板的 15分波段值整场不变 */
+      ensureM15JL(stock.code);
       const l15lo = l15 ? Math.min(l15.a, l15.b) : 0, l15hi0 = l15 ? Math.max(l15.a, l15.b) : 0;
       const l15hi = l15 ? Math.max(l15hi0, liveP, Number(stock.high) || 0) : 0;
       let mid = "", judge = "";
       if (l15 && l15hi > l15lo) {
-        mid = `<div class="fibState">中波段·15分 低 ${l15lo.toFixed(2)} → 高 ${l15hi.toFixed(2)}${l15hi > l15hi0 ? " · 盘中" : ""}</div>`;
+        /* v0.82.11-F1: 显示与判定统一到 l15hi0。原来这里显示 l15hi(含现价与今日高)、
+           而下面判定用 l15hi0，同一屏上「15分波段高」会出现两个不同的数。
+           盘中新高改成独立标注的事实，不再冒充「波段高」。 */
+        mid = `<div class="fibState">中波段·15分 低 ${l15lo.toFixed(2)} → 高 ${l15hi0.toFixed(2)}${l15hi > l15hi0 ? ` · <span style="color:#e8c568">盘中已新高 ${l15hi.toFixed(2)}</span>` : ""}</div>`;
+        /* v0.82.11-F2: 0.2% 滞后带 + 按票记忆。腿换了(l15hi0 变动 >0.5%)则状态作废重判。 */
+        const _pvHi = _l15BrkHiJL[stock.code];
+        if (_pvHi > 0 && Math.abs(_pvHi - l15hi0) / _pvHi > 0.005) _l15BrkJL[stock.code] = 0;
+        _l15BrkHiJL[stock.code] = l15hi0;
+        let _brk = _l15BrkJL[stock.code] === 1;
+        if (!_brk && liveP > l15hi0 * 1.002) _brk = true;
+        else if (_brk && liveP < l15hi0 * 0.998) _brk = false;
+        _l15BrkJL[stock.code] = _brk ? 1 : 0;
+        /* v0.82.11-F3: 回调目标改指本腿自身的接回档，命名与 playbookHTMLJL 的
+           「接回·浅 0.382 / 接回·半 0.50」逐字对齐。原来的 l15lo 是整条腿的起点
+           (= 100% 回撤位)，按实数会给出「回调看 31.18（跌 25.1%）」这种没有操作意义的目标。 */
+        const _rng15 = l15hi0 - l15lo;
+        /* v0.82.11-F3b: 只取仍在现价下方的档位，最浅两档就是最近的两个回调目标。
+           原来固定报 0.382/0.5 两档，价格已经跌到它们下方时会算出「跌 -20.7%」这种负数
+           (_chk5/test_fib.js 边界用例实测)，方向都是反的。四档全被穿过时改说人话，不硬塞目标。 */
+        const _lv15 = [[0.382, "接回·浅"], [0.5, "接回·半"], [0.618, "接回·深"], [0.786, "接回·极限"]]
+          .map((z) => ({ nm: z[1], v: l15hi0 - _rng15 * z[0] }))
+          .filter((o) => Number.isFinite(o.v) && o.v < liveP);
+        const _pd = (v) => ((1 - v / liveP) * 100).toFixed(1);
         const bHi = Math.max(f.hi, liveP, Number(stock.high) || 0);
-        if (liveP > l15hi0) judge = `<div class="fibState" style="color:#ff5459">已破15分波段高 ${l15hi0.toFixed(2)} · 冲刺日级别高 ${bHi.toFixed(2)}（还差 ${((bHi / liveP - 1) * 100).toFixed(1)}%）</div>`;
-        else judge = `<div class="fibState" style="color:#1fdc93">没破15分波段高 ${l15hi0.toFixed(2)} · 回调看 ${l15lo.toFixed(2)}（跌 ${((1 - l15lo / liveP) * 100).toFixed(1)}%）</div>`;
+        if (liveP < l15lo) {
+          /* v0.82.11-F4: 补失效态。卡面 posRulerHTMLJL 有 brkL「▼破段低·破位」、
+             日线面板 playbookHTMLJL 有「已破腿起点 · 旧接回档作废」，这里原来两者都没有，
+             于是价格跌破腿起点后仍显示「没破 · 回调看 <已跌穿的值>」——用户 10-01 实证现象。 */
+          judge = `<div class="fibState" style="color:#ff7a72">已破15分波段起点 ${l15lo.toFixed(2)} · 本段接回档作废（与日线面板同口径）</div>`;
+        } else if (_brk) {
+          const _gap = (bHi / liveP - 1) * 100;
+          if (_gap < 0.05) {
+            /* v0.82.11-F6: bHi 把现价自己吃进了 max，现价即最高时 _gap 恒 0，
+               「冲刺日级别高 X（还差 0.0%）」是退化显示。改指面板同源的冲刺档。 */
+            const _hh = Math.max(f.H1 || 0, liveP, Number(stock.high) || 0), _rg = _hh - (f.L1 || 0);
+            judge = _rg > 0
+              ? `<div class="fibState" style="color:#ff5459">已破15分波段高 ${l15hi0.toFixed(2)} · 现价即日级别活高 ${bHi.toFixed(2)} · 下一目标 冲刺一 ${(f.L1 + _rg * 1.272).toFixed(2)} / 冲刺主 ${(f.L1 + _rg * 1.618).toFixed(2)}</div>`
+              : `<div class="fibState" style="color:#ff5459">已破15分波段高 ${l15hi0.toFixed(2)} · 现价即日级别活高 ${bHi.toFixed(2)} · 无更高段高可指</div>`;
+          } else {
+            judge = `<div class="fibState" style="color:#ff5459">已破15分波段高 ${l15hi0.toFixed(2)} · 冲刺日级别高 ${bHi.toFixed(2)}（还差 ${_gap.toFixed(1)}%）</div>`;
+          }
+        } else {
+          judge = _lv15.length
+            ? `<div class="fibState" style="color:#1fdc93">没破15分波段高 ${l15hi0.toFixed(2)} · 回调看 ${_lv15.slice(0, 2).map((o) => `${o.nm} ${o.v.toFixed(2)}（跌 ${_pd(o.v)}%）`).join(" / ")}</div>`
+            : `<div class="fibState" style="color:#e8c568">没破15分波段高 ${l15hi0.toFixed(2)} · 现价 ${liveP.toFixed(2)} 已穿全部接回档（最深 ${(l15hi0 - _rng15 * 0.786).toFixed(2)}）· 逼近腿起点 ${l15lo.toFixed(2)}</div>`;
+        }
       }
       return panel + mid + judge;
     })() : "真实波段 Fib 加载中…";
