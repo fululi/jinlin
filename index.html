@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.82.11" data-sw="jinlin-shell-v107"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.82.12" data-sw="jinlin-shell-v108"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -29,7 +29,7 @@
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paint); else paint();
   })();</script>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.82.11</title><style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.82.12</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:var(--ink);color:#eff9fc;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation}#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:#081a27ee;color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink)}body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:var(--ink);display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -5175,6 +5175,32 @@ document.addEventListener("visibilitychange", () => {
         const rs = await fetch("./pool_latest.json?_=" + Date.now(), { cache: "no-store" });
         const snap = rs.ok ? await rs.json() : null;
         if (snap && snap.L && snap.d0) {
+          /* v0.82.12-P15: 不再无条件用静态快照覆盖本地榜。
+             仓库里的 pool_latest.json 是 hq 管道产物，管道停更后它永远停在旧日期
+             (实测 date=d0=2026-09-21, ts=15:16)。原逻辑只判 snap && snap.L && snap.d0
+             就 JLPOOL = snap 并 jlSafeSetJL("jl_pool_v1", snap) —— 用户长按实盘重扫出来的
+             09-30 新榜，被一次「点按龙池扫描」永久覆盖回 09-21(连 localStorage 一起写坏)，
+             而 toast 只说「离线快照已载入」，听不出这是降级。
+             这就是「我扫过 09-30 了，重新打开怎么还是 09-21」。
+             改为比数据日(ISO 串可直接比大小)：快照不比本地新就保留本地榜、不写盘、
+             并把两边日期都说清楚。快照确实更新时照旧覆盖，那条路径是对的。
+             return 在 try 内，行 5256 的 finally 仍会复位 JLPOOL_RUN 并 renderWatch。 */
+          const _snapD0 = String(snap.d0 || snap.date || "");
+          let _locP = null;
+          try { _locP = JSON.parse(localStorage.getItem("jl_pool_v1") || "null"); } catch (eLc) { _locP = null; }
+          const _locD0 = String((_locP && (_locP.d0 || _locP.date)) || "");
+          if (_locP && _locP.L && _locD0 && _snapD0 && _locD0 > _snapD0) {
+            JLPOOL = _locP;
+            window.__jlPoolOfflineD0 = _snapD0;
+            try { window.__jlPoolAsOf = ""; } catch (eAo3) {}
+            try { window.__jlPoolKeptLocalJL = { loc: _locD0, snap: _snapD0 }; } catch (eKp) {}
+            JLPOOL_PCT = 100;
+            JLPOOL_PROG = "";
+            try {
+              toast("已保留本地榜 · 数据日 " + _locD0 + " · 仓库离线快照停在 " + _snapD0 + "(较旧·未覆盖) · 长按=实盘重扫");
+            } catch (e4) {}
+            return;
+          }
           JLPOOL = snap;
           /* jl-0924-fix35: 原来这里把快照自己的 d0 写进 __jlPoolAsOf，而 jlPoolFresh 的第三个
              判定分支正是 "s === window.__jlPoolAsOf" —— 等于快照自己证明自己新鲜。
@@ -5198,7 +5224,8 @@ document.addEventListener("visibilitychange", () => {
           JLPOOL_PCT = 100;
           JLPOOL_PROG = "";
           try {
-            toast("离线快照已载入 · 数据日 " + snap.d0 + " · 长按=实盘重扫");
+            /* v0.82.12-P15b: 这一支是「快照确实不比本地旧」才走到，把覆盖动作说明白 */
+            toast("离线快照已载入 · 数据日 " + snap.d0 + (_locD0 && _locD0 !== _snapD0 ? "(覆盖本地 " + _locD0 + ")" : "") + " · 长按=实盘重扫");
           } catch (e) {
           }
           return;
