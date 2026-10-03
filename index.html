@@ -3797,7 +3797,7 @@ document.addEventListener("visibilitychange", () => {
   const ATR_FLOOR_JL = 0.9;
   function decTierJL(s) { // jl-0928-6: 档位精度——ETF/基金(51/15/16/58段)或1元以下票用3位小数, 与ks端dec()同口径
     const p2 = Number(s && s.base) || 0, b2 = String(s && s.code || "").replace(/^(sh|sz|bj)/, "");
-    return p2 > 0 && p2 < 1 || /^(51|15|16|58)/.test(b2) ? 3 : 2;
+    return p2 > 0 && p2 < 1 || /^(51|15|16|56|58)/.test(b2) ? 3 : 2; /* v0.83.3: 补 56 段 ETF；仅显示位数，档位取整(computeTierJL tick2)仍按价格 <1 判断，未改 */
   }
   function tiersViewJL(s) {
     const t = tierLevelsJL(s);
@@ -4492,7 +4492,7 @@ document.addEventListener("visibilitychange", () => {
     return g === "indices" ? indices : g === "leaders" ? [...new Map([...testedLeadersJL(), ...researchedStocksJL].map((x) => [x.code, x])).values()] : stocks.concat(researchedStocksJL.filter((x) => x && !stocks.some((s) => s.code === x.code))); // v.52: 持仓deck带上研究股(兆易不再"又没了")
   }
   const JLPOOL_LAYERS = [["start", "\u521A\u542F\u52A8", "#ff9f6e"], ["zs", "\u4E3B\u5347", "#ff5f56"], ["eb", "\u4E8C\u6CE2", "#e8c568"], ["trend", "\u8D8B\u52BF\u4E2D", "#4a9eff"], ["top", "\u5230\u9876\u98CE\u9669", "#8d97a6"]];
-  const JLPOOL_DESC = { start: "\u63A7\u5236\u52065\u65E5\u6025\u5347 + \u4F4E\u4F4D + \u653E\u91CF\u542F\u52A8 \xB7 \u5148\u9A8C\u65E5K/\u8D44\u91D1\u65B0\u9C9C\u5EA6\uFF0C\u5408\u683C\u540E\u8BC4\u5206\u6392\u5E8F", zs: "\u63A7\u5236\u5206>150 \u9AD8\u4F4D\u5F3A\u52BF \xB7 10\u65E5\u4E3B\u529B\u6D41\u5165\u5929\u6570\u53EA\u4F5C\u6392\u5E8F\u8BC1\u636E", eb: "\u6DA8\u505C\u57FA\u56E0 + 20\u65E5\u7EBF\u9644\u8FD1(\u5BB92%)\u7F29\u91CF\u22653\u5929 + 20\u65E5\u7EBF\u8FD15\u65E5\u672A\u8D70\u4F4E \xB7 \u8D44\u91D1\u7F3A\u5931/\u65E7\u65E5\u671F\u76F4\u63A5\u964D\u7EA7\uFF0C\u4E0D\u6CBF\u7528\u65E7\u503C", trend: "\u7AD9EMA20 + \u63A7\u5236\u5206\u226550 \xB7 \u8D44\u91D1\u65B0\u9C9C\u5EA6\u540C\u6837\u5148\u9A8C\uFF0C\u53C2\u8003\u4ED3\u522B\u91CD\u4ED3", top: "\u63A7\u5236\u5206\u9AD8\u4F4D + \u5F53\u65E5\u56DE\u843D \xB7 \u98CE\u9669\u89C2\u5BDF\u9879\uFF0C\u4E0D\u662F\u4E70\u70B9" };
+  const JLPOOL_DESC = { start: "\u63A7\u5236\u52065\u65E5\u6025\u5347 + \u4F4E\u4F4D + \u653E\u91CF\u542F\u52A8 \xB7 \u5148\u9A8C\u65E5K/\u8D44\u91D1\u65B0\u9C9C\u5EA6\uFF0C\u5408\u683C\u540E\u8BC4\u5206\u6392\u5E8F", zs: "\u63A7\u5236\u5206>150 \u9AD8\u4F4D\u5F3A\u52BF \xB7 10\u65E5\u4E3B\u529B\u6D41\u5165\u5929\u6570\u53EA\u4F5C\u6392\u5E8F\u8BC1\u636E", eb: "\u6DA8\u505C\u57FA\u56E0 + EMA20\u9644\u8FD1(\u5BB92%)\u7F29\u91CF\u22653\u5929 + EMA20\u8FD15\u65E5\u672A\u8D70\u4F4E \xB7 \u8D44\u91D1\u7F3A\u5931/\u65E7\u65E5\u671F\u76F4\u63A5\u964D\u7EA7\uFF0C\u4E0D\u6CBF\u7528\u65E7\u503C", trend: "\u7AD9EMA20 + \u63A7\u5236\u5206\u226550 \xB7 \u8D44\u91D1\u65B0\u9C9C\u5EA6\u540C\u6837\u5148\u9A8C\uFF0C\u53C2\u8003\u4ED3\u522B\u91CD\u4ED3", top: "\u63A7\u5236\u5206\u9AD8\u4F4D + \u5F53\u65E5\u56DE\u843D \xB7 \u98CE\u9669\u89C2\u5BDF\u9879\uFF0C\u4E0D\u662F\u4E70\u70B9" };
   let JLPOOL = null;
   try {
     const _jp = JSON.parse(localStorage.getItem("jl_pool_v1"));
@@ -5505,10 +5505,10 @@ document.addEventListener("visibilitychange", () => {
   }
   function whyLineJL(x) {
     const b = [];
-    if (x.layer === "start") b.push("\u63A7\u5236\u52065\u65E5" + (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0) + "\uFF08>30 \u89E6\u53D1\u7EBF\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u4F4E\u4F4D", "20\u65E5" + x.p20.toFixed(1) + "%\uFF08<15%\uFF09", "\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A");
-    else if (x.layer === "zs") b.push("\u63A7\u5236\u5206" + x.ctrl + "\uFF08>150\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u9AD8\u4F4D", "\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A", "20\u65E5" + x.p20.toFixed(1) + "%");
-    else if (x.layer === "eb") b.push("\u8FD120\u65E5\u6DA8\u505C" + x.lu20 + "\u6B21 \xB7 \u4E00\u5E74\u6DA8\u505C\u57FA\u56E0" + x.gene, "20\u65E5\u7EBF\u9644\u8FD1\u7F29\u91CF\u6574\u7406" + x.wash + "\u5929\uFF08\u22653\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x));
-    else if (x.layer === "trend") b.push("\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A", "\u63A7\u5236\u5206" + x.ctrl + "\uFF08\u226550\uFF09");
+    if (x.layer === "start") b.push("\u63A7\u5236\u52065\u65E5" + (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0) + "\uFF08>30 \u89E6\u53D1\u7EBF\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u4F4E\u4F4D", "20\u65E5" + x.p20.toFixed(1) + "%\uFF08<15%\uFF09", "\u6536\u76D8\u5728EMA20\u4E0A");
+    else if (x.layer === "zs") b.push("\u63A7\u5236\u5206" + x.ctrl + "\uFF08>150\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u9AD8\u4F4D", "\u6536\u76D8\u5728EMA20\u4E0A", "20\u65E5" + x.p20.toFixed(1) + "%");
+    else if (x.layer === "eb") b.push("\u8FD120\u65E5\u6DA8\u505C" + x.lu20 + "\u6B21 \xB7 \u4E00\u5E74\u6DA8\u505C\u57FA\u56E0" + x.gene, "EMA20\u9644\u8FD1\u7F29\u91CF\u6574\u7406" + x.wash + "\u5929\uFF08\u22653\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x));
+    else if (x.layer === "trend") b.push("\u6536\u76D8\u5728EMA20\u4E0A", "\u63A7\u5236\u5206" + x.ctrl + "\uFF08\u226550\uFF09");
     else b.push("\u63A7\u5236\u5206" + x.ctrl + "\u9AD8\u4F4D\uFF08\u2265100\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x), "\u5F53\u65E5" + x.pct.toFixed(2) + "%\u56DE\u843D");
     if (x.vr >= 1.5) b.push("\u542F\u52A8\u91CF\u6BD4" + x.vr.toFixed(2) + "\xD7");
     if (x.ind && JLPOOL_HOT.has(x.ind)) b.push("\u70ED\u95E8\u884C\u4E1A\xB7" + x.ind);
@@ -6515,20 +6515,43 @@ document.addEventListener("visibilitychange", () => {
     }
     return [];
   }
-  function dkSaveJL(code, rows) {
+  /* v0.83.3: jl_dk_ 日K缓存加上限 + 持仓/观察票永不驱逐(比照 jlFfEvictJL)。
+     原来没有数量上限，配额满时只删 localStorage.key() 遍历遇到的第一只——顺序由浏览器决定，可能正好删掉持仓票。
+     jl_dk_ 是纯数组没有写入时间，用最后一根K线日期作 LRU 代理(停牌/久未刷新的票日期旧，优先删)，不解析 JSON 只截字符串。 */
+  const DK_CAP_JL = 60;
+  function dkEvictJL(keepCode, need) {
     try {
-      localStorage.setItem("jl_dk_" + code, JSON.stringify(rows.slice(-320).map((r) => [r.t, r.o, r.c, r.h, r.l, r.v])));
+      const keep = {}, nb = (c) => String(c).replace(/^(sh|sz|bj)/i, "");
+      keep[nb(keepCode)] = 1;
+      try { (typeof stocks !== "undefined" ? stocks : []).forEach((s) => { if (s && s.code) keep[nb(s.code)] = 1; }); } catch (eK) {
+      }
+      const ks = [];
+      for (let q = 0; q < localStorage.length; q++) {
+        const k2 = localStorage.key(q);
+        if (k2 && k2.indexOf("jl_dk_") === 0) ks.push(k2);
+      }
+      let over = need ? Math.max(need, ks.length - DK_CAP_JL) : ks.length - DK_CAP_JL;
+      if (over <= 0) return 0;
+      const sac = ks.filter((k2) => !keep[nb(k2.slice(6))]).map((k2) => {
+        const v = localStorage.getItem(k2) || "", j = v.lastIndexOf('["');
+        return [k2, j >= 0 ? v.slice(j + 2, j + 12) : ""];
+      }).sort((a, b) => a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0);
+      let n = 0;
+      for (let i = 0; i < sac.length && over > 0; i++, over--, n++) localStorage.removeItem(sac[i][0]);
+      return n; /* 极端情况: 持仓+观察本身超上限——不动, 宁可不缓存新票 */
+    } catch (e) {
+      return 0;
+    }
+  }
+  function dkSaveJL(code, rows) {
+    const val = JSON.stringify(rows.slice(-320).map((r) => [r.t, r.o, r.c, r.h, r.l, r.v]));
+    try {
+      localStorage.setItem("jl_dk_" + code, val);
+      dkEvictJL(code, 0);
     } catch (e) {
       if (e && e.name === "QuotaExceededError") {
         try {
-          for (let q = 0; q < localStorage.length; q++) {
-            const k2 = localStorage.key(q);
-            if (k2 && k2.indexOf("jl_dk_") === 0) {
-              localStorage.removeItem(k2);
-              break;
-            }
-          }
-          localStorage.setItem("jl_dk_" + code, JSON.stringify(rows.slice(-320).map((r) => [r.t, r.o, r.c, r.h, r.l, r.v])));
+          if (dkEvictJL(code, 1) > 0) localStorage.setItem("jl_dk_" + code, val);
         } catch (e3) {
         }
       }
@@ -6571,7 +6594,7 @@ document.addEventListener("visibilitychange", () => {
   }
   try { // jl-0920-41: 清洗第二轮·白名单制——v1只清了日K/旧筹码,龙池/资金流/行业/温度/标定/涨停池等计算缓存残留照样喂脏数据;本轮除用户数据(持仓/画线/提醒/做T记录/设置/复盘台账)外,jl_*/jinlin_*全部清除,全部从接口重建
     if (localStorage.getItem("jl_purge_0920b") !== "1") {
-      const _keep = /^(jinlin_stocks_v2|jinlin_stocks_v2_bak|jinlin_research_v1|jinlin_preview_lines_v1|jinlin_preview_alerts_v1|jinlin_panes_v1|jinlin_ov_v1|jinlin_ov_sr_mig|jinlin_rlm_opt_v1|jinlin_trades_v1|jinlin_tier_alert_v1|jinlin_hldsub_v1|jl_fund_mode_v1|jinlin_ks_on|jinlin_yd_tab|jinlin_sborb_v1|jinlin_ffball_v1|jinlin_brokers_v1|jl_band_ledger_v1|jl_line_log_v1|jinlin_pred_log_v1|jl_fund_review_v1|jinlin_tt_v1|jinlin_tier_day_v1|jinlin_ks_mig2|jl_purge_)/;
+      const _keep = /^(jinlin_stocks_v2|jinlin_stocks_v2_bak|jinlin_research_v1|jinlin_preview_lines_v1|jinlin_preview_alerts_v1|jinlin_panes_v1|jinlin_ov_v1|jinlin_ov_sr_mig|jinlin_rlm_opt_v1|jinlin_trades_v1|jinlin_tier_alert_v1|jinlin_hldsub_v1|jl_fund_mode_v1|jinlin_ks_on|jinlin_yd_tab|jinlin_sborb_v1|jinlin_ffball_v1|jinlin_brokers_v1|jl_band_ledger_v1|jl_line_log_v1|jinlin_pred_log_v1|jl_fund_review_v1|jinlin_tt_v1|jinlin_tier_day_v1|jinlin_ks_mig2|jl_pool_picks_v1|jl_pool_signals_v1|jl_purge_)/; /* v0.83.3: 龙池研究记录(主推跟踪/信号记录)加入永久保留，防止日后复制本段做新一轮清洗时误删 */
       const _pk = [];
       for (let _i = 0; _i < localStorage.length; _i++) {
         const _k = localStorage.key(_i);
