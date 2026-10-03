@@ -4549,7 +4549,7 @@ document.addEventListener("visibilitychange", () => {
     if (n < 80) return null; // jl-0920-38: 删n<60死代码(被本行覆盖)
     const _gL = kl[n - 1], _gPC = n >= 2 ? kl[n - 2].c : 0;
     if (!(_gL.v > 0)) return null;
-    const _gCode = String(code || "").replace(/^(sh|sz|bj)/, "");
+    const _gCode = String(code || "").replace(/^(sh|sz|bj)/i, "");
     if (/ST|退/i.test(name || "") || /^bj/i.test(String(code || "")) || /^(8|4|92)/.test(_gCode)) return null; // v0.83.2: 龙池剔除北交所、ST、退市整理
     if (!/^(60\d|68[89]|00\d|30\d)\d{3}$/.test(_gCode)) return null; // v0.83.2: 证券类型白名单——只放行沪深 A 股(沪主板60x/科创688·689/深主板00x/创业板30x)，换数据源也挡住 ETF/基金/可转债/B股
     /* v0.83.2: 涨停改交易所口径——涨停价 = 昨收×(1+幅度) 按 0.01 四舍五入，收盘达到涨停价(容 1 分，前复权价有舍入误差)才算；
