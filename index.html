@@ -3612,6 +3612,38 @@ document.addEventListener("visibilitychange", () => {
   function legEffHiJL(s, leg) {
     return Math.max(Number(leg.hi) || 0, Number(s.base) || 0, Number(s.high) || 0);
   }
+  /* v0.83.2: 卡面「当前段」——中波段 H 之后的回落腿（日线，H 后最低点，含盘中低）。
+     中波段 L1/H1 是已确认枢轴，回落中不会重绘，卡面原来只剩上一腿的回撤档，看不出这一波本身的高低。
+     这里直接给出：本段 H → 本段 L、反弹档（本段 0.382/0.5/0.618）、破本段 L 后的下一支撑（上一腿未穿的回撤档/L1）。 */
+  /* v0.83.2-P0: 卡面「交易计划」三行——当前段 / 上方看哪 / 下方看哪，全部基于日线中波段一条腿，不混 15 分。
+     下跌段：H 之后的最低点为本段 L，上方 = 本段反弹 0.382/0.5/0.618（与上涨腿回撤档相距 <0.5% 标「重合」），下方 = 上涨腿未穿的 0.618/0.786/L1。
+     上涨段（创新高中 / 回落 <3% / H 前已确认新低）：上方 = 段高，下方 = 上涨腿回撤 0.382/0.5/0.618，跌破 L1 失效。 */
+  function curLegHTMLJL(s, leg) {
+    if (!leg || !(leg.L1 > 0) || !(leg.H1 > leg.L1)) return "";
+    const p = Number(s.base) || 0, f = (v) => v.toFixed(2), H1 = Number(leg.H1), hh = Math.max(H1, Number(leg.hi) || 0, p, Number(s.high) || 0);
+    const row = (k, c, v) => `<div style="display:flex;gap:6px;align-items:baseline;line-height:1.55"><span style="flex:0 0 52px;color:${c}">${k}</span><span style="color:#dcebf2">${v}</span></div>`;
+    const wrap = (h) => `<div class="planJL" style="margin:6px 0 4px;padding:6px 8px;border:1px solid #81e6d92c;border-radius:9px;background:#0a1a2a80;font-size:10.5px;font-family:ui-monospace,monospace">${h}</div>`;
+    let lo = null, loD = "";
+    if (leg.hiD && !(leg.L1d && leg.L1d > leg.hiD) && p < hh) {
+      for (const r of dailyBarsOf(s.code)) if (r.t > leg.hiD && (lo == null || r.l < lo)) { lo = r.l; loD = r.t.slice(5); }
+      const dl = Number(s.low) || 0;
+      if (dl > 0 && (lo == null || dl < lo)) { lo = dl; loD = "盘中"; }
+    }
+    const upR = H1 - leg.L1;
+    if (lo > 0 && lo < hh * 0.97) {
+      const hi = Number(leg.hi) || hh, rg = hi - lo, upLv = [0.382, 0.5, 0.618, 0.786].map((r) => H1 - upR * r);
+      const reb = [0.382, 0.5, 0.618].map((r) => { const v = lo + rg * r, m = upLv.find((u) => Math.abs(u - v) / v < 0.005); return f(v) + (m ? `<small style="color:#e8c568">(重合压力)</small>` : ""); }).join(" / ");
+      const sup = [[0.618], [0.786], [1, "上涨段失效"]].map(([r, t]) => [H1 - upR * r, t]).filter(([v]) => v < lo - 1e-9).slice(0, 2).map(([v, t]) => f(v) + (t ? `<small style="color:#ff7a72">(${t})</small>` : "")).join(" / ");
+      return wrap(row("当前段", "#ff7a72", `▼ 下跌中 ${f(hi)} <i>${(leg.hiD || "").slice(5)}</i> → ${f(lo)} <i>${loD}</i>`)
+        + row("上方看", "#e8c568", "反弹 " + reb)
+        + row("下方看", "#57a7ff", sup ? `跌破 ${f(lo)} → ${sup}` : `跌破 ${f(lo)} → 已在上涨段起点下方`));
+    }
+    const hiTag = hh > (Number(leg.hi) || 0) + 1e-9 ? "盘中" : (leg.hiD || "").slice(5) + (leg.h1Prov ? "·未确认" : ""), rgU = hh - leg.L1;
+    const pb = [0.382, 0.5, 0.618].map((r) => f(hh - rgU * r)).join(" / ");
+    return wrap(row("当前段", "#1fdc93", `▲ 上涨中 ${f(leg.L1)} <i>${(leg.L1d || "").slice(5)}</i> → ${f(hh)} <i>${hiTag}</i>`)
+      + row("上方看", "#e8c568", p >= hh - 1e-9 ? `正在创新高 · 段高跟随 ${f(hh)}` : `段高 ${f(hh)}`)
+      + row("下方看", "#57a7ff", `回调 ${pb} · 跌破 ${f(leg.L1)}<small style="color:#ff7a72">(上涨段失效)</small>`));
+  }
   function posRulerHTMLJL(s) {
     const pr = posRulerJL(s);
     if (!pr) return "";
@@ -3623,13 +3655,15 @@ document.addEventListener("visibilitychange", () => {
     ensureM15JL(s.code);
     const _l15lo = _leg15 ? Math.min(_leg15.a, _leg15.b) : 0, _l15hi0 = _leg15 ? Math.max(_leg15.a, _leg15.b) : 0;
     const _l15hi = _leg15 ? Math.max(_l15hi0, p, Number(s.high) || 0) : 0;
-    const legF = sw && !_leg15 ? legFibJL(s.code, p) : null, hasLeg = !!(_leg15 || legF), useLeg = sw && hasLeg;
-    const bLo = useLeg ? _leg15 ? _l15lo : legF.lo : pr.lo, bHi = useLeg ? _leg15 ? _l15hi : legF.hi : pr.hi, rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
+    /* v0.83.2-P0: 波段模式的刻度条改用日线中波段 L1→段高(与下方 fib 刻度、卡面交易计划同一条腿)；15分腿只在日线腿缺失时兜底，15分明细看展开详情 */
+    const _legD = legFibJL(s.code, p), dOk = !!(_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1), _dHi = dOk ? Math.max(_legD.H1, p, Number(s.high) || 0) : 0;
+    const legF = sw && !dOk && !_leg15 ? _legD : null, hasLeg = !!(dOk || _leg15 || legF), useLeg = sw && hasLeg;
+    const bLo = useLeg ? dOk ? _legD.L1 : _leg15 ? _l15lo : legF.lo : pr.lo, bHi = useLeg ? dOk ? _dHi : _leg15 ? _l15hi : legF.hi : pr.hi, rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
     const tLo = _leg15 ? _l15lo : legF ? legF.lo : 0, tHi = _leg15 ? _l15hi : legF ? legF.hi : 0, tRng = tHi - tLo || 1;
     const stKey = useLeg ? p > bHi ? "brkH" : p < bLo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid" : pr.st;
     const stMap = useLeg ? { brkH: ["▲破段高·强势", "r"], brkL: ["▼破段低·破位", "g"], high: ["近段高·防回调", "r"], low: ["近段低·看支撑", "g"], mid: ["段内", ""] } : { brkH: ["▲破预判高·强势", "r"], brkL: ["▼破预判低·破位", "g"], high: ["高位·防回调", "r"], low: ["低位·看支撑", "g"], mid: ["中段", ""] }, st = stMap[stKey];
     let ticks = "";
-    const _legD = legFibJL(s.code, p); /* v0.82.4d: fib刻度行与展开面板逐字符同公式(L1/H1+突破跟随)——v0.82.4只换了腿源(lo/hi段极值),多腿/突破时仍与面板L1/H1基分叉; 现bk/ex对齐: r<=1→hh-rng*r, r>1→L1+rng*r, hh=max(H1,现价,今高) */
+    /* _legD 已在上方取得。v0.82.4d: fib刻度行与展开面板逐字符同公式(L1/H1+突破跟随)——v0.82.4只换了腿源(lo/hi段极值),多腿/突破时仍与面板L1/H1基分叉; 现bk/ex对齐: r<=1→hh-rng*r, r>1→L1+rng*r, hh=max(H1,现价,今高) */
     if (_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1) {
       /* v0.83.0-S4: 卡面只留 4 档接回。1.272/1.618/2.618 是等幅外推位（非波段结构），
          下沉到展开页的「外推位」行 —— 用户明确指出它们和接回档排在一行，
@@ -3640,7 +3674,7 @@ document.addEventListener("visibilitychange", () => {
         return `<span class="ftk"><b>${r}</b><strong class="pbLv ${z[1]}">${v.toFixed(2)}</strong></span>`;
       }).join("") + "</div>";
     }
-    return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? "15分低 " + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 波段" : "⇄ 日内"}</button><span>${sw ? "15分高 " + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTrack"><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${useLeg ? `<i class="prTri lo" style="left:${posF(pr.lo).toFixed(1)}%"></i><i class="prTri hi" style="left:${posF(pr.hi).toFixed(1)}%"></i>` : ""}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}<div class="prFoot"><span class="prState ${st[1]}">${st[0]}</span><span>位置 ${Math.round(pos)}% · 标定 +${pr.ku}/−${pr.kd}×ATR${pr.cal && pr.cal.cov != null ? " · 覆盖" + pr.cal.cov + "%" : ""}</span></div></div>`;
+    return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? (dOk ? "段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 波段" : "⇄ 日内"}</button><span>${sw ? (dOk ? "段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTrack"><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${useLeg && !dOk ? `<i class="prTri lo" style="left:${posF(pr.lo).toFixed(1)}%"></i><i class="prTri hi" style="left:${posF(pr.hi).toFixed(1)}%"></i>` : ""}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}<div class="prFoot"><span class="prState ${st[1]}">${st[0]}</span><span>位置 ${Math.round(pos)}%${useLeg ? (dOk ? " · 日线段" : " · 15分段") : ` · 标定 +${pr.ku}/−${pr.kd}×ATR${pr.cal && pr.cal.cov != null ? " · 覆盖" + pr.cal.cov + "%" : ""}`}</span></div></div>`;
   }
 
   const _ffMJL = { t: 0, d: null };
@@ -4277,7 +4311,7 @@ document.addEventListener("visibilitychange", () => {
         if (pr.st === "brkL") sig = ["\u25BC\u7834\u4F4D", "g"];
         else if (pr.st === "brkH") sig = ["\u25B2\u5F3A\u52BF", "s"];
       }
-      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s)}</small></span><strong>${s.quoteReady === true ? money(s.base) : "\u2014"}<small class="${s.quoteReady === true ? cls(s.pct) : ""}">${s.quoteReady === true ? pct(s.pct) : "\u7B49\u5F85\u62A5\u4EF7"}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news="${s.code}" style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legHi">中波段 <b>H ${legEffHiJL(s, leg).toFixed(2)}</b><i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? "盘中" : leg.hiD ? leg.hiD.slice(5) : ""}</i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? `<em class="legBos ${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "" : "dn"}">${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "▲" : "▼"}BOS</em>` : ""}</span><span class="legLo"><b>L ${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span></div>` : ""}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
+      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s)}</small></span><strong>${s.quoteReady === true ? money(s.base) : "\u2014"}<small class="${s.quoteReady === true ? cls(s.pct) : ""}">${s.quoteReady === true ? pct(s.pct) : "\u7B49\u5F85\u62A5\u4EF7"}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news="${s.code}" style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legHi">中波段 <b>H ${legEffHiJL(s, leg).toFixed(2)}</b><i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? "盘中" : leg.hiD ? leg.hiD.slice(5) : ""}</i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? `<em class="legBos ${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "" : "dn"}">${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "▲" : "▼"}BOS</em>` : ""}</span><span class="legLo"><b>L ${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span></div>` : ""}${curLegHTMLJL(s, leg)}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
     }).join("");
     const _dp = _deckList.findIndex((o) => o.i === active);
     $("count").textContent = _deckList.length ? `${String((_dp < 0 ? 0 : _dp) + 1).padStart(2, "0")} / ${String(_deckList.length).padStart(2, "0")}` : "00 / 00";
@@ -4515,7 +4549,9 @@ document.addEventListener("visibilitychange", () => {
     if (n < 80) return null; // jl-0920-38: 删n<60死代码(被本行覆盖)
     const _gL = kl[n - 1], _gPC = n >= 2 ? kl[n - 2].c : 0;
     if (!(_gL.v > 0)) return null;
-    const _gCode = String(code || "").replace(/^(sh|sz|bj)/, ""), _gLim = /ST/i.test(name || "") ? 4.8 : /^(30|68)/.test(_gCode) ? 19.8 : /^(8|4|92)/.test(_gCode) ? 29.8 : 9.8; // jl-0929-12: code带sh/sz前缀, 原正则永不匹配恒9.8(一字板判定阈值表全灭)
+    const _gCode = String(code || "").replace(/^(sh|sz|bj)/, "");
+    if (/ST/i.test(name || "") || /^bj/i.test(String(code || "")) || /^(8|4|92)/.test(_gCode)) return null; // v0.83.2: 龙池剔除北交所与ST
+    const _gLim = /ST/i.test(name || "") ? 4.8 : /^(30|68)/.test(_gCode) ? 19.8 : /^(8|4|92)/.test(_gCode) ? 29.8 : 9.8; // jl-0929-12: code带sh/sz前缀, 原正则永不匹配恒9.8(一字板判定阈值表全灭)
     if (_gPC > 0 && _gL.o === _gL.c && _gL.c === _gL.h && _gL.h === _gL.l && (_gL.c / _gPC - 1) * 100 >= _gLim - 0.3) return null;
     if (n >= 20) {
       let _amt = 0;
