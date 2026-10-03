@@ -1,4 +1,9 @@
-/* jinlin sw v.78 — 2026-10-01: 缓存名 →v108, 配合龙池榜单不被旧快照覆盖(index v0.82.12:
+/* jinlin sw v.79 — 2026-10-03: 缓存名 →v109, 配合波段链状态机批(index v0.83.0:
+   S1 新增 swingStateJL 纯函数(破前低以收盘价为准/双起点/翻转后改反弹档/外推改锚新段起点) /
+   S3 外推位不再锚上一段腿低(永鼎 77.57 那类数消失) / S4 卡面 fib 只留4档接回 /
+   S5 命名统一(日线段=中波段, 15分=短波段) / S6 自动斐波那契改开关默认关 /
+   S7 龙池节假日不再误触发全A重扫 + jl_autoscan_d 闸真正生效)。
+   jinlin sw v.78 — 2026-10-01: 缓存名 →v108, 配合龙池榜单不被旧快照覆盖(index v0.82.12:
    P15 poolOfflineJL 覆盖前比数据日——仓库 pool_latest.json 停在 09-21，原来点按龙池扫描
    会无条件把用户 09-30 实盘重扫的榜连 localStorage 一起覆盖回 09-21；现改为快照不比本地新
    就保留本地榜并把两个日期都说清 / P15b 覆盖成功那一路的 toast 也标明是覆盖了哪个本地日)。
@@ -34,8 +39,8 @@
    (b) 缓存全 miss 时回退等待原始 fetch,不再 respondWith(undefined) 抛 TypeError
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
-const C = 'jinlin-shell-v108';
-const KEEP = ['jinlin-shell-v108', 'jinlin-shell-v107'];
+const C = 'jinlin-shell-v109';
+const KEEP = ['jinlin-shell-v109', 'jinlin-shell-v108'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
