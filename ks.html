@@ -2706,13 +2706,15 @@ function loadAll(reset) {
       }
     }
     if (atEnd || reset) S.end = kl.length;
-    if (S.urlLines) {
+    S._tp = S._tp || {};
+    if (S.urlLines || !S._tp[S.active]) { // 金粼1004: 没带 lines 进来时也清一次旧的自动档位线(主页已不再传 B/S 档位), 每票只清一次, 手画线不动
+      S._tp[S.active] = 1;
       var d0 = kl[kl.length - 1][0], dl2 = dlist(), chg = false;
       // 自动价位线（hq-mobile 跳传来的低吸/高抛线）整组替换：先清旧自动线再画新线，不随刷新/重进堆积
       for (var aj = dl2.length - 1; aj >= 0; aj--) {
         if (dl2[aj].type === "hline" && (dl2[aj].auto || (dl2[aj].tag && (/^[BS]\d+$/.test(dl2[aj].tag) || dl2[aj].tag.indexOf("低吸") === 0 || dl2[aj].tag.indexOf("高抛") === 0)))) { dl2.splice(aj, 1); chg = true; }
       }
-      S.urlLines.forEach(function (it) {
+      (S.urlLines || []).forEach(function (it) {
         var hl = { type: "hline", pts: [{ d: d0, p: it.p }], auto: true };
         if (it.tag) hl.tag = it.tag;
         dl2.push(hl); chg = true;

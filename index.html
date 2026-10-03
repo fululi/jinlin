@@ -3108,7 +3108,8 @@ document.addEventListener("visibilitychange", () => {
       let lines2 = "";
       try {
         const st = byCode(code), t = st && tiersViewJL(st);
-        if (t) lines2 = [...t.buys.map((v) => "b" + v.toFixed(2)), ...t.sells.map((v) => "s" + v.toFixed(2))].join(",");
+        /* v0.83.4: 不再把 B/S 档位作为横线组传进大图(满图红绿虚线遮挡K线、指标菜单里也关不掉)。档位看卡面水位表。 */
+        void t;
       } catch (e) {
       }
       if (fr.dataset.cur !== code + "|" + lines2) {
@@ -3139,7 +3140,7 @@ document.addEventListener("visibilitychange", () => {
             }
           }
         }, 12e3);
-        fr.src = "ks.html?embed=1&v=0930d&code=" + encodeURIComponent(code) + "&name=" + encodeURIComponent((byCode(code) || {}).name || code) + (lines2 ? "&lines=" + encodeURIComponent(lines2) : "");
+        fr.src = "ks.html?embed=1&v=1004a&code=" + encodeURIComponent(code) + "&name=" + encodeURIComponent((byCode(code) || {}).name || code) + (lines2 ? "&lines=" + encodeURIComponent(lines2) : "");
       }
       const cr = $("crossReadout");
       if (cr) cr.textContent = "K-STATION \u5F15\u64CE \xB7 \u56FE\u5185\u5DE5\u5177\u884C\uFF1A\u5468\u671F/\u6307\u6807/\u753B\u7EBF/\u63D0\u9192\uFF08\u672A\u5F00\u76D8\u4E3A\u6700\u8FD1\u4EA4\u6613\u65E5\u6570\u636E\uFF09";
@@ -3609,6 +3610,26 @@ document.addEventListener("visibilitychange", () => {
     else if (pos <= 0.15) st = "low";
     return { lo, hi, pos, st, atr: a, ku, kd, cal };
   }
+  /* v0.83.4: 卡面顶部两行——①日期 开/高/低/收/昨收(相对昨收红涨绿跌) ②持仓股数/成本/现价/浮动盈亏。
+     原来这些只在卡片下半部(facts)或大图头部，打开卡片第一屏看不到。 */
+  function quoteRowsJL(s) {
+    if (s.quoteReady !== true) return "";
+    /* 昨收用 现价/(1+涨跌幅) 反推，与卡头涨跌幅同口径——盘后/周末 seedPrevJL 会把 prevClose 改写成最近收盘，直接用会出现 昨收=收 */
+    const dc = typeof decTierJL === "function" ? decTierJL(s) : 2, p = Number(s.base) || 0, pctV = Number(s.pct), pc = p > 0 && Number.isFinite(pctV) && pctV > -99 ? +(p / (1 + pctV / 100)).toFixed(dc) : Number(s.prevClose) || 0;
+    const col = (v) => !(pc > 0 && v > 0) ? "#eef9fc" : v > pc + 1e-9 ? "#ff5459" : v < pc - 1e-9 ? "#1fdc93" : "#eef9fc";
+    const it = (k, v) => v > 0 ? `<span style="white-space:nowrap">${k}<b style="color:${col(v)};font-weight:600;margin-left:2px">${v.toFixed(dc)}</b></span>` : "";
+    let dt = "";
+    try { const lb = dailyBarsOf(s.code).at(-1); if (lb && lb.t) dt = String(lb.t).slice(5, 10); } catch (e) {
+    }
+    const r1 = `<div style="display:flex;flex-wrap:wrap;gap:1px 7px;font:9.5px ui-monospace,Menlo,monospace;color:#9fc3cf;margin:0 0 3px">${dt ? `<span>${dt}</span>` : ""}${it("开", Number(s.open))}${it("高", Number(s.high))}${it("低", Number(s.low))}${it("收", p)}${pc > 0 ? `<span style="white-space:nowrap">昨收<b style="color:#eef9fc;font-weight:600;margin-left:2px">${pc.toFixed(dc)}</b></span>` : ""}</div>`;
+    const q = Number(s.qty) || 0, c = s.cost != null ? Number(s.cost) : NaN;
+    let r2 = "";
+    if (q > 0 && c > 0 && p > 0) {
+      const pnl = q * (p - c), rt = (p / c - 1) * 100, pcol = pnl > 0 ? "#ff5459" : pnl < 0 ? "#1fdc93" : "#eef9fc";
+      r2 = `<div style="display:flex;flex-wrap:wrap;gap:1px 7px;font:9.5px ui-monospace,Menlo,monospace;color:#9fc3cf;margin:0 0 5px"><span>${q.toLocaleString()}股</span><span>成本<b style="color:#eef9fc;font-weight:600;margin-left:2px">${c.toFixed(3)}</b></span><span>现价<b style="color:${col(p)};font-weight:600;margin-left:2px">${p.toFixed(dc)}</b></span><span>浮${pnl >= 0 ? "盈" : "亏"}<b style="color:${pcol};font-weight:600;margin-left:2px">${pnl >= 0 ? "+" : ""}${Math.round(pnl).toLocaleString()}</b><b style="color:${pcol};font-weight:600;margin-left:3px">${rt >= 0 ? "+" : ""}${rt.toFixed(2)}%</b></span></div>`;
+    }
+    return r1 + r2;
+  }
   function legEffHiJL(s, leg) {
     return Math.max(Number(leg.hi) || 0, Number(s.base) || 0, Number(s.high) || 0);
   }
@@ -3630,19 +3651,23 @@ document.addEventListener("visibilitychange", () => {
     const tLo = _leg15 ? _l15lo : legF ? legF.lo : 0, tHi = _leg15 ? _l15hi : legF ? legF.hi : 0, tRng = tHi - tLo || 1;
     const stKey = useLeg ? p > bHi ? "brkH" : p < bLo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid" : pr.st;
     const stMap = useLeg ? { brkH: ["▲破段高·强势", "r"], brkL: ["▼破段低·破位", "g"], high: ["近段高·防回调", "r"], low: ["近段低·看支撑", "g"], mid: ["段内", ""] } : { brkH: ["▲破预判高·强势", "r"], brkL: ["▼破预判低·破位", "g"], high: ["高位·防回调", "r"], low: ["低位·看支撑", "g"], mid: ["中段", ""] }, st = stMap[stKey];
-    let ticks = "";
+    let ticks = "", marks = "";
     /* _legD 已在上方取得。v0.82.4d: fib刻度行与展开面板逐字符同公式(L1/H1+突破跟随)——v0.82.4只换了腿源(lo/hi段极值),多腿/突破时仍与面板L1/H1基分叉; 现bk/ex对齐: r<=1→hh-rng*r, r>1→L1+rng*r, hh=max(H1,现价,今高) */
     if (_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1) {
       /* v0.83.0-S4: 卡面只留 4 档接回。1.272/1.618/2.618 是等幅外推位（非波段结构），
          下沉到展开页的「外推位」行 —— 用户明确指出它们和接回档排在一行，
          看起来像"波段直接干到 77"。同时删掉原来 ix===4 处的分组竖线（已无第二组）。 */
       const _hhT = Math.max(_legD.H1, p, Number(s.high) || 0), _rngT = _hhT - _legD.L1 || 1, lv = [[0.382, "c382"], [0.5, "c50"], [0.618, "c618"], [0.786, "c786"]];
-      ticks = '<div class="fibTicksJL">' + lv.map((z, ix) => {
-        const r = z[0], v = r <= 1 ? _hhT - _rngT * r : _legD.L1 + _rngT * r;
-        return `<span class="ftk"><b>${r}</b><strong class="pbLv ${z[1]}">${v.toFixed(2)}</strong></span>`;
-      }).join("") + "</div>";
+      /* v0.83.4: 刻度按价格落到刻度条对应位置(左低右高，与段低/段高、指针、日内三角同一坐标)，原来是等距排列且从高到低，和条上位置对不上。
+         超出当前刻度条范围的档不画；相邻档上下错开两行防字重叠；条上同色短竖线标出档位。 */
+      const tkCol = { c382: "#57a7ff", c50: "#c792ea", c618: "#ffd21f", c786: "#ff9a5c" };
+      const tks = lv.map((z) => { const r = z[0], v = r <= 1 ? _hhT - _rngT * r : _legD.L1 + _rngT * r; return { r, v, c: z[1], x: (v - bLo) / rng * 100 }; }).filter((o) => o.x >= 0 && o.x <= 100).sort((a, b) => a.x - b.x);
+      if (tks.length) {
+        marks = tks.map((o) => `<i style="position:absolute;top:-3px;width:1px;height:9px;left:${o.x.toFixed(1)}%;background:${tkCol[o.c]};opacity:.9"></i>`).join("");
+        ticks = '<div class="fibTicksJL" style="position:relative;display:block;height:23px;margin:3px 3px 1px">' + tks.map((o, ix) => `<span class="ftk" style="position:absolute;top:${ix % 2 ? 11 : 0}px;left:${Math.max(9, Math.min(91, o.x)).toFixed(1)}%;transform:translateX(-50%);flex-direction:row;align-items:baseline;gap:2px;white-space:nowrap"><b>${o.r}</b><strong class="pbLv ${o.c}">${o.v.toFixed(2)}</strong></span>`).join("") + "</div>";
+      }
     }
-    return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? (dOk ? "段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 波段" : "⇄ 日内"}</button><span>${sw ? (dOk ? "段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTrack"><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${useLeg ? `<i class="prTri lo" style="left:${posF(pr.lo).toFixed(1)}%"></i><i class="prTri hi" style="left:${posF(pr.hi).toFixed(1)}%"></i>` : ""}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}<div class="prFoot"><span class="prState ${st[1]}">${st[0]}</span><span>位置 ${Math.round(pos)}%${useLeg ? ` · 日内 <b style="color:#1fdc93">${pr.lo.toFixed(2)}</b>–<b style="color:#ff7a72">${pr.hi.toFixed(2)}</b>` : ` · 标定 +${pr.ku}/−${pr.kd}×ATR${pr.cal && pr.cal.cov != null ? " · 覆盖" + pr.cal.cov + "%" : ""}`}</span></div></div>`;
+    return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? (dOk ? "段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 波段" : "⇄ 日内"}</button><span>${sw ? (dOk ? "段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTrack"><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${useLeg ? `<i class="prTri lo" style="left:${posF(pr.lo).toFixed(1)}%"></i><i class="prTri hi" style="left:${posF(pr.hi).toFixed(1)}%"></i>` : ""}${marks}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}<div class="prFoot"><span class="prState ${st[1]}">${st[0]}</span><span>位置 ${Math.round(pos)}%${useLeg ? ` · 日内 <b style="color:#1fdc93">${pr.lo.toFixed(2)}</b>–<b style="color:#ff7a72">${pr.hi.toFixed(2)}</b>` : ` · 标定 +${pr.ku}/−${pr.kd}×ATR${pr.cal && pr.cal.cov != null ? " · 覆盖" + pr.cal.cov + "%" : ""}`}</span></div></div>`;
   }
 
   const _ffMJL = { t: 0, d: null };
@@ -4279,7 +4304,7 @@ document.addEventListener("visibilitychange", () => {
         if (pr.st === "brkL") sig = ["\u25BC\u7834\u4F4D", "g"];
         else if (pr.st === "brkH") sig = ["\u25B2\u5F3A\u52BF", "s"];
       }
-      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s)}</small></span><strong>${s.quoteReady === true ? money(s.base) : "\u2014"}<small class="${s.quoteReady === true ? cls(s.pct) : ""}">${s.quoteReady === true ? pct(s.pct) : "\u7B49\u5F85\u62A5\u4EF7"}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news="${s.code}" style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legHi">中波段 <b>H ${legEffHiJL(s, leg).toFixed(2)}</b><i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? "盘中" : leg.hiD ? leg.hiD.slice(5) : ""}</i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? `<em class="legBos ${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "" : "dn"}">${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "▲" : "▼"}BOS</em>` : ""}</span><span class="legLo"><b>L ${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span></div>` : ""}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
+      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s)}</small></span><strong>${s.quoteReady === true ? money(s.base) : "\u2014"}<small class="${s.quoteReady === true ? cls(s.pct) : ""}">${s.quoteReady === true ? pct(s.pct) : "\u7B49\u5F85\u62A5\u4EF7"}</small></strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><button data-open-news="${s.code}" style="position:absolute;right:36px;top:8px;z-index:3;border:1px solid #81e6d944;border-radius:8px;background:#81e6d912;color:#bcefeb;font-size:10px;padding:3px 8px">\u65B0\u95FB</button>${leg ? `<div class="legBandJL"><span class="legHi">中波段 <b>H ${legEffHiJL(s, leg).toFixed(2)}</b><i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? "盘中" : leg.hiD ? leg.hiD.slice(5) : ""}</i>${legEffHiJL(s, leg) > (Number(leg.hi) || 0) + 1e-9 ? `<em class="legBos ${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "" : "dn"}">${Number(s.base) >= legEffHiJL(s, leg) - 1e-9 ? "▲" : "▼"}BOS</em>` : ""}</span><span class="legLo"><b>L ${(leg.L1 || leg.lo).toFixed(2)}</b><i>${leg.L1d ? leg.L1d.slice(5) : legDatesJL(s.code, leg)}</i></span></div>` : ""}${quoteRowsJL(s)}${posRulerHTMLJL(s)}${resoLineJL(s)}${typeof triBadgeJL === "function" ? triBadgeJL(s) : ""}${cyqLineHTMLJL(s)}${ladderHTMLJL(s, i)}${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button></div></div></article>`;
     }).join("");
     const _dp = _deckList.findIndex((o) => o.i === active);
     $("count").textContent = _deckList.length ? `${String((_dp < 0 ? 0 : _dp) + 1).padStart(2, "0")} / ${String(_deckList.length).padStart(2, "0")}` : "00 / 00";
