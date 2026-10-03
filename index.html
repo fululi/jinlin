@@ -4492,7 +4492,7 @@ document.addEventListener("visibilitychange", () => {
     return g === "indices" ? indices : g === "leaders" ? [...new Map([...testedLeadersJL(), ...researchedStocksJL].map((x) => [x.code, x])).values()] : stocks.concat(researchedStocksJL.filter((x) => x && !stocks.some((s) => s.code === x.code))); // v.52: 持仓deck带上研究股(兆易不再"又没了")
   }
   const JLPOOL_LAYERS = [["start", "\u521A\u542F\u52A8", "#ff9f6e"], ["zs", "\u4E3B\u5347", "#ff5f56"], ["eb", "\u4E8C\u6CE2", "#e8c568"], ["trend", "\u8D8B\u52BF\u4E2D", "#4a9eff"], ["top", "\u5230\u9876\u98CE\u9669", "#8d97a6"]];
-  const JLPOOL_DESC = { start: "\u63A7\u5236\u52065\u65E5\u6025\u5347 + \u4F4E\u4F4D + \u653E\u91CF\u542F\u52A8 \xB7 \u5148\u9A8C\u65E5K/\u8D44\u91D1\u65B0\u9C9C\u5EA6\uFF0C\u5408\u683C\u540E\u8BC4\u5206\u6392\u5E8F", zs: "\u63A7\u5236\u5206>150 \u9AD8\u4F4D\u5F3A\u52BF \xB7 10\u65E5\u4E3B\u529B\u6D41\u5165\u5929\u6570\u53EA\u4F5C\u6392\u5E8F\u8BC1\u636E", eb: "\u6DA8\u505C\u57FA\u56E0 + \u5B88EMA20\u7F29\u91CF\u22653\u5929 + EMA20\u4E0D\u4E0B\u884C \xB7 \u8D44\u91D1\u7F3A\u5931/\u65E7\u65E5\u671F\u76F4\u63A5\u964D\u7EA7\uFF0C\u4E0D\u6CBF\u7528\u65E7\u503C", trend: "\u7AD9EMA20 + \u63A7\u5236\u5206\u226550 \xB7 \u8D44\u91D1\u65B0\u9C9C\u5EA6\u540C\u6837\u5148\u9A8C\uFF0C\u53C2\u8003\u4ED3\u522B\u91CD\u4ED3", top: "\u63A7\u5236\u5206\u9AD8\u4F4D + \u5F53\u65E5\u56DE\u843D \xB7 \u98CE\u9669\u89C2\u5BDF\u9879\uFF0C\u4E0D\u662F\u4E70\u70B9" };
+  const JLPOOL_DESC = { start: "\u63A7\u5236\u52065\u65E5\u6025\u5347 + \u4F4E\u4F4D + \u653E\u91CF\u542F\u52A8 \xB7 \u5148\u9A8C\u65E5K/\u8D44\u91D1\u65B0\u9C9C\u5EA6\uFF0C\u5408\u683C\u540E\u8BC4\u5206\u6392\u5E8F", zs: "\u63A7\u5236\u5206>150 \u9AD8\u4F4D\u5F3A\u52BF \xB7 10\u65E5\u4E3B\u529B\u6D41\u5165\u5929\u6570\u53EA\u4F5C\u6392\u5E8F\u8BC1\u636E", eb: "\u6DA8\u505C\u57FA\u56E0 + \u5B8820\u65E5\u7EBF\u7F29\u91CF\u22653\u5929 + 20\u65E5\u7EBF\u8FD15\u65E5\u672A\u8D70\u4F4E \xB7 \u8D44\u91D1\u7F3A\u5931/\u65E7\u65E5\u671F\u76F4\u63A5\u964D\u7EA7\uFF0C\u4E0D\u6CBF\u7528\u65E7\u503C", trend: "\u7AD9EMA20 + \u63A7\u5236\u5206\u226550 \xB7 \u8D44\u91D1\u65B0\u9C9C\u5EA6\u540C\u6837\u5148\u9A8C\uFF0C\u53C2\u8003\u4ED3\u522B\u91CD\u4ED3", top: "\u63A7\u5236\u5206\u9AD8\u4F4D + \u5F53\u65E5\u56DE\u843D \xB7 \u98CE\u9669\u89C2\u5BDF\u9879\uFF0C\u4E0D\u662F\u4E70\u70B9" };
   let JLPOOL = null;
   try {
     const _jp = JSON.parse(localStorage.getItem("jl_pool_v1"));
@@ -4551,6 +4551,7 @@ document.addEventListener("visibilitychange", () => {
     if (!(_gL.v > 0)) return null;
     const _gCode = String(code || "").replace(/^(sh|sz|bj)/, "");
     if (/ST|退/i.test(name || "") || /^bj/i.test(String(code || "")) || /^(8|4|92)/.test(_gCode)) return null; // v0.83.2: 龙池剔除北交所、ST、退市整理
+    if (!/^(60\d|68[89]|00\d|30\d)\d{3}$/.test(_gCode)) return null; // v0.83.2: 证券类型白名单——只放行沪深 A 股(沪主板60x/科创688·689/深主板00x/创业板30x)，换数据源也挡住 ETF/基金/可转债/B股
     /* v0.83.2: 涨停改交易所口径——涨停价 = 昨收×(1+幅度) 按 0.01 四舍五入，收盘达到涨停价(容 1 分，前复权价有舍入误差)才算；
        涨幅超过限幅 0.5 个百分点 = 无涨跌幅限制日(新股前 5 日/复牌等)，不计涨停。ST/北交所已在上面剔除，这里只剩 20%(创业板/科创板) 与 10%(主板)。 */
     const _luR = /^(30|68)/.test(_gCode) ? 0.2 : 0.1;
@@ -4602,7 +4603,7 @@ document.addEventListener("visibilitychange", () => {
     for (let j = Math.max(6, i - 9); j <= i; j++) {
       const p = (kl[j].c / kl[j - 1].c - 1) * 100;
       const lb = kl[j].v / ((kl[j - 5].v + kl[j - 4].v + kl[j - 3].v + kl[j - 2].v + kl[j - 1].v) / 5);
-      if (p >= -2.5 && p <= 0.5 && lb < 0.85 && kl[j].c >= e20[j]) wash++; /* v0.83.2: 洗盘须守住 EMA20——跌在 20 日线下的缩量小跌是阴跌不是洗盘 */
+      if (p >= -2.5 && p <= 0.5 && lb < 0.85 && kl[j].c >= e20[j] * 0.98) wash++; /* v0.83.2: 洗盘须基本守住 EMA20(容 2%，不卡太死)——明显跌在 20 日线下的缩量小跌是阴跌不是洗盘 */
     }
     const e20up = i >= 5 && e20[i] >= e20[i - 5]; /* v0.83.2: EMA20 近 5 日不下行，二波层趋势约束 */
     const dc5 = i >= 5 && ctrl[i - 5] !== null ? ctrl[i] - ctrl[i - 5] : 0;
