@@ -378,7 +378,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 <div class="indBar" id="indBar"></div><div class="plots"><div class="mainPlot"><canvas id="bigChart" tabindex="0" aria-label="K线主图，拖动平移、右侧价格轴缩放、捏合缩放"></canvas><button class="panArrow l" aria-label="向左平移K线">‹</button><button class="panArrow r" aria-label="向右平移K线">›</button></div><div class="volumePlot"><canvas id="volumeChart" tabindex="0" aria-label="成交量副图，可画线"></canvas></div><div class="ddxPlot"><span>主力净额 · 资金</span><button id="ddxCloseJL" type="button" aria-label="关闭主力净额附图">×</button><canvas id="ddxChart" aria-label="DDX主力资金副图"></canvas></div><div id="subPanes"></div><div id="crossSpanJL"></div><iframe id="ksFrameJL" title="K-STATION 大图"></iframe><button id="ddxReopenJL" type="button">主力净额附图已隐藏（该周期未覆盖/资金未到位/已手动关闭）· 点我展开</button></div>
 <div id="crossReadout">拖动图表平移 · 拖动右轴缩放 · 双击复位</div>
 <div class="chartFooter"><details id="technical"><summary>技术摘要 <span id="technicalPeriod"></span></summary><div id="technicalBody"></div></details></div>
-</section><section class="view" id="watchPage" hidden=""><div class="pageTitle"><h2>市场池</h2><span>WATCH &amp; LEADERS</span></div><div class="watchTabs"><button data-watch="watch" class="active">观察自选</button><button data-watch="leaders">龙头股池</button><button type="button" id="watchAdd">＋ 添加</button><button type="button" id="dragonScan">⟳ 龙池扫描</button></div><div id="watchList"></div><button type="button" class="newsEntry" data-open-news=""><i></i><span>新闻入口 · 市场资金异动与持仓相关资讯</span></button><p class="smallPrint">龙头池口径照搬 hq-mobile 跑测版：分层=控盘×位置×涨停基因×缩量×量比，资格门先验日K+资金新鲜度，评分只排合格集合；旧数据日整池标注，不装活。</p></section>
+</section><section class="view" id="watchPage" hidden=""><div class="pageTitle"><h2>市场池</h2><span>WATCH &amp; LEADERS</span></div><div class="watchTabs"><button data-watch="watch" class="active">观察自选</button><button data-watch="leaders">龙头股池</button><button type="button" id="watchAdd">＋ 添加</button><button type="button" id="dragonScan">⟳ 龙池扫描</button></div><div id="watchList"></div><button type="button" class="newsEntry" data-open-news=""><i></i><span>新闻入口 · 市场资金异动与持仓相关资讯</span></button><p class="smallPrint">龙头池口径照搬 hq-mobile 跑测版：分层=区间控制分(价格区间自定义指标·非主力/筹码数据)×位置×涨停基因×缩量×量比，资格门先验日K+资金新鲜度，评分只排合格集合；旧数据日整池标注，不装活。</p></section>
 <section class="view" id="reviewPage" hidden=""><div class="pageTitle"><h2>复盘</h2><span>REVIEW</span></div><article class="glass reviewCard"><h3 id="reviewTitleJL">日复盘 <small>真实数据</small></h3><div class="resonancePanel"><span>市场环境<b data-review-market="">等待市场情绪数据</b></span><span>板块方向<b data-review-sector="">等待板块资金数据</b></span><span>做T结果<b data-review-trade="">等待台账成交记录</b></span><span>预判战绩<b data-review-pred="">样本积累中</b></span><span>龙池战绩<b data-review-pool="">待首期推荐</b></span><span>结论<b data-review-conclusion="">资金数据尚未结算</b></span></div><div id="reviewAllJL"></div><details><summary>展开真实证据 · K线 / DDX / Fib / 执行</summary><p class="smallPrint">复盘只显示已取得的真实行情、资金和成交记录；缺失字段保留为数据暂缺。单日主力净额经统计对次日无预测力(r≈0.07)，已移出结论仅作背景。</p><div data-review-ev style="font-size:10.5px;line-height:1.9;color:#e0f2f6;padding-top:4px"></div></details></article></section></div><nav class="navigation" aria-label="页面导航"><button data-view="home"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10H3Z M9 20v-7h6v7"></path></svg>总览</button><button data-view="watchPage"><svg viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"></path></svg>自选</button><button data-view="chartPage" aria-label="K线工作区"><svg viewBox="0 0 24 24"><path d="M4 3v18h17M8 15V7m5 10V4m5 10V8"></path></svg>K线</button><button class="active" data-view="holds"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="3"></rect><path d="M8 7V3h8v4 M3 12h18 M10 12v3h4v-3"></path></svg>持仓</button><button data-view="reviewPage"><svg viewBox="0 0 24 24"><path d="M4 3v18h17 M8 16v-4 M13 16V6 M18 16V9"></path></svg>复盘</button></nav><div class="homebar"></div><div id="newsShade" hidden=""></div><section id="newsPanel" hidden="" aria-label="新闻与产业链"><header><b>新闻 / 产业链</b><button id="newsClose" aria-label="关闭新闻">×</button></header><div class="newsTabsJL"><button type="button" data-news="zao" class="active">早报</button><button type="button" data-news="wan">晚报</button><button type="button" data-news="kx">快讯</button><a id="newsFullJL" rel="noopener" target="_blank">全屏打开 ↗</a></div><iframe id="newsFrameJL" title="真实交易线索新闻" scrolling="no"></iframe><div id="newsEmptyJL" hidden="">新闻暂未生成，点击右上角可打开存档。</div><div id="newsKxJL" hidden=""><div class="kxSrcJL"><span>东财 7×24 快讯 · <b id="kxTimeJL">--:--</b> 更新 · 30秒轮询</span><a href="https://m.cls.cn/telegraph" target="_blank" rel="noopener">财联社电报 ↗</a></div><div id="kxListJL"><div class="kxLoadingJL">快讯加载中…</div></div></div></section><div id="pickerShade" hidden=""></div><section id="picker" hidden="" aria-label="选择股票"><header><b>选择股票</b><button id="pickerClose" aria-label="关闭选股">×</button></header><input id="pickerSearch" type="search" placeholder="输入代码/名称/拼音，回车搜索" aria-label="搜索股票" style="width:100%;margin:9px 0 4px;padding:9px;border:1px solid var(--edge);background:transparent;color:var(--fg);border-radius:9px;font-size:13px"/><div class="pickerTabs"><button data-group="holds">持仓</button><button data-group="watch">自选</button><button data-group="leaders">龙头</button><button data-group="indices">指数</button></div><div id="pickerRows"></div><small>上下滑动列表 · 点名称切换</small></section><dialog id="alerts"><form id="alertForm"><h3>到价提醒 · 实时</h3><label>目标价格<input type="number" min="0.01" step="any" required="" id="alertValue"/></label><label>条件<select id="alertSide"><option value="above">高于或等于</option><option value="below">低于或等于</option></select></label><p>仅在页面打开时监测价格，非真实行情提醒。</p><button type="submit">保存</button><button type="button" id="alertClose">取消</button><div id="alertList"></div></form></dialog><div class="toast" role="status" id="toast"></div></div></section></main>
 
 <script>
@@ -4492,7 +4492,7 @@ document.addEventListener("visibilitychange", () => {
     return g === "indices" ? indices : g === "leaders" ? [...new Map([...testedLeadersJL(), ...researchedStocksJL].map((x) => [x.code, x])).values()] : stocks.concat(researchedStocksJL.filter((x) => x && !stocks.some((s) => s.code === x.code))); // v.52: 持仓deck带上研究股(兆易不再"又没了")
   }
   const JLPOOL_LAYERS = [["start", "\u521A\u542F\u52A8", "#ff9f6e"], ["zs", "\u4E3B\u5347", "#ff5f56"], ["eb", "\u4E8C\u6CE2", "#e8c568"], ["trend", "\u8D8B\u52BF\u4E2D", "#4a9eff"], ["top", "\u5230\u9876\u98CE\u9669", "#8d97a6"]];
-  const JLPOOL_DESC = { start: "\u63A7\u76D85\u65E5\u6025\u5347 + \u4F4E\u4F4D + \u653E\u91CF\u542F\u52A8 \xB7 \u5148\u9A8C\u65E5K/\u8D44\u91D1\u65B0\u9C9C\u5EA6\uFF0C\u5408\u683C\u540E\u8BC4\u5206\u6392\u5E8F", zs: "\u63A7\u76D8>150 \u9AD8\u4F4D\u5F3A\u52BF \xB7 10\u65E5\u4E3B\u529B\u6D41\u5165\u5929\u6570\u53EA\u4F5C\u6392\u5E8F\u8BC1\u636E", eb: "\u6DA8\u505C\u57FA\u56E0 + \u7F29\u91CF\u22653\u5929 \xB7 \u8D44\u91D1\u7F3A\u5931/\u65E7\u65E5\u671F\u76F4\u63A5\u964D\u7EA7\uFF0C\u4E0D\u6CBF\u7528\u65E7\u503C", trend: "\u7AD9EMA20 + \u63A7\u76D8\u226550 \xB7 \u8D44\u91D1\u65B0\u9C9C\u5EA6\u540C\u6837\u5148\u9A8C\uFF0C\u53C2\u8003\u4ED3\u522B\u91CD\u4ED3", top: "\u63A7\u76D8\u9AD8\u4F4D + \u5F53\u65E5\u56DE\u843D \xB7 \u98CE\u9669\u89C2\u5BDF\u9879\uFF0C\u4E0D\u662F\u4E70\u70B9" };
+  const JLPOOL_DESC = { start: "\u63A7\u5236\u52065\u65E5\u6025\u5347 + \u4F4E\u4F4D + \u653E\u91CF\u542F\u52A8 \xB7 \u5148\u9A8C\u65E5K/\u8D44\u91D1\u65B0\u9C9C\u5EA6\uFF0C\u5408\u683C\u540E\u8BC4\u5206\u6392\u5E8F", zs: "\u63A7\u5236\u5206>150 \u9AD8\u4F4D\u5F3A\u52BF \xB7 10\u65E5\u4E3B\u529B\u6D41\u5165\u5929\u6570\u53EA\u4F5C\u6392\u5E8F\u8BC1\u636E", eb: "\u6DA8\u505C\u57FA\u56E0 + \u5B88EMA20\u7F29\u91CF\u22653\u5929 + EMA20\u4E0D\u4E0B\u884C \xB7 \u8D44\u91D1\u7F3A\u5931/\u65E7\u65E5\u671F\u76F4\u63A5\u964D\u7EA7\uFF0C\u4E0D\u6CBF\u7528\u65E7\u503C", trend: "\u7AD9EMA20 + \u63A7\u5236\u5206\u226550 \xB7 \u8D44\u91D1\u65B0\u9C9C\u5EA6\u540C\u6837\u5148\u9A8C\uFF0C\u53C2\u8003\u4ED3\u522B\u91CD\u4ED3", top: "\u63A7\u5236\u5206\u9AD8\u4F4D + \u5F53\u65E5\u56DE\u843D \xB7 \u98CE\u9669\u89C2\u5BDF\u9879\uFF0C\u4E0D\u662F\u4E70\u70B9" };
   let JLPOOL = null;
   try {
     const _jp = JSON.parse(localStorage.getItem("jl_pool_v1"));
@@ -4550,9 +4550,12 @@ document.addEventListener("visibilitychange", () => {
     const _gL = kl[n - 1], _gPC = n >= 2 ? kl[n - 2].c : 0;
     if (!(_gL.v > 0)) return null;
     const _gCode = String(code || "").replace(/^(sh|sz|bj)/, "");
-    if (/ST/i.test(name || "") || /^bj/i.test(String(code || "")) || /^(8|4|92)/.test(_gCode)) return null; // v0.83.2: 龙池剔除北交所与ST
-    const _gLim = /ST/i.test(name || "") ? 4.8 : /^(30|68)/.test(_gCode) ? 19.8 : /^(8|4|92)/.test(_gCode) ? 29.8 : 9.8; // jl-0929-12: code带sh/sz前缀, 原正则永不匹配恒9.8(一字板判定阈值表全灭)
-    if (_gPC > 0 && _gL.o === _gL.c && _gL.c === _gL.h && _gL.h === _gL.l && (_gL.c / _gPC - 1) * 100 >= _gLim - 0.3) return null;
+    if (/ST|退/i.test(name || "") || /^bj/i.test(String(code || "")) || /^(8|4|92)/.test(_gCode)) return null; // v0.83.2: 龙池剔除北交所、ST、退市整理
+    /* v0.83.2: 涨停改交易所口径——涨停价 = 昨收×(1+幅度) 按 0.01 四舍五入，收盘达到涨停价(容 1 分，前复权价有舍入误差)才算；
+       涨幅超过限幅 0.5 个百分点 = 无涨跌幅限制日(新股前 5 日/复牌等)，不计涨停。ST/北交所已在上面剔除，这里只剩 20%(创业板/科创板) 与 10%(主板)。 */
+    const _luR = /^(30|68)/.test(_gCode) ? 0.2 : 0.1;
+    const isLUc = (pc, c, h) => pc > 0 && c >= h - 1e-9 && c >= Math.round(pc * (1 + _luR) * 100 + 1e-6) / 100 - 0.011 && (c / pc - 1) <= _luR + 0.005; /* 收盘=最高 是涨停的必要条件，挡住 1 分容差带来的误判 */
+    if (_gPC > 0 && _gL.o === _gL.c && _gL.c === _gL.h && _gL.h === _gL.l && isLUc(_gPC, _gL.c, _gL.h)) return null;
     if (n >= 20) {
       let _amt = 0;
       for (let _gi = n - 20; _gi < n; _gi++) _amt += kl[_gi].v * 100 * (kl[_gi].h + kl[_gi].l + kl[_gi].c) / 3;
@@ -4599,14 +4602,11 @@ document.addEventListener("visibilitychange", () => {
     for (let j = Math.max(6, i - 9); j <= i; j++) {
       const p = (kl[j].c / kl[j - 1].c - 1) * 100;
       const lb = kl[j].v / ((kl[j - 5].v + kl[j - 4].v + kl[j - 3].v + kl[j - 2].v + kl[j - 1].v) / 5);
-      if (p >= -2.5 && p <= 0.5 && lb < 0.85) wash++;
+      if (p >= -2.5 && p <= 0.5 && lb < 0.85 && kl[j].c >= e20[j]) wash++; /* v0.83.2: 洗盘须守住 EMA20——跌在 20 日线下的缩量小跌是阴跌不是洗盘 */
     }
+    const e20up = i >= 5 && e20[i] >= e20[i - 5]; /* v0.83.2: EMA20 近 5 日不下行，二波层趋势约束 */
     const dc5 = i >= 5 && ctrl[i - 5] !== null ? ctrl[i] - ctrl[i - 5] : 0;
-    const lim = code.indexOf("sz300") === 0 || code.indexOf("sz301") === 0 || code.indexOf("sh688") === 0 ? 19.8 : 9.8;
-    const isLU = (j2) => {
-      const p = (kl[j2].c / kl[j2 - 1].c - 1) * 100;
-      return p >= lim - 0.3 && kl[j2].l < kl[j2].h;
-    };
+    const isLU = (j2) => isLUc(kl[j2 - 1].c, kl[j2].c, kl[j2].h) && kl[j2].l < kl[j2].h; /* v0.83.2: 与上面一字板过滤同一涨停价口径 */
     let gene = 0, lu20 = 0;
     for (let j2 = Math.max(6, n - 250); j2 < n; j2++) {
       if (isLU(j2)) {
@@ -4641,7 +4641,7 @@ document.addEventListener("visibilitychange", () => {
     let layer = null;
     if (ctrl[i] >= 100 && pos >= 0.85 && pct2 < 0) layer = "top";
     else if (ctrl[i] > 150 && pos > 0.8 && up) layer = "zs";
-    else if (lu20 >= 2 && wash >= 3 && pos < 0.8 || mh60 >= 120 && ctrl[i] >= 50 && ctrl[i] < 120 && pos >= 0.3 && pos <= 0.65 && wash >= 4) layer = "eb";
+    else if (e20up && (lu20 >= 2 && wash >= 3 && pos < 0.8 || mh60 >= 120 && ctrl[i] >= 50 && ctrl[i] < 120 && pos >= 0.3 && pos <= 0.65 && wash >= 4)) layer = "eb";
     else if (dc5 > 30 && up && pos < 0.6 && p20 < 15) layer = "start";
     else if (up && ctrl[i] >= 50) layer = "trend";
     if (!layer) return null;
@@ -4698,7 +4698,7 @@ document.addEventListener("visibilitychange", () => {
       sc = (x.f5 > 0 ? 40 : 0) + geneScoreJL(x.gene) + (x.wash >= 5 ? 20 : 10) + ind * 15;
     } else if (x.layer === "trend") {
       /* v0.82.8-P9: trend 层此前落到 else return null -> 永远无分 -> 排序/卡面/精选全拿不到它。
-         按 JLPOOL_DESC 的 trend 定义(站EMA20 + 控盘>=50 + 资金新鲜度先验 + 参考仓别重仓)给分，
+         按 JLPOOL_DESC 的 trend 定义(站EMA20 + 控制分>=50 + 资金新鲜度先验 + 参考仓别重仓)给分，
          骨架照 zs 层降权。权重是可回测初值，要调直接改这四个数。 */
       sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 28 : x.f10 > 0 ? 15 : 0) + (x.emaDays >= 20 ? 25 : x.emaDays >= 10 ? 15 : 6) + geneScoreJL(x.gene) + ind * 15;
     } else return null;
@@ -5504,11 +5504,11 @@ document.addEventListener("visibilitychange", () => {
   }
   function whyLineJL(x) {
     const b = [];
-    if (x.layer === "start") b.push("\u63A7\u76D85\u65E5" + (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0) + "\uFF08>30 \u89E6\u53D1\u7EBF\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u4F4E\u4F4D", "20\u65E5" + x.p20.toFixed(1) + "%\uFF08<15%\uFF09", "\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A");
-    else if (x.layer === "zs") b.push("\u63A7\u76D8" + x.ctrl + "\uFF08>150\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u9AD8\u4F4D", "\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A", "20\u65E5" + x.p20.toFixed(1) + "%");
-    else if (x.layer === "eb") b.push("\u8FD120\u65E5\u6DA8\u505C" + x.lu20 + "\u6B21 \xB7 \u4E00\u5E74\u6DA8\u505C\u57FA\u56E0" + x.gene, "\u7F29\u91CF\u6574\u7406" + x.wash + "\u5929\uFF08\u22653\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x));
-    else if (x.layer === "trend") b.push("\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A", "\u63A7\u76D8" + x.ctrl + "\uFF08\u226550\uFF09");
-    else b.push("\u63A7\u76D8" + x.ctrl + "\u9AD8\u4F4D\uFF08\u2265100\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x), "\u5F53\u65E5" + x.pct.toFixed(2) + "%\u56DE\u843D");
+    if (x.layer === "start") b.push("\u63A7\u5236\u52065\u65E5" + (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0) + "\uFF08>30 \u89E6\u53D1\u7EBF\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u4F4E\u4F4D", "20\u65E5" + x.p20.toFixed(1) + "%\uFF08<15%\uFF09", "\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A");
+    else if (x.layer === "zs") b.push("\u63A7\u5236\u5206" + x.ctrl + "\uFF08>150\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x) + "\u9AD8\u4F4D", "\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A", "20\u65E5" + x.p20.toFixed(1) + "%");
+    else if (x.layer === "eb") b.push("\u8FD120\u65E5\u6DA8\u505C" + x.lu20 + "\u6B21 \xB7 \u4E00\u5E74\u6DA8\u505C\u57FA\u56E0" + x.gene, "\u5B8820\u65E5\u7EBF\u7F29\u91CF\u6574\u7406" + x.wash + "\u5929\uFF08\u22653\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x));
+    else if (x.layer === "trend") b.push("\u6536\u76D8\u572820\u65E5\u7EBF\u4E0A", "\u63A7\u5236\u5206" + x.ctrl + "\uFF08\u226550\uFF09");
+    else b.push("\u63A7\u5236\u5206" + x.ctrl + "\u9AD8\u4F4D\uFF08\u2265100\uFF09", "60\u65E5\u533A\u95F4" + fmtPosJL(x), "\u5F53\u65E5" + x.pct.toFixed(2) + "%\u56DE\u843D");
     if (x.vr >= 1.5) b.push("\u542F\u52A8\u91CF\u6BD4" + x.vr.toFixed(2) + "\xD7");
     if (x.ind && JLPOOL_HOT.has(x.ind)) b.push("\u70ED\u95E8\u884C\u4E1A\xB7" + x.ind);
     return b.join(" \xB7 ");
@@ -5541,7 +5541,7 @@ document.addEventListener("visibilitychange", () => {
     return s2;
   }
   function evChipsJL(x) {
-    const arr = [["\u63A7\u76D8", x.ctrl], ["\u03945\u65E5", (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0)], ["\u4F4D\u7F6E", fmtPosJL(x)], ["\u6DA8\u505C\u57FA\u56E0", x.gene], ["\u7F29\u91CF", x.wash + "\u5929"], ["\u91CF\u6BD4", x.vr.toFixed(2) + "\xD7"], ["\u91CF\u4F4D120\u65E5", x.volPct120 != null ? (x.volPct120 * 100).toFixed(0) + "%" : "\u2014"]];
+    const arr = [["\u63A7\u5236\u5206", x.ctrl], ["\u03945\u65E5", (x.dc5 >= 0 ? "+" : "") + x.dc5.toFixed(0)], ["\u4F4D\u7F6E", fmtPosJL(x)], ["\u6DA8\u505C\u57FA\u56E0", x.gene], ["\u7F29\u91CF", x.wash + "\u5929"], ["\u91CF\u6BD4", x.vr.toFixed(2) + "\xD7"], ["\u91CF\u4F4D120\u65E5", x.volPct120 != null ? (x.volPct120 * 100).toFixed(0) + "%" : "\u2014"]];
     if (x.hy) arr.push(["\u884C\u4E1A", x.hy]);
     const cq = cyqEvJL(x.code);
     if (cq) arr.push(["\u83B7\u5229", cq.profit], ["\u96C6\u4E2D\u5EA6", cq.conc]);
@@ -5581,7 +5581,7 @@ document.addEventListener("visibilitychange", () => {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
     const color = bucket === "RISK" ? "#ff5459" : meta[2], g = bucket === "L" ? x.gate : x.obsGate;
     const bare = x.code.slice(2), _hs = stocks.find((s2) => s2.code === bare), held = !!_hs, heldQty = !!(_hs && _hs.qty > 0);
-    return '<div class="poolRowDetailJL"><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + '</div><div class="poolRowActJL"><button type="button" data-pl-k="' + bare + '" data-n="' + escAttrJL(x.name) + '">K\u7EBF \u203A</button><button type="button" class="trajBtnJL" data-traj="' + bare + '" data-tn="' + escAttrJL(x.name) + '">\u8F68\u8FF9</button>' + (held ? '<span class="heldTag">' + (heldQty ? '\u5DF2\u6301\u4ED3' : '\u5DF2\u89C2\u5BDF') + '</span>' : '<button type="button" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '">\uFF0B\u89C2\u5BDF</button>') + (x.score != null ? '<span class="poolScore" style="color:' + color + ';margin-left:auto">' + x.score + "<small>\u5206</small></span>" : "") + '</div><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div></div>';
+    return '<div class="poolRowDetailJL"><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + '</div><div class="poolRowActJL"><button type="button" data-pl-k="' + bare + '" data-n="' + escAttrJL(x.name) + '">K\u7EBF \u203A</button><button type="button" class="trajBtnJL" data-traj="' + bare + '" data-tn="' + escAttrJL(x.name) + '">\u8F68\u8FF9</button>' + (held ? '<span class="heldTag">' + (heldQty ? '\u5DF2\u6301\u4ED3' : '\u5DF2\u89C2\u5BDF') + '</span>' : '<button type="button" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '">\uFF0B\u89C2\u5BDF</button>') + (x.score != null ? '<span class="poolScore" style="color:' + color + ';margin-left:auto">' + x.score + "<small>\u89c4\u5219\u5206</small></span>" : "") + '</div><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div></div>';
   }
   function poolRowJL(x, bucket) {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
@@ -5603,7 +5603,7 @@ document.addEventListener("visibilitychange", () => {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
     const color = bucket === "RISK" ? "#ff5459" : meta[2], g = bucket === "L" ? x.gate : x.obsGate;
     const bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
-    return '<article class="watchItem poolCard' + (bucket !== "L" ? " dim" : "") + '"><div class="watchRow"><span><b>' + escJL(x.name) + '<i class="dgTag" style="color:' + color + ";border-color:" + color + "66;background:" + color + '14">' + (bucket === "RISK" ? "\u98CE\u9669 \xB7 \u6D3E\u53D1" : bucket === "OBS" ? "\u89C2\u5BDF \xB7 " : "") + (bucket === "RISK" ? "" : meta[1]) + "</i></b><small>" + bare + (x.ind ? " \xB7 " + escJL(x.ind) : "") + (x.ind && JLPOOL_HOT.has(x.ind) ? " \u98CE\u53E3" : "") + (x.emaDays >= 3 ? " \xB7 \u8D8B\u52BF" + x.emaDays + "\u5929" : "") + (x.upDays >= 2 ? " \xB7 \u8FDE\u6DA8" + x.upDays + "\u5929" : "") + (bucket === "RISK" ? " \xB7 \u539F\u5F62\u6001" + meta[1] : "") + " \xB7 \u65E5K " + String(x.d || "").slice(5) + "</small></span>" + (x.score != null ? '<span class="poolScore" style="color:' + color + '">' + x.score + "<small>\u5206</small></span>" : "") + "<strong>" + money(x.close) + '<small class="' + cls(x.pct) + '">' + pct(x.pct) + "</small></strong>" + (held ? "" : '<button class="dgAdd" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '" aria-label="\u52A0\u89C2\u5BDF">\uFF0B</button>') + '</div><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + "</div></article>";
+    return '<article class="watchItem poolCard' + (bucket !== "L" ? " dim" : "") + '"><div class="watchRow"><span><b>' + escJL(x.name) + '<i class="dgTag" style="color:' + color + ";border-color:" + color + "66;background:" + color + '14">' + (bucket === "RISK" ? "\u98CE\u9669 \xB7 \u6D3E\u53D1" : bucket === "OBS" ? "\u89C2\u5BDF \xB7 " : "") + (bucket === "RISK" ? "" : meta[1]) + "</i></b><small>" + bare + (x.ind ? " \xB7 " + escJL(x.ind) : "") + (x.ind && JLPOOL_HOT.has(x.ind) ? " \u98CE\u53E3" : "") + (x.emaDays >= 3 ? " \xB7 \u8D8B\u52BF" + x.emaDays + "\u5929" : "") + (x.upDays >= 2 ? " \xB7 \u8FDE\u6DA8" + x.upDays + "\u5929" : "") + (bucket === "RISK" ? " \xB7 \u539F\u5F62\u6001" + meta[1] : "") + " \xB7 \u65E5K " + String(x.d || "").slice(5) + "</small></span>" + (x.score != null ? '<span class="poolScore" style="color:' + color + '">' + x.score + "<small>\u89c4\u5219\u5206</small></span>" : "") + "<strong>" + money(x.close) + '<small class="' + cls(x.pct) + '">' + pct(x.pct) + "</small></strong>" + (held ? "" : '<button class="dgAdd" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '" aria-label="\u52A0\u89C2\u5BDF">\uFF0B</button>') + '</div><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + "</div></article>";
   }
   const POOL_LAYER_SHORT_JL = { start: "启动", zs: "主升", eb: "二波", trend: "趋势", top: "到顶" };
   function poolTrackReadJL() {
@@ -6002,7 +6002,7 @@ document.addEventListener("visibilitychange", () => {
       if (P0 && P0.L) {
         under = '<div class="poolStale">\u626B\u63CF\u8FDB\u884C\u4E2D \xB7 \u4E0B\u65B9\u4E3A ' + (P0.d0 || P0.date || "?") + " \u65E7\u699C\uFF0C\u53EF\u8FB9\u626B\u8FB9\u770B\uFF0C\u4E0D\u7528\u7B49</div>" + poolNavHTMLJL(P0, "", false) + poolLayersHTMLJL(P0, "", true);
       }
-      box.innerHTML = '<div class="poolConsole"><div class="pcRow"><b>\u9F99\u6C60\u626B\u63CF\u4E2D \xB7 hq \u4E94\u5C42\u53E3\u5F84</b><span>' + JLPOOL_PROG + '</span></div><div class="pcBar"><i style="width:' + JLPOOL_PCT + '%"></i></div><div class="pcRow" style="margin-top:6px"><span>\u5206\u5C42=\u63A7\u76D8\xD7\u4F4D\u7F6E\xD7\u6DA8\u505C\u57FA\u56E0\xD7\u7F29\u91CF\xD7\u91CF\u6BD4 \u2192 \u8D44\u683C\u95E8 \u2192 \u8D44\u91D1\u786E\u8BA4 \u2192 \u8BC4\u5206</span></div></div>' + under;
+      box.innerHTML = '<div class="poolConsole"><div class="pcRow"><b>\u9F99\u6C60\u626B\u63CF\u4E2D \xB7 hq \u4E94\u5C42\u53E3\u5F84</b><span>' + JLPOOL_PROG + '</span></div><div class="pcBar"><i style="width:' + JLPOOL_PCT + '%"></i></div><div class="pcRow" style="margin-top:6px"><span>\u5206\u5C42=\u63A7\u5236\u5206\xD7\u4F4D\u7F6E\xD7\u6DA8\u505C\u57FA\u56E0\xD7\u7F29\u91CF\xD7\u91CF\u6BD4 \u2192 \u8D44\u683C\u95E8 \u2192 \u8D44\u91D1\u786E\u8BA4 \u2192 \u8BC4\u5206</span></div></div>' + under;
       return;
     }
     box.dataset.plRun = "0";
@@ -6045,7 +6045,7 @@ document.addEventListener("visibilitychange", () => {
         hasPicks = true;
         html += '<div class="poolLayerHead" id="plh_pick" style="scroll-margin-top:46px"><b style="color:#ffd21f">' + (fresh ? "\u4ECA\u65E5\u4E3B\u63A8" : JLPOOL.d0 + " \u4E3B\u63A8\u5B58\u6863") + '</b><span class="plhN">' + picks.length + '</span><small>\u4E09\u5C42\u5404\u53D6\u8FC7\u95E8\u4E14\u5206\u226560\u7684\u524D3 \xB7 \u503C\u5F97\u770B\u2260\u4E70\u5165\u6307\u4EE4</small></div><div class="poolPicks">' + picks.map((x) => {
           const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer), bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
-          return '<div class="poolPick"><div class="ppTop"><b>' + escJL(x.name) + '</b><span class="poolScore" style="color:' + meta[2] + '">' + x.score + '<small>\u5206</small></span></div><div class="ppSub">' + bare + " \xB7 " + meta[1] + ((x.ind || JLPOOL_HY[x.code]) ? " \xB7 " + escJL(x.ind || JLPOOL_HY[x.code]) : "") + " \xB7 " + money(x.close) + ' <i class="' + cls(x.pct) + '">' + pct(x.pct) + '</i>' + poolStreakTagJL(x.code, JLPOOL.d0) + '</div><div class="poolFund" style="padding:4px 0 0">' + fundLineJL(x) + '</div><div class="poolWhy" style="padding:4px 0 0">' + whyLineJL(x) + "</div>" + cyqLineHTMLJL({ code: x.code, base: x.close }) + '<button type="button" class="trajBtnJL" style="width:100%;margin-top:6px" data-pl-k="' + bare + '" data-n="' + escAttrJL(x.name) + '">K\u7EBF \u203A</button>' + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '">\uFF0B \u52A0\u89C2\u5BDF</button>') + '<button type="button" class="trajBtnJL" style="width:100%;margin-top:4px" data-traj="' + bare + '" data-tn="' + escAttrJL(x.name) + '">\u8F68\u8FF9 \xB7 \u8FD1\u65E5\u5728\u699C</button><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div>' + "</div>";
+          return '<div class="poolPick"><div class="ppTop"><b>' + escJL(x.name) + '</b><span class="poolScore" style="color:' + meta[2] + '">' + x.score + '<small>\u89c4\u5219\u5206</small></span></div><div class="ppSub">' + bare + " \xB7 " + meta[1] + ((x.ind || JLPOOL_HY[x.code]) ? " \xB7 " + escJL(x.ind || JLPOOL_HY[x.code]) : "") + " \xB7 " + money(x.close) + ' <i class="' + cls(x.pct) + '">' + pct(x.pct) + '</i>' + poolStreakTagJL(x.code, JLPOOL.d0) + '</div><div class="poolFund" style="padding:4px 0 0">' + fundLineJL(x) + '</div><div class="poolWhy" style="padding:4px 0 0">' + whyLineJL(x) + "</div>" + cyqLineHTMLJL({ code: x.code, base: x.close }) + '<button type="button" class="trajBtnJL" style="width:100%;margin-top:6px" data-pl-k="' + bare + '" data-n="' + escAttrJL(x.name) + '">K\u7EBF \u203A</button>' + (held ? "" : '<button class="dgAdd" style="width:100%;margin-top:6px" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '">\uFF0B \u52A0\u89C2\u5BDF</button>') + '<button type="button" class="trajBtnJL" style="width:100%;margin-top:4px" data-traj="' + bare + '" data-tn="' + escAttrJL(x.name) + '">\u8F68\u8FF9 \xB7 \u8FD1\u65E5\u5728\u699C</button><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div>' + "</div>";
         }).join("") + "</div>";
       }
     }
@@ -6114,7 +6114,7 @@ document.addEventListener("visibilitychange", () => {
       const pl = poolFindJL(s2.code);
       const wf = typeof watchFundHTMLJL === "function" ? watchFundHTMLJL(s2) : "";
       const plMeta = pl && JLPOOL_LAYERS.find((l) => l[0] === pl.layer);
-      const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
+      const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u89c4\u5219\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
       return `<article class="watchItem" style="position:relative">${s2.qty > 0 && !s2.watch ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" onclick="event.stopPropagation();window.__jlDelWatch(&quot;' + s2.code + '&quot;)" style="position:absolute;right:6px;top:6px;z-index:3;width:26px;height:26px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s2)}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${typeof triBadgeJL === "function" ? triBadgeJL(s2) : ""}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
     };
     const obs = rows.filter((s2) => !(s2.qty > 0) || s2.watch);
@@ -10464,7 +10464,7 @@ var RLMCore = (function () {
       x.font = "8px Menlo, monospace";
       x.textAlign = "right";
       x.textBaseline = "alphabetic";
-      x.fillText("\u9AD8\u63A7\u76D8100", right - 4, ZY(100) - 2);
+      x.fillText("\u9AD8\u63A7\u5236\u5206100", right - 4, ZY(100) - 2);
     }
     const bw = Math.max(1, v.step * 0.55);
     for (let i = v.i0; i < v.i1; i++) {
@@ -10482,7 +10482,7 @@ var RLMCore = (function () {
       }
     }
     if (cur != null) {
-      const lv = cur >= 100 ? "\u9AD8\u63A7\u76D8" : cur >= 50 ? "\u4E2D\u63A7\u76D8" : cur > 0 ? "\u4F4E\u63A7\u76D8" : "\u65E0\u63A7\u76D8";
+      const lv = cur >= 100 ? "\u9AD8\u63A7\u5236\u5206" : cur >= 50 ? "\u4E2D\u63A7\u5236\u5206" : cur > 0 ? "\u4F4E\u63A7\u5236\u5206" : "\u65E0\u63A7\u5236\u5206";
       const lc = cur >= 100 ? "#ff5459" : cur >= 50 ? "#ff9a5c" : cur > 0 ? "#e8c568" : "#8fa398";
       x.font = "bold 9.5px Menlo, monospace";
       x.textAlign = "right";
@@ -10662,7 +10662,7 @@ var RLMCore = (function () {
       x.fillText((zv[li2] >= 0 ? "+" : "") + (Math.abs(zv[li2]) >= 1e4 ? (zv[li2] / 1e4).toFixed(2) + "\u4EBF" : Math.round(zv[li2]) + "\u4E07"), right - 4, y2 + 9);
     }
   }
-  const SUBPANES = [["macd", "MACD 12/26/9"], ["ctrl", "\u4E3B\u529B\u63A7\u76D8"], ["tqs", "\u5F3A\u5F31T"], ["zlyy", "\u4E3B\u529B\u51C0\u989D \xB7 \u65E5\u7EA7"]];
+  const SUBPANES = [["macd", "MACD 12/26/9"], ["ctrl", "\u533A\u95F4\u63A7\u5236\u5206"], ["tqs", "\u5F3A\u5F31T"], ["zlyy", "\u4E3B\u529B\u51C0\u989D \xB7 \u65E5\u7EA7"]];
   const __hideVolumePane = () => {
     const v = document.querySelector(".volumePlot");
     if (v) {
@@ -10755,7 +10755,7 @@ var RLMCore = (function () {
       else if (k === "zlyy") paneZlyy(x, v, kl, T, B - T, R, selected);
     });
   }
-  const PANE_DEFS = [["vol", "VOL"], ["ddx", "DDX"], ["macd", "MACD"], ["ctrl", "\u63A7\u76D8"], ["tqs", "\u5F3A\u5F31T"], ["zlyy", "\u8D44\u91D1\u51C0\u989D"]];
+  const PANE_DEFS = [["vol", "VOL"], ["ddx", "DDX"], ["macd", "MACD"], ["ctrl", "\u63A7\u5236\u5206"], ["tqs", "\u5F3A\u5F31T"], ["zlyy", "\u8D44\u91D1\u51C0\u989D"]];
   /* v0.83.0-S6: 自动斐波那契进指标条，默认关（用户："绑死的那个给我取消掉"）*/
   const OV_DEFS = [["afib", "\u81EA\u52A8Fib"], ["boll", "BOLL"], ["ema", "EMA"], ["hma", "\u53D8\u8272MA"], ["cost", "\u6210\u672C\u7EBF"], ["tdhl", "\u4ECA\u9AD8\u4F4E"], ["sr", "\u6491\u538BSR"], ["rlm", "\u53CD\u5E94\u4F4D"], ["vp", "\u91CF\u5206\u5E03"], ["cyq", "\u7B79\u7801"]];
   function savePanePrefs() {
@@ -13443,7 +13443,7 @@ var RLMCore = (function () {
         h += '<div style="font-size:11px;color:#ffd21f;padding:8px 0 3px">' + d + " \xB7 \u6570\u636E\u65E5 " + String(e.d0 || "").slice(5) + "</div>" + (e.picks || []).map((x) => {
           const f = (v) => v == null ? '<b style="color:#8fa8b3">\u2014</b>' : '<b style="color:' + (v > 0 ? "#ff5459" : v < 0 ? "#1fdc93" : "#e0f2f6") + '">' + (v > 0 ? "+" : "") + v + "%</b>";
           const bad = x.r1 != null && x.r1 <= -8 || x.r2 != null && x.r2 <= -12;
-          return '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;font-size:11.5px;color:#f2fbfd;padding:5px 0;border-bottom:1px solid #81e6d914;align-items:baseline"><span>' + x.name + ' <i style="font-style:normal;color:#b9d9e2">' + x.code.slice(2) + " \xB7 " + x.layer + " " + x.score + "\u5206 @" + x.close + (x.hy ? " \xB7 " + x.hy : "") + (x.d0 != null ? " \xB7 \u4E3B\u529B" + fmtFundJL(x.d0) : "") + (x.f5 != null ? " \xB7 5\u65E5" + fmtFundJL(x.f5) : "") + "</i>" + (bad ? ' <u style="color:#ff8a80;text-decoration:none">\u8E29\u96F7\u590D\u76D8</u>' : "") + "</span><span>T1 " + f(x.r1) + "</span><span>T2 " + f(x.r2) + "</span><span>T3 " + f(x.r3) + "</span></div>";
+          return '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:10px;font-size:11.5px;color:#f2fbfd;padding:5px 0;border-bottom:1px solid #81e6d914;align-items:baseline"><span>' + x.name + ' <i style="font-style:normal;color:#b9d9e2">' + x.code.slice(2) + " \xB7 " + x.layer + " " + x.score + "\u89c4\u5219\u5206 @" + x.close + (x.hy ? " \xB7 " + x.hy : "") + (x.d0 != null ? " \xB7 \u4E3B\u529B" + fmtFundJL(x.d0) : "") + (x.f5 != null ? " \xB7 5\u65E5" + fmtFundJL(x.f5) : "") + "</i>" + (bad ? ' <u style="color:#ff8a80;text-decoration:none">\u8E29\u96F7\u590D\u76D8</u>' : "") + "</span><span>T1 " + f(x.r1) + "</span><span>T2 " + f(x.r2) + "</span><span>T3 " + f(x.r3) + "</span></div>";
         }).join("");
       });
       sec.innerHTML = h;
