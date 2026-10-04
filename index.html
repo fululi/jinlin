@@ -575,7 +575,7 @@ document.addEventListener("visibilitychange", () => {
         r = [];
       }
       if (!Array.isArray(r)) r = [];
-      if (!r.some((x) => x && x.code === "603986")) r.unshift({ code: "603986", name: "\u5146\u6613\u521B\u65B0", base: 0, pct: 0, qty: 0, cost: null, pnl: 0 }); // v.52: 兆易钉住,研究股持久化
+      try { if (localStorage.getItem("jl_zy_unpin_v1") !== "1" && !r.some((x) => x && x.code === "603986")) r.unshift({ code: "603986", name: "\u5146\u6613\u521B\u65B0", base: 0, pct: 0, qty: 0, cost: null, pnl: 0 }); } catch (eZy) {} // jl-1010: 钉住加一次性开关, 删过不再强加回
       return r;
     })();
     const saveResearchJL = () => {
@@ -4533,6 +4533,7 @@ document.addEventListener("visibilitychange", () => {
         const ri = researchedStocksJL.findIndex((x) => x.code === del.dataset.deleteStock);
         if (ri >= 0) {
           researchedStocksJL.splice(ri, 1);
+          if (del.dataset.deleteStock === "603986") { try { localStorage.setItem("jl_zy_unpin_v1", "1"); } catch (eZ3) {} } /* jl-1010 */
           saveResearchJL();
           renderDeck();
           renderWatch();
@@ -6216,6 +6217,19 @@ document.addEventListener("visibilitychange", () => {
       e.stopPropagation();
       const code2 = dl.getAttribute("data-watch-del");
       const i2 = stocks.findIndex((x) => x.code === code2);
+      if (i2 < 0) { /* jl-1010: 研究池兜底——观察列表是 stocks+researchedStocksJL 并集, 删除原来只找 stocks, 研究池票点了没反应 */
+        const ri2 = researchedStocksJL.findIndex((x) => x && x.code === code2);
+        if (ri2 >= 0) {
+          const nm3 = researchedStocksJL[ri2].name;
+          researchedStocksJL.splice(ri2, 1);
+          if (code2 === "603986") { try { localStorage.setItem("jl_zy_unpin_v1", "1"); } catch (eZ2) {} }
+          saveResearchJL();
+          renderDeck();
+          renderWatch();
+          try { toast(nm3 + " \u5DF2\u79FB\u51FA\u7814\u7A76\u6C60"); } catch (e4) {}
+        }
+        return;
+      }
       if (i2 >= 0) {
         const nm2 = stocks[i2].name;
         stocks.splice(i2, 1);
