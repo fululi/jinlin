@@ -545,8 +545,8 @@ function normalizeKlt(k) {
   return PERIOD_KEYS.indexOf(k) >= 0 ? k : "101";
 }
 var PERIODS = [["1", "1"], ["5", "5"], ["15", "15"], ["30", "30"], ["60", "60分钟"], ["101", "日"], ["102", "周"]];
-var TOOLS = [["trend", "趋势线", 2], ["hline", "水平线", 1], ["ray", "射线", 2], ["rect", "矩形", 2], ["fib", "斐波那契", 2], ["pct", "测幅%", 2], ["tri", "三角形", 3], ["xabcd", "蝴蝶XABCD", 5], ["freedraw", "画笔", 2], ["lrchan", "画回归", 2], ["buy", "买点线", 1], ["priceline", "价线", 0]];
-var TICON = { trend: "╱", hline: "─", ray: "↗", rect: "▭", fib: "φ", pct: "⇅", tri: "△", xabcd: "✕", freedraw: "✎", lrchan: "∥", buy: "Ⓑ", priceline: "¥" }; // ks-0906-19: TV风图标按钮(名字在title/提示里)
+var TOOLS = [["trend", "趋势线", 2], ["hline", "水平线", 1], ["ray", "射线", 2], ["rect", "矩形", 2], ["fib", "斐波那契", 2], ["pct", "测幅%", 2], ["tri", "三角形", 3], ["xabcd", "蝴蝶XABCD", 5], ["freedraw", "画笔", 2], ["poly", "折线", 999], ["lrchan", "画回归", 2], ["buy", "买点线", 1], ["priceline", "价线", 0]];
+var TICON = { trend: "╱", hline: "─", ray: "↗", rect: "▭", fib: "φ", pct: "⇅", tri: "△", xabcd: "✕", freedraw: "✎", poly: "⦚", lrchan: "∥", buy: "Ⓑ", priceline: "¥" }; // ks-0906-19: TV风图标按钮(名字在title/提示里)
 // ks-0906-26: 默认名单不再硬编码(公开仓库不挂用户底牌)——优先读同域名 hq-mobile 的 portfolio_v2 持仓, 读不到就空列表自己加
 var KS_SEED = (function () {
   try {
@@ -900,6 +900,11 @@ function anchorXY(v, im, a) {
   return { x: v.X(i), y: yOfPane(v, a.pane, a.p), i: i };
 }
 var FIB_R = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.414, 1.618, 2.618];
+/* jl-1007: Fib 显示设置与主文档同键互通(jinlin_fib_cfg_v1), 13档含0.886/4.618 */
+var KS_FIB_DEF = [[0,"0","#f2f5f3"],[0.236,"0.236","#8fa9c9"],[0.382,"0.382","#57a7ff"],[0.5,"0.5","#c792ea"],[0.618,"0.618","#ffd21f"],[0.786,"0.786","#ff9a5c"],[0.886,"0.886","#90aeb9"],[1,"1","#f2f5f3"],[1.272,"1.272","#6ee7ff"],[1.414,"1.414","#72d8c2"],[1.618,"1.618","#e8c568"],[2.618,"2.618","#ff8a80"],[4.618,"4.618","#ff5f9e"]];
+function ksFibCfgJL() { var c = null; try { c = JSON.parse(localStorage.getItem("jinlin_fib_cfg_v1") || "null"); } catch (e) {} var vis = c && c.vis ? c.vis : {}, col = c && c.col ? c.col : {}; return KS_FIB_DEF.map(function (z) { return { r: z[0], lb: z[1], color: col[z[1]] || z[2], on: vis[z[1]] !== false }; }); }
+function ksFibOnJL() { return ksFibCfgJL().filter(function (z) { return z.on; }).map(function (z) { return z.r; }); }
+function ksFibColorJL(r) { var c9 = ksFibCfgJL(); for (var i9 = 0; i9 < c9.length; i9++) if (Math.abs(c9[i9].r - r) < 1e-9) return c9[i9].color; return "#d5e0d8"; }
 var FIB_C = { "0": "#f2f5f3", "0.236": "#8fa9c9", "0.382": "#57a7ff", "0.5": "#c792ea", "0.618": "#ffd21f", "0.786": "#ff9a5c", "1": "#f2f5f3", "1.272": "#6ee7ff", "1.414": "#3ddc97", "1.618": "#b48ee8", "2.618": "#dfe9f2" };
 var FIB_N = { "0.382": "接回·浅", "0.5": "接回·半", "0.618": "接回·深", "0.786": "接回·极限", "1.272": "冲刺一", "1.414": "冲刺二", "1.618": "冲刺·主", "2.618": "冲刺·尾" }; // ks-0906-20d: 去红化——端点白/0.382亮蓝(与绿强反差)/0.5紫/0.618金/0.786橙/扩展位冷灰蓝, 不与红涨绿跌打架
 function ptsOf(v, im, pts) {
@@ -931,7 +936,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   ctx.font = "10px -apple-system, sans-serif";
   ctx.textAlign = "left"; ctx.textBaseline = "middle";
   var t = dg.type;
-  var MINP = { trend: 2, hline: 1, ray: 2, rect: 2, fib: 2, pct: 2, tri: 3, xabcd: 5, freedraw: 2, lrchan: 2, buy: 1 };
+  var MINP = { trend: 2, hline: 1, ray: 2, rect: 2, fib: 2, pct: 2, tri: 3, xabcd: 5, freedraw: 2, lrchan: 2, buy: 1, poly: 999 };
   if (pts.length < (MINP[t] || 2)) {
     // 进行中的多点画线：只画已落锚点之间的预览连线和点
     ctx.strokeStyle = sel ? SEL : "#e6b43c";
@@ -941,11 +946,12 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     }
     return;
   }
-  if (t === "freedraw") {
+  if (t === "freedraw" || t === "poly") {
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (var fp = 1; fp < pts.length; fp++) ctx.lineTo(pts[fp].x, pts[fp].y);
     ctx.stroke();
+    if (t === "poly") { for (var pj = 0; pj < pts.length; pj++) { ctx.beginPath(); ctx.arc(pts[pj].x, pts[pj].y, sel ? 3 : 2.2, 0, 7); ctx.fill(); } }
   }
   else if (t === "lrchan") {
     var iA = Math.min(pts[0].i, pts[1].i), iB = Math.max(pts[0].i, pts[1].i);
@@ -1032,11 +1038,11 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     var p1 = dg.pts[0].p, p2 = dg.pts[1].p;
     var fx0 = Math.min(pts[0].x, pts[1].x);
     window.__fibLastY = -99;
-    var FIB_SEQ = p2 >= p1 ? FIB_R.slice().reverse() : FIB_R; // v.89: 低→高画线时yy随档位递减,防撞只吃递增序会跳光标签;按屏幕自上而下贴签
+    var _fc9 = ksFibOnJL(); var FIB_SEQ = p2 >= p1 ? _fc9.slice().reverse() : _fc9; // v.89: 低→高画线时yy随档位递减,防撞只吃递增序会跳光标签;按屏幕自上而下贴签
     for (var fi = 0; fi < FIB_SEQ.length; fi++) {
       var r = FIB_SEQ[fi], pr = p1 + (p2 - p1) * r, yy = yOfPane(v, dg.pts[0].pane, pr);
       if (dg.pts[0].pane !== "tqs" && (yy < v.pTop - 30 || yy > v.pTop + v.priceH + 30)) continue;
-      ctx.strokeStyle = FIB_C[String(r)] || "#d5e0d8";
+      ctx.strokeStyle = ksFibColorJL(r);
       ctx.lineWidth = r === 0 || r === 1 ? 1 : (r === 0.618 || r === 0.382 ? 0.9 : 0.7);
       ctx.setLineDash(dg.dash ? [7, 5] : (r > 1 ? [4, 4] : []));
       ctx.beginPath(); ctx.moveTo(fx0, yy); ctx.lineTo(right, yy); ctx.stroke();
@@ -1051,7 +1057,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
         ctx.font = "bold 10px Menlo, monospace";
         var _tw4 = ctx.measureText(_tx2).width;
         /* ks-0924-1: 删掉 rgba(6,10,8,0.88) 近黑底片，改字形光环（透明底） */
-        ksHaloTextJL(ctx, _tx2, right - _tw4 - 4, yy - 2, FIB_C[String(r)] || "#d5e0d8");
+        ksHaloTextJL(ctx, _tx2, right - _tw4 - 4, yy - 2, ksFibColorJL(r));
         ctx.font = "10px -apple-system, sans-serif";
       }
     }
@@ -1902,7 +1908,7 @@ function hitTest(pt) {
     var dg = dl[idx], pts = ptsOf(v, im, dg.pts);
     if (!pts) continue;
     var d = Infinity, t = dg.type;
-    if (t === "freedraw") { for (var fs = 0; fs < pts.length - 1; fs++) d = Math.min(d, distSeg(pt.x, pt.y, pts[fs], pts[fs + 1])); }
+    if (t === "freedraw" || t === "poly") { for (var fs = 0; fs < pts.length - 1; fs++) d = Math.min(d, distSeg(pt.x, pt.y, pts[fs], pts[fs + 1])); }
     else if (t === "trend" || t === "pct" || t === "lrchan") d = distSeg(pt.x, pt.y, pts[0], pts[1]);
     else if (t === "ray") {
       var dx = pts[1].x - pts[0].x, dy = pts[1].y - pts[0].y;
@@ -1924,8 +1930,8 @@ function hitTest(pt) {
       var p1 = dg.pts[0].p, p2 = dg.pts[1].p;
       var fx0 = Math.min(pts[0].x, pts[1].x);
       if (pt.x < fx0 - 12) continue;
-      for (var fi = 0; fi < FIB_R.length; fi++) {
-        d = Math.min(d, Math.abs(pt.y - yOfPane(v, dg.pts[0].pane, p1 + (p2 - p1) * FIB_R[fi])));
+      for (var fi = 0, _fh9 = ksFibOnJL(); fi < _fh9.length; fi++) {
+        d = Math.min(d, Math.abs(pt.y - yOfPane(v, dg.pts[0].pane, p1 + (p2 - p1) * _fh9[fi])));
       }
     }
     else if (t === "tri") {
@@ -1981,7 +1987,7 @@ function placeAnchor(pt) {
     hint("「" + toolName(S.tool) + "」已完成 · 按住画线可整体拖动 · 拖锚点(黄点)微调 · 「删选」删除");
     S.tool = null; syncTools(); store();
   } else {
-    hint("「" + toolName(S.tool) + "」还差 " + (need - S.pending.length) + " 个点 · 点「撤点」回退 / 再点工具取消");
+    hint(S.tool === "poly" ? "折线已打 " + S.pending.length + " 点 · 再点「折线」钮完成 · 「撤点」回退" : "「" + toolName(S.tool) + "」还差 " + (need - S.pending.length) + " 个点 · 点「撤点」回退 / 再点工具取消");
   }
   draw();
 }
@@ -2576,6 +2582,24 @@ function buildPStrip() {
     else location.href = "https://fululi.github.io/hq-mobile/";
   });
 })();
+function ksFibDialogJL() {
+  var d = document.getElementById("ksFibDlg");
+  if (!d) { d = document.createElement("div"); d.id = "ksFibDlg"; d.style.cssText = "position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center"; d.innerHTML = '<div style="background:#101820;border:1px solid #2b3a44;border-radius:12px;padding:12px;max-width:340px;width:92%;max-height:76vh;overflow:auto"><b style="color:#eef9fc;font-size:13px">Fib 显示设置</b><p style="color:#9fb9c4;font-size:10px;margin:4px 0 8px">只控制 Fib 数字与颜色，不改波段/档位计算。与主页同一套设置。</p><div data-kf-box></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button type="button" data-kf-cancel style="padding:5px 12px;border:1px solid #37454f;background:transparent;color:#cfe4ea;border-radius:7px">取消</button><button type="button" data-kf-ok style="padding:5px 12px;border:1px solid #81e6d9;background:#81e6d922;color:#81e6d9;border-radius:7px">保存</button></div></div>'; document.body.appendChild(d);
+    d.addEventListener("click", function (e) { if (e.target === d) d.style.display = "none"; });
+    d.querySelector("[data-kf-cancel]").onclick = function () { d.style.display = "none"; };
+    d.querySelector("[data-kf-ok]").onclick = function () {
+      var vis = {}, col = {};
+      d.querySelectorAll("[data-kf-on]").forEach(function (x) { vis[x.getAttribute("data-kf-on")] = x.checked; });
+      d.querySelectorAll("[data-kf-col]").forEach(function (x) { col[x.getAttribute("data-kf-col")] = x.value; });
+      try { localStorage.setItem("jinlin_fib_cfg_v1", JSON.stringify({ vis: vis, col: col })); } catch (e2) {}
+      d.style.display = "none";
+      try { draw(); } catch (e3) {}
+    };
+  }
+  var box = d.querySelector("[data-kf-box]");
+  box.innerHTML = ksFibCfgJL().map(function (z) { return '<label style="display:flex;align-items:center;gap:8px;padding:3px 0;color:#e2f2f7;font-size:11px"><input type="checkbox" data-kf-on="' + z.lb + '" ' + (z.on ? "checked" : "") + '> <span style="width:44px">' + z.lb + '</span><input type="color" data-kf-col="' + z.lb + '" value="' + z.color + '"></label>'; }).join("");
+  d.style.display = "flex";
+}
 function buildTools() {
   var el = document.querySelector("[data-tools]");
   el.innerHTML = "";
@@ -2610,6 +2634,7 @@ function buildTools() {
     });
     if (dlist().length || swept) { DRAW[dkey()] = []; S.selected = -1; store(); hint(swept ? "本周期画线+各周期价位线已清空" : "本周期画线已清空"); syncTools(); draw(); }
   }],
+  ["Fib设", function () { ksFibDialogJL(); }],
   ["副图上置", function () {
     S.ind.paneTop = !S.ind.paneTop; store(); buildTools(); draw();
     hint(S.ind.paneTop ? "副图已上置到主图上方" : "副图已回主图下方");
@@ -2629,7 +2654,7 @@ function buildTools() {
     b.setAttribute("data-tool", t[0]);
     b.addEventListener("click", function () {
       if (S.favPick) { toggleFav("tool:" + t[0]); return; } // 挑选模式: 点按钮=收藏/取消收藏, 不触发工具
-      if (S.tool === t[0]) { S.tool = null; S.pending = []; S.ghost = null; hint(""); }
+      if (S.tool === t[0]) { var _doneP = t[0] === "poly" && S.pending.length >= 2; if (_doneP) { dlist().push({ type: "poly", pts: S.pending.slice() }); S.selected = dlist().length - 1; store(); } S.tool = null; S.pending = []; S.ghost = null; if (_doneP) hint("折线已完成 · 「删选」可删 · 按住可整体拖"); else hint(""); syncTools(); draw(); }
       else if (t[2] === 0) {
         var pr = prompt("输入价格（如 44.2）");
         var pv2 = parseFloat(pr);
