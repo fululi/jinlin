@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="K-STATION" data-page-node-id="eakkpnvZONjpAgIoWJfWXR">
 <meta name="theme-color" content="#0a0e0b" data-page-node-id="G8xVsmyJW6v9vqF1PGoexF">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='24' fill='%230a0e0b'/%3E%3Crect x='30' y='44' width='10' height='40' fill='%23ff6f66'/%3E%3Crect x='48' y='30' width='10' height='54' fill='%2335d99a'/%3E%3Crect x='66' y='52' width='10' height='34' fill='%23ff6f66'/%3E%3Crect x='84' y='38' width='10' height='48' fill='%2335d99a'/%3E%3C/svg%3E" data-page-node-id="xPNcNcdDoerIE4BP3A0aDV">
-<title>K-STATION Mobile · 持仓K线</title><meta name="build" content="ks-0930-54: 六信号改纯图形戳(房主拍板: 撤文字牌/全名只留彩点单字戳, hint缩一行); 实时主力线零上红/零下绿细线化(原金粗线)+零轴亮白; 档位线已触压暗/下一档同色挑亮实线; 价格轴亮白11px">
+<title>K-STATION Mobile · 持仓K线</title><meta name="build" content="ks-0930-54: 六信号改纯图形戳(撤文字牌/全名只留彩点单字戳, hint缩一行); 实时主力线零上红/零下绿细线化(原金粗线)+零轴亮白; 档位线已触压暗/下一档同色挑亮实线; 价格轴亮白11px">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -68,6 +68,7 @@
   .topbar .fresh.bad { color: #ff6f66; }
   body.rows-off .row { display: none; }
   body.tools-off .row[data-tools], body.tools-off .row[data-inds] { display: none; }
+  body.inds-off .row[data-inds] { display: none; } /* jl-1015 */
   body.simple #icthelp, body.simple .tpan { display: none; }
   body.simple .row[data-tabs] { display: none; } /* 内嵌单票: 股票切换行没意义 */
   body.simple .topbar [data-collapse] { display: none; }
@@ -566,7 +567,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false }, /* jl-1004: 六信号默认关(房主实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(房主: 打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
+  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawLock: false, pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式
   favs: [], favPick: false, favHide: false, // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
@@ -588,7 +589,7 @@ function store() {
     return;
   }
   try {
-    localStorage.setItem("ksm_v1", JSON.stringify({ v: 4, codes: S.codes, active: S.active, klt: S.klt, ind: S.ind, draw: DRAW, lineMode: S.lineMode, pdhlMode: S.pdhlMode, monOpen: S.monOpen, collapsed: S.collapsed, toolsOff: S.toolsOff, drawLock: S.drawLock, favs: S.favs, favHide: S.favHide, theme: S.theme }));
+    localStorage.setItem("ksm_v1", JSON.stringify({ v: 4, codes: S.codes, active: S.active, klt: S.klt, ind: S.ind, indsOff: S.indsOff, draw: DRAW, lineMode: S.lineMode, pdhlMode: S.pdhlMode, monOpen: S.monOpen, collapsed: S.collapsed, toolsOff: S.toolsOff, drawLock: S.drawLock, favs: S.favs, favHide: S.favHide, theme: S.theme }));
   } catch (e) {}
 }
 function restore() {
@@ -605,7 +606,9 @@ function restore() {
     if (o.monOpen != null) S.monOpen = !!o.monOpen;
     if (o.draw) DRAW = o.draw;
     if (o.collapsed != null) S.collapsed = !!o.collapsed;
+    if (o.indsOff != null) S.indsOff = !!o.indsOff; /* jl-1015 */
     S.toolsOff = (o.toolsOff != null) ? !!o.toolsOff : false; // 画图工具默认展开(用户高频使用画线)
+  S.indsOff = (o.indsOff != null) ? !!o.indsOff : true; /* jl-1015: 指标行默认收起 */
     if (o.favs && o.favs.length) S.favs = o.favs;
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
@@ -656,7 +659,7 @@ function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFix
   }
 
 var UP = "#ff6f66", DN = "#35d99a", DIM = "#8fa398", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f"; // ks-0907-27: DIM提亮(白底invert后是深灰才看得清)/GRID降噪
-// 金粼0913晚: embed网格细化(0.5px Tiffany青调)——只动网格线, 字/标注颜色一律跟随部署版(房主指令: 字颜色全抄K-STATION)
+// 金粼0913晚: embed网格细化(0.5px Tiffany青调)——只动网格线, 字/标注颜色一律跟随部署版(字颜色全抄K-STATION)
 function _embMode() { return typeof document !== "undefined" && document.body && document.body.classList.contains("embed"); }
 function gridSt(ctx) { if (_embMode()) { ctx.strokeStyle = "rgba(135,183,196,0.10)"; ctx.lineWidth = 0.5; } else { ctx.strokeStyle = GRID; ctx.lineWidth = 1; } } /* v.22 修递归炸雷: 原else自调用,非embed即堆栈爆 */
 function maArr(kl, n) {
@@ -2646,6 +2649,10 @@ function buildTools() {
     b.addEventListener("click", op[1]);
     el.appendChild(b);
   });
+  var ib = document.createElement("button");
+  ib.className = "btn"; ib.type = "button"; ib.textContent = "指标"; ib.title = "展开/收起指标行";
+  ib.addEventListener("click", function () { S.indsOff = !S.indsOff; store(); syncCollapse(); syncTools(); draw(); hint(S.indsOff ? "指标行已收起" : "指标行已展开"); });
+  el.appendChild(ib); /* jl-1015: 指标行独立开关, 默认收起 */
   TOOLS.forEach(function (t) {
     var b = document.createElement("button");
     b.className = "btn"; b.type = "button";
@@ -2677,6 +2684,7 @@ function buildTools() {
   syncTools();
 }
 function syncTools() {
+  document.querySelectorAll("[data-tools] > button").forEach(function (b) { if (b.title === "展开/收起指标行") b.classList.toggle("on", !S.indsOff); });
   document.querySelectorAll("[data-tool]").forEach(function (b) {
     b.classList.toggle("on", b.getAttribute("data-tool") === S.tool);
   });
@@ -2803,6 +2811,7 @@ function syncCollapse() {
   document.querySelector("[data-collapse]").textContent = S.collapsed ? "展开▼" : "收起▲";
   // 画线/指标两长行收进"工具"钮,股票/周期常驻——顶栏不再一屏全是按钮
   document.body.classList.toggle("tools-off", !!S.toolsOff);
+  document.body.classList.toggle("inds-off", !!S.indsOff); /* jl-1015 */
   var tb = document.querySelector("[data-tooltog]");
   if (tb) tb.textContent = S.toolsOff ? "工具▾" : "工具▴";
 }
@@ -5500,7 +5509,7 @@ function renderSixSigJL(ctx, v) {
     ctx.fillStyle = "#0a0e0b"; ctx.fillText(mk.t, x, y + 0.5);
   }
 }
-/* ks-0930-54: 文字牌/宽模式全名撤除——房主 0930 拍板"还是画图吧,别给我文字儿了", 只留彩点单字戳 */
+/* ks-0930-54: 文字牌/宽模式全名撤除——0930 拍板"还是画图吧,别给我文字儿了", 只留彩点单字戳 */
 /* ================= 主力净额副图（东财日级真实口径：超大单+大单净额，一条线看方向） ================= */
 function renderExtraPanes(ctx, v) {
   if (!S.ind.zlyy || noFund(S.active)) return;
@@ -5591,7 +5600,7 @@ function buildFavs() {
   pk.addEventListener("click", function () {
     S.favPick = !S.favPick;
     if (S.favPick) document.body.classList.remove("tools-off"); // 挑选时临时展开工具/指标两行, 否则没东西可挑
-    else document.body.classList.toggle("tools-off", !!S.toolsOff);
+    else { document.body.classList.toggle("tools-off", !!S.toolsOff); document.body.classList.toggle("inds-off", !!S.indsOff); } /* jl-1015 */
     buildFavs(); buildTools(); buildInds();
     hint(S.favPick ? "挑选模式: 点工具/指标按钮上的☆即收藏, 再点「完成✓」退出" : "已退出挑选");
   });
@@ -5683,7 +5692,7 @@ function applyUrl() {
       document.documentElement.classList.remove("theme-la", "theme-lc"); if (typeof S !== "undefined") S.theme = ""; // 金粼0913: 内嵌强制深色, 与金粼底融合
       // 金粼0913晚: 内嵌默认开 三角/SR/OB/VOL叠加/BSL·SSL流动性; 关掉 ICT 结构标记(ms)——BOS 只留三角突破那一枚(上黄下红, 部署版自带)
       // 金粼0913深夜(口径定案): 每次打开都恢复默认开——隐藏/删除只是本次会话有效, 不做跨会话持久化, 重开必须看到指标在
-      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(房主实证卖侧戳误导); 指标条[六信号]可手动开 */ }
+      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
       S.lineMode = false; // 金粼0914: 内嵌大图必须是蜡烛K线——存档里 lineMode=true 会把主图变成蓝色收盘价折线(用户看到的"实时线盖图"), 内嵌强制蜡烛, 可用紧凑条「K/线」切回
       // 金粼0913晚(重打在部署版上): 单行抽屉紧凑条(周期/画线/指标/幅图 + 删除/清空/隐藏/锁定/提醒), 替代☰多行展开
       if (!document.getElementById("ksBarJL")) {
