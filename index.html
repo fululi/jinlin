@@ -375,7 +375,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 <div class="chartHeading"><button id="chartBack" aria-label="返回来源页面">‹</button><div><b id="chartName"></b><small id="chartCode"></small></div><strong id="chartPrice"></strong><div class="chartMeta"><small id="chartDate"></small><small id="chartMarketStatus"></small></div><small>实时</small><button id="pickerOpen" aria-expanded="false">☷ 选股</button></div>
 <div class="periodBar" data-period-bar=""></div>
 <div id="ksMiniJL"><button id="ksMiniHandle" aria-expanded="false">工具</button><div id="ksMiniBody" hidden=""><button data-mb="picker">选股</button><button data-period="1分">1分</button><button data-period="5分">5分</button><button data-period="15分">15分</button><button data-period="30分">30分</button><button data-period="日K">日K</button><button data-period="5日">5日</button><button data-period="周">周</button><button data-period="月">月</button><button data-mb="draw">画线</button><button data-mb="undo">删除</button><button data-mb="clear">清空</button><button data-mb="hide">隐藏</button><button data-mb="lock">锁定</button><button data-mb="ind">指标</button><button data-mb="alert">提醒</button><button data-mb="reset">复位</button><button data-mb="exit">退出全屏</button></div></div>
-<div class="chartActions"><button id="drawMode" aria-pressed="false">╱ 画线</button><button id="fibSettings" type="button" aria-label="Fib档位显示与颜色设置">Fib</button><button id="undoLine">⌫ 删除</button><button id="ksToggle" aria-pressed="true">◈ 指标</button><button id="resetChart">⊙ 复位</button><button id="alertOpen" aria-label="价格提醒">⏰</button><button id="lineBuy" aria-label="买入线绿色">B</button><button id="lineSell" aria-label="卖出线红色">S</button><button id="lineStyle" aria-label="切换实线虚线">┄</button><button id="lineWidth" aria-label="切换线宽">━</button><button id="fibSettings" aria-label="Fib显示设置">Fib</button><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="chartAdd" aria-label="添加股票">＋ 股票</button></div>
+<div class="chartActions"><button id="drawMode" aria-pressed="false">╱ 画线</button><button id="fibSettings" type="button" aria-label="Fib档位显示与颜色设置">Fib</button><button id="polyPathJL" type="button" aria-pressed="false" aria-label="路径画线 按住拖动自由画多段线">路径</button><button id="polyLineJL" type="button" aria-pressed="false" aria-label="折线 点击逐点打点再点完成">折线</button><button id="undoLine">⌫ 删除</button><button id="ksToggle" aria-pressed="true">◈ 指标</button><button id="resetChart">⊙ 复位</button><button id="alertOpen" aria-label="价格提醒">⏰</button><button id="lineBuy" aria-label="买入线绿色">B</button><button id="lineSell" aria-label="卖出线红色">S</button><button id="lineStyle" aria-label="切换实线虚线">┄</button><button id="lineWidth" aria-label="切换线宽">━</button><button id="fibSettings" aria-label="Fib显示设置">Fib</button><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="chartAdd" aria-label="添加股票">＋ 股票</button></div>
 <div class="indBar" id="indBar"></div><div class="plots"><div class="mainPlot"><canvas id="bigChart" tabindex="0" aria-label="K线主图，拖动平移、右侧价格轴缩放、捏合缩放"></canvas><button class="panArrow l" aria-label="向左平移K线">‹</button><button class="panArrow r" aria-label="向右平移K线">›</button></div><div class="volumePlot"><canvas id="volumeChart" tabindex="0" aria-label="成交量副图，可画线"></canvas></div><div class="ddxPlot"><span>主力净额 · 资金</span><button id="ddxCloseJL" type="button" aria-label="关闭主力净额附图">×</button><canvas id="ddxChart" aria-label="DDX主力资金副图"></canvas></div><div id="subPanes"></div><div id="crossSpanJL"></div><iframe id="ksFrameJL" title="K-STATION 大图"></iframe><button id="ddxReopenJL" type="button">主力净额附图已隐藏（该周期未覆盖/资金未到位/已手动关闭）· 点我展开</button></div>
 <div id="crossReadout">拖动图表平移 · 拖动右轴缩放 · 双击复位</div>
 <div class="chartFooter"><details id="technical"><summary>技术摘要 <span id="technicalPeriod"></span></summary><div id="technicalBody"></div></details></div>
@@ -585,7 +585,7 @@ document.addEventListener("visibilitychange", () => {
       }
     };
   const byCode = (c) => [...stocks, ...researchedStocksJL, ...indices].find((x) => x.code === c), periods = ["1\u5206", "5\u5206", "15\u5206", "30\u5206", "\u65E5K", "5\u65E5", "\u5468", "\u6708"];
-  let page = "holds", origin = "holds", index = indices[0].code, selected = stocks[0].code, active = 0, period = "\u65E5K", style = "candle", group = "holds", watchMode = "watch", tick = 0, drawMode = false, cross = null, holdingCross = null, overviewCross = null, miniCross = /* @__PURE__ */ new WeakMap(), draft = null;
+  let page = "holds", origin = "holds", index = indices[0].code, selected = stocks[0].code, active = 0, period = "\u65E5K", style = "candle", group = "holds", watchMode = "watch", tick = 0, drawMode = false, polyToolJL = null, cross = null, holdingCross = null, overviewCross = null, miniCross = /* @__PURE__ */ new WeakMap(), draft = null;
   let hvp = { count: 48, end: -1, ys: 1, offset: 0 }, homeTool = null, homeSel = null, homeMove = null, homeLinesHidden = false, homeFlowOn = false, homeFlowJL = { ts: 0, code: "", data: null };
   const viewport = { count: 48, end: -1, ys: 1, offset: 0 };
   function vpEnd(vp, len) {
@@ -7655,10 +7655,15 @@ function ffMergeJL(oldRows, newRows) {
         x.lineWidth = sel ? 2.4 : (line.width || lineWidthJL);
         x.setLineDash(line.dash || lineDashJL);
         x.beginPath();
-        x.moveTo(X(line.a.i), Y(line.a.v));
-        x.lineTo(X(line.b.i), Y(line.b.v));
+        if (line.pts && line.pts.length) { /* jl-1007 多点线 */
+          x.moveTo(X(line.pts[0].i), Y(line.pts[0].v));
+          for (let _pi = 1; _pi < line.pts.length; _pi++) x.lineTo(X(line.pts[_pi].i), Y(line.pts[_pi].v));
+        } else {
+          x.moveTo(X(line.a.i), Y(line.a.v));
+          x.lineTo(X(line.b.i), Y(line.b.v));
+        }
         x.stroke();
-        if (pane === "price" && li < saved.length) ltags.push({ ly: Math.max(T + 2, Math.min(B - 9, Y(line.b.v))), lt: line.b.v.toFixed(2) + (sel ? " \xD7" : ""), sel });
+        if (pane === "price" && li < saved.length) { const _lvT = line.pts ? line.pts[line.pts.length - 1].v : line.b.v; ltags.push({ ly: Math.max(T + 2, Math.min(B - 9, Y(_lvT))), lt: _lvT.toFixed(2) + (sel ? " \xD7" : ""), sel }); }
       });
       if (cross) {
         x.strokeStyle = fg;
@@ -8081,8 +8086,10 @@ function ffMergeJL(oldRows, newRows) {
         x.strokeStyle = sel ? "#ffd21f" : line.fib ? "#e8c568" : light ? "#9056c1" : "#d5b5ff";
         x.lineWidth = sel ? 2.4 : 1.5;
         x.beginPath();
+        if (line.pts && line.pts.length) { x.moveTo(X(line.pts[0].i), Y(line.pts[0].v)); for (let _pi2 = 1; _pi2 < line.pts.length; _pi2++) x.lineTo(X(line.pts[_pi2].i), Y(line.pts[_pi2].v)); } else {
         x.moveTo(X(line.a.i), Y(line.a.v));
         x.lineTo(X(line.b.i), Y(line.b.v));
+        }
         x.stroke();
         if (line.fib) {
           const dv = line.b.v - line.a.v, FIBD = fibVisibleJL().map((z) => [z.r, z.color, z.lb]);
@@ -11569,6 +11576,31 @@ var RLMCore = (function () {
   }
   ["lineBuy","lineSell","lineStyle","lineWidth"].forEach((id) => { const el = $(id); if (el) el.onclick = () => { if (id === "lineBuy") lineColorJL = "#1fdc93"; if (id === "lineSell") lineColorJL = "#ff5459"; if (id === "lineStyle") lineDashJL = lineDashJL.length ? [] : [5,4]; if (id === "lineWidth") lineWidthJL = lineWidthJL >= 2 ? 1.2 : lineWidthJL + .4; toast(id === "lineBuy" ? "买入线 · 绿色" : id === "lineSell" ? "卖出线 · 红色" : id === "lineStyle" ? (lineDashJL.length ? "虚线" : "实线") : "线宽 " + lineWidthJL.toFixed(1)); paint(); }; });
   $("fibSettings") && ($("fibSettings").onclick = openFibSettingsJL);
+    /* jl-1007: 路径/折线 多点画线工具(仅大K线图), 与现有线共用存储/撤销/删除/锁 */
+    function commitPolyCJL() {
+      if (draft && draft.poly && draft.pts && draft.pts.length >= 2) {
+        const k = keyFor(lastPane || "price");
+        (lines[k] != null ? lines[k] : lines[k] = []).push({ pts: draft.pts, poly: 1, color: lineColorJL, dash: lineDashJL.slice(), width: lineWidthJL });
+        save();
+      }
+      draft = null;
+    }
+    function syncPolyBtnsJL() {
+      const a = $("polyPathJL"), b = $("polyLineJL");
+      if (a) { a.setAttribute("aria-pressed", String(polyToolJL === "polyF")); a.style.color = polyToolJL === "polyF" ? "#ffd21f" : ""; }
+      if (b) { b.setAttribute("aria-pressed", String(polyToolJL === "polyC")); b.style.color = polyToolJL === "polyC" ? "#ffd21f" : ""; }
+    }
+    if ($("polyPathJL")) $("polyPathJL").onclick = () => {
+      if (polyToolJL === "polyC") commitPolyCJL();
+      polyToolJL = polyToolJL === "polyF" ? null : "polyF";
+      if (polyToolJL) { draft = null; drawMode = false; const dm = $("drawMode"); if (dm) dm.setAttribute("aria-pressed", "false"); toast("\u8DEF\u5F84\uFF1A\u6309\u4F4F\u62D6\u52A8\u81EA\u7531\u753B\uFF0C\u677E\u624B\u5B8C\u6210"); }
+      syncPolyBtnsJL(); paint();
+    };
+    if ($("polyLineJL")) $("polyLineJL").onclick = () => {
+      if (polyToolJL === "polyC") { commitPolyCJL(); polyToolJL = null; toast("\u6298\u7EBF\u5DF2\u5B8C\u6210"); }
+      else { if (polyToolJL === "polyF") draft = null; polyToolJL = "polyC"; drawMode = false; const dm = $("drawMode"); if (dm) dm.setAttribute("aria-pressed", "false"); toast("\u6298\u7EBF\uFF1A\u70B9\u51FB\u753B\u5E03\u9010\u70B9\u6253\u70B9\uFF0C\u518D\u70B9\u201C\u6298\u7EBF\u201D\u5B8C\u6210"); }
+      syncPolyBtnsJL(); paint();
+    };
   $("drawMode").onclick = () => {
     drawMode = !drawMode;
     $("drawMode").setAttribute("aria-pressed", drawMode);
@@ -12022,8 +12054,11 @@ var RLMCore = (function () {
       if (p.x < m.L || p.x > m.R || p.y < m.T || p.y > m.B) return null;
       let hit = null;
       for (const [idx, ln] of (lines[keyFor(pane)] || []).entries()) {
-        const ax = m.X(ln.a.i), ay = m.Y(ln.a.v), dx = m.X(ln.b.i) - ax, dy = m.Y(ln.b.v) - ay, t = clamp(((p.x - ax) * dx + (p.y - ay) * dy) / (dx * dx + dy * dy || 1), 0, 1), d = Math.hypot(p.x - ax - t * dx, p.y - ay - t * dy);
-        if (d <= 8 && (!hit || d < hit.d)) hit = { idx, d };
+        const segs = ln.pts && ln.pts.length >= 2 ? ln.pts.slice(0, -1).map((q, qi) => [q, ln.pts[qi + 1]]) : [[ln.a, ln.b]];
+        for (const sg of segs) {
+          const ax = m.X(sg[0].i), ay = m.Y(sg[0].v), dx = m.X(sg[1].i) - ax, dy = m.Y(sg[1].v) - ay, t = clamp(((p.x - ax) * dx + (p.y - ay) * dy) / (dx * dx + dy * dy || 1), 0, 1), d = Math.hypot(p.x - ax - t * dx, p.y - ay - t * dy);
+          if (d <= 8 && (!hit || d < hit.d)) hit = { idx, d };
+        }
       }
       return hit;
     };
@@ -12046,7 +12081,8 @@ var RLMCore = (function () {
       if (selLine && selLine.pane === pane) {
         const sl = (lines[keyFor(pane)] || [])[selLine.index];
         if (sl && p.x > m.R) {
-          const lyT = Math.max(m.T + 2, Math.min(m.B - 9, m.Y(sl.b.v)));
+          const _slv = sl.pts && sl.pts.length ? sl.pts[sl.pts.length - 1].v : sl.b.v;
+          const lyT = Math.max(m.T + 2, Math.min(m.B - 9, m.Y(_slv)));
           if (Math.abs(p.y - lyT) <= 9) {
             lines[keyFor(pane)].splice(selLine.index, 1);
             selLine = null;
@@ -12060,7 +12096,7 @@ var RLMCore = (function () {
       }
       const near = hitLine(p, m);
       if (!near && selLine && p.x < m.R) selLine = null;
-      gesture = { mode: !linesLockedJL && near ? "moveLine" : drawMode ? "line" : p.x > m.R && pane === "price" ? "axis" : "pan", x: p.x, y: p.y, end: vpEnd(viewport, series(selected, false).length), offset: viewport.offset, ys: viewport.ys };
+      gesture = { mode: !linesLockedJL && near ? "moveLine" : polyToolJL === "polyF" ? "polyF" : polyToolJL === "polyC" ? "polyC" : drawMode ? "line" : p.x > m.R && pane === "price" ? "axis" : "pan", x: p.x, y: p.y, end: vpEnd(viewport, series(selected, false).length), offset: viewport.offset, ys: viewport.ys };
       if (near) {
         movingLine = { pane, index: near.idx, lastI: m.I(p.x), lastV: m.V(p.y) };
         c.style.cursor = "grabbing";
@@ -12073,6 +12109,8 @@ var RLMCore = (function () {
       }
       ;
       if (gesture.mode === "line") draft = { pane, a: { i: m.I(p.x), v: m.V(p.y) }, b: { i: m.I(p.x), v: m.V(p.y) } };
+      if (gesture.mode === "polyF") draft = { pane, poly: 1, pts: [{ i: m.I(p.x), v: m.V(p.y) }] };
+      if (gesture.mode === "polyC") { const _pt9 = { i: m.I(p.x), v: m.V(p.y) }; if (draft && draft.poly && draft.pane === pane) draft.pts.push(_pt9); else draft = { pane, poly: 1, pts: [_pt9] }; }
       if (cv) updateCrossQuote(selected, ci);
       c.onpointermove = (e2) => {
         const p2 = pos(e2), m2 = maps.get(c);
@@ -12088,12 +12126,14 @@ var RLMCore = (function () {
             viewport.count = clamp(gesture.count * gesture.dist / Math.max(5, dist()), 12, 100);
             viewport.end = clamp(vpEnd(viewport, series(selected, false).length), viewport.count - 1, Math.max(viewport.count - 1, series(selected, false).length - 1));
           } else if ((gesture == null ? void 0 : gesture.mode) === "line" && draft) draft.b = { i: m2.I(p2.x), v: m2.V(p2.y) };
+          else if ((gesture == null ? void 0 : gesture.mode) === "polyF" && draft && draft.pts) { const _lq = draft.pts[draft.pts.length - 1], _ni = m2.I(p2.x), _nv = m2.V(p2.y); if (Math.hypot(m2.X(_ni) - m2.X(_lq.i), m2.Y(_nv) - m2.Y(_lq.v)) > 6) draft.pts.push({ i: _ni, v: _nv }); }
           else if ((gesture == null ? void 0 : gesture.mode) === "moveLine" && movingLine) {
             const ln = (lines[keyFor(pane)] || [])[movingLine.index], di = m2.I(p2.x) - movingLine.lastI, dv = m2.V(p2.y) - movingLine.lastV;
+            if (ln.pts && ln.pts.length) { ln.pts.forEach((q) => { q.i += di; q.v += dv; }); } else {
             ln.a.i += di;
             ln.b.i += di;
             ln.a.v += dv;
-            ln.b.v += dv;
+            ln.b.v += dv; }
             movingLine.lastI = m2.I(p2.x);
             movingLine.lastV = m2.V(p2.y);
           } else if ((gesture == null ? void 0 : gesture.mode) === "axis") viewport.ys = clamp(gesture.ys * Math.exp((p2.y - gesture.y) / 140), 0.35, 5);
@@ -12109,6 +12149,13 @@ var RLMCore = (function () {
       };
       const finish = (e2) => {
         var _a2, _b2;
+        if ((gesture == null ? void 0 : gesture.mode) === "polyF" && draft && draft.pts && draft.pts.length >= 2) {
+          const _k9 = keyFor(pane);
+          (lines[_k9] != null ? lines[_k9] : lines[_k9] = []).push({ pts: draft.pts, poly: 1, color: lineColorJL, dash: lineDashJL.slice(), width: lineWidthJL });
+          save();
+          polyToolJL = null;
+          try { syncPolyBtnsJL(); } catch (eS9) {}
+        }
         if ((gesture == null ? void 0 : gesture.mode) === "line" && draft && Math.abs(draft.a.i - draft.b.i) + Math.abs(draft.a.v - draft.b.v) > 0.01) {
           ((_b2 = lines[_a2 = keyFor(pane)]) != null ? _b2 : lines[_a2] = []).push({ a: draft.a, b: draft.b, color: lineColorJL, dash: lineDashJL.slice(), width: lineWidthJL });
           save();
@@ -12128,7 +12175,7 @@ var RLMCore = (function () {
           const pe = pos(e2);
           selLine = Math.hypot(pe.x - gesture.x, pe.y - gesture.y) < 6 ? { pane, index: movingLine.index } : null;
         }
-        draft = null;
+        if ((gesture == null ? void 0 : gesture.mode) !== "polyC") draft = null;
         movingLine = null;
         points.delete(e2.pointerId);
         gesture = null;
@@ -12169,7 +12216,8 @@ var RLMCore = (function () {
         if (m2 && p2.x > m2.R) {
           if (pane === "vol") return;
           for (const ln of lines[keyFor(pane)] || []) {
-            const lyT = Math.max(m2.T + 2, Math.min(m2.B - 9, m2.Y(ln.b.v)));
+            const _glv = ln.pts && ln.pts.length ? ln.pts[ln.pts.length - 1].v : ln.b.v;
+          const lyT = Math.max(m2.T + 2, Math.min(m2.B - 9, m2.Y(_glv)));
             if (Math.abs(p2.y - lyT) <= 9) return;
           }
           const v = Number(m2.V(p2.y).toFixed(2));
@@ -12688,7 +12736,8 @@ var RLMCore = (function () {
           if (p.x < m.L || p.x > m.R || p.y < m.T || p.y > m.B) return null;
           let hit = null;
           for (const [idx, ln] of (lines[hkey()] || []).entries()) {
-            const ax = m.X(ln.a.i), ay = m.Y(ln.a.v), bx2 = m.X(ln.b.i), by2 = m.Y(ln.b.v), da2 = Math.hypot(p.x - ax, p.y - ay), db2 = Math.hypot(p.x - bx2, p.y - by2);
+            const _ha = ln.pts && ln.pts.length ? ln.pts[0] : ln.a, _hb = ln.pts && ln.pts.length ? ln.pts[ln.pts.length - 1] : ln.b;
+            const ax = m.X(_ha.i), ay = m.Y(_ha.v), bx2 = m.X(_hb.i), by2 = m.Y(_hb.v), da2 = Math.hypot(p.x - ax, p.y - ay), db2 = Math.hypot(p.x - bx2, p.y - by2);
             if (da2 <= 14 || db2 <= 14) {
               const d0 = Math.min(da2, db2);
               if (!hit || d0 < hit.d) hit = { idx, d: d0, pt: da2 <= db2 ? "a" : "b" };
@@ -12734,7 +12783,8 @@ var RLMCore = (function () {
           if (homeSel != null) {
             const sl = (lines[hkey()] || [])[homeSel.index];
             if (sl && p.x > m.R) {
-              const lyT = Math.max(m.T + 2, Math.min(m.B - 9, m.Y(sl.b.v)));
+              const _slv2 = sl.pts && sl.pts.length ? sl.pts[sl.pts.length - 1].v : sl.b.v;
+              const lyT = Math.max(m.T + 2, Math.min(m.B - 9, m.Y(_slv2)));
               if (Math.abs(p.y - lyT) <= 9) {
                 lines[hkey()].splice(homeSel.index, 1);
                 homeSel = null;
@@ -12776,10 +12826,11 @@ var RLMCore = (function () {
                   ln[homeMove.pt].v = m.V(p.y);
                 } else {
                   const di = m.I(p.x) - homeMove.lastI, dv = m.V(p.y) - homeMove.lastV;
+                  if (ln.pts && ln.pts.length) ln.pts.forEach((q) => { q.i += di; q.v += dv; }); else {
                   ln.a.i += di;
                   ln.b.i += di;
                   ln.a.v += dv;
-                  ln.b.v += dv;
+                  ln.b.v += dv; }
                   homeMove.lastI = m.I(p.x);
                   homeMove.lastV = m.V(p.y);
                 }
@@ -12843,7 +12894,8 @@ var RLMCore = (function () {
           }
           if (m && p.x > m.R) {
             for (const ln of lines[hkey()] || []) {
-              const lyT = Math.max(m.T + 2, Math.min(m.B - 9, m.Y(ln.b.v)));
+              const _glv2 = ln.pts && ln.pts.length ? ln.pts[ln.pts.length - 1].v : ln.b.v;
+          const lyT = Math.max(m.T + 2, Math.min(m.B - 9, m.Y(_glv2)));
               if (Math.abs(p.y - lyT) <= 9) return;
             }
             const v = Number(m.V(p.y).toFixed(2));
