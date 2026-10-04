@@ -44,8 +44,8 @@
    (b) 缓存全 miss 时回退等待原始 fetch,不再 respondWith(undefined) 抛 TypeError
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
-const C = 'jinlin-shell-v120';
-const KEEP = ['jinlin-shell-v120', 'jinlin-shell-v119'];
+const C = 'jinlin-shell-v121';
+const KEEP = ['jinlin-shell-v121', 'jinlin-shell-v120'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -60,6 +60,7 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(ks => Promise.all(ks.filter(k => KEEP.indexOf(k) < 0).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll().then(cs => cs.forEach(c => { try { c.postMessage({ type: 'JL_SW_NEW' }); } catch (e) {} })))
   );
 });
 self.addEventListener('fetch', e => {
