@@ -566,7 +566,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: true }, /* ks-0930: 反应位横线组默认关(房主: 打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
+  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false }, /* jl-1004: 六信号默认关(房主实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(房主: 打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawLock: false, pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式
   favs: [], favPick: false, favHide: false, // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
@@ -609,7 +609,7 @@ function restore() {
     if (o.favs && o.favs.length) S.favs = o.favs;
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
-    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: true };
+    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false };
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
@@ -5658,7 +5658,7 @@ function applyUrl() {
       document.documentElement.classList.remove("theme-la", "theme-lc"); if (typeof S !== "undefined") S.theme = ""; // 金粼0913: 内嵌强制深色, 与金粼底融合
       // 金粼0913晚: 内嵌默认开 三角/SR/OB/VOL叠加/BSL·SSL流动性; 关掉 ICT 结构标记(ms)——BOS 只留三角突破那一枚(上黄下红, 部署版自带)
       // 金粼0913深夜(口径定案): 每次打开都恢复默认开——隐藏/删除只是本次会话有效, 不做跨会话持久化, 重开必须看到指标在
-      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = true; /* ks-0929-53: 内嵌默认开六信号 */ }
+      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(房主实证卖侧戳误导); 指标条[六信号]可手动开 */ }
       S.lineMode = false; // 金粼0914: 内嵌大图必须是蜡烛K线——存档里 lineMode=true 会把主图变成蓝色收盘价折线(用户看到的"实时线盖图"), 内嵌强制蜡烛, 可用紧凑条「K/线」切回
       // 金粼0913晚(重打在部署版上): 单行抽屉紧凑条(周期/画线/指标/幅图 + 删除/清空/隐藏/锁定/提醒), 替代☰多行展开
       if (!document.getElementById("ksBarJL")) {

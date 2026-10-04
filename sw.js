@@ -1,4 +1,6 @@
-/* jinlin sw v.80 — 2026-10-03: 缓存名 →v110, 配合命名去撞车批(index v0.83.1:
+/* jinlin sw v.81 — 2026-10-04: 缓存名 →v111, 配合持仓页通透批(index v0.83.9:
+   按钮去灰玻璃化/持仓卡去压黑/开高低收三列报价/日期只留小标签/新闻减字/主力球固定右下角可拖拽记忆)。
+   jinlin sw v.80 — 2026-10-03: 缓存名 →v110, 配合命名去撞车批(index v0.83.1:
    N1 中波段块不再重复渲染接回档(v0.83.0 自造的同标签双数值) / N2 短波段档位改「短波·X」
    不再借用日线「接回·X」 / N3 手画Fib标签中性化为「回撤/外推」 / N4 残留「冲刺」文案清零)。
    jinlin sw v.79 — 2026-10-03: 缓存名 →v109, 配合波段链状态机批(index v0.83.0:
@@ -42,8 +44,8 @@
    (b) 缓存全 miss 时回退等待原始 fetch,不再 respondWith(undefined) 抛 TypeError
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
-const C = 'jinlin-shell-v110';
-const KEEP = ['jinlin-shell-v110', 'jinlin-shell-v109'];
+const C = 'jinlin-shell-v111';
+const KEEP = ['jinlin-shell-v111', 'jinlin-shell-v110'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
