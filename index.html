@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.83.23" data-sw="jinlin-shell-v125"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.83.24" data-sw="jinlin-shell-v126"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -525,6 +525,8 @@ document.addEventListener("visibilitychange", () => {
 })();
 "use strict";
 (() => {
+  try { /* jl-1026: 分级启动哨兵——主 IIFE 整体包 try/catch, 中途异常记 jl_err_v1(带 stack 行号=失败阶段)并上屏提示, 不再静默半死 */
+    window.__jlBootStage = "top";
   var _a, _b, _c, _d;
   /* 启动哨兵先登记：后续接口失败不能把已经可用的持仓界面误报成“引擎启动异常”。
      真正的运行错误仍由下方 onerror/unhandledrejection 记录。 */
@@ -805,7 +807,11 @@ document.addEventListener("visibilitychange", () => {
       if (principal) principal.textContent = amount(f.capital);
     });
     const total = document.querySelector("#holds .portfolio .amount");
-    if (total) total.textContent = amount(totals.market);
+    if (total) { /* jl-1026: 就绪计数可见——不齐时总市值后跟 N/M, 全就绪不显示任何多余字符 */
+      const _nm = totals["_nmarket"] || 0, _tm = stocks.length;
+      total.textContent = amount(totals.market) + (_nm && _nm < _tm ? " \xB7 " + _nm + "/" + _tm : "");
+      total.title = _nm < _tm ? "\u5DF2\u5C31\u7EEA " + _nm + "/" + _tm + " \u53EA\u62A5\u4EF7\u53C2\u4E0E\u5408\u8BA1" : "";
+    }
     const day = document.querySelector("#holds .portfolio .pnlLine strong");
     if (day) {
       day.textContent = amount(totals.day, true);
@@ -2885,8 +2891,9 @@ document.addEventListener("visibilitychange", () => {
       }
       const ydTicks = ["09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00"].map((tm) => { const z = tm.replace(":",""); return '<text x="' + XT(z).toFixed(1) + '" y="' + (H - 3) + '" font-size="8.5" fill="#dcebef" text-anchor="middle">' + tm + '</text>'; }).join(""); /* jl-1004: ydTicks 声明上移到使用之前(原在svg串之后声明, let TDZ 直接炸死大盘异动整图) */
       svg = '<svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;display:block;touch-action:none" onpointerdown="ydCrossMvJL(event)" onpointermove="ydCrossMvJL(event)" onpointerleave="ydCrossOffJL()"><rect x="' + PL + '" y="' + PT + '" width="' + AW + '" height="' + (H - PT - PB) + '" fill="rgba(141,151,166,.10)"/><line x1="' + (PL + AW) + '" x2="' + (PL + AW) + '" y1="' + PT + '" y2="' + (H - PB) + '" stroke="#3a4350" stroke-dasharray="2,3" stroke-width="0.8"/><text x="' + (PL + AW / 2) + '" y="' + (H - 3) + '" font-size="8.5" fill="#7e8798" text-anchor="middle">\u7ADE\u4EF7</text><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + zeroY + '" y2="' + zeroY + '" stroke="#4a5462" stroke-dasharray="3,3" stroke-width="1"/><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + YT(mxp / 2) + '" y2="' + YT(mxp / 2) + '" stroke="rgba(135,183,196,0.10)" stroke-width="0.7"/><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + YT(-mxp / 2) + '" y2="' + YT(-mxp / 2) + '" stroke="rgba(135,183,196,0.10)" stroke-width="0.7"/>' + series2.map((s2, si) => {
-        const pl = s2.pts.map((p, i) => s2.xs[i].toFixed(1) + "," + (si === 2 ? YTc : YT)(p[1]).toFixed(1)).join(" ");
-        return (si === 0 ? '<polygon points="' + (PL + AW) + "," + zeroY + " " + pl + " " + s2.xs[s2.xs.length - 1] + "," + zeroY + '" fill="rgba(74,158,255,.15)"/>' : "") + '<polyline points="' + pl + '" fill="none" stroke="' + s2.c + '" stroke-width="' + s2.w + '"' + (s2.lb === "\u5747\u4EF7" ? ' stroke-dasharray="4,2.5"' : "") + "/>";
+        if (!s2 || !Array.isArray(s2.pts) || !Array.isArray(s2.xs) || !s2.pts.length || s2.pts.length !== s2.xs.length) return ""; /* jl-1026: 空/错配序列不画, 防 undefined 进 SVG points */
+        const pl = s2.pts.map((p, i) => (Number(s2.xs[i]) || 0).toFixed(1) + "," + (si === 2 ? YTc : YT)(Number.isFinite(p && p[1]) ? p[1] : 0).toFixed(1)).join(" ");
+        return (si === 0 ? '<polygon points="' + (PL + AW) + "," + zeroY + " " + pl + " " + (Number(s2.xs[s2.xs.length - 1]) || 0) + "," + zeroY + '" fill="rgba(74,158,255,.15)"/>' : "") + '<polyline points="' + pl + '" fill="none" stroke="' + s2.c + '" stroke-width="' + s2.w + '"' + (s2.lb === "\u5747\u4EF7" ? ' stroke-dasharray="4,2.5"' : "") + "/>";
       }).join("") + dens + bub + vols + '<g id="ydCgJL" style="display:none"></g><text x="' + (W - 2) + '" y="' + (PT + 4) + '" font-size="9.5" fill="#dcebef" text-anchor="end">+' + mxp.toFixed(2) + '%</text><text x="' + (W - 2) + '" y="' + (zeroY + 3) + '" font-size="9.5" fill="#dcebef" text-anchor="end">0.00%</text><text x="' + (W - 2) + '" y="' + (H - PB + 2) + '" font-size="9.5" fill="#dcebef" text-anchor="end">-' + mxp.toFixed(2) + '%</text>' + ydTicks + '</svg>';
       const lp = pts[n - 1][1];
       $("ydTmJL").innerHTML = (YDJ.line.date ? YDJ.line.date.slice(4, 6) + "/" + YDJ.line.date.slice(6) + " " : "") + "\u6536 " + lp.toFixed(2) + " (" + (lp >= pre ? "+" : "") + ((lp / pre - 1) * 100).toFixed(2) + "%)" + (series2.length > 1 ? ' <span style="color:#5ec8ff">\u2014\u4E0A\u8BC1</span><span style="color:#e8b64c">\u2014\u5747\u4EF7</span>' + (series2.length > 2 ? '<span style="color:#ff9f43">\u2014\u6743\u91CD50</span>' : "") : "");
@@ -13046,12 +13053,13 @@ var RLMCore = (function () {
           });
           return;
         }
-        if (ln.pts && ln.pts.length) { /* jl-1009: 多点线在小图只读绘制, 不可选/不可拖, 防 ln.a 未定义崩 paint */
+        if (ln.pts && ln.pts.length && ln.pts.every((pt) => pt && Number.isFinite(pt.i) && Number.isFinite(pt.v))) { /* jl-1009: 多点线在小图只读绘制, 不可选/不可拖, 防 ln.a 未定义崩 paint / jl-1026: 反序列化坏点结构校验 */
           x.strokeStyle = col; x.lineWidth = sel ? 2 : 1.2; x.beginPath();
           x.moveTo(mm.X(ln.pts[0].i), yOf(ln.pts[0]));
           for (let _q9 = 1; _q9 < ln.pts.length; _q9++) x.lineTo(mm.X(ln.pts[_q9].i), yOf(ln.pts[_q9]));
           x.stroke(); return;
         }
+        if (!ln.a || !ln.b || !Number.isFinite(ln.a.i) || !Number.isFinite(ln.a.v) || !Number.isFinite(ln.b.i) || !Number.isFinite(ln.b.v)) return; /* jl-1026: 损坏线数据不崩整张小图 */
         const ax = mm.X(ln.a.i), ay = yOf(ln.a), bx = mm.X(ln.b.i), by = yOf(ln.b);
         /* v0.81.8: 趋势线画成【线段+端点圆】(原无限延长到图缘="这条线很奇怪"); 复盘投影用大图画线, 不受影响 */
         x.strokeStyle = col;
@@ -16107,6 +16115,17 @@ var RLMCore = (function () {
     }
   } catch (eSeed) {}
   window.__jlBootOK = 1;
+  } catch (eBoot) { /* jl-1026: 主脚本中途异常在此落盘+提示; __jlBootOK 不置位, 9s 救援脚本照常介入 */
+    try {
+      const _bl = JSON.parse(localStorage.getItem("jl_err_v1") || "[]");
+      _bl.push({ t: new Date().toISOString(), stage: window.__jlBootStage || "top", msg: String((eBoot && eBoot.stack) || eBoot).slice(0, 900) });
+      localStorage.setItem("jl_err_v1", JSON.stringify(_bl.slice(-8)));
+      const _bb = document.createElement("div");
+      _bb.textContent = "\u5F15\u64CE\u542F\u52A8\u5F02\u5E38(" + (window.__jlBootStage || "top") + "): " + String((eBoot && eBoot.message) || eBoot).slice(0, 80) + " \xB7 \u8BCA\u65AD\u5DF2\u5B58 jl_err_v1";
+      _bb.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:99998;background:#5a1015f2;color:#ffd7d7;font:600 11px/1.5 -apple-system,sans-serif;padding:8px 10px;text-align:center";
+      (document.body || document.documentElement).appendChild(_bb);
+    } catch (eB2) {}
+  }
 })();
 </script>
 </body>
