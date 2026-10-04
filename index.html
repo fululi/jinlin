@@ -2989,7 +2989,7 @@ document.addEventListener("visibilitychange", () => {
       if (YDJ.tab === "zt") renderZtPoolJL(evBox);
       else {
         let evs = YDJ.ev || [];
-        if (YDJ.tab === "tail") evs = evs.filter((e) => e.tm >= 143e3 && !/^(8|4|92)/.test(String(e.c).replace(/^(sh|sz|bj)/, "")) && !/ST|\u9000/.test(String(e.n || "")));
+        if (YDJ.tab === "tail") evs = evs.filter((e) => e.tm >= 1457e2 && /^(8203|8204|8206)$/.test(String(e.t)) && !/^(8|4|92)/.test(String(e.c).replace(/^(sh|sz|bj)/, "")) && !/ST|\u9000/.test(String(e.n || ""))); /* jl-1004: 尾盘改东财口径——收盘竞价14:57后+买入类异动(大笔买入/封涨停/有大买盘), 事件流无价格字段故不算拉升幅度 */
         else if (YDJ.tab === "mine") {
           const mine = {};
           stocks.forEach((h) => {
@@ -3009,12 +3009,12 @@ document.addEventListener("visibilitychange", () => {
               if (e.tm > a.last) a.last = e.tm;
             });
             const top = Object.keys(agg).map((c2) => ({ c: c2, s: agg[c2].s, n: agg[c2].n, hy: agg[c2].hy, m: agg[c2].m })).filter((x) => !/^(8|4|92)/.test(String(x.c).replace(/^(sh|sz|bj)/, "")) && !/ST|\u9000/.test(String(x.n || ""))).sort((a, b) => b.s - a.s).slice(0, 8);
-            if (top.length) grabH = '<div style="padding:2px 0 5px;border-bottom:1px dashed #81e6d922;margin-bottom:4px"><div style="color:#e8c568;font-weight:700;font-size:11px;padding-bottom:2px">\u26A1 \u5C3E\u76D8\u62A2\u7B79\u699C <span class="ydsub" style="font-weight:400">14:30\u540E\u4E70\u5165\u7C7B\u5F02\u52A8\u52A0\u6743 \xB7 \u4E1C\u8D22\u4E8B\u4EF6\u53E3\u5F84\u8FD1\u4F3C,\u975E\u771F\u5B9E\u9010\u7B14\u62A2\u7B79</span></div>' + top.map((x, xi) => `<div class="yev" style="cursor:pointer" onclick="ydOpenStockJL('` + x.c + "','" + x.n + `')"><span class="yet">` + (xi + 1) + '</span><span class="yen">' + x.n + (x.hy ? ' <i style="font-style:normal;color:#5d6675">' + x.hy + "</i>" : "") + '</span><span class="yel u">\u62A2\u7B79' + x.s + "\u5206</span></div>").join("") + "</div>";
+            if (top.length) grabH = '<div style="padding:2px 0 5px;border-bottom:1px dashed #81e6d922;margin-bottom:4px"><div style="color:#e8c568;font-weight:700;font-size:11px;padding-bottom:2px">\u26A1 \u5C3E\u76D8\u62A2\u7B79\u699C <span class="ydsub" style="font-weight:400">14:57\u6536\u76D8\u7ADE\u4EF7\u540E\u4E70\u5165\u7C7B\u5F02\u52A8 \xB7 \u4E1C\u8D22\u4E8B\u4EF6\u6D41\u53E3\u5F84(\u65E0\u4EF7\u683C\u5B57\u6BB5,\u4E0D\u542B\u62C9\u5347\u5E45\u5EA6)</span></div>' + top.map((x, xi) => `<div class="yev" style="cursor:pointer" onclick="ydOpenStockJL('` + x.c + "','" + x.n + `')"><span class="yet">` + (xi + 1) + '</span><span class="yen">' + x.n + (x.hy ? ' <i style="font-style:normal;color:#5d6675">' + x.hy + "</i>" : "") + '</span><span class="yel u">\u62A2\u7B79' + x.s + "\u5206</span></div>").join("") + "</div>";
           }
           evBox.innerHTML = grabH + evs.slice(0, 12).map((e) => {
             const up = YD_UPT[e.t] ? 1 : 0, hh = String(e.tm).padStart(6, "0");
             return `<div class="yev" style="cursor:pointer" onclick="ydOpenStockJL('` + e.c + "','" + e.n + `')"><span class="yet">` + hh.slice(0, 2) + ":" + hh.slice(2, 4) + '</span><span class="yen">' + e.n + (e.hy ? ' <i style="font-style:normal;color:#5d6675">' + e.hy + "</i>" : "") + '</span><span class="yel ' + (up ? "u" : "d") + '">' + (YD_TL[String(e.t)] || e.t) + "</span></div>";
-          }).join("") + (YDJ.tab === "tail" ? '<div class="ydsub">14:30\u540E\u4E8B\u4EF6 \xB7 \u4E1C\u8D22\u65E0\u4E13\u6709\u5C3E\u76D8\u63A5\u53E3,\u6B64\u4E3A\u8FD1\u4F3C\u53E3\u5F84</div>' : "");
+          }).join("") + (YDJ.tab === "tail" ? '<div class="ydsub">14:57\u6536\u76D8\u7ADE\u4EF7\u540E\u4E70\u5165\u7C7B\u5F02\u52A8 \xB7 \u4E1C\u8D22\u4E8B\u4EF6\u6D41\u53E3\u5F84(\u65E0\u4EF7\u683C\u5B57\u6BB5,\u4E0D\u542B\u62C9\u5347/\u6253\u538B\u5E45\u5EA6)</div>' : "");
         } else evBox.innerHTML = '<div class="ydsub">' + (YDJ.tab === "mine" ? "\u4ECA\u65E5\u6682\u65E0\u6301\u4ED3\u7968\u5F02\u52A8\u4E8B\u4EF6" : mktLiveJL() ? "\u4E8B\u4EF6\u6D41\u52A0\u8F7D\u4E2D\u6216\u6682\u672A\u53D6\u5230" : "\u4F11\u5E02\u65E0\u5B9E\u65F6\u5F02\u52A8\u4E8B\u4EF6\u6D41(\u4EA4\u6613\u65E5\u76D8\u4E2D\u66F4\u65B0)") + (YDJ.cacheD ? " \xB7 \u26A0\u7F13\u5B58" + String(YDJ.cacheD).slice(5) : "") + "</div>";
       }
     }
