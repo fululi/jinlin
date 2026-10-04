@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.83.22" data-sw="jinlin-shell-v124"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.83.23" data-sw="jinlin-shell-v125"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -841,6 +841,7 @@ document.addEventListener("visibilitychange", () => {
           item.low = Number((_l = (_k = q.f16) != null ? _k : item.low) != null ? _l : price);
           item.prevClose = prev;
           item.quoteAt = String(q.f124 || "");
+          try { jlObserveTradeDayJL(item.quoteDate); } catch (eObs) {} /* jl-1025: 报价回落即观测交易日 */
           item.quoteDate = String(q.f124 || "").slice(0, 8).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") || (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE");
           item.quoteReady = true;
           applied++;
@@ -1877,7 +1878,8 @@ document.addEventListener("visibilitychange", () => {
     const el = $("mtDistJL");
     if (el) {
       const cols = [[">7%", d.bu[0], "#ff6f60", "bu0"], ["7~5", d.bu[1], "#ff8a75", "bu1"], ["5~2", d.bu[2], "#ffa08a", "bu2"], ["2~0", d.bu[3], "#ffb59f", "bu3"], ["\u5E73", d.flat, "#8d97a6", ""], ["0~2", d.bd[0], "#69d6a4", "bd0"], ["2~5", d.bd[1], "#4ecb92", "bd1"], ["5~7", d.bd[2], "#38bd82", "bd2"], ["7<", d.bd[3], "#2aad72", "bd3"]], mx = Math.max(...cols.map((c) => c[1]), 1), DW = 340, DH = 104, DB = 18, DT = 13, bw = (DW - 10) / 9; /* v0.82.4: 摘涨跌停后9档 */
-      el.innerHTML = '<svg viewBox="0 0 ' + DW + " " + DH + '" style="width:100%;display:block">' + cols.map((c, i) => {
+      if ((d.bu || []).every((x) => !x) && (d.bd || []).every((x) => !x)) { el.innerHTML = ""; } /* jl-1025: 分布全零=钻取采样未成, 隐藏柱图保留主指标, 不画误导全零图 */
+      else el.innerHTML = '<svg viewBox="0 0 ' + DW + " " + DH + '" style="width:100%;display:block">' + cols.map((c, i) => {
         const h = Math.max(2, Math.round(Math.sqrt(c[1] / mx) * (DH - DT - DB))), x = (5 + i * bw + bw * 0.15).toFixed(1), w = (bw * 0.7).toFixed(1), tx = (+x + +w / 2).toFixed(1);
         return "<g" + (c[3] ? ' class="mtd" data-mtd="' + c[3] + '" style="cursor:pointer"' : "") + '><rect x="' + x + '" y="' + (DH - DB - h) + '" width="' + w + '" height="' + h + '" rx="2" fill="' + c[2] + '"/><text x="' + tx + '" y="' + (DH - DB - h - 2) + '" font-size="8" fill="#aeb8c6" text-anchor="middle">' + c[1] + '</text><text x="' + tx + '" y="' + (DH - 7) + '" font-size="7.5" fill="#7e8798" text-anchor="middle">' + c[0] + "</text></g>";
       }).join("") + "</svg>";
@@ -4097,7 +4099,7 @@ document.addEventListener("visibilitychange", () => {
     const all = [...t.buys.map((v, k) => ({ v, k: "B" + (k + 1) + (k >= (t.extB || 1e9) ? "\u5EF6" : ""), c: "b" })), ...t.sells.map((v, k) => ({ v, k: "S" + (k + 1) + (k >= (t.extS || 1e9) ? "\u5EF6" : ""), c: "s" }))].sort((a, b2) => a.v - b2.v);
     const hi = Number(s.high), lo = Number(s.low);
     const minA = Math.min(...all.map((o) => o.v), p, hi > 0 ? hi : Infinity, lo > 0 ? lo : Infinity), maxA = Math.max(...all.map((o) => o.v), p, hi > 0 ? hi : -Infinity, lo > 0 ? lo : -Infinity), span = maxA - minA || 1, posF = (v) => ((v - minA) / span * 100).toFixed(1);
-    return `<div class="tierStripJL" ${dAttr} role="button" aria-label="\u70B9\u5F00${s.name}\u6C34\u4F4D\u8BE6\u60C5"><div class="tsRow tsLvl">${all.map((o) => `<span class="tsTag ${o.c}">${o.k} ${o.v.toFixed(2)}</span>`).join("")}</div>${(() => { let dk = "", st = !!t._stale; try { const _mm = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}"), _e = _mm[String(s.code).replace(/^(sh|sz)/, "")]; if (_e && _e.dk) dk = String(_e.dk); } catch (_) {} const _td = new Date().toLocaleDateString("sv-SE"); if (!st && dk && dk !== _td) st = true; return '<div class="tsDateJL" style="font-size:9px;line-height:1.5;padding:2px 2px 0;color:' + (st ? "#ff5459" : "#8fa8b3") + '">' + (st ? "\u26A0 \u6863\u4F4D\u662F " + (dk || "\u65E7") + " \u7684\uFF0C\u4E0D\u662F\u4ECA\u5929 \u00B7 \u522B\u7167\u5B83\u6302\u5355" : "\u6863\u4F4D\u6570\u636E\u65E5 " + (dk || "\u2014") + " \u00B7 \u951A\u4E0D\u968F\u76D8\u4E2D\u4EF7\u91CD\u7B97") + '</div>'; })()}<div class="tsBar">${all.map((o) => `<i class="tsTick ${o.c}" style="left:${posF(o.v)}%"></i>`).join("")}<i class="tsNow" style="left:${posF(p)}%" title="\u73B0\u4EF7 ${p.toFixed(2)}"></i>${hi > 0 ? '<i class="tsHiJL" style="left:' + posF(hi) + '%" title="\u5F53\u65E5\u9AD8 ' + hi.toFixed(2) + '">\u25B2</i>' : ""}${lo > 0 ? '<i class="tsLoJL" style="left:' + posF(lo) + '%" title="\u5F53\u65E5\u4F4E ' + lo.toFixed(2) + '">\u25BC</i>' : ""}</div><div class="tsRow"><span class="tsSig ${nearS ? "s" : nearB ? "b" : ""}">${sig} \xB7 ATR ${t.atr.toFixed(2)}</span><span class="tsHL">\u9AD8 ${hi > 0 ? hi.toFixed(2) : "\u2014"} \xB7 \u4F4E ${lo > 0 ? lo.toFixed(2) : "\u2014"}</span></div></div>`;
+    return `<div class="tierStripJL" ${dAttr} role="button" aria-label="\u70B9\u5F00${s.name}\u6C34\u4F4D\u8BE6\u60C5"><div class="tsRow tsLvl">${all.map((o) => `<span class="tsTag ${o.c}">${o.k} ${o.v.toFixed(2)}</span>`).join("")}</div><div class="tsBar">${all.map((o) => `<i class="tsTick ${o.c}" style="left:${posF(o.v)}%"></i>`).join("")}<i class="tsNow" style="left:${posF(p)}%" title="\u73B0\u4EF7 ${p.toFixed(2)}"></i>${hi > 0 ? '<i class="tsHiJL" style="left:' + posF(hi) + '%" title="\u5F53\u65E5\u9AD8 ' + hi.toFixed(2) + '">\u25B2</i>' : ""}${lo > 0 ? '<i class="tsLoJL" style="left:' + posF(lo) + '%" title="\u5F53\u65E5\u4F4E ' + lo.toFixed(2) + '">\u25BC</i>' : ""}</div><div class="tsRow"><span class="tsSig ${nearS ? "s" : nearB ? "b" : ""}">${sig} \xB7 ATR ${t.atr.toFixed(2)}</span><span class="tsHL">\u9AD8 ${hi > 0 ? hi.toFixed(2) : "\u2014"} \xB7 \u4F4E ${lo > 0 ? lo.toFixed(2) : "\u2014"}</span></div></div>`;
   }
   function quoteDay8JL(s) {
     const q = String(s && s.quoteAt || "");
@@ -4534,34 +4536,29 @@ document.addEventListener("visibilitychange", () => {
     if (del) {
       e.stopPropagation();
       const i = stocks.findIndex((x) => x.code === del.dataset.deleteStock);
-      if (i < 0) {
-        const ri = researchedStocksJL.findIndex((x) => x.code === del.dataset.deleteStock);
-        if (ri >= 0) {
-          researchedStocksJL.splice(ri, 1);
-          if (del.dataset.deleteStock === "603986") { try { localStorage.setItem("jl_zy_unpin_v1", "1"); } catch (eZ3) {} } /* jl-1010 */
-          saveResearchJL();
-          renderDeck();
-          renderWatch();
-          try { toast("\u5DF2\u79FB\u51FA\u7814\u7A76\u6C60"); } catch (e2) {}
-        }
-        return;
+      const ri = researchedStocksJL.findIndex((x) => x.code === del.dataset.deleteStock); /* jl-1025: 双侧清除——同票同时在持仓与研究池时旧单向删除造成"删不掉" */
+      if (i < 0 && ri < 0) return;
+      if (i >= 0) stocks.splice(i, 1);
+      if (ri >= 0) {
+        researchedStocksJL.splice(ri, 1);
+        saveResearchJL();
       }
-      if (i >= 0) {
-        stocks.splice(i, 1);
-        if (!stocks.length) {
-          active = 0;
-          selected = "";
-          persistStocks();
-          renderDeck();
-          $("holdingName").textContent = "\u6682\u65E0\u6301\u4ED3";
-          return;
-        }
-        active = Math.min(active, stocks.length - 1);
-        selected = stocks[active].code;
+      if (del.dataset.deleteStock === "603986") { try { localStorage.setItem("jl_zy_unpin_v1", "1"); } catch (eZ3) {} }
+      if (!stocks.length) {
+        active = 0;
+        selected = "";
         persistStocks();
         renderDeck();
-        paint();
+        renderWatch();
+        $("holdingName").textContent = "\u6682\u65E0\u6301\u4ED3";
+        return;
       }
+      active = Math.min(active, stocks.length - 1);
+      selected = stocks[active].code;
+      persistStocks();
+      renderDeck();
+      renderWatch();
+      paint();
     }
   });
   renderDeck();
@@ -4598,7 +4595,10 @@ document.addEventListener("visibilitychange", () => {
   }
   // jl-0920-39 已知局限: 只跳过周末+9:20前回退一天, 不接交易所日历——法定长假(国庆/春节)后的"最近交易日"会误算成假期内的周五,
   // 影响 jlPoolFresh 的新鲜度判定(长假期间可能把假期前数据误判为不新鲜)。根治需接交易日历表, 改动大收益小, 暂记于此。
+  let _jlLtdObs = "";
+  function jlObserveTradeDayJL(dt) { const s = String(dt || "").slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(s) && s <= jlYMD(new Date())) _jlLtdObs = s; } /* jl-1025 */
   function jlLastTradeDay() {
+    if (_jlLtdObs) return _jlLtdObs; /* jl-1025: 数据感知——连休期日历推算误判(原已知局限), 以行情实际观测到的最近交易日为准 */
     const d = /* @__PURE__ */ new Date();
     if (d.getHours() * 60 + d.getMinutes() < 560) d.setDate(d.getDate() - 1);
     while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
@@ -6224,30 +6224,17 @@ document.addEventListener("visibilitychange", () => {
       e.stopPropagation();
       const code2 = dl.getAttribute("data-watch-del");
       const i2 = stocks.findIndex((x) => x.code === code2);
-      if (i2 < 0) { /* jl-1010: 研究池兜底——观察列表是 stocks+researchedStocksJL 并集, 删除原来只找 stocks, 研究池票点了没反应 */
-        const ri2 = researchedStocksJL.findIndex((x) => x && x.code === code2);
-        if (ri2 >= 0) {
-          const nm3 = researchedStocksJL[ri2].name;
-          researchedStocksJL.splice(ri2, 1);
-          if (code2 === "603986") { try { localStorage.setItem("jl_zy_unpin_v1", "1"); } catch (eZ2) {} }
-          saveResearchJL();
-          renderDeck();
-          renderWatch();
-          try { toast(nm3 + " \u5DF2\u79FB\u51FA\u7814\u7A76\u6C60"); } catch (e4) {}
-        }
-        return;
-      }
-      if (i2 >= 0) {
-        const nm2 = stocks[i2].name;
-        stocks.splice(i2, 1);
-        persistStocks();
-        renderDeck();
-        renderWatch();
-        try {
-          toast(nm2 + " \u5DF2\u79FB\u51FA\u89C2\u5BDF");
-        } catch (e3) {
-        }
-      }
+      const ri2 = researchedStocksJL.findIndex((x) => x && x.code === code2); /* jl-1025: 双侧清除 */
+      if (i2 < 0 && ri2 < 0) return;
+      const nm2 = i2 >= 0 ? stocks[i2].name : ri2 >= 0 ? researchedStocksJL[ri2].name : code2; /* jl-1025: 先取名字再删 */
+      if (i2 >= 0) stocks.splice(i2, 1);
+      if (ri2 >= 0) researchedStocksJL.splice(ri2, 1);
+      if (code2 === "603986") { try { localStorage.setItem("jl_zy_unpin_v1", "1"); } catch (eZ2) {} }
+      saveResearchJL();
+      persistStocks();
+      renderDeck();
+      renderWatch();
+      try { toast(nm2 + " \u5DF2\u79FB\u9664"); } catch (e4) {}
       return;
     }
     const ex = e.target.closest("[data-watch-expand]");
