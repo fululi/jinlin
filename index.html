@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.83.9" data-sw="jinlin-shell-v111"></script><script>(function () {
+<script id="jlVerJL" data-ver="0.83.9" data-sw="jinlin-shell-v112"></script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -3744,7 +3744,7 @@ document.addEventListener("visibilitychange", () => {
       const tks = lv.map((z) => { const r = z[0], v = r <= 1 ? _hhT - _rngT * r : _fibLo + _rngT * r; return { r, v, c: z[1], x: (v - bLo) / rng * 100 }; }).filter((o) => o.x >= 0 && o.x <= 100).sort((a, b) => a.x - b.x);
       if (tks.length) {
         marks = tks.map((o) => `<i style="position:absolute;top:-3px;width:1px;height:9px;left:${o.x.toFixed(1)}%;background:${tkCol[o.c]};opacity:.9"></i>`).join("");
-        ticks = '<div class="fibTicksJL" style="display:flex;height:18px;margin:3px 3px 1px;align-items:baseline;justify-content:space-between;gap:3px;overflow:hidden">' + tks.map((o) => `<span class="ftk" style="position:static;display:inline-flex;flex-direction:row;align-items:baseline;gap:2px;white-space:nowrap;flex:0 0 auto"><b>${o.r}</b><strong class="pbLv ${o.c}">${o.v.toFixed(2)}</strong></span>`).join("") + "</div>";
+        ticks = '<div class="fibTicksJL" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;margin:3px 3px 1px">' + tks.map((o) => `<span class="ftk" style="position:static;display:inline-flex;flex-direction:row;align-items:baseline;gap:2px;white-space:nowrap;flex:0 0 auto"><b>${o.r}</b><strong class="pbLv ${o.c}">${o.v.toFixed(2)}</strong></span>`).join("") + "</div>";
       }
     }
     const _candTxt = _swState && _swState.anchorKind === "provisional" && Number(_swState.pullLow) > 0 ? ` · 候选低 ${Number(_swState.pullLow).toFixed(2)}·待确认` : "";
