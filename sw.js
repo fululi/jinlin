@@ -44,8 +44,9 @@
    (b) 缓存全 miss 时回退等待原始 fetch,不再 respondWith(undefined) 抛 TypeError
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
-const C = 'jinlin-shell-v121';
-const KEEP = ['jinlin-shell-v121', 'jinlin-shell-v120'];
+/* jinlin sw v.82 — 2026-10-05: →v122 壳改「先秒出缓存+后台静默更新」: v121 及以前网络竞跑3.5s, 弱网必输喂旧缓存(=手机永远慢一版的根因); 配合 index jl-1020 自愈, 弱网最多两次刷新到新版 */
+const C = 'jinlin-shell-v122';
+const KEEP = ['jinlin-shell-v122', 'jinlin-shell-v121'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -68,16 +69,15 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (u.origin !== location.origin) return;                 // 只管本站的壳,行情接口一律直连
   if (!/(\/|index\.html|ks\.html)$/.test(u.pathname)) return;
-  const net = fetch(e.request).then(r => {                  // 缓存写入挂在 fetch 本体上:
+  const bg = fetch(e.request).then(r => {                   // 后台静默更新: 晚到响应照常入缓存,弱网不再永远写不进
     if (r && r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); return r; }
-    throw new Error('bad-net');                             // HTTP 错误(404/500)同样回退缓存,不把错误页端给用户
+    throw new Error('bad-net');                             // HTTP 错误(404/500)不入缓存,不把错误页端给用户
   });
   e.respondWith(
-    Promise.race([
-      net,
-      new Promise((_, rj) => setTimeout(() => rj(new Error('slow-net')), 3500))
-    ]).catch(() => caches.match(e.request, { ignoreSearch: true })
-        .then(m => m || caches.match('index.html'))
-        .then(m => m || net))        // 缓存全空 → 等原始请求跑完,绝不 resolve undefined
+    caches.match(e.request, { ignoreSearch: true })
+      .then(m => {
+        if (m) { bg.catch(() => {}); return m; }            // 有缓存: 先秒出,新版后台入缓存,下次刷新即新(不再3.5s竞跑)
+        return bg.catch(() => caches.match('index.html').then(x => { if (x) return x; throw new Error('no-shell'); }));  // 缓存全空: 等网络,失败回退缓存任一 index
+      })
   );
 });
