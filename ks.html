@@ -14,7 +14,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   /* jl-1031: 被金粼 iframe 嵌入时整体透明, 透出站点玻璃底; 独立打开仍保持原深色 */
-  @media all { html.ksTransparent, html.ksTransparent body { background: transparent !important; } }
+  @media all { html.ksTransparent, html.ksTransparent body { background: rgba(8,20,30,0.55) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); } } /* jl-1036: 嵌入态改深色玻璃盾(全透会露出桌面全屏下的浅色底层=白图翻车), 观感玻璃非死黑 */
   body {
     background: #0a0e0b; color: #c3d2c6;
     font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
