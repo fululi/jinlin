@@ -1,3 +1,6 @@
+/* jinlin sw v.83 — 2026-10-06: 缓存名 →v138, 配合大K线白板根治批(index v0.83.38 + ks-1006-55:
+   W1 ks白板根治: 进图查画布无则自动重载(治加载中断后dataset.cur挡重试的永久白板) + 加载中遮白改玻璃加载条 /
+   W2 移动端chartMode 100dvh占满(底栏空缺消失) / W3 ks嵌底清透融入 / W4 sw后台刷新同时写规范键(治ks.html带参刷新永远命不中新版) */
 /* jinlin sw v.82 — 2026-10-06: 缓存名 →v137, 配合市场资金休市兜底批(index v0.83.37:
    M1 修上一批误伤的版本属性引号(data-ver未闭合,自愈壳号比对失效) / M2 市场资金休市兜底:
    东财实时源空(长假/被墙)时用近5日历史最新交易日主力净额顶替暂缺+「休市·显示MM-DD收盘数据」标签 /
@@ -49,8 +52,8 @@
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
 /* jinlin sw v.82 — 2026-10-05: →v122 壳改「先秒出缓存+后台静默更新」: v121 及以前网络竞跑3.5s, 弱网必输喂旧缓存(=手机永远慢一版的根因); 配合 index jl-1020 自愈, 弱网最多两次刷新到新版 */
-const C = 'jinlin-shell-v137';
-const KEEP = ['jinlin-shell-v136', 'jinlin-shell-v135'];
+const C = 'jinlin-shell-v138';
+const KEEP = ['jinlin-shell-v138', 'jinlin-shell-v137'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -74,7 +77,7 @@ self.addEventListener('fetch', e => {
   if (u.origin !== location.origin) return;                 // 只管本站的壳,行情接口一律直连
   if (!/(\/|index\.html|ks\.html)$/.test(u.pathname)) return;
   const bg = fetch(e.request).then(r => {                   // 后台静默更新: 晚到响应照常入缓存,弱网不再永远写不进
-    if (r && r.ok) { const cp = r.clone(); caches.open(C).then(c => c.put(e.request, cp)); return r; }
+    if (r && r.ok) { const cp = r.clone(); const cp2 = r.clone(); caches.open(C).then(c => { c.put(e.request, cp); try { const nu = new URL(e.request.url); nu.search = ''; if (nu.href !== e.request.url) c.put(nu.href, cp2); } catch (e2) {} }); return r; }
     throw new Error('bad-net');                             // HTTP 错误(404/500)不入缓存,不把错误页端给用户
   });
   e.respondWith(
