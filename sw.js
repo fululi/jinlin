@@ -1,3 +1,6 @@
+/* jinlin sw v.85 — 2026-10-06: 缓存名 →v140, 配合手机卡旧版根治批(index v0.83.43:
+   jl-1047/1048/1049 三连推只改了index没升壳号——sw.js字节不变,手机浏览器永不重装SW,
+   缓存秒出旧版39,房主刷新多次无效实证;本批补齐壳号配对+横幅点按已改真·硬恢复) */
 /* jinlin sw v.84 — 2026-10-06: 缓存名 →v139, 配合龙池资金确认轻量化批(index v0.83.39:
    治「下午10只凌晨1只」——东财风控触发时资金确认大面积失败致全进观察; 日K轻量通道(10根柱)提前, 分钟重通道(240根/只)降级备用;
    门槛/打分/分类零改动 */
@@ -55,8 +58,8 @@
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
 /* jinlin sw v.82 — 2026-10-05: →v122 壳改「先秒出缓存+后台静默更新」: v121 及以前网络竞跑3.5s, 弱网必输喂旧缓存(=手机永远慢一版的根因); 配合 index jl-1020 自愈, 弱网最多两次刷新到新版 */
-const C = 'jinlin-shell-v139';
-const KEEP = ['jinlin-shell-v139', 'jinlin-shell-v138'];
+const C = 'jinlin-shell-v140';
+const KEEP = ['jinlin-shell-v140', 'jinlin-shell-v139'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
