@@ -206,6 +206,19 @@
       back: back, bounce: bounce, ext: ext, msg: msg
     };
   }
+
+// === jlPoolShouldKeepLocalJL ===
+  function jlPoolShouldKeepLocalJL(locD0, ancD0, snapD0) {
+    const a = String(locD0 || ""), b = String(ancD0 || ""), s = String(snapD0 || "");
+    const best = a > b ? a : b;
+    return !!(best && s && best >= s);
+  }
+
+// === jlFfCacheNewerJL ===
+  function jlFfCacheNewerJL(cacheD0Date, offAsOf) {
+    const c = String(cacheD0Date || ""), o = String(offAsOf || "") || "0000";
+    return !!(c && c >= o);
+  }
 // ── Exports ──────────────────────────────────────────────────────────
 module.exports = {
   luLimJL,
@@ -216,4 +229,6 @@ module.exports = {
   zzPivotsJL,
   jlDayClosedJL,
   swingStateJL,
+  jlPoolShouldKeepLocalJL,
+  jlFfCacheNewerJL,
 };

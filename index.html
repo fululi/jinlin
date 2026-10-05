@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.83.25" data-sw="jinlin-shell-v127"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.83.26" data-sw="jinlin-shell-v128"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -328,6 +328,9 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 .poolWhy{padding:0 12px 9px;font-size:9.5px;color:#f2fbfd;line-height:1.55}
 .poolWhy i{display:block;font-style:normal;color:#ffd21f;margin-top:2px}
 .poolCard.dim{opacity:.72}
+.poolCard{background:transparent!important;box-shadow:none!important;border:0!important} /* jl-1028: 龙池主升/风险卡去黑框, 嵌进玻璃底对齐持仓报价区透度 */
+.poolCard .evChips,.poolCard .poolFund,.poolCard .poolWhy{background:transparent!important}
+.evChip{border-color:#81e6d933!important;background:#81e6d90d!important}
 .streakTagJL{font-style:normal;color:#ffd21f;font-size:9px;white-space:nowrap}.trajBtnJL{border:1px solid #81e6d944;border-radius:6px;background:#81e6d90d;color:#bcefeb;font-size:10px;padding:2px 8px;min-height:24px;margin-left:6px}.trajBoxJL{margin:4px 0 2px;padding:6px 8px;border:1px solid #81e6d922;border-radius:8px;background:#0e223366}.trajRowJL{display:flex;gap:6px;align-items:baseline;font-size:10px;padding:2px 0;border-bottom:1px dashed #81e6d911;flex-wrap:nowrap;overflow:hidden}.trajRowJL b{min-width:40px;font-weight:400;color:#9fc3d0;flex:none}.trajRowJL .tl{min-width:30px;flex:none}.trajRowJL .ts{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c8dde6}.trajRowJL .tf{flex:none;font-family:ui-monospace,monospace;color:#9fc3d0}.trajWhyJL{font-size:9px;color:#d9a0a4;padding:0 0 2px 46px;line-height:1.4}.trajNoteJL{font-size:9px;color:#7d99a8;margin-top:4px;line-height:1.5}.trajLoadJL,.trajErrJL{font-size:10px;color:#9fc3d0;padding:4px 0}.poolLinkOff{opacity:.78}
 .poolScore{font-family:ui-monospace,monospace;font-size:17px;font-weight:700;line-height:1;text-align:right;flex:none}
 .poolScore small{font-size:8px;font-weight:400;color:#d5e9f0;margin-left:1px}
@@ -402,7 +405,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
     errLog('core: boot flag missing @9s, main script dead');
     var bf=0;try{bf=Number(localStorage.getItem('jl_bf_n')||0)+1;localStorage.setItem('jl_bf_n',String(bf))}catch(e){bf=2}
     if(bf>=2){ /* 连死2次: 核掉大缓存键(持仓/台账/设置绝不动),坏数据杀启动的case */
-      try{var ks=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^(jl_dk_|jl_cyq2_|jl_pool_v1|jl_scan_|jl_ff_v1|jl_mf_)/.test(k))ks.push(k)}for(var j=0;j<ks.length;j++)localStorage.removeItem(ks[j]);errLog('core: nuke bulky caches x'+ks.length)}catch(e){}
+      try{var ks=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(/^(jl_dk_|jl_cyq2_|jl_scan_|jl_ff_v1|jl_mf_)/.test(k))ks.push(k)}for(var j=0;j<ks.length;j++)localStorage.removeItem(ks[j]);errLog('core: nuke bulky caches x'+ks.length)}catch(e){} /* jl-1028: jl_pool_v1/jl_pool_ff_rt_v1/jl_pool_anchor_d0 移出核销名单——龙池榜与资金是用户实盘扫出的硬数据, 非脏缓存, 被核即"刷出09-30又退回旧日"的元凶 */
     }
     var tried='';try{tried=sessionStorage.getItem('jl_hr_n')||''}catch(e){}
     if(!tried){errLog('core: auto hardRecover bf='+bf);hardRecover();return} /* 自动硬恢复,多数情况用户无感 */
@@ -4860,6 +4863,24 @@ document.addEventListener("visibilitychange", () => {
       return e2 && e2.d0Date ? e2 : null;
     } catch (e3) { return null; }
   }
+  /* jl-1028: 龙池最新有效数据日锚点——独立小 key, 不在核销名单, 记录用户实盘扫到过/资金确认过的最新日; poolOfflineJL 用它做第二道防线, 仓库旧快照压不过它 */
+  function jlPoolAnchorSetJL(d0) {
+    try { const s = String(d0 || "").slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(s)) localStorage.setItem("jl_pool_anchor_d0", s); } catch (e) {}
+  }
+  function jlPoolAnchorGetJL() {
+    try { const s = localStorage.getItem("jl_pool_anchor_d0") || ""; return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ""; } catch (e) { return ""; }
+  }
+  /* jl-1028: 纯函数——判断仓库离线快照是否应被本地(榜或锚点)压住; true=保留本地不吃旧快照。供 poolOfflineJL 调用 + jl_test 回归 */
+  function jlPoolShouldKeepLocalJL(locD0, ancD0, snapD0) {
+    const a = String(locD0 || ""), b = String(ancD0 || ""), s = String(snapD0 || "");
+    const best = a > b ? a : b;
+    return !!(best && s && best >= s);
+  }
+  /* jl-1027: 纯函数——个股资金本地缓存是否比离线表新; true=优先用本地。供 poolFFJL one() 调用 + jl_test 回归 */
+  function jlFfCacheNewerJL(cacheD0Date, offAsOf) {
+    const c = String(cacheD0Date || ""), o = String(offAsOf || "") || "0000";
+    return !!(c && c >= o);
+  }
   function jlFfOffLoadJL() {
     if (_jlFfOffP) return _jlFfOffP;
     _jlFfOffP = fetch("./pool_ff.json?_=" + Date.now(), { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((d) => {
@@ -4897,7 +4918,7 @@ document.addEventListener("visibilitychange", () => {
     };
     async function one(x) {
       const off = await jlFfOffLoadJL(), oe = off && off.d[x.code.slice(2)];
-      const _lc = jlFfCacheGetJL(x.code), _lcNewer = !!(_lc && String(_lc.d0Date || "") >= String((off && off.asof) || "0000")); /* jl-1027 */
+      const _lc = jlFfCacheGetJL(x.code), _lcNewer = !!(_lc && jlFfCacheNewerJL(_lc.d0Date, off && off.asof)); /* jl-1027/1028: 纯函数择新 */
       if (window.__jlPoolRT) {
         try {
           const _sec = (x.code.indexOf("sh") === 0 ? "1." : "0.") + x.code.slice(2);
@@ -4929,6 +4950,7 @@ document.addEventListener("visibilitychange", () => {
             for (let q0 = _nets.length - 1; q0 >= 0 && _nets[q0] < 0; q0--) _st++;
             x.outStreak = _st;
             jlFfCachePutJL(x.code, x); /* jl-1027 */
+            try { if (_dt > jlPoolAnchorGetJL()) jlPoolAnchorSetJL(_dt); } catch (eAn2) {} /* jl-1028: 资金确认到的最新日也进锚点 */
             pfProgJL("实时");
             return;
           }
@@ -5324,6 +5346,7 @@ document.addEventListener("visibilitychange", () => {
       }
     } catch (e) {
     }
+    try { jlPoolAnchorSetJL(d0); } catch (eAn) {} /* jl-1028: 实盘定稿即更新锚点 */
     if (!jlSafeSetJL("jl_pool_v1", JSON.stringify(JLPOOL))) {
       try {
         toast("\u5B58\u50A8\u5DF2\u6EE1 \xB7 \u9F99\u6C60\u7ED3\u679C\u672A\u80FD\u4FDD\u5B58\uFF0C\u9694\u65E5\u5C06\u770B\u4E0D\u5230\u6863\uFF0C\u8BF7\u6E05\u7406\u6D4F\u89C8\u5668\u7F13\u5B58\u540E\u91CD\u626B");
@@ -5356,15 +5379,17 @@ document.addEventListener("visibilitychange", () => {
           let _locP = null;
           try { _locP = JSON.parse(localStorage.getItem("jl_pool_v1") || "null"); } catch (eLc) { _locP = null; }
           const _locD0 = String((_locP && (_locP.d0 || _locP.date)) || "");
-          if (_locP && _locP.L && _locD0 && _snapD0 && _locD0 > _snapD0) {
-            JLPOOL = _locP;
+          const _ancD0 = jlPoolAnchorGetJL(); /* jl-1028: 锚点=用户实盘扫到过的最新日, 不被核销 */
+          if (jlPoolShouldKeepLocalJL(_locD0, _ancD0, _snapD0)) { /* jl-1028: 纯函数决策——本地榜或锚点 >= 快照即保留, 旧快照压不过 */
+            JLPOOL = _locP && _locP.L ? _locP : JLPOOL;
             window.__jlPoolOfflineD0 = _snapD0;
             try { window.__jlPoolAsOf = ""; } catch (eAo3) {}
-            try { window.__jlPoolKeptLocalJL = { loc: _locD0, snap: _snapD0 }; } catch (eKp) {}
+            try { window.__jlPoolKeptLocalJL = { loc: (_locD0 > _ancD0 ? _locD0 : _ancD0), snap: _snapD0 }; } catch (eKp) {}
             JLPOOL_PCT = 100;
             JLPOOL_PROG = "";
             try {
-              toast("已保留本地榜 · 数据日 " + _locD0 + " · 仓库离线快照停在 " + _snapD0 + "(较旧·未覆盖) · 长按=实盘重扫");
+              const _bestLocal = _locD0 > _ancD0 ? _locD0 : _ancD0;
+              toast(_locP && _locP.L ? "已保留本地榜 · 数据日 " + _bestLocal + " · 仓库快照停在 " + _snapD0 + "(未覆盖)" : "本地榜暂缺 · 锚点 " + _ancD0 + " 比仓库快照 " + _snapD0 + " 新 · 长按=实盘重扫(不载入旧快照)");
             } catch (e4) {}
             return;
           }

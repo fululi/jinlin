@@ -17,6 +17,8 @@ const {
   zzPivotsJL,
   jlDayClosedJL,
   swingStateJL,
+  jlPoolShouldKeepLocalJL,
+  jlFfCacheNewerJL,
 } = require("./harness");
 
 // ── 测试基础设施 ────────────────────────────────────────────────────
@@ -415,6 +417,46 @@ test("provisional vs confirmed anchor", () => {
       `Unexpected anchorKind: ${st.anchorKind}`
     );
   }
+});
+
+// ── jlPoolShouldKeepLocalJL (jl-1028 龙池快照覆盖决策) ──────────────
+
+test("poolKeep: 本地榜比快照新 → 保留", () => {
+  assert.strictEqual(jlPoolShouldKeepLocalJL("2026-09-30", "", "2026-09-21"), true);
+});
+
+test("poolKeep: 本地榜丢失但锚点比快照新 → 仍保留(根治刷回旧日)", () => {
+  assert.strictEqual(jlPoolShouldKeepLocalJL("", "2026-09-30", "2026-09-21"), true);
+});
+
+test("poolKeep: 本地与锚点都空 → 不保留(允许载入快照)", () => {
+  assert.strictEqual(jlPoolShouldKeepLocalJL("", "", "2026-09-21"), false);
+});
+
+test("poolKeep: 快照比本地新 → 不保留(允许覆盖更新)", () => {
+  assert.strictEqual(jlPoolShouldKeepLocalJL("2026-09-21", "", "2026-09-30"), false);
+});
+
+test("poolKeep: 日期相等 → 保留(含等号, 不无谓覆盖)", () => {
+  assert.strictEqual(jlPoolShouldKeepLocalJL("2026-09-21", "", "2026-09-21"), true);
+});
+
+// ── jlFfCacheNewerJL (jl-1027/1028 个股资金缓存择新) ────────────────
+
+test("ffNewer: 缓存日比离线表新 → 用本地", () => {
+  assert.strictEqual(jlFfCacheNewerJL("2026-09-30", "2026-09-16"), true);
+});
+
+test("ffNewer: 离线表 asof 为空 → 用本地(弱网兜底)", () => {
+  assert.strictEqual(jlFfCacheNewerJL("2026-09-30", ""), true);
+});
+
+test("ffNewer: 缓存日为空 → 不用本地", () => {
+  assert.strictEqual(jlFfCacheNewerJL("", "2026-09-16"), false);
+});
+
+test("ffNewer: 缓存日比离线表旧 → 不用本地", () => {
+  assert.strictEqual(jlFfCacheNewerJL("2026-09-16", "2026-09-30"), false);
 });
 
 // ── 汇总 ────────────────────────────────────────────────────────────

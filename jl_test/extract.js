@@ -115,6 +115,14 @@ chunks.push(extractFunction("jlDayClosedJL"));
 chunks.push("\n// === swingStateJL ===");
 chunks.push(extractFunction("swingStateJL"));
 
+// jlPoolShouldKeepLocalJL — jl-1028 龙池快照覆盖决策纯函数
+chunks.push("\n// === jlPoolShouldKeepLocalJL ===");
+chunks.push(extractFunction("jlPoolShouldKeepLocalJL"));
+
+// jlFfCacheNewerJL — jl-1027/1028 个股资金缓存择新纯函数
+chunks.push("\n// === jlFfCacheNewerJL ===");
+chunks.push(extractFunction("jlFfCacheNewerJL"));
+
 // ── 4. 拼装 harness.js ─────────────────────────────────────────────
 
 const preamble = `"use strict";
@@ -133,6 +141,8 @@ module.exports = {
   zzPivotsJL,
   jlDayClosedJL,
   swingStateJL,
+  jlPoolShouldKeepLocalJL,
+  jlFfCacheNewerJL,
 };
 `;
 
@@ -143,5 +153,6 @@ console.log("✓ Generated", path.relative(ROOT, OUT), "(" + output.length + " b
 console.log("  Functions extracted:", [
   "luLimJL", "decTierJL", "rmaAtrSeriesJL",
   "zzThJL", "zzMergeSmallLegsJL", "zzPivotsJL",
-  "jlDayClosedJL", "swingStateJL"
+  "jlDayClosedJL", "swingStateJL",
+  "jlPoolShouldKeepLocalJL", "jlFfCacheNewerJL"
 ].join(", "));
