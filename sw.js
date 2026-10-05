@@ -58,8 +58,10 @@
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
 /* jinlin sw v.82 — 2026-10-05: →v122 壳改「先秒出缓存+后台静默更新」: v121 及以前网络竞跑3.5s, 弱网必输喂旧缓存(=手机永远慢一版的根因); 配合 index jl-1020 自愈, 弱网最多两次刷新到新版 */
-const C = 'jinlin-shell-v140';
-const KEEP = ['jinlin-shell-v140', 'jinlin-shell-v139'];
+/* jinlin sw v.86 — 2026-10-06: 缓存名 →v141, 配合持仓卡五状态风险分批(index v0.83.44 / jl-1051:
+   状态泡泡+分值条+依据下沉共振卡首行, 4=观察线/5=减仓线, 做T/资金流/水位/详情原样不动) */
+const C = 'jinlin-shell-v141';
+const KEEP = ['jinlin-shell-v141', 'jinlin-shell-v140'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
