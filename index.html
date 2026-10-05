@@ -15,6 +15,7 @@
       if (b && !b.__jlDbgBound) {
         b.__jlDbgBound = 1;
         b.style.cursor = "pointer";
+        b.title = "\u70B9\u51FB\u5207\u6362K\u7EBF\u8BCA\u65AD\u884C"; /* jl-1035: 误点展开后用户知道这是什么/怎么关 */
         b.addEventListener("click", function (ev) {
           ev.stopPropagation();
           try {
