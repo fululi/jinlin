@@ -13,6 +13,8 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
+  /* jl-1031: 被金粼 iframe 嵌入时整体透明, 透出站点玻璃底; 独立打开仍保持原深色 */
+  @media all { html.ksTransparent, html.ksTransparent body { background: transparent !important; } }
   body {
     background: #0a0e0b; color: #c3d2c6;
     font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
@@ -186,6 +188,7 @@
   html.theme-la .tpan button { background: rgba(255,255,255,.75); color: #5d7065; border-color: #d3ded6; }
   html.theme-la .up { color: #e5453c; } html.theme-la .down { color: #1f9d66; } html.theme-la .flat { color: #7c8d83; }
 </style>
+  <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent')}}catch(e){}</script>
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 <div class="topbar" data-page-node-id="rkFiWqJwDe8rCQLnZupxAU" data-topbar>
