@@ -246,6 +246,7 @@ body.ksEmbed #chartPage .plots{height:640px}
 .prFoot{display:flex;justify-content:space-between;align-items:center;color:#eef9fc;font-size:9px}
 .prState{font-weight:600}
 .prState.r{color:#ff5459}
+.prState.y{color:#ffd21f} /* jl-1032: 回调·待确认琥珀色(复查发现的缺失类) */
 .prState.g{color:#1fdc93}.prSub{display:flex;align-items:center;gap:6px;margin:2px 3px 4px}.prSubTag{flex:0 0 58px;font-size:8.5px;color:#cfe3ef;white-space:nowrap}.prSubLo,.prSubHi{flex:0 0 auto;font-size:9px;font-family:ui-monospace,Menlo,monospace;color:#eef9fc;min-width:32px}.prSubLo{text-align:right}.prSubTrack{position:relative;flex:1;height:9px;border-radius:5px;background:rgba(255,255,255,.07)}.prSubFill{position:absolute;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,#63e4d4aa,#ffd21faa,#ff5459aa)}.prSubTrack .prNeedle{top:-2px;height:13px}.prJudge{margin:3px 3px 1px;font-size:10.5px;font-weight:600;color:#eef9fc}.prJudge.up{color:#ff5459}.prJudge.dn{color:#1fdc93}.fibTicksJL{display:flex;align-items:flex-end;justify-content:space-between;gap:4px;white-space:nowrap;overflow:hidden;margin:4px 1px 1px}.ftk{display:flex;flex-direction:column;align-items:center;gap:1px}.ftk b{font-size:8px;color:#fff;font-weight:600}.ftk strong{font-size:9px;font-weight:650;font-family:ui-monospace,Menlo,monospace;text-shadow:0 0 6px #ffffff44;padding:0 1px}.ftkSep{width:1px;height:16px;background:#ffffff22;align-self:center}.legBos{color:#ff5459;font-weight:700}.legBos.dn{color:#1fdc93}
 .posRulerJL.brkL .prNeedle{background:#1fdc93;box-shadow:0 0 8px #1fdc93}
 .posRulerJL.brkH .prNeedle{background:#ff5459;box-shadow:0 0 8px #ff5459}
@@ -645,7 +646,7 @@ document.addEventListener("visibilitychange", () => {
   try {
     const _p = JSON.parse(localStorage.getItem("jinlin_panes_v1") || "null"), _o = JSON.parse(localStorage.getItem("jinlin_ov_v1") || "null");
     if (_p) paneOn = { ...paneOn, ..._p };
-    try { if (!localStorage.getItem("jinlin_panes_zlyy_off_mig1")) { paneOn.zlyy = false; localStorage.setItem("jinlin_panes_zlyy_off_mig1", "1"); } } catch (eZm) {} /* jl-1029 */
+    try { if (!localStorage.getItem("jinlin_panes_zlyy_off_mig1")) { if (!(_p && _p.zlyy === true)) paneOn.zlyy = false; localStorage.setItem("jinlin_panes_zlyy_off_mig1", "1"); } } catch (eZm) {} /* jl-1032: 迁移尊重用户手动开过的偏好 */
     if (_o) ovOn = { ...ovOn, ..._o };
     if (!localStorage.getItem("jinlin_ov_sr_mig2")) { // jl-0928: SR默认关(与RLM反应位重复),要用指标条手动开回
       ovOn.sr = false;
