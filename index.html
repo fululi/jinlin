@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.83.27" data-sw="jinlin-shell-v129"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.83.28" data-sw="jinlin-shell-v130"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -316,7 +316,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 .plhN{font-size:9px;color:#d5e9f0;font-family:ui-monospace,monospace}
 .poolLayerHead small{font-size:9.5px;color:#e8f6fa;flex:1 1 100%;line-height:1.4}
 .poolPicks{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px}
-.poolPick{flex:0 0 212px;border:1px solid #ffd21f44;border-radius:12px;background:linear-gradient(160deg,#1a140859,var(--panel));padding:9px 11px}
+.poolPick{flex:0 0 212px;border:1px solid #81e6d926;border-radius:12px;background:#0a1a2a33;padding:9px 11px} /* jl-1030: 风口卡去黑框透度对齐 */
 .ppTop{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
 .ppTop b{font-size:13px;color:#eff9fc}
 .ppSub{font-size:9px;color:#d5e9f0;margin-top:2px;font-family:ui-monospace,monospace}
@@ -382,7 +382,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 <div class="indBar" id="indBar"></div><div class="plots"><div class="mainPlot"><canvas id="bigChart" tabindex="0" aria-label="K线主图，拖动平移、右侧价格轴缩放、捏合缩放"></canvas><button class="panArrow l" aria-label="向左平移K线">‹</button><button class="panArrow r" aria-label="向右平移K线">›</button></div><div class="volumePlot"><canvas id="volumeChart" tabindex="0" aria-label="成交量副图，可画线"></canvas></div><div class="ddxPlot"><span>主力净额 · 资金</span><button id="ddxCloseJL" type="button" aria-label="关闭主力净额附图">×</button><canvas id="ddxChart" aria-label="DDX主力资金副图"></canvas></div><div id="subPanes"></div><div id="crossSpanJL"></div><iframe id="ksFrameJL" title="K-STATION 大图"></iframe><button id="ddxReopenJL" type="button">附图已隐藏 · 点我展开</button></div>
 <div id="crossReadout">拖动图表平移 · 拖动右轴缩放 · 双击复位</div>
 <div class="chartFooter"><details id="technical"><summary>技术摘要 <span id="technicalPeriod"></span></summary><div id="technicalBody"></div></details></div>
-</section><section class="view" id="watchPage" hidden=""><div class="pageTitle"><h2>市场池</h2><span>WATCH &amp; LEADERS</span></div><div class="watchTabs watchCtlJL"><span class="segJL"><button data-watch="watch" class="active">观察自选</button><button data-watch="leaders">龙头股池</button></span><button type="button" id="watchAdd" class="addBtnJL" aria-label="添加观察">＋</button><button type="button" id="dragonScan" class="scanBtnJL"><span class="scIc">⟳</span><b>龙池扫描</b><small class="scTx"></small><i class="dgBarJL"></i></button></div><div id="watchList"></div><button type="button" class="newsEntry" data-open-news=""><i></i><span>新闻 · 市场资金异动与持仓资讯</span></button><p class="smallPrint">龙头池口径照搬 hq-mobile 跑测版：分层=区间控制分(价格区间自定义指标·非主力/筹码数据)×位置×涨停基因×缩量×量比，资格门先验日K+资金新鲜度，评分只排合格集合；旧数据日整池标注，不装活。</p></section>
+</section><section class="view" id="watchPage" hidden=""><div class="pageTitle"><h2>市场池</h2><span>WATCH &amp; LEADERS</span></div><div class="watchTabs watchCtlJL"><span class="segJL"><button data-watch="watch" class="active">观察自选</button><button data-watch="leaders">龙头股池</button></span><button type="button" id="watchAdd" class="addBtnJL" aria-label="添加观察">＋</button><button type="button" id="dragonScan" class="scanBtnJL"><span class="scIc">⟳</span><b>龙池扫描</b><small class="scTx"></small><i class="dgBarJL"></i></button></div><div id="watchList"></div><button type="button" class="newsEntry" data-open-news=""><i></i><span>新闻 · 市场资金异动与持仓资讯</span></button></section>
 <section class="view" id="reviewPage" hidden=""><div class="pageTitle"><h2>复盘</h2><span>REVIEW</span></div><article class="glass reviewCard"><h3 id="reviewTitleJL">日复盘 <small>真实数据</small></h3><div class="resonancePanel"><span>市场环境<b data-review-market="">等待市场情绪数据</b></span><span>板块方向<b data-review-sector="">等待板块资金数据</b></span><span>做T结果<b data-review-trade="">等待台账成交记录</b></span><span>预判战绩<b data-review-pred="">样本积累中</b></span><span>龙池战绩<b data-review-pool="">待首期推荐</b></span><span>结论<b data-review-conclusion="">资金数据尚未结算</b></span></div><div id="reviewAllJL"></div><details><summary>展开真实证据 · K线 / DDX / Fib / 执行</summary><p class="smallPrint">复盘只显示已取得的真实行情、资金和成交记录；缺失字段保留为数据暂缺。单日主力净额经统计对次日无预测力(r≈0.07)，已移出结论仅作背景。</p><div data-review-ev style="font-size:10.5px;line-height:1.9;color:#e0f2f6;padding-top:4px"></div></details></article></section></div><nav class="navigation" aria-label="页面导航"><button data-view="home"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7v10H3Z M9 20v-7h6v7"></path></svg>总览</button><button data-view="watchPage"><svg viewBox="0 0 24 24"><path d="m12 3 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"></path></svg>自选</button><button data-view="chartPage" aria-label="K线工作区"><svg viewBox="0 0 24 24"><path d="M4 3v18h17M8 15V7m5 10V4m5 10V8"></path></svg>K线</button><button class="active" data-view="holds"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="3"></rect><path d="M8 7V3h8v4 M3 12h18 M10 12v3h4v-3"></path></svg>持仓</button><button data-view="reviewPage"><svg viewBox="0 0 24 24"><path d="M4 3v18h17 M8 16v-4 M13 16V6 M18 16V9"></path></svg>复盘</button></nav><div class="homebar"></div><div id="newsShade" hidden=""></div><section id="newsPanel" hidden="" aria-label="新闻与产业链"><header><b>新闻 / 产业链</b><button id="newsClose" aria-label="关闭新闻">×</button></header><div class="newsTabsJL"><button type="button" data-news="zao" class="active">早报</button><button type="button" data-news="wan">晚报</button><button type="button" data-news="kx">快讯</button><a id="newsFullJL" rel="noopener" target="_blank">全屏打开 ↗</a></div><iframe id="newsFrameJL" title="真实交易线索新闻" scrolling="no"></iframe><div id="newsEmptyJL" hidden="">新闻暂未生成，点击右上角可打开存档。</div><div id="newsKxJL" hidden=""><div class="kxSrcJL"><span>东财 7×24 快讯 · <b id="kxTimeJL">--:--</b> 更新 · 30秒轮询</span><a href="https://m.cls.cn/telegraph" target="_blank" rel="noopener">财联社电报 ↗</a></div><div id="kxListJL"><div class="kxLoadingJL">快讯加载中…</div></div></div></section><div id="pickerShade" hidden=""></div><section id="picker" hidden="" aria-label="选择股票"><header><b>选择股票</b><button id="pickerClose" aria-label="关闭选股">×</button></header><input id="pickerSearch" type="search" placeholder="输入代码/名称/拼音，回车搜索" aria-label="搜索股票" style="width:100%;margin:9px 0 4px;padding:9px;border:1px solid var(--edge);background:transparent;color:var(--fg);border-radius:9px;font-size:13px"/><div class="pickerTabs"><button data-group="holds">持仓</button><button data-group="watch">自选</button><button data-group="leaders">龙头</button><button data-group="indices">指数</button></div><div id="pickerRows"></div><small>上下滑动列表 · 点名称切换</small></section><dialog id="alerts"><form id="alertForm"><h3>到价提醒 · 实时</h3><label>目标价格<input type="number" min="0.01" step="any" required="" id="alertValue"/></label><label>条件<select id="alertSide"><option value="above">高于或等于</option><option value="below">低于或等于</option></select></label><p>仅在页面打开时监测价格，非真实行情提醒。</p><button type="submit">保存</button><button type="button" id="alertClose">取消</button><div id="alertList"></div></form></dialog><div class="toast" role="status" id="toast"></div></div></section></main>
 
 <script>
@@ -1888,7 +1888,12 @@ document.addEventListener("visibilitychange", () => {
     const el = $("mtDistJL");
     if (el) {
       const cols = [[">7%", d.bu[0], "#ff6f60", "bu0"], ["7~5", d.bu[1], "#ff8a75", "bu1"], ["5~2", d.bu[2], "#ffa08a", "bu2"], ["2~0", d.bu[3], "#ffb59f", "bu3"], ["\u5E73", d.flat, "#8d97a6", ""], ["0~2", d.bd[0], "#69d6a4", "bd0"], ["2~5", d.bd[1], "#4ecb92", "bd1"], ["5~7", d.bd[2], "#38bd82", "bd2"], ["7<", d.bd[3], "#2aad72", "bd3"]], mx = Math.max(...cols.map((c) => c[1]), 1), DW = 340, DH = 104, DB = 18, DT = 13, bw = (DW - 10) / 9; /* v0.82.4: 摘涨跌停后9档 */
-      if ((d.bu || []).every((x) => !x) && (d.bd || []).every((x) => !x)) { el.innerHTML = ""; } /* jl-1025: 分布全零=钻取采样未成, 隐藏柱图保留主指标, 不画误导全零图 */
+      if ((d.bu || []).every((x) => !x) && (d.bd || []).every((x) => !x)) { /* jl-1030: 九档全零但有涨跌家数时画三柱聚合(真实数据), 否则隐藏 */
+        if (d.up || d.down || d.flat) {
+          const c3 = [["\u4E0A\u6DA8", d.up || 0, "#ff6f60"], ["\u5E73", d.flat || 0, "#8d97a6"], ["\u4E0B\u8DCC", d.down || 0, "#2aad72"]], mx3 = Math.max(d.up || 0, d.flat || 0, d.down || 0, 1), bw3 = (DW - 10) / 3;
+          el.innerHTML = '<svg viewBox="0 0 ' + DW + " " + DH + '" style="width:100%;display:block">' + c3.map((c, i3) => { const h3 = Math.max(2, Math.round(Math.sqrt(c[1] / mx3) * (DH - DT - DB))), x3 = (5 + i3 * bw3 + bw3 * 0.2).toFixed(1), w3 = (bw3 * 0.6).toFixed(1), tx3 = (+x3 + +w3 / 2).toFixed(1); return "<g><rect x=\"" + x3 + "\" y=\"" + (DH - DB - h3) + "\" width=\"" + w3 + "\" height=\"" + h3 + "\" rx=\"2\" fill=\"" + c[2] + "\"/><text x=\"" + tx3 + "\" y=\"" + (DH - DB - h3 - 2) + "\" font-size=\"8\" fill=\"#aeb8c6\" text-anchor=\"middle\">" + c[1] + '</text><text x="' + tx3 + '" y="' + (DH - 7) + '" font-size="7.5" fill="#7e8798" text-anchor="middle">' + c[0] + "</text></g>"; }).join("") + "</svg>";
+        } else el.innerHTML = "";
+      }
       else el.innerHTML = '<svg viewBox="0 0 ' + DW + " " + DH + '" style="width:100%;display:block">' + cols.map((c, i) => {
         const h = Math.max(2, Math.round(Math.sqrt(c[1] / mx) * (DH - DT - DB))), x = (5 + i * bw + bw * 0.15).toFixed(1), w = (bw * 0.7).toFixed(1), tx = (+x + +w / 2).toFixed(1);
         return "<g" + (c[3] ? ' class="mtd" data-mtd="' + c[3] + '" style="cursor:pointer"' : "") + '><rect x="' + x + '" y="' + (DH - DB - h) + '" width="' + w + '" height="' + h + '" rx="2" fill="' + c[2] + '"/><text x="' + tx + '" y="' + (DH - DB - h - 2) + '" font-size="8" fill="#aeb8c6" text-anchor="middle">' + c[1] + '</text><text x="' + tx + '" y="' + (DH - 7) + '" font-size="7.5" fill="#7e8798" text-anchor="middle">' + c[0] + "</text></g>";
@@ -3798,7 +3803,7 @@ document.addEventListener("visibilitychange", () => {
         if (_c3 && Number.isFinite(+_c3.amt)) { sf = { amt: +_c3.amt, pct: +_c3.pct, name: sec, _d: _c3.d }; secStale = String(_c3.d || "") !== jlLastTradeDay(); }
       } catch (e3) {}
     }
-    const mt = mtempJL.data, ownV = ff && !ffStale0 ? ff.main : (_ffFb ? _ffFb.main : null), secV = sf && Number.isFinite(sf.amt) ? sf.amt : null, mtV = mt && Number.isFinite(mt.fund) ? mt.fund : (() => { try { const _mc = JSON.parse(localStorage.getItem("jinlin_mtemp_v1") || "null"); return _mc && _mc.data && Number.isFinite(_mc.data.fund) ? _mc.data.fund : null; } catch (eM) { return null; } })(), /* jl-1029 */ dir = (v) => v == null || !Number.isFinite(v) ? NaN : v > 0 ? 1 : v < 0 ? -1 : 0, dO = dir(ownV), dS = dir(secV), dM = dir(mtV);
+    const mt = mtempJL.data, ownV = ff && !ffStale0 ? ff.main : (_ffFb ? _ffFb.main : null), secV = sf && Number.isFinite(sf.amt) ? sf.amt : null, mtV = (() => { if (mt && Number.isFinite(mt.fund)) return mt.fund; try { const _mc = JSON.parse(localStorage.getItem("jinlin_mtemp_v1") || "null"); if (_mc && _mc.data && Number.isFinite(_mc.data.fund)) return _mc.data.fund; } catch (eM) {} if (typeof mktLiveJL === "function" && !mktLiveJL() && window.__jlIdxFfLast && Number.isFinite(window.__jlIdxFfLast.v)) return window.__jlIdxFfLast.v * 1e8; return null; })(), /* jl-1029/1030: 休市市场列回退指数资金(与主力球同源, 亿→元) */ dir = (v) => v == null || !Number.isFinite(v) ? NaN : v > 0 ? 1 : v < 0 ? -1 : 0, dO = dir(ownV), dS = dir(secV), dM = dir(mtV);
     let verdict, vc, short;
     let ffStreak = 0;
     try {
@@ -4878,6 +4883,23 @@ document.addEventListener("visibilitychange", () => {
     return !!(best && s && best >= s);
   }
   /* jl-1027: 纯函数——个股资金本地缓存是否比离线表新; true=优先用本地。供 poolFFJL one() 调用 + jl_test 回归 */
+  function jlSeedStaticFfJL() { /* jl-1030: 启动种入仓库静态资金快照(同花顺09-30真数据)——清缓存/弱网后个股列不再暂缺 */
+    try {
+      fetch("./jl_static/ff_snap.json?_=" + Date.now(), { cache: "no-store" }).then((r) => (r && r.ok ? r.json() : null)).then((snap) => {
+        if (!snap || !snap.d || !snap.asof) return;
+        let m = {}; try { m = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {}; } catch (e1) {}
+        let ch = false;
+        Object.keys(snap.d).forEach((code) => {
+          const rows = (snap.d[code] || []).map((pr2) => ({ d: pr2[0], main: pr2[1] }));
+          if (!rows.length) return;
+          const cur = m[code], curD = cur && cur.rows && cur.rows.length ? String(cur.rows[cur.rows.length - 1].d || "") : "";
+          if (!cur || !cur.rows || !cur.rows.length || curD < snap.asof) { m[code] = { rows: rows, t: Date.now(), src: "static-ifind" }; ch = true; }
+        });
+        if (ch) { try { localStorage.setItem("jl_ff_v1", JSON.stringify(m)); } catch (e2) {} _ffMJL.t = 0; }
+      }).catch(() => {});
+    } catch (e3) {}
+  }
+  jlSeedStaticFfJL();
   function jlFfCacheNewerJL(cacheD0Date, offAsOf) {
     const c = String(cacheD0Date || ""), o = String(offAsOf || "") || "0000";
     return !!(c && c >= o);
@@ -6099,7 +6121,7 @@ document.addEventListener("visibilitychange", () => {
     } catch (eZ) {
     }
     const _ztOpen = _ztCol.zt != null ? !!_ztCol.zt : true;
-    return '<div class="poolLayerHead" id="plh_zt" data-pl-toggle="zt" role="button" style="cursor:pointer;scroll-margin-top:46px"><b style="color:#ff7a59">' + (_ztOpen ? "\u25BE " : "\u25B8 ") + '\u6DA8\u505C\u98CE\u53E3 \xB7 ' + dS + '</b><span class="plhN">' + hot.length + "/" + zt.total + (_veto.length ? " \xB7 \u98CE\u9669\u5254" + _veto.length : "") + '</span><small>\u5C01\u5355\u22652000\u4E07\u6216\u8FDE\u677F\u22652 \xB7 \u6309\u5C01\u5355\u989D\u6392 \xB7 \u8D5B\u9053\u5206=\u8FDE\u677F\u9AD8\u5EA6/\u5C01\u5355/\u9996\u5C01/\u70B8\u677F \xB7 \u98CE\u9669=\u5C01\u677F\u8D28\u91CF+\u9AD8\u5EA6+\u6362\u624B+\u8EAB\u4F4D\u56DB\u5C42\u6263\u5206(\u2264 20\u4F4E/21-45\u4E2D/>45\u9AD8) \xB7 \u4E00\u7968\u5426\u51B3\u5DF2\u5254 \xB7 \u9608\u503C\u5F85\u56DE\u6D4B\u6807\u5B9A</small></div><div class="poolPicks" data-pl-body="zt" style="display:' + (_ztOpen ? "flex" : "none") + '">' + hot.map((x) => {
+    return '<div class="poolLayerHead" id="plh_zt" data-pl-toggle="zt" role="button" style="cursor:pointer;scroll-margin-top:46px"><b style="color:#ff7a59">' + (_ztOpen ? "\u25BE " : "\u25B8 ") + '\u6DA8\u505C\u98CE\u53E3 \xB7 ' + dS + '</b><span class="plhN">' + hot.length + "/" + zt.total + (_veto.length ? " \xB7 \u98CE\u9669\u5254" + _veto.length : "") + '</span></div><div class="poolPicks" data-pl-body="zt" style="display:' + (_ztOpen ? "flex" : "none") + '">' + hot.map((x) => {
       const _hc = String(x.code).slice(2), _hs = stocks.find((s2) => s2.code === _hc || s2.code === x.code), held = !!_hs, heldQty = !!(_hs && _hs.qty > 0);
       const _lb8 = Math.max(0, Math.min(100, (x.lbc >= 2 ? x.lbc * 20 : 8) + Math.min(30, Math.round((x.fund || 0) / 1e7) * 2) + (x.fbt && +String(x.fbt).padStart(6, "0").slice(0, 2) < 10 ? 15 : 0) + (x.zbc ? -Math.min(30, x.zbc * 10) : 15))); // jl-0920-38: 连板赛道分(高度/封单/首封/炸板)
       const _rk = ztRiskJL(x, _hyN[x.hy] || 1);
@@ -13028,7 +13050,7 @@ var RLMCore = (function () {
               const tm2 = a[0].slice(11, 16).replace(":", ""), v2 = +a[1];
               if (tm2 && !isNaN(v2)) rows.push([tm2, v2 / 1e8]);
             });
-            if (rows.length > 5) return rows;
+            if (rows.length > 5) { try { window.__jlIdxFfLast = { d: day, v: rows.reduce((a2, r2) => a2 + r2[1], 0) }; } catch (eS2) {} return rows; } /* jl-1030 */
           }
         } catch (e) {
         }
@@ -15322,6 +15344,7 @@ var RLMCore = (function () {
     try {
       const d = await emFetchJL("/api/qt/stock/fflow/daykline/get?secid=1.510300&ut=" + JL_UT + "&lmt=25&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52");
       const k = d && d.data && d.data.klines || [];
+      if (!k.length) { try { const _du = await emFetchJL("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62&secids=1.510300"); const _f62 = _du && _du.data && _du.data.diff && _du.data.diff[0] ? +_du.data.diff[0].f62 : NaN; if (Number.isFinite(_f62)) k.push(jlLastTradeDay() + "," + _f62); } catch (eU) {} } /* jl-1030: push2his不通时push2 ulist兜底(休市返回09-30值) */
       if (k.length) {
         let hist = {};
         try {
