@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.83.24" data-sw="jinlin-shell-v126"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.83.25" data-sw="jinlin-shell-v127"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按立即更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){location.reload()};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -4842,6 +4842,24 @@ document.addEventListener("visibilitychange", () => {
     });
   }
   let JLPOOL_FFOFF = null, JLPOOL_FFOFF_ASOF = "", _jlFfOffP = null;
+  /* jl-1027: 个股实时资金落盘——扫出来的新资金日(如09-30)刷新不再丢; 弱网实时全超时回落时, 本地缓存比仓库离线表(asof停更在09-16)新就用本地, 不再被拖回旧日 */
+  function jlFfCachePutJL(code, x) {
+    try {
+      if (!x || !x.fundSourceValid || !x.d0Date) return;
+      const k = "jl_pool_ff_rt_v1", m = JSON.parse(localStorage.getItem(k) || "{}");
+      m[String(code).slice(2)] = { d0: x.d0, d0Date: x.d0Date, d0Stale: x.d0Stale, f5: x.f5, f10: x.f10, n10: x.n10, c2: x.c2, outStreak: x.outStreak, ts: Date.now() };
+      const ks = Object.keys(m);
+      if (ks.length > 600) ks.sort((a, b) => (m[a].ts || 0) - (m[b].ts || 0)).slice(0, ks.length - 600).forEach((k2) => { delete m[k2]; });
+      localStorage.setItem(k, JSON.stringify(m));
+    } catch (e) {}
+  }
+  function jlFfCacheGetJL(code) {
+    try {
+      const m = JSON.parse(localStorage.getItem("jl_pool_ff_rt_v1") || "{}");
+      const e2 = m[String(code).slice(2)];
+      return e2 && e2.d0Date ? e2 : null;
+    } catch (e3) { return null; }
+  }
   function jlFfOffLoadJL() {
     if (_jlFfOffP) return _jlFfOffP;
     _jlFfOffP = fetch("./pool_ff.json?_=" + Date.now(), { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((d) => {
@@ -4879,6 +4897,7 @@ document.addEventListener("visibilitychange", () => {
     };
     async function one(x) {
       const off = await jlFfOffLoadJL(), oe = off && off.d[x.code.slice(2)];
+      const _lc = jlFfCacheGetJL(x.code), _lcNewer = !!(_lc && String(_lc.d0Date || "") >= String((off && off.asof) || "0000")); /* jl-1027 */
       if (window.__jlPoolRT) {
         try {
           const _sec = (x.code.indexOf("sh") === 0 ? "1." : "0.") + x.code.slice(2);
@@ -4909,10 +4928,19 @@ document.addEventListener("visibilitychange", () => {
             let _st = 0;
             for (let q0 = _nets.length - 1; q0 >= 0 && _nets[q0] < 0; q0--) _st++;
             x.outStreak = _st;
+            jlFfCachePutJL(x.code, x); /* jl-1027 */
             pfProgJL("实时");
             return;
           }
         } catch (e) {}
+      }
+      if (_lcNewer) { /* jl-1027: 本地实时资金缓存比离线表新→优先本地, 弱网刷新不再拖回09-16 */
+        x.fundSourceValid = true;
+        x.fundStatus = "本地·" + String(_lc.d0Date).slice(5);
+        x.d0 = _lc.d0; x.d0Date = _lc.d0Date; x.d0Stale = _lc.d0Date === jlLastTradeDay() ? 0 : 1;
+        x.f5 = _lc.f5; x.f10 = _lc.f10; x.n10 = _lc.n10; x.c2 = _lc.c2; x.outStreak = _lc.outStreak || 0;
+        pfProgJL("本地资金·" + String(_lc.d0Date).slice(5));
+        return;
       }
       if (oe) {
         const nets = (oe[1] || []).filter((v) => typeof v === "number").slice(-10);
@@ -4953,6 +4981,7 @@ document.addEventListener("visibilitychange", () => {
             x.d0 = f62b;
             x.d0Date = jlLastTradeDay();
             x.d0Stale = 0;
+            jlFfCachePutJL(x.code, x); /* jl-1027 */
             pfProgJL("实时/当日盘中");
             return;
           }
@@ -4978,6 +5007,7 @@ document.addEventListener("visibilitychange", () => {
           let st = 0;
           for (let q = nets.length - 1; q >= 0 && nets[q] < 0; q--) st++;
           x.outStreak = st;
+          jlFfCachePutJL(x.code, x); /* jl-1027 */
           if (x.d0Stale) {
             try {
               const td2 = jlLastTradeDay();
