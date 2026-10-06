@@ -1,3 +1,4 @@
+/* jinlin sw v177 — 2026-10-07: 缓存名 →v177, 配合 jl-1089 v0.84.35 全站Typography可读性批(纯视觉层: 白字三档+玻璃text-shadow+涨跌值/影响标签实底pill白字+数据密集区稳定底层+tabular-nums; 零业务逻辑改动; jlv2.js?v=10) */
 /* jinlin sw v.88 — 2026-10-06: 缓存名 →v143, 配合首页尾部三张折叠卡批(index v0.84.0: jlv2.js 独立模块,
    大资金国家队/温度计v2/大盘异动分组, 现有模块零改动; jlv2.js 非壳文件不受SW缓存, 拉取即最新) */
 /* jinlin sw v.87 — 2026-10-06: 缓存名 →v142, 终版推送jl-1052(替代并行批15df898, 持仓联动改事件驱动防双算)。前批 →v140, 配合手机卡旧版根治批(index v0.83.43:
@@ -84,8 +85,8 @@
    龙池扫描两处最小修: ①宇宙会话钉住(poolUniJL三级源瀑布按当次网络落位=4412↔5061漂移, 且断点续扫按uniLen匹配; 内存+sessionStorage 90min TTL对齐断点窗)
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
-const C = 'jinlin-shell-v176'; /* jl-1088 v0.84.34: 龙池扫描最小修; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v176', 'jinlin-shell-v175'];
+const C = 'jinlin-shell-v177'; /* jl-1088 v0.84.34: 龙池扫描最小修; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v177', 'jinlin-shell-v176'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

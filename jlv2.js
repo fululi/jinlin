@@ -528,7 +528,7 @@
         rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(c.at)) + '</span><span class="tt"><b>' + (YD_NAME[c.t] || c.t) + '扩散 · ' + c.list.length + '只</b><small>近' + p.spWin + '分钟 · 代表 ' + c.list.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(dir, per) + '</span></div>';
         if (i === 0 && per !== "dead") { /* 顶部醒目横幅: 偏空红系/偏多金系, 跟进中/待确认 */
           banner = '<div class="grp" style="margin:3px 0;border:1px solid ' + (dir < 0 ? "#ff5459" : "#ffd21f") + '55;background:' + (dir < 0 ? "rgba(255,84,89,.10)" : "rgba(255,210,31,.08)") + ';border-radius:10px;padding:7px 9px;font-size:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
-            '<b style="font-size:10.5px;color:' + (dir < 0 ? "#ffa4a8" : "#ffd21f") + '">⚠ ' + (YD_NAME[c.t] || "异动") + '扩散 · ' + c.list.length + '只</b>' +
+            '<b style="font-size:10.5px;color:#fff;font-weight:650;text-shadow:0 1px 2px rgba(0,0,0,.35)">⚠ ' + (YD_NAME[c.t] || "异动") + '扩散 · ' + c.list.length + '只</b>' +
             '<small style="color:rgba(255,255,255,.86);font-size:8.5px">近' + p.spWin + '分钟 ≥' + p.spM + '只 · 影响' + (dir > 0 ? "偏多" : dir < 0 ? "偏空" : "中性") + ' · ' + (per === "live" ? "跟进中" : "待确认") + '</small></div>';
         }
       });
@@ -811,8 +811,8 @@
         if (!r) return "";
         var w = isFinite(r.today) ? Math.max(3, Math.abs(r.today) / mx * 46) : 0;
         var bar = isFinite(r.today) ? (r.today >= 0
-          ? '<i style="left:50%;width:' + w + '%;background:linear-gradient(90deg,#ff5459cc,#ff5459)"></i><em style="left:50%;padding-left:5px;color:#ff8b8f">' + fmtYi(r.today) + '</em>'
-          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding-right:5px;color:#5ae8ab">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:rgba(255,255,255,.86)">—</em>';
+          ? '<i style="left:50%;width:' + w + '%;background:linear-gradient(90deg,#ff5459cc,#ff5459)"></i><em style="left:50%;padding:1px 4px 1px 6px;background:rgba(224,32,32,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>'
+          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding:1px 6px 1px 4px;background:rgba(0,150,90,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:rgba(255,255,255,.88);text-shadow:0 1px 2px rgba(0,0,0,.35)">—</em>';
         return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:9.5px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
       }).join("");
     } else rows = '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + "</div>"; /* jl-1075: 裸"未到"→降级卡(最后成功HH:MM+手动立即重试+指数退避上限5次; 收盘后mktLive停轮询也能自愈) */
