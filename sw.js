@@ -70,8 +70,10 @@
    龙池斐波那契波段加分(复用持仓卡legFibJL零改公式) + B/S球档位失守监控(黄/橙/红+诱多+失守演示) + 强势度评分/S档待确认/移动卖出参考trailing; jlv2.js?v=7 jl_sector_map.js?v=1 不变) */
 /* jinlin sw v.94 — 2026-10-07: 缓存名 →v172, 配合jl-1084热修(index v0.84.30: jlv2.js?v=8)——
    跨零点dt2对null取.t抛TypeError→paint死→boot崩→三卡永久消失(休市无自愈), 判空+boot防爆盾两行根修 */
-const C = 'jinlin-shell-v172'; /* jl-1084 v0.84.30: 跨零点三卡消失根修; jlv2.js?v=8 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v172', 'jinlin-shell-v171'];
+/* jinlin sw v.95 — 2026-10-07: 缓存名 →v173, 配合jl-1085龙池两修(index v0.84.31)——
+   ①断点续扫纯时间戳判定(原ck.date==今天在跨零点后作废90分钟内新断点) ②自动补扫标记加今日(长假exp/d0恒不变→假期只触发一次, 困扰三天的机制根因) */
+const C = 'jinlin-shell-v173'; /* jl-1085 v0.84.31: 龙池断点跨零点+假期自动补扫两修; jlv2.js?v=8 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v173', 'jinlin-shell-v172'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
