@@ -153,9 +153,10 @@
     var po = lsGet("jlv2_pool_v1", null); if (po && po.date === d) S.pool = po;
     var pr = lsGet("jlv2_prem_v1", null); if (pr && pr.date === d) S.prem = pr;
     var at = lsGet("jlv2_atr_v1", null); if (at && at.date === d) S.atr = at;
-    var et = lsGet("jlv2_etf_v1", null); if (et && et.date === d) S.etf = et;
+    var et = lsGet("jlv2_etf_v1", null); if (et && et.date === d) { S.etf = et.rows && et.rows.length ? et.rows : null; S.etfAt = et.at || ""; } /* jl-1075: 修缓存形状bug——原S.etf=整个对象而renderGjd期望数组, 重载后今日缓存永不生效恒"未到" */
     var ho = lsGet("jlv2_hot_v1", null); if (ho) S.hot = ho;
   })();
+  function dgText(k, fb) { try { if (window.__jlDg) return window.__jlDg.text(k, fb); } catch (e) {} return fb; } /* jl-1075: 降级卡文本桥(index.html jl-1074模块), 未就绪时回退原文案 */
 
   function prevTradeDay() {
     if (S.atr && S.atr.prevDate) return S.atr.prevDate;
@@ -251,7 +252,7 @@
     var out = [], left = CFG.etfs.length, bad = 0;
     CFG.etfs.forEach(function (e0, i) {
       setTimeout(function () {
-        fetchOneEtf(i, function (e, r) { if (e) { bad++; } else { out[i] = r; } if (--left <= 0) { if (bad >= CFG.etfs.length) { cb(new Error("etf-all")); return; } S.etf = out; lsSet("jlv2_etf_v1", { date: today(), rows: out, at: hhmm(String(nowMin()).padStart(4, "0")) }); cb(null, out); } });
+        fetchOneEtf(i, function (e, r) { if (e) { bad++; } else { out[i] = r; } if (--left <= 0) { if (bad >= CFG.etfs.length) { try { window.__jlDg && window.__jlDg.fail("jlv2:etf", function () { return new Promise(function (res) { fetchEtfs(function (e2) { paint(); res(!e2); }); }); }, "东财ETF净额通道受阻(网络/IP或风控)", function () { return !!(S.etf && S.etf.some(Boolean)); }); } catch (eD) {} cb(new Error("etf-all")); return; } S.etf = out; S.etfAt = hhmm(String(nowMin()).padStart(4, "0")); try { window.__jlDg && window.__jlDg.ok("jlv2:etf"); } catch (eO) {} lsSet("jlv2_etf_v1", { date: today(), rows: out, at: S.etfAt }); cb(null, out); } });
       }, i * 350);
     });
   }
@@ -520,8 +521,8 @@
   function renderGjd() {
     var stx = deriveStruct();
     var etfOk = S.etf && S.etf.length && S.etf.some(Boolean);
-    var head = '<b>大资金 · 国家队</b><small>ETF主力净额口径' + (S.etf && S.etf.at ? ' · ' + S.etf.at : '') + '</small>';
-    if (!stx && !etfOk) { return { head: head, sum: '<span class="jsum">采样中… 点标题展开</span>', body: "" }; }
+    var head = '<b>大资金 · 国家队</b><small>ETF主力净额口径' + (S.etfAt ? ' · ' + S.etfAt : '') + '</small>'; /* jl-1075: at改独立S.etfAt(数组态无.at) */
+    if (!stx && !etfOk) { return { head: head, sum: '<span class="jsum">采样中… 点标题展开</span>', body: '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + '</div>' }; } /* jl-1075: 结构+ETF双缺时ETF降级卡也要露面(原body空=卡内什么都不显) */
     var VN = ["普涨 · 全面进攻", "权重强 · 个股弱", "权重弱 · 个股强", "普跌 · 防御", "结构均衡"];
     var v = stx ? stx.v : 4;
     var e300 = etfOk ? S.etf[0] : null;
@@ -541,7 +542,7 @@
           : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding-right:5px;color:#5ae8ab">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:rgba(255,255,255,.86)">—</em>';
         return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:9.5px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
       }).join("");
-    } else rows = '<div class="g2">ETF 净额通道未到 · 稍后自动重试</div>';
+    } else rows = '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + "</div>"; /* jl-1075: 裸"未到"→降级卡(最后成功HH:MM+手动立即重试+指数退避上限5次; 收盘后mktLive停轮询也能自愈) */
     var struct = "";
     if (stx) {
       var e1000 = etfOk && S.etf[2] && isFinite(S.etf[2].today) ? S.etf[2].today : null;
