@@ -66,8 +66,10 @@
    主模块异动Tab事件流全tab/涨停池家数/密度图/气泡聚集 + jlv2涨跌停池(温度v2九因子/连板/炸板/昨涨停溢价)同口径剔ST/退市) */
 /* jinlin sw v.92 — 2026-10-06: 缓存名 →v170, 配合离线板块映射批(index v0.84.28: jlv2.js?v=7 + jl_sector_map.js?v=1,
    内置东财EM2016二级行业映射5929只纯静态——板块异动聚簇键换映射(治恒0组)/热点板块持续离线聚合/跌停明细可点展开+DT池sort根修) */
-const C = 'jinlin-shell-v170'; /* jl-1080 v0.84.28: 离线板块映射三空转位补齐; jlv2.js?v=7 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v170', 'jinlin-shell-v169'];
+/* jinlin sw v.93 — 2026-10-06: 缓存名 →v171, 配合三合一批(index v0.84.29:
+   龙池斐波那契波段加分(复用持仓卡legFibJL零改公式) + B/S球档位失守监控(黄/橙/红+诱多+失守演示) + 强势度评分/S档待确认/移动卖出参考trailing; jlv2.js?v=7 jl_sector_map.js?v=1 不变) */
+const C = 'jinlin-shell-v171'; /* jl-1083 v0.84.29: 失守监控+强势评分+龙池斐波那契加分; jlv2.js?v=7 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v171', 'jinlin-shell-v170'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
