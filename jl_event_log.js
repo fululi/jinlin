@@ -1,4 +1,4 @@
-/* jl_event_log.js — jl-1086 v0.84.32 任务B 事件日志器（独立新文件, 零改现有模块; jlv2.js 仅3处被动接入: 2处tap+1键位行）
+/* jl_event_log.js — jl-1087 v0.84.33 T3竞态根修: 首会话快速双paint写入竞态(在途键pending占位+fin三路清除); 原jl-1086 v0.84.32 任务B 事件日志器（独立新文件, 零改现有模块; jlv2.js 仅3处被动接入: 2处tap+1键位行）
    B1 写入 IndexedDB(jinlin_evlog/ev), 全程 try/catch 失败静默——不影响任何现有展示; 禁止 localStorage
    B2 只在事件状态转换时记一条: 新触发/升级/衰竭(观察者对照 jlv2 既有判定, 见下); 禁止逐分钟重复记
    B3 字段: {schema, rule, at, day, type, cat, prev, cur, tm, n, codes[], mc, mcDist{}, conc, temp, ztN, dtN, key}
@@ -18,11 +18,11 @@
   if (window.__JLEVLOG_INSTALLED__) return;
   window.__JLEVLOG_INSTALLED__ = 1;
 
-  var DB_NAME = "jinlin_evlog", STORE = "ev", DB_VER = 1, SCHEMA = 1, RULE = "v0.84.32";
+  var DB_NAME = "jinlin_evlog", STORE = "ev", DB_VER = 1, SCHEMA = 1, RULE = "v0.84.33";
   var BUF_CAP = 300;
   var CON = (window.__JL_CONCEPTS__ && window.__JL_CONCEPTS__.map) || {}; /* A1 概念映射: 主概念分布用, 纯静态 */
   var db = null, ready = false, dead = false, buf = [], state = {}, stateDay = "";
-  var wq = [], writing = false;
+  var wq = [], writing = false, pend = {}; /* jl-1087: 键写入在途占位(纯内存: 不入IndexedDB, 不作业务状态)——治首会话快速双paint同key双写 */
   var stat = { today: 0, total: 0 };
 
   function today() { return new Date().toLocaleDateString("sv-SE"); }
@@ -108,6 +108,7 @@
   }
 
   function emit(key, type, cat, prev, c, isSp, temp, ztN, dtN, denN) {
+    if (pend[key]) return; /* jl-1087: 在途抑制≠吞转换——写完成推进state后, 下次paint对该key按已推进state重评, 合法转换仍可补记 */
     var dist = {}, codes = c.codes || [];
     codes.forEach(function (cd) { var k = mcOf(cd) || "其他"; dist[k] = (dist[k] || 0) + 1; });
     var den = denN[c.t] || 0;
@@ -120,18 +121,20 @@
       temp: temp, ztN: ztN, dtN: dtN, key: key
     };
     wq.push({ rec: rec, key: key, cur: c.per, n: rec.n });
+    pend[key] = 1; /* jl-1087: 决策通过即占位(进队列), 写回调统一清除 */
     pump();
   }
 
   /* ---------- 写队列: 写成功才推进状态 ---------- */
   function pump() {
     if (writing || !wq.length) return;
-    if (!db || dead) { wq = []; return; } /* 无法落库: 丢弃待写(不推进状态→不产生半记录), 静默 */
+    if (!db || dead) { wq = []; pend = {}; return; } /* 无法落库: 丢弃待写(不推进状态→不产生半记录), 连带清占位防泄漏, 静默 */
     writing = true;
     var job = wq[0], done = false;
     function fin(ok) {
       if (done) return;
       done = true; writing = false; wq.shift();
+      delete pend[job.key]; /* jl-1087: 四路统一清占位——add成功/失败/abort/try-catch异常全经fin, 缺一不可(泄漏=该key永久静默, 比双写更糟) */
       if (ok) { state[job.key] = { cur: job.cur, n: job.n }; stat.today++; stat.total++; refreshUI(); }
       pump();
     }

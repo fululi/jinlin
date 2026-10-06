@@ -76,8 +76,12 @@
    jlv2.js?v=9 + 新增 jl_concept_map.js?v=1(东财F10 ssbk全量5929只: 一级/二级/概念[]/主概念mc, 纯静态零在线, 板块异动聚簇键=主概念优先)
    + 新增 jl_event_log.js?v=1(任务B事件日志器: IndexedDB权威状态源+写成功才推进+纯观察者tap+备份导出/导入, 失败全静默)——
    两新文件与jlv2.js均非壳文件不受SW缓存, 拉取即最新; jl_sector_map.js?v=1 不变; 宇宙红线: 映射纯查表不碰候选池/扫描池 */
-const C = 'jinlin-shell-v174'; /* jl-1086 v0.84.32: 离线板块地基+事件日志器; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=1 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v174', 'jinlin-shell-v173'];
+/* jinlin sw v.97 — 2026-10-07: 缓存名 →v175, 配合jl-1087(index v0.84.33)——
+   T3事件日志器竞态根修: 首会话快速双paint下, emit决策通过即对该key建内存pending占位(fin回调三路统一清除:
+   add成功/onerror/onabort/异常), 在途时同key后续emit抑制(=延迟到下次paint对已推进state重评, 合法转换仍可补记);
+   仅jl_event_log.js内部改动, jlv2 tap/判定/展示零触碰; 修复前证据: 59ms双记录已归档 */
+const C = 'jinlin-shell-v175'; /* jl-1087 v0.84.33: T3竞态修复; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v175', 'jinlin-shell-v174'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
