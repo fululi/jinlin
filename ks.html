@@ -766,7 +766,7 @@ function view() {
   var n = S.kl.length;
   if (!n) return null;
   var w = cv.clientWidth, hh = cv.clientHeight;
-  var padL = 6, padR = 56, padT = 10, padB = 18;
+  var padL = 6, padR = 48, padT = 10, padB = 18;
   var plotW = w - padL - padR;
   var avail = hh - padT - padB;
   var volH = (S.ind.volMain && S.bigPane !== "vol") ? 0 : Math.round(avail * 0.085); // ks-0906-13: VOL叠加主图时不占副图位(点VOL放大仍出大副图)
