@@ -14,7 +14,17 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   /* jl-1031: 被金粼 iframe 嵌入时整体透明, 透出站点玻璃底; 独立打开仍保持原深色 */
-  @media all { html.ksTransparent, html.ksTransparent body { background: rgba(8,20,30,0.14) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); } /* jl-1059: 玻璃盾减淡(0.42近黑→0.14), 极光透出与主UI卡片玻璃一致; 保留tint防浅底白图翻车(jl-1036初衷) */ } /* jl-1036: 嵌入态改深色玻璃盾(全透会露出桌面全屏下的浅色底层=白图翻车), 观感玻璃非死黑 */
+  @media all { html.ksTransparent, html.ksTransparent body { background: rgba(8,20,30,0.14) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); } /* jl-1059: 玻璃盾减淡(0.42近黑→0.14), 极光透出与主UI卡片玻璃一致; 保留tint防浅底白图翻车(jl-1036初衷) */ }
+  @media all { /* jl-1060: 嵌入态与主UI蓝青玻璃统一——Key Station绿灰工具条换主UI家族色; 仅ksT生效, 独立版/日间主题零影响 */
+    html.ksTransparent body { color: #c9dfe8; }
+    html.ksTransparent .btn { background: rgba(10,22,32,.5); color: #c9dfe8; border-color: #81e6d92e; }
+    html.ksTransparent .btn:active { background: rgba(16,32,44,.7); }
+    html.ksTransparent .btn.on { background: rgba(255,210,31,.10); color: #ffd984; border-color: #8a6d2f; }
+    html.ksTransparent .tpan button { background: rgba(10,22,32,.55); color: #c9dfe8; border-color: #81e6d933; }
+    html.ksTransparent .tabbtn.on { background: rgba(16,32,44,.8); color: #eafffd; border-color: #81e6d944; }
+    html.ksTransparent .pstrip { background: rgba(6,13,21,.4); border-color: #1e3442; }
+    html.ksTransparent .yz button { background: rgba(10,22,32,.55); }
+  } /* jl-1036: 嵌入态改深色玻璃盾(全透会露出桌面全屏下的浅色底层=白图翻车), 观感玻璃非死黑 */
   body {
     background: #0a0e0b; color: #c3d2c6;
     font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
