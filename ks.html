@@ -50,7 +50,7 @@
   .btn:active { background: #1c2620; }
   .btn.on { background: #3a2f14; color: #ffd984; border-color: #8a6d2f; }
   .btn.warn { color: #ff6f66; border-color: #5a2c28; }
-  .row { display: flex; gap: 6px; padding: 6px 10px 2px; overflow-x: auto; flex: none; scrollbar-width: none; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px 2px; overflow-x: hidden; flex: none; scrollbar-width: none; } /* jl-1058: 条不再横向拖移, 挤时换行 */
   .row::-webkit-scrollbar { display: none; }
   .row .btn { flex: none; white-space: nowrap; }
   .row.seps { padding-top: 2px; }
