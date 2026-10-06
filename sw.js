@@ -72,8 +72,12 @@
    跨零点dt2对null取.t抛TypeError→paint死→boot崩→三卡永久消失(休市无自愈), 判空+boot防爆盾两行根修 */
 /* jinlin sw v.95 — 2026-10-07: 缓存名 →v173, 配合jl-1085龙池两修(index v0.84.31)——
    ①断点续扫纯时间戳判定(原ck.date==今天在跨零点后作废90分钟内新断点) ②自动补扫标记加今日(长假exp/d0恒不变→假期只触发一次, 困扰三天的机制根因) */
-const C = 'jinlin-shell-v173'; /* jl-1085 v0.84.31: 龙池断点跨零点+假期自动补扫两修; jlv2.js?v=8 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v173', 'jinlin-shell-v172'];
+/* jinlin sw v.96 — 2026-10-07: 缓存名 →v174, 配合jl-1086离线板块地基+事件日志器批(index v0.84.32; 编号让位: 龙池批已占jl-1085):
+   jlv2.js?v=9 + 新增 jl_concept_map.js?v=1(东财F10 ssbk全量5929只: 一级/二级/概念[]/主概念mc, 纯静态零在线, 板块异动聚簇键=主概念优先)
+   + 新增 jl_event_log.js?v=1(任务B事件日志器: IndexedDB权威状态源+写成功才推进+纯观察者tap+备份导出/导入, 失败全静默)——
+   两新文件与jlv2.js均非壳文件不受SW缓存, 拉取即最新; jl_sector_map.js?v=1 不变; 宇宙红线: 映射纯查表不碰候选池/扫描池 */
+const C = 'jinlin-shell-v174'; /* jl-1086 v0.84.32: 离线板块地基+事件日志器; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=1 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v174', 'jinlin-shell-v173'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

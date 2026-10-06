@@ -10,6 +10,9 @@
    ②热点板块持续=主模块温度逐股涨跌×映射聚合→行业涨幅榜首(无数据显"板块映射未覆盖") ③跌停明细可点展开+DT池sort根修(fbt:asc恒空行→fund:desc)+事件流口径交叉校验
    jl-1084 v0.84.30: 跨零点崩溃根修(编号让位: 另会话 jl-1081~1083 三合一已占)——dt2=sn.t-yv.t在if(!sn)保护之前对null取.t(零点后快照按日期闸不恢复+温度史留昨日条目→必炸)→paint死→boot首句崩→
    9个抓取全不调度→三卡永久消失(休市无mktLive轮询自愈, 交易日9:15后被60s轮询掩盖两周边界雷); 两行修: ①dt2补sn判空走既有"采样中"降级 ②boot()paint加防爆盾(渲染异常不再杀抓取链)
+   jl-1086 v0.84.32: 离线板块地基(任务A)+事件日志器(任务B)同批——A1新文件jl_concept_map.js(东财F10 ssbk全量: l1/l2/概念[]/主概念mc, 统计唯一归属杜绝一票多板块重复计数)
+   A2 板块异动聚簇键=主概念mc优先(conOf)·jl-1080二级映射次之·hy兜底; A4跌停明细板块列同键位; B新文件jl_event_log.js(IndexedDB权威状态源+写成功才推进+纯观察者tap)——
+   本模块仅3处接入: secOf旁加conOf只读/485聚簇键位/495与517行同式per的两处被动tap(失败静默); 判定逻辑/参数/样式零改
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -298,6 +301,10 @@
      板块异动聚簇/热点板块持续/跌停明细所在板块三处共用; 纯静态零在线请求; 通达信导出整文件替换+?v=升位即换源 */
   var SEC_MAP = (window.__JL_SECTORS__ && window.__JL_SECTORS__.map) || {};
   function secOf(code) { return SEC_MAP[code] || ""; }
+  /* jl-1086: 离线概念映射(jl_concept_map.js 静态引入, 东财F10 ssbk: l1/l2/概念[]/主概念mc)——
+     板块异动聚簇主键(A2)/事件日志主概念分布(B3)/跌停明细板块列(A4)共用; 纯静态零在线; 重跑gen_concept_map.py整文件替换+?v=升位即换源 */
+  var CON_MAP = (window.__JL_CONCEPTS__ && window.__JL_CONCEPTS__.map) || {};
+  function conOf(code) { var v = CON_MAP[code]; return (v && v.mc) || ""; } /* 主概念: 每票恰一个, 统计唯一归属 */
   S.ownYd = S.ownYd || []; /* 本模块补抓的异动事件（8205/8218/8202）*/
   function fetchOwnYd(cb) {
     var tys = ["8205", "8218", "8202"], left = tys.length, okN = 0; /* jl-1076: 通道存活(返回过有效数据)与事件有无分离——区分"真无事件"和"取不到" */
@@ -482,7 +489,7 @@
       var cls = {};
       evs.forEach(function (e) {
         if (e.mn == null || base - e.mn < 0 || base - e.mn > p.bkWin) return;
-        var sy = secOf(e.c) || e.hy; /* jl-1080: 离线映射优先, 事件流hy兜底(东财口径)——治"板块异动恒0组"根因: hy富化在东财风控下常败 */
+        var sy = conOf(e.c) || secOf(e.c) || e.hy; /* jl-1086: 主概念mc优先(任务A2——每票恰一个, 统计唯一归属杜绝一票多板块重复计数) · jl-1080二级映射次之(治"恒0组"根因: hy富化常败) · 事件流hy兜底(东财口径) */
         if (!sy || sy === "其他") return; /* 未映射不参簇——防伪板块事件 */
         var k = sy + "|" + e.t, c = cls[k] || (cls[k] = { hy: sy, t: +e.t, mp: {}, list: [] });
         if (!c.mp[e.c]) { c.mp[e.c] = 1; c.list.push(e); } /* 同股同类只计一只 */
@@ -498,6 +505,7 @@
         rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(c.at)) + '</span><span class="tt"><b>' + esc(c.hy) + ' · ' + (YD_NAME[c.t] || c.t) + ' ' + c.list.length + '只</b><small>代表 ' + c.list.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(dir, per) + '</span></div>';
       });
       if (rows) groups.push({ t: "板块异动", n: live, html: rows }); /* 右侧计数=进行中(未衰竭)板块事件数 */
+      try { if (window.__JLEVLOG__) window.__JLEVLOG__({ k: "bk", day: today(), base: base, evs: evs, top: top.map(function (c) { return { hy: c.hy, t: c.t, nm: YD_NAME[c.t] || String(c.t), n: c.list.length, at: c.at, per: base - c.at <= 10 ? "live" : (base - c.at <= CFG.persistMin ? "warn" : "dead"), codes: c.list.map(function (e) { return e.c; }) }; }) }); } catch (eL) {} /* jl-1086: 任务B事件日志器被动tap(纯观察者: per=上方渲染行同式同CFG, 结构化输出喂jl_event_log.js; 失败静默不影响展示) */
     })();
     // C 个股扩散（jl-1077 二期: 同类事件T分钟内扩散至≥M只不同股票→升级扩散事件, 卡片顶部醒目横幅; 15分钟环比降为辅助行）
     (function () {
@@ -528,6 +536,7 @@
       evs.forEach(function (e) { if (YD_UP[e.t] && Math.floor(e.mn / 15) * 15 === w15) upN[e.c] = 1; });
       var cur = Object.keys(upN).length;
       if (rows) groups.push({ t: "个股扩散", n: live, html: rows + '<div class="g2">本15分钟上涨类 ' + cur + ' 只 · N=' + p.bkN + ' T=' + p.bkWin + '分 M=' + p.spM + '（CFG.yd 可调）</div>' });
+      try { if (window.__JLEVLOG__) window.__JLEVLOG__({ k: "sp", day: today(), base: base, evs: evs, sp: sp.map(function (c) { return { t: c.t, nm: YD_NAME[c.t] || String(c.t), n: c.list.length, at: c.at, per: base - c.at <= 10 ? "live" : (base - c.at <= CFG.persistMin ? "warn" : "dead"), codes: c.list.map(function (e) { return e.c; }) }; }) }); } catch (eL) {} /* jl-1086: 任务B事件日志器被动tap(C组=现有"≥M只升级"事件, 升级类日志唯一来源; per=上方渲染行同式; 失败静默) */
     })();
     // D 风险事件
     (function () {
@@ -686,7 +695,7 @@
   /* jl-1080: 跌停明细弹层——温度卡"跌停"数字可点开; 与涨跌停结构组"封跌停"事件流计数交叉校验, 不一致以跌停池为准并标注口径差异 */
   function dtDetailHtml(dtr) {
     var rs = dtr.rows.slice(0, 30).map(function (r) {
-      return '<div class="ev"><span class="tt"><b>' + esc(r.n) + '</b><small>' + r.c + " · " + esc(secOf(r.c) || "未映射") + (r.days > 1 ? " · 连" + r.days + "天" : "") + '</small></span><span class="mono dn">' + r.zdp.toFixed(2) + '%</span></div>';
+      return '<div class="ev"><span class="tt"><b>' + esc(r.n) + '</b><small>' + r.c + " · " + esc(conOf(r.c) || secOf(r.c) || "未映射") + (r.days > 1 ? " · 连" + r.days + "天" : "") + '</small></span><span class="mono dn">' + r.zdp.toFixed(2) + '%</span></div>';
     }).join("");
     var diff = S.evDtN != null && S.evDtN !== dtr.n ? ' · <span class="dn">⚠口径差异 事件流' + S.evDtN + '家</span>' : "";
     return '<div style="margin:6px 0 2px;padding:7px 9px;border:1px solid #81e6d92e;border-radius:8px;background:rgba(255,255,255,.04)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:10px">当日跌停明细 · ' + dtr.n + '家</b><span style="font-size:9px;color:rgba(255,255,255,.72)">跌停池为准' + diff + '</span></div>' + rs + '<div class="g2" style="margin-top:4px">按封单额降序 · 剔除ST · 跌幅为现价对昨收</div></div>';
