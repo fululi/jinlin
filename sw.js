@@ -62,8 +62,10 @@
 /* jinlin sw v.82 — 2026-10-05: →v122 壳改「先秒出缓存+后台静默更新」: v121 及以前网络竞跑3.5s, 弱网必输喂旧缓存(=手机永远慢一版的根因); 配合 index jl-1020 自愈, 弱网最多两次刷新到新版 */
 /* jinlin sw v.90 — 2026-10-06: 缓存名 →v168, 配合大盘异动聚合剔ST批(index v0.84.26: jlv2.js?v=5,
    ST/*ST 5%涨跌停口径≠主板, 六组聚合/代表个股/扩散横幅/最新全剔除, CFG.yd.exst可关) */
-const C = 'jinlin-shell-v168'; /* jl-1078 v0.84.26: 大盘异动聚合剔除ST/*ST; jlv2.js?v=5 */
-const KEEP = ['jinlin-shell-v168', 'jinlin-shell-v167'];
+/* jinlin sw v.91 — 2026-10-06: 缓存名 →v169, 配合ST剔除推广全站批(index v0.84.27: jlv2.js?v=6,
+   主模块异动Tab事件流全tab/涨停池家数/密度图/气泡聚集 + jlv2涨跌停池(温度v2九因子/连板/炸板/昨涨停溢价)同口径剔ST/退市) */
+const C = 'jinlin-shell-v169'; /* jl-1079 v0.84.27: ST剔除推广全站; jlv2.js?v=6 */
+const KEEP = ['jinlin-shell-v169', 'jinlin-shell-v168'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

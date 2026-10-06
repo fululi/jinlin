@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.84.26" data-sw="jinlin-shell-v168"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.84.27" data-sw="jinlin-shell-v169"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -2777,11 +2777,15 @@ document.addEventListener("visibilitychange", () => {
   }
   function renderZtPoolJL(evBox) {
     const z = YDJ.zt;
+    let pl = z && z.pool ? z.pool.filter((t) => !/ST|\u9000/.test(String(t.n || ""))) : []; /* jl-1079: 涨停池剔ST/退市(5%板≠10%), 家数/行业TOP/列表全用滤后口径; z.pool原始保留 */
     if (z && z.pool && z.pool.length) {
-      evBox.innerHTML = '<div class="ydsub">\u6DA8\u505C<b style="color:#ff8a80">' + z.pool.length + "</b>\u5BB6 \xB7 \u884C\u4E1A " + (z.hyTop && z.hyTop.length ? z.hyTop.map((h) => { const _pn = jlPoolHyCountJL()[h[0]] || 0; return h[0] + " " + h[1] + "\u5BB6" + (_pn ? ' <b style="color:#81e6d9">⚡龙池' + _pn + "只</b>" : ""); }).join(" / ") : "\u2014") + " \xB7 " + z.date.slice(4, 6) + "/" + z.date.slice(6) + "</div>" + z.pool.slice(0, 15).map((t) => {
+      const hyC = {};
+      pl.forEach((t2) => { if (t2.hy) hyC[t2.hy] = (hyC[t2.hy] || 0) + 1; });
+      const hyTop = Object.keys(hyC).map((k2) => [k2, hyC[k2]]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      evBox.innerHTML = '<div class="ydsub">\u6DA8\u505C<b style="color:#ff8a80">' + pl.length + "</b>\u5BB6(\u5265ST) \xB7 \u884C\u4E1A " + (hyTop.length ? hyTop.map((h) => { const _pn = jlPoolHyCountJL()[h[0]] || 0; return h[0] + " " + h[1] + "\u5BB6" + (_pn ? ' <b style="color:#81e6d9">⚡龙池' + _pn + "只</b>" : ""); }).join(" / ") : "\u2014") + " \xB7 " + z.date.slice(4, 6) + "/" + z.date.slice(6) + "</div>" + pl.slice(0, 15).map((t) => {
         const hh = String(t.fbt).padStart(6, "0");
         return `<div class="yev" style="cursor:pointer" onclick="ydOpenStockJL('` + t.c + "','" + t.n + `')"><span class="yet">` + hh.slice(0, 2) + ":" + hh.slice(2, 4) + '</span><span class="yen">' + t.n + (t.lbc > 1 ? ' <i style="font-style:normal;color:#ff8a80">' + t.lbc + "\u677F</i>" : "") + (t.hy ? ' <i style="font-style:normal;color:rgba(255,255,255,.72)">' + t.hy + "</i>" : "") + '</span><span class="yel u">\u5C01\u5355' + fmtFundJL(t.fund) + "</span></div>";
-      }).join("") + '<div class="ydsub">\u6309\u9996\u6B21\u5C01\u677F\u65F6\u95F4\u6392\u5E8F \xB7 \u5C01\u5355=\u5C01\u677F\u8D44\u91D1\u989D \xB7 \u4F11\u5E02\u81EA\u52A8\u53D6\u6700\u8FD1\u4EA4\u6613\u65E5</div>';
+      }).join("") + '<div class="ydsub">\u6309\u9996\u6B21\u5C01\u677F\u65F6\u95F4\u6392\u5E8F \xB7 \u5C01\u5355=\u5C01\u677F\u8D44\u91D1\u989D \xB7 \u5265\u9664ST \xB7 \u4F11\u5E02\u81EA\u52A8\u53D6\u6700\u8FD1\u4EA4\u6613\u65E5</div>';
     } else evBox.innerHTML = '<div class="ydsub">\u6DA8\u505C\u6C60\u672A\u53D6\u5230(\u4E1C\u8D22push2ex' + (mktLiveJL() ? ",\u52A0\u8F7D\u4E2D\u6216\u9650\u6D41" : "") + (YDJ.cacheD ? " \xB7 \u26A0\u7F13\u5B58" + String(YDJ.cacheD).slice(5) : "") + ")</div>";
   }
   function ydCrossMvJL(ev) {
@@ -2892,6 +2896,7 @@ document.addEventListener("visibilitychange", () => {
       if (YDJ.ev && YDJ.ev.length) {
         const buck = {};
         YDJ.ev.forEach((e2) => {
+          if (/ST|\u9000/.test(String(e2.n || ""))) return; /* jl-1079: 密度图剔ST/退市(口径同尾盘tab), 5%板≠10%不掺统计 */
           const hs = String(e2.tm).padStart(6, "0"), kk = hs.slice(0, 4);
           const bb = buck[kk] || (buck[kk] = { u: 0, d: 0, hys: {} });
           if (YD_UPT[e2.t]) bb.u++;
@@ -2925,10 +2930,12 @@ document.addEventListener("visibilitychange", () => {
           else o.d++;
         };
         (YDJ.ev || []).forEach((e2) => {
+          if (/ST|\u9000/.test(String(e2.n || ""))) return; /* jl-1079: 气泡行业聚集剔ST/退市 */
           if (!e2.hy) return;
           fold(String(e2.tm).padStart(6, "0").slice(0, 4), e2.hy, !!YD_UPT[e2.t]);
         });
         if (YDJ.zt && YDJ.zt.pool) YDJ.zt.pool.forEach((t2) => {
+          if (/ST|\u9000/.test(String(t2.n || ""))) return; /* jl-1079 */
           fold(String(t2.fbt).padStart(6, "0").slice(0, 4), t2.hy, true);
         });
         const best = {};
@@ -3121,6 +3128,7 @@ document.addEventListener("visibilitychange", () => {
       if (YDJ.tab === "zt") renderZtPoolJL(evBox);
       else {
         let evs = YDJ.ev || [];
+        evs = evs.filter((e) => !/ST|\u9000/.test(String(e.n || ""))); /* jl-1079: 事件流全tab剔ST/退市(5%板≠10%口径, 不掺主板事件流; 缓存原始不动只滤渲染) */
         let _mineRendered = false; /* jl-1038 */
         if (YDJ.tab === "tail") evs = evs.filter((e) => e.tm >= 1457e2 && /^(8203|8204|8206)$/.test(String(e.t)) && !/^(8|4|92)/.test(String(e.c).replace(/^(sh|sz|bj)/, "")) && !/ST|\u9000/.test(String(e.n || ""))); /* jl-1004: 尾盘改东财口径——收盘竞价14:57后+买入类异动(大笔买入/封涨停/有大买盘), 事件流无价格字段故不算拉升幅度 */
         else if (YDJ.tab === "mine") { /* jl-1038: 按持仓/观察分组渲染, 不再一锅烩; 空组不显示 */
@@ -16686,7 +16694,7 @@ var RLMCore = (function () {
   }
 })();
 </script>
-<script src="jlv2.js?v=5" defer></script>
+<script src="jlv2.js?v=6" defer></script>
 <canvas id="jlBling" aria-hidden="true"></canvas><script>(function(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;var cv=document.getElementById("jlBling"),g=cv.getContext("2d"),P=[],dpr=Math.min(devicePixelRatio||1,2);cv.style.cssText="position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483000";function rs(){dpr=Math.min(devicePixelRatio||1,2);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr}rs();addEventListener("resize",rs);var COLS=["#ffe9b0","#ffd478","#8fe3ff","#ffffff","#ffc7e8"];function spawn(x,y,n){for(var i=0;i<n;i++){var a=Math.random()*6.283,sp=1.2+Math.random()*3.4;P.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.8,r:1.1+Math.random()*2.2,c:COLS[Math.random()*COLS.length|0],l:0,t:60+Math.random()*60,s:Math.random()<0.35,rot:Math.random()*6.283,vr:(Math.random()-0.5)*0.2})}if(P.length>400)P=P.slice(-400)}addEventListener("pointerdown",function(e){spawn(e.clientX,e.clientY,26)},{passive:true});setInterval(function(){if(!document.hidden)spawn(Math.random()*innerWidth,Math.random()*innerHeight,1)},340);function star(x,y,r,rot){g.beginPath();for(var i=0;i<10;i++){var rr=i%2?r*0.45:r,aa=rot+i*Math.PI/5;g[i?"lineTo":"moveTo"](x+Math.cos(aa)*rr,y+Math.sin(aa)*rr)}g.closePath()}(function loop(){requestAnimationFrame(loop);if(document.hidden)return;g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,cv.width/dpr,cv.height/dpr);for(var i=P.length-1;i>=0;i--){var q=P[i];q.l++;if(q.l>=q.t){P.splice(i,1);continue}q.x+=q.vx;q.y+=q.vy;q.vy+=0.045;q.vx*=0.985;q.vy*=0.985;q.rot+=q.vr;var al=1-q.l/q.t;g.globalAlpha=al;g.fillStyle=q.c;g.shadowColor=q.c;g.shadowBlur=9;if(q.s){star(q.x,q.y,q.r*2.1,q.rot);g.fill()}else{g.beginPath();g.arc(q.x,q.y,q.r,0,6.283);g.fill()}}g.globalAlpha=1;g.shadowBlur=0})()})();</script></body>
 </html>
 

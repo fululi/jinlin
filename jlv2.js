@@ -5,6 +5,7 @@
    jl-1077 v0.84.25 二期并批：板块异动(同板块N只·T分钟同类聚簇)+个股扩散(≥M只升级+顶部醒目横幅) 复用事件流判定零新源；
    指数异动+成交额异动 腾讯分钟源自算(东财整族被拒不碰)；休市/断档=冻结不报错，通道死走降级卡
    jl-1078 v0.84.26: 聚合剔除ST(5%涨跌停口径≠主板, CFG.yd.exst可关)，六组/代表个股/横幅/最新全口径生效
+   jl-1079 v0.84.27: ST剔除推广全站——主模块异动Tab(事件流全tab/涨停池/密度图/气泡)+本模块涨跌停池(温度v2九因子/连板/炸板/溢价)同口径
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -207,7 +208,9 @@
   function fetchPoolOne(kind, date, cb) {
     jsonp(P2X, "/getTopic" + kind + "Pool?ut=" + UT + "&dpt=wz.ztzt&Pageindex=0&pagesize=200&sort=fbt:asc&date=" + date, function (e, d) {
       if (e || !d || !d.data || !d.data.pool) { cb(e || new Error(kind)); return; }
-      cb(null, d.data.pool);
+      var pool = d.data.pool;
+      if (CFG.yd.exst) pool = pool.filter(function (r) { return !/ST/.test(String(r.n || "")); }); /* jl-1079: 涨跌停池家族剔ST——温度v2九因子/连板高度/炸板率/溢价/涨跌停结构组判定全口径对齐主模块 */
+      cb(null, pool);
     });
   }
   function fetchPools(cb) {
