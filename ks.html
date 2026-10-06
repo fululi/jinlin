@@ -2870,6 +2870,16 @@ setInterval(function () {
   }
 }, 60000);
 window.addEventListener("resize", draw);
+  /* jl-1057: iframe元素尺寸变化不会触发iframe内window.resize(浏览器机制)——外壳布局微调后画布按旧尺寸绘制整体错位(左侧留空/轴标签被顶出视口), ResizeObserver自感知重绘 */
+  if (typeof ResizeObserver !== "undefined") {
+    var _ksRO = 0;
+    try {
+      new ResizeObserver(function () {
+        cancelAnimationFrame(_ksRO);
+        _ksRO = requestAnimationFrame(function () { try { draw(); } catch (e) {} });
+      }).observe(document.documentElement);
+    } catch (e) {}
+  }
 /* ================= ICT 叠加（FVG / 流动性BSL·SSL / 结构BOS·CHoCH / 订单块，简化口径） ================= */
 function smaNulls(arr, n) {
   var out = new Array(arr.length).fill(null), s = 0, c = 0;
