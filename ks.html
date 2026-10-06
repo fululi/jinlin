@@ -14,7 +14,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   /* jl-1031: 被金粼 iframe 嵌入时整体透明, 透出站点玻璃底; 独立打开仍保持原深色 */
-  @media all { html.ksTransparent, html.ksTransparent body { background: rgba(8,20,30,0.14) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); } /* jl-1059: 玻璃盾减淡(0.42近黑→0.14), 极光透出与主UI卡片玻璃一致; 保留tint防浅底白图翻车(jl-1036初衷) */ }
+  @media all { html.ksTransparent, html.ksTransparent body { background: rgba(8,20,30,0.30) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); } /* jl-1061: 0.14→0.30——深色主题网格/价签需要暗底对比, 仍透极光不回死黑 */ /* jl-1059: 玻璃盾减淡(0.42近黑→0.14), 极光透出与主UI卡片玻璃一致; 保留tint防浅底白图翻车(jl-1036初衷) */ }
   @media all { /* jl-1060: 嵌入态与主UI蓝青玻璃统一——Key Station绿灰工具条换主UI家族色; 仅ksT生效, 独立版/日间主题零影响 */
     html.ksTransparent body { color: #c9dfe8; }
     html.ksTransparent .btn { background: rgba(10,22,32,.5); color: #c9dfe8; border-color: #81e6d92e; }
@@ -198,7 +198,7 @@
   html.theme-la .tpan button { background: rgba(255,255,255,.75); color: #5d7065; border-color: #d3ded6; }
   html.theme-la .up { color: #e5453c; } html.theme-la .down { color: #1f9d66; } html.theme-la .flat { color: #7c8d83; }
 </style>
-  <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent')}}catch(e){}</script>
+  <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 <div class="topbar" data-page-node-id="rkFiWqJwDe8rCQLnZupxAU" data-topbar>
@@ -625,6 +625,7 @@ function restore() {
     if (o.favs && o.favs.length) S.favs = o.favs;
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
+    if (window.KS_T) { S.theme = "d"; applyTheme(); } /* jl-1061: 嵌入态强制深色主题——房主存档是浅色主题, 浅灰网格/价签/十字线压在玻璃上全看不清; 独立版主题不受影响 */
     if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false };
   } catch (e) {}
 }
