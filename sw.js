@@ -68,8 +68,10 @@
    内置东财EM2016二级行业映射5929只纯静态——板块异动聚簇键换映射(治恒0组)/热点板块持续离线聚合/跌停明细可点展开+DT池sort根修) */
 /* jinlin sw v.93 — 2026-10-06: 缓存名 →v171, 配合三合一批(index v0.84.29:
    龙池斐波那契波段加分(复用持仓卡legFibJL零改公式) + B/S球档位失守监控(黄/橙/红+诱多+失守演示) + 强势度评分/S档待确认/移动卖出参考trailing; jlv2.js?v=7 jl_sector_map.js?v=1 不变) */
-const C = 'jinlin-shell-v171'; /* jl-1083 v0.84.29: 失守监控+强势评分+龙池斐波那契加分; jlv2.js?v=7 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v171', 'jinlin-shell-v170'];
+/* jinlin sw v.94 — 2026-10-07: 缓存名 →v172, 配合jl-1084热修(index v0.84.30: jlv2.js?v=8)——
+   跨零点dt2对null取.t抛TypeError→paint死→boot崩→三卡永久消失(休市无自愈), 判空+boot防爆盾两行根修 */
+const C = 'jinlin-shell-v172'; /* jl-1084 v0.84.30: 跨零点三卡消失根修; jlv2.js?v=8 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v172', 'jinlin-shell-v171'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

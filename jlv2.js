@@ -8,6 +8,8 @@
    jl-1079 v0.84.27: ST剔除推广全站——主模块异动Tab(事件流全tab/涨停池/密度图/气泡)+本模块涨跌停池(温度v2九因子/连板/炸板/溢价)同口径
    jl-1080 v0.84.28: 内置离线板块映射(jl_sector_map.js 东财EM2016二级5929只·纯静态零在线)——①板块异动聚簇键=映射优先(治"恒0组"根因: hy富化常败)
    ②热点板块持续=主模块温度逐股涨跌×映射聚合→行业涨幅榜首(无数据显"板块映射未覆盖") ③跌停明细可点展开+DT池sort根修(fbt:asc恒空行→fund:desc)+事件流口径交叉校验
+   jl-1084 v0.84.30: 跨零点崩溃根修(编号让位: 另会话 jl-1081~1083 三合一已占)——dt2=sn.t-yv.t在if(!sn)保护之前对null取.t(零点后快照按日期闸不恢复+温度史留昨日条目→必炸)→paint死→boot首句崩→
+   9个抓取全不调度→三卡永久消失(休市无mktLive轮询自愈, 交易日9:15后被60s轮询掩盖两周边界雷); 两行修: ①dt2补sn判空走既有"采样中"降级 ②boot()paint加防爆盾(渲染异常不再杀抓取链)
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -694,7 +696,7 @@
     var st = deriveState(), sn = S.snap;
     var yk = Object.keys(S.hist).filter(function (k) { return k < today(); }).pop();
     var yv = yk ? S.hist[yk] : null;
-    var dt2 = yv && yv.t != null ? sn.t - yv.t : null;
+    var dt2 = sn && yv && yv.t != null ? sn.t - yv.t : null; /* jl-1084: 补sn判空——跨零点重载snap按日期闸不恢复(null)+温度史留昨日条目(有t)→原式对null取.t抛TypeError→paint死→boot()首句崩→9个抓取全不调度→三卡永久消失(休市无mktLive轮询自愈); 判空后走699行既有"采样中…"降级路径 */
     var head = '<b>市场温度 · v2</b><small>采样 ' + (sn ? sn.at : "—") + ' · 东财沪深快照 · 自建通道</small>';
     if (!sn) { return { head: head, sum: '<span class="jsum">采样中… 点标题展开</span>', body: "" }; }
     var zbr = st ? st.zbr : null;
@@ -881,7 +883,7 @@
   /* ---------- 调度 ---------- */
   function onceDaily(fn) { fn(function () { }); }
   function boot() {
-    paint();
+    try { paint(); } catch (eB0) {} /* jl-1084: 防爆盾——渲染任何异常不再杀死boot后续9个抓取调度(单卡bug不再放大成整模块消失) */
     fetchSnap(function () { paint(); });
     setTimeout(function () { fetchIdx(function () { paint(); }); }, 400);
     setTimeout(function () { fetchAtr(function () { paint(); fetchPremium(function () { paint(); }); }); }, 900);
