@@ -274,13 +274,14 @@
   var YD_NAME = { 8201: "火箭发射", 8202: "快速反弹", 8203: "大笔买入", 8204: "封涨停", 8205: "打开涨停", 8206: "有大买盘", 8207: "有大卖盘", 8218: "加速下跌", 8219: "高台跳水", 8220: "大笔卖出", 8221: "封跌停", 8222: "打开跌停" };
   S.ownYd = S.ownYd || []; /* 本模块补抓的异动事件（8205/8218/8202）*/
   function fetchOwnYd(cb) {
-    var tys = ["8205", "8218", "8202"], left = tys.length;
+    var tys = ["8205", "8218", "8202"], left = tys.length, okN = 0; /* jl-1076: 通道存活(返回过有效数据)与事件有无分离——区分"真无事件"和"取不到" */
     tys.forEach(function (ty) {
       jsonp(P2X, "/getAllStockChanges?type=" + ty + "&pageindex=0&pagesize=200&ut=" + UT + "&dpt=wzchanges", function (e, d) {
         if (!e && d && d.data && d.data.allstock) {
+          okN++;
           d.data.allstock.forEach(function (x) { S.ownYd.push({ c: String(x.c), m: +x.m, n: String(x.n), t: +x.t, tm: +x.tm }); });
         }
-        if (--left <= 0) cb(null, S.ownYd);
+        if (--left <= 0) { S.ydFetchOk = okN > 0; cb(null, S.ownYd); }
       });
     });
   }
@@ -300,7 +301,11 @@
     (S.ownYd || []).forEach(function (x) {
       if (!evs.some(function (e) { return e.c === x.c && e.t === x.t && e.tm === x.tm; })) evs.push(x);
     });
-    evs = evs.filter(function (e) { return e && e.tm >= 930 && e.tm <= 1500; });
+    /* jl-1076: tm实为HHMMSS(如144506=14:45:06), 原闸按HHMM(930~1500)比对=全量误筛——"大盘异动恒0组"自上线即如此的根源。统一换算真实分钟再过滤/分桶(原HHMM直接除以15跨整点还会出9:90伪时刻) */
+    var toMin = function (v) { v = +v; return v > 2359 ? Math.floor(v / 10000) * 60 + Math.floor(v % 10000 / 100) : Math.floor(v / 100) * 60 + v % 100; };
+    var fromMin = function (m) { return Math.floor(m / 60) * 100 + m % 60; };
+    evs.forEach(function (e) { if (e) e.mn = toMin(e.tm); });
+    evs = evs.filter(function (e) { return e && e.mn >= 570 && e.mn <= 900; });
     var H = holdingsMap();
     var nm = nowMin(), nReal = hhmm2min(nm); /* 跨小时修正：HHMM→真实分钟差 */
     function hhmm2min(v) { v = +v; return Math.floor(v / 100) * 60 + v % 100; }
@@ -316,7 +321,7 @@
       var zt4 = evs.filter(function (e) { return e.t === 8204 || e.t === 8205 || e.t === 8221 || e.t === 8222; });
       if (!zt4.length) return;
       var bk = {};
-      zt4.forEach(function (e) { var k = Math.floor(e.tm / 15) * 15; (bk[k] = bk[k] || []).push(e); });
+      zt4.forEach(function (e) { var k = Math.floor(e.mn / 15) * 15; (bk[k] = bk[k] || []).push(e); });
       var keys = Object.keys(bk).sort(function (a, b) { return b - a; }).slice(0, 2);
       var rows = "";
       keys.forEach(function (k) {
@@ -325,9 +330,9 @@
         var dn = arr.filter(function (e) { return e.t === 8221 || e.t === 8222; }).length;
         var ttl = zb >= Math.max(3, up) ? "炸板潮" : dn > up ? "跌停潮" : up >= 3 ? "封板潮" : "涨跌停波动";
         var dir = ttl === "炸板潮" || ttl === "跌停潮" ? -1 : ttl === "封板潮" ? 1 : 0;
-        var per = arr.some(function (e) { return nReal - hhmm2min(e.tm) <= 10; }) ? "live" : "dead";
+        var per = arr.some(function (e) { return nReal - e.mn <= 10; }) ? "live" : "dead";
         var hold = arr.map(function (e) { return H.mh[e.c] ? "●" + esc(H.mh[e.c]) : (H.mw[e.c] ? "○" + esc(H.mw[e.c]) : ""); }).filter(Boolean).slice(0, 2).join(" ");
-        rows += '<div class="ev"><span class="tm">' + hhmm(k) + '</span><span class="tt"><b>' + ttl + ' · ' + arr.length + '只</b><small>封' + up + ' / 炸' + zb + ' / 跌向' + dn + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(dir, per) + '</span></div>';
+        rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(+k)) + '</span><span class="tt"><b>' + ttl + ' · ' + arr.length + '只</b><small>封' + up + ' / 炸' + zb + ' / 跌向' + dn + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(dir, per) + '</span></div>';
       });
       groups.push({ t: "涨跌停结构", n: zt4.length, html: rows });
     })();
@@ -335,27 +340,27 @@
     (function () {
       var upCls = evs.filter(function (e) { return YD_UP[e.t] && e.hy; });
       var bk = {};
-      upCls.forEach(function (e) { var k = Math.floor(e.tm / 10) * 10; bk[k + "|" + e.hy] = (bk[k + "|" + e.hy] || 0) + 1; });
+      upCls.forEach(function (e) { var k = Math.floor(e.mn / 10) * 10; bk[k + "|" + e.hy] = (bk[k + "|" + e.hy] || 0) + 1; });
       var top = Object.keys(bk).map(function (k) { return { k: k.split("|")[0], hy: k.split("|")[1], n: bk[k] }; }).filter(function (x) { return x.n >= 4; }).sort(function (a, b) { return b.k - a.k || b.n - a.n; }).slice(0, 2);
       var rows = "";
       top.forEach(function (x) {
-        var mem = upCls.filter(function (e) { return e.hy === x.hy && Math.floor(e.tm / 10) * 10 === +x.k; });
+        var mem = upCls.filter(function (e) { return e.hy === x.hy && Math.floor(e.mn / 10) * 10 === +x.k; });
         var hold = mem.map(function (e) { return H.mh[e.c] ? "●" + esc(H.mh[e.c]) : (H.mw[e.c] ? "○" + esc(H.mw[e.c]) : ""); }).filter(Boolean).slice(0, 2).join(" ");
-        var per = nReal - hhmm2min(+x.k) <= 10 ? "live" : (nReal - hhmm2min(+x.k) <= CFG.persistMin ? "warn" : "dead");
-        rows += '<div class="ev"><span class="tm">' + hhmm(x.k) + '</span><span class="tt"><b>' + esc(x.hy) + '快速拉升 · ' + mem.length + '只↑</b><small>' + mem.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(1, per) + '</span></div>';
+        var per = nReal - +x.k <= 10 ? "live" : (nReal - +x.k <= CFG.persistMin ? "warn" : "dead");
+        rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(+x.k)) + '</span><span class="tt"><b>' + esc(x.hy) + '快速拉升 · ' + mem.length + '只↑</b><small>' + mem.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(1, per) + '</span></div>';
       });
       if (rows) groups.push({ t: "板块异动", n: top.length, html: rows });
     })();
     // C 个股扩散（15分钟环比）
     (function () {
-      var w = {}, w15 = Math.floor(nm / 15) * 15;
-      evs.filter(function (e) { return YD_UP[e.t]; }).forEach(function (e) { var k = Math.floor(e.tm / 15) * 15; w[k] = (w[k] || 0) + 1; });
+      var w = {}, w15 = Math.floor(nReal / 15) * 15;
+      evs.filter(function (e) { return YD_UP[e.t]; }).forEach(function (e) { var k = Math.floor(e.mn / 15) * 15; w[k] = (w[k] || 0) + 1; });
       var cur = w[w15] || 0, prev = w[w15 - 15] || 0;
       if (!cur && !prev) return;
       var env = prev ? Math.round((cur - prev) / Math.max(1, prev) * 100) : (cur ? 100 : 0);
       var dir = env >= 25 ? 1 : env <= -25 ? -1 : 0;
       var ttl = dir > 0 ? "上涨类异动扩散 · 赚钱效应回暖" : dir < 0 ? "上涨类异动收敛 · 情绪退潮" : "异动密度平稳";
-      var rows = '<div class="ev"><span class="tm">' + hhmm(w15) + '</span><span class="tt"><b>' + ttl + '</b><small>本15分钟 ' + cur + ' 只 · 上15分钟 ' + prev + ' 只 · 环比 ' + (env >= 0 ? "+" : "") + env + '%</small></span><span class="tags">' + tags(dir, "warn") + '</span></div>';
+      var rows = '<div class="ev"><span class="tm">' + hhmm(fromMin(w15)) + '</span><span class="tt"><b>' + ttl + '</b><small>本15分钟 ' + cur + ' 只 · 上15分钟 ' + prev + ' 只 · 环比 ' + (env >= 0 ? "+" : "") + env + '%</small></span><span class="tags">' + tags(dir, "warn") + '</span></div>';
       groups.push({ t: "个股扩散", n: 1, html: rows });
     })();
     // D 风险事件
@@ -363,19 +368,19 @@
       var rk = evs.filter(function (e) { return e.t === 8218 || e.t === 8219 || e.t === 8220 || e.t === 8221; });
       if (!rk.length) return;
       var bk = {};
-      rk.forEach(function (e) { var k = Math.floor(e.tm / 15) * 15; (bk[k] = bk[k] || []).push(e); });
+      rk.forEach(function (e) { var k = Math.floor(e.mn / 15) * 15; (bk[k] = bk[k] || []).push(e); });
       var keys = Object.keys(bk).sort(function (a, b) { return b - a; }).slice(0, 2);
       var rows = "";
       keys.forEach(function (k) {
         var arr = bk[k];
         var jp = arr.filter(function (e) { return e.t === 8219; }).length, js = arr.filter(function (e) { return e.t === 8218; }).length;
-        var per = nReal - hhmm2min(+k) <= 10 ? "live" : "dead";
+        var per = nReal - +k <= 10 ? "live" : "dead";
         var hold = arr.map(function (e) { return H.mh[e.c] ? "●" + esc(H.mh[e.c]) : ""; }).filter(Boolean).slice(0, 2).join(" ");
-        rows += '<div class="ev"><span class="tm">' + hhmm(k) + '</span><span class="tt"><b>风险事件聚集 · ' + arr.length + '只</b><small>高台跳水' + jp + ' · 加速下跌' + js + ' · 大笔卖出' + (arr.length - jp - js) + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(-1, per) + '</span></div>';
+        rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(+k)) + '</span><span class="tt"><b>风险事件聚集 · ' + arr.length + '只</b><small>高台跳水' + jp + ' · 加速下跌' + js + ' · 大笔卖出' + (arr.length - jp - js) + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(-1, per) + '</span></div>';
       });
       groups.push({ t: "风险事件", n: rk.length, html: rows });
     })();
-    var latest = evs.length ? hhmm(evs[0].tm) + " " + esc(evs[0].n) + " " + (YD_NAME[evs[0].t] || evs[0].t) : "";
+    var latest = evs.length ? hhmm(fromMin(evs[0].mn)) + " " + esc(evs[0].n) + " " + (YD_NAME[evs[0].t] || evs[0].t) : "";
     S.grp = { groups: groups, count: groups.reduce(function (a, g) { return a + g.n; }, 0), latest: latest };
   }
 
@@ -465,7 +470,7 @@
       tile("炸板率", zbr != null ? zbr + "%" : "—", zbr != null && zbr >= 40 ? "dn" : "mu", "盘中暂态 · 收盘定版") +
       tile("连板高度", st && st.lb != null ? st.lb + "板" : "—", (st && st.lb != null && st.lb >= 6) ? "up" : (st && st.lb != null && st.lb <= 2) ? "dn" : "mu", "最高连板") +
       tile("昨涨停溢价", st && st.prem != null ? pct(st.prem) : "—", (st && st.prem != null && st.prem >= 3) ? "up" : (st && st.prem != null && st.prem <= -1) ? "dn" : "mu", "T-1 · 强势股次日") +
-      tile("成交额变化", amtDiffHtml(), amtDiffCls(), "较上一交易日") +
+      tile("成交额变化", amtDiffHtml(), amtDiffCls(), amtDiffSub()) + /* jl-1076 */
       tile("ATR波动率", S.atr && S.atr.vol != null ? S.atr.vol.toFixed(2) + "%" : "—", "mu", "上证 ATR14/价") +
       tile("热点板块持续", S.hot ? S.hot.streak + "天" : "—", "mu", esc(S.hot ? S.hot.name : "行业涨幅榜首"));
     var rules = "";
@@ -504,19 +509,25 @@
       '<div class="foot">状态描述，不构成操作建议 · 温度=50+(涨跌比-0.5)×100 与旧卡同源 · 冰点=规则组判定（≥3项）· 阈值集中在 CFG 待回测校准 · 涨跌停池为本模块自建口径</div>';
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
   }
-  function amtDiff() {
+  function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——房主质疑"1.44万亿是多了还是少了", 额度差才是人话 */
     if (!S.snap || !isFinite(S.snap.amt)) return null;
     var ks = Object.keys(S.hist).filter(function (k) { return k < today() && S.hist[k].amt > 1e11; }).sort();
     if (!ks.length) return null;
     var pv = S.hist[ks[ks.length - 1]].amt;
-    return (S.snap.amt - pv) / pv * 100;
+    return { diff: S.snap.amt - pv, prev: pv };
   }
-  function amtDiffHtml() {
-    var d = amtDiff();
-    if (d != null) return (d >= 0 ? "+" : "") + d.toFixed(1) + "%";
+  function amtDiff() { var a = amtDiffBase(); return a && a.prev ? a.diff / a.prev * 100 : null; }
+  function fmtAmtDiff(v) { /* ±额度差: 元→万亿/亿 */
+    var y = v / 1e8;
+    return (y >= 0 ? "+" : "") + (Math.abs(y) >= 1e4 ? (y / 1e4).toFixed(2) + "万亿" : Math.abs(y) >= 100 ? y.toFixed(0) + "亿" : y.toFixed(1) + "亿");
+  }
+  function amtDiffHtml() { /* jl-1076: 有昨日基准→±额度差; 无基准→今日总额+明示基准缺失(原裸挂总额被当变化值=误导) */
+    var a = amtDiffBase();
+    if (a) return fmtAmtDiff(a.diff);
     if (S.snap && isFinite(S.snap.amt)) return (S.snap.amt / 1e12).toFixed(2) + "万亿";
     return "—";
   }
+  function amtDiffSub() { var d = amtDiff(); return d != null ? "较昨日 · " + (d >= 0 ? "+" : "") + d.toFixed(1) + "%" : "今日总额 · 昨日基准缺失(历史采样一天后自动补上)"; }
   function amtDiffCls() { var d = amtDiff(); return d == null ? "mu" : (d >= 0 ? "up" : "dn"); }
   function renderGjd() {
     var stx = deriveStruct();
@@ -570,7 +581,13 @@
     var riskOn = g.groups.some(function (x) { return x.t === "风险事件"; });
     var alertDot = riskOn ? '<span class="dot" style="color:#ff5459"></span>' : "";
     var body = "";
-    if (!g.groups.length) body = '<div class="g2">今日暂无聚合事件（异动 Tab 打开过才有事件缓存 · 本模块会自行补抓 8205/8218/8202）</div>';
+    if (!g.groups.length) { /* jl-1076: 房主问"大盘异动是画不出来还是?"——通道全败=降级卡(数据源不可用+重试), 通道活但真无事件=原文案 */
+      if (S.ydFetchOk) { body = '<div class="g2">今日暂无聚合事件（异动 Tab 打开过才有事件缓存 · 本模块会自行补抓 8205/8218/8202）</div>'; try { window.__jlDg && window.__jlDg.ok("jlv2:yd"); } catch (eOy) {} }
+      else {
+        body = '<div class="g2" data-dg-key="jlv2:yd">' + dgText("jlv2:yd", "今日暂无聚合事件（异动 Tab 打开过才有事件缓存 · 本模块会自行补抓 8205/8218/8202）") + "</div>";
+        try { window.__jlDg && window.__jlDg.fail("jlv2:yd", function () { return new Promise(function (res) { fetchOwnYd(function () { paint(); res(true); }); }); }, "异动事件通道受阻(自抓8205/8218/8202未返回 · 网络/IP)", function () { return !!(S.ydFetchOk || S.ownYd.length); }); } catch (eDy) {}
+      }
+    } else { try { window.__jlDg && window.__jlDg.ok("jlv2:yd"); } catch (eOy2) {} }
     var ORDER = ["指数异动", "涨跌停结构", "成交额异动", "板块异动", "个股扩散", "风险事件"];
     var map = {}; g.groups.forEach(function (x) { map[x.t] = x; });
     body += ORDER.map(function (t) {
