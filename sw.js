@@ -80,8 +80,12 @@
    T3事件日志器竞态根修: 首会话快速双paint下, emit决策通过即对该key建内存pending占位(fin回调三路统一清除:
    add成功/onerror/onabort/异常), 在途时同key后续emit抑制(=延迟到下次paint对已推进state重评, 合法转换仍可补记);
    仅jl_event_log.js内部改动, jlv2 tap/判定/展示零触碰; 修复前证据: 59ms双记录已归档 */
-const C = 'jinlin-shell-v175'; /* jl-1087 v0.84.33: T3竞态修复; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v175', 'jinlin-shell-v174'];
+/* jinlin sw v.98 — 2026-10-07: 缓存名 →v176, 配合jl-1088(index v0.84.34)——
+   龙池扫描两处最小修: ①宇宙会话钉住(poolUniJL三级源瀑布按当次网络落位=4412↔5061漂移, 且断点续扫按uniLen匹配; 内存+sessionStorage 90min TTL对齐断点窗)
+   ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
+   红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
+const C = 'jinlin-shell-v176'; /* jl-1088 v0.84.34: 龙池扫描最小修; jlv2.js?v=9 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v176', 'jinlin-shell-v175'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

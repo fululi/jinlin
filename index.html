@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.84.33" data-sw="jinlin-shell-v175"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.84.34" data-sw="jinlin-shell-v176"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -3235,6 +3235,7 @@ document.addEventListener("visibilitychange", () => {
   function show(id) {
     closePicker();
     page = id;
+    try { if (id === "watchPage" || id === "reviewPage" || id === "home") sessionStorage.setItem("jl_view_v1", id); } catch (eV0) {} /* jl-1088: 换版自动reload(controllerchange熔断/自愈链)不再丢所在页——无hash的reload必落默认holds页="扫描暂停后跳回初始页"根因; chartPage需选中上下文不存; hash显式导航最优先 */
     if (id === "reviewPage") {
       try {
         renderResonanceJL();
@@ -5423,6 +5424,11 @@ document.addEventListener("visibilitychange", () => {
     }
   }
   async function poolUniJL() {
+    try { /* jl-1088: 宇宙会话钉住(内存+sessionStorage, TTL 54e5对齐断点窗)——三级源瀑布按当次网络落位(alla可用/东财被拒落pool_ff滤后4412), 换版自动reload重开页面即重摇, 跨扫描漂移4412↔5061; 且 ck.uniLen!==UNI.length 直接作废断点续扫=reload后从头再来。钉住后会话内与reload后同宇宙 */
+      let _uc = window.__jlUniCacheJL || null;
+      if (!_uc) { try { const _s = sessionStorage.getItem("jl_uni_v1"); if (_s) _uc = JSON.parse(_s); } catch (eS) {} }
+      if (_uc && _uc.u && _uc.u.length >= 2e3 && Date.now() - (_uc.t || 0) < 54e5) { window.__jlUniCacheJL = _uc; window.JLPOOL_SRC_OK = true; return _uc.u; }
+    } catch (eU0) {}
     try {
       const ac = new AbortController();
       const tm = setTimeout(() => ac.abort(), 12e3);
@@ -5432,7 +5438,9 @@ document.addEventListener("visibilitychange", () => {
         const a = await r.json();
         if (Array.isArray(a) && a.length > 1e3) {
           window.JLPOOL_SRC_OK = true;
-          return a.filter((x) => !/ST|退|PT/.test(x[1]));
+          const _f = a.filter((x) => !/ST|退|PT/.test(x[1])), _t8 = Date.now();
+          try { window.__jlUniCacheJL = { t: _t8, u: _f }; sessionStorage.setItem("jl_uni_v1", JSON.stringify({ t: _t8, u: _f })); } catch (eU1) {}
+          return _f;
         }
       }
     } catch (e) {
@@ -5546,6 +5554,7 @@ document.addEventListener("visibilitychange", () => {
       }
     }
     if (uni.length >= 2e3) window.JLPOOL_SRC_OK = true;
+    try { if (uni.length >= 2e3) { const _t9 = Date.now(); window.__jlUniCacheJL = { t: _t9, u: uni }; sessionStorage.setItem("jl_uni_v1", JSON.stringify({ t: _t9, u: uni })); } } catch (eU2) {} /* jl-1088: 成功级才钉住(≥2e3), 退化宇宙不pin */
     return uni;
   }
   /* v0.81.9: 持仓股龙池同口径体检——大跌/放量/深回撤/破低/资金连出, ≥1项列出, ≥2项红色 */
@@ -13045,7 +13054,8 @@ var RLMCore = (function () {
       setInterval(() => { if (!document.hidden) { const _m9 = (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes(); if (_m9 >= 545 && _m9 <= 915) loadMTempJL(false); } }, 6e4); /* v0.81.8: 市场温度盘中每分钟自检(内部15分钟TTL), 不再手点采集 */ // jl-0928-8: 资金流全量刷新1→3分钟(每分钟全票重拉=限流团灭根因) // jl-0929-12: hidden守卫
     periodBars();
     renderWatch();
-    show(location.hash === "#home" ? "home" : location.hash === "#watch" ? "watchPage" : "holds");
+    var _vwJL = ""; try { _vwJL = sessionStorage.getItem("jl_view_v1") || ""; } catch (eV1) {} /* jl-1088: reload后回原页(hash显式导航仍最优先) */
+    show(location.hash === "#home" ? "home" : location.hash === "#watch" ? "watchPage" : (_vwJL === "watchPage" || _vwJL === "reviewPage" || _vwJL === "home") ? _vwJL : "holds");
     if (location.hash === "#detail") setTimeout(() => {
       const d = $("detail");
       if (d) {
