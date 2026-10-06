@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.84.11" data-sw="jinlin-shell-v154"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.84.12" data-sw="jinlin-shell-v155"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -30,8 +30,8 @@
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paint); else paint();
   })();</script>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.84.11</title><style>
-:root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 52% at 94% 38%,rgba(160,110,35,.38),transparent 65%),radial-gradient(ellipse 80% 50% at 85% 0%,rgba(232,197,116,.18),transparent 60%),radial-gradient(ellipse 70% 60% at 10% 10%,rgba(120,20,45,.35),transparent 65%),radial-gradient(ellipse 90% 70% at 50% 45%,rgba(70,12,40,.30),transparent 70%),linear-gradient(160deg,#1a0508 0%,#2b0817 45%,#170510 100%);background-attachment:fixed;color:#eff9fc;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none} /* jl-1064 v0.84.11(房主视觉批·只动颜色字重不动布局字号业务逻辑): ①龙池筛选工具栏+扫描横幅深黑实心→统一玻璃rgba(255,255,255,.075)+blur14 saturate1.7+描边.10+圆角12 ②背景顶层加右深金baseglow rgba(160,110,35,.38) ③文字全面提亮加粗: body基线500, 元信息灰字→亮白.8/500-600, 数值.95/.8+.85/600-700, 提示字统一≥.75/500+终扫残留12处灰字提亮+ladRow已触行.55→.65(禁<.6文字); H清查: 全码唯一H=枢轴kind(小图computeTierJL/ks zzPivotsJL,大写=已确认/小写=未确认),资金卡温度卡渲染无H输出, 标题700, 指数小卡.85/600/13px, --secondary.74→.80 ④资金预警风险分溢出修复: 条与数值间距8px+条flex收缩min44px+数值flex:none ⑤终扫见响应报告; ks.html零改动 --><!-- jl-1063 v0.84.10(房主: 152仍雾蒙蒙, 要独立版KeyStation原色): 雾根因=仍有半透明+模糊叠加——①ks嵌入态背景改实心#0a0e0b, backdrop-filter全关(与独立版深色主题逐像素一致) ②外壳叠加层0.22→transparent(只留薄荷描边) ③保留: 全出血/缓存根修/强制深色主题 --><!-- jl-1062 v0.84.9(房主拍板): 玻璃实验终止, ks嵌入面板调回原黑——盾0.30→0.42+blur10(=v0.84.5观感), 外壳叠加0.08→0.22(原值); 保留: 手机全出血/缓存锁定当前壳/嵌入态强制深色主题(亮线可读)/工具条蓝青统一; 独立版与算法零影响 --><!-- jl-1061 v0.84.8(房主实拍: 玻璃生效但网格/价签/十字线全看不清): 根因=房主K线Station存档是浅色主题——浅灰结构线压在玻璃上无对比——①嵌入态强制深色主题(独立版主题选择不受影响, 存档不覆盖) ②玻璃0.14→0.30+blur12(深色线条有暗底对比, 仍透极光不回死黑) ③画布/指标算法零改动, 非大修 --><!-- jl-1060 v0.84.7(房主实拍: 面板仍死黑不match): 根因=SW全局ignoreSearch缓存匹配把KEEP旧壳缓存里的陈年ks.html喂给iframe, v0.84.6玻璃改动根本没送到手机——①sw.js运行时匹配锁定当前壳C(陈旧投喂根除, 离线回退链不变) ②ks嵌入态工具条/文字绿灰→主UI蓝青玻璃家族(仅ksT, 独立版/主题零影响) ③零数据/业务逻辑改动 --><!-- jl-1059 v0.84.6(房主截图圈注): ①手机chartMode全出血——@media430取消舞台padding24px/设备95vw居中/圆角, K线图铺满手机不再两侧空带 ②ks玻璃减淡——玻璃盾0.42→0.14+blur14, 外壳叠加层0.22→0.10, 极光背景透出与首页卡片玻璃一致, 不再死黑不搭(UI统一) ③零数据/业务逻辑改动 --><!-- jl-1058: 整页嵌死手机宽——任一页超宽不再把整个文档拖成可左右平移 */#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.84.12</title><style>
+:root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 52% at 94% 38%,rgba(160,110,35,.38),transparent 65%),radial-gradient(ellipse 80% 50% at 85% 0%,rgba(232,197,116,.18),transparent 60%),radial-gradient(ellipse 70% 60% at 10% 10%,rgba(120,20,45,.35),transparent 65%),radial-gradient(ellipse 90% 70% at 50% 45%,rgba(70,12,40,.30),transparent 70%),linear-gradient(160deg,#1a0508 0%,#2b0817 45%,#170510 100%);background-attachment:fixed;color:#eff9fc;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none} /* jl-1065 v0.84.12(K线组件专项, 只动bigChart交互层): ①十字线抖动根治——新增透明overlay层, 指针移动只重绘overlay(十字线+左右玻璃标签+底部时间), 主图canvas零重绘完全静止; 手势(平移/缩放/画线)起手自动回落原生路径 ②左右涨跌幅/右侧价格/时间标签黑底→玻璃(rgba白.14+.95白字) ③小闹钟恢复——⏰按钮前置工具栏首位+图上金色虚线+⏰常显(夜背景切合) ④趋势线: ↗趋势按钮(首位引导入口)+点线弹玻璃菜单(拖动/锁定/隐藏/删除), 单线lock跳过命中检测/hide跳过渲染, 隐藏线点原位置可唤回 ⑤主图+幅图通用(画线系统本就按pane存储) --><!-- jl-1064 v0.84.11(房主视觉批·只动颜色字重不动布局字号业务逻辑): ①龙池筛选工具栏+扫描横幅深黑实心→统一玻璃rgba(255,255,255,.075)+blur14 saturate1.7+描边.10+圆角12 ②背景顶层加右深金baseglow rgba(160,110,35,.38) ③文字全面提亮加粗: body基线500, 元信息灰字→亮白.8/500-600, 数值.95/.8+.85/600-700, 提示字统一≥.75/500+终扫残留12处灰字提亮+ladRow已触行.55→.65(禁<.6文字); H清查: 全码唯一H=枢轴kind(小图computeTierJL/ks zzPivotsJL,大写=已确认/小写=未确认),资金卡温度卡渲染无H输出, 标题700, 指数小卡.85/600/13px, --secondary.74→.80 ④资金预警风险分溢出修复: 条与数值间距8px+条flex收缩min44px+数值flex:none ⑤终扫见响应报告; ks.html零改动 --><!-- jl-1063 v0.84.10(房主: 152仍雾蒙蒙, 要独立版KeyStation原色): 雾根因=仍有半透明+模糊叠加——①ks嵌入态背景改实心#0a0e0b, backdrop-filter全关(与独立版深色主题逐像素一致) ②外壳叠加层0.22→transparent(只留薄荷描边) ③保留: 全出血/缓存根修/强制深色主题 --><!-- jl-1062 v0.84.9(房主拍板): 玻璃实验终止, ks嵌入面板调回原黑——盾0.30→0.42+blur10(=v0.84.5观感), 外壳叠加0.08→0.22(原值); 保留: 手机全出血/缓存锁定当前壳/嵌入态强制深色主题(亮线可读)/工具条蓝青统一; 独立版与算法零影响 --><!-- jl-1061 v0.84.8(房主实拍: 玻璃生效但网格/价签/十字线全看不清): 根因=房主K线Station存档是浅色主题——浅灰结构线压在玻璃上无对比——①嵌入态强制深色主题(独立版主题选择不受影响, 存档不覆盖) ②玻璃0.14→0.30+blur12(深色线条有暗底对比, 仍透极光不回死黑) ③画布/指标算法零改动, 非大修 --><!-- jl-1060 v0.84.7(房主实拍: 面板仍死黑不match): 根因=SW全局ignoreSearch缓存匹配把KEEP旧壳缓存里的陈年ks.html喂给iframe, v0.84.6玻璃改动根本没送到手机——①sw.js运行时匹配锁定当前壳C(陈旧投喂根除, 离线回退链不变) ②ks嵌入态工具条/文字绿灰→主UI蓝青玻璃家族(仅ksT, 独立版/主题零影响) ③零数据/业务逻辑改动 --><!-- jl-1059 v0.84.6(房主截图圈注): ①手机chartMode全出血——@media430取消舞台padding24px/设备95vw居中/圆角, K线图铺满手机不再两侧空带 ②ks玻璃减淡——玻璃盾0.42→0.14+blur14, 外壳叠加层0.22→0.10, 极光背景透出与首页卡片玻璃一致, 不再死黑不搭(UI统一) ③零数据/业务逻辑改动 --><!-- jl-1058: 整页嵌死手机宽——任一页超宽不再把整个文档拖成可左右平移 */#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:rgba(26,18,10,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05)} /* jl-1036: 容器层深色玻璃兜底 */body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;height:100dvh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05);display:block} /* jl-1036 */body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
 .prL{display:flex;align-items:center;gap:6px;min-width:0}
@@ -57,7 +57,7 @@
 .chartHeading{display:flex;align-items:center;gap:6px;flex-shrink:0;color:var(--fg);padding:4px 0;flex-wrap:wrap;overflow:hidden} /* jl-1058: 挤时换行, 名称不再被压扁 */.chartHeading>div{min-width:96px;flex:1 1 96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chartHeading>strong{flex:0 0 auto}.chartHeading>small{display:none} /* jl-1033 */.chartHeading>div{flex:1}.chartHeading b{font-size:16px}.chartHeading small{color:var(--secondary);display:block;font-size:9px}.chartHeading strong{font-size:18px;font-variant-numeric:tabular-nums}.chartActions{display:flex;gap:4px;padding:4px 0 7px;flex-shrink:0}.chartActions button{font-size:10px;padding:6px 8px}.plots{flex:1;min-height:220px;display:flex;flex-direction:column;border:1px solid #81e6d92e;border-radius:12px;background:rgba(255,255,255,0.03);backdrop-filter:blur(8px);overflow:hidden} /* jl-1029 */.mainPlot{flex:1;min-height:230px;position:relative}
 .panArrow{position:absolute;top:42%;z-index:6;width:30px;height:46px;border-radius:9px;border:1px solid var(--edge);background:#12303fa8;color:#e6fbff;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;opacity:.92;cursor:pointer;touch-action:manipulation;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid #81e6d92e}
 .panArrow:active{opacity:1;background:#16303f}
-.panArrow.l{left:6px}.panArrow.r{right:52px}.volumePlot{height:62px;flex-shrink:0;border-top:1px solid var(--edge);position:relative}.volumePlot>span{position:absolute;top:5px;left:8px;color:var(--secondary);font-size:8px;pointer-events:none}.ddxPlot{height:84px;flex-shrink:0;border-top:1px solid var(--edge);position:relative}.subPlot{height:56px;flex-shrink:0;border-top:1px solid var(--edge);position:relative}.subPlot>span{position:absolute;top:4px;left:8px;color:var(--secondary);font-size:8px;pointer-events:none;z-index:2}.indBar{display:flex;gap:4px;overflow-x:auto;padding:0 0 6px;flex-shrink:0}.indBar button{font-size:9px;padding:4px 7px;white-space:nowrap}.indBar button.on{border-color:var(--accent)!important;color:var(--accent)!important}.ddxPlot>span{position:absolute;top:5px;left:8px;color:var(--secondary);font-size:8px;pointer-events:none}#ksToggle[aria-pressed='true']{border-color:var(--accent)!important;color:var(--accent)!important}.plots canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}#crossReadout{height:24px;flex-shrink:0;color:#d9f4f5;font:9px monospace;overflow:hidden;white-space:nowrap;padding:5px 0}.chartFooter{display:flex;align-items:flex-start;gap:8px;flex-shrink:0}#technical{flex:1;background:var(--panel);color:var(--fg);border:1px solid var(--edge);border-radius:8px;padding:8px 10px;font-size:10px}#technical summary{cursor:pointer}#technicalPeriod{float:right;color:#c8e9eb}#technicalBody{max-height:75px;overflow:auto;line-height:1.9;padding-top:5px}#pickerOpen{margin-left:auto}
+.panArrow.l{left:6px}.panArrow.r{right:52px}.volumePlot{height:62px;flex-shrink:0;border-top:1px solid var(--edge);position:relative}.volumePlot>span{position:absolute;top:5px;left:8px;color:var(--secondary);font-size:8px;pointer-events:none}.ddxPlot{height:84px;flex-shrink:0;border-top:1px solid var(--edge);position:relative}.subPlot{height:56px;flex-shrink:0;border-top:1px solid var(--edge);position:relative}.subPlot>span{position:absolute;top:4px;left:8px;color:var(--secondary);font-size:8px;pointer-events:none;z-index:2}.indBar{display:flex;gap:4px;overflow-x:auto;padding:0 0 6px;flex-shrink:0}.indBar button{font-size:9px;padding:4px 7px;white-space:nowrap}.indBar button.on{border-color:var(--accent)!important;color:var(--accent)!important}.ddxPlot>span{position:absolute;top:5px;left:8px;color:var(--secondary);font-size:8px;pointer-events:none}#ksToggle[aria-pressed='true']{border-color:var(--accent)!important;color:var(--accent)!important}.plots canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}.plots{position:relative}#crossOvJL{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;display:none}#lineMenuJL{position:absolute;top:6px;right:8px;z-index:7;display:flex;gap:4px;background:rgba(255,255,255,0.09);backdrop-filter:blur(14px) saturate(1.7);-webkit-backdrop-filter:blur(14px) saturate(1.7);border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:4px;box-shadow:0 4px 14px #0006}#lineMenuJL button{border:0;background:transparent;color:rgba(255,255,255,.92);font:600 10px sans-serif;padding:4px 7px;border-radius:7px;cursor:pointer}#lineMenuJL button:active{background:rgba(255,255,255,.14)}#crossReadout{height:24px;flex-shrink:0;color:rgba(255,255,255,.92);font:500 9px monospace;overflow:hidden;white-space:nowrap;padding:5px 8px;margin:0 6px;background:rgba(255,255,255,0.075);backdrop-filter:blur(14px) saturate(1.7);-webkit-backdrop-filter:blur(14px) saturate(1.7);border:1px solid rgba(255,255,255,0.10);border-radius:10px}.chartFooter{display:flex;align-items:flex-start;gap:8px;flex-shrink:0}#technical{flex:1;background:var(--panel);color:var(--fg);border:1px solid var(--edge);border-radius:8px;padding:8px 10px;font-size:10px}#technical summary{cursor:pointer}#technicalPeriod{float:right;color:#c8e9eb}#technicalBody{max-height:75px;overflow:auto;line-height:1.9;padding-top:5px}#pickerOpen{margin-left:auto}
 .phone.chartMode .scroll{overflow:hidden;padding:0 12px 10px;height:calc(100% - 168px);display:flex;flex-direction:column}.phone.chartMode #chartPage{display:flex;flex-direction:column;flex:1;min-height:0}.phone.chartMode .header{padding-top:5px;padding-bottom:8px}
 /* jl-0924-fix36b: 320/375px 窄屏下四个钮自然宽合计341px 会溢出容器(实测)，
    而 flex 项 min-width 被全局设为 0 → 可被压到零宽点不到。改为允许换行且禁止压缩。
@@ -437,7 +437,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 <div class="chartHeading"><button id="chartBack" aria-label="返回来源页面">‹</button><div><b id="chartName"></b><small id="chartCode"></small></div><strong id="chartPrice"></strong><div class="chartMeta"><small id="chartDate"></small><small id="chartMarketStatus"></small></div><small>实时</small><button id="pickerOpen" aria-expanded="false">☷ 选股</button></div>
 <div class="periodBar" data-period-bar=""></div>
 <div id="ksMiniJL"><button id="ksMiniHandle" aria-expanded="false">工具</button><div id="ksMiniBody" hidden=""><button data-mb="picker">选股</button><button data-period="1分">1分</button><button data-period="5分">5分</button><button data-period="15分">15分</button><button data-period="30分">30分</button><button data-period="日K">日K</button><button data-period="5日">5日</button><button data-period="周">周</button><button data-period="月">月</button><button data-mb="draw">画线</button><button data-mb="undo">删除</button><button data-mb="clear">清空</button><button data-mb="hide">隐藏</button><button data-mb="lock">锁定</button><button data-mb="ind">指标</button><button data-mb="alert">提醒</button><button data-mb="reset">复位</button><button data-mb="exit">退出全屏</button></div></div>
-<div class="chartActions"><button id="drawMode" aria-pressed="false">╱ 画线</button><button id="fibSettings" type="button" aria-label="Fib档位显示与颜色设置">Fib</button><button id="polyPathJL" type="button" aria-pressed="false" aria-label="路径画线 按住拖动自由画多段线">路径</button><button id="polyLineJL" type="button" aria-pressed="false" aria-label="折线 点击逐点打点再点完成">折线</button><button id="undoLine">⌫ 删除</button><button id="ksToggle" aria-pressed="true">◈ 指标</button><button id="resetChart">⊙ 复位</button><button id="alertOpen" aria-label="价格提醒">⏰</button><button id="lineBuy" aria-label="买入线绿色">B</button><button id="lineSell" aria-label="卖出线红色">S</button><button id="lineStyle" aria-label="切换实线虚线">┄</button><button id="lineWidth" aria-label="切换线宽">━</button><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="chartAdd" aria-label="添加股票">＋ 股票</button></div>
+<div class="chartActions"><button id="trlBtnJL" type="button" aria-pressed="false" aria-label="趋势线">↗ 趋势</button><button id="alertOpen" type="button" aria-label="价格提醒" title="点=按当前价挂提醒 · 双击=管理列表">⏰</button><button id="drawMode" aria-pressed="false">╱ 画线</button><button id="fibSettings" type="button" aria-label="Fib档位显示与颜色设置">Fib</button><button id="polyPathJL" type="button" aria-pressed="false" aria-label="路径画线 按住拖动自由画多段线">路径</button><button id="polyLineJL" type="button" aria-pressed="false" aria-label="折线 点击逐点打点再点完成">折线</button><button id="undoLine">⌫ 删除</button><button id="ksToggle" aria-pressed="true">◈ 指标</button><button id="resetChart">⊙ 复位</button><button id="lineBuy" aria-label="买入线绿色">B</button><button id="lineSell" aria-label="卖出线红色">S</button><button id="lineStyle" aria-label="切换实线虚线">┄</button><button id="lineWidth" aria-label="切换线宽">━</button><button data-style="" aria-label="切换蜡烛图与走势线">▥</button><button id="chartAdd" aria-label="添加股票">＋ 股票</button></div>
 <div class="indBar" id="indBar"></div><div class="plots"><div class="mainPlot"><canvas id="bigChart" tabindex="0" aria-label="K线主图，拖动平移、右侧价格轴缩放、捏合缩放"></canvas><button class="panArrow l" aria-label="向左平移K线">‹</button><button class="panArrow r" aria-label="向右平移K线">›</button></div><div class="volumePlot"><canvas id="volumeChart" tabindex="0" aria-label="成交量副图，可画线"></canvas></div><div class="ddxPlot"><span>主力净额 · 资金</span><button id="ddxCloseJL" type="button" aria-label="关闭主力净额附图">×</button><canvas id="ddxChart" aria-label="DDX主力资金副图"></canvas></div><div id="subPanes"></div><div id="crossSpanJL"></div><div id="ksLoadJL"><span class="ksSpinJL"></span>K线引擎加载中…</div><iframe id="ksFrameJL" title="K-STATION 大图"></iframe><button id="ddxReopenJL" type="button">附图已隐藏 · 点我展开</button></div>
 <div id="crossReadout">拖动图表平移 · 拖动右轴缩放 · 双击复位</div>
 <div class="chartFooter"><details id="technical"><summary>技术摘要 <span id="technicalPeriod"></span></summary><div id="technicalBody"></div></details></div>
@@ -7993,6 +7993,7 @@ function ffMergeJL(oldRows, newRows) {
     if (large) {
       const saved = chartLinesHiddenJL ? [] : lines[keyFor(pane)] || [];
       [...saved, ...draft && draft.pane === pane && !draft.home ? [draft] : []].forEach((line, li) => {
+        if (line.hide) return;
         const sel = li < saved.length && selLine && selLine.pane === pane && selLine.index === li;
         x.strokeStyle = sel ? "#ffd21f" : line.color || (light ? "#9056c1" : lineColorJL);
         x.lineWidth = sel ? 2.4 : (line.width || lineWidthJL);
@@ -8008,7 +8009,7 @@ function ffMergeJL(oldRows, newRows) {
         x.stroke();
         if (pane === "price" && li < saved.length) { const _lvT = line.pts ? line.pts[line.pts.length - 1].v : line.b.v; ltags.push({ ly: Math.max(T + 2, Math.min(B - 9, Y(_lvT))), lt: _lvT.toFixed(2) + (sel ? " \xD7" : ""), sel }); }
       });
-      if (cross) {
+      if (cross && !crossOvOnJL) {
         x.strokeStyle = fg;
         x.setLineDash([3, 3]);
         x.lineWidth = 1;
@@ -8095,23 +8096,29 @@ function ffMergeJL(oldRows, newRows) {
       x.fillStyle = "#fff";
       x.fillText(tg.lt, R + 5, tg.ly + 3);
     }
-    if (large && c.id === "bigChart" && cross && cross.pane === "price") {
+    if (large && c.id === "bigChart" && cross && cross.pane === "price" && !crossOvOnJL) {
       const ci = Math.max(0, Math.min(bars.length - 1, Math.round(cross.i))), py = Y(cross.v), tagY = Math.max(T, Math.min(B - 16, py - 8));
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(R + 1, tagY, 58, 16);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.font = "9px monospace";
       x.fillText(cross.v.toFixed(2), R + 4, tagY + 11);
       const stock = byCode(code), price = Number(cross.v), reference = ci < bars.length - 1 ? Number(bars[ci - 1] && bars[ci - 1].c) || refPrev(bars, ci, code) : refPrev(bars, ci, code), change = price - reference, sign = change >= 0 ? "+" : "", percent = sign + (change / reference * 100).toFixed(2) + "%";
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(L, tagY, Math.max(54, x.measureText(percent).width + 8), 16);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.fillText("\u6DA8\u8DCC " + percent, L + 4, tagY + 11);
       const time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 100, X(ci) - 50));
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(tx, B + 1, 100, 16);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.fillText(time, tx + 4, B + 12);
+    }
+    if (large && c.id === "bigChart" && pane === "price") { /* jl-1065: 小闹钟提醒标记恢复常显——金色虚线+⏰, 夜背景切合 */
+      try { (alerts || []).forEach(function(a2){ if (a2.code !== code || a2.fired) return; const ay = Y(Number(a2.value)); if (!(ay > T && ay < B)) return;
+        x.strokeStyle = "rgba(255,210,31,.45)"; x.setLineDash([2, 4]); x.lineWidth = 1; x.beginPath(); x.moveTo(L, ay); x.lineTo(R, ay); x.stroke(); x.setLineDash([]);
+        x.fillStyle = "#ffd21f"; x.font = "10px sans-serif"; x.textAlign = "right"; x.fillText("\u23F0", R - 2, ay - 3); x.textAlign = "left";
+      }); } catch (eA2) {}
     }
     if (!large && pane === "price") {
       const live = lastBar(bars).c, ly = Y(live);
@@ -8168,9 +8175,9 @@ function ffMergeJL(oldRows, newRows) {
       const tagY = Math.max(T, Math.min(B - 16, (Number.isFinite(localCross.y) ? localCross.y : (T + B) / 2) - 8));
       const _hasMainYJL = Number.isFinite(localCross.y);
       if (_hasMainYJL) {
-        x.fillStyle = light ? "#d9e4e7" : "#26333d";
+        x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
         x.fillRect(R + 1, tagY, 50, 16);
-        x.fillStyle = light ? "#10202a" : "#eef9fc";
+        x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
         x.font = "9px monospace";
         x.fillText(Number.isFinite(cv) ? cv.toFixed(2) : "--", R + 4, tagY + 11);
       }
@@ -8178,17 +8185,17 @@ function ffMergeJL(oldRows, newRows) {
          且文字过长被画布裁切(实测渲染到 "收41.11 -0." 就断了)、黑底压蜡烛。
          该根 OHLC 与涨跌幅由卡面负责,图上不再重复一遍。 */
       if (_hasMainYJL) {   /* jl-0923-fix29h: 十字线只在副图上时，主图不画左%标签 */
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(1, tagY, 48, 16);   /* jl-0923-fix27c */
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.font = "8px monospace";   /* jl-0922-fix25d: 与左轴%列同字号同精度规则，避免溢出标签框 */
       x.fillText((pctP >= 0 ? "+" : "") + (Math.abs(pctP) >= 1000 ? pctP.toFixed(0) : pctP.toFixed(2)) + "%", 4, tagY + 11);
       x.font = "9px monospace";
       }
       const ci = li, time = crossTime(ci, code), tx = Math.max(L, Math.min(R - 112, snapXJL - 56)); /* jl-0922-fix23c: 时间标签跟着吸附后的竖线走 */
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(tx, B + 1, 112, 15);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.fillText(time, tx + 4, B + 12);
     }
     x.fillStyle = fg;
@@ -8402,20 +8409,20 @@ function ffMergeJL(oldRows, newRows) {
       x.stroke();
       x.setLineDash([]);
       const crossValue = max - (overviewCross.y - T) / (B - T) * (max - min), label = crossValue.toFixed(2), tagW = 50, tagH = 16, tagY = Math.max(T, Math.min(B - tagH, overviewCross.y - tagH / 2));
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(R + 1, tagY, tagW, tagH);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.font = "9px monospace";
       x.fillText(label, R + 4, tagY + 11);
       const hiIdx = Math.max(0, Math.min(bars.length - 1, Math.round(f.I(overviewCross.x)))), homeBase = Number((_a2 = bars[hiIdx - 1]) == null ? void 0 : _a2.c) || Number((_b2 = bars[hiIdx]) == null ? void 0 : _b2.o) || Number(lastBar(bars).o) || 1, homePct = (crossValue - homeBase) / homeBase * 100;
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(1, tagY, 48, 16);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.fillText((homePct >= 0 ? "+" : "") + homePct.toFixed(2) + "%", 4, tagY + 11);
       const oi = Math.max(0, Math.min(bars.length - 1, Math.round(f.I(overviewCross.x)))), ot = crossTime(oi, code), otx = Math.max(L, Math.min(R - 112, overviewCross.x - 56));
-      x.fillStyle = light ? "#d9e4e7" : "#26333d";
+      x.fillStyle = light ? "#d9e4e7" : "rgba(255,255,255,.14)";
       x.fillRect(otx, B + 1, 112, 15);
-      x.fillStyle = light ? "#10202a" : "#eef9fc";
+      x.fillStyle = light ? "#10202a" : "rgba(255,255,255,.95)";
       x.fillText(ot, otx + 4, B + 12);
     }
     if (c.id === "homeChart" && pane === "price") {
@@ -11944,15 +11951,90 @@ var RLMCore = (function () {
       else { if (polyToolJL === "polyF") draft = null; polyToolJL = "polyC"; drawMode = false; const dm = $("drawMode"); if (dm) dm.setAttribute("aria-pressed", "false"); toast("\u6298\u7EBF\uFF1A\u70B9\u51FB\u753B\u5E03\u9010\u70B9\u6253\u70B9\uFF0C\u518D\u70B9\u201C\u6298\u7EBF\u201D\u5B8C\u6210"); }
       syncPolyBtnsJL(); paint();
     };
+  $("trlBtnJL").onclick = () => { /* jl-1065: 趋势线工具——引导式画线入口, 画完可拖动/锁定/隐藏/删除 */
+    drawMode = true; polyToolJL = null; draft = null;
+    $("drawMode").setAttribute("aria-pressed", "true");
+    $("trlBtnJL").setAttribute("aria-pressed", "true");
+    try { syncPolyBtnsJL(); } catch (eT1) {}
+    paint();
+    toast("\u8D8B\u52BF\u7EBF\uFF1A\u6309\u4F4F\u62D6\u51FA\u4E00\u6761\u7EBF\xB7\u753B\u5B8C\u70B9\u7EBF\u53EF\u76F4\u63A5\u62D6\u52A8/\u7BA1\u7406");
+  };
   $("drawMode").onclick = () => {
     drawMode = !drawMode;
     $("drawMode").setAttribute("aria-pressed", drawMode);
+    const _tb = $("trlBtnJL"); if (_tb) _tb.setAttribute("aria-pressed", drawMode);
     if (drawMode) { polyToolJL = null; try { syncPolyBtnsJL(); } catch (ePT3) {} } /* jl-1009 */
     draft = null;
     paint();
   };
   let lastPane = "price";
   let linesLockedJL = false, chartLinesHiddenJL = false, lineColorJL = "#1fdc93", lineDashJL = [], lineWidthJL = 1.2;
+  /* jl-1065: 十字线overlay快速通道——移动只画透明层, 不整图重绘(根治上下抖动); 附带趋势线单线管理菜单 */
+  let crossOvOnJL = false;
+  try { const _paintOrig = paint; paint = function () { _paintOrig(); try { syncLineMenuJL(); } catch (ePS1) {} }; } catch (ePS2) {}
+  (function(){ const plots = document.querySelector(".plots"); if (plots && !$("crossOvJL")) { const ov = document.createElement("canvas"); ov.id = "crossOvJL"; ov.setAttribute("aria-hidden", "true"); plots.appendChild(ov); } })();
+  function clearCrossOvJL(){ crossOvOnJL = false; const ov = $("crossOvJL"); if (ov) { try { ov.getContext("2d").clearRect(0, 0, ov.width, ov.height); } catch (eCO1) {} ov.style.display = "none"; } }
+  function paintCrossOvJL(c, m){ try {
+    const plots = document.querySelector(".plots"), ov = $("crossOvJL");
+    if (!plots || !ov || !m || !cross) return;
+    crossOvOnJL = true; ov.style.display = "block";
+    const dpr = window.devicePixelRatio || 1, pw = plots.clientWidth, ph = plots.clientHeight;
+    if (ov.width !== Math.round(pw * dpr) || ov.height !== Math.round(ph * dpr)) { ov.width = Math.round(pw * dpr); ov.height = Math.round(ph * dpr); }
+    const g = ov.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, pw, ph);
+    const off = (el) => { let ox = 0, oy = 0; while (el && el !== plots) { ox += el.offsetLeft || 0; oy += el.offsetTop || 0; el = el.offsetParent; } return [ox, oy]; };
+    qa(".plots canvas").forEach(function(pc){ if (pc === ov) return; const pm = maps.get(pc); if (!pm) return;
+      const o = off(pc); g.save(); g.translate(o[0], o[1]);
+      g.strokeStyle = "rgba(255,255,255,.42)"; g.lineWidth = 0.8; g.setLineDash([4, 3]);
+      const cx = Math.max(pm.L, Math.min(pm.R, pm.X(cross.i)));
+      g.beginPath(); g.moveTo(cx, pm.T); g.lineTo(cx, pm.B); g.stroke();
+      if (pc === c) {
+        g.strokeStyle = "rgba(255,255,255,.34)";
+        const py = Math.max(pm.T, Math.min(pm.B - 8, pm.Y(cross.v)));
+        g.beginPath(); g.moveTo(pm.L, pm.Y(cross.v)); g.lineTo(pm.R, pm.Y(cross.v)); g.stroke(); g.setLineDash([]);
+        g.fillStyle = "rgba(255,255,255,.14)"; g.strokeStyle = "rgba(255,255,255,.25)";
+        g.beginPath(); if (g.roundRect) g.roundRect(pm.R + 1, py - 8, 58, 16, 4); else g.rect(pm.R + 1, py - 8, 58, 16); g.fill(); g.stroke();
+        g.fillStyle = "rgba(255,255,255,.95)"; g.font = "9px monospace";
+        g.fillText(cross.v.toFixed(2), pm.R + 4, py + 3);
+        const bars = series(selected, false), ci = Math.max(0, Math.min(bars.length - 1, Math.round(cross.i)));
+        const reference = ci < bars.length - 1 ? Number(bars[ci - 1] && bars[ci - 1].c) || refPrev(bars, ci, selected) : refPrev(bars, ci, selected);
+        const pctv = reference > 0 ? (cross.v - reference) / reference * 100 : 0;
+        const ptxt = "\u6DA8\u8DCC " + (pctv >= 0 ? "+" : "") + pctv.toFixed(2) + "%";
+        const pw2 = Math.max(54, g.measureText(ptxt).width + 8);
+        g.fillStyle = "rgba(255,255,255,.14)"; g.strokeStyle = "rgba(255,255,255,.25)";
+        g.beginPath(); if (g.roundRect) g.roundRect(pm.L, py - 8, pw2, 16, 4); else g.rect(pm.L, py - 8, pw2, 16); g.fill(); g.stroke();
+        g.fillStyle = "rgba(255,255,255,.95)"; g.fillText(ptxt, pm.L + 4, py + 3);
+        const time = crossTime(ci, selected), tx = Math.max(pm.L, Math.min(pm.R - 100, pm.X(ci) - 50));
+        g.fillStyle = "rgba(255,255,255,.14)"; g.strokeStyle = "rgba(255,255,255,.25)";
+        g.beginPath(); if (g.roundRect) g.roundRect(tx, pm.B, 100, 15, 4); else g.rect(tx, pm.B, 100, 15); g.fill(); g.stroke();
+        g.fillStyle = "rgba(255,255,255,.95)"; g.fillText(time, tx + 4, pm.B + 11);
+      }
+      g.restore();
+    });
+  } catch (eOV) {} }
+  function syncLineMenuJL(){ try {
+    const lm = $("lineMenuJL"); if (!lm) return;
+    const lb = lm.querySelector('[data-lm="lock"]'), hb = lm.querySelector('[data-lm="hide"]');
+    if (!selLine) { lm.hidden = true; return; }
+    const ln = (lines[keyFor(selLine.pane)] || [])[selLine.index];
+    if (!ln) { selLine = null; lm.hidden = true; return; }
+    if (lb) lb.textContent = ln.lock ? "\uD83D\uDD13\u89E3\u9501" : "\uD83D\uDD12\u9501\u5B9A";
+    if (hb) hb.textContent = ln.hide ? "\uD83D\uDC41\u663E\u793A" : "\uD83D\uDC41\u9690\u85CF";
+    lm.hidden = false;
+  } catch (eLM) {} }
+  (function(){ if ($("lineMenuJL")) return; const lm = document.createElement("div"); lm.id = "lineMenuJL"; lm.hidden = true;
+    lm.innerHTML = '<button type="button" data-lm="mv">\u270B\u62D6\u52A8</button><button type="button" data-lm="lock">\uD83D\uDD12\u9501\u5B9A</button><button type="button" data-lm="hide">\uD83D\uDC41\u9690\u85CF</button><button type="button" data-lm="del">\uD83D\uDDD1\u5220\u9664</button>';
+    document.querySelector(".plots").appendChild(lm);
+    lm.addEventListener("pointerdown", (e) => e.stopPropagation());
+    lm.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b || !selLine) return;
+      const arr = lines[keyFor(selLine.pane)] || [], ln = arr[selLine.index];
+      if (!ln) { selLine = null; syncLineMenuJL(); return; }
+      if (b.dataset.lm === "mv") toast("\u76F4\u63A5\u6309\u4F4F\u7EBF\u4E0A\u4EFB\u610F\u5904\u62D6\u52A8\u5373\u53EF\u632A\u52A8");
+      else if (b.dataset.lm === "lock") { ln.lock = !ln.lock; toast(ln.lock ? "\u6B64\u7EBF\u5DF2\u9501\u5B9A\xB7\u4E0D\u53EF\u62D6\u52A8/\u5220\u9664" : "\u5DF2\u89E3\u9501"); save(); paint(); }
+      else if (b.dataset.lm === "hide") { ln.hide = !ln.hide; toast(ln.hide ? "\u6B64\u7EBF\u5DF2\u9690\u85CF\xB7\u70B9\u539F\u4F4D\u7F6E\u53EF\u518D\u5524\u51FA" : "\u5DF2\u663E\u793A"); selLine = null; save(); paint(); }
+      else if (b.dataset.lm === "del") { arr.splice(selLine.index, 1); selLine = null; save(); paint(); toast("\u753B\u7EBF\u5DF2\u5220\u9664"); }
+      syncLineMenuJL();
+    });
+  })();
   $("undoLine").onclick = () => {
     if (polyToolJL === "polyC" && draft && draft.pts && draft.pts.length) { draft.pts.pop(); if (!draft.pts.length) { draft = null; polyToolJL = null; try { syncPolyBtnsJL(); } catch (eU) {} } paint(); return; } /* jl-1009: 折线打点中先撤点 */
     (lines[keyFor(lastPane)] || []).pop();
@@ -12380,11 +12462,12 @@ var RLMCore = (function () {
       const r = c.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top }, m = maps.get(c);
       if (!m) return;
       cross = { i: m.I(p.x), v: m.V(p.y), pane };
-      paint();
+      paintCrossOvJL(c, m);
     });
     c.addEventListener("pointerleave", () => {
       if (points.size || gesture) return;
       cross = null;
+      clearCrossOvJL();
       paint();
     });
     const pos = (e) => {
@@ -12399,6 +12482,7 @@ var RLMCore = (function () {
       if (p.x < m.L || p.x > m.R || p.y < m.T || p.y > m.B) return null;
       let hit = null;
       for (const [idx, ln] of (lines[keyFor(pane)] || []).entries()) {
+        if (ln.lock) continue;
         const segs = ln.pts && ln.pts.length >= 2 ? ln.pts.slice(0, -1).map((q, qi) => [q, ln.pts[qi + 1]]) : [[ln.a, ln.b]];
         for (const sg of segs) {
           const ax = m.X(sg[0].i), ay = m.Y(sg[0].v), dx = m.X(sg[1].i) - ax, dy = m.Y(sg[1].v) - ay, t = clamp(((p.x - ax) * dx + (p.y - ay) * dy) / (dx * dx + dy * dy || 1), 0, 1), d = Math.hypot(p.x - ax - t * dx, p.y - ay - t * dy);
@@ -12418,6 +12502,7 @@ var RLMCore = (function () {
       c.setPointerCapture(e.pointerId);
       points.set(e.pointerId, p);
       lastPane = pane;
+      clearCrossOvJL();
       if (points.size === 2) {
         draft = null;
         gesture = { mode: "pinch", dist: dist(), count: viewport.count };
@@ -12441,6 +12526,7 @@ var RLMCore = (function () {
       }
       const near = hitLine(p, m);
       if (!near && selLine && p.x < m.R) selLine = null;
+        syncLineMenuJL();
       gesture = { mode: !linesLockedJL && near ? "moveLine" : polyToolJL === "polyF" ? "polyF" : polyToolJL === "polyC" ? "polyC" : drawMode ? "line" : p.x > m.R && pane === "price" ? "axis" : "pan", x: p.x, y: p.y, end: vpEnd(viewport, series(selected, false).length), offset: viewport.offset, ys: viewport.ys };
       if (near) {
         movingLine = { pane, index: near.idx, lastI: m.I(p.x), lastV: m.V(p.y) };
@@ -12519,6 +12605,7 @@ var RLMCore = (function () {
           save();
           const pe = pos(e2);
           selLine = Math.hypot(pe.x - gesture.x, pe.y - gesture.y) < 6 ? { pane, index: movingLine.index } : null;
+          syncLineMenuJL();
         }
         if ((gesture == null ? void 0 : gesture.mode) !== "polyC") draft = null;
         movingLine = null;
@@ -12528,6 +12615,7 @@ var RLMCore = (function () {
         if (m2) hoverCursor(pos(e2), m2);
         if (!points.size) {
           cross = null;
+          clearCrossOvJL();
           if ($("crossReadout") && page === "chartPage") $("crossReadout").textContent = "\u62D6\u52A8\u56FE\u8868\u5E73\u79FB \xB7 \u62D6\u52A8\u53F3\u8F74\u7F29\u653E \xB7 \u53CC\u51FB\u590D\u4F4D";
           paint();
         }
