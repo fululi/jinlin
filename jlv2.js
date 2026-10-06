@@ -62,10 +62,10 @@
   var css = document.createElement("style");
   css.textContent =
     "#jlv2root{margin-top:14px}" +
-    ".jlv2{background:rgba(255,255,255,0.04);border:1px solid #81e6d92e;border-radius:18px;padding:15px;margin-top:14px;color:#eef9fc}" +
+    ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#eef9fc;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
     "body.day .jlv2{background:rgba(0,0,0,0.03);border-color:#0a7d6b3d;color:#12262b}" +
     ".jlv2 h3{font-size:12px;font-weight:500;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}" +
-    ".jlv2 h3 small{font-size:9px;color:#8fa8b3;font-weight:400;text-align:right}" +
+    ".jlv2 h3 small{font-size:9px;color:rgba(255,255,255,.72);font-weight:400;text-align:right}" +
     ".jlv2 .jsum{font-size:10.5px;color:#eef9fc;margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}" +
     ".jlv2 .jsum .dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 7px currentColor}" +
     ".jlv2 .jbody{display:none;margin-top:11px;border-top:1px solid #81e6d91c;padding-top:11px}" +
@@ -74,9 +74,9 @@
     ".jlv2.open .jchev{transform:rotate(90deg)}" +
     ".jlv2 .jh{font-size:9px;color:#81e6d9;letter-spacing:.24em;margin:12px 0 7px;display:flex;align-items:center;gap:8px}" +
     ".jlv2 .jh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#81e6d93d,transparent)}" +
-    ".jlv2 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:10px}" +
+    ".jlv2 .row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 0;flex-wrap:wrap;border-bottom:1px solid #81e6d914;font-size:10px}" +
     ".jlv2 .row:last-child{border-bottom:none}" +
-    ".jlv2 .row small{color:#8fa8b3;font-size:8.5px}" +
+    ".jlv2 .row small{color:rgba(255,255,255,.72);font-size:8.5px}" +
     ".jlv2 .mono{font-family:ui-monospace,'SF Mono',monospace}" +
     ".up{color:#ff5459}.dn{color:#1fdc93}.mu{color:#c9dfe8}.hl{color:#ffd21f}" +
     /* 温度计v2 */
@@ -85,16 +85,16 @@
     ".jlv2 .zpill{font-size:11px;color:#81e6d9;border:1px solid #81e6d9;border-radius:9px;padding:2px 9px;font-weight:600}" +
     ".jlv2 .zpill.ice{color:#5ad0ff;border-color:#5ad0ff}.jlv2 .zpill.hot{color:#ff5459;border-color:#ff5459}" +
     ".jlv2 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}" +
-    ".jlv2 .ft{border:1px solid #ffffff10;border-radius:10px;padding:7px 8px;background:rgba(255,255,255,0.02)}" +
-    ".jlv2 .ft span{font-size:8.5px;color:#8fa8b3;display:block}" +
+    ".jlv2 .ft{border:1px solid #ffffff10;border-radius:10px;padding:7px 8px;background:rgba(255,255,255,0.045)}" +
+    ".jlv2 .ft span{font-size:8.5px;color:rgba(255,255,255,.72);display:block}" +
     ".jlv2 .ft b{font-size:13px;font-family:ui-monospace,monospace;display:block;margin-top:2px}" +
-    ".jlv2 .ft small{font-size:7.5px;color:#7e8798;display:block;margin-top:2px;line-height:1.4}" +
+    ".jlv2 .ft small{font-size:7.5px;color:rgba(255,255,255,.80);display:block;margin-top:2px;line-height:1.4}" +
     ".jlv2 .rule{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:9.5px;line-height:1.6}" +
     ".jlv2 .rule:last-of-type{border-bottom:none}" +
     ".jlv2 .rst{flex:none;width:15px;height:15px;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;margin-top:1px}" +
     ".jlv2 .rst.ok{color:#0a1a14;background:#1fdc93;font-weight:700}" +
     ".jlv2 .rst.no{color:#3a1c1e;background:rgba(255,255,255,0.08);border:1px solid #ffffff26}" +
-    ".jlv2 .scn{border:1px solid #ffffff12;border-radius:11px;padding:8px 10px;margin-top:7px;font-size:9.5px;color:#8fa8b3;background:rgba(255,255,255,0.02)}" +
+    ".jlv2 .scn{border:1px solid #ffffff12;border-radius:11px;padding:8px 10px;margin-top:7px;font-size:9.5px;color:rgba(255,255,255,.72);background:rgba(255,255,255,0.045)}" +
     ".jlv2 .scn b{color:#c9dfe8;display:block;font-size:10px;margin-bottom:2px;font-weight:600}" +
     ".jlv2 .scn.on{border-color:#81e6d98c;color:#eef9fc;background:#81e6d90d}" +
     ".jlv2 .scn.on b{color:#81e6d9}" +
@@ -102,34 +102,34 @@
     ".jlv2 .erow{display:grid;grid-template-columns:112px 1fr 58px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:10px}" +
     ".jlv2 .erow:last-of-type{border-bottom:none}" +
     ".jlv2 .erow .nm b{display:block;font-size:10.5px;font-weight:600}" +
-    ".jlv2 .erow .nm small{color:#7e8798;font-size:8px;letter-spacing:.05em}" +
-    ".jlv2 .ebar{position:relative;height:15px;border-radius:4px;background:rgba(255,255,255,0.03);overflow:hidden}" +
+    ".jlv2 .erow .nm small{color:rgba(255,255,255,.80);font-size:8px;letter-spacing:.05em}" +
+    ".jlv2 .ebar{position:relative;height:15px;border-radius:4px;background:rgba(255,255,255,0.045);overflow:hidden}" +
     ".jlv2 .ebar::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:#ffffff26}" +
     ".jlv2 .ebar i{position:absolute;top:2px;bottom:2px;border-radius:2px}" +
     ".jlv2 .ebar em{position:absolute;top:0;bottom:0;font-style:normal;font-size:9px;line-height:15px;font-family:ui-monospace,monospace;white-space:nowrap}" +
     ".jlv2 .bigState{font-size:17px;font-weight:600;color:#ffd21f;letter-spacing:.03em}" +
     ".jlv2 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}" +
-    ".jlv2 .chip{font-size:8.5px;border:1px solid #ffffff1f;border-radius:8px;padding:4px 8px;color:#8fa8b3}" +
+    ".jlv2 .chip{font-size:8.5px;border:1px solid #ffffff1f;border-radius:8px;padding:4px 8px;color:rgba(255,255,255,.72)}" +
     ".jlv2 .chip.on{border-color:#81e6d9;color:#81e6d9;background:#81e6d914;font-weight:600}" +
     /* 大盘异动 */
     ".jlv2 .grp{margin-top:4px}" +
     ".jlv2 .grpH{display:flex;justify-content:space-between;font-size:9.5px;color:#81e6d9;padding:6px 0;border-bottom:1px dashed #81e6d92e}" +
-    ".jlv2 .grpH small{color:#7e8798}" +
+    ".jlv2 .grpH small{color:rgba(255,255,255,.80)}" +
     ".jlv2 .ev{display:grid;grid-template-columns:34px 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid #81e6d90f;font-size:9.5px;align-items:start}" +
     ".jlv2 .ev:last-child{border-bottom:none}" +
-    ".jlv2 .ev .tm{font-family:ui-monospace,monospace;color:#8fa8b3;font-size:9px;padding-top:1px}" +
+    ".jlv2 .ev .tm{font-family:ui-monospace,monospace;color:rgba(255,255,255,.72);font-size:9px;padding-top:1px}" +
     ".jlv2 .ev .tt b{display:block;font-size:10px;font-weight:600}" +
-    ".jlv2 .ev .tt small{color:#8fa8b3;font-size:8.5px;display:block;margin-top:2px;line-height:1.5}" +
+    ".jlv2 .ev .tt small{color:rgba(255,255,255,.72);font-size:8.5px;display:block;margin-top:2px;line-height:1.5}" +
     ".jlv2 .tags{display:flex;flex-direction:column;gap:3px;align-items:flex-end}" +
     ".jlv2 .tg{font-size:8px;border-radius:5px;padding:2px 6px;border:1px solid #ffffff26;color:#c9dfe8;white-space:nowrap}" +
-    ".jlv2 .tg.up{border-color:#ff54598c;color:#ff8b8f}" +
+    ".jlv2 .tg.up{border-color:#ff54598c;color:#ffa4a8}" +
     ".jlv2 .tg.dn{border-color:#1fdc938c;color:#1fdc93}" +
     ".jlv2 .tg.warn{border-color:#ffd21f8c;color:#ffd21f}" +
     ".jlv2 .tg.live{border-color:#81e6d9;color:#81e6d9;background:#81e6d914}" +
-    ".jlv2 .tg.dead{border-color:#ffffff1f;color:#7e8798}" +
-    ".jlv2 .hold{color:#ffd21f}.jlv2 .watch{color:#8fa8b3}" +
-    ".jlv2 .foot{font-size:8px;color:#7e8798;margin-top:10px;line-height:1.6}" +
-    ".jlv2 .g2{font-size:9px;color:#7e8798;padding:6px 0}";
+    ".jlv2 .tg.dead{border-color:#ffffff1f;color:rgba(255,255,255,.80)}" +
+    ".jlv2 .hold{color:#ffd21f}.jlv2 .watch{color:rgba(255,255,255,.72)}" +
+    ".jlv2 .foot{font-size:8px;color:rgba(255,255,255,.80);margin-top:10px;line-height:1.6}" +
+    ".jlv2 .g2{font-size:9px;color:rgba(255,255,255,.80);padding:6px 0}";
   document.head.appendChild(css);
 
   /* ---------- 状态 ---------- */
@@ -453,7 +453,7 @@
     if (st && st.zt != null) sumParts.push('<span class="mono">涨停' + st.zt + '/跌停' + (st.dt == null ? "—" : st.dt) + '</span>');
     if (zbr != null) sumParts.push('<span class="mono">炸板' + zbr + '%</span>');
     var alertDot = st && (st.state === "冰点" || st.state === "高潮") ? '<span class="dot" style="color:#ff5459"></span>' : (st && st.state === "冷点" ? '<span class="dot" style="color:#ffd21f"></span>' : "");
-    var scale = '<div class="row" style="border-bottom:none;gap:0;display:flex;justify-content:space-between;font-size:8px;color:#7e8798"><span>100 沸</span><span>热</span><span>温</span><span>50 平</span><span>冷</span><span>过冷</span><span>0 冰</span></div>';
+    var scale = '<div class="row" style="border-bottom:none;gap:0;display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.80)"><span>100 沸</span><span>热</span><span>温</span><span>50 平</span><span>冷</span><span>过冷</span><span>0 冰</span></div>';
     function tile(lb, val, cls, sub) { return '<div class="ft"><span>' + lb + '</span><b class="' + cls + '">' + val + '</b><small>' + sub + '</small></div>'; }
     var upR = Math.round(sn.up / Math.max(1, sn.up + sn.down) * 100);
     var yzbr = yv && yv.zbr != null ? yv.zbr : null;
@@ -496,12 +496,12 @@
     }
     var body =
       scale +
-      '<div class="tnow" style="margin-top:8px"><b>' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '">' + (st ? st.state : "—") + '</span><span style="font-size:8.5px;color:#8fa8b3">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
+      '<div class="tnow" style="margin-top:8px"><b>' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '">' + (st ? st.state : "—") + '</span><span style="font-size:8.5px;color:rgba(255,255,255,.72)">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
       '<div class="fgrid">' + grid + '</div>' +
       '<div class="jh">冰点判定 · 规则组（非阈值）</div>' + rules +
       '<div class="jh">场景提示 · 状态驱动</div>' + scn +
       '<div class="foot">状态描述，不构成操作建议 · 温度=50+(涨跌比-0.5)×100 与旧卡同源 · 冰点=规则组判定（≥3项）· 阈值集中在 CFG 待回测校准 · 涨跌停池为本模块自建口径</div>';
-    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#7e8798">·</span>') + '</span>', body: body };
+    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.80)">·</span>') + '</span>', body: body };
   }
   function amtDiff() {
     if (!S.snap || !isFinite(S.snap.amt)) return null;
@@ -532,13 +532,13 @@
     var rows = "";
     if (etfOk) {
       var mx = Math.max.apply(null, S.etf.map(function (r) { return r && isFinite(r.today) ? Math.abs(r.today) : 0; }).concat([1]));
-      rows = '<div class="row" style="font-size:8px;color:#7e8798;border-bottom:none;padding-bottom:2px"><span>品种</span><span>当日主力净额（红入绿出）</span><span style="text-align:right">近5日</span></div>';
+      rows = '<div class="row" style="font-size:8px;color:rgba(255,255,255,.80);border-bottom:none;padding-bottom:2px"><span>品种</span><span>当日主力净额（红入绿出）</span><span style="text-align:right">近5日</span></div>';
       rows += S.etf.map(function (r) {
         if (!r) return "";
         var w = isFinite(r.today) ? Math.max(3, Math.abs(r.today) / mx * 46) : 0;
         var bar = isFinite(r.today) ? (r.today >= 0
           ? '<i style="left:50%;width:' + w + '%;background:linear-gradient(90deg,#ff5459cc,#ff5459)"></i><em style="left:50%;padding-left:5px;color:#ff8b8f">' + fmtYi(r.today) + '</em>'
-          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding-right:5px;color:#1fdc93">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:#7e8798">—</em>';
+          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding-right:5px;color:#5ae8ab">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:rgba(255,255,255,.80)">—</em>';
         return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:9.5px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
       }).join("");
     } else rows = '<div class="g2">ETF 净额通道未到 · 稍后自动重试</div>';
@@ -557,7 +557,7 @@
     }
     var body = rows + struct +
       '<div class="foot">ETF主力净额≠真实净流入（份额变动×净值）· push2his fflow 日K · 近5日=近5根日K合计 · 结构判断=沪深300涨跌×上涨占比交叉派生 · 托底不等于全面进攻</div>';
-    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#7e8798">·</span>') + '</span>', body: body };
+    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.80)">·</span>') + '</span>', body: body };
   }
   function renderYd() {
     buildGroups();
@@ -579,7 +579,7 @@
       return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>' + x.n + '</small></div>' + x.html + '</div>';
     }).join("");
     body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 指数/成交额异动二期自算</div>';
-    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#7e8798">·</span>') + '</span>', body: body };
+    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.80)">·</span>') + '</span>', body: body };
   }
 
   /* 调试钩子（金粲惯例 window 挂钩）：__JLV2S__=状态 __JLV2P__=手动重绘 __JLV2C__=配置 */
