@@ -60,11 +60,10 @@
    (c) 预缓存失败不 skipWaiting;activate 保留前一版缓存,消灭"空缓存窗口"
    (d) 2026-09-20: 网络返回 HTTP 错误(4xx/5xx)也视为失败回退缓存,不再把错误响应直接端给用户 */
 /* jinlin sw v.82 — 2026-10-05: →v122 壳改「先秒出缓存+后台静默更新」: v121 及以前网络竞跑3.5s, 弱网必输喂旧缓存(=手机永远慢一版的根因); 配合 index jl-1020 自愈, 弱网最多两次刷新到新版 */
-/* jinlin sw v.89 — 2026-10-06: 缓存名 →v167, 配合大盘异动二期并批(index v0.84.25: jlv2.js?v=4,
-   板块异动N=3/T=30分聚簇+个股扩散M=5升级横幅 复用事件流零新源; 指数异动+成交额异动 腾讯分钟源自算(东财被拒不碰),
-   休市冻结/断档降级; "二期·本版仅聚合个股事件流"占位移除) */
-const C = 'jinlin-shell-v167'; /* jl-1077 v0.84.25: 大盘异动二期并批(板块异动+个股扩散+指数异动+成交额异动); jlv2.js?v=4 */
-const KEEP = ['jinlin-shell-v167', 'jinlin-shell-v166'];
+/* jinlin sw v.90 — 2026-10-06: 缓存名 →v168, 配合大盘异动聚合剔ST批(index v0.84.26: jlv2.js?v=5,
+   ST/*ST 5%涨跌停口径≠主板, 六组聚合/代表个股/扩散横幅/最新全剔除, CFG.yd.exst可关) */
+const C = 'jinlin-shell-v168'; /* jl-1078 v0.84.26: 大盘异动聚合剔除ST/*ST; jlv2.js?v=5 */
+const KEEP = ['jinlin-shell-v168', 'jinlin-shell-v167'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

@@ -4,6 +4,7 @@
    ③ 大盘异动 · 分组：事件流六组聚合（涨跌停结构/板块异动/个股扩散/风险事件/指数异动/成交额异动）
    jl-1077 v0.84.25 二期并批：板块异动(同板块N只·T分钟同类聚簇)+个股扩散(≥M只升级+顶部醒目横幅) 复用事件流判定零新源；
    指数异动+成交额异动 腾讯分钟源自算(东财整族被拒不碰)；休市/断档=冻结不报错，通道死走降级卡
+   jl-1078 v0.84.26: 聚合剔除ST(5%涨跌停口径≠主板, CFG.yd.exst可关)，六组/代表个股/横幅/最新全口径生效
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -21,7 +22,7 @@
     hot: { zt: 100, lb: 6, prem: 4 },                       // 高潮（对偶状态）
     bounce: { dtJump: 8, zbFail: 35 },                      // 温度快升但涨停扩散失败
     persistMin: 15,                                         // 异动持续性：N分钟无跟进→已衰竭
-    yd: { bkN: 3, bkWin: 30, spM: 5, spWin: 30 },            // jl-1077 二期①: 板块异动=同板块≥bkN只·bkWin分钟同类 | 个股扩散=spWin分钟同类≥spM只不同股
+    yd: { bkN: 3, bkWin: 30, spM: 5, spWin: 30, exst: 1 },   // jl-1077 二期①: 板块异动=同板块≥bkN只·bkWin分钟同类 | 个股扩散=spWin分钟同类≥spM只不同股; jl-1078 exst=剔ST/*ST(5%涨跌停口径≠主板, 0=关)
     tx: {                                                    // jl-1077 二期②: 指数/成交额异动（腾讯分钟源自算）
       hosts: ["https://proxy.finance.qq.com/ifzqgtimg", "https://web.ifzq.gtimg.cn", "https://ifzq.gtimg.cn"],
       idx: [["sh000001", "沪指"], ["sz399001", "深成指"], ["sz399006", "创业板指"]],
@@ -423,6 +424,7 @@
     (S.ownYd || []).forEach(function (x) {
       if (!evs.some(function (e) { return e.c === x.c && e.t === x.t && e.tm === x.tm; })) evs.push(x);
     });
+    if (CFG.yd.exst) evs = evs.filter(function (e) { return e && !/ST/.test(String(e.n || "")); }); /* jl-1078: 剔除ST/*ST(S*ST同名命中)——5%涨跌停口径≠主板, 六组聚合/代表个股/扩散横幅/最新全不掺入; 原始缓存不动, 只滤聚合入口 */
     /* jl-1076: tm实为HHMMSS(如144506=14:45:06), 原闸按HHMM(930~1500)比对=全量误筛——"大盘异动恒0组"自上线即如此的根源。统一换算真实分钟再过滤/分桶(原HHMM直接除以15跨整点还会出9:90伪时刻) */
     var toMin = function (v) { v = +v; return v > 2359 ? Math.floor(v / 10000) * 60 + Math.floor(v % 10000 / 100) : Math.floor(v / 100) * 60 + v % 100; };
     var fromMin = function (m) { return Math.floor(m / 60) * 100 + m % 60; };
@@ -786,7 +788,7 @@
       if (!x) return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>0</small></div></div>';
       return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>' + x.n + '</small></div>' + x.html + '</div>';
     }).join("");
-    body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 指数/成交额自算（腾讯分钟源 · 休市冻结）</div>';
+    body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 剔除ST · 指数/成交额自算（腾讯分钟源 · 休市冻结）</div>';
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
   }
 
