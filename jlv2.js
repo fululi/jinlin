@@ -1,7 +1,9 @@
 /* jlv2.js — jl-1053 v0.84.0 首页尾部三张折叠卡（独立模块，零侵入）
    ① 大资金 · 国家队：4只宽基ETF主力净额 + 市场结构判断（权重托底≠全面进攻）
    ② 市场温度 · v2：温度 + 冰点/冷点状态机（规则组判定，非阈值）+ 九因子 + 场景提示
-   ③ 大盘异动 · 分组：事件流六组聚合（涨跌停结构/板块异动/个股扩散/风险事件/指数·量能二期）
+   ③ 大盘异动 · 分组：事件流六组聚合（涨跌停结构/板块异动/个股扩散/风险事件/指数异动/成交额异动）
+   jl-1077 v0.84.25 二期并批：板块异动(同板块N只·T分钟同类聚簇)+个股扩散(≥M只升级+顶部醒目横幅) 复用事件流判定零新源；
+   指数异动+成交额异动 腾讯分钟源自算(东财整族被拒不碰)；休市/断档=冻结不报错，通道死走降级卡
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -19,6 +21,14 @@
     hot: { zt: 100, lb: 6, prem: 4 },                       // 高潮（对偶状态）
     bounce: { dtJump: 8, zbFail: 35 },                      // 温度快升但涨停扩散失败
     persistMin: 15,                                         // 异动持续性：N分钟无跟进→已衰竭
+    yd: { bkN: 3, bkWin: 30, spM: 5, spWin: 30 },            // jl-1077 二期①: 板块异动=同板块≥bkN只·bkWin分钟同类 | 个股扩散=spWin分钟同类≥spM只不同股
+    tx: {                                                    // jl-1077 二期②: 指数/成交额异动（腾讯分钟源自算）
+      hosts: ["https://proxy.finance.qq.com/ifzqgtimg", "https://web.ifzq.gtimg.cn", "https://ifzq.gtimg.cn"],
+      idx: [["sh000001", "沪指"], ["sz399001", "深成指"], ["sz399006", "创业板指"]],
+      amt: [["sh000001", "沪市"], ["sz399106", "深市"]],      // 全市场分钟成交额=沪000001+深综399106（399001为成分指口径偏小）
+      idx1m: 0.5, idx5m: 1.0, idxCool: 10,                   // 指数: 1分钟±% / 5分钟同向累计±% 触发, 同向冷却合并
+      amtWin: 5, amtUp: 2.0, amtDn: 0.5, amtBasis: 5          // 成交额: 5分钟窗 vs 历史同期均值, ≥2倍放量 ≤0.5倍缩量, 基准天数
+    },
     refrLive: 60e3, refrEtf: 120e3
   };
 
@@ -142,7 +152,9 @@
     atr: null,    // {vol,atr,close,prevDate}
     etf: null,    // [{secid,name,code,today,d5,arr}]
     hot: null,    // {name,streak}
-    grp: null,    // {groups:[],count,latest}
+    grp: null,    // {groups:[],count,latest,banner}
+    tx: null,     // jl-1077 腾讯分钟源: {ok,date,today,pts:{code:[[mn,价]]},slots:{"HHMM":全市场分钟额}} 断档保留旧值=冻结
+    txOk: 0,      // jl-1077 通道存活(返回过有效数据)与数据有无分离
     open: lsGet("jlv2_open_v1", { t: 0, g: 0, y: 0 })
   };
   // 载入今日已有缓存
@@ -272,6 +284,7 @@
   /* ---------- P2 异动分组（读 jinlin_yd_v1 缓存 + 自补 8205/8218/8202） ---------- */
   var YD_UP = { 8201: 1, 8202: 1, 8203: 1, 8204: 1, 8206: 1 };
   var YD_NAME = { 8201: "火箭发射", 8202: "快速反弹", 8203: "大笔买入", 8204: "封涨停", 8205: "打开涨停", 8206: "有大买盘", 8207: "有大卖盘", 8218: "加速下跌", 8219: "高台跳水", 8220: "大笔卖出", 8221: "封跌停", 8222: "打开跌停" };
+  var YD_DIR = { 8201: 1, 8202: 1, 8203: 1, 8204: 1, 8206: 1, 8222: 1, 8205: -1, 8207: -1, 8218: -1, 8219: -1, 8220: -1, 8221: -1 }; /* jl-1077: 事件类型→影响方向(1偏多/-1偏空), 板块异动/个股扩散共用; 打开跌停=翘板偏多 */
   S.ownYd = S.ownYd || []; /* 本模块补抓的异动事件（8205/8218/8202）*/
   function fetchOwnYd(cb) {
     var tys = ["8205", "8218", "8202"], left = tys.length, okN = 0; /* jl-1076: 通道存活(返回过有效数据)与事件有无分离——区分"真无事件"和"取不到" */
@@ -284,6 +297,115 @@
         if (--left <= 0) { S.ydFetchOk = okN > 0; cb(null, S.ownYd); }
       });
     });
+  }
+  /* ---------- jl-1077 腾讯分钟源（指数异动/成交额异动自算; 东财整族被拒不碰） ----------
+     通道: /appstock/app/minute/query?code=XX → {"data":{code:{"data":{"data":["HHMM 价 累计手 累计额"],"date":"20260930"}}}}
+     休市冻结: 响应自带date, ≠今日=假期/未开盘→不产新事件只显冻结行; 断档保留S.tx旧值=冻结; 全败走降级卡 */
+  var txHostI = 0; /* 记忆当前可用host, 失败逐个轮换 */
+  function txMin(v) { v = +v; return Math.floor(v / 100) * 60 + v % 100; }
+  function txGet(path, cb) {
+    var tried = 0;
+    (function go() {
+      var h = CFG.tx.hosts[txHostI % CFG.tx.hosts.length];
+      var ac = null, tm = 0;
+      try { ac = new AbortController(); } catch (eC) {}
+      if (ac) tm = setTimeout(function () { try { ac.abort(); } catch (eA) {} }, 9e3);
+      fetch(h + path, { cache: "no-store", signal: ac ? ac.signal : undefined }).then(function (r) {
+        if (tm) clearTimeout(tm);
+        return r && r.ok ? r.json() : Promise.reject(new Error("http" + (r && r.status)));
+      }).then(function (j) { cb(null, j); }).catch(function (e) {
+        if (tm) clearTimeout(tm);
+        txHostI++; tried++;
+        if (tried < CFG.tx.hosts.length) go(); else cb(e || new Error("tx"));
+      });
+    })();
+  }
+  function fetchTxMin(cb) {
+    var seen = {}, codes = [];
+    CFG.tx.idx.concat(CFG.tx.amt).forEach(function (x) { if (!seen[x[0]]) { seen[x[0]] = 1; codes.push(x[0]); } });
+    var left = codes.length, okN = 0, acc = {};
+    codes.forEach(function (code) {
+      txGet("/appstock/app/minute/query?code=" + code, function (e, j) {
+        try {
+          var node = !e && j && j.data && j.data[code] && j.data[code].data;
+          if (node && node.data && node.data.length) { okN++; acc[code] = { date: String(node.date || ""), rows: node.data }; }
+        } catch (eP) {}
+        if (--left <= 0) {
+          S.txOk = okN > 0 ? 1 : 0;
+          if (okN) { parseTx(acc); try { window.__jlDg && window.__jlDg.ok("jlv2:tx"); } catch (eD) {} }
+          else { try { window.__jlDg && window.__jlDg.fail("jlv2:tx", function () { return new Promise(function (res) { fetchTxMin(function () { paint(); res(true); }); }); }, "腾讯分钟源受阻(指数/成交额自算未返回 · 网络/IP)", function () { return !!S.txOk; }); } catch (eD) {} }
+          if (cb) cb(null);
+        }
+      });
+    });
+  }
+  function parseTx(acc) {
+    var dtx = "", pts = {}, cumKeys = {};
+    Object.keys(acc).forEach(function (code) {
+      var a = acc[code], arr = [], byKey = {};
+      if (!dtx || a.date > dtx) dtx = a.date;
+      (a.rows || []).forEach(function (r) {
+        var p = String(r).split(" ");
+        if (p.length < 4) return;
+        var mn = txMin(p[0]);
+        if (mn >= 570 && mn <= 901) { arr.push([mn, +p[1]]); byKey[p[0]] = +p[3]; } /* 竞价异常行(如925)剔除 */
+      });
+      if (arr.length) { pts[code] = arr; cumKeys[code] = byKey; }
+    });
+    /* 全市场每分钟成交额 = 沪000001+深综399106 累计额差分（399001为成分指口径偏小不用） */
+    var slots = {}, allK = {}, prev = 0;
+    CFG.tx.amt.forEach(function (x) { Object.keys(cumKeys[x[0]] || {}).forEach(function (k) { allK[k] = 1; }); });
+    Object.keys(allK).sort().forEach(function (k) {
+      var tot = 0, full = true;
+      CFG.tx.amt.forEach(function (x) { var v = (cumKeys[x[0]] || {})[k]; if (v == null) { full = false; return; } tot += v; });
+      if (!full) return; /* 午休边界某源缺该分钟→跳过, 不串位 */
+      slots[k] = Math.max(0, tot - prev); prev = tot;
+    });
+    S.tx = { ok: true, date: dtx, today: !!dtx && (dtx.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") === today()), pts: pts, slots: slots };
+    /* 量能基准入库: 完整日曲线幂等入库, 保留 amtBasis+1 天（休市补看上一交易日也能入, 部分曲线>100分钟才收防污染） */
+    if (dtx && Object.keys(slots).length > 100) {
+      var st = lsGet("jlv2_amt_v1", {}) || {}; st.days = st.days || {};
+      var day = {}; Object.keys(slots).forEach(function (k) { day[k] = Math.round(slots[k]); });
+      st.days[dtx] = day;
+      var dk = Object.keys(st.days).sort();
+      for (var q = 0; q < dk.length - (CFG.tx.amtBasis + 1); q++) delete st.days[dk[q]];
+      lsSet("jlv2_amt_v1", st);
+    }
+  }
+  /* 指数事件: 1分钟|环比|≥idx1m 或 5分钟净幅≥idx5m → 快拉/快跳水; 同向idxCool分钟内合并(时间滚最新, 幅度取更强) */
+  function calcIdxEv(pts, cf) {
+    var raw = [], i;
+    for (i = 1; i < pts.length; i++) {
+      var m1 = (pts[i][1] - pts[i - 1][1]) / pts[i - 1][1] * 100;
+      if (Math.abs(m1) >= cf.idx1m) { raw.push({ start: pts[i][0], mn: pts[i][0], dir: m1 > 0 ? 1 : -1, m1: m1, m5: null }); continue; }
+      if (i >= 5) {
+        var m5 = (pts[i][1] - pts[i - 5][1]) / pts[i - 5][1] * 100;
+        if (Math.abs(m5) >= cf.idx5m) raw.push({ start: pts[i][0], mn: pts[i][0], dir: m5 > 0 ? 1 : -1, m1: m1, m5: m5 });
+      }
+    }
+    var out = [];
+    raw.forEach(function (e) {
+      var last = out[out.length - 1];
+      if (last && last.dir === e.dir && e.mn - last.mn <= cf.idxCool) {
+        last.mn = e.mn;
+        if (e.m5 != null && (last.m5 == null || Math.abs(e.m5) > Math.abs(last.m5))) { last.m5 = e.m5; last.m1 = e.m1; }
+        else if (e.m5 == null && last.m5 == null && Math.abs(e.m1) > Math.abs(last.m1)) last.m1 = e.m1;
+      } else out.push(e);
+    });
+    return out;
+  }
+  /* 量能事件: amtWin分钟窗合计 vs 历史同期窗均值 → ≥amtUp放量 ≤amtDn缩量; 每类只保最新一条(天然防每分钟刷屏) */
+  function calcAmtEv(slots, basis, cf) {
+    var ks = Object.keys(slots).sort(), up = null, dn = null, i, j;
+    for (i = cf.amtWin - 1; i < ks.length; i++) {
+      var sum = 0, bsum = 0, bn = 0;
+      for (j = i - cf.amtWin + 1; j <= i; j++) { sum += slots[ks[j]] || 0; var b = basis[ks[j]]; if (b != null && b > 0) { bsum += b; bn++; } }
+      if (bn < cf.amtWin || bsum <= 0) continue; /* 基准窗不满(首日/尾段)不判定 */
+      var r = sum / bsum;
+      if (r >= cf.amtUp) up = { mn: txMin(ks[i]), r: r, amt: sum, avg: bsum };
+      else if (r <= cf.amtDn) dn = { mn: txMin(ks[i]), r: r, amt: sum, avg: bsum };
+    }
+    return { up: up, dn: dn };
   }
   function holdingsMap() {
     var st = lsGet("jinlin_stocks_v2", []), mh = {}, mw = {};
@@ -316,6 +438,7 @@
       return a + b;
     }
     var groups = [];
+    var banner = ""; /* jl-1077: 个股扩散升级事件的顶部醒目横幅(C组赋值) */
     // A 涨跌停结构
     (function () {
       var zt4 = evs.filter(function (e) { return e.t === 8204 || e.t === 8205 || e.t === 8221 || e.t === 8222; });
@@ -336,32 +459,57 @@
       });
       groups.push({ t: "涨跌停结构", n: zt4.length, html: rows });
     })();
-    // B 板块异动（行业×10分钟聚簇）
+    // B 板块异动（jl-1077 二期: 同板块≥N只·T分钟内触发同类事件→聚合成板块级事件, 复用事件流判定零新源）
     (function () {
-      var upCls = evs.filter(function (e) { return YD_UP[e.t] && e.hy; });
-      var bk = {};
-      upCls.forEach(function (e) { var k = Math.floor(e.mn / 10) * 10; bk[k + "|" + e.hy] = (bk[k + "|" + e.hy] || 0) + 1; });
-      var top = Object.keys(bk).map(function (k) { return { k: k.split("|")[0], hy: k.split("|")[1], n: bk[k] }; }).filter(function (x) { return x.n >= 4; }).sort(function (a, b) { return b.k - a.k || b.n - a.n; }).slice(0, 2);
-      var rows = "";
-      top.forEach(function (x) {
-        var mem = upCls.filter(function (e) { return e.hy === x.hy && Math.floor(e.mn / 10) * 10 === +x.k; });
-        var hold = mem.map(function (e) { return H.mh[e.c] ? "●" + esc(H.mh[e.c]) : (H.mw[e.c] ? "○" + esc(H.mw[e.c]) : ""); }).filter(Boolean).slice(0, 2).join(" ");
-        var per = nReal - +x.k <= 10 ? "live" : (nReal - +x.k <= CFG.persistMin ? "warn" : "dead");
-        rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(+x.k)) + '</span><span class="tt"><b>' + esc(x.hy) + '快速拉升 · ' + mem.length + '只↑</b><small>' + mem.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(1, per) + '</span></div>';
+      var p = CFG.yd, base = evs.reduce(function (m, e) { return Math.max(m, e.mn); }, 0); /* 基准=最新事件分钟: 休市缓存日不随墙钟误判衰竭 */
+      if (!base) return;
+      var cls = {};
+      evs.forEach(function (e) {
+        if (!e.hy || e.mn == null || base - e.mn < 0 || base - e.mn > p.bkWin) return;
+        var k = e.hy + "|" + e.t, c = cls[k] || (cls[k] = { hy: e.hy, t: +e.t, mp: {}, list: [] });
+        if (!c.mp[e.c]) { c.mp[e.c] = 1; c.list.push(e); } /* 同股同类只计一只 */
       });
-      if (rows) groups.push({ t: "板块异动", n: top.length, html: rows });
+      var top = Object.keys(cls).map(function (k) { return cls[k]; }).filter(function (c) { return c.list.length >= p.bkN; });
+      top.forEach(function (c) { c.list.sort(function (a, b) { return b.mn - a.mn; }); c.at = c.list[0].mn; });
+      top.sort(function (a, b) { return b.at - a.at || b.list.length - a.list.length; });
+      var rows = "", live = 0;
+      top.slice(0, 3).forEach(function (c) {
+        var dir = YD_DIR[c.t] || 0, per = base - c.at <= 10 ? "live" : (base - c.at <= CFG.persistMin ? "warn" : "dead");
+        if (per !== "dead") live++;
+        var hold = c.list.map(function (e) { return H.mh[e.c] ? "●" + esc(H.mh[e.c]) : (H.mw[e.c] ? "○" + esc(H.mw[e.c]) : ""); }).filter(Boolean).slice(0, 2).join(" ");
+        rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(c.at)) + '</span><span class="tt"><b>' + esc(c.hy) + ' · ' + (YD_NAME[c.t] || c.t) + ' ' + c.list.length + '只</b><small>代表 ' + c.list.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(dir, per) + '</span></div>';
+      });
+      if (rows) groups.push({ t: "板块异动", n: live, html: rows }); /* 右侧计数=进行中(未衰竭)板块事件数 */
     })();
-    // C 个股扩散（15分钟环比）
+    // C 个股扩散（jl-1077 二期: 同类事件T分钟内扩散至≥M只不同股票→升级扩散事件, 卡片顶部醒目横幅; 15分钟环比降为辅助行）
     (function () {
-      var w = {}, w15 = Math.floor(nReal / 15) * 15;
-      evs.filter(function (e) { return YD_UP[e.t]; }).forEach(function (e) { var k = Math.floor(e.mn / 15) * 15; w[k] = (w[k] || 0) + 1; });
-      var cur = w[w15] || 0, prev = w[w15 - 15] || 0;
-      if (!cur && !prev) return;
-      var env = prev ? Math.round((cur - prev) / Math.max(1, prev) * 100) : (cur ? 100 : 0);
-      var dir = env >= 25 ? 1 : env <= -25 ? -1 : 0;
-      var ttl = dir > 0 ? "上涨类异动扩散 · 赚钱效应回暖" : dir < 0 ? "上涨类异动收敛 · 情绪退潮" : "异动密度平稳";
-      var rows = '<div class="ev"><span class="tm">' + hhmm(fromMin(w15)) + '</span><span class="tt"><b>' + ttl + '</b><small>本15分钟 ' + cur + ' 只 · 上15分钟 ' + prev + ' 只 · 环比 ' + (env >= 0 ? "+" : "") + env + '%</small></span><span class="tags">' + tags(dir, "warn") + '</span></div>';
-      groups.push({ t: "个股扩散", n: 1, html: rows });
+      var p = CFG.yd, base = evs.reduce(function (m, e) { return Math.max(m, e.mn); }, 0);
+      if (!base) return;
+      var w = {};
+      evs.forEach(function (e) {
+        if (base - e.mn < 0 || base - e.mn > p.spWin) return;
+        var c = w[e.t] || (w[e.t] = { t: +e.t, mp: {}, list: [] });
+        if (!c.mp[e.c]) { c.mp[e.c] = 1; c.list.push(e); } /* 不同股票去重计数 */
+      });
+      var sp = Object.keys(w).map(function (k) { return w[k]; }).filter(function (c) { return c.list.length >= p.spM; });
+      sp.forEach(function (c) { c.list.sort(function (a, b) { return b.mn - a.mn; }); c.at = c.list[0].mn; });
+      sp.sort(function (a, b) { return b.list.length - a.list.length; });
+      var rows = "", live = 0;
+      sp.slice(0, 3).forEach(function (c, i) {
+        var dir = YD_DIR[c.t] || 0, per = base - c.at <= 10 ? "live" : (base - c.at <= CFG.persistMin ? "warn" : "dead");
+        if (per !== "dead") live++;
+        var hold = c.list.map(function (e) { return H.mh[e.c] ? "●" + esc(H.mh[e.c]) : (H.mw[e.c] ? "○" + esc(H.mw[e.c]) : ""); }).filter(Boolean).slice(0, 2).join(" ");
+        rows += '<div class="ev"><span class="tm">' + hhmm(fromMin(c.at)) + '</span><span class="tt"><b>' + (YD_NAME[c.t] || c.t) + '扩散 · ' + c.list.length + '只</b><small>近' + p.spWin + '分钟 · 代表 ' + c.list.slice(0, 3).map(function (e) { return esc(e.n); }).join(" · ") + (hold ? '<br><span class="hold">' + hold + '</span>' : '') + '</small></span><span class="tags">' + tags(dir, per) + '</span></div>';
+        if (i === 0 && per !== "dead") { /* 顶部醒目横幅: 偏空红系/偏多金系, 跟进中/待确认 */
+          banner = '<div class="grp" style="margin:3px 0;border:1px solid ' + (dir < 0 ? "#ff5459" : "#ffd21f") + '55;background:' + (dir < 0 ? "rgba(255,84,89,.10)" : "rgba(255,210,31,.08)") + ';border-radius:10px;padding:7px 9px;font-size:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<b style="font-size:10.5px;color:' + (dir < 0 ? "#ffa4a8" : "#ffd21f") + '">⚠ ' + (YD_NAME[c.t] || "异动") + '扩散 · ' + c.list.length + '只</b>' +
+            '<small style="color:rgba(255,255,255,.86);font-size:8.5px">近' + p.spWin + '分钟 ≥' + p.spM + '只 · 影响' + (dir > 0 ? "偏多" : dir < 0 ? "偏空" : "中性") + ' · ' + (per === "live" ? "跟进中" : "待确认") + '</small></div>';
+        }
+      });
+      var w15 = Math.floor(base / 15) * 15, upN = {};
+      evs.forEach(function (e) { if (YD_UP[e.t] && Math.floor(e.mn / 15) * 15 === w15) upN[e.c] = 1; });
+      var cur = Object.keys(upN).length;
+      if (rows) groups.push({ t: "个股扩散", n: live, html: rows + '<div class="g2">本15分钟上涨类 ' + cur + ' 只 · N=' + p.bkN + ' T=' + p.bkWin + '分 M=' + p.spM + '（CFG.yd 可调）</div>' });
     })();
     // D 风险事件
     (function () {
@@ -380,8 +528,51 @@
       });
       groups.push({ t: "风险事件", n: rk.length, html: rows });
     })();
+    // E 指数异动 + F 成交额异动（jl-1077 二期: 腾讯分钟源自算; 休市date≠今日→冻结行, 通道死→降级卡, 均不报错）
+    (function () {
+      var tx = S.tx;
+      if (!tx || !tx.ok) { groups.push({ t: "指数异动", n: 0, html: dgText("jlv2:tx", "腾讯分钟源未到 · 稍后自动重试") }); return; }
+      if (!tx.today) { /* 休市/未开盘: 冻结显示, 不随墙钟产新事件 */
+        var mmdd = tx.date ? tx.date.slice(4, 6) + "-" + tx.date.slice(6, 8) : "";
+        groups.push({ t: "指数异动", n: 0, html: '<div class="g2">休市冻结 · 分钟数据停在 ' + mmdd + '（不报错 · 开盘自动恢复）</div>' });
+        groups.push({ t: "成交额异动", n: 0, html: '<div class="g2">休市冻结 · 量能基准 ' + mmdd + '</div>' });
+        return;
+      }
+      var cf = CFG.tx, rowsI = "", nI = 0;
+      cf.idx.forEach(function (ix) {
+        var pts = tx.pts[ix[0]];
+        if (!pts || pts.length < 2) return;
+        var evs2 = calcIdxEv(pts, cf), last = evs2[evs2.length - 1]; /* 每指数只显示最近一条 */
+        if (!last) return;
+        var end = pts[pts.length - 1][0]; /* 数据尾=状态基准, 非墙钟 */
+        var per = end - last.mn <= 10 ? "live" : (end - last.mn <= CFG.persistMin ? "warn" : "dead");
+        if (per !== "dead") nI++;
+        var amp = last.m5 != null ? "5分钟" + (last.m5 >= 0 ? "+" : "") + last.m5.toFixed(2) + "%" : "1分钟" + (last.m1 >= 0 ? "+" : "") + last.m1.toFixed(2) + "%";
+        var sub = "自 " + hhmm(fromMin(last.start)) + " 起" + (last.m5 != null ? " · 近1分钟" + (last.m1 >= 0 ? "+" : "") + last.m1.toFixed(2) + "%" : "") + " · 1分" + cf.idx1m + "%/5分" + cf.idx5m + "%触发";
+        rowsI += '<div class="ev"><span class="tm">' + hhmm(fromMin(last.mn)) + '</span><span class="tt"><b>' + ix[1] + (last.dir > 0 ? " 快拉" : " 快跳水") + ' · ' + amp + '</b><small>' + sub + '</small></span><span class="tags">' + tags(last.dir, per) + '</span></div>';
+      });
+      if (rowsI) groups.push({ t: "指数异动", n: nI, html: rowsI });
+      /* F 成交额: 基准=历史同期分钟均值(数据日除外, ≤amtBasis天) */
+      var st = lsGet("jlv2_amt_v1", null), days = st && st.days ? st.days : {};
+      var bd = Object.keys(days).filter(function (d) { return d !== tx.date; }).sort().slice(-cf.amtBasis);
+      if (!bd.length) { groups.push({ t: "成交额异动", n: 0, html: '<div class="g2">量能基准积累中 · 已入 ' + Object.keys(days).length + ' 日（需历史交易日分钟曲线做同期均值）</div>' }); return; }
+      var basis = {};
+      bd.forEach(function (d) { Object.keys(days[d]).forEach(function (k) { (basis[k] = basis[k] || []).push(days[d][k]); }); });
+      Object.keys(basis).forEach(function (k) { var a = basis[k]; basis[k] = a.reduce(function (x, y) { return x + y; }, 0) / a.length; });
+      var ra = calcAmtEv(tx.slots, basis, cf), rowsA = "", nA = 0;
+      var ks = Object.keys(tx.slots).sort(), endA = ks.length ? txMin(ks[ks.length - 1]) : 0;
+      [[ra.up, "全市场放量", 1], [ra.dn, "全市场缩量", 0]].forEach(function (it) { /* 缩量=中性 */
+        var e = it[0];
+        if (!e) return;
+        var per = endA - e.mn <= 10 ? "live" : (endA - e.mn <= CFG.persistMin ? "warn" : "dead");
+        if (per !== "dead") nA++;
+        rowsA += '<div class="ev"><span class="tm">' + hhmm(fromMin(e.mn)) + '</span><span class="tt"><b>' + it[1] + ' · 同期' + e.r.toFixed(1) + '倍</b><small>近' + cf.amtWin + '分钟 ' + (e.amt / 1e8).toFixed(0) + '亿 vs 均值' + (e.avg / 1e8).toFixed(0) + '亿 · 基准' + bd.length + '日 · ≥' + cf.amtUp + '倍放量/≤' + cf.amtDn + '倍缩量</small></span><span class="tags">' + tags(it[2], per) + '</span></div>';
+      });
+      if (rowsA) groups.push({ t: "成交额异动", n: nA, html: rowsA });
+      else groups.push({ t: "成交额异动", n: 0, html: '<div class="g2">量能平稳 · 近' + cf.amtWin + '分钟在同期均值' + cf.amtDn + '~' + cf.amtUp + '倍区间内</div>' });
+    })();
     var latest = evs.length ? hhmm(fromMin(evs[0].mn)) + " " + esc(evs[0].n) + " " + (YD_NAME[evs[0].t] || evs[0].t) : "";
-    S.grp = { groups: groups, count: groups.reduce(function (a, g) { return a + g.n; }, 0), latest: latest };
+    S.grp = { groups: groups, count: groups.reduce(function (a, g) { return a + g.n; }, 0), latest: latest, banner: banner };
   }
 
   /* ---------- 派生：温度状态机 / 结构判断 ---------- */
@@ -590,13 +781,12 @@
     } else { try { window.__jlDg && window.__jlDg.ok("jlv2:yd"); } catch (eOy2) {} }
     var ORDER = ["指数异动", "涨跌停结构", "成交额异动", "板块异动", "个股扩散", "风险事件"];
     var map = {}; g.groups.forEach(function (x) { map[x.t] = x; });
-    body += ORDER.map(function (t) {
-      if (t === "指数异动" || t === "成交额异动") return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>二期 · 本版仅聚合个股事件流</small></div></div>';
+    body += (g.banner || "") + ORDER.map(function (t) { /* jl-1077: 二期占位行已由真实功能替换(指数/成交额自算), 扩散横幅置顶 */
       var x = map[t];
       if (!x) return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>0</small></div></div>';
       return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>' + x.n + '</small></div>' + x.html + '</div>';
     }).join("");
-    body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 指数/成交额异动二期自算</div>';
+    body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 指数/成交额自算（腾讯分钟源 · 休市冻结）</div>';
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
   }
 
@@ -604,6 +794,7 @@
   window.__JLV2S__ = S;
   window.__JLV2P__ = function () { try { paint(); } catch (e) {} };
   window.__JLV2C__ = CFG;
+  window.__JLV2T__ = { calcIdxEv: calcIdxEv, calcAmtEv: calcAmtEv, fetchTxMin: fetchTxMin }; /* jl-1077: 纯函数暴露, 便于回测校准 */
 
   function paint() {
     var root = ensureRoot();
@@ -638,6 +829,7 @@
     setTimeout(function () { fetchEtfs(function () { paint(); }); }, 2200);
     setTimeout(function () { fetchHot(function () { paint(); }); }, 3000);
     setTimeout(function () { fetchOwnYd(function () { paint(); }); }, 3600);
+    setTimeout(function () { fetchTxMin(function () { paint(); }); }, 4200); /* jl-1077: 指数/成交额自算 */
   }
   var lastTick = 0;
   setInterval(function () {
@@ -646,6 +838,7 @@
     fetchSnap(function () { paint(); });
     if (n - lastTick > CFG.refrEtf) { lastTick = n; fetchIdx(function () { paint(); }); fetchEtfs(function () { paint(); }); }
     fetchPools(function () { paint(); });
+    fetchTxMin(function () { paint(); }); /* jl-1077: 分钟级自算(60s), 休市时mktLive闸住=冻结 */
     paint();
   }, CFG.refrLive);
   var visAt = 0;
