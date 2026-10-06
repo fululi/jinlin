@@ -64,8 +64,10 @@
    ST/*ST 5%涨跌停口径≠主板, 六组聚合/代表个股/扩散横幅/最新全剔除, CFG.yd.exst可关) */
 /* jinlin sw v.91 — 2026-10-06: 缓存名 →v169, 配合ST剔除推广全站批(index v0.84.27: jlv2.js?v=6,
    主模块异动Tab事件流全tab/涨停池家数/密度图/气泡聚集 + jlv2涨跌停池(温度v2九因子/连板/炸板/昨涨停溢价)同口径剔ST/退市) */
-const C = 'jinlin-shell-v169'; /* jl-1079 v0.84.27: ST剔除推广全站; jlv2.js?v=6 */
-const KEEP = ['jinlin-shell-v169', 'jinlin-shell-v168'];
+/* jinlin sw v.92 — 2026-10-06: 缓存名 →v170, 配合离线板块映射批(index v0.84.28: jlv2.js?v=7 + jl_sector_map.js?v=1,
+   内置东财EM2016二级行业映射5929只纯静态——板块异动聚簇键换映射(治恒0组)/热点板块持续离线聚合/跌停明细可点展开+DT池sort根修) */
+const C = 'jinlin-shell-v170'; /* jl-1080 v0.84.28: 离线板块映射三空转位补齐; jlv2.js?v=7 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v170', 'jinlin-shell-v169'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

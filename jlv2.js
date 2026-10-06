@@ -6,6 +6,8 @@
    指数异动+成交额异动 腾讯分钟源自算(东财整族被拒不碰)；休市/断档=冻结不报错，通道死走降级卡
    jl-1078 v0.84.26: 聚合剔除ST(5%涨跌停口径≠主板, CFG.yd.exst可关)，六组/代表个股/横幅/最新全口径生效
    jl-1079 v0.84.27: ST剔除推广全站——主模块异动Tab(事件流全tab/涨停池/密度图/气泡)+本模块涨跌停池(温度v2九因子/连板/炸板/溢价)同口径
+   jl-1080 v0.84.28: 内置离线板块映射(jl_sector_map.js 东财EM2016二级5929只·纯静态零在线)——①板块异动聚簇键=映射优先(治"恒0组"根因: hy富化常败)
+   ②热点板块持续=主模块温度逐股涨跌×映射聚合→行业涨幅榜首(无数据显"板块映射未覆盖") ③跌停明细可点展开+DT池sort根修(fbt:asc恒空行→fund:desc)+事件流口径交叉校验
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -206,7 +208,8 @@
     });
   }
   function fetchPoolOne(kind, date, cb) {
-    jsonp(P2X, "/getTopic" + kind + "Pool?ut=" + UT + "&dpt=wz.ztzt&Pageindex=0&pagesize=200&sort=fbt:asc&date=" + date, function (e, d) {
+    var srt = kind === "DT" ? "fund:desc" : "fbt:asc"; /* jl-1080: DT池fbt:asc恒返空行(实测tc=21而pool=[]), fund:desc才出明细——跌停计数自上线恒0的根修 */
+    jsonp(P2X, "/getTopic" + kind + "Pool?ut=" + UT + "&dpt=wz.ztzt&Pageindex=0&pagesize=200&sort=" + srt + "&date=" + date, function (e, d) {
       if (e || !d || !d.data || !d.data.pool) { cb(e || new Error(kind)); return; }
       var pool = d.data.pool;
       if (CFG.yd.exst) pool = pool.filter(function (r) { return !/ST/.test(String(r.n || "")); }); /* jl-1079: 涨跌停池家族剔ST——温度v2九因子/连板高度/炸板率/溢价/涨跌停结构组判定全口径对齐主模块 */
@@ -218,7 +221,7 @@
     function fin() { if (--left > 0) return; if (bad >= 3) { cb(new Error("pools")); return; } S.pool = out; lsSet("jlv2_pool_v1", out); cb(null, out); }
     fetchPoolOne("ZT", ymd(), function (e, p) { if (e) { bad++; } else { var lb = 0, zb = 0; p.forEach(function (r) { lb = Math.max(lb, +r.lbc || 0); zb += +r.zbc || 0; }); out.zt = { n: p.length, lb: lb, zbc: zb }; } fin(); });
     fetchPoolOne("ZB", ymd(), function (e, p) { if (e) { bad++; } else { out.zb = { n: p.length }; } fin(); });
-    fetchPoolOne("DT", ymd(), function (e, p) { if (e) { bad++; } else { out.dt = { n: p.length }; } fin(); });
+    fetchPoolOne("DT", ymd(), function (e, p) { if (e) { bad++; } else { out.dt = { n: p.length, rows: p.map(function (r) { return { c: String(r.c), n: String(r.n), zdp: +r.zdp || 0, days: +r.days || 1, fund: +r.fund || 0 }; }) }; } fin(); }); /* jl-1080: 跌停明细落存(zdp跌幅/days连跌天数/fund封单), 温度卡点数字弹出 */
   }
   function fetchPremium(cb) {
     var pd = prevTradeDay();
@@ -289,6 +292,10 @@
   var YD_UP = { 8201: 1, 8202: 1, 8203: 1, 8204: 1, 8206: 1 };
   var YD_NAME = { 8201: "火箭发射", 8202: "快速反弹", 8203: "大笔买入", 8204: "封涨停", 8205: "打开涨停", 8206: "有大买盘", 8207: "有大卖盘", 8218: "加速下跌", 8219: "高台跳水", 8220: "大笔卖出", 8221: "封跌停", 8222: "打开跌停" };
   var YD_DIR = { 8201: 1, 8202: 1, 8203: 1, 8204: 1, 8206: 1, 8222: 1, 8205: -1, 8207: -1, 8218: -1, 8219: -1, 8220: -1, 8221: -1 }; /* jl-1077: 事件类型→影响方向(1偏多/-1偏空), 板块异动/个股扩散共用; 打开跌停=翘板偏多 */
+  /* jl-1080: 离线板块映射(jl_sector_map.js 静态引入, 东财EM2016二级行业5929只)——
+     板块异动聚簇/热点板块持续/跌停明细所在板块三处共用; 纯静态零在线请求; 通达信导出整文件替换+?v=升位即换源 */
+  var SEC_MAP = (window.__JL_SECTORS__ && window.__JL_SECTORS__.map) || {};
+  function secOf(code) { return SEC_MAP[code] || ""; }
   S.ownYd = S.ownYd || []; /* 本模块补抓的异动事件（8205/8218/8202）*/
   function fetchOwnYd(cb) {
     var tys = ["8205", "8218", "8202"], left = tys.length, okN = 0; /* jl-1076: 通道存活(返回过有效数据)与事件有无分离——区分"真无事件"和"取不到" */
@@ -423,7 +430,7 @@
   function buildGroups() {
     var cc = lsGet("jinlin_yd_v1", null);
     var evs = [];
-    if (cc && cc.date === today() && cc.ev && cc.ev.length) evs = cc.ev.slice(0, 800);
+    if (cc && cc.date === today() && cc.ev && cc.ev.length) evs = cc.ev.slice(0, 1200); /* jl-1080: 800→1200对齐主模块写入上限——主模块按类型分块append, 800截掉尾部类型(8205/8218/8219/8220/8221/8222恒丢失)=板块异动恒0第二根因 */
     (S.ownYd || []).forEach(function (x) {
       if (!evs.some(function (e) { return e.c === x.c && e.t === x.t && e.tm === x.tm; })) evs.push(x);
     });
@@ -448,6 +455,8 @@
     (function () {
       var zt4 = evs.filter(function (e) { return e.t === 8204 || e.t === 8205 || e.t === 8221 || e.t === 8222; });
       if (!zt4.length) return;
+      var _dts = {}; zt4.forEach(function (e) { if (e.t === 8221) _dts[e.c] = 1; });
+      S.evDtN = Object.keys(_dts).length; /* jl-1080: 事件流封跌停去重股数——与跌停池家数交叉校验用(口径差异标注) */
       var bk = {};
       zt4.forEach(function (e) { var k = Math.floor(e.mn / 15) * 15; (bk[k] = bk[k] || []).push(e); });
       var keys = Object.keys(bk).sort(function (a, b) { return b - a; }).slice(0, 2);
@@ -470,8 +479,10 @@
       if (!base) return;
       var cls = {};
       evs.forEach(function (e) {
-        if (!e.hy || e.mn == null || base - e.mn < 0 || base - e.mn > p.bkWin) return;
-        var k = e.hy + "|" + e.t, c = cls[k] || (cls[k] = { hy: e.hy, t: +e.t, mp: {}, list: [] });
+        if (e.mn == null || base - e.mn < 0 || base - e.mn > p.bkWin) return;
+        var sy = secOf(e.c) || e.hy; /* jl-1080: 离线映射优先, 事件流hy兜底(东财口径)——治"板块异动恒0组"根因: hy富化在东财风控下常败 */
+        if (!sy || sy === "其他") return; /* 未映射不参簇——防伪板块事件 */
+        var k = sy + "|" + e.t, c = cls[k] || (cls[k] = { hy: sy, t: +e.t, mp: {}, list: [] });
         if (!c.mp[e.c]) { c.mp[e.c] = 1; c.list.push(e); } /* 同股同类只计一只 */
       });
       var top = Object.keys(cls).map(function (k) { return cls[k]; }).filter(function (c) { return c.list.length >= p.bkN; });
@@ -641,6 +652,44 @@
     return ROOT;
   }
   function statePill(st) { return st === "冰点" ? "zpill ice" : st === "高潮" ? "zpill hot" : "zpill"; }
+  /* jl-1080: 热点板块持续——离线板块映射聚合主模块温度逐股涨跌(jinlin_mtemp_v1.data.rows, 增强通道顺手持久化) → 行业涨幅榜首
+     板块上涨占比+平均涨幅; 样本<8不参榜(防小板块霸榜); 连日数独立键jlv2_hotoff_v1(与在线jlv2_hot_v1互不污染); 无数据=映射未覆盖 */
+  function calcHotSector() {
+    var rows = null;
+    try { var mc = lsGet("jinlin_mtemp_v1", null); rows = mc && mc.data && mc.data.rows; } catch (e) { rows = null; } /* lsGet已parse, 勿再JSON.parse */
+    if (!rows || !rows.length) return null;
+    var agg = {};
+    for (var i = 0; i < rows.length; i++) {
+      var hy = SEC_MAP[rows[i][0]];
+      if (!hy) continue;
+      var o = agg[hy] || (agg[hy] = { n: 0, up: 0, s: 0 }), p = +rows[i][1] || 0;
+      o.n++; if (p > 0) o.up++; o.s += p;
+    }
+    var best = null;
+    Object.keys(agg).forEach(function (k) {
+      var o = agg[k];
+      if (o.n < 8) return;
+      var a = o.s / o.n;
+      if (!best || a > best.avg) best = { name: k, avg: a, upR: o.up / o.n, n: o.n };
+    });
+    if (!best) return null;
+    var h = lsGet("jlv2_hotoff_v1", {});
+    if (h.name === best.name && h.date === today()) best.streak = h.streak || 1;
+    else {
+      best.streak = (h.date === yesterdayStr() && h.name === best.name) ? (h.streak || 1) + 1 : 1;
+      lsSet("jlv2_hotoff_v1", { date: today(), name: best.name, streak: best.streak });
+    }
+    return best;
+  }
+  /* jl-1080: 跌停明细弹层——温度卡"跌停"数字可点开; 与涨跌停结构组"封跌停"事件流计数交叉校验, 不一致以跌停池为准并标注口径差异 */
+  function dtDetailHtml(dtr) {
+    var rs = dtr.rows.slice(0, 30).map(function (r) {
+      return '<div class="ev"><span class="tt"><b>' + esc(r.n) + '</b><small>' + r.c + " · " + esc(secOf(r.c) || "未映射") + (r.days > 1 ? " · 连" + r.days + "天" : "") + '</small></span><span class="mono dn">' + r.zdp.toFixed(2) + '%</span></div>';
+    }).join("");
+    var diff = S.evDtN != null && S.evDtN !== dtr.n ? ' · <span class="dn">⚠口径差异 事件流' + S.evDtN + '家</span>' : "";
+    return '<div style="margin:6px 0 2px;padding:7px 9px;border:1px solid #81e6d92e;border-radius:8px;background:rgba(255,255,255,.04)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:10px">当日跌停明细 · ' + dtr.n + '家</b><span style="font-size:9px;color:rgba(255,255,255,.72)">跌停池为准' + diff + '</span></div>' + rs + '<div class="g2" style="margin-top:4px">按封单额降序 · 剔除ST · 跌幅为现价对昨收</div></div>';
+  }
+  window.__JLDtDetailJL = function () { S.dtOpen = !S.dtOpen; paint(); };
   function renderTemp() {
     var st = deriveState(), sn = S.snap;
     var yk = Object.keys(S.hist).filter(function (k) { return k < today(); }).pop();
@@ -659,16 +708,21 @@
     function tile(lb, val, cls, sub) { return '<div class="ft"><span>' + lb + '</span><b class="' + cls + '">' + val + '</b><small>' + sub + '</small></div>'; }
     var upR = Math.round(sn.up / Math.max(1, sn.up + sn.down) * 100);
     var yzbr = yv && yv.zbr != null ? yv.zbr : null;
+    var hotSec = calcHotSector(); /* jl-1080: 离线板块映射聚合→行业涨幅榜首 */
+    var dtr = S.pool && S.pool.dt && S.pool.dt.rows && S.pool.dt.rows.length ? S.pool.dt : null;
+    var dtDiff = dtr && S.evDtN != null && S.evDtN !== dtr.n ? " · ⚠口径差" : "";
     var grid =
       tile("上涨占比", upR + "%", upR >= 55 ? "up" : upR <= 45 ? "dn" : "mu", esc(sn.up) + "/" + esc(sn.down) + " 家") +
       tile("涨停", st && st.zt != null ? st.zt : "—", (st && st.zt != null && st.zt >= 60) ? "up" : (st && st.zt != null && st.zt <= 25) ? "dn" : "mu", "涨停池口径") +
-      tile("跌停", st && st.dt != null ? st.dt : "—", (st && st.dt != null && st.dt >= 40) ? "dn" : "mu", "跌停池 · 本模块自建") +
+      (dtr
+        ? '<div class="ft" role="button" tabindex="0" style="cursor:pointer" onclick="__JLDtDetailJL()" title="点击展开/收起当日跌停明细"><span>跌停</span><b class="' + ((st && st.dt != null && st.dt >= 40) ? "dn" : "mu") + '">' + (st && st.dt != null ? st.dt : "—") + '</b><small>跌停池 · 点看明细' + dtDiff + '</small></div>'
+        : tile("跌停", st && st.dt != null ? st.dt : "—", (st && st.dt != null && st.dt >= 40) ? "dn" : "mu", "跌停池 · 本模块自建")) +
       tile("炸板率", zbr != null ? zbr + "%" : "—", zbr != null && zbr >= 40 ? "dn" : "mu", "盘中暂态 · 收盘定版") +
       tile("连板高度", st && st.lb != null ? st.lb + "板" : "—", (st && st.lb != null && st.lb >= 6) ? "up" : (st && st.lb != null && st.lb <= 2) ? "dn" : "mu", "最高连板") +
       tile("昨涨停溢价", st && st.prem != null ? pct(st.prem) : "—", (st && st.prem != null && st.prem >= 3) ? "up" : (st && st.prem != null && st.prem <= -1) ? "dn" : "mu", "T-1 · 强势股次日") +
       tile("成交额变化", amtDiffHtml(), amtDiffCls(), amtDiffSub()) + /* jl-1076 */
       tile("ATR波动率", S.atr && S.atr.vol != null ? S.atr.vol.toFixed(2) + "%" : "—", "mu", "上证 ATR14/价") +
-      tile("热点板块持续", S.hot ? S.hot.streak + "天" : "—", "mu", esc(S.hot ? S.hot.name : "行业涨幅榜首"));
+      tile("热点板块持续", hotSec ? esc(hotSec.name) + " " + (hotSec.avg >= 0 ? "+" : "") + hotSec.avg.toFixed(1) + "%" : (S.hot ? S.hot.streak + "天" : "板块映射未覆盖"), hotSec ? (hotSec.avg > 0 ? "up" : "dn") : "mu", hotSec ? "上涨占比" + Math.round(hotSec.upR * 100) + "% · 连" + hotSec.streak + "天" : (S.hot ? "行业涨幅榜首 · 在线兜底" : "离线板块映射聚合")); /* jl-1080 */
     var rules = "";
     if (st) {
       var rtxt = [
@@ -700,6 +754,7 @@
       scale +
       '<div class="tnow" style="margin-top:8px"><b>' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '">' + (st ? st.state : "—") + '</span><span style="font-size:8.5px;color:rgba(255,255,255,.72)">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
       '<div class="fgrid">' + grid + '</div>' +
+      (S.dtOpen && dtr ? dtDetailHtml(dtr) : "") + /* jl-1080: 跌停明细展开层(点"跌停"数字切换) */
       '<div class="jh">冰点判定 · 规则组（非阈值）</div>' + rules +
       '<div class="jh">场景提示 · 状态驱动</div>' + scn +
       '<div class="foot">状态描述，不构成操作建议 · 温度=50+(涨跌比-0.5)×100 与旧卡同源 · 冰点=规则组判定（≥3项）· 阈值集中在 CFG 待回测校准 · 涨跌停池为本模块自建口径</div>';
