@@ -1,3 +1,4 @@
+/* jinlin sw v180 — 2026-10-07: 缓存名 →v180, 配合 v0.84.38 批[jl-1092止血: 闸A进页补扫+闸B新交易日自动重扫关闭(手动长按⟳保留)+持仓资金EM连挂3次歇5分钟退避 | jl-1093 P2口径统一: 横幅混合态三态化/轨迹当日行继承票卡确认态(历史日勿补假数据)/待确认行与资金行口径统一; 小定时器全部保留] */
 /* jinlin sw v179 — 2026-10-07: 缓存名 →v179, 配合 jl-1091 v0.84.37 资金流着色+红白可读性批——
    ①"资金流·实时走势"四项金额(主/大/中/小)逐项红涨绿跌: 原单<i>纯文本拼接+行级inline色仅按主力符号=整行同色(负数红/正数绿实证); 改构造处按各item自身数值符号挂up/dn类(正负唯一来源=构造处数值符号), fv格式化与数值字符串/计算零改动, 删行级单色行
    ②持仓页正向红提亮#ff5459→#ff6b6b(仅#holds文本红+hero/行情列JS内联色值; 实底pill白字/暗红盈亏盖帽/红涨绿跌语义与判断零触碰; 绿色#1fdc93对比度~9:1复查达标不动)
@@ -92,8 +93,8 @@
    龙池扫描两处最小修: ①宇宙会话钉住(poolUniJL三级源瀑布按当次网络落位=4412↔5061漂移, 且断点续扫按uniLen匹配; 内存+sessionStorage 90min TTL对齐断点窗)
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
-const C = 'jinlin-shell-v179'; /* jl-1091 v0.84.37: 资金流四项逐项红涨绿跌+持仓页红提亮+小字二次提升; jlv2.js?v=10 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v179', 'jinlin-shell-v178'];
+const C = 'jinlin-shell-v180'; /* jl-1091 v0.84.37: 资金流四项逐项红涨绿跌+持仓页红提亮+小字二次提升; jlv2.js?v=10 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v180', 'jinlin-shell-v179'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

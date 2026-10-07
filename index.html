@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.84.37" data-sw="jinlin-shell-v179"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.84.38" data-sw="jinlin-shell-v180"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -3412,7 +3412,7 @@ document.addEventListener("visibilitychange", () => {
         const _exp = typeof jlLastTradeDay === "function" ? jlLastTradeDay() : "";
         const _stale = !JLPOOL || !jlPoolFresh(JLPOOL.d0);
         const _mark = (typeof jlYMD === "function" ? jlYMD(/* @__PURE__ */ new Date()) : "") + "|" + _exp + "|" + (JLPOOL && JLPOOL.d0 || "none"); /* jl-1085: 加今日日期——长假里 exp(9-30)与 d0(9-16) 恒不变, 原标记跨天不重置=整个假期自动补扫只触发第一次(此后每天进页都读到同一旧mark, "每日一回"变"假期一回"), 扫不完又无人重试就是"困扰三天停在16号"的机制根因 */
-        if (_stale && _exp && localStorage.getItem("jl_pool_auto_v1") !== _mark) {
+        if (false && _stale && _exp && localStorage.getItem("jl_pool_auto_v1") !== _mark) { /* jl-1092 2026-10-07: 进页过期自动补扫关闭; 手动长按⟳保留; 恢复=删"false &&" */
           localStorage.setItem("jl_pool_auto_v1", _mark);
           poolScanJL();
         }
@@ -6188,7 +6188,7 @@ document.addEventListener("visibilitychange", () => {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
     const color = bucket === "RISK" ? "#ff5459" : meta[2], g = bucket === "L" ? x.gate : x.obsGate;
     const bare = x.code.slice(2), _hs = stocks.find((s2) => s2.code === bare), held = !!_hs, heldQty = !!(_hs && _hs.qty > 0);
-    return '<div class="poolRowDetailJL"><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + '</div>' + (x.fib ? '<div class="poolFibJL"><b>\u221F ' + (x.fib.hit ? "0.382\u4F01\u7A33\u00B7\u52A0\u5206+10" : "\u672A\u8FBE\u4F01\u7A33\u53E3\u5F84") + '</b><i>\u6CE2\u6BB5 ' + String(x.fib.loD).slice(5) + "\u2192" + String(x.fib.hiD).slice(5) + " " + (+x.fib.lo).toFixed(2) + "~" + (+x.fib.hi).toFixed(2) + " (+" + x.fib.amp + "%)</i><i>0.382\u4F4D " + (+x.fib.f382).toFixed(2) + "</i><i>1.618\u4F4D " + (+x.fib.f618).toFixed(2) + '</i><i class="' + (x.fib.hit ? "" : "no") + '">\u73B0\u4EF7 ' + (+x.fib.close).toFixed(2) + " \u00B7 \u56DE\u64A4" + x.fib.ret + "% \u00B7 \u8DDD1.618 " + (x.fib.room > 0 ? "+" : "") + x.fib.room + "%</i></div>" : "") + '<div class="poolRowActJL"><button type="button" data-pl-k="' + bare + '" data-n="' + escAttrJL(x.name) + '">K\u7EBF \u203A</button><button type="button" class="trajBtnJL" data-traj="' + bare + '" data-tn="' + escAttrJL(x.name) + '">\u8F68\u8FF9</button>' + (held ? '<span class="heldTag">' + (heldQty ? '\u5DF2\u6301\u4ED3' : '\u5DF2\u89C2\u5BDF') + '</span>' : '<button type="button" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '">\uFF0B\u89C2\u5BDF</button>') + (x.score != null ? '<span class="poolScore" style="color:' + color + ';margin-left:auto">' + x.score + "<small>\u89c4\u5219\u5206</small></span>" : "") + '</div><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div></div>';
+    return '<div class="poolRowDetailJL"><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + poolWhyUnifyJL(x, g.reasons).join("\u3001") + "</i>" : "") + '</div>' + (x.fib ? '<div class="poolFibJL"><b>\u221F ' + (x.fib.hit ? "0.382\u4F01\u7A33\u00B7\u52A0\u5206+10" : "\u672A\u8FBE\u4F01\u7A33\u53E3\u5F84") + '</b><i>\u6CE2\u6BB5 ' + String(x.fib.loD).slice(5) + "\u2192" + String(x.fib.hiD).slice(5) + " " + (+x.fib.lo).toFixed(2) + "~" + (+x.fib.hi).toFixed(2) + " (+" + x.fib.amp + "%)</i><i>0.382\u4F4D " + (+x.fib.f382).toFixed(2) + "</i><i>1.618\u4F4D " + (+x.fib.f618).toFixed(2) + '</i><i class="' + (x.fib.hit ? "" : "no") + '">\u73B0\u4EF7 ' + (+x.fib.close).toFixed(2) + " \u00B7 \u56DE\u64A4" + x.fib.ret + "% \u00B7 \u8DDD1.618 " + (x.fib.room > 0 ? "+" : "") + x.fib.room + "%</i></div>" : "") + '<div class="poolRowActJL"><button type="button" data-pl-k="' + bare + '" data-n="' + escAttrJL(x.name) + '">K\u7EBF \u203A</button><button type="button" class="trajBtnJL" data-traj="' + bare + '" data-tn="' + escAttrJL(x.name) + '">\u8F68\u8FF9</button>' + (held ? '<span class="heldTag">' + (heldQty ? '\u5DF2\u6301\u4ED3' : '\u5DF2\u89C2\u5BDF') + '</span>' : '<button type="button" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '">\uFF0B\u89C2\u5BDF</button>') + (x.score != null ? '<span class="poolScore" style="color:' + color + ';margin-left:auto">' + x.score + "<small>\u89c4\u5219\u5206</small></span>" : "") + '</div><div class="trajBoxJL" data-traj-box="' + bare + '" hidden></div></div>';
   }
   function poolRowJL(x, bucket) {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
@@ -6210,7 +6210,7 @@ document.addEventListener("visibilitychange", () => {
     const meta = JLPOOL_LAYERS.find((l) => l[0] === x.layer) || ["", "\u5019\u9009", "#9db9c4"];
     const color = bucket === "RISK" ? "#ff5459" : meta[2], g = bucket === "L" ? x.gate : x.obsGate;
     const bare = x.code.slice(2), held = stocks.some((s2) => s2.code === bare);
-    return '<article class="watchItem poolCard' + (bucket !== "L" ? " dim" : "") + '"><div class="watchRow"><span><b>' + escJL(x.name) + '<i class="dgTag" style="color:' + color + ";border-color:" + color + "AA;background:rgba(13,22,28,.88);text-shadow:0 1px 2px rgba(0,0,0,.35)" + '">' + (bucket === "RISK" ? "\u98CE\u9669 \xB7 \u6D3E\u53D1" : bucket === "OBS" ? "\u89C2\u5BDF \xB7 " : "") + (bucket === "RISK" ? "" : meta[1]) + "</i></b><small>" + bare + (x.ind ? " \xB7 " + escJL(x.ind) : "") + (x.ind && JLPOOL_HOT.has(x.ind) ? " \u98CE\u53E3" : "") + (x.emaDays >= 3 ? " \xB7 \u8D8B\u52BF" + x.emaDays + "\u5929" : "") + (x.upDays >= 2 ? " \xB7 \u8FDE\u6DA8" + x.upDays + "\u5929" : "") + (bucket === "RISK" ? " \xB7 \u539F\u5F62\u6001" + meta[1] : "") + " \xB7 \u65E5K " + String(x.d || "").slice(5) + "</small></span>" + (x.score != null ? '<span class="poolScore" style="color:' + color + ';font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.4)">' + x.score + "<small>\u89c4\u5219\u5206</small></span>" : "") + "<strong>" + money(x.close) + '<small class="' + cls(x.pct) + '">' + pct(x.pct) + "</small></strong>" + (held ? "" : '<button class="dgAdd" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '" aria-label="\u52A0\u89C2\u5BDF">\uFF0B</button>') + '</div><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + g.reasons.join("\u3001") + "</i>" : "") + "</div></article>";
+    return '<article class="watchItem poolCard' + (bucket !== "L" ? " dim" : "") + '"><div class="watchRow"><span><b>' + escJL(x.name) + '<i class="dgTag" style="color:' + color + ";border-color:" + color + "AA;background:rgba(13,22,28,.88);text-shadow:0 1px 2px rgba(0,0,0,.35)" + '">' + (bucket === "RISK" ? "\u98CE\u9669 \xB7 \u6D3E\u53D1" : bucket === "OBS" ? "\u89C2\u5BDF \xB7 " : "") + (bucket === "RISK" ? "" : meta[1]) + "</i></b><small>" + bare + (x.ind ? " \xB7 " + escJL(x.ind) : "") + (x.ind && JLPOOL_HOT.has(x.ind) ? " \u98CE\u53E3" : "") + (x.emaDays >= 3 ? " \xB7 \u8D8B\u52BF" + x.emaDays + "\u5929" : "") + (x.upDays >= 2 ? " \xB7 \u8FDE\u6DA8" + x.upDays + "\u5929" : "") + (bucket === "RISK" ? " \xB7 \u539F\u5F62\u6001" + meta[1] : "") + " \xB7 \u65E5K " + String(x.d || "").slice(5) + "</small></span>" + (x.score != null ? '<span class="poolScore" style="color:' + color + ';font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,.4)">' + x.score + "<small>\u89c4\u5219\u5206</small></span>" : "") + "<strong>" + money(x.close) + '<small class="' + cls(x.pct) + '">' + pct(x.pct) + "</small></strong>" + (held ? "" : '<button class="dgAdd" data-watch-add="' + bare + '" data-name="' + escAttrJL(x.name) + '" data-price="' + x.close + '" aria-label="\u52A0\u89C2\u5BDF">\uFF0B</button>') + '</div><div class="evChips">' + evChipsJL(x) + '</div><div class="poolFund">' + fundLineJL(x) + '</div><div class="poolWhy">' + whyLineJL(x) + (g && g.reasons && g.reasons.length ? "<i>" + g.status + "\uFF1A" + poolWhyUnifyJL(x, g.reasons).join("\u3001") + "</i>" : "") + "</div></article>";
   }
   const POOL_LAYER_SHORT_JL = { start: "启动", zs: "主升", eb: "二波", trend: "趋势", top: "到顶" };
   function poolTrackReadJL() {
@@ -6289,6 +6289,30 @@ document.addEventListener("visibilitychange", () => {
     return sc;
   }
   const poolTrajCacheJL = {};
+  /* jl-1093 v0.84.38 P2口径统一三件套(房主0834指示): 有数据且日期可证→确认; 不可证→统一标未确认; 勿补假数据 */
+  function jlFfCacheD0JL(code) { /* 可证资金日 = jl_ff_v1 末行日期(与票卡"主力(补)"行同源) */
+    try {
+      const cf = (JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {})[String(code || "").replace(/^(sh|sz)/, "")];
+      return cf && cf.rows && cf.rows.length ? String(cf.rows[cf.rows.length - 1].d || "") : "";
+    } catch (e) { return ""; }
+  }
+  function jlFfCacheNetsJL(bare) { /* 当日轨迹兜底源: 缓存行→{日期:主力净额}, 仅真实拉取写入的数据, 不造假 */
+    try {
+      const cf = (JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {})[String(bare || "").replace(/^(sh|sz)/, "")];
+      if (!cf || !cf.rows || !cf.rows.length) return null;
+      const m = {};
+      cf.rows.forEach((r2) => { const dk = String(r2.d || "").slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) m[dk] = +r2.main; });
+      return Object.keys(m).length ? m : null;
+    } catch (e) { return null; }
+  }
+  function poolWhyUnifyJL(x, reasons) { /* 待确认行不再与资金行打架: 可证资金日==门槛日时, "资金日期未确认…"改标已证 */
+    try {
+      if (!reasons || !reasons.length) return reasons;
+      const provD = jlFfCacheD0JL(x && x.code);
+      if (!provD || provD !== jlLastTradeDay()) return reasons;
+      return reasons.map((r2) => String(r2).indexOf("资金日期未确认") === 0 ? "资金日" + provD.slice(5) + "·已证(与资金行同源)" : r2);
+    } catch (e) { return reasons; }
+  }
   async function poolTrajDataJL(bare, name) {
     const key = bare + "|" + jlLastTradeDay();
     if (poolTrajCacheJL[key]) return poolTrajCacheJL[key];
@@ -6327,8 +6351,9 @@ document.addEventListener("visibilitychange", () => {
     for (const T of T5) {
       const slice = rows.filter((r) => String(r[0]).slice(0, 10) <= T).slice(-300);
       const hit = poolClassifyJL(code, name, slice.map((r) => r.slice()));
-      const ndates = nets ? Object.keys(nets).filter((k2) => k2 <= T).sort() : [];
-      const n10 = ndates.slice(-10).map((k2) => nets[k2]);
+      const _nt = nets || (T === jlLastTradeDay() ? jlFfCacheNetsJL(bare) : null); /* jl-1093 P2-1: EM轨迹失败时当日行继承票卡缓存; 历史日不补假数据 */
+      const ndates = _nt ? Object.keys(_nt).filter((k2) => k2 <= T).sort() : [];
+      const n10 = ndates.slice(-10).map((k2) => _nt[k2]);
       const d0v = n10.length ? n10[n10.length - 1] : null;
       const d0fresh = ndates.length > 0 && ndates[ndates.length - 1] === T;
       const f10 = n10.reduce((a, v) => a + v, 0), f5 = n10.slice(-5).reduce((a, v) => a + v, 0);
@@ -6658,7 +6683,7 @@ document.addEventListener("visibilitychange", () => {
           + ' \u00B7 \u70B9\u6309=\u79D2\u8F7D\u6B64\u65E7\u699C \u00B7 \u957F\u6309\u9F99\u6C60\u626B\u63CF=\u5B9E\u76D8\u91CD\u626B</div>';
       }
     }
-    html += '<div class="poolConsole"><div class="pcRow"><b>\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \xB7 " + JLPOOL.ts + "\u626B \xB7 \u5B87\u5B99" + JLPOOL.uni + "\u53EA" + (JLPOOL.src === "offline" ? " \xB7 \u79BB\u7EBF\u7EC8\u699C" : JLPOOL.src === "snap" ? " \xB7 \u79BB\u7EBF\u5FEB\u7167" : JLPOOL.src === "ffoff" ? " \xB7 \u79BB\u7EBF\u8D44\u91D1" + JLPOOL_FFOFF_ASOF.slice(5) : "") + "</b><span>" + JLPOOL_LAYERS.map((l) => l[1] + (JLPOOL.L[l[0]] || []).length).join(" \xB7 ") + "</span></div>" + (JLPOOL.rejectStats ? '<div class="pcRow" style="margin-top:4px"><span>\u8D44\u683C\u95E8\u62E6\u622A\uFF1A\u8FC7\u671F' + JLPOOL.rejectStats.stale + " \xB7 \u6D3E\u53D1\u98CE\u9669" + JLPOOL.rejectStats.risk + " \xB7 \u8D44\u91D1\u91CF\u7EA7/\u8BC1\u636E\u4E0D\u8DB3" + JLPOOL.rejectStats.insufficient + " \xB7 \u8F6C\u89C2\u5BDF" + JLPOOL.rejectStats.observe + "</span></div>" : "") + "</div>";
+    html += '<div class="poolConsole"><div class="pcRow"><b>\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \xB7 " + JLPOOL.ts + "\u626B \xB7 \u5B87\u5B99" + JLPOOL.uni + "\u53EA" + (JLPOOL.src === "offline" ? " · 离线终榜" : JLPOOL.src === "snap" ? " · 离线快照" : JLPOOL.src === "ffoff" ? ((window.__jlFfHitJL || 0) > 0 ? " · 实时" + String(JLPOOL.d0 || "").slice(5) + "·兜底×" + (window.__jlFfOffJL || 0) : " · 离线资金" + JLPOOL_FFOFF_ASOF.slice(5)) : ((window.__jlFfHitJL || 0) > 0 && !(window.__jlFfOffJL || 0) ? " · 资金·实时" + String(JLPOOL.d0 || "").slice(5) : "")) /* jl-1093 P2-2: 横幅混合态三态——全实时=资金·实时MM-DD/部分兜底=实时MM-DD·兜底×N/全兜底=离线资金MM-DD; 计数为本会话扫描值, 离线重载回落旧标 */ + "</b><span>" + JLPOOL_LAYERS.map((l) => l[1] + (JLPOOL.L[l[0]] || []).length).join(" \xB7 ") + "</span></div>" + (JLPOOL.rejectStats ? '<div class="pcRow" style="margin-top:4px"><span>\u8D44\u683C\u95E8\u62E6\u622A\uFF1A\u8FC7\u671F' + JLPOOL.rejectStats.stale + " \xB7 \u6D3E\u53D1\u98CE\u9669" + JLPOOL.rejectStats.risk + " \xB7 \u8D44\u91D1\u91CF\u7EA7/\u8BC1\u636E\u4E0D\u8DB3" + JLPOOL.rejectStats.insufficient + " \xB7 \u8F6C\u89C2\u5BDF" + JLPOOL.rejectStats.observe + "</span></div>" : "") + "</div>";
     if (!fresh) html += '<div class="poolStale">\u6570\u636E\u65E5 ' + JLPOOL.d0 + " \u2260 \u6700\u8FD1\u4EA4\u6613\u65E5\uFF08" + jlLastTradeDay() + "\uFF09\xB7 \u65E7\u699C\u5B58\u6863\u5C55\u793A\xB7\u4E0D\u4F5C\u4E3A\u4ECA\u65E5\u4F9D\u636E \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>";
     if (fresh) html += '<div class="poolConsole" style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button type="button" id="plRefundJL" style="' + PL_NAV_BTN + ';min-height:28px;padding:4px 10px;font-size:10px">\u8D44\u91D1\u8865\u8DD1</button><span style="font-size:9px;color:rgba(255,255,255,.88)">\u53EA\u8865\u5408\u683C\u6C60+\u89C2\u5BDF\u6C60\u8D44\u91D1\uFF0C\u4E0D\u91CD\u626B\u5F62\u6001</span></div>';
     let hasPicks = false;
@@ -13064,7 +13089,7 @@ var RLMCore = (function () {
           return { d: p[0], main: +p[1], small: +p[2], mid: +p[3], big: +p[4], sup: +p[5], mainPct: +p[6] };
         });
       };
-      const ffSave = (rows) => {
+      const ffSave = (rows) => { try { window.__jlFfFailStreakJL = 0; } catch (eRs) {} /* 礼貌管道jl-1092: 任一票成功→连挂计数复位 */
         try {
           if (loadOneFFJL._fails) delete loadOneFFJL._fails[st2.code]; // jl-0928-8: 成功即解除冷却
         } catch (eF2) {
@@ -13121,7 +13146,7 @@ var RLMCore = (function () {
               if (!(c2 && c2.rows && c2.rows.length)) {
                 if (tryN < 2) loadOneFFJL(st2, tryN + 1);
                 else { // jl-0928-8: 0/1/2三次全败 → 记冷却
-                  (loadOneFFJL._fails = loadOneFFJL._fails || {})[st2.code] = { t: Date.now() };
+                  (loadOneFFJL._fails = loadOneFFJL._fails || {})[st2.code] = { t: Date.now() }; try { window.__jlFfFailStreakJL = (window.__jlFfFailStreakJL || 0) + 1; window.__jlFfFailAtJL = Date.now(); } catch (eFs) {} /* 礼貌管道jl-1092: 终败记连挂 */
                 }
               }
             } catch (e3) {
@@ -13199,7 +13224,7 @@ var RLMCore = (function () {
     };
     window.refreshFFlowJL = refreshFFlowJL2;
     setTimeout(() => refreshFFlowJL2(false), 2500);
-    setInterval(() => { if (!document.hidden) refreshFFlowJL2(true); }, 18e4);
+    setInterval(() => { if (document.hidden) return; try { const _fsS = window.__jlFfFailStreakJL || 0, _fsT = window.__jlFfFailAtJL || 0; if (_fsS >= 3 && Date.now() - _fsT < 3e5) return; } catch (eBg) {} refreshFFlowJL2(true); }, 18e4); /* 礼貌管道jl-1092 2026-10-07: 持仓资金EM连挂3次歇5分钟(任一成功复位); 恢复默认=还原本行 */
       setInterval(() => { if (!document.hidden) { const _m9 = (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes(); if (_m9 >= 545 && _m9 <= 915) loadMTempJL(false); } }, 6e4); /* v0.81.8: 市场温度盘中每分钟自检(内部15分钟TTL), 不再手点采集 */ // jl-0928-8: 资金流全量刷新1→3分钟(每分钟全票重拉=限流团灭根因) // jl-0929-12: hidden守卫
     periodBars();
     renderWatch();
@@ -15187,7 +15212,7 @@ var RLMCore = (function () {
           const _tv = localStorage.getItem("jl_autoscan_try_v1") || "";
           if (_tv.indexOf(td + "|") === 0) _tryA = parseInt(_tv.split("|")[1] || "0", 10) || 0;
         } catch (eT) { _tryA = 0; }
-        const _canAuto = _dowA >= 1 && _dowA <= 5 && _mnA >= 910 && _tryA < 2 && !document.hidden;
+        const _canAuto = false && _dowA >= 1 && _dowA <= 5 && _mnA >= 910 && _tryA < 2 && !document.hidden; /* jl-1092 2026-10-07: 新交易日开机自动重扫关闭, 转手动提示分支; 恢复=删"false &&" */
         if (_canAuto) {
           try { localStorage.setItem("jl_autoscan_try_v1", td + "|" + (_tryA + 1)); } catch (eS) {}
           try { toast("\u65B0\u4EA4\u6613\u65E5 \xB7 \u81EA\u52A8\u5F00\u59CB\u5B9E\u76D8\u91CD\u626B \xB7 \u53EF\u8FB9\u626B\u8FB9\u770B"); } catch (e2) {}
