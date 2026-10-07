@@ -2,6 +2,7 @@
    覆盖: ①板块口径回退A/B/C/D+稳定可重复 ②板块身份一致性 ③涨幅 ④上涨率 ⑤n<8过滤 ⑥涨停数聚合
         ⑦事件扩散=T3记录聚合(零重算) ⑧缺失处理(不造假) ⑨快照写入schema ⑩快照读取回程 ⑪重复时间点不重复写
         ⑫顺序无关 ⑬一级合成fixture回放(同输入同输出/同缺失/重复回放不重写; 日期=输入非硬编码) ⑭二级真实T3记录回放(16条归档)
+        ⑮跨会话日回放硬门槛(数据日09-30, 会话日无关, 双跑同k, 二跑added=0) ⑯收口结构断言(amt/leader移出/std/dir/scoreParts删, leaderCand非因子)
    运行: node jl_test/run_t4a.js */
 "use strict";
 const path = require("path");
@@ -50,7 +51,7 @@ MockStore.prototype.add = function (r) { if (this.map.has(r.k)) throw new Error(
 function snap() { return CORE.buildSnap({ day: DAY, at: AT, rows: ROWS, ztPool: ZT, t3recs: T3, ctx: CTX, ydDate: DAY }); }
 function bySec(o, s) { return o.recs.filter(r => r.sector === s)[0]; }
 
-console.log("== T4a 第一阶段测试面 (jl_sector_strength.js / t4a_v1 r2) ==");
+console.log("== T4a 第一阶段测试面 (jl_sector_strength.js / t4a_v2 r2·收口版) ==");
 
 test("①板块口径回退 A: conOf存在→mc(优先于sec)", function () {
   eq(CORE.sectorOf("000001", CTX, "别的行业").tier, "mc");
@@ -99,8 +100,9 @@ test("⑤n<8过滤: 机器人7样本→smallN不参评不进ranked, 不给假值
 test("⑥涨停数聚合: ztN/lb/候选字段 (电池技术2只·lb3)", function () {
   var o = snap(), r = bySec(o, "电池技术"), f = r.factors.ztN;
   eq(f.state, "ok"); eq(f.raw, 2); eq(f.note, "lb=3");
-  var cand = r.factors.leader.raw.cand;
+  var cand = r.leaderCand.cand;
   eq(cand.length, 2); ok(cand[0].n === "电池A" && cand[0].lbc === 3 && cand[0].fund === 2.1e8, "候选按lbc降序");
+  ok(cand[0].zbc !== undefined && "fbt" in cand[0], "候选含zbc/fbt(通道现有六字段)");
 });
 test("⑦事件扩散=T3记录聚合(零重算): bk按mc归属, sp不推归属", function () {
   var ev = CORE.evFromT3(T3, DAY);
@@ -121,15 +123,23 @@ test("⑧缺失处理: rows缺失→miss非假数; 成交额=数据不足; 龙�
   var r = bySec(o, "电池技术");
   eq(r.factors.avgPct.state, "miss"); eq(r.factors.avgPct.raw, null);
   eq(r.factors.upR.state, "miss");
-  eq(r.factors.amt.state, "insufficient"); eq(r.factors.amt.raw, null);
-  eq(r.factors.leader.state, "pending");
+  ok(!("amt" in r.factors), "amt占位已删(结构零空字段)");
+  ok(!("leader" in r.factors), "leader已移出factors");
+  ok(r.leaderCand && r.leaderCand.nonFactor === true, "leaderCand独立字段+非因子标注");
+  ok(Array.isArray(r.leaderCand.cand), "候选=数组(rows缺失但ztPool在场, 候选事实保留, 不因字段缺失清空)");
   ok(JSON.stringify(o).indexOf("NaN") < 0, "无NaN字面量(缺失因子以null+state表达, 契约允许)");
 });
 test("⑨快照写入schema: 令书全字段齐备", function () {
   var o = snap(), r = o.recs[0];
-  ["schema","rule","day","at","kb","cal","sector","sectorTier","fallback","factors","mid","srcVer","k"].forEach(function (k2) { ok(k2 in r, "缺字段" + k2); });
-  ["avgPct","upR","ztN","evN","amt","leader"].forEach(function (k2) { ok(k2 in r.factors, "缺因子" + k2); });
-  eq(r.schema, "t4a_v1"); eq(r.cal, "mc>sec>hy");
+  ["schema","rule","day","at","kb","cal","sector","sectorTier","fallback","factors","leaderCand","mid","srcVer","k"].forEach(function (k2) { ok(k2 in r, "缺字段" + k2); });
+  eq(Object.keys(r.factors).sort().join(","), "avgPct,evN,upR,ztN", "仅四因子");
+  ["avgPct","upR","ztN","evN"].forEach(function (k2) {
+    eq(Object.keys(r.factors[k2]).sort().join(","), "note,raw,src,state", k2 + "因子字段=raw/state/note/src(std/dir已删)");
+  });
+  ok(!("scoreParts" in r.mid), "scoreParts已删");
+  eq(r.mid.rankBy, "avgPct:desc", "rank排序键=涨幅原始值·降序(可解释)");
+  ok(r.leaderCand.cand[0] && "zbc" in r.leaderCand.cand[0] && "fbt" in r.leaderCand.cand[0], "候选6字段(c/n/lbc/fund/zbc/fbt)");
+  eq(r.schema, "t4a_v2"); eq(r.rule, "r2"); eq(r.cal, "mc>sec>hy");
   eq(r.k, r.day + "|" + CORE.bucket(AT) + "|" + r.sector);
   var st = o.tierStat; eq(st, { mc: 32, sec: 9, hy: 1, unattr: 4 }, "口径回退统计");
 });
@@ -167,7 +177,7 @@ test("⑭二级真实回放: 16条归档T3记录(jl_evlog_export.json)", functio
   var raw = JSON.parse(require("fs").readFileSync(path.join(__dirname, "fixture_t3_real.json"), "utf8"));
   var recs = raw.records;
   ok(recs.length === 16, "输入规模16条");
-  var day = String(recs[0].day); ok(day === "2026-10-07", "day来自记录(回放会话墙钟日)");
+  var day = String(recs[0].day); ok(day === "2026-10-07", "day取自T3记录自身day字段(数据自带时间戳, 非本次回放会话墙钟)");
   var ev = CORE.evFromT3(recs, day);
   var o = CORE.buildSnap({ day: day, at: Date.parse(recs[0].at) || 0, rows: null, ztPool: [], t3recs: recs, ctx: { con: {}, sec: {} } });
   console.log("      [二级] 板块=" + Object.keys(ev).join("/") + " | 各板块{recN,codeN,memPeak}=" + JSON.stringify(ev));
@@ -179,6 +189,23 @@ test("⑭二级真实回放: 16条归档T3记录(jl_evlog_export.json)", functio
   eq(CORE.persist(o.recs, ms).added, 0, "重复回放不重写");
   console.log("      [二级] 快照" + o.recs.length + "条 | 全部avgPct=miss(无mtemp输入, 契约:不造假)");
 });
+
+test("⑮跨会话日回放硬门槛: 数据日09-30与会话日无关, 双跑同k, 二跑added=0", function () {
+  var ms = new MockStore(); /* 两次回放之间不清库(令书禁止) */
+  var runA = CORE.buildSnap(FIX0930());
+  ok(runA.recs[0].day === "2026-09-30", "Session A: snapshot.day=fixture数据日09-30");
+  var wall = new Date().toLocaleDateString("sv-SE");
+  ok(wall !== "2026-09-30", "会话墙钟日=" + wall + "≠数据日(功能证明: day不取会话日)");
+  var pA = CORE.persist(runA.recs, ms);
+  var keysA = Array.from(ms.map.keys()).sort();
+  var runB = CORE.buildSnap(FIX0930()); /* Session B: 完全相同fixture, 推导路径零墙钟引用→等价 */
+  var pB = CORE.persist(runB.recs, ms);
+  var keysB = Array.from(ms.map.keys()).sort();
+  eq(runB.recs[0].day, "2026-09-30", "Session B: 仍为数据日09-30");
+  eq(keysA, keysB, "两次key集合完全一致");
+  ok(pB.added === 0 && pB.skipped === pA.added, "第二次added=0(全部去重), 不因会话差量生成新快照");
+});
+function FIX0930() { return { day: "2026-09-30", at: 1727682600000, rows: ROWS, ztPool: ZT, t3recs: T3, ctx: CTX }; }
 
 console.log("\nT4a: " + PASS + " 通过 / " + FAIL + " 失败 (现有run.js 56/56另行独立, 未动其语义)");
 process.exitCode = FAIL ? 1 : 0;

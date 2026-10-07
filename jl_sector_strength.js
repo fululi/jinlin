@@ -14,7 +14,7 @@
 
   /* ============ 纯核心(Node测试可达, 零DOM/IDB依赖) ============ */
   var CORE = {
-    SCHEMA: "t4a_v1", RULE: "r2", CAL: "mc>sec>hy", MIN_N: 8, UNATTR: "（未归属·个股扩散）",
+    SCHEMA: "t4a_v2", RULE: "r2", CAL: "mc>sec>hy", MIN_N: 8, UNATTR: "（未归属·个股扩散）",
     BUCKET_MS: 1800e3, /* 快照写入门限: 30分钟桶 */
 
     /* 口径归属: 一票一板块; 返回 {name, tier}: tier∈mc|sec|hy|""(无归属) */
@@ -54,7 +54,7 @@
         if (!o0.name || o0.name === "其他") return;
         var o = agg[o0.name] || (agg[o0.name] = { ztN: 0, lb: 0, cand: [], fb: { mc: 0, sec: 0, hy: 0 } });
         o.ztN++; o.lb = Math.max(o.lb, +r.lbc || 0); o.fb[o0.tier]++;
-        o.cand.push({ c: String(r.c), n: String(r.n || ""), lbc: +r.lbc || 0, fund: +r.fund || 0 });
+        o.cand.push({ c: String(r.c), n: String(r.n || ""), lbc: +r.lbc || 0, fund: +r.fund || 0, zbc: +r.zbc || 0, fbt: r.fbt });
       });
       return agg;
     },
@@ -117,15 +117,15 @@
         var rec = {
           schema: CORE.SCHEMA, rule: CORE.RULE, day: inp.day, at: inp.at, kb: CORE.bucket(inp.at),
           cal: CORE.CAL, sector: sy, sectorTier: tier, fallback: fb,
-          factors: {
-            avgPct: { raw: fAvg.raw, std: null, dir: 1, state: fAvg.state, note: fAvg.note, src: "mtemp" },
-            upR: { raw: fUpR.raw, std: null, dir: 1, state: fUpR.state, note: fUpR.note, src: "mtemp" },
-            ztN: { raw: fZt.raw, std: null, dir: 1, state: fZt.state, note: fZt.note, src: "yd.zt" },
-            evN: { raw: fEv.raw, std: null, dir: 1, state: fEv.state, note: fEv.note, src: "t3_idb" },
-            amt: { raw: null, std: null, dir: 0, state: "insufficient", note: "现有通道无板块级成交额(禁市场级/涨停股替代)", src: "-" },
-            leader: { raw: cand.length ? { cand: cand } : null, std: null, dir: 0, state: "pending", note: "龙头定义留T4b, 仅候选", src: "yd.zt.pool" }
+          factors: { /* 仅四因子, 各含 raw原始值/state数据状态/note缺失原因/src来源(均有当前实际语义); 无std(标准化未定)无dir(存储层无方向计算逻辑, 展示层箭头由raw符号现算) */
+            avgPct: { raw: fAvg.raw, state: fAvg.state, note: fAvg.note, src: "mtemp" },
+            upR: { raw: fUpR.raw, state: fUpR.state, note: fUpR.note, src: "mtemp" },
+            ztN: { raw: fZt.raw, state: fZt.state, note: fZt.note, src: "yd.zt" },
+            evN: { raw: fEv.raw, state: fEv.state, note: fEv.note, src: "t3_idb" }
           },
-          mid: { rank: null, scoreParts: null }, /* 综合中间值槽位: v0不产出总分(缺失因子不偷分不偷权重) */
+          /* leaderCand=已整理候选数据, 非当前评分因子(定义留T4b): 通道现有c/n/lbc/fund/zbc/fbt六字段(hs/amount不在yd.zt.pool通道, 不伪装); C组成员留存于T3记录/未归属桶 */
+          leaderCand: { cand: cand, src: "yd.zt.pool", nonFactor: true, note: "非因子·候选数据(龙头定义留T4b)" },
+          mid: { rank: null, rankBy: "avgPct:desc" }, /* rank: 按涨幅原始值avgPct降序名次(排序键=avgPct原始值, 方向=降序, 理由=强度直觉且透明可解释); scoreParts已删(无当前内容) */
           srcVer: { mtempAt: inp.at, ydDate: inp.ydDate || null, jlv2: "v10", t3: "v0.84.32", cal: CORE.CAL }
         };
         rec.k = CORE.snapKey(rec);
@@ -281,13 +281,13 @@
   }
   function secRow(rec) {
     var f = rec.factors;
-    var a = f.avgPct, u = f.upR, z = f.ztN, e = f.evN, L = f.leader;
+    var a = f.avgPct, u = f.upR, z = f.ztN, e = f.evN, L = rec.leaderCand; /* 候选数据已移出factors, 独立字段(非因子) */
     var dirA = a.state === "ok" ? (a.raw > 0 ? 1 : a.raw < 0 ? -1 : 0) : 0;
     var dirU = u.state === "ok" ? (u.raw >= 0.5 ? 1 : u.raw < 0.5 ? -1 : 0) : 0;
     var evTxt = e.state === "ok" ? ("股" + e.raw.codeN + "·录" + e.raw.recN + "·峰" + e.raw.memPeak) : "无当日记录";
     var candTxt = "";
-    if (L.raw && L.raw.cand && L.raw.cand.length) {
-      candTxt = '<div style="font-size:9.5px;color:rgba(255,255,255,.55);margin:1px 0 2px 2px">龙头候选(未评分): ' + L.raw.cand.map(function (c) { return esc(c.n) + "(连" + c.lbc + "·封" + fmtYi(c.fund) + ")"; }).join(" / ") + "</div>";
+    if (L && L.cand && L.cand.length) {
+      candTxt = '<div style="font-size:9.5px;color:rgba(255,255,255,.55);margin:1px 0 2px 2px">龙头候选(未评分·非因子): ' + L.cand.map(function (c) { return esc(c.n) + "(连" + c.lbc + "·封" + fmtYi(c.fund) + (c.zbc ? "·炸" + c.zbc : "") + ")"; }).join(" / ") + "</div>";
     }
     return '<div style="padding:7px 9px;margin:4px 0;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)">' +
       '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px;color:#ffd21f">' + esc(rec.sector) + '</b><small style="font-size:9px;color:rgba(255,255,255,.5)">' + rec.sectorTier + "级 · 样本" + (a.note.indexOf("n=") === 0 ? a.note.slice(2) : "?") + " · 排名#" + (rec.mid.rank || "—") + "</small></div>" +
@@ -296,7 +296,7 @@
       chip("涨停数", z.state === "ok" ? z.raw : stateTxt(z.state), z.state === "ok" ? 1 : 0, z.state) +
       chip("事件扩散", evTxt, e.state === "ok" ? 1 : 0, e.state) +
       chip("成交额变化", "数据不足", 0, "insufficient") +
-      chip("龙头强度", L.raw && L.raw.cand && L.raw.cand.length ? "待定义(候选" + L.raw.cand.length + ")" : "待定义", 0, "pending") +
+      chip("龙头强度", L && L.cand && L.cand.length ? "待定义(候选" + L.cand.length + ")" : "待定义", 0, "pending") +
       candTxt + "</div>";
   }
   function stateTxt(st) { return st === "smallN" ? "样本<8" : st === "miss" ? "数据缺失" : st === "none" ? "无" : st; }
