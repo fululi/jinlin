@@ -93,8 +93,9 @@
    龙池扫描两处最小修: ①宇宙会话钉住(poolUniJL三级源瀑布按当次网络落位=4412↔5061漂移, 且断点续扫按uniLen匹配; 内存+sessionStorage 90min TTL对齐断点窗)
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
-const C = 'jinlin-shell-v180'; /* jl-1091 v0.84.37: 资金流四项逐项红涨绿跌+持仓页红提亮+小字二次提升; jlv2.js?v=10 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v180', 'jinlin-shell-v179'];
+/* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
+const C = 'jinlin-shell-v181'; /* jl-1091 v0.84.37: 资金流四项逐项红涨绿跌+持仓页红提亮+小字二次提升; jlv2.js?v=10 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
+const KEEP = ['jinlin-shell-v181', 'jinlin-shell-v180'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
