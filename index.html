@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.84.43" data-sw="jinlin-shell-v184"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
+<script id="jlVerJL" data-ver="0.84.44" data-sw="jinlin-shell-v185"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {
     var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
@@ -30,7 +30,7 @@
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paint); else paint();
   })();</script>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.84.43</title><style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.84.44</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 52% at 94% 38%,rgba(255,217,94,.38),transparent 65%),radial-gradient(ellipse 80% 50% at 85% 0%,rgba(255,217,94,.18),transparent 60%),radial-gradient(ellipse 70% 60% at 10% 10%,rgba(120,20,45,.35),transparent 65%),radial-gradient(ellipse 90% 70% at 50% 45%,rgba(70,12,40,.30),transparent 70%),linear-gradient(160deg,#1a0508 0%,#2b0817 45%,#170510 100%);background-attachment:fixed;color:#eff9fc;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none} /* jl-1068 v0.84.15: 房主指示撤掉持仓小图Fib画图按钮(只要趋势线), Fib引擎代码保留不删;  持仓小图画线条按钮文字误用JS转义写在HTML区→渲染成\u2571乱码(房主截图实证), 改回真实UTF-8字符: ╱线/∿Fib/锁/隐/删/5色点; 其余不动 --><!-- jl-1081~1083 v0.84.29(三合一, 全部只提示预警不做自动交易): ①龙池"斐波那契波段"加分项——扫描worker抓完K线原样喂给持仓卡同源 legFibJL(同一函数零改公式, 龙池价位与温度计逐位一致), 命中口径=上涨正式波段+段幅≥15%+回撤0.30~0.45(0.382附近)+近3收站上0.382档企稳+距1.618扩展位≥5%空间, 各层+10分(加分项非硬门槛); 列表∿标+卡片显示波段区间/0.382位/1.618位/当前回撤; realCache临时挂载用完还原不占jl_dk_配额 ②B/S球"档位失守监控"——跌破买档15分钟(可配jinlin_breach_cfg_v1)不收回记失守, Bn±0.5%内震荡=到档停留不算; 黄=日内累计≥2档「已连续跌穿N档,档位买点逻辑警戒,暂停加仓」/橙=60分钟内≥2档「下滑加速,建议考虑先减仓」/红=最深档失守含开盘<最深档×0.97跳空「已跌穿最深买档,档位体系失效,建议减仓观察,待企稳再决策」; 诱多=早盘强势候选/确认后触发黄色→直升橙+标注; 球按级别变色(wy/wo/wr), 每级每票当日只弹一次横幅, 面板显示失守档位列表/现价所在档/距最深档空间; 面板"失守演示"按钮=合成数据黄/橙/红各一例 ③强势度评分+卖飞治理——9:25竞价出证据(个股高开≥3%且上证高开≥0.5%=候选, 评分=高开/量比估/大盘共振/缺口不回补四维), 9:40~10:10不回补缺口+量比≥1.5确认; 确认票S档触及改"待确认"(琥珀), 触线后15分钟不收回或14:45尾盘复核才转正提示; 移动卖出参考(trailing)=日内高点回落2%, 破线一次性提示; 弱势日行为不变。红线遵守: 不碰资金流/离线资金/大盘异动/B-S球原有触档算法, 零新增外部接口, 假期断档冻结(jlMktPhaseJL闸) --><!-- jl-1066 v0.84.13(房主看图反馈批): ①emoji管理菜单(手/锁/眼/垃圾桶)全撤——换TradingView式底部玻璃色条(白金橙绿红5色点+✕删), 选中画线才出现 ②持仓小图画线入口恢复(jl-1006撤的线/Fib按钮回归, 引擎原样)+单线换色生效(draw1读ln.color) ③小图闪动根治——tsWait自愈改一次性(Set守卫)+renderDeck数据未变不重建innerHTML(deck卡片小图频繁重建=闪动真因) ④⏰补齐: 持仓小图工具栏加⏰按钮(自动对准当前票)+提醒金线标记扩展到小图 ⑤大K线图(KS全屏)=ks.html体系, 其🔔提醒/+提醒健在; KS单线换色下轮 --><!-- jl-1065 v0.84.12(K线组件专项, 只动bigChart交互层): ①十字线抖动根治——新增透明overlay层, 指针移动只重绘overlay(十字线+左右玻璃标签+底部时间), 主图canvas零重绘完全静止; 手势(平移/缩放/画线)起手自动回落原生路径 ②左右涨跌幅/右侧价格/时间标签黑底→玻璃(rgba白.14+.95白字) ③小闹钟恢复——⏰按钮前置工具栏首位+图上金色虚线+⏰常显(夜背景切合) ④趋势线: ↗趋势按钮(首位引导入口)+点线弹玻璃菜单(拖动/锁定/隐藏/删除), 单线lock跳过命中检测/hide跳过渲染, 隐藏线点原位置可唤回 ⑤主图+幅图通用(画线系统本就按pane存储) --><!-- jl-1064 v0.84.11(房主视觉批·只动颜色字重不动布局字号业务逻辑): ①龙池筛选工具栏+扫描横幅深黑实心→统一玻璃rgba(255,255,255,.075)+blur14 saturate1.7+描边.10+圆角12 ②背景顶层加右深金baseglow rgba(160,110,35,.38) ③文字全面提亮加粗: body基线500, 元信息灰字→亮白.8/500-600, 数值.95/.8+.85/600-700, 提示字统一≥.75/500+终扫残留12处灰字提亮+ladRow已触行.55→.65(禁<.6文字); H清查: 全码唯一H=枢轴kind(小图computeTierJL/ks zzPivotsJL,大写=已确认/小写=未确认),资金卡温度卡渲染无H输出, 标题700, 指数小卡.85/600/13px, --secondary.74→.80 ④资金预警风险分溢出修复: 条与数值间距8px+条flex收缩min44px+数值flex:none ⑤终扫见响应报告; ks.html零改动 --><!-- jl-1063 v0.84.10(房主: 152仍雾蒙蒙, 要独立版KeyStation原色): 雾根因=仍有半透明+模糊叠加——①ks嵌入态背景改实心#0a0e0b, backdrop-filter全关(与独立版深色主题逐像素一致) ②外壳叠加层0.22→transparent(只留薄荷描边) ③保留: 全出血/缓存根修/强制深色主题 --><!-- jl-1062 v0.84.9(房主拍板): 玻璃实验终止, ks嵌入面板调回原黑——盾0.30→0.42+blur10(=v0.84.5观感), 外壳叠加0.08→0.22(原值); 保留: 手机全出血/缓存锁定当前壳/嵌入态强制深色主题(亮线可读)/工具条蓝青统一; 独立版与算法零影响 --><!-- jl-1061 v0.84.8(房主实拍: 玻璃生效但网格/价签/十字线全看不清): 根因=房主K线Station存档是浅色主题——浅灰结构线压在玻璃上无对比——①嵌入态强制深色主题(独立版主题选择不受影响, 存档不覆盖) ②玻璃0.14→0.30+blur12(深色线条有暗底对比, 仍透极光不回死黑) ③画布/指标算法零改动, 非大修 --><!-- jl-1060 v0.84.7(房主实拍: 面板仍死黑不match): 根因=SW全局ignoreSearch缓存匹配把KEEP旧壳缓存里的陈年ks.html喂给iframe, v0.84.6玻璃改动根本没送到手机——①sw.js运行时匹配锁定当前壳C(陈旧投喂根除, 离线回退链不变) ②ks嵌入态工具条/文字绿灰→主UI蓝青玻璃家族(仅ksT, 独立版/主题零影响) ③零数据/业务逻辑改动 --><!-- jl-1059 v0.84.6(房主截图圈注): ①手机chartMode全出血——@media430取消舞台padding24px/设备95vw居中/圆角, K线图铺满手机不再两侧空带 ②ks玻璃减淡——玻璃盾0.42→0.14+blur14, 外壳叠加层0.22→0.10, 极光背景透出与首页卡片玻璃一致, 不再死黑不搭(UI统一) ③零数据/业务逻辑改动 --><!-- jl-1058: 整页嵌死手机宽——任一页超宽不再把整个文档拖成可左右平移 */#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:rgba(26,18,10,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05)} /* jl-1036: 容器层深色玻璃兜底 */body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;height:100dvh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05);display:block} /* jl-1036 */body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#e0f2f6}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#eef9fc;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -204,7 +204,27 @@ body.ksEmbed #chartPage .plots{height:640px}
 .rsHoldJL b.up{color:#ff5459}.rsHoldJL b.dn{color:#1fdc93}.rsHoldJL div:last-child b,.rsHoldJL div:last-child i{color:#b23a34!important}/* jl-1073: 浮动盈亏金额+百分比+成本线状态字 按房主指示统一暗红(盖过up/dn动态色) */
 .rsHoldJL i{font-style:normal;display:block;font-size:8px;color:rgba(255,255,255,.88);margin-top:1px;white-space:nowrap}
 .rsLinkJL{font-size:8px;color:#81e6d9;padding-top:4px;letter-spacing:.02em}
-.sbTopJL{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:2px 96px 6px 2px;min-height:20px}
+/* jl-1098 v0.84.44 到站牌竖槽(房主定稿): S上B下贴卡右缘——只显当前最深档+价位, 过站翻数字; 未触侧灰显最近档不写字; 新触=✦星+档+价+边框整槽脉冲(tm≤15分), 闪完落定常亮; 强势票S触=琥珀待确认(jl-1083口径), B档失守=红框勿接(jl-1082口径); 温度计段低/段高·斐波刻度原样不动 */
+.jlStWrapJL{display:flex;gap:8px;align-items:stretch;margin:0 0 8px}
+.jlStQJL{flex:1;min-width:0}
+.sbTopJL{flex:none;width:64px;display:flex;flex-direction:column;gap:5px;justify-content:center}
+.jlStJL{border:1px solid #81e6d92b;border-radius:9px;background:rgba(255,255,255,.045);padding:4px 4px 5px;text-align:center}
+.jlStJL b{display:block;font:700 10px/1.25 ui-monospace,Menlo,monospace;color:rgba(255,255,255,.5);letter-spacing:.4px}
+.jlStJL i{display:block;font-style:normal;font:500 8.5px/1.3 ui-monospace,Menlo,monospace;color:rgba(255,255,255,.34);margin-top:1px}
+.jlStJL u{display:block;text-decoration:none;font:700 7.5px/1.3 -apple-system,"PingFang SC",sans-serif;margin-top:2px;letter-spacing:.6px}
+.jlStJL.st-hitS{border-color:#ff5459aa;background:#ff545916}
+.jlStJL.st-hitS b{color:#ff8a8e}.jlStJL.st-hitS i{color:#ffb3b6cc}
+.jlStJL.st-hitB{border-color:#1fdc93aa;background:#1fdc9316}
+.jlStJL.st-hitB b{color:#6fe9c0}.jlStJL.st-hitB i{color:#9df5d3cc}
+.jlStJL.st-newS,.jlStJL.st-newB{animation:jlStTwk 1.15s ease-in-out infinite}  /* 星+档+价+框整槽一起闪 */
+.jlStJL.st-pend{border-color:#ffd21f88;background:#ffd21f12}
+.jlStJL.st-pend b{color:#ffd21f}.jlStJL.st-pend i{color:#ffd21fcc}.jlStJL.st-pend u{color:#ffd21f}
+.jlStJL.st-near{border-color:#ffd21f55}
+.jlStJL.st-near b{color:#e5cf7f}.jlStJL.st-near i{color:#e5cf7f99}
+.jlStJL.st-lost{border-color:#ff5459;background:#ff54591f}
+.jlStJL.st-lost b{color:#ffb3b6}.jlStJL.st-lost i{color:#ffb3b6}.jlStJL.st-lost u{color:#ff8a8e}
+@keyframes jlStTwk{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.jlStJL.st-newS,.jlStJL.st-newB{animation:none}}  /* jl-1097同规: 静态变色仍可见 */
 .sbClkJL{display:inline-flex;align-items:center;gap:4px;font-size:8.5px;color:#f2fbfd;letter-spacing:.3px;padding:2px 7px;border-radius:8px;border:1px solid #81e6d92e;background:linear-gradient(145deg,#12303d80,#0a1c2680)}
 .sbClkJL b{color:#fff;font-weight:600}
 .sbClkJL .dot{width:5px;height:5px;border-radius:50%;background:#81e6d9;box-shadow:0 0 6px #81e6d9}
@@ -445,9 +465,22 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 .sbOrbJL.hitS.hitB b{color:#ffe9b0}.sbOrbJL.hitS.hitB i{color:#ffd98a}
 @keyframes sbOrbGlowG{0%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 0 #1fdc9355}70%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 16px #1fdc9300}100%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 0 #1fdc9300}}
 @keyframes sbOrbGlowY{0%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 0 #ffd21f55}70%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 16px #ffd21f00}100%{box-shadow:0 16px 34px #000b,inset 0 2px 7px #ffffff38,inset 0 -9px 16px #0009,0 0 0 0 #ffd21f00}}
-.sbOrbBadgeJL{position:absolute;top:-13px;right:-8px;z-index:2;font:600 8px/1.25 -apple-system,"PingFang SC",sans-serif;color:#f2feff;background:rgba(16,10,8,.9);border:1px solid #81e6d966;border-radius:8px;padding:2px 5px;white-space:nowrap;pointer-events:none;box-shadow:0 2px 8px #000a;text-shadow:0 1px 2px #000}
-.sbOrbBadgeJL.s{border-color:#ff5459aa;color:#ffb3b6}
-.sbOrbBadgeJL.b{border-color:#1fdc93aa;color:#9df5d3}
+/* jl-1098 v0.84.44 卫星星点(替代jl-1097常驻徽标): 多持仓同触一只一颗星, 最新3颗实显+超折✦+N计数, 星点闪=该票最新触档≤15分; 价格只进点开面板, 球面不挂价格长列 */
+.sbOrbStarsJL{position:absolute;inset:0;z-index:2;pointer-events:none}
+.sbStarJL{position:absolute;white-space:nowrap;display:flex;gap:3px;align-items:center;font:600 8px/1.2 -apple-system,"PingFang SC",sans-serif;color:#eafcff;background:rgba(16,10,8,.88);border:1px solid #81e6d966;border-radius:7px;padding:2px 4px;box-shadow:0 2px 8px #000a;text-shadow:0 1px 2px #000}
+.sbStarJL b{font-weight:700;letter-spacing:.3px}
+.sbStarJL.s{border-color:#ff5459aa}.sbStarJL.s b{color:#ff8a8e}
+.sbStarJL.b{border-color:#1fdc93aa}.sbStarJL.b b{color:#6fe9c0}
+.sbStarJL.fold{border-color:#ffd21f66;color:#cfe8d0}.sbStarJL.fold b{color:#ffd21f}
+.sbStarJL.p0{top:-15px;left:50%;transform:translate(-50%,0)}
+.sbStarJL.p1{top:50%;right:calc(100% + 5px);transform:translate(0,-50%)}
+.sbStarJL.p2{bottom:-15px;left:50%;transform:translate(-50%,0)}
+.sbStarJL.p3{bottom:-13px;right:calc(100% + 3px)}
+.sbStarJL.fw{animation:jlStarTwk 1.15s ease-in-out infinite}
+@keyframes jlStarTwk{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.sbStarJL.fw{animation:none}}  /* jl-1097同规: 静态色仍可见 */
+.sbDingBtn{font:600 9px/1 -apple-system,"PingFang SC",sans-serif;color:#9df5d3;border:1px solid #1fdc9355;border-radius:7px;padding:4px 7px;background:#1fdc9314}
+.sbDingBtn.off{color:#8fa398;border-color:#81e6d933;background:transparent}
 </style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
 
 <style id="jlTypoJL">/* jl-1089 v0.84.35 全站Typography可读性批(纯视觉层·零业务逻辑·零新网络请求): ①玻璃上白字统一 text-shadow:0 1px 2px rgba(0,0,0,.35)(day亮色主题复位) ②涨跌值/影响类标签改实底pill+白字600-700·圆角8px·红rgba(224,32,32,.92)/绿rgba(0,150,90,.92)(红涨绿跌语义不变仅换载体) ③数据密集区(筹码行/ETF列表/事件卡/轨迹区)加稳定底层 ④数字列 tabular-nums ⑤低透明度白字提亮(.70-.80→.78/.88) */
@@ -4828,7 +4861,7 @@ document.addEventListener("visibilitychange", () => {
         if (pr.st === "brkL") sig = ["\u25BC\u7834\u4F4D", "g"];
         else if (pr.st === "brkH") sig = ["\u25B2\u5F3A\u52BF", "s"];
       }
-      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}</small></span><strong>${(() => { const _dq = deckQuoteJL(s); if (!(_dq.p > 0)) return "\u2014"; const _qc = _dq.live ? cls(s.pct) : (_dq.pc > 0 ? "up" : _dq.pc < 0 ? "down" : ""); return '<span class="' + _qc + '">' + money(_dq.p) + "</span>" + (_dq.live ? '<small class="' + _qc + '">' + pct(s.pct) + "</small>" : '<small class="dqDtJL">' + _dq.dt + "\u6536</small>"); })()}</strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}>${deckSBJL(t, s)}<button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button>${quoteRowsJL(s, leg, pr)}${posRulerHTMLJL(s)}<div class="jlResoCardJL">${resoLineJL(s)}${cyqLineHTMLJL(s)}${rsHoldHTMLJL(s)}</div>${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button><button type="button" data-open-news="${s.code}" style="border:1px solid #81e6d955;border-radius:9px;background:#81e6d91f;color:#dffbf7;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">\u65B0\u95FB</button></div></div></article>`;
+      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}</small></span><strong>${(() => { const _dq = deckQuoteJL(s); if (!(_dq.p > 0)) return "\u2014"; const _qc = _dq.live ? cls(s.pct) : (_dq.pc > 0 ? "up" : _dq.pc < 0 ? "down" : ""); return '<span class="' + _qc + '">' + money(_dq.p) + "</span>" + (_dq.live ? '<small class="' + _qc + '">' + pct(s.pct) + "</small>" : '<small class="dqDtJL">' + _dq.dt + "\u6536</small>"); })()}</strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}><button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><div class="jlStWrapJL"><div class="jlStQJL">${quoteRowsJL(s, leg, pr)}</div>${deckSBJL(t, s)}</div>${posRulerHTMLJL(s)}<div class="jlResoCardJL">${resoLineJL(s)}${cyqLineHTMLJL(s)}${rsHoldHTMLJL(s)}</div>${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><div class="facts"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"><small>\u6301\u4ED3\u672C\u91D1 ${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</small></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button><button type="button" data-open-news="${s.code}" style="border:1px solid #81e6d955;border-radius:9px;background:#81e6d91f;color:#dffbf7;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">\u65B0\u95FB</button></div></div></article>`;
     }).join("");
     const _dp = _deckList.findIndex((o) => o.i === active);
     $("count").textContent = _deckList.length ? `${String((_dp < 0 ? 0 : _dp) + 1).padStart(2, "0")} / ${String(_deckList.length).padStart(2, "0")}` : "00 / 00";
@@ -15444,7 +15477,36 @@ var RLMCore = (function () {
     return rows;
   }
   function deckSBJL(t, s) {
-    return "";
+    /* jl-1098 到站牌: 档序=档位数组序(S1→S3价升/B1→B3价降), 过站只翻数字不回显旧档;
+       hit=当日触及(天亮即清, sbRowsJL口径), pend=强势票待确认, lost=jl-1082失守, near=±1%逼近 */
+    if (!t || !t.sells || !t.sells.length) return "";
+    const rows = sbRowsJL(t, s);
+    if (!rows.length) return "";
+    const dc = typeof decTierJL === "function" ? decTierJL(s) : 2;
+    const bev = (() => { try { return sbBreachNowJL ? sbBreachNowJL[s.code] : null; } catch (e) { return null; } })();  /* try/catch防TDZ(jl-1004教训): deckSBJL可在const声明前被首帧调用 */
+    const nowMin = (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes();
+    const tm2min = (tm) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(tm || "")); return m ? +m[1] * 60 + +m[2] : null; };
+    const slot = (side) => {
+      const rs = rows.filter((r) => r.side === side);
+      if (!rs.length) return "";
+      const lostLbs = side === "b" && bev && bev.lost && bev.lost.length ? bev.lost.map((r9) => r9.lb) : [];
+      const hitRows = rs.filter((r) => r.hit), pendRows = rs.filter((r) => r.pend), lostRows = rs.filter((r) => lostLbs.includes(r.lb));
+      let row = hitRows.length ? hitRows[hitRows.length - 1] : pendRows.length ? pendRows[pendRows.length - 1] : lostRows.length ? lostRows[lostRows.length - 1] : rs[0];
+      if (!row) return "";
+      const m2 = row.hit ? tm2min(row.tm) : null;
+      const isNew = m2 != null && nowMin - m2 >= 0 && nowMin - m2 <= 15;  /* 星闪只挂新穿线那一刻(15分节拍), 之后落定常亮 */
+      let cls = "", tag = "";
+      if (row.hit) {
+        cls = side === "s" ? "st-hitS" : "st-hitB";
+        if (isNew) cls += side === "s" ? " st-newS" : " st-newB";
+      } else if (row.pend) { cls = "st-pend"; tag = "<u>\u5F85\u786E\u8BA4</u>"; }
+      else if (lostLbs.includes(row.lb)) { cls = "st-lost"; tag = "<u>\u5931\u5B88\u52FF\u63A5</u>"; }
+      else if (row.near) cls = "st-near";
+      return '<div class="jlStJL ' + cls + '"><b>' + (isNew ? "\u2726 " : "") + row.lb + "</b><i>" + Number(row.v).toFixed(dc) + "</i>" + tag + "</div>";
+    };
+    const hs = slot("s"), hb = slot("b");
+    if (!hs && !hb) return "";
+    return '<div class="sbTopJL">' + hs + hb + "</div>";
   }
   /* ==== jl-1082 v0.84.29: B/S球"档位失守监控"(只提示预警, 不做任何自动交易) ====
      概念口径(房主定义):
@@ -15672,7 +15734,7 @@ var RLMCore = (function () {
     b.className = "sbOrbJL";
     b.type = "button";
     b.setAttribute("aria-label", "水位B/S汇总");
-    b.innerHTML = '<span class="orbCore"><b>B/S</b><i id="sbOrbSub">—</i></span><i id="sbOrbBadgeJL" class="sbOrbBadgeJL" hidden></i>'; /* jl-1097: 常驻徽标=当日最新触档(纯展示, pointer-events:none不碰拖拽) */
+    b.innerHTML = '<span class="orbCore"><b>B/S</b><i id="sbOrbSub">—</i></span><i id="sbOrbStarsJL" class="sbOrbStarsJL" aria-hidden="true"></i>'; /* jl-1098: 卫星星点容器(替代jl-1097常驻徽标, pointer-events:none不碰拖拽) */
     document.body.appendChild(b);
     try {
       const ps = JSON.parse(localStorage.getItem("jinlin_sborb_v1") || "{}");
@@ -15717,6 +15779,55 @@ var RLMCore = (function () {
       }
     });
   }
+  /* ==== jl-1098 v0.84.44 页面内提醒(房主令: 不做锁屏推送)——穿档叮声(面板开关 jinlin_sbding_v1, 默认开) + 安卓震动 + 标签标题闪 ==== */
+  let jlDingCtxJL = null, jlDingStateJL = null, jlTitleFlashTimerJL = null;
+  function jlDingIsOnJL() {
+    if (jlDingStateJL == null) { try { jlDingStateJL = localStorage.getItem("jinlin_sbding_v1") !== "0"; } catch (e) { jlDingStateJL = true; } }
+    return jlDingStateJL;
+  }
+  function jlDingToggleJL() {
+    jlDingStateJL = !jlDingIsOnJL();
+    try { localStorage.setItem("jinlin_sbding_v1", jlDingStateJL ? "1" : "0"); } catch (e) {}
+    return jlDingStateJL;
+  }
+  function jlDingUnlockJL() {
+    try {
+      if (!jlDingCtxJL) jlDingCtxJL = new (window.AudioContext || window.webkitAudioContext)();
+      if (jlDingCtxJL && jlDingCtxJL.state === "suspended") jlDingCtxJL.resume();
+    } catch (e) {}
+  }
+  document.addEventListener("pointerdown", jlDingUnlockJL, { passive: true });  /* 移动端音频解锁: 任意点按一次即通(解锁失败静默, 不炸球循环) */
+  function jlDingJL() {
+    if (!jlDingIsOnJL()) return;
+    try {
+      jlDingUnlockJL();
+      if (!jlDingCtxJL || jlDingCtxJL.state !== "running") return;
+      const t0 = jlDingCtxJL.currentTime;  /* 双音"叮-叮"(880/1318Hz, 0.5s自衰减), 克制不刺耳 */
+      [[880, 0], [1318.5, 0.13]].forEach((nv) => {
+        const o = jlDingCtxJL.createOscillator(), g = jlDingCtxJL.createGain();
+        o.type = "sine"; o.frequency.value = nv[0];
+        g.gain.setValueAtTime(1e-4, t0 + nv[1]);
+        g.gain.exponentialRampToValueAtTime(0.22, t0 + nv[1] + 0.02);
+        g.gain.exponentialRampToValueAtTime(1e-4, t0 + nv[1] + 0.5);
+        o.connect(g); g.connect(jlDingCtxJL.destination);
+        o.start(t0 + nv[1]); o.stop(t0 + nv[1] + 0.55);
+      });
+    } catch (e) {}
+  }
+  function jlTitleFlashStartJL(txt) {  /* 标签标题闪~22s: 切去别的App/后台回来一眼看到✦档位; 切回本页即复位 */
+    const base = document.title.indexOf("✦") === 0 ? "金粼 · 联动工作台 v0.84.44" : document.title;  /* 连环触发防污染: base不可是闪到一半的✦态 */
+    try { clearInterval(jlTitleFlashTimerJL); } catch (e) {}
+    let flip = false, n = 0;
+    jlTitleFlashTimerJL = setInterval(() => {
+      flip = !flip; n++;
+      document.title = flip ? "✦ " + txt : base;
+      if (n >= 28) { clearInterval(jlTitleFlashTimerJL); jlTitleFlashTimerJL = null; document.title = base; }
+    }, 800);
+    const onStop = () => {
+      if (!document.hidden && jlTitleFlashTimerJL) { clearInterval(jlTitleFlashTimerJL); jlTitleFlashTimerJL = null; document.title = base; document.removeEventListener("visibilitychange", onStop); }
+    };
+    document.addEventListener("visibilitychange", onStop);
+  }
   let sbLastHitJL = 0, sbHitSigJL = "";
   try { sbHitSigJL = localStorage.getItem("jinlin_sbhit_v1") || ""; } catch (e) {}
   function sbOrbRefreshJL() {
@@ -15725,17 +15836,21 @@ var RLMCore = (function () {
     let hits = 0, near = 0, pends = 0, lostN = 0, bR = 0, bO = 0, bY = 0, hitsS = 0, hitsB = 0, bdBest = null;  /* jl-1097: 分边触档计数+当日最新触档徽标候选 */
     const ph = typeof jlMktPhaseJL === "function" ? jlMktPhaseJL() : { t: "", on: false };
     try { if (ph.on) jlStrongTickJL(); } catch (eS) {}  /* jl-1083: 强势度评分挂球循环(内部20s节流+假期冻结) */
+    const stars = [];  /* jl-1098: 卫星星点——每只持仓取当日最新触档(一只一颗, 同触几只就有几颗星在动) */
     stocks.forEach((s) => {
       const t = typeof tiersViewJL === "function" ? tiersViewJL(s) : null;
+      let _stBest = null;  /* jl-1098: 该票当日最新触档 → 星点(一只一颗) */
       sbRowsJL(t, s).forEach((r) => {
         if (r.hit) {
           hits++;
           if (r.side === "s") hitsS++; else hitsB++;  /* jl-1097: 触档分边 */
           if (r.tm && (!bdBest || String(r.tm) > String(bdBest.tm))) bdBest = { tm: String(r.tm), lb: r.lb, side: r.side, nm: String(s.name || "").slice(0, 4) };  /* jl-1097: 当日最新触档(HH:MM字符串按字典序比) */
+          if (!_stBest || String(r.tm || "") >= String(_stBest.tm || "")) _stBest = { tm: String(r.tm || ""), lb: r.lb, side: r.side, nm: String(s.name || "").slice(0, 4), code: String(s.code) };  /* jl-1098: 星点取该票最新触档(tm空=无15分K, 排队尾) */
         }
         else if (r.pend) pends++;
         else if (r.near) near++;
       });
+      if (_stBest && _stBest.lb) stars.push(_stBest);  /* jl-1098 */
       if (ph.on && t && !t.planNext && (typeof freshQuoteJL !== "function" || freshQuoteJL(s))) {  /* jl-1082: 档位失守监控(只用现有盘中数据) */
         try { if (typeof ensureM15JL === "function") ensureM15JL(s.code); } catch (eM) {}
         try {
@@ -15751,11 +15866,33 @@ var RLMCore = (function () {
     });
     /* 文案与球色: 失守红>橙>黄 > 触档分边色(jl-1097: S红/B绿/双边琥珀, 取代旧单色触档红) > 逼近黄; 文案链仍含待确认 */
     sub.textContent = bR ? "\u6700\u6DF1\u6863\u5931\u5B88" : bO ? "\u52A0\u901F\u4E0B\u6ED1" + (bO + bR > 1 ? "\u00D7" + (bO + bR) : "") : lostN >= 2 || bY ? "\u5931\u5B88" + lostN + "\u6863" : pends ? pends + "\u5F85\u786E\u8BA4" : hits ? hits + "\u89E6" : near ? near + "\u903C\u8FD1" : "\u65E0\u89E6\u53D1";
-    const hitSig = stocks.map((s) => String(s.code) + ":" + sbRowsJL(typeof tiersViewJL === "function" ? tiersViewJL(s) : null, s).filter((r) => r.hit).map((r) => r.side + "@" + Number(r.v).toFixed(3)).join(",")).join("|");
-    if (hitSig && hitSig !== sbHitSigJL && typeof toast === "function") {
-      const fresh = hitSig.split("|").filter((x) => x && !sbHitSigJL.includes(x)).length;
-      toast("水位提醒 · " + Math.max(1, fresh) + " 个新档位已触及 · 请结合波段确认");
-      orb.animate && orb.animate([{transform:"scale(1)"},{transform:"scale(1.2)"},{transform:"scale(1)"},{transform:"scale(1.2)"},{transform:"scale(1)"}], {duration:1500, easing:"ease-out"});  /* jl-1097: 脉冲520ms单拍→1.5s双拍, 到档弹跳更显眼 */
+    const hitSig = stocks.map((s) => { const _rr = sbRowsJL(typeof tiersViewJL === "function" ? tiersViewJL(s) : null, s).filter((r) => r.hit); return _rr.length ? String(s.code) + ":" + _rr.map((r) => r.side + "@" + Number(r.v).toFixed(3)).join(",") : ""; }).filter(Boolean).join("|");  /* jl-1098: 零触及票不进sig——治"无触首发也弹toast+叮"的空part噪声 */
+    if (hitSig && hitSig !== sbHitSigJL) {
+      const freshParts = hitSig.split("|").filter((x) => x && x.slice(x.indexOf(":") + 1).length > 0 && !sbHitSigJL.includes(x));  /* jl-1098: 空档part不入fresh(升级过渡旧sig含空part也不误报) */
+      if (freshParts.length) {
+        const fm9 = freshParts.slice(0, 3).map((part) => {  /* jl-1098: 新档拆成票名·档位, 声音/震动/标题闪同口径 */
+          const ci = part.indexOf(":");
+          if (ci < 0) return "";
+          const st9 = stocks.find((x) => String(x.code) === part.slice(0, ci));
+          const t9 = st9 && typeof tiersViewJL === "function" ? tiersViewJL(st9) : null;
+          if (!t9) return "";
+          const lbs = part.slice(ci + 1).split(",").filter(Boolean).map((sg2) => {
+            const k2 = sg2.indexOf("@");
+            if (k2 < 0) return "";
+            const sd = sg2.slice(0, k2), v2 = +sg2.slice(k2 + 1);
+            const arr = sd === "s" ? t9.sells : t9.buys;
+            const ix = arr.findIndex((x2) => Math.abs(x2 - v2) < 1e-6);
+            return sd.toUpperCase() + (ix >= 0 ? ix + 1 : "?");
+          }).join("/");
+          return (st9 ? String(st9.name).slice(0, 4) : part.slice(0, ci)) + "\u00B7" + lbs;
+        }).filter(Boolean);
+        if (typeof toast === "function") toast("\u6C34\u4F4D\u63D0\u9192 \u00B7 " + (fm9.length ? fm9.join(" ") + " \u5DF2\u89E6\u53CA" : Math.max(1, freshParts.length) + " \u4E2A\u65B0\u6863\u4F4D\u5DF2\u89E6\u53CA") + " \u00B7 \u8BF7\u7ED3\u5408\u6CE2\u6BB5\u786E\u8BA4");
+        orb.animate && orb.animate([{transform:"scale(1)"},{transform:"scale(1.2)"},{transform:"scale(1)"},{transform:"scale(1.2)"},{transform:"scale(1)"}], {duration:1500, easing:"ease-out"});  /* jl-1097: 脉冲520ms单拍→1.5s双拍, 到档弹跳更显眼 */
+        /* jl-1098: 页面内即时提醒(房主令不做锁屏推送)——叮声(面板可开关)+安卓震动+标签标题闪, 切回页面即停 */
+        jlDingJL();
+        try { navigator.vibrate && navigator.vibrate([90, 70, 90]); } catch (eV) {}
+        jlTitleFlashStartJL(fm9.join(" ") || "\u65B0\u6863\u4F4D\u89E6\u53CA");
+      }
       sbHitSigJL = hitSig;
       try { localStorage.setItem("jinlin_sbhit_v1", hitSig); } catch (e) {}
     }
@@ -15767,10 +15904,16 @@ var RLMCore = (function () {
     orb.classList.toggle("hitS", !_brk9 && hitsS > 0);  /* jl-1097: S档(卖位)触=红光, 取代旧.hit单色红环(旧CSS留存不挂类) */
     orb.classList.toggle("hitB", !_brk9 && hitsB > 0);  /* jl-1097: B档(买位)触=绿光; 双边都触=琥珀(hitS.hitB) */
     orb.classList.toggle("near", !_brk9 && !hits && near > 0);
-    const bd = document.getElementById("sbOrbBadgeJL");  /* jl-1097: 常驻徽标——当日最新触档贴球顶(名·档·时刻), 纯派生态零存储, 新交易日触档时间自然归零即消失 */
-    if (bd) {
-      if (bdBest) { bd.hidden = false; bd.className = "sbOrbBadgeJL " + bdBest.side; bd.textContent = bdBest.nm + "\u00B7" + bdBest.lb + (bdBest.tm ? " " + bdBest.tm : ""); }
-      else bd.hidden = true;
+    const stEl = document.getElementById("sbOrbStarsJL");  /* jl-1098: 卫星星点——最新3颗实显(tm排序, tm空殿后), 超出折✦+N; 星点闪=该票最新触档≤15分; 纯派生态零存储, 新交易日自然清空; 价格只进点开面板 */
+    if (stEl) {
+      const _nowM = (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes();
+      const _fw = (st2) => { const m9 = /^(\d{1,2}):(\d{2})$/.exec(String(st2.tm || "")); if (!m9) return false; const d9 = _nowM - (+m9[1] * 60 + +m9[2]); return d9 >= 0 && d9 <= 15; };
+      const sorted = stars.slice().sort((a, b) => String(b.tm || "").localeCompare(String(a.tm || "")));
+      const shown = sorted.slice(0, 3), fold = sorted.length - shown.length;
+      let hh = "";
+      shown.forEach((st2, i) => { hh += '<i class="sbStarJL ' + st2.side + " p" + i + (_fw(st2) ? " fw" : "") + '"><b>\u2726' + st2.lb + "</b>" + st2.nm + "</i>"; });
+      if (fold > 0) hh += '<i class="sbStarJL fold p3"><b>\u2726+' + fold + "</b>\u70B9\u5F00\u770B\u5168</i>";
+      stEl.innerHTML = hh;
     }
     const pop = document.getElementById("sbPopJL");
     if (pop) pop.innerHTML = sbPanelHTMLJL();
@@ -15779,7 +15922,7 @@ var RLMCore = (function () {
   setInterval(() => { try { sbOrbEnsureJL(); sbOrbRefreshJL(); } catch (e) {} }, 1500);
   function sbPanelHTMLJL() {
     const ph = jlMktPhaseJL(), td = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), wk = "\u65E5\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D"[(/* @__PURE__ */ new Date()).getDay()];
-    let html = `<h4>水位 B/S · 持仓汇总<span>${td.slice(5)} 周${wk} · ${ph.t}</span><button type="button" class="sbDemoBtn" onclick="sbBreachDemoJL()" title="\u5931\u5B88\u76D1\u63A7\u6F14\u793A(\u9EC4/\u6A59/\u7EA2\u5404\u4E00\u4F8B, \u5408\u6210\u6570\u636E)">失守演示</button></h4>`;
+    let html = `<h4>水位 B/S · 持仓汇总<span>${td.slice(5)} 周${wk} · ${ph.t}</span><button type="button" class="sbDemoBtn" onclick="sbBreachDemoJL()" title="\u5931\u5B88\u76D1\u63A7\u6F14\u793A(\u9EC4/\u6A59/\u7EA2\u5404\u4E00\u4F8B, \u5408\u6210\u6570\u636E)">失守演示</button><button type="button" class="sbDingBtn${jlDingIsOnJL() ? "" : " off"}" data-jl-ding title="新触档\u53EE\u58F0\u63D0\u9192\u5F00\u5173(\u9707\u52A8\u4EC5\u5B89\u5353)">叮${jlDingIsOnJL() ? "开" : "关"}</button></h4>`;  /* jl-1098 */
     const seen = {};
     const fmtMin9 = (m) => String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
     stocks.forEach((s) => {
@@ -15827,6 +15970,15 @@ var RLMCore = (function () {
     el.style.left = Math.max(8, Math.min(window.innerWidth - el.offsetWidth - 8, rc.left + rc.width / 2 - el.offsetWidth / 2)) + "px";
     const above = rc.top - el.offsetHeight - 10;
     el.style.top = (above >= 8 ? above : Math.min(window.innerHeight - el.offsetHeight - 8, rc.bottom + 10)) + "px";
+  });
+  document.addEventListener("click", (e) => {  /* jl-1098: 叮声开关(面板内)——不关面板, 切换即生效 */
+    const btn = e.target.closest("[data-jl-ding]");
+    if (!btn) return;
+    e.stopPropagation();
+    const on = jlDingToggleJL();
+    btn.classList.toggle("off", !on);
+    btn.textContent = "\u53EE" + (on ? "\u5F00" : "\u5173");
+    if (typeof toast === "function") toast(on ? "\u53EE\u58F0\u63D0\u9192\u5DF2\u5F00" : "\u53EE\u58F0\u63D0\u9192\u5DF2\u5173");
   });
   function fundBoxHTMLJL(s) {
     if (!s || !s.code) return "";
