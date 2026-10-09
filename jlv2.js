@@ -77,7 +77,7 @@
   var P2H = ["https://push2his.eastmoney.com", "https://push2delay.eastmoney.com"];
   var P2X = ["https://push2ex.eastmoney.com"];
 
-  /* ---------- 样式（透亮玻璃，房主定稿口径） ---------- */
+  /* ---------- 样式（透亮玻璃，定稿口径） ---------- */
   var css = document.createElement("style");
   css.textContent =
     "#jlv2root{margin-top:14px}" +
@@ -771,7 +771,7 @@
       '<div class="foot">状态描述，不构成操作建议 · 温度=50+(涨跌比-0.5)×100 与旧卡同源 · 冰点=规则组判定（≥3项）· 阈值集中在 CFG 待回测校准 · 涨跌停池为本模块自建口径</div>';
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
   }
-  function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——房主质疑"1.44万亿是多了还是少了", 额度差才是人话 */
+  function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——质疑"1.44万亿是多了还是少了", 额度差才是人话 */
     if (!S.snap || !isFinite(S.snap.amt)) return null;
     var ks = Object.keys(S.hist).filter(function (k) { return k < today() && S.hist[k].amt > 1e11; }).sort();
     if (!ks.length) return null;
@@ -843,7 +843,7 @@
     var riskOn = g.groups.some(function (x) { return x.t === "风险事件"; });
     var alertDot = riskOn ? '<span class="dot" style="color:#ff5459"></span>' : "";
     var body = "";
-    if (!g.groups.length) { /* jl-1076: 房主问"大盘异动是画不出来还是?"——通道全败=降级卡(数据源不可用+重试), 通道活但真无事件=原文案 */
+    if (!g.groups.length) { /* jl-1076: 问题:"大盘异动是画不出来还是?"——通道全败=降级卡(数据源不可用+重试), 通道活但真无事件=原文案 */
       if (S.ydFetchOk) { body = '<div class="g2">今日暂无聚合事件（异动 Tab 打开过才有事件缓存 · 本模块会自行补抓 8205/8218/8202）</div>'; try { window.__jlDg && window.__jlDg.ok("jlv2:yd"); } catch (eOy) {} }
       else {
         body = '<div class="g2" data-dg-key="jlv2:yd">' + dgText("jlv2:yd", "今日暂无聚合事件（异动 Tab 打开过才有事件缓存 · 本模块会自行补抓 8205/8218/8202）") + "</div>";

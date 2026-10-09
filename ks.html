@@ -14,7 +14,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   /* jl-1031: 被金粼 iframe 嵌入时整体透明, 透出站点玻璃底; 独立打开仍保持原深色 */
-  @media all { html.ksTransparent, html.ksTransparent body { background: #0a0e0b !important; backdrop-filter: none; -webkit-backdrop-filter: none; } /* jl-1063: 房主拍板——实心纯黑, 与独立版KeyStation完全一致, 透明/模糊全关, 雾蒙蒙根除 */ /* jl-1059: 玻璃盾减淡(0.42近黑→0.14), 极光透出与主UI卡片玻璃一致; 保留tint防浅底白图翻车(jl-1036初衷) */ }
+  @media all { html.ksTransparent, html.ksTransparent body { background: #0a0e0b !important; backdrop-filter: none; -webkit-backdrop-filter: none; } /* jl-1063: 定案——实心纯黑, 与独立版KeyStation完全一致, 透明/模糊全关, 雾蒙蒙根除 */ /* jl-1059: 玻璃盾减淡(0.42近黑→0.14), 极光透出与主UI卡片玻璃一致; 保留tint防浅底白图翻车(jl-1036初衷) */ }
   @media all { /* jl-1060: 嵌入态与主UI蓝青玻璃统一——Key Station绿灰工具条换主UI家族色; 仅ksT生效, 独立版/日间主题零影响 */
     html.ksTransparent body { color: #c9dfe8; }
     html.ksTransparent .btn { background: rgba(10,22,32,.5); color: #c9dfe8; border-color: #81e6d92e; }
@@ -625,7 +625,7 @@ function restore() {
     if (o.favs && o.favs.length) S.favs = o.favs;
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
-    if (window.KS_T) { S.theme = "d"; applyTheme(); } /* jl-1061: 嵌入态强制深色主题——房主存档是浅色主题, 浅灰网格/价签/十字线压在玻璃上全看不清; 独立版主题不受影响 */
+    if (window.KS_T) { S.theme = "d"; applyTheme(); } /* jl-1061: 嵌入态强制深色主题——存档是浅色主题, 浅灰网格/价签/十字线压在玻璃上全看不清; 独立版主题不受影响 */
     if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false };
   } catch (e) {}
 }
