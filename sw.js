@@ -96,8 +96,9 @@
 /* jinlin sw v184 — 2026-10-08: 缓存名 →v184, 配合 jl-1097 v0.84.43 浮球触档强提示——S档(卖位)触=红/B档(买位)触=绿/双边琥珀, 静态变色为主(prefers-reduced-motion下可见), 新增常驻徽标(当日最新触档·名·档·时刻), 脉冲520ms→1.5s双拍; 失守族优先级/触档判定/失守监控/台账链零触碰 */
 /* jinlin sw v183 — 2026-10-08: 缓存名 →v183, 配合 jl-1096 v0.84.42 龙池板块标签全层补齐——行卡/主推卡/展开chip三个标签位接jl_concept_map.js本地兜底(行业口径x.ind/JLPOOL_HY优先·主概念mc兜底, 纯查表零网络), 东财f100双路被拒网络下不再全层无标签, 趋势层被排除在行业映射外的硬伤一并覆盖; evChips"行业"chip改"板块"; 宇宙/资金判定/评分/层归置/涨停池链/SW资产清单零触碰 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v184'; /* jl-1097 v0.84.43: 浮球触档强提示(S红/B绿/双琥珀+常驻徽标+脉冲加长, 静态变色免动画依赖); jlv2.js?v=10等脚本参数不变 */
-const KEEP = ['jinlin-shell-v184', 'jinlin-shell-v183'];
+/* jinlin sw v185 — 2026-10-09: 缓存名 →v185, 配合 jl-1098 v0.84.44 到站牌+卫星星点批——①持仓卡右缘竖槽"到站牌"(S上B下只显当前最深档+价位, 过站翻数字, 新触=星+档+价+框整槽闪≤15分后落定, 未触侧灰显最近档不写字, 不挡温度计段低/段高); ②浮球jl-1097常驻徽标→卫星星星点(一只持仓一颗星, 最新3颗+超折✦+N, 价格只进点开面板); ③穿档页面内提醒(叮声可开关+安卓震动+标签标题闪, 房主令不做锁屏推送); 失守监控/强势待确认/台账链/资产清单零触碰 */
+const C = 'jinlin-shell-v185'; /* jl-1098 v0.84.44: 到站牌竖槽+卫星星点+页面内叮声提醒; jlv2.js?v=10等脚本参数不变 */
+const KEEP = ['jinlin-shell-v185', 'jinlin-shell-v184'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
