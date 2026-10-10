@@ -1,3 +1,4 @@
+/* jinlin sw v194 — 2026-10-11: 缓存名 →v194, 配合 v0.84.53 批[jl-1111: 持仓卡温度计⇄波段/日内切换三修——①切换钮独立成行居中于温度计正上方(原挤prHead双span中, 段低·待确认行宽溢出换行→钮甩右上角) ②热区43×18→60×24px ③renderDeck jl-1066签名补ttModeJL(切换不入签名→点按不重建="从日内点回波段点不中"根因); 卡面prHead回归左Low右High单行; 玻璃/背景/文字零改动] */
 /* jinlin sw v193 — 2026-10-11: 缓存名 →v193, 配合 v0.84.52 批[jl-1110: shader香槟金铺满——左柱香槟釉面+金集中zone+白丝带根除(peak/前景丝改香槟), 卡片层冻结零改动] */
 /* jinlin sw v192 — 2026-10-11: 缓存名 →v192, 配合 v0.84.51 批[jl-1109b: 卡片透亮感——.stock/.stock.active/.glass/#holds .glass+!important共享组统一=白玻璃.07/.015+blur(2px)sat(160%)bright(1.08)+边.5+四段投影; 共振小卡.03+边.28+backdrop置none; WebGL shader零改动(金带铺匀shader待下批)] */
 /* jinlin sw v191 — 2026-10-11: 缓存名 →v191, 配合 v0.84.50 批[jl-1109: 持仓大小卡/玻璃卡无色玻璃化(白玻璃145deg .10→.03+blur10 sat130%+白边.35), .stock:before金晕停用, 复盘卡金底rgba(255,217,94规则删除, 共振小卡摘二层模糊, shader脊线r3→r5金带变细丝带; 文字/卡片内容零改动] */
@@ -98,8 +99,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v193'; /* jl-1091 v0.84.37: 资金流四项逐项红涨绿跌+持仓页红提亮+小字二次提升; jlv2.js?v=10 jl_concept_map.js?v=1 jl_event_log.js?v=2 jl_sector_map.js?v=1 */
-const KEEP = ['jinlin-shell-v193', 'jinlin-shell-v192'];
+const C = 'jinlin-shell-v194'; /* jl-1111 v0.84.53: 温度计⇄切换钮归位温度计正上方+热区扩大+renderDeck签名补ttModeJL(切换不重建根因); 其余零改动 */
+const KEEP = ['jinlin-shell-v194', 'jinlin-shell-v193'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
