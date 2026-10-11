@@ -153,8 +153,8 @@
       if (document.getElementById("jlelCss")) return;
       var st = document.createElement("style");
       st.id = "jlelCss";
-      st.textContent = ".jlelBar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0 2px;font-size:8.5px;color:rgba(255,255,255,.72);border-top:1px dashed #81e6d92e;flex-wrap:wrap}" +
-        ".jlelB{font-size:8.5px;color:#81e6d9;border:1px solid #81e6d966;background:transparent;border-radius:6px;padding:2px 9px;cursor:pointer;font-family:inherit}" +
+      st.textContent = ".jlelBar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0 2px;font-size:12px;color:#FFFFFF;font-weight:600;border-top:1px dashed #81e6d92e;flex-wrap:wrap}" +
+        ".jlelB{font-size:12px;color:#81e6d9;border:1px solid #81e6d966;background:transparent;border-radius:6px;padding:2px 9px;cursor:pointer;font-family:inherit}" +
         ".jlelB:hover{background:#81e6d91a}";
       document.head.appendChild(st);
     } catch (eC) {}

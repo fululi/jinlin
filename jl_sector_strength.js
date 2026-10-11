@@ -279,9 +279,9 @@
     + "body.ksFullJL #jlsectroot{display:none!important}" /* K线全屏模式nav隐藏, 抽屉同退场 */
     + "#jlsectHandle{height:32px;display:flex;align-items:center;gap:7px;padding:0 12px;pointer-events:auto;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}" /* touch-action:none=拖拽不被页面滚动抢占 */
     + "#jlsectHandle .jlsecGrab{flex:0 0 auto;width:30px;height:4px;border-radius:10px;background:rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.4)}"
-    + "#jlsectHandle b{font-size:11.5px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
-    + "#jlsectHandle small{font-size:8.5px;color:rgba(255,255,255,.95);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
-    + "#jlsectHandle .jlsecArr{margin-left:auto;flex:0 0 auto;font-size:10px;color:rgba(255,255,255,.95);font-weight:700;transition:transform .3s}"
+    + "#jlsectHandle b{font-size:12px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
+    + "#jlsectHandle small{font-size:12px;color:#FFFFFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
+    + "#jlsectHandle .jlsecArr{margin-left:auto;flex:0 0 auto;font-size:10px;color:#FFFFFF;font-weight:700;transition:transform .3s}"
     + "#jlsectroot.open .jlsecArr{transform:rotate(180deg)}"
     + "#jlsectBody{overflow-y:auto;max-height:calc(min(58vh,520px) - 34px);pointer-events:auto;overscroll-behavior:contain;padding:2px 11px 12px}" /* 内容区内滚, 关态被根裁剪自然无事件 */
     + "@media (prefers-reduced-motion:reduce){#jlsectroot{transition:none}#jlsectHandle .jlsecArr{transition:none}}";

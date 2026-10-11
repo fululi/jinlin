@@ -15,6 +15,7 @@
    jl-1086 v0.84.32: 离线板块地基(任务A)+事件日志器(任务B)同批——A1新文件jl_concept_map.js(东财F10 ssbk全量: l1/l2/概念[]/主概念mc, 统计唯一归属杜绝一票多板块重复计数)
    A2 板块异动聚簇键=主概念mc优先(conOf)·jl-1080二级映射次之·hy兜底; A4跌停明细板块列同键位; B新文件jl_event_log.js(IndexedDB权威状态源+写成功才推进+纯观察者tap)——
    本模块仅3处接入: secOf旁加conOf只读/485聚簇键位/495与517行同式per的两处被动tap(失败静默); 判定逻辑/参数/样式零改
+   jl-1121 v0.84.60: 温度v2九因子宫格展示补全(纯渲染层·零数据链变更·零新增请求)——①最高连板: ZT池聚合一处落存最高lbc行(名称/代码/行业入池缓存top字段, 旧缓存无top自然降级原样), 宫格副行显示 股票名·题材(主概念mc优先→二级行业→池hybk兜底) ②热点板块持续: 板块名上副行(离线聚合/在线兜底两路同口径), 均幅与涨幅榜首留副行注 ③涨停/跌停宫格标签改"涨停数量/跌停数量" ④炸板率副行挂 炸板数/涨停数(deriveState现成, 口径=炸板/(涨停+炸板)) ⑤ATR波动率标签改"ATR14/价"去解释小字(副行仅留"上证"); jsum折叠摘要/规则组/状态机/阈值/异动卡零触碰
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
    阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
@@ -83,11 +84,11 @@
   var css = document.createElement("style");
   css.textContent =
     "#jlv2root{margin-top:14px}" +
-    ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#eef9fc;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
+    ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#FFFFFF;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
     "body.day .jlv2{background:rgba(0,0,0,0.03);border-color:#0a7d6b3d;color:#12262b}" +
-    ".jlv2 h3{font-size:12px;font-weight:500;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}" +
-    ".jlv2 h3 small{font-size:9px;color:rgba(255,255,255,.72);font-weight:400;text-align:right}" +
-    ".jlv2 .jsum{font-size:10.5px;color:#eef9fc;margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}" +
+    ".jlv2 h3{font-size:12px;font-weight:600;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}" +
+    ".jlv2 h3 small{font-size:12px;color:#FFFFFF;font-weight:600;text-align:right}" +
+    ".jlv2 .jsum{font-size:12px;color:#FFFFFF;font-weight:600;margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}" +
     ".jlv2 .jsum .dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 7px currentColor}" +
     ".jlv2 .jbody{display:none;margin-top:11px;border-top:1px solid #81e6d91c;padding-top:11px}" +
     ".jlv2.open .jbody{display:block}" +
@@ -95,62 +96,62 @@
     ".jlv2.open .jchev{transform:rotate(90deg)}" +
     ".jlv2 .jh{font-size:9px;color:#81e6d9;letter-spacing:.24em;margin:12px 0 7px;display:flex;align-items:center;gap:8px}" +
     ".jlv2 .jh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#81e6d93d,transparent)}" +
-    ".jlv2 .row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 0;flex-wrap:wrap;border-bottom:1px solid #81e6d914;font-size:10px}" +
+    ".jlv2 .row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:8px 0;flex-wrap:wrap;border-bottom:1px solid #81e6d914;font-size:12px}" +
     ".jlv2 .row:last-child{border-bottom:none}" +
-    ".jlv2 .row small{color:rgba(255,255,255,.72);font-size:8.5px}" +
+    ".jlv2 .row small{color:#FFFFFF;font-weight:600;font-size:12px}" +
     ".jlv2 .mono{font-family:ui-monospace,'SF Mono',monospace}" +
-    ".up{color:#ff5459}.dn{color:#1fdc93}.mu{color:rgba(255,255,255,.88)}.hl{color:#ffd21f}" +
+    ".up{color:#ff5459}.dn{color:#1fdc93}.mu{color:#FFFFFF;font-weight:600}.hl{color:#ffd21f}" +
     /* 温度计v2 */
     ".jlv2 .tnow{display:flex;align-items:baseline;gap:9px}" +
     ".jlv2 .tnow b{font-size:26px;font-family:ui-monospace,monospace}" +
-    ".jlv2 .zpill{font-size:11px;color:#81e6d9;border:1px solid #81e6d9;border-radius:9px;padding:2px 9px;font-weight:600}" +
+    ".jlv2 .zpill{font-size:12px;color:#81e6d9;border:1px solid #81e6d9;border-radius:9px;padding:2px 9px;font-weight:600}" +
     ".jlv2 .zpill.ice{color:#5ad0ff;border-color:#5ad0ff}.jlv2 .zpill.hot{color:#ff5459;border-color:#ff5459}" +
     ".jlv2 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}" +
     ".jlv2 .ft{border:1px solid #ffffff10;border-radius:10px;padding:7px 8px;background:rgba(255,255,255,0.045)}" +
-    ".jlv2 .ft span{font-size:8.5px;color:rgba(255,255,255,.72);display:block}" +
+    ".jlv2 .ft span{font-size:12px;color:#FFFFFF;font-weight:600;display:block}" +
     ".jlv2 .ft b{font-size:13px;font-family:ui-monospace,monospace;display:block;margin-top:2px}" +
-    ".jlv2 .ft small{font-size:7.5px;color:rgba(255,255,255,.86);display:block;margin-top:2px;line-height:1.4}" +
-    ".jlv2 .rule{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:9.5px;line-height:1.6}" +
+    ".jlv2 .ft small{font-size:12px;color:#FFFFFF;font-weight:600;display:block;margin-top:2px;line-height:1.4}" +
+    ".jlv2 .rule{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:12px;line-height:1.6}" +
     ".jlv2 .rule:last-of-type{border-bottom:none}" +
     ".jlv2 .rst{flex:none;width:15px;height:15px;border-radius:50%;font-size:9px;display:flex;align-items:center;justify-content:center;margin-top:1px}" +
     ".jlv2 .rst.ok{color:#0a1a14;background:#1fdc93;font-weight:700}" +
     ".jlv2 .rst.no{color:#3a1c1e;background:rgba(255,255,255,0.08);border:1px solid #ffffff26}" +
-    ".jlv2 .scn{border:1px solid #ffffff12;border-radius:11px;padding:8px 10px;margin-top:7px;font-size:9.5px;color:rgba(255,255,255,.72);background:rgba(255,255,255,0.045)}" +
-    ".jlv2 .scn b{color:rgba(255,255,255,.88);display:block;font-size:10px;margin-bottom:2px;font-weight:600}" +
-    ".jlv2 .scn.on{border-color:#81e6d98c;color:#eef9fc;background:#81e6d90d}" +
+    ".jlv2 .scn{border:1px solid #ffffff12;border-radius:11px;padding:8px 10px;margin-top:7px;font-size:12px;color:#FFFFFF;font-weight:600;background:rgba(255,255,255,0.045)}" +
+    ".jlv2 .scn b{color:#FFFFFF;display:block;font-size:12px;margin-bottom:2px;font-weight:650}" +
+    ".jlv2 .scn.on{border-color:#81e6d98c;color:#FFFFFF;background:#81e6d926}" +
     ".jlv2 .scn.on b{color:#81e6d9}" +
     /* 国家队 */
-    ".jlv2 .erow{display:grid;grid-template-columns:112px 1fr 58px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:10px}" +
+    ".jlv2 .erow{display:grid;grid-template-columns:112px 1fr 58px;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid #81e6d914;font-size:12px}" +
     ".jlv2 .erow:last-of-type{border-bottom:none}" +
-    ".jlv2 .erow .nm b{display:block;font-size:10.5px;font-weight:600}" +
-    ".jlv2 .erow .nm small{color:rgba(255,255,255,.86);font-size:8px;letter-spacing:.05em}" +
+    ".jlv2 .erow .nm b{display:block;font-size:12px;font-weight:650}" +
+    ".jlv2 .erow .nm small{color:#FFFFFF;font-size:12px;letter-spacing:.05em}" +
     ".jlv2 .ebar{position:relative;height:15px;border-radius:4px;background:rgba(255,255,255,0.045);overflow:hidden}" +
     ".jlv2 .ebar::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:#ffffff26}" +
     ".jlv2 .ebar i{position:absolute;top:2px;bottom:2px;border-radius:2px}" +
-    ".jlv2 .ebar em{position:absolute;top:0;bottom:0;font-style:normal;font-size:9px;line-height:15px;font-family:ui-monospace,monospace;white-space:nowrap}" +
+    ".jlv2 .ebar em{position:absolute;top:0;bottom:0;font-style:normal;font-size:12px;line-height:15px;font-family:ui-monospace,monospace;white-space:nowrap}" +
     ".jlv2 .bigState{font-size:17px;font-weight:600;color:#ffd21f;letter-spacing:.03em}" +
     ".jlv2 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}" +
-    ".jlv2 .chip{font-size:8.5px;border:1px solid #ffffff1f;border-radius:8px;padding:4px 8px;color:rgba(255,255,255,.72)}" +
-    ".jlv2 .chip.on{border-color:#81e6d9;color:#81e6d9;background:#81e6d914;font-weight:600}" +
+    ".jlv2 .chip{font-size:12px;border:1px solid #ffffff1f;border-radius:8px;padding:4px 8px;color:#FFFFFF;font-weight:600}" +
+    ".jlv2 .chip.on{border-color:#81e6d9;color:#FFFFFF;background:#81e6d933;font-weight:700}" +
     /* 大盘异动 */
     ".jlv2 .grp{margin-top:4px}" +
-    ".jlv2 .grpH{display:flex;justify-content:space-between;font-size:9.5px;color:#81e6d9;padding:6px 0;border-bottom:1px dashed #81e6d92e}" +
-    ".jlv2 .grpH small{color:rgba(255,255,255,.86)}" +
-    ".jlv2 .ev{display:grid;grid-template-columns:34px 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid #81e6d90f;font-size:9.5px;align-items:start}" +
+    ".jlv2 .grpH{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:#81e6d9;padding:6px 0;border-bottom:1px dashed #81e6d92e}" +
+    ".jlv2 .grpH small{color:#FFFFFF;font-weight:600}" +
+    ".jlv2 .ev{display:grid;grid-template-columns:34px 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid #81e6d90f;font-size:12px;align-items:start}" +
     ".jlv2 .ev:last-child{border-bottom:none}" +
-    ".jlv2 .ev .tm{font-family:ui-monospace,monospace;color:rgba(255,255,255,.72);font-size:9px;padding-top:1px}" +
-    ".jlv2 .ev .tt b{display:block;font-size:10px;font-weight:600}" +
-    ".jlv2 .ev .tt small{color:rgba(255,255,255,.72);font-size:8.5px;display:block;margin-top:2px;line-height:1.5}" +
+    ".jlv2 .ev .tm{font-family:ui-monospace,monospace;color:#FFFFFF;font-size:9px;padding-top:1px}" +
+    ".jlv2 .ev .tt b{display:block;font-size:12px;font-weight:650}" +
+    ".jlv2 .ev .tt small{color:#FFFFFF;font-weight:600;font-size:12px;display:block;margin-top:2px;line-height:1.5}" +
     ".jlv2 .tags{display:flex;flex-direction:column;gap:3px;align-items:flex-end}" +
-    ".jlv2 .tg{font-size:8px;border-radius:5px;padding:2px 6px;border:1px solid #ffffff26;color:rgba(255,255,255,.88);white-space:nowrap}" +
+    ".jlv2 .tg{font-size:12px;border-radius:5px;padding:2px 6px;border:1px solid #ffffff26;color:#FFFFFF;font-weight:600;white-space:nowrap}" +
     ".jlv2 .tg.up{border-color:#ff54598c;color:#ffa4a8}" +
     ".jlv2 .tg.dn{border-color:#1fdc938c;color:#1fdc93}" +
     ".jlv2 .tg.warn{border-color:#ffd21f8c;color:#ffd21f}" +
     ".jlv2 .tg.live{border-color:#81e6d9;color:#81e6d9;background:#81e6d914}" +
-    ".jlv2 .tg.dead{border-color:#ffffff1f;color:rgba(255,255,255,.86)}" +
-    ".jlv2 .hold{color:#ffd21f}.jlv2 .watch{color:rgba(255,255,255,.72)}" +
-    ".jlv2 .foot{font-size:8px;color:rgba(255,255,255,.86);margin-top:10px;line-height:1.6}" +
-    ".jlv2 .g2{font-size:9px;color:rgba(255,255,255,.86);padding:6px 0}";
+    ".jlv2 .tg.dead{border-color:#ffffff1f;color:#FFFFFF}" +
+    ".jlv2 .hold{color:#ffd21f}.jlv2 .watch{color:#FFFFFF;font-weight:600}" +
+    ".jlv2 .foot{font-size:12px;color:#FFFFFF;font-weight:600;margin-top:10px;line-height:1.6}" +
+    ".jlv2 .g2{font-size:12px;color:#FFFFFF;font-weight:600;padding:6px 0}";
   document.head.appendChild(css);
 
   /* ---------- 状态 ---------- */
@@ -226,7 +227,7 @@
   function fetchPools(cb) {
     var out = { zt: null, zb: null, dt: null, date: today() }, left = 3, bad = 0;
     function fin() { if (--left > 0) return; if (bad >= 3) { cb(new Error("pools")); return; } S.pool = out; lsSet("jlv2_pool_v1", out); cb(null, out); }
-    fetchPoolOne("ZT", ymd(), function (e, p) { if (e) { bad++; } else { var lb = 0, zb = 0; p.forEach(function (r) { lb = Math.max(lb, +r.lbc || 0); zb += +r.zbc || 0; }); out.zt = { n: p.length, lb: lb, zbc: zb }; } fin(); });
+    fetchPoolOne("ZT", ymd(), function (e, p) { if (e) { bad++; } else { var lb = 0, zb = 0, top = null; p.forEach(function (r) { var L = +r.lbc || 0; if (L > lb) { lb = L; top = { c: String(r.c || ""), nm: String(r.n || ""), hy: String(r.hybk || "") }; } zb += +r.zbc || 0; }); out.zt = { n: p.length, lb: lb, zbc: zb, top: top }; } fin(); }); /* jl-1121: 最高连板行落存top(名称/代码/行业, 同板并列取首封最早——ZT池按fbt升序) */
     fetchPoolOne("ZB", ymd(), function (e, p) { if (e) { bad++; } else { out.zb = { n: p.length }; } fin(); });
     fetchPoolOne("DT", ymd(), function (e, p) { if (e) { bad++; } else { out.dt = { n: p.length, rows: p.map(function (r) { return { c: String(r.c), n: String(r.n), zdp: +r.zdp || 0, days: +r.days || 1, fund: +r.fund || 0 }; }) }; } fin(); }); /* jl-1080: 跌停明细落存(zdp跌幅/days连跌天数/fund封单), 温度卡点数字弹出 */
   }
@@ -670,8 +671,8 @@
     return t < 45 ? "#5ad0ff" : t < 55 ? "#b8c2c8" : t < 80 ? "#ffd21f" : "#ff5459";
   }
   function sColJL(st) { /* jl-B2: 状态标签四色(状态机语义)——冰点/冷点=冰蓝, 正常=灰, 高潮=橙红 */
-    if (!st) return "#b8c2c8";
-    return st.state === "冰点" || st.state === "冷点" ? "#5ad0ff" : st.state === "高潮" ? "#ff5459" : "#b8c2c8";
+    if (!st) return "#FFFFFF";
+    return st.state === "冰点" || st.state === "冷点" ? "#5ad0ff" : st.state === "高潮" ? "#ff5459" : "#FFFFFF";
   }
   /* jl-1080: 热点板块持续——离线板块映射聚合主模块温度逐股涨跌(jinlin_mtemp_v1.data.rows, 增强通道顺手持久化) → 行业涨幅榜首
      板块上涨占比+平均涨幅; 样本<8不参榜(防小板块霸榜); 连日数独立键jlv2_hotoff_v1(与在线jlv2_hot_v1互不污染); 无数据=映射未覆盖 */
@@ -708,7 +709,7 @@
       return '<div class="ev"><span class="tt"><b>' + esc(r.n) + '</b><small>' + r.c + " · " + esc(conOf(r.c) || secOf(r.c) || "未映射") + (r.days > 1 ? " · 连" + r.days + "天" : "") + '</small></span><span class="mono dn">' + r.zdp.toFixed(2) + '%</span></div>';
     }).join("");
     var diff = S.evDtN != null && S.evDtN !== dtr.n ? ' · <span class="dn">⚠口径差异 事件流' + S.evDtN + '家</span>' : "";
-    return '<div style="margin:6px 0 2px;padding:7px 9px;border:1px solid #81e6d92e;border-radius:8px;background:rgba(255,255,255,.04)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:10px">当日跌停明细 · ' + dtr.n + '家</b><span style="font-size:9px;color:rgba(255,255,255,.72)">跌停池为准' + diff + '</span></div>' + rs + '<div class="g2" style="margin-top:4px">按封单额降序 · 剔除ST · 跌幅为现价对昨收</div></div>';
+    return '<div style="margin:6px 0 2px;padding:7px 9px;border:1px solid #81e6d92e;border-radius:8px;background:rgba(255,255,255,.04)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:10px">当日跌停明细 · ' + dtr.n + '家</b><span style="font-size:12px;color:#FFFFFF">跌停池为准' + diff + '</span></div>' + rs + '<div class="g2" style="margin-top:4px">按封单额降序 · 剔除ST · 跌幅为现价对昨收</div></div>';
   }
   window.__JLDtDetailJL = function () { S.dtOpen = !S.dtOpen; paint(); };
   function renderTemp() {
@@ -721,7 +722,7 @@
     var zbr = st ? st.zbr : null;
     var sumParts = [];
     var zc = tColJL(sn.t), sc = sColJL(st); /* jl-B2: 温度数字=温区色, 状态标签=状态机色 */
-    sumParts.push('<span class="mono" style="color:' + zc + ';font-weight:700">' + sn.t + '</span> ' + (st && st.state !== "正常" ? '<span class="' + statePill(st.state) + '" style="font-size:9px;padding:1px 7px;color:' + sc + ';border-color:' + sc + '">' + st.state + '</span>' : '<span class="mu" style="color:' + sc + '">平</span>'));
+    sumParts.push('<span class="mono" style="color:' + zc + ';font-weight:700">' + sn.t + '</span> ' + (st && st.state !== "正常" ? '<span class="' + statePill(st.state) + '" style="font-size:12px;padding:1px 7px;color:' + sc + ';border-color:' + sc + '">' + st.state + '</span>' : '<span class="mu" style="color:' + sc + '">平</span>'));
     if (dt2 != null && dt2 !== 0) sumParts.push('<span class="' + (dt2 > 0 ? "up" : "dn") + ' mono">' + (dt2 > 0 ? "▲" : "▼") + Math.abs(dt2) + '</span>');
     if (st && st.zt != null) sumParts.push('<span class="mono">涨停' + st.zt + '/跌停' + (st.dt == null ? "—" : st.dt) + '</span>');
     if (zbr != null) sumParts.push('<span class="mono">炸板' + zbr + '%</span>');
@@ -729,8 +730,8 @@
     /* jl-B2: 7档位分档高亮——当前档白亮加粗+微光晕, 其余档调暗至40%透明度; 边界对齐v1温区(80/65/55/45/35/20) */
     var LV7 = ["100 沸", "热", "温", "50 平", "冷", "过冷", "0 冰"];
     var lv = sn.t == null ? -1 : sn.t >= 80 ? 0 : sn.t >= 65 ? 1 : sn.t >= 55 ? 2 : sn.t >= 45 ? 3 : sn.t >= 35 ? 4 : sn.t >= 20 ? 5 : 6;
-    var scale = '<div class="row" style="border-bottom:none;gap:0;display:flex;justify-content:space-between;font-size:8px">' + LV7.map(function (s, i) {
-      return '<span style="' + (i === lv ? "color:#fff;font-weight:700;text-shadow:0 0 6px rgba(255,255,255,.5)" : "color:rgba(255,255,255,.86);opacity:.4") + '">' + s + '</span>';
+    var scale = '<div class="row" style="border-bottom:none;gap:0;display:flex;justify-content:space-between;font-size:12px">' + LV7.map(function (s, i) {
+      return '<span style="' + (i === lv ? "color:#fff;font-weight:700;text-shadow:0 0 6px rgba(255,255,255,.5)" : "color:#FFFFFF;font-weight:600;opacity:.9") + '">' + s + '</span>';
     }).join("") + '</div>';
     function tile(lb, val, cls, sub) { return '<div class="ft"><span>' + lb + '</span><b class="' + cls + '">' + val + '</b><small>' + sub + '</small></div>'; }
     var upR = Math.round(sn.up / Math.max(1, sn.up + sn.down) * 100);
@@ -738,18 +739,22 @@
     var hotSec = calcHotSector(); /* jl-1080: 离线板块映射聚合→行业涨幅榜首 */
     var dtr = S.pool && S.pool.dt && S.pool.dt.rows && S.pool.dt.rows.length ? S.pool.dt : null;
     var dtDiff = dtr && S.evDtN != null && S.evDtN !== dtr.n ? " · ⚠口径差" : "";
+    var topLb = S.pool && S.pool.zt && S.pool.zt.top ? S.pool.zt.top : null; /* jl-1121: v12前旧池缓存无top→自然降级原样 */
+    var lbNm = topLb && topLb.nm ? esc(String(topLb.nm).slice(0, 5) + (String(topLb.nm).length > 5 ? "…" : "")) : "";
+    var lbTh = topLb ? (conOf(topLb.c) || secOf(topLb.c) || String(topLb.hy || "").replace(/ⅠⅡⅢ+$/, "") || "") : ""; /* jl-1121: 题材=主概念mc优先→二级行业→池hybk兜底 */
+    var zbn = st ? st.zb : null, ztn = st ? st.zt : null; /* jl-1121: 炸板/涨停池家数(deriveState现成, 炸板率口径=炸板/(涨停+炸板)) */
     var grid =
       tile("上涨占比", upR + "%", upR >= 55 ? "up" : upR <= 45 ? "dn" : "mu", esc(sn.up) + "/" + esc(sn.down) + " 家") +
-      tile("涨停", st && st.zt != null ? st.zt : "—", (st && st.zt != null && st.zt >= 60) ? "up" : (st && st.zt != null && st.zt <= 25) ? "dn" : "mu", "涨停池口径") +
+      tile("涨停数量", st && st.zt != null ? st.zt : "—", (st && st.zt != null && st.zt >= 60) ? "up" : (st && st.zt != null && st.zt <= 25) ? "dn" : "mu", "涨停池口径") +
       (dtr
-        ? '<div class="ft" role="button" tabindex="0" style="cursor:pointer" onclick="__JLDtDetailJL()" title="点击展开/收起当日跌停明细"><span>跌停</span><b class="' + ((st && st.dt != null && st.dt >= 40) ? "dn" : "mu") + '">' + (st && st.dt != null ? st.dt : "—") + '</b><small>跌停池 · 点看明细' + dtDiff + '</small></div>'
-        : tile("跌停", st && st.dt != null ? st.dt : "—", (st && st.dt != null && st.dt >= 40) ? "dn" : "mu", "跌停池 · 本模块自建")) +
-      tile("炸板率", zbr != null ? zbr + "%" : "—", zbr != null && zbr >= 40 ? "dn" : "mu", "盘中暂态 · 收盘定版") +
-      tile("连板高度", st && st.lb != null ? st.lb + "板" : "—", (st && st.lb != null && st.lb >= 6) ? "up" : (st && st.lb != null && st.lb <= 2) ? "dn" : "mu", "最高连板") +
+        ? '<div class="ft" role="button" tabindex="0" style="cursor:pointer" onclick="__JLDtDetailJL()" title="点击展开/收起当日跌停明细"><span>跌停数量</span><b class="' + ((st && st.dt != null && st.dt >= 40) ? "dn" : "mu") + '">' + (st && st.dt != null ? st.dt : "—") + '</b><small>跌停池 · 点看明细' + dtDiff + '</small></div>'
+        : tile("跌停数量", st && st.dt != null ? st.dt : "—", (st && st.dt != null && st.dt >= 40) ? "dn" : "mu", "跌停池 · 本模块自建")) +
+      tile("炸板率", zbr != null ? zbr + "%" : "—", zbr != null && zbr >= 40 ? "dn" : "mu", zbn != null && ztn != null ? "炸板" + zbn + "/涨停" + ztn : "盘中暂态 · 收盘定版") +
+      tile("最高连板", st && st.lb != null ? st.lb + "板" : "—", (st && st.lb != null && st.lb >= 6) ? "up" : (st && st.lb != null && st.lb <= 2) ? "dn" : "mu", lbNm ? lbNm + (lbTh ? " · " + esc(lbTh) : "") : "涨停池口径") +
       tile("昨涨停溢价", st && st.prem != null ? pct(st.prem) : "—", (st && st.prem != null && st.prem >= 3) ? "up" : (st && st.prem != null && st.prem <= -1) ? "dn" : "mu", "T-1 · 强势股次日") +
       tile("成交额变化", amtDiffHtml(), amtDiffCls(), amtDiffSub()) + /* jl-1076 */
-      tile("ATR波动率", S.atr && S.atr.vol != null ? S.atr.vol.toFixed(2) + "%" : "—", "mu", "上证 ATR14/价") +
-      tile("热点板块持续", hotSec ? esc(hotSec.name) + " " + (hotSec.avg >= 0 ? "+" : "") + hotSec.avg.toFixed(1) + "%" : (S.hot ? S.hot.streak + "天" : "板块映射未覆盖"), hotSec ? (hotSec.avg > 0 ? "up" : "dn") : "mu", hotSec ? "上涨占比" + Math.round(hotSec.upR * 100) + "% · 连" + hotSec.streak + "天" : (S.hot ? "行业涨幅榜首 · 在线兜底" : "离线板块映射聚合")); /* jl-1080 */
+      tile("ATR14/价", S.atr && S.atr.vol != null ? S.atr.vol.toFixed(2) + "%" : "—", "mu", "上证") +
+      tile("热点板块持续", hotSec ? hotSec.streak + "天" : (S.hot ? S.hot.streak + "天" : "板块映射未覆盖"), hotSec ? (hotSec.avg > 0 ? "up" : "dn") : "mu", hotSec ? esc(hotSec.name) + " · 均" + (hotSec.avg >= 0 ? "+" : "") + hotSec.avg.toFixed(1) + "%" : (S.hot ? esc(S.hot.name) + " · 行业涨幅榜首" : "离线板块映射聚合")); /* jl-1080 · jl-1121: 板块名上副行, 持续天数上值行 */
     var rules = "";
     if (st) {
       var rtxt = [
@@ -779,13 +784,13 @@
     }
     var body =
       scale +
-      '<div class="tnow" style="margin-top:8px"><b style="color:' + zc + '">' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '" style="color:' + sc + ';border-color:' + sc + '">' + (st ? st.state : "—") + '</span><span style="font-size:8.5px;color:rgba(255,255,255,.72)">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
+      '<div class="tnow" style="margin-top:8px"><b style="color:' + zc + '">' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '" style="color:' + sc + ';border-color:' + sc + '">' + (st ? st.state : "—") + '</span><span style="font-size:12px;color:#FFFFFF">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
       '<div class="fgrid">' + grid + '</div>' +
       (S.dtOpen && dtr ? dtDetailHtml(dtr) : "") + /* jl-1080: 跌停明细展开层(点"跌停"数字切换) */
       '<div class="jh">冰点判定 · 规则组（非阈值）</div>' + rules +
       '<div class="jh">场景提示 · 状态驱动</div>' + scn +
       '<div class="foot">状态描述，不构成操作建议 · 温度=50+(涨跌比-0.5)×100 与旧卡同源 · 冰点=规则组判定（≥3项）· 阈值集中在 CFG 待回测校准 · 涨跌停池为本模块自建口径</div>';
-    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
+    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——质疑"1.44万亿是多了还是少了", 额度差才是人话 */
     if (!S.snap || !isFinite(S.snap.amt)) return null;
@@ -822,14 +827,14 @@
     var rows = "";
     if (etfOk) {
       var mx = Math.max.apply(null, S.etf.map(function (r) { return r && isFinite(r.today) ? Math.abs(r.today) : 0; }).concat([1]));
-      rows = '<div class="row" style="font-size:8px;color:rgba(255,255,255,.86);border-bottom:none;padding-bottom:2px"><span>品种</span><span>当日主力净额（红入绿出）</span><span style="text-align:right">近5日</span></div>';
+      rows = '<div class="row" style="font-size:12px;color:#FFFFFF;border-bottom:none;padding-bottom:2px"><span>品种</span><span>当日主力净额（红入绿出）</span><span style="text-align:right">近5日</span></div>';
       rows += S.etf.map(function (r) {
         if (!r) return "";
         var w = isFinite(r.today) ? Math.max(3, Math.abs(r.today) / mx * 46) : 0;
         var bar = isFinite(r.today) ? (r.today >= 0
           ? '<i style="left:50%;width:' + w + '%;background:linear-gradient(90deg,#ff5459cc,#ff5459)"></i><em style="left:50%;padding:1px 4px 1px 6px;background:rgba(224,32,32,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>'
-          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding:1px 6px 1px 4px;background:rgba(0,150,90,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:rgba(255,255,255,.88);text-shadow:0 1px 2px rgba(0,0,0,.35)">—</em>';
-        return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:9.5px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
+          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding:1px 6px 1px 4px;background:rgba(0,150,90,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,.35)">—</em>';
+        return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:12px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
       }).join("");
     } else rows = '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + "</div>"; /* jl-1075: 裸"未到"→降级卡(最后成功HH:MM+手动立即重试+指数退避上限5次; 收盘后mktLive停轮询也能自愈) */
     var struct = "";
@@ -847,7 +852,7 @@
     }
     var body = rows + struct +
       '<div class="foot">ETF主力净额≠真实净流入（份额变动×净值）· push2his fflow 日K · 近5日=近5根日K合计 · 结构判断=沪深300涨跌×上涨占比交叉派生 · 托底不等于全面进攻</div>';
-    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
+    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function renderYd() {
     buildGroups();
@@ -874,7 +879,7 @@
       return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>' + x.n + '</small></div>' + x.html + '</div>';
     }).join("");
     body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 剔除ST · 指数/成交额自算（腾讯分钟源 · 休市冻结）</div>';
-    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:rgba(255,255,255,.86)">·</span>') + '</span>', body: body };
+    return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
 
   /* 调试钩子（金粲惯例 window 挂钩）：__JLV2S__=状态 __JLV2P__=手动重绘 __JLV2C__=配置 */
