@@ -1,6 +1,11 @@
 /* jl_sector_strength.js — jl-1094 v0.84.39 T4a第一阶段: 可解释板块强度基础层(独立新文件)
    外部JS视觉批 jl-B(2026-10-11, 只动浏览器层渲染, CORE计算/IDB/口径零触碰):
    ①根卡墨绿(rgba(10,26,34,.72)+#81e6d9绿描边)退场→持仓页白玻璃同族(145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光/外投影族) ②开发术语人话化: "mtemp rows缺失"→"暂无板块数据", "无mtemp"→"暂无数据", 无涨幅数据的板块多卡"数据缺失"小块→合并一行 ③小灰字→白亮两色(数值.95/元信息.78), 红色逻辑#ff8b8f→亮红#ff5459, 卡标题#81e6d9→白 ④大K线图表背景: 评估结论=不属本文件(ks.html体系, v0.84.54已改深蓝香槟金), 本文件无图表对象
+   jl-C批次(2026-10-11, 用户四点要求, 依旧只动渲染/交互层, CORE计算/IDB/口径/数据零触碰):
+     ①挂载根修: body尾部(被甩到页面最底·导航之下·浏览器栏遮半截)→挂进.phone玻璃抽屉, absolute bottom=54对齐底部tab新高度(index.html jl-1114同步改), z=33(nav30之上/picker·news遮罩面板35/36之下, 弹层仍可盖抽屉)
+     ②交互: 底部玻璃抽屉——手柄(拖条+标题+数据时点)常驻tab上方32px, 点按开合/上拉下滑手势(位移>28px或速度>0.45px/ms判向, 小抖动回弹), 开合=max-height裁剪动画(32px↔min(58vh,520px)), 内容区内滚+滚动位置跨刷新保留
+     ③文字: 灰字rgba(255,255,255,.78)全→亮白.95+加粗(600-700), 红维持亮红#ff5459(A股红涨), 标题去"v0(T4a)"开发后缀
+     ④prefers-reduced-motion: 过渡关闭; 老浏览器无PointerEvent回落click
    基准: jinlin_clone@7ba89e8 (v0.84.38已推送)
    红线遵守: 零新增网络请求(纯消费现有缓存与既有IDB); 不改jlv2聚簇/不改T3任何语义(只读jinlin_evlog); 不接龙池/不改资格排序资金universe扫描频率假期规则
    口径(钉死, B组键序): 主概念mc(__JL_CONCEPTS__.map.mc) → 二级行业sec(__JL_SECTORS__.map) → hy(hybk剥ⅠⅡⅢ)兜底; "其他"剔除; 三级全缺=无归属(不进板块表, 计入tierStat.unattr)
@@ -266,20 +271,38 @@
     } catch (e) { S.last = null; paint(); }
   }
 
-  /* ============ 渲染: 透明卡(body尾部, jlv2板块卡同区域) ============ */
+  /* ============ 渲染: 底部玻璃抽屉(jl-C: body尾卡→挂.phone, bottom对齐底部tab54px; CSS自注入) ============ */
   var ROOT = null;
+  var DRAG = { on: false, y0: 0, dy: 0, t0: 0 }; /* jl-C: 手柄拖拽态, paint()拖拽中跳过防DOM重建丢监听 */
+  var JSEC_CSS = "#jlsectroot{position:absolute;left:8px;right:8px;bottom:54px;z-index:33;overflow:hidden;pointer-events:none;max-height:32px;transition:max-height .34s cubic-bezier(.32,.72,.28,1);border-radius:16px 16px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.5);border-bottom:0;backdrop-filter:blur(14px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(14px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.2),0 -10px 34px rgba(0,10,40,.35)}" /* 根=裁剪容器: max-height 32(只露手柄)↔min(58vh,520px)开; 遮罩裁剪=隐藏体不压导航不吞点击 */
+    + "#jlsectroot.open{max-height:min(58vh,520px)}"
+    + "body.ksFullJL #jlsectroot{display:none!important}" /* K线全屏模式nav隐藏, 抽屉同退场 */
+    + "#jlsectHandle{height:32px;display:flex;align-items:center;gap:7px;padding:0 12px;pointer-events:auto;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}" /* touch-action:none=拖拽不被页面滚动抢占 */
+    + "#jlsectHandle .jlsecGrab{flex:0 0 auto;width:30px;height:4px;border-radius:10px;background:rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.4)}"
+    + "#jlsectHandle b{font-size:11.5px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
+    + "#jlsectHandle small{font-size:8.5px;color:rgba(255,255,255,.95);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
+    + "#jlsectHandle .jlsecArr{margin-left:auto;flex:0 0 auto;font-size:10px;color:rgba(255,255,255,.95);font-weight:700;transition:transform .3s}"
+    + "#jlsectroot.open .jlsecArr{transform:rotate(180deg)}"
+    + "#jlsectBody{overflow-y:auto;max-height:calc(min(58vh,520px) - 34px);pointer-events:auto;overscroll-behavior:contain;padding:2px 11px 12px}" /* 内容区内滚, 关态被根裁剪自然无事件 */
+    + "@media (prefers-reduced-motion:reduce){#jlsectroot{transition:none}#jlsectHandle .jlsecArr{transition:none}}";
   function ensureRoot() {
     if (ROOT) return ROOT;
     ROOT = document.createElement("div");
     ROOT.id = "jlsectroot";
-    document.body.appendChild(ROOT);
+    var st = document.createElement("style");
+    st.setAttribute("data-jlsec", "1");
+    st.textContent = JSEC_CSS;
+    document.head.appendChild(st);
+    var host = document.querySelector(".phone") || document.body; /* jl-C: 挂.phone(原body尾=甩到页面最底根修); 兜底body时改fixed定位 */
+    if (!document.querySelector(".phone")) ROOT.style.position = "fixed";
+    host.appendChild(ROOT);
     return ROOT;
   }
   function chip(label, val, dir, state) {
-    var col = state === "ok" ? (dir > 0 ? "#ff5459" : dir < 0 ? "#5ae8ab" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.78)"; /* jl-B: 红改亮红#ff5459; 灰两档→亮白.95(数值)/.78(元信息) */
+    var col = state === "ok" ? (dir > 0 ? "#ff5459" : dir < 0 ? "#5ae8ab" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.95)"; /* jl-C: 非ok态灰.78→亮白.95(用户:灰字加粗亮白); 红维持亮红#ff5459(A股红涨) */
     var bg = state === "ok" ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.03)";
     var arrow = state === "ok" ? (dir > 0 ? " ↑" : dir < 0 ? " ↓" : "") : "";
-    return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 7px;border-radius:8px;background:' + bg + ';border:1px solid rgba(255,255,255,.10);font-size:10.5px;color:' + col + ';white-space:nowrap"><b style="color:rgba(255,255,255,.78);font-weight:600">' + label + '</b> ' + esc(val) + arrow + '</span>';
+    return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 7px;border-radius:8px;background:' + bg + ';border:1px solid rgba(255,255,255,.10);font-size:10.5px;font-weight:600;color:' + col + ';white-space:nowrap"><b style="color:rgba(255,255,255,.95);font-weight:700">' + label + '</b> ' + esc(val) + arrow + '</span>';
   }
   function secRow(rec) {
     var f = rec.factors;
@@ -289,10 +312,10 @@
     var evTxt = e.state === "ok" ? ("股" + e.raw.codeN + "·录" + e.raw.recN + "·峰" + e.raw.memPeak) : "无当日记录";
     var candTxt = "";
     if (L && L.cand && L.cand.length) {
-      candTxt = '<div style="font-size:9.5px;color:rgba(255,255,255,.78);margin:1px 0 2px 2px">龙头候选(未评分·非因子): ' + L.cand.map(function (c) { return esc(c.n) + "(连" + c.lbc + "·封" + fmtYi(c.fund) + (c.zbc ? "·炸" + c.zbc : "") + ")"; }).join(" / ") + "</div>";
+      candTxt = '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:1px 0 2px 2px">龙头候选(未评分·非因子): ' + L.cand.map(function (c) { return esc(c.n) + "(连" + c.lbc + "·封" + fmtYi(c.fund) + (c.zbc ? "·炸" + c.zbc : "") + ")"; }).join(" / ") + "</div>"; /* jl-C: 灰.78→亮白.95加粗 */
     }
     return '<div style="padding:7px 9px;margin:4px 0;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px;color:#ffd21f">' + esc(rec.sector) + '</b><small style="font-size:9px;color:rgba(255,255,255,.78)">' + rec.sectorTier + "级 · 样本" + (a.note.indexOf("n=") === 0 ? a.note.slice(2) : "?") + " · 排名#" + (rec.mid.rank || "—") + "</small></div>" +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px;color:#ffd21f">' + esc(rec.sector) + '</b><small style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600">' + rec.sectorTier + "级 · 样本" + (a.note.indexOf("n=") === 0 ? a.note.slice(2) : "?") + " · 排名#" + (rec.mid.rank || "—") + "</small></div>" + /* jl-C: 元信息灰.78→亮白.95加粗 */
       chip("涨幅", a.state === "ok" ? fmtPct(a.raw) : stateTxt(a.state), dirA, a.state) +
       chip("上涨率", u.state === "ok" ? Math.round(u.raw * 100) + "%" : stateTxt(u.state), dirU, u.state) +
       chip("涨停数", z.state === "ok" ? z.raw : stateTxt(z.state), z.state === "ok" ? 1 : 0, z.state) +
@@ -303,10 +326,10 @@
   }
   function stateTxt(st) { return st === "smallN" ? "样本<8" : st === "miss" ? "暂无数据" : st === "none" ? "无" : st; }
   function paint() {
+    if (DRAG.on) return; /* jl-C: 拖拽中不重建DOM(手柄监听会丢), 60s下一轮补刷 */
     var R = ensureRoot();
     var has = !!(S.last && S.day);
-    var head = "板块强度 · v0(T4a)";
-    var sub = has ? (S.day + " · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无板块数据"; /* jl-B: 开发术语(mtemp/口径链)退场, 人话化 */
+    var sub = has ? (S.day + " · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无板块数据"; /* jl-B: 开发术语(mtemp/口径链)退场, 人话化; jl-C: 移入手柄右侧 */
     var body = "";
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
@@ -314,28 +337,65 @@
       var restMiss = restAll.filter(function (r) { return r.factors.avgPct.state === "miss"; }); /* jl-B: 无涨幅数据的板块→合并一行, 不再逐卡铺"数据缺失"小块 */
       var rest = restAll.filter(function (r) { return r.factors.avgPct.state !== "miss"; }).slice(0, 4);
       var unr = o.recs.filter(function (r) { return r.sector === CORE.UNATTR; })[0] || null;
-      body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.78);padding:6px 2px">暂无板块数据 · 当日样本未达统计口径</div>';
-      if (rest.length) body += '<div style="font-size:9px;color:rgba(255,255,255,.78);margin:6px 0 2px">— 样本不足的板块（事件/涨停侧仍跟踪）—</div>' + rest.map(secRow).join("");
+      body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无板块数据 · 当日样本未达统计口径</div>';
+      if (rest.length) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:6px 0 2px">— 样本不足的板块（事件/涨停侧仍跟踪）—</div>' + rest.map(secRow).join("");
       if (restMiss.length) {
         var names = restMiss.map(function (r) { return esc(r.sector); });
         var cap = names.slice(0, 8).join(" · ") + (names.length > 8 ? " 等" + names.length + "个" : "");
-        body += '<div style="font-size:9.5px;color:rgba(255,255,255,.78);margin:4px 0 2px;line-height:1.7">暂无板块数据: <span style="color:rgba(255,255,255,.95);font-weight:600">' + cap + '</span>（事件/涨停侧仍跟踪）</div>';
+        body += '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:4px 0 2px;line-height:1.7">暂无板块数据: <span style="color:rgba(255,255,255,.95);font-weight:700">' + cap + '</span>（事件/涨停侧仍跟踪）</div>';
       }
-      if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.78);margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条（成分股" + unr.factors.evN.raw.codeN + " · 不作归属猜测）</div>";
+      if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条（成分股" + unr.factors.evN.raw.codeN + " · 不作归属猜测）</div>";
       var st = S.stat || { mc: 0, sec: 0, hy: 0, unattr: 0 };
-      body += '<div style="font-size:9px;color:rgba(255,255,255,.78);margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径 | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
-      body += '<div style="margin-top:6px"><button id="jlSecExp" style="font-size:9.5px;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">导出快照JSON</button></div>';
+      body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径 | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
+      body += '<div style="margin-top:6px"><button id="jlSecExp" style="font-size:9.5px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">导出快照JSON</button></div>';
     } else {
-      body = '<div style="font-size:10.5px;color:rgba(255,255,255,.78);padding:6px 2px">暂无板块数据 · 数据到达后自动计算</div>';
+      body = '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无板块数据 · 数据到达后自动计算</div>';
     }
-    /* jl-B: 墨绿根卡(rgba(10,26,34,.72)+蒂芙尼绿描边)退场 → 持仓页白玻璃同族: 145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光族 */
-    R.innerHTML = '<div style="margin:10px 0 26px;border-radius:11px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.5);padding:9px 11px;backdrop-filter:blur(2px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(2px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.2),inset 0 0 18px rgba(255,255,255,.06),0 8px 28px rgba(0,10,40,.2);overflow:hidden">' +
-      '<div id="jlSecHead" style="display:flex;justify-content:space-between;align-items:baseline;cursor:pointer;user-select:none"><b style="font-size:12px;color:#fff;font-weight:600">' + head + '</b><small style="font-size:9px;color:rgba(255,255,255,.78)">' + esc(sub) + (S.open ? " ▾" : " ▸") + "</small></div>" +
-      '<div id="jlSecBody" style="display:' + (S.open ? "block" : "none") + ';padding-top:6px">' + body + "</div></div>";
-    var h = document.getElementById("jlSecHead");
-    if (h) h.onclick = function () { S.open = !S.open; paint(); };
+    /* jl-C: 白玻璃抽屉结构——手柄(拖条+标题+时点+箭头) + 内容区; 开合由ROOT.open类驱动max-height动画 */
+    var prevB = document.getElementById("jlsectBody"), sc = prevB ? prevB.scrollTop : 0; /* 刷新保留滚动位置 */
+    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
+      '<div id="jlsectBody">' + body + "</div>";
+    R.classList.toggle("open", !!S.open);
+    var nb = document.getElementById("jlsectBody");
+    if (nb) nb.scrollTop = sc;
+    var h = document.getElementById("jlsectHandle");
+    if (h) bindHandleJL(h);
     var b = document.getElementById("jlSecExp");
     if (b) b.onclick = function (ev) { ev.stopPropagation(); exportJSON(); };
+  }
+  /* jl-C: 手柄手势——点按开合(位移<6px且<350ms=tap)/上拉下滑(位移>28px或速度>0.45px/ms判向), 小抖动回弹; 拖拽中高度跟手(max-height裁剪), 无PointerEvent老浏览器回落click */
+  function bindHandleJL(h) {
+    var R = ROOT;
+    if (!R) return;
+    function capH() { return Math.min(window.innerHeight * 0.58, 520); }
+    h.addEventListener("pointerdown", function (e) {
+      DRAG.on = true; DRAG.y0 = e.clientY; DRAG.dy = 0; DRAG.t0 = Date.now();
+      R.style.transition = "none";
+      try { h.setPointerCapture(e.pointerId); } catch (ec) {}
+      e.preventDefault();
+    });
+    h.addEventListener("pointermove", function (e) {
+      if (!DRAG.on) return;
+      DRAG.dy = e.clientY - DRAG.y0;
+      var base = Math.max(32, Math.min(capH(), R.getBoundingClientRect().height - DRAG.dy));
+      R.style.maxHeight = Math.max(32, Math.min(capH(), base)) + "px"; /* 上拉(dy<0)抽屉变高, 下滑收矮, 32~capH夹紧 */
+    });
+    function up() {
+      if (!DRAG.on) return;
+      var dt = Math.max(1, Date.now() - DRAG.t0), v = DRAG.dy / dt;
+      DRAG.on = false;
+      var want = S.open;
+      if (Math.abs(DRAG.dy) < 6 && dt < 350) want = !S.open; /* tap=开合 */
+      else if (DRAG.dy < -28 || v < -0.45) want = true; /* 上拉=开 */
+      else if (DRAG.dy > 28 || v > 0.45) want = false; /* 下滑=关 */
+      R.style.transition = "";
+      R.style.maxHeight = "";
+      S.open = want;
+      R.classList.toggle("open", !!S.open);
+    }
+    h.addEventListener("pointerup", up);
+    h.addEventListener("pointercancel", up);
+    if (!window.PointerEvent) h.addEventListener("click", function () { S.open = !S.open; R.classList.toggle("open", !!S.open); });
   }
 
   function exportJSON() {
