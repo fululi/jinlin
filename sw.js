@@ -1,3 +1,4 @@
+/* jinlin sw v202 — 2026-10-11夜: 缓存名 →v202, 配合 v0.84.61 批[jl-1120 斐波标签行常显亮白批(纯显示层, 判定逻辑/数据零触碰)——①共振卡斐波行全档常显: 正常区也显示「斐波·正常区 0.786~1.618 · 价a~价b」(位置+价位, 原正常区不渲染) ②P5补齐价位「斐波·0.786 下方 价」与其他档对齐 ③弃灰改亮白#fff+微光晕(用户反馈: 透明亮卡上小灰字看不清), P0/P1红、P2/P3黄、P4绿不变 ④zone判定/fibRisk结构因子/stamp记录/状态机零改动; KEEP=202+201] */
 /* jinlin sw v201 — 2026-10-11夜: 缓存名 →v201, 配合 v0.84.60 批[让号: v0.84.59 已被占用; jl-1120 反抽压力状态机+斐波位标签(冻结设计v2.1, 纯读取+新增显示层+本地状态机, 数据零触碰)——①B档反抽压力五态机jl_broke_v1: initial/broken/rebounding/recovered/failed, T2盘中触及±0.5%唯一盘中转移, T3反抽失败次数计数(横盘无测试日不计数), T5三次failed(非终态可再T2), T4站回quality=强/普通(MA5×1.3), T7锚漂>1%清空重记; 事件键code|type|tier每日1次与jl-1082命名空间隔离; 档行章压/压·N/3/压·定/复+prFoot压力成立摘要+展开面板审计行(全字段) ②斐波标签行(共振卡, 反转/背离族+「斐波·」前缀): P0段低失守>P1破位0.886>P2 1.618背离>P3反转区>P4反弹确认>P5 0.786下方; P0/P1结构因子+2且chip保底升「结构风险」(资金族系数不动) ③白名单+ jl_broke_v1; bsTicksJL 26→33px容纳第三行章; 红线(资金通道/pool_ff/B-S球原触档/龙池/tiersViewJL/tierLevelsJL/computeTierJL/rsBSJL原公式)零触碰; KEEP=201+199] */
 /* jinlin sw v199 — 2026-10-11: 缓存名 →v199, 配合 v0.84.58 批[jl-1119 方案A定案(jl-1118已被evidence层占用,让号): 删历史遗留裸规则 span:nth-child(3)::before{content:"H ";color:#8fe8dd}——CSS伪元素全局选择器污染, 给页内所有"第3个span"前挂青绿H伪元素, 实证误伤中波段Fib 0.618档/日波段B3档/资金共振卡/持仓卡多处; 定性: 纯CSS污染, 不涉及JS逻辑/数据/计算, 档位价格水位全部无恙(H是叠加非替换); 行情行O/H/L/C/P前缀有第一份带作用域规则+content:none!important兜底, 直接删不补回; 后续排查"未知文字串入多个模块"优先查: ::before/::after/content/全局nth-child/全局span-div选择器; KEEP=199+198] */
 /* jinlin sw v198 — 2026-10-11: 缓存名 →v198, 配合 v0.84.57 批[jl-1117: 持仓卡温度计排版定案批(纯展示层, 计算零触碰)——①Fib刻度恒单行(撤jl-1115两行错行, 相邻<11%字号微缩兜底, 禁竖排/换行/反向) ②⇄切换钮去胶囊/边框/阴影→纯文字亮白加粗(居中与data-tt逻辑不动) ③日波段方案B(用户定稿): 量程外扩包住全部B/S档(基础3+3+延伸至6+6), B/S水位行=名称上价格下·与温度计同一posF·左低右高·B6→B1|S1→S6, 延伸档弱化+「延」; 预判区间虚线标界+两侧暗色观察区; 水位%随量程变(方案B明示后果); 中波段无B/S行 ④prFoot拆两行: 状态提示独立行(风险色class零改动)+位置信息行; tiersViewJL/tierLevelsJL/computeTierJL/swingStateJL/legFibJL/posRulerJL计算、ttModeJL切换逻辑、deckSBJL到站牌、页面结构全部零改动; KEEP=198+197] */
@@ -104,8 +105,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v201'; /* jl-1120 v0.84.60: 反抽压力状态机+斐波位标签批(让号: v59 已占用, v200 一并跳过防撞号); 缓存名成对升版(旧注释: jl-1119 方案A删裸CSS规则) */
-const KEEP = ['jinlin-shell-v201', 'jinlin-shell-v199'];
+const C = 'jinlin-shell-v202'; /* jl-1120 v0.84.61: 斐波标签行常显+亮白批; 缓存名成对升版(旧注释: v201 反抽压力状态机批) */
+const KEEP = ['jinlin-shell-v202', 'jinlin-shell-v201'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
