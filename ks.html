@@ -1114,6 +1114,8 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     ctx.fill();
   }
   else if (t === "xabcd") {
+    /* ks-1011c: 配色方案改「蓝线·黄比例·白价格」——线由默认暗金→艳蓝, 只覆盖本分支 */
+    ctx.strokeStyle = sel ? SEL : "#2f9dff";
     var LB = ["X", "A", "B", "C", "D"];
     for (var li = 0; li < 4; li++) drawSeg(ctx, pts[li], pts[li + 1]);
     ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
@@ -1131,22 +1133,19 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     else if (Math.abs(rB - 0.5) < 0.07 && Math.abs(rD2 - 0.886) < 0.09) patt = "≈蝙蝠";
     var ratios = "B/XA=" + rB.toFixed(3) + "  C/AB=" + rC.toFixed(3) +
       "  D/BC=" + rD1.toFixed(3) + "  D/XA=" + rD2.toFixed(3) + (patt ? "  " + patt : "");
+    void ratios; /* ks-1011: 左上角比例汇总行已撤(用户嫌乱), ratios/patt 仅留计算备查不渲染 */
     for (var vi2 = 0; vi2 < 5; vi2++) {
-      ctx.fillStyle = sel ? SEL : "#e6b43c";
+      /* ks-1011: 五角标签黄→亮白「名称 价格」(用户: 白色亮白字显示价格), 白字压K线走halo光环保可读 */
+      ctx.fillStyle = sel ? SEL : "#ffffff";
       ctx.beginPath(); ctx.arc(pts[vi2].x, pts[vi2].y, 3, 0, 7); ctx.fill();
-      ctx.fillText(LB[vi2], pts[vi2].x + 5, pts[vi2].y - 6);
+      ksHaloTextJL(ctx, LB[vi2] + (P[vi2].p != null ? " " + fwp(P[vi2].p) : ""), pts[vi2].x + 5, pts[vi2].y - 6, sel ? SEL : "#ffffff");
     }
-    // 每条腿的比例数字标注（0.382 / 0.786 / 1.272 这类）
-    ctx.font = "10.5px Menlo, monospace";
-    ctx.fillStyle = "#3fd6c2";
-    ctx.fillText(rB.toFixed(3), pts[2].x + 5, pts[2].y + 10);
-    ctx.fillStyle = "#b78cff";
-    ctx.fillText(rC.toFixed(3), pts[3].x + 5, pts[3].y + 10);
-    ctx.fillStyle = "#ff9a5c";
-    ctx.fillText(rD1.toFixed(3) + " | XA:" + rD2.toFixed(3), pts[4].x + 5, pts[4].y + 10);
-    ctx.font = "10px -apple-system, sans-serif";
-    ctx.fillStyle = "#d9b45c";
-    ctx.fillText(ratios, v.padL + 4, v.pTop + 14);
+    // 每条腿的比例数字——ks-1011d: #ffd21f用户仍嫌橘嫌暗→荧光黄#fff200(绿分量210→242, 去橘提亮)
+    ctx.font = "bold 11px Menlo, monospace";
+    var RAT = "#fff200";
+    ksHaloTextJL(ctx, rB.toFixed(3), pts[2].x + 5, pts[2].y + 10, RAT);
+    ksHaloTextJL(ctx, rC.toFixed(3), pts[3].x + 5, pts[3].y + 10, RAT);
+    ksHaloTextJL(ctx, rD1.toFixed(3) + " | XA:" + rD2.toFixed(3), pts[4].x + 5, pts[4].y + 10, RAT);
   }
   // 选中态：画锚点手柄（可拖拽微调）
   if (sel && pts.length) {
