@@ -1,3 +1,4 @@
+/* jinlin sw v199 — 2026-10-11: 缓存名 →v199, 配合 v0.84.58 批[jl-1119 方案A定案(jl-1118已被evidence层占用,让号): 删历史遗留裸规则 span:nth-child(3)::before{content:"H ";color:#8fe8dd}——CSS伪元素全局选择器污染, 给页内所有"第3个span"前挂青绿H伪元素, 实证误伤中波段Fib 0.618档/日波段B3档/资金共振卡/持仓卡多处; 定性: 纯CSS污染, 不涉及JS逻辑/数据/计算, 档位价格水位全部无恙(H是叠加非替换); 行情行O/H/L/C/P前缀有第一份带作用域规则+content:none!important兜底, 直接删不补回; 后续排查"未知文字串入多个模块"优先查: ::before/::after/content/全局nth-child/全局span-div选择器; KEEP=199+198] */
 /* jinlin sw v198 — 2026-10-11: 缓存名 →v198, 配合 v0.84.57 批[jl-1117: 持仓卡温度计排版定案批(纯展示层, 计算零触碰)——①Fib刻度恒单行(撤jl-1115两行错行, 相邻<11%字号微缩兜底, 禁竖排/换行/反向) ②⇄切换钮去胶囊/边框/阴影→纯文字亮白加粗(居中与data-tt逻辑不动) ③日波段方案B(用户定稿): 量程外扩包住全部B/S档(基础3+3+延伸至6+6), B/S水位行=名称上价格下·与温度计同一posF·左低右高·B6→B1|S1→S6, 延伸档弱化+「延」; 预判区间虚线标界+两侧暗色观察区; 水位%随量程变(方案B明示后果); 中波段无B/S行 ④prFoot拆两行: 状态提示独立行(风险色class零改动)+位置信息行; tiersViewJL/tierLevelsJL/computeTierJL/swingStateJL/legFibJL/posRulerJL计算、ttModeJL切换逻辑、deckSBJL到站牌、页面结构全部零改动; KEEP=198+197] */
 /* jinlin sw v197 — 2026-10-11: 缓存名 →v197, 配合 v0.84.56 ks批[ks-1011~d: ks.html XABCD谐波形态标注配色定案(四轮用户反馈迭代)——①五点标签X/A/B/C/D暗金→亮白+价格+halo光环 ②左上角B/XA=汇总行撤销(ratios计算保留不渲染) ③腿比例数字青/紫/橙三色→荧光黄#fff200·bold11px+halo(经#57a7ff→#2f9dff→#ffd21f三轮迭代, 治深底发淡/发橘) ④形态连线暗金→艳蓝#2f9dff(仅xabcd分支, 其他画线工具不动); ks.html在SHELL缓存故升壳号成对提交; KEEP=197+196] */
 /* jinlin sw v196 — 2026-10-11: 缓存名 →v196, 配合 v0.84.56 批[jl-1112: 浮球面板sbPopJL墨绿残留清源——深青近实心底(160deg #10242f/#081520)改持仓页白玻璃族(145deg白纱.10/.03+blur14+sat160%+bright1.08+白.5描边+四段投影, 保10px小字可读); 外部JS视觉批jl-B(只动渲染层零动业务逻辑): jlv2.js(?v=10→11防旧缓存)温度计v2七档刻度分档高亮(当前档白亮加粗+微光晕/其余40%透明, 边界对齐v1温区80/65/55/45/35/20)+温度数字与状态标签温区四色(冰蓝→灰→暖金→橙红), jl_sector_strength.js(?v=1→2)根卡墨绿→白玻璃同族+红#ff8b8f→亮红#ff5459+小灰改白亮两档(.95/.78)+开发术语人话化; 逻辑/口径/数据零改动] */
@@ -102,8 +103,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v198'; /* jl-1117 v0.84.57: 温度计排版定案批——Fib恒单行/切换钮纯文字亮白/日波段方案B量程外扩+B/S水位行/状态独立行; 计算零触碰 */
-const KEEP = ['jinlin-shell-v198', 'jinlin-shell-v197'];
+const C = 'jinlin-shell-v199'; /* jl-1119 v0.84.58: 删历史遗留裸CSS规则span:nth-child(3)::before{content:"H "}——全局伪元素污染(实证: 中波段Fib 0.618档/日波段B3档/共振卡/持仓卡), 纯CSS不涉及JS逻辑/数据/计算; 方案A直接删不补回 */
+const KEEP = ['jinlin-shell-v199', 'jinlin-shell-v198'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
