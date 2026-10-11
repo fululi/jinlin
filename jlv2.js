@@ -1,4 +1,6 @@
 /* jlv2.js — jl-1053 v0.84.0 首页尾部三张折叠卡（独立模块，零侵入）
+   外部JS视觉批 jl-B(2026-10-11, 只动渲染层零动业务逻辑): ①温度计v2七档刻度分档高亮(当前档白亮加粗+微光晕/其余档40%透明度, 边界对齐v1温区80/65/55/45/35/20)
+   ②温度数字与状态标签温区四色(冰蓝#5ad0ff→灰#b8c2c8→暖金#ffd21f→橙红#ff5459, 折叠sum行与展开tnow行同色; 冰点/冷点/高潮状态机极值优先) ③仅renderTemp/statePill邻域, 红线零触碰
    ① 大资金 · 国家队：4只宽基ETF主力净额 + 市场结构判断（权重托底≠全面进攻）
    ② 市场温度 · v2：温度 + 冰点/冷点状态机（规则组判定，非阈值）+ 九因子 + 场景提示
    ③ 大盘异动 · 分组：事件流六组聚合（涨跌停结构/板块异动/个股扩散/风险事件/指数异动/成交额异动）
@@ -663,6 +665,14 @@
     return ROOT;
   }
   function statePill(st) { return st === "冰点" ? "zpill ice" : st === "高潮" ? "zpill hot" : "zpill"; }
+  function tColJL(t) { /* jl-B2: 温度数值温区四色——冰蓝(冷侧<45)→灰(平45-54)→暖金(温热55-79)→橙红(沸≥80), 界对齐v1温区 */
+    if (t == null) return "rgba(255,255,255,.85)";
+    return t < 45 ? "#5ad0ff" : t < 55 ? "#b8c2c8" : t < 80 ? "#ffd21f" : "#ff5459";
+  }
+  function sColJL(st) { /* jl-B2: 状态标签四色(状态机语义)——冰点/冷点=冰蓝, 正常=灰, 高潮=橙红 */
+    if (!st) return "#b8c2c8";
+    return st.state === "冰点" || st.state === "冷点" ? "#5ad0ff" : st.state === "高潮" ? "#ff5459" : "#b8c2c8";
+  }
   /* jl-1080: 热点板块持续——离线板块映射聚合主模块温度逐股涨跌(jinlin_mtemp_v1.data.rows, 增强通道顺手持久化) → 行业涨幅榜首
      板块上涨占比+平均涨幅; 样本<8不参榜(防小板块霸榜); 连日数独立键jlv2_hotoff_v1(与在线jlv2_hot_v1互不污染); 无数据=映射未覆盖 */
   function calcHotSector() {
@@ -710,12 +720,18 @@
     if (!sn) { return { head: head, sum: '<span class="jsum">采样中… 点标题展开</span>', body: "" }; }
     var zbr = st ? st.zbr : null;
     var sumParts = [];
-    sumParts.push('<span class="mono">' + sn.t + '</span> ' + (st && st.state !== "正常" ? '<span class="' + statePill(st.state) + '" style="font-size:9px;padding:1px 7px">' + st.state + '</span>' : '<span class="mu">平</span>'));
+    var zc = tColJL(sn.t), sc = sColJL(st); /* jl-B2: 温度数字=温区色, 状态标签=状态机色 */
+    sumParts.push('<span class="mono" style="color:' + zc + ';font-weight:700">' + sn.t + '</span> ' + (st && st.state !== "正常" ? '<span class="' + statePill(st.state) + '" style="font-size:9px;padding:1px 7px;color:' + sc + ';border-color:' + sc + '">' + st.state + '</span>' : '<span class="mu" style="color:' + sc + '">平</span>'));
     if (dt2 != null && dt2 !== 0) sumParts.push('<span class="' + (dt2 > 0 ? "up" : "dn") + ' mono">' + (dt2 > 0 ? "▲" : "▼") + Math.abs(dt2) + '</span>');
     if (st && st.zt != null) sumParts.push('<span class="mono">涨停' + st.zt + '/跌停' + (st.dt == null ? "—" : st.dt) + '</span>');
     if (zbr != null) sumParts.push('<span class="mono">炸板' + zbr + '%</span>');
     var alertDot = st && (st.state === "冰点" || st.state === "高潮") ? '<span class="dot" style="color:#ff5459"></span>' : (st && st.state === "冷点" ? '<span class="dot" style="color:#ffd21f"></span>' : "");
-    var scale = '<div class="row" style="border-bottom:none;gap:0;display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.86)"><span>100 沸</span><span>热</span><span>温</span><span>50 平</span><span>冷</span><span>过冷</span><span>0 冰</span></div>';
+    /* jl-B2: 7档位分档高亮——当前档白亮加粗+微光晕, 其余档调暗至40%透明度; 边界对齐v1温区(80/65/55/45/35/20) */
+    var LV7 = ["100 沸", "热", "温", "50 平", "冷", "过冷", "0 冰"];
+    var lv = sn.t == null ? -1 : sn.t >= 80 ? 0 : sn.t >= 65 ? 1 : sn.t >= 55 ? 2 : sn.t >= 45 ? 3 : sn.t >= 35 ? 4 : sn.t >= 20 ? 5 : 6;
+    var scale = '<div class="row" style="border-bottom:none;gap:0;display:flex;justify-content:space-between;font-size:8px">' + LV7.map(function (s, i) {
+      return '<span style="' + (i === lv ? "color:#fff;font-weight:700;text-shadow:0 0 6px rgba(255,255,255,.5)" : "color:rgba(255,255,255,.86);opacity:.4") + '">' + s + '</span>';
+    }).join("") + '</div>';
     function tile(lb, val, cls, sub) { return '<div class="ft"><span>' + lb + '</span><b class="' + cls + '">' + val + '</b><small>' + sub + '</small></div>'; }
     var upR = Math.round(sn.up / Math.max(1, sn.up + sn.down) * 100);
     var yzbr = yv && yv.zbr != null ? yv.zbr : null;
@@ -763,7 +779,7 @@
     }
     var body =
       scale +
-      '<div class="tnow" style="margin-top:8px"><b>' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '">' + (st ? st.state : "—") + '</span><span style="font-size:8.5px;color:rgba(255,255,255,.72)">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
+      '<div class="tnow" style="margin-top:8px"><b style="color:' + zc + '">' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '" style="color:' + sc + ';border-color:' + sc + '">' + (st ? st.state : "—") + '</span><span style="font-size:8.5px;color:rgba(255,255,255,.72)">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
       '<div class="fgrid">' + grid + '</div>' +
       (S.dtOpen && dtr ? dtDetailHtml(dtr) : "") + /* jl-1080: 跌停明细展开层(点"跌停"数字切换) */
       '<div class="jh">冰点判定 · 规则组（非阈值）</div>' + rules +

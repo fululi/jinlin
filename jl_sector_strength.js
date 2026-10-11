@@ -1,4 +1,6 @@
 /* jl_sector_strength.js — jl-1094 v0.84.39 T4a第一阶段: 可解释板块强度基础层(独立新文件)
+   外部JS视觉批 jl-B(2026-10-11, 只动浏览器层渲染, CORE计算/IDB/口径零触碰):
+   ①根卡墨绿(rgba(10,26,34,.72)+#81e6d9绿描边)退场→持仓页白玻璃同族(145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光/外投影族) ②开发术语人话化: "mtemp rows缺失"→"暂无板块数据", "无mtemp"→"暂无数据", 无涨幅数据的板块多卡"数据缺失"小块→合并一行 ③小灰字→白亮两色(数值.95/元信息.78), 红色逻辑#ff8b8f→亮红#ff5459, 卡标题#81e6d9→白 ④大K线图表背景: 评估结论=不属本文件(ks.html体系, v0.84.54已改深蓝香槟金), 本文件无图表对象
    基准: jinlin_clone@7ba89e8 (v0.84.38已推送)
    红线遵守: 零新增网络请求(纯消费现有缓存与既有IDB); 不改jlv2聚簇/不改T3任何语义(只读jinlin_evlog); 不接龙池/不改资格排序资金universe扫描频率假期规则
    口径(钉死, B组键序): 主概念mc(__JL_CONCEPTS__.map.mc) → 二级行业sec(__JL_SECTORS__.map) → hy(hybk剥ⅠⅡⅢ)兜底; "其他"剔除; 三级全缺=无归属(不进板块表, 计入tierStat.unattr)
@@ -274,10 +276,10 @@
     return ROOT;
   }
   function chip(label, val, dir, state) {
-    var col = state === "ok" ? (dir > 0 ? "#ff8b8f" : dir < 0 ? "#5ae8ab" : "rgba(255,255,255,.85)") : "rgba(255,255,255,.62)";
+    var col = state === "ok" ? (dir > 0 ? "#ff5459" : dir < 0 ? "#5ae8ab" : "rgba(255,255,255,.95)") : "rgba(255,255,255,.78)"; /* jl-B: 红改亮红#ff5459; 灰两档→亮白.95(数值)/.78(元信息) */
     var bg = state === "ok" ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.03)";
     var arrow = state === "ok" ? (dir > 0 ? " ↑" : dir < 0 ? " ↓" : "") : "";
-    return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 7px;border-radius:8px;background:' + bg + ';border:1px solid rgba(255,255,255,.10);font-size:10.5px;color:' + col + ';white-space:nowrap"><b style="color:rgba(255,255,255,.55);font-weight:500">' + label + '</b> ' + esc(val) + arrow + '</span>';
+    return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 7px;border-radius:8px;background:' + bg + ';border:1px solid rgba(255,255,255,.10);font-size:10.5px;color:' + col + ';white-space:nowrap"><b style="color:rgba(255,255,255,.78);font-weight:600">' + label + '</b> ' + esc(val) + arrow + '</span>';
   }
   function secRow(rec) {
     var f = rec.factors;
@@ -287,10 +289,10 @@
     var evTxt = e.state === "ok" ? ("股" + e.raw.codeN + "·录" + e.raw.recN + "·峰" + e.raw.memPeak) : "无当日记录";
     var candTxt = "";
     if (L && L.cand && L.cand.length) {
-      candTxt = '<div style="font-size:9.5px;color:rgba(255,255,255,.55);margin:1px 0 2px 2px">龙头候选(未评分·非因子): ' + L.cand.map(function (c) { return esc(c.n) + "(连" + c.lbc + "·封" + fmtYi(c.fund) + (c.zbc ? "·炸" + c.zbc : "") + ")"; }).join(" / ") + "</div>";
+      candTxt = '<div style="font-size:9.5px;color:rgba(255,255,255,.78);margin:1px 0 2px 2px">龙头候选(未评分·非因子): ' + L.cand.map(function (c) { return esc(c.n) + "(连" + c.lbc + "·封" + fmtYi(c.fund) + (c.zbc ? "·炸" + c.zbc : "") + ")"; }).join(" / ") + "</div>";
     }
     return '<div style="padding:7px 9px;margin:4px 0;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px;color:#ffd21f">' + esc(rec.sector) + '</b><small style="font-size:9px;color:rgba(255,255,255,.5)">' + rec.sectorTier + "级 · 样本" + (a.note.indexOf("n=") === 0 ? a.note.slice(2) : "?") + " · 排名#" + (rec.mid.rank || "—") + "</small></div>" +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12.5px;color:#ffd21f">' + esc(rec.sector) + '</b><small style="font-size:9px;color:rgba(255,255,255,.78)">' + rec.sectorTier + "级 · 样本" + (a.note.indexOf("n=") === 0 ? a.note.slice(2) : "?") + " · 排名#" + (rec.mid.rank || "—") + "</small></div>" +
       chip("涨幅", a.state === "ok" ? fmtPct(a.raw) : stateTxt(a.state), dirA, a.state) +
       chip("上涨率", u.state === "ok" ? Math.round(u.raw * 100) + "%" : stateTxt(u.state), dirU, u.state) +
       chip("涨停数", z.state === "ok" ? z.raw : stateTxt(z.state), z.state === "ok" ? 1 : 0, z.state) +
@@ -299,28 +301,36 @@
       chip("龙头强度", L && L.cand && L.cand.length ? "待定义(候选" + L.cand.length + ")" : "待定义", 0, "pending") +
       candTxt + "</div>";
   }
-  function stateTxt(st) { return st === "smallN" ? "样本<8" : st === "miss" ? "数据缺失" : st === "none" ? "无" : st; }
+  function stateTxt(st) { return st === "smallN" ? "样本<8" : st === "miss" ? "暂无数据" : st === "none" ? "无" : st; }
   function paint() {
     var R = ensureRoot();
     var has = !!(S.last && S.day);
     var head = "板块强度 · v0(T4a)";
-    var sub = has ? (S.day + " · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "无mtemp") + " · 口径 " + CORE.CAL) : "数据未到/无当日缓存";
+    var sub = has ? (S.day + " · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无板块数据"; /* jl-B: 开发术语(mtemp/口径链)退场, 人话化 */
     var body = "";
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
-      var rest = o.recs.filter(function (r) { return r.factors.avgPct.state !== "ok" && r.sector !== CORE.UNATTR; }).slice(0, 4);
+      var restAll = o.recs.filter(function (r) { return r.factors.avgPct.state !== "ok" && r.sector !== CORE.UNATTR; });
+      var restMiss = restAll.filter(function (r) { return r.factors.avgPct.state === "miss"; }); /* jl-B: 无涨幅数据的板块→合并一行, 不再逐卡铺"数据缺失"小块 */
+      var rest = restAll.filter(function (r) { return r.factors.avgPct.state !== "miss"; }).slice(0, 4);
       var unr = o.recs.filter(function (r) { return r.sector === CORE.UNATTR; })[0] || null;
-      body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.6);padding:6px 2px">当日无n≥8板块样本(mtemp rows缺失或全被口径滤除)</div>';
-      if (rest.length) body += '<div style="font-size:9px;color:rgba(255,255,255,.4);margin:6px 0 2px">— 样本<8或无涨幅数据的板块(事件/涨停侧仍跟踪) —</div>' + rest.map(secRow).join("");
-      if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.5);margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条(成分股" + unr.factors.evN.raw.codeN + ", sp无mc不猜测) · mcDist 原文留存快照</div>";
+      body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.78);padding:6px 2px">暂无板块数据 · 当日样本未达统计口径</div>';
+      if (rest.length) body += '<div style="font-size:9px;color:rgba(255,255,255,.78);margin:6px 0 2px">— 样本不足的板块（事件/涨停侧仍跟踪）—</div>' + rest.map(secRow).join("");
+      if (restMiss.length) {
+        var names = restMiss.map(function (r) { return esc(r.sector); });
+        var cap = names.slice(0, 8).join(" · ") + (names.length > 8 ? " 等" + names.length + "个" : "");
+        body += '<div style="font-size:9.5px;color:rgba(255,255,255,.78);margin:4px 0 2px;line-height:1.7">暂无板块数据: <span style="color:rgba(255,255,255,.95);font-weight:600">' + cap + '</span>（事件/涨停侧仍跟踪）</div>';
+      }
+      if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.78);margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条（成分股" + unr.factors.evN.raw.codeN + " · 不作归属猜测）</div>";
       var st = S.stat || { mc: 0, sec: 0, hy: 0, unattr: 0 };
-      body += '<div style="font-size:9px;color:rgba(255,255,255,.45);margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径 | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
+      body += '<div style="font-size:9px;color:rgba(255,255,255,.78);margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径 | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
       body += '<div style="margin-top:6px"><button id="jlSecExp" style="font-size:9.5px;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">导出快照JSON</button></div>';
     } else {
-      body = '<div style="font-size:10.5px;color:rgba(255,255,255,.55);padding:6px 2px">等待数据: mtemp/yd 缓存到达后自动计算(60s自检)</div>';
+      body = '<div style="font-size:10.5px;color:rgba(255,255,255,.78);padding:6px 2px">暂无板块数据 · 数据到达后自动计算</div>';
     }
-    R.innerHTML = '<div style="margin:10px 0 26px;border-radius:11px;background:rgba(10,26,34,.72);border:1px solid rgba(129,230,217,.16);padding:9px 11px;backdrop-filter:blur(4px)">' +
-      '<div id="jlSecHead" style="display:flex;justify-content:space-between;align-items:baseline;cursor:pointer;user-select:none"><b style="font-size:12px;color:#81e6d9">' + head + '</b><small style="font-size:9px;color:rgba(255,255,255,.5)">' + esc(sub) + (S.open ? " ▾" : " ▸") + "</small></div>" +
+    /* jl-B: 墨绿根卡(rgba(10,26,34,.72)+蒂芙尼绿描边)退场 → 持仓页白玻璃同族: 145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光族 */
+    R.innerHTML = '<div style="margin:10px 0 26px;border-radius:11px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.5);padding:9px 11px;backdrop-filter:blur(2px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(2px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.2),inset 0 0 18px rgba(255,255,255,.06),0 8px 28px rgba(0,10,40,.2);overflow:hidden">' +
+      '<div id="jlSecHead" style="display:flex;justify-content:space-between;align-items:baseline;cursor:pointer;user-select:none"><b style="font-size:12px;color:#fff;font-weight:600">' + head + '</b><small style="font-size:9px;color:rgba(255,255,255,.78)">' + esc(sub) + (S.open ? " ▾" : " ▸") + "</small></div>" +
       '<div id="jlSecBody" style="display:' + (S.open ? "block" : "none") + ';padding-top:6px">' + body + "</div></div>";
     var h = document.getElementById("jlSecHead");
     if (h) h.onclick = function () { S.open = !S.open; paint(); };
