@@ -65,6 +65,35 @@
   .row .btn { flex: none; white-space: nowrap; }
   .row.seps { padding-top: 2px; }
   .row.seps .btn { padding: 4px 8px; font-size: 11.5px; min-height: 24px; }
+  /* ks-1012: 单图形设置面板(点选/双击图形弹出) */
+  #ksDgPanel { position: absolute; z-index: 12; background: rgba(11, 24, 33, 0.97); border: 1px solid #2b4250; border-radius: 10px; padding: 9px 11px 8px; font-size: 12px; color: #dbe7ee; width: 196px; box-sizing: border-box; }
+  #ksDgPanel .dgpHd { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 12.5px; }
+  #ksDgPanel .dgpHd .lk { font-size: 10px; font-weight: 400; color: #8fa4b0; }
+  #ksDgPanel .dgpX { background: none; border: none; color: #8fa4b0; font-size: 15px; cursor: pointer; padding: 0 2px; line-height: 1; }
+  #ksDgPanel .dgpSw { display: flex; gap: 6px; margin: 8px 0 2px; }
+  #ksDgPanel .dgpSw button { width: 17px; height: 17px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; }
+  #ksDgPanel .dgpSw button.on { border-color: #ffffff; }
+  #ksDgPanel .dgpRow { display: flex; justify-content: space-between; align-items: center; padding: 6px 0 2px; border-top: 1px solid #1d2c36; margin-top: 5px; }
+  #ksDgPanel .dgpTg { width: 34px; height: 18px; border-radius: 9px; border: none; padding: 2px; box-sizing: border-box; cursor: pointer; display: inline-flex; background: #2b3a44; }
+  #ksDgPanel .dgpTg i { width: 14px; height: 14px; border-radius: 50%; background: #8fa4b0; display: block; }
+  #ksDgPanel .dgpTg.on { background: #ffd21f; justify-content: flex-end; }
+  #ksDgPanel .dgpTg.on i { background: #0d1a24; }
+  #ksDgPanel .dgpFt { font-size: 10px; color: #7d93a0; margin-top: 6px; }
+  /* ks-1012: 右键/长按设提醒菜单 */
+  .ksAlMenu { position: fixed; z-index: 80; background: #0d2331; border: 1px solid #2b4250; border-radius: 8px; padding: 4px 0; min-width: 190px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
+  .ksAlMenu button { display: block; width: 100%; text-align: left; background: none; border: none; color: #dbe7ee; font-size: 12.5px; padding: 8px 14px; cursor: pointer; font-family: inherit; }
+  .ksAlMenu button:hover { background: #16303f; }
+  .ksAlMenu button.ksAlCancel { color: #8fa4b0; }
+  /* ks-1012: 画线抽屉的色板/提醒列表/全锁行 */
+  .ksPalRow { flex-basis: 100%; display: flex; gap: 7px; align-items: center; padding: 2px 0 1px; }
+  .ksPalRow .ksPalDot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; flex: none; }
+  .ksPalRow .ksPalDot.on { border-color: #ffffff; }
+  .ksAlSec, .ksLkRow { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; border-top: 1px solid rgba(120, 135, 148, 0.25); padding-top: 5px; margin-top: 2px; }
+  .ksAlSec .hd { font-size: 10.5px; color: #8fa4b0; flex-basis: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .ksAlSec .hd button { background: none; border: none; color: #7d93a0; font-size: 10.5px; cursor: pointer; padding: 0; font-family: inherit; }
+  .ksAlRow { flex-basis: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #c3d2dc; padding: 1px 0; }
+  .ksAlRow.off { color: #6b7a84; }
+  .ksAlRow .x { background: none; border: none; color: #8fa4b0; font-size: 13px; cursor: pointer; padding: 0 2px; font-family: inherit; }
   /* 周期行 TradingView 式紧凑横滚: 小钮密排单行, 左右滑看全部周期/范围, 少占一截屏 */
   [data-periods] { gap: 3px; padding: 3px 8px 1px; }
   #pper { position: fixed; z-index: 70; background: #141b16; border: 1px solid #2c3a31; border-radius: 8px; padding: 6px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,.55); }
@@ -164,8 +193,6 @@
   body.embed #ksBarJL::-webkit-scrollbar { display: none; }
   body.embed #ksBarJL button { flex: none; font-family: inherit; font-size: 10px; line-height: 1.6; padding: 2px 7px; border-radius: 7px; border: 1px solid #87b7c43d; background: transparent; color: #a0b9c6; cursor: pointer; }
   body.embed #ksBarJL button.on { color: #81e6d9; border-color: #81e6d9; }
-  #ksBarJL button#ksBarLockBtn.on { background: #ffd21f30; border-color: #ffd21f; color: #ffd21f; }
-  #ksBarJL button#ksBarLockBtn.lkFlash { animation: lkFl .45s ease-in-out 4; }
   @keyframes lkFl { 50% { background: #ffd21f88; box-shadow: 0 0 12px #ffd21faa; } }
   body.embed #ksBarJL i.sep { width: 1px; height: 14px; background: #87b7c433; flex: none; margin: 0 2px; }
   /* ks-0906-22: 主题三态挂html根元素(body背景会穿透到页面画布层,filter管不着=字变板不变的根因); invert(1)全量反色不灰蒙蒙, hue-rotate(180)保红涨绿跌; 纯黑(默认)/外黑内白(只反画布)/纯白(整页反色) */
@@ -222,11 +249,11 @@
   <div class="pstrip" data-pstrip></div>
   <div class="yz" data-page-node-id="M5km2Nilu3r9diHBiEP7O8"><button type="button" data-yzin title="纵向放大" data-page-node-id="IwXBboDm2CiFJvVpgkdwLQ">＋</button><button type="button" data-yzout title="纵向缩小" data-page-node-id="P1nk2xa8jeHhDX5pW0pAQD">－</button></div>
 <div class="tpan" data-page-node-id="dKei7X02s66kfDU8hLChRw"><button type="button" onclick="panTime(-1)" title="早前" data-page-node-id="soce9cG5d6g4qGXYe79Hch">◀</button><button type="button" onclick="panTime(1)" title="往后" data-page-node-id="rSyCfM0fi4YypF3jRIhJaA">▶</button></div>
-<button id="alBtn" type="button" title="点=挂提醒 · 长按/双击=清空本股提醒" style="display:none;position:absolute;z-index:9;background:#1f6feb;color:#fff;border:none;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer">＋提醒</button>
+<!-- ks-1012: ＋提醒悬停按钮已撤(挡手)——挂提醒改走右键/长按菜单, 见 openAlMenu -->
 <div class="lgpop" data-lgpop>
   <div class="hd">图例 · 点?关闭</div>
   <b class="g">吸</b>主力进散户出·只在60日区间下半部盖(回测唯一正超额) · 派/恐/洗已回测证伪下线<br>
-  主力控盘: <b class="r">红</b>≥100 <b class="o">橙</b>≥50 <b class="y">黄</b>低(量价) · <b class="y">金线</b>DDX60真钱控盘,上行才信柱(回测+6.8% vs +0.9%) · DDX升=金/降=灰 · 白线=DDX MA10 · 分钟周期=DDX20同源口径<br>
+  主力控盘: <b class="r">红</b>≥100 <b class="o">橙</b>≥50 <b class="y">黄</b>低(量价) · <b class="y">[DDX]</b>指标▾里开=独立副图(日线淡柱=主力净额红进绿出+DDX60金线·升金降灰·白线MA10,回测+6.8% vs +0.9%;分钟=DDX20同源口径) · 关=不占屏<br>
   <b class="y">★</b>冲进高位区≥80(过热) · <b class="g">★</b>跌进低位区≤20(超卖) · ●连排=单边延续<br>
   <b class="r">BOS↓</b>下破 · <b class="g">BOS↑</b>上破 · SR/OB/BSL·SSL 只显示英文短签<br>
   <b class="y">▲B/▼S</b>你的买卖画线 · <b class="o">⚠1.618</b>扩展到位别追<br>
@@ -561,6 +588,8 @@ function normalizeKlt(k) {
 var PERIODS = [["1", "1"], ["5", "5"], ["15", "15"], ["30", "30"], ["60", "60分钟"], ["101", "日"], ["102", "周"]];
 var TOOLS = [["trend", "趋势线", 2], ["hline", "水平线", 1], ["ray", "射线", 2], ["rect", "矩形", 2], ["fib", "斐波那契", 2], ["pct", "测幅%", 2], ["tri", "三角形", 3], ["xabcd", "蝴蝶XABCD", 5], ["freedraw", "画笔", 2], ["poly", "折线", 999], ["lrchan", "画回归", 2], ["buy", "买点线", 1], ["priceline", "价线", 0]];
 var TICON = { trend: "╱", hline: "─", ray: "↗", rect: "▭", fib: "φ", pct: "⇅", tri: "△", xabcd: "✕", freedraw: "✎", poly: "⦚", lrchan: "∥", buy: "Ⓑ", priceline: "¥" }; // ks-0906-19: TV风图标按钮(名字在title/提示里)
+/* ks-1012: 画线 8 色板(用户定稿)——抽屉选色管"新画的线", 单图形设置面板可对任一已画图形单独改色 */
+var DCOLORS = ["#ffd21f", "#ff5459", "#1fdc93", "#2f9dff", "#f2f5f3", "#b48ee8", "#ff9a5c", "#3ddc97"];
 // ks-0906-26: 默认名单不再硬编码(公开仓库不挂用户底牌)——优先读同域名 hq-mobile 的 portfolio_v2 持仓, 读不到就空列表自己加
 var KS_SEED = (function () {
   try {
@@ -582,7 +611,7 @@ var S = {
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
   ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
-  lineMode: true, drawLock: false, pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式
+  lineMode: true, drawColor: "#ffd21f", pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式; ks-1012: drawColor=抽屉色板当前色(新画线用)
   favs: [], favPick: false, favHide: false, // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
   theme: "d", // ks-0906-20: d=纯黑 lc=外黑内白 la=纯白
 };
@@ -595,14 +624,14 @@ function applyTheme() {
 var DRAW = {}; // "code:klt" -> [{type, pts:[{i,p}...]}]
 // ks-0907-21: 画线转提醒(TradingView式)——"code" -> [{kind:'px'|'tqs',val,note,armed,ts}]
 var ALERTS = {}; try { ALERTS = JSON.parse(localStorage.getItem("ksm_alerts_v1") || "{}"); } catch (e) {}
-function storeAlerts() { try { localStorage.setItem("ksm_alerts_v1", JSON.stringify(ALERTS)); } catch (e) {} try { syncAlBadge(); } catch (e) {} }
+function storeAlerts() { try { localStorage.setItem("ksm_alerts_v1", JSON.stringify(ALERTS)); } catch (e) {} try { syncAlBadge(); } catch (e) {} try { refreshAlSec(); } catch (e) {} } // ks-1012: 抽屉"本股提醒"区同步刷新
 function store() {
   if (S.simple) { // ks-0906-19: 内嵌模式只合并收藏+主题三个键(跨模式要记住), 其余偏好不污染主站
     try { var o9 = JSON.parse(localStorage.getItem("ksm_v1") || "{}"); o9.v = 4; o9.favs = S.favs; o9.favHide = S.favHide; o9.theme = S.theme; localStorage.setItem("ksm_v1", JSON.stringify(o9)); } catch (e) {}
     return;
   }
   try {
-    localStorage.setItem("ksm_v1", JSON.stringify({ v: 4, codes: S.codes, active: S.active, klt: S.klt, ind: S.ind, indsOff: S.indsOff, draw: DRAW, lineMode: S.lineMode, pdhlMode: S.pdhlMode, monOpen: S.monOpen, collapsed: S.collapsed, toolsOff: S.toolsOff, drawLock: S.drawLock, favs: S.favs, favHide: S.favHide, theme: S.theme }));
+    localStorage.setItem("ksm_v1", JSON.stringify({ v: 4, codes: S.codes, active: S.active, klt: S.klt, ind: S.ind, indsOff: S.indsOff, draw: DRAW, lineMode: S.lineMode, pdhlMode: S.pdhlMode, monOpen: S.monOpen, collapsed: S.collapsed, toolsOff: S.toolsOff, drawColor: S.drawColor, favs: S.favs, favHide: S.favHide, theme: S.theme }));
   } catch (e) {}
 }
 function restore() {
@@ -612,10 +641,10 @@ function restore() {
     if (o.codes && o.codes.length) S.codes = o.codes;
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = normalizeKlt(o.klt);
-    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
+    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
-    if (o.drawLock) S.drawLock = true; var _slb = document.getElementById("ksBarLockBtn"); if (_slb) { _slb.textContent = S.drawLock ? "已锁\uD83D\uDD12" : "锁定"; _slb.classList.toggle("on", !!S.drawLock); }
+    if (o.drawColor && DCOLORS.indexOf(o.drawColor) >= 0) S.drawColor = o.drawColor; /* ks-1012: 抽屉色板当前色(新画线用), 非法色值回默认黄 */
     if (o.monOpen != null) S.monOpen = !!o.monOpen;
     if (o.draw) DRAW = o.draw;
     if (o.collapsed != null) S.collapsed = !!o.collapsed;
@@ -783,7 +812,7 @@ function view() {
   var volH = (S.ind.volMain && S.bigPane !== "vol") ? 0 : Math.round(avail * 0.085); // ks-0906-13: VOL叠加主图时不占副图位(点VOL放大仍出大副图)
   var macdH = S.ind.macd === false ? 0 : Math.round(avail * 0.13);
   var zzH = S.ind.zz ? Math.round(avail * 0.11) : 0; // ks-0918-zz: 共振追涨副图,跟在MACD下面
-  var ddxH = 0;
+  var ddxH = S.ind.ddx && !noFund(S.active) ? Math.round(avail * 0.12) : 0; // ks-1012任务二: DDX独立副图两态——指标▾里开=独立DDX幅图, 关=完全不占位主图满高; 指数/ETF/美股无资金流不占位
   var zlyyH = S.ind.zlyy && !noFund(S.active) ? Math.round(avail * 0.11) : 0; // ks-0907-02: 副图加高,不再挤成一条线
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0; // ks-0907-02: 资金控盘(真钱口径),同上加高
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0; // ks-0917: 限流断线收成窄条不占屏
@@ -792,6 +821,7 @@ function view() {
   else if (S.bigPane === "macd" && macdH) macdH = Math.round(avail * 0.32);
   else if (S.bigPane === "zz" && zzH) zzH = Math.round(avail * 0.32);
   else if (S.bigPane === "zlyy" && zlyyH) zlyyH = Math.round(avail * 0.32);
+  else if (S.bigPane === "ddx" && ddxH) ddxH = Math.round(avail * 0.32); // ks-1012任务二: DDX副图可点标题条放大
   else if (S.bigPane === "ctrl" && ctrlH) ctrlH = Math.round(avail * 0.32);
   else if (S.bigPane === "rt" && rtH) rtH = Math.round(avail * 0.32);
   else if (S.bigPane === "tqs" && tqsH) tqsH = Math.round(avail * 0.32);
@@ -854,6 +884,7 @@ function paneLabelAt(v, x, y) {
   if (v.macdH && inLbl(v.macdY, v.macdH)) return "macd";
   if (v.zzH && inLbl(v.zzY, v.zzH)) return "zz";
   if (v.rtH && inLbl(v.rtY, v.rtH)) return "rt";
+  if (v.ddxH && inLbl(v.ddxY, v.ddxH)) return "ddx"; // ks-1012任务二
   if (v.zlyyH && inLbl(v.zlyyY, v.zlyyH)) return "zlyy";
   if (v.ctrlH && inLbl(v.ctrlY, v.ctrlH)) return "ctrl";
   if (v.tqsH && inLbl(v.tqsY, v.tqsH)) return "tqs";
@@ -866,6 +897,7 @@ function paneAt(v, y) {
   if (v.macdH && y >= v.macdY && y <= v.macdY + v.macdH) return "macd";
   if (v.zzH && y >= v.zzY && y <= v.zzY + v.zzH) return "zz";
   if (v.rtH && y >= v.rtY && y <= v.rtY + v.rtH) return "rt";
+  if (v.ddxH && y >= v.ddxY && y <= v.ddxY + v.ddxH) return "ddx"; // ks-1012任务二
   if (v.zlyyH && y >= v.zlyyY && y <= v.zlyyY + v.zlyyH) return "zlyy";
   if (v.ctrlH && y >= v.ctrlY && y <= v.ctrlY + v.ctrlH) return "ctrl";
   if (v.tqsH && y >= v.tqsY && y <= v.tqsY + v.tqsH) return "tqs";
@@ -892,6 +924,7 @@ function paneRectOf(v, pn) {
   else if (pn === "macd") { y = v.macdY; h = v.macdH; }
   else if (pn === "zz") { y = v.zzY; h = v.zzH; }
   else if (pn === "rt") { y = v.rtY; h = v.rtH; }
+  else if (pn === "ddx") { y = v.ddxY; h = v.ddxH; } // ks-1012任务二: DDX副图也支持画线按比例落锚
   else if (pn === "zlyy") { y = v.zlyyY; h = v.zlyyH; }
   else if (pn === "ctrl") { y = v.ctrlY; h = v.ctrlH; }
   else if (pn === "tqs") { y = v.tqsY; h = v.tqsH; }
@@ -946,17 +979,23 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   }
   if (!pts) return;
   var right = v.padL + (v.i1 - v.i0) * v.step;
-  ctx.strokeStyle = sel ? SEL : "#e6b43c";
-  ctx.fillStyle = sel ? SEL : "#e6b43c";
+  var OC = dg.color || null; // ks-1012: 每对象独立颜色(设置面板8色板); 未设色的走各类型默认色
+  ctx.strokeStyle = sel ? SEL : (OC || "#e6b43c");
+  ctx.fillStyle = sel ? SEL : (OC || "#e6b43c");
   ctx.lineWidth = sel ? 1.2 : 0.85;
-  ctx.setLineDash(dg.dash ? [7, 5] : []);
+  var _alDash = false; // ks-1012: 挂了提醒的价位线自动细虚线(蓝🔔监听/灰已触发在renderPaneDrawings画)
+  if ((dg.type === "hline" || dg.type === "buy") && dg.pts && dg.pts[0] && dg.pts[0].p != null) {
+    var _pv0 = +dg.pts[0].p, _pn0 = dg.pts[0].pane;
+    _alDash = _pn0 === "tqs" ? (S._alTq && S._alTq[Math.round(_pv0 * 10)]) : (!_pn0 && S._alPx && S._alPx[Math.round(_pv0 * 1000)]);
+  }
+  ctx.setLineDash((dg.dash || _alDash) ? [7, 5] : []);
   ctx.font = "10px -apple-system, sans-serif";
   ctx.textAlign = "left"; ctx.textBaseline = "middle";
   var t = dg.type;
   var MINP = { trend: 2, hline: 1, ray: 2, rect: 2, fib: 2, pct: 2, tri: 3, xabcd: 5, freedraw: 2, lrchan: 2, buy: 1, poly: 999 };
   if (pts.length < (MINP[t] || 2)) {
     // 进行中的多点画线：只画已落锚点之间的预览连线和点
-    ctx.strokeStyle = sel ? SEL : "#e6b43c";
+    ctx.strokeStyle = sel ? SEL : (OC || "#e6b43c");
     for (var pp = 0; pp < pts.length - 1; pp++) drawSeg(ctx, pts[pp], pts[pp + 1]);
     for (var pp2 = 0; pp2 < pts.length; pp2++) {
       ctx.beginPath(); ctx.arc(pts[pp2].x, pts[pp2].y, 3, 0, 7); ctx.fill();
@@ -982,7 +1021,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
       sd3 = Math.sqrt(sd3 / nn);
       var pxP3 = v.priceH / (v.hi - v.lo);
       [["rgba(232,242,234,0.85)", 0, []], ["rgba(255,111,102,0.85)", 2, S.ind.solid ? [] : [5, 4]], ["rgba(53,217,154,0.85)", -2, S.ind.solid ? [] : [5, 4]]].forEach(function (L5) {
-        ctx.strokeStyle = sel ? SEL : L5[0]; ctx.lineWidth = sel ? 1.3 : 0.9; ctx.setLineDash(L5[2]);
+        ctx.strokeStyle = sel ? SEL : (OC || L5[0]); ctx.lineWidth = sel ? 1.3 : 0.9; ctx.setLineDash(L5[2]);
         ctx.beginPath();
         ctx.moveTo(v.X(iA), v.Y(ic3) - L5[1] * sd3 * pxP3);
         ctx.lineTo(v.X(iB), v.Y(ic3 + sl3 * (nn - 1)) - L5[1] * sd3 * pxP3);
@@ -1000,7 +1039,8 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   else if (t === "hline" || t === "buy") {
     var tag0 = dg.tag || "";
     var lc = tag0.charAt(0) === "B" ? "#35d99a" : (tag0.charAt(0) === "S" ? "#ff6f66" : (tag0.indexOf("低吸") === 0 ? "#35d99a" : (tag0.indexOf("高抛") === 0 ? "#ff6f66" : "#e6b43c")));
-    if (t === "buy") { ctx.strokeStyle = sel ? SEL : "#ffd21f"; ctx.lineWidth = sel ? 1.3 : 0.9; }
+    if (OC) lc = OC; // ks-1012: 用户单独设过色的线优先于语义色
+    if (t === "buy") { ctx.strokeStyle = sel ? SEL : (OC || "#ffd21f"); ctx.lineWidth = sel ? 1.3 : 0.9; }
     else if (tag0) { ctx.strokeStyle = sel ? SEL : lc; ctx.lineWidth = sel ? 1.3 : 0.9; }
     var isBS = dg.auto && /^[BS]\d+$/.test(tag0);
     if (isBS) { // v.52 用户0916: 已触档压暗, 现价最近未触档(下一档)同色挑亮+实线
@@ -1046,9 +1086,9 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   else if (t === "rect") {
     var x0 = Math.min(pts[0].x, pts[1].x), x1 = Math.max(pts[0].x, pts[1].x);
     var y0 = Math.min(pts[0].y, pts[1].y), y1 = Math.max(pts[0].y, pts[1].y);
-    ctx.fillStyle = "rgba(87,167,255,0.10)";
+    ctx.fillStyle = OC ? OC + "1f" : "rgba(87,167,255,0.10)"; // ks-1012: 单独设色时填充同色淡底
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    ctx.strokeStyle = sel ? SEL : "#57a7ff";
+    ctx.strokeStyle = sel ? SEL : (OC || "#57a7ff");
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
   }
   else if (t === "fib") {
@@ -1059,7 +1099,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     for (var fi = 0; fi < FIB_SEQ.length; fi++) {
       var r = FIB_SEQ[fi], pr = p1 + (p2 - p1) * r, yy = yOfPane(v, dg.pts[0].pane, pr);
       if (dg.pts[0].pane !== "tqs" && (yy < v.pTop - 30 || yy > v.pTop + v.priceH + 30)) continue;
-      ctx.strokeStyle = ksFibColorJL(r);
+      ctx.strokeStyle = OC || ksFibColorJL(r); // ks-1012: 设过色的斐波全档统一用该色(档位名仍在,宽度分层保留)
       ctx.lineWidth = r === 0 || r === 1 ? 1 : (r === 0.618 || r === 0.382 ? 0.9 : 0.7);
       ctx.setLineDash(dg.dash ? [7, 5] : (r > 1 ? [4, 4] : []));
       ctx.beginPath(); ctx.moveTo(fx0, yy); ctx.lineTo(right, yy); ctx.stroke();
@@ -1081,7 +1121,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   }
   else if (t === "pct") {
     var pc = dg.pts[0].p ? (dg.pts[1].p / dg.pts[0].p - 1) * 100 : 0;
-    var colP = pc >= 0 ? UP : DN;
+    var colP = OC || (pc >= 0 ? UP : DN); // ks-1012: 设过色优先(方向由标签+/-表达)
     ctx.strokeStyle = sel ? SEL : colP;
     ctx.lineWidth = sel ? 1.4 : 1;
     drawSeg(ctx, pts[0], pts[1]);
@@ -1110,12 +1150,12 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.lineTo(pts[2].x, pts[2].y);
     ctx.closePath(); ctx.stroke();
-    ctx.fillStyle = sel ? "rgba(255,210,31,0.08)" : "rgba(230,180,60,0.06)";
+    ctx.fillStyle = sel ? "rgba(255,210,31,0.08)" : (OC ? OC + "0f" : "rgba(230,180,60,0.06)"); // ks-1012
     ctx.fill();
   }
   else if (t === "xabcd") {
-    /* ks-1011c: 配色方案改「蓝线·黄比例·白价格」——线由默认暗金→艳蓝, 只覆盖本分支 */
-    ctx.strokeStyle = sel ? SEL : "#2f9dff";
+    /* ks-1011c: 配色方案改「蓝线·黄比例·白价格」——线由默认暗金→艳蓝, 只覆盖本分支; ks-1012: 设过色优先 */
+    ctx.strokeStyle = sel ? SEL : (OC || "#2f9dff");
     var LB = ["X", "A", "B", "C", "D"];
     for (var li = 0; li < 4; li++) drawSeg(ctx, pts[li], pts[li + 1]);
     ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
@@ -1156,6 +1196,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
       ctx.beginPath(); ctx.arc(pts[hd].x, pts[hd].y, 4.5, 0, 7); ctx.stroke();
     }
   }
+  // ks-1012b(用户反馈): 锁定不再在图上挂🔒标——锁了就安安静静, 要解锁=轻点图形弹面板; 图面保持干净
 }
 function renderDrawings(ctx, v) {
   if (S.linesHidden) return; // 金粼紧凑条「隐藏」开关: 只影响显示, 不动数据
@@ -1197,12 +1238,13 @@ function renderDrawings(ctx, v) {
 function renderPaneDrawings(ctx, v) {
   if (S.linesHidden) return; // ks-0916-51: 「隐藏」开关覆盖副图画线通道(原只盖主图)
   var im = idxMap(v), dl = S.simple ? [] : visList(); // ks-0909-30: 触线提醒同样对跨周期价位线生效; 副图通道仍按pane过滤不受影响; ks-0910-42: simple/内嵌跳过本机画线
-  // 触线提醒: 主图画线被最新价贴近(±0.3%)/穿越时, 线右端亮⚡标记, 不用盯盘
+  // 触线提醒: 主图画线被最新价贴近(±0.3%)/穿越时, 线右端亮⚡标记(ks-1012: 每对象「到价提示」开关控制, 默认关; 价位集合在drawReal里已构建)
   if (S.kl.length) {
     var _c0 = S.kl[S.kl.length - 1][4], _c1 = S.kl.length >= 2 ? S.kl[S.kl.length - 2][4] : _c0;
     var _rt2 = v.padL + (v.i1 - v.i0) * v.step;
     for (var ai = 0; ai < dl.length; ai++) {
       var _da = dl[ai];
+      if (!_da.spark) continue; // ks-1012: 没开「到价提示」的线不出⚡
       if (!_da.pts || !_da.pts.length || _da.pts[0].pane) continue; // 只管主图线
       var lvA = null;
       if ((_da.type === "hline" || _da.type === "buy") && _da.pts[0].p != null) lvA = _da.pts[0].p;
@@ -1275,111 +1317,171 @@ function lineLevelNow(v, im, da) { // 画线在最新K线处的水平值+屏幕Y
   if (lv == null || !isFinite(lv) || lv <= 0) return null;
   return { val: lv, y: pane ? yOfPane(v, "tqs", lv) : v.Y(lv), kind: pane ? "tqs" : "px" };
 }
-var alBtn = document.getElementById("alBtn"), _alHov = null, _alHideT = 0;
-// ks-0910-42: 线在触点x处的屏幕Y——trend/ray按斜率延伸到触点位置算(不再只认最新K线处的值);点线中段也能认出这条线
-function lineYAtX(v, im, da, x) {
-  if (!da.pts || !da.pts.length) return null;
-  var pane = da.pts[0].pane || null;
-  if (pane && pane !== "tqs") return null;
-  if ((da.type === "hline" || da.type === "buy") && da.pts[0].p != null) return yOfPane(v, pane, da.pts[0].p);
-  if ((da.type === "trend" || da.type === "ray") && da.pts.length >= 2) {
-    var qA = anchorXY(v, im, da.pts[0]), qB = anchorXY(v, im, da.pts[1]);
-    if (!qA || !qB) return null;
-    if (Math.abs(qB.x - qA.x) < 0.001) return qA.y;
-    return qA.y + (qB.y - qA.y) / (qB.x - qA.x) * (x - qA.x);
-  }
-  return null;
+/* ============ ks-1012: 单图形设置面板 + 右键/长按设提醒菜单（替代已撤的＋提醒悬停按钮） ============ */
+// 面板: 手机轻点图形/电脑双击图形弹出——8色换色(只改本图形) + 锁定(整对象一把锁) + 到价提示(⚡触线标记)
+// 菜单: 电脑右键/手机长按约500ms(手不劲动)弹出——对这条线设提醒(免输价) / 在此价位设提醒
+function ksToolName(ty) { for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i][0] === ty) return TOOLS[i][1]; return "画线"; }
+function ksCloseOverlays() { try { closeDgPanel(); } catch (e) {} try { closeAlMenu(); } catch (e) {} }
+function closeDgPanel() {
+  var el = document.getElementById("ksDgPanel");
+  if (el) el.remove();
+  S.dgPanel = null;
 }
+function dgFill(el, dg) {
+  var hd = el.querySelector(".dgpHd");
+  hd.childNodes[0].textContent = ksToolName(dg.type);
+  hd.querySelector(".lk").textContent = dg.locked ? "🔒 已锁定" : "";
+  el.querySelectorAll(".dgpSw button").forEach(function (b) {
+    b.classList.toggle("on", !!dg.color && b.getAttribute("data-c") === dg.color);
+  });
+  el.querySelector(".dgpTgLk").classList.toggle("on", !!dg.locked);
+  el.querySelector(".dgpTgSp").classList.toggle("on", !!dg.spark);
+}
+function openDgPanel(idx) {
+  if (S.simple) return;
+  var v = view(); if (!v) return;
+  var dl = dlist(), dg = dl[idx];
+  if (!dg || !dg.pts || !dg.pts.length) return;
+  closeAlMenu();
+  S.selected = idx;
+  S.dgPanel = idx;
+  var el = document.getElementById("ksDgPanel");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "ksDgPanel";
+    var hd = document.createElement("div"); hd.className = "dgpHd";
+    hd.appendChild(document.createTextNode(""));
+    var lk = document.createElement("span"); lk.className = "lk"; hd.appendChild(lk);
+    var xx = document.createElement("button"); xx.type = "button"; xx.className = "dgpX"; xx.textContent = "✕";
+    xx.addEventListener("click", function () { closeDgPanel(); });
+    hd.appendChild(xx);
+    el.appendChild(hd);
+    var sw = document.createElement("div"); sw.className = "dgpSw";
+    DCOLORS.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button"; b.style.background = c; b.setAttribute("data-c", c); b.title = "换成本色(只改这个图形)";
+      b.addEventListener("click", function () {
+        var dg2 = dlist()[S.dgPanel]; if (!dg2) return;
+        dg2.color = c; store(); draw(); dgFill(el, dg2);
+        hint("已换色 · 只改了这一个「" + ksToolName(dg2.type) + "」· 其余画线不动");
+      });
+      sw.appendChild(b);
+    });
+    el.appendChild(sw);
+    function mkRow(label, cls, fn) {
+      var r = document.createElement("div"); r.className = "dgpRow";
+      var s1 = document.createElement("span"); s1.textContent = label; r.appendChild(s1);
+      var tg = document.createElement("button"); tg.type = "button"; tg.className = "dgpTg " + cls;
+      tg.appendChild(document.createElement("i"));
+      tg.addEventListener("click", fn);
+      r.appendChild(tg);
+      return r;
+    }
+    el.appendChild(mkRow("🔒 锁定（拖不动·删不掉·不挡手）", "dgpTgLk", function () {
+      var dg2 = dlist()[S.dgPanel]; if (!dg2) return;
+      dg2.locked = !dg2.locked; store(); draw(); dgFill(el, dg2);
+      hint(dg2.locked ? "已锁定 · 这一个图形冻住(其余照常画/拖) · 画线落锚可穿它" : "已解锁 · 恢复可拖动");
+    }));
+    el.appendChild(mkRow("⚡ 到价提示（线右端亮标记）", "dgpTgSp", function () {
+      var dg2 = dlist()[S.dgPanel]; if (!dg2) return;
+      dg2.spark = !dg2.spark; store(); draw(); dgFill(el, dg2);
+      hint(dg2.spark ? "⚡ 已开 · 最新价贴近/穿越这条线时右端亮标记" : "⚡ 已关 · 推送提醒请用右键/长按菜单挂");
+    }));
+    var ft = document.createElement("div"); ft.className = "dgpFt";
+    ft.textContent = "点图表空白处收起 · 只改这一个图形";
+    el.appendChild(ft);
+    document.getElementById("chartwrap").appendChild(el);
+  }
+  dgFill(el, dg);
+  // 落位: 贴着图形首锚点右侧; 夹紧在图区内
+  var im = idxMap(v), pts = ptsOf(v, im, dg.pts), ax, ay;
+  if (!pts && (dg.type === "hline" || dg.type === "buy")) {
+    var _a0 = dg.pts[0], _yy = _a0.pr != null && _a0.pane ? (paneRectOf(v, _a0.pane) ? paneRectOf(v, _a0.pane).y + _a0.pr * paneRectOf(v, _a0.pane).h : null) : yOfPane(v, _a0.pane, _a0.p);
+    pts = _yy != null ? [{ x: v.padL + (v.i1 - v.i0) * v.step, y: _yy }] : null;
+  }
+  if (pts && pts.length) { ax = pts[0].x; ay = pts[0].y; }
+  else { ax = cv.clientWidth * 0.5; ay = v.pTop + 30; }
+  var wr = document.getElementById("chartwrap").getBoundingClientRect(), cr = cv.getBoundingClientRect();
+  var px = cr.left - wr.left + ax + 14, py = cr.top - wr.top + ay - 30;
+  px = Math.max(4, Math.min(wr.width - el.offsetWidth - 4, px));
+  py = Math.max(4, Math.min(wr.height - el.offsetHeight - 4, py));
+  el.style.left = px + "px";
+  el.style.top = py + "px";
+}
+function reposDgPanel() { // 图平移/缩放/重挂后面板跟着对象走
+  var idx = S.dgPanel;
+  if (idx == null || idx < 0) return;
+  var dl = dlist();
+  if (!dl[idx]) { closeDgPanel(); return; }
+  openDgPanel(idx);
+}
+var alMenuEl = null;
+function closeAlMenu() { if (alMenuEl) { alMenuEl.remove(); alMenuEl = null; } }
+function addKsAlert(lv, dg) {
+  var code = S.active; if (!ALERTS[code]) ALERTS[code] = [];
+  var dup = ALERTS[code].some(function (a) { return a.kind === lv.kind && Math.abs(a.val / lv.val - 1) < 0.002; });
+  if (dup) { hint("这个" + (lv.kind === "px" ? "价位" : "位置") + "已挂过提醒"); return; }
+  var note = dg ? (dg.tag || ksToolName(dg.type)) : "价位";
+  ALERTS[code].push({ kind: lv.kind, val: +lv.val.toFixed(lv.kind === "tqs" ? 1 : 3), note: note, armed: true, ts: Date.now() });
+  storeAlerts();
+  hint("🔔 已挂提醒: " + (lv.kind === "px" ? "价 " + lv.val.toFixed(2) : "强弱T " + lv.val.toFixed(0)) + " · " + note + " · 现价穿越时提示+系统通知 · 图上线变细虚线");
+  try { if (window.Notification && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
+  draw();
+}
+function openAlMenu(pt, cx, cy) { // pt=画布内坐标; cx/cy=屏幕坐标(菜单位)
+  if (S.simple) return;
+  var v = view(); if (!v) return;
+  closeDgPanel(); closeAlMenu();
+  var im = idxMap(v), dl = dlist();
+  var hi = hitTest(pt, true); // 软命中: 锁定的线也能挂提醒
+  var dg = hi >= 0 ? dl[hi] : null;
+  var lv = dg ? lineLevelNow(v, im, dg) : null;
+  var pn = paneAt(v, pt.y);
+  var items = [];
+  if (lv) {
+    items.push({ t: "🔔 对这条线设提醒 · " + (lv.kind === "px" ? fwp(lv.val) : "强弱T " + lv.val.toFixed(0)), fn: function () { addKsAlert(lv, dg); } });
+  }
+  if (pn == null && pt.y >= v.pTop && pt.y <= v.pTop + v.priceH) {
+    var pv = v.P(pt.y);
+    if (isFinite(pv) && pv > 0) items.push({ t: "在此价位设提醒 " + fwp(pv), fn: function () { addKsAlert({ kind: "px", val: pv }, null); } });
+  }
+  if (pn === "tqs" && v.tqsH) {
+    var t0 = v.tqsY + 11, b0 = v.tqsY + v.tqsH - 3;
+    var tv = Math.max(0, Math.min(100, 100 - (pt.y - t0) / (b0 - t0) * 100));
+    items.push({ t: "在此位置设提醒 · 强弱T " + tv.toFixed(0), fn: function () { addKsAlert({ kind: "tqs", val: tv }, null); } });
+  }
+  if (!items.length) return; // 按在无价位语义的副图空白上——不弹, 不打扰
+  var m = document.createElement("div");
+  m.className = "ksAlMenu";
+  items.forEach(function (it) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = it.t;
+    b.addEventListener("click", function (e2) { e2.stopPropagation(); closeAlMenu(); it.fn(); });
+    m.appendChild(b);
+  });
+  var cb = document.createElement("button");
+  cb.type = "button"; cb.className = "ksAlCancel"; cb.textContent = "取消";
+  cb.addEventListener("click", function (e2) { e2.stopPropagation(); closeAlMenu(); });
+  m.appendChild(cb);
+  document.body.appendChild(m);
+  var mw = m.offsetWidth, mh = m.offsetHeight;
+  var mx = Math.max(6, Math.min(window.innerWidth - mw - 6, (cx != null ? cx : window.innerWidth / 2) + 8));
+  var my = Math.max(6, Math.min(window.innerHeight - mh - 6, (cy != null ? cy : window.innerHeight / 2) - 10));
+  m.style.left = mx + "px";
+  m.style.top = my + "px";
+  alMenuEl = m;
+  document.addEventListener("pointerdown", function cl(e3) {
+    if (alMenuEl && !alMenuEl.contains(e3.target)) { closeAlMenu(); document.removeEventListener("pointerdown", cl); }
+  });
+}
+// 电脑: 右键图面任意处弹设提醒菜单(浏览器菜单屏蔽)
+cv.addEventListener("contextmenu", function (e) {
+  e.preventDefault();
+  var pt = posT(e);
+  openAlMenu(pt, e.clientX, e.clientY);
+});
 function rlabDup(v, p) { var a = v._rlab || []; for (var i = 0; i < a.length; i++) if (a[i].p > 0 && Math.abs(a[i].p / p - 1) < 0.0015) return true; return false; }
 function rlabReg(v, p, y) { if (!v._rlab) v._rlab = []; var a = v._rlab, yy = y, g = 0; for (;;) { var clash = false; for (var i = 0; i < a.length; i++) if (Math.abs(a[i].y - yy) < 12) { clash = true; break; } if (!clash || ++g > 24) break; yy += 12; if (yy > v.pTop + v.priceH - 8) yy = v.pTop + v.priceH - 8; } a.push({ p: p, y: yy }); return yy; }
-// ks-0910-42b: 提醒钮落位(抽共用)——跟手:落在触点/光标右上方、贴线在触点处的位置;无触点(选中等场景)落线右端;夹紧在图区内防跑出屏
-var _alPX = -999, _alPY = -999; // 最近一次的触点/光标位置(重挂时保持跟手位)
-function alPlace(v, y, px) {
-  var wr = document.getElementById("chartwrap").getBoundingClientRect(), cr = cv.getBoundingClientRect();
-  var rt = v.padL + (v.i1 - v.i0) * v.step;
-  var lx = (px != null && px > -100) ? (px + 16) : (rt - 58); // 触点右侧16px;没触点回右端
-  lx = Math.max(v.padL + 2, Math.min(rt - 56, lx));
-  alBtn.style.display = "block";
-  alBtn.style.left = (cr.left - wr.left + lx) + "px";
-  var tp = cr.top - wr.top + y - 26;
-  alBtn.style.top = Math.max(2, Math.min(wr.height - 34, tp)) + "px";
-}
-function alRepos() {
-  if (!alBtn || alBtn.style.display !== "block") return;
-  var v = view(); if (!v || !S.kl.length) { alBtn.style.display = "none"; _alHov = null; return; }
-  var im = idxMap(v), dl = dlist(), lv = null, da2 = null;
-  if (S.selected >= 0 && dl[S.selected]) { da2 = dl[S.selected]; lv = lineLevelNow(v, im, da2); }
-  if (!lv && _alHov) {
-    for (var ai = 0; ai < dl.length; ai++) {
-      var l2 = lineLevelNow(v, im, dl[ai]);
-      if (l2 && _alHov.val > 0 && l2.kind === _alHov.kind && Math.abs(l2.val / _alHov.val - 1) < 0.002) { lv = l2; da2 = dl[ai]; break; }
-    }
-  }
-  if (!lv) { alBtn.style.display = "none"; _alHov = null; return; }
-  _alHov = lv;
-  var yx = (_alPX > -100 && da2) ? lineYAtX(v, im, da2, _alPX) : null;
-  alPlace(v, yx != null ? yx : lv.y, _alPX);
-}
-function alHideLater() { clearTimeout(_alHideT); _alHideT = setTimeout(function () { if (alBtn) { alBtn.style.display = "none"; _alHov = null; } }, 6000); }
-function cancelAlHide() { clearTimeout(_alHideT); }
-function alTol() { return (alBtn && alBtn.style.display === "block") ? 36 : 14; } // ks-0909-33: 滞回——按钮已弹出时放宽容差,移向按钮不会半路收回
-function updAlBtn(px2, py2, sticky) {
-  if (!alBtn) return;
-  if (!S.kl.length) { alBtn.style.display = "none"; _alHov = null; return; } // ks-0909-33: 审计A3——藏按钮必清_alHov,杜绝 stale 挂错价位
-  if (S.tool) { alBtn.style.display = "none"; _alHov = null; return; }
-  if (px2 > -100) { _alPX = px2; _alPY = py2; }
-  var v = view(); if (!v) { alBtn.style.display = "none"; _alHov = null; return; }
-  var im = idxMap(v), dl = dlist(), best = null;
-  for (var ai = 0; ai < dl.length; ai++) {
-    var lv = lineLevelNow(v, im, dl[ai]); if (!lv) continue;
-    var yx = lineYAtX(v, im, dl[ai], px2); if (yx == null) continue; // ks-0910-42: 按触点x处的线Y判距离——点哪条线钮去哪条(原按右端值测距,点斜线中段认不出)
-    var dy = Math.abs(py2 - yx);
-    if (dy < alTol() && (!best || dy < best.dy)) best = { dy: dy, lv: lv, y: yx };
-  }
-  // 选中画线: 触点不在任何线附近时,钮落选中线(触点x处的线Y,跟手;无触点=右端)
-  if (!best && S.selected >= 0 && dl[S.selected]) {
-    var lv2 = lineLevelNow(v, im, dl[S.selected]);
-    if (lv2) { var yx2 = px2 > -100 ? lineYAtX(v, im, dl[S.selected], px2) : null; best = { dy: 0, lv: lv2, y: yx2 != null ? yx2 : lv2.y }; }
-  }
-  if (!best) { if (!sticky) { alBtn.style.display = "none"; _alHov = null; } return; }
-  _alHov = best.lv;
-  alPlace(v, best.y, px2);
-  if (sticky) alHideLater(); // 触屏:松手后粘6秒,够点;到点必收不常驻
-}
-// ks-0910-42b: 选中/取消选中画线后重挂提醒钮(syncTools在选中变化时被调)——用最近触点定位(钮出现在手指点的地方);点了空白立即收;显示后粘6秒必收
-function alSyncSel() { if (!alBtn) return; cancelAlHide(); updAlBtn(_alPX, _alPY, false); if (alBtn.style.display === "block") alHideLater(); }
-cv.addEventListener("pointermove", function (ev) {
-  if (ev.pointerType && ev.pointerType !== "mouse") return;
-  if (alBtn && alBtn.style.display === "block") { // ks-0909-33: 光标已在按钮上/边缘→保持,别半路收回
-    var br = alBtn.getBoundingClientRect();
-    if (ev.clientX >= br.left - 10 && ev.clientX <= br.right + 10 && ev.clientY >= br.top - 10 && ev.clientY <= br.bottom + 10) { cancelAlHide(); return; }
-  }
-  var cr = cv.getBoundingClientRect(); updAlBtn(ev.clientX - cr.left, ev.clientY - cr.top, false);
-});
-cv.addEventListener("pointerleave", function (ev) { if (ev.pointerType === "mouse" && alBtn) alHideLater(); }); // ks-0909-33: 离开画布给3秒宽限(多半正移向按钮),按钮hover会取消
-cv.addEventListener("touchstart", function (ev) { var t = ev.touches[0], cr = cv.getBoundingClientRect(); updAlBtn(t.clientX - cr.left, t.clientY - cr.top, true); }, { passive: true });
-if (alBtn) {
-  alBtn.addEventListener("click", function () {
-    if (!_alHov) return;
-    var code = S.active; if (!ALERTS[code]) ALERTS[code] = [];
-    var lv = _alHov;
-    var dup = ALERTS[code].some(function (a) { return a.kind === lv.kind && Math.abs(a.val / lv.val - 1) < 0.002; });
-    if (dup) { hint("这个" + (lv.kind === "px" ? "价位" : "位置") + "已挂过提醒"); return; }
-    var note = "高抛";
-    try { var inp = prompt("提醒备注(高抛/低吸/破位…)", lv.kind === "tqs" ? (lv.val >= 80 ? "高抛" : "观察") : "高抛"); if (inp === null) return; note = inp || "提醒"; } catch (e) {}
-    ALERTS[code].push({ kind: lv.kind, val: +lv.val.toFixed(lv.kind === "tqs" ? 1 : 3), note: note, armed: true, ts: Date.now() });
-    storeAlerts();
-    hint("🔔 已挂提醒: " + (lv.kind === "px" ? "价 " + lv.val.toFixed(2) : "强弱T " + lv.val.toFixed(0)) + " · " + note + "（双击＋提醒=清空本股）");
-    try { if (window.Notification && Notification.permission === "default") Notification.requestPermission(); } catch (e) {}
-    alBtn.style.display = "none"; _alHov = null; draw(); // ks-0909-33: 审计A3——挂成功后状态一并清
-  });
-  alBtn.addEventListener("dblclick", function () { if (!confirm("清空本股全部提醒？")) return; ALERTS[S.active] = []; storeAlerts(); hint("本股提醒已清空"); draw(); }); // ks-0910-39: 防误触清空(提醒"又不见了"最大嫌疑=双击/长按误触)
-  alBtn.addEventListener("pointerenter", function (ev) { if (!ev.pointerType || ev.pointerType === "mouse") cancelAlHide(); }); // ks-0909-33: 鼠标进按钮→保住不收
-  alBtn.addEventListener("pointerleave", function (ev) { if (!ev.pointerType || ev.pointerType === "mouse") alHideLater(); }); // 离开按钮→3秒后收
-  var _alLP = 0;
-  alBtn.addEventListener("touchstart", function () { _alLP = Date.now(); cancelAlHide(); }, { passive: true });
-  alBtn.addEventListener("touchend", function () { if (Date.now() - _alLP > 600) { if (!confirm("清空本股全部提醒？")) { alBtn.style.display = "none"; _alHov = null; return; } ALERTS[S.active] = []; storeAlerts(); hint("本股提醒已清空"); alBtn.style.display = "none"; _alHov = null; draw(); } }); // ks-0909-33: 审计A2——长按清空后按钮必须收,否则卡屏且能把刚清的原样挂回; ks-0910-39: 加确认闸防误触
-}
 /* ---- ks-0907-22: 提醒汇总面板 —— 全部股票的提醒一览(高抛/低吸/破位), 可跳转该票/单条删除 ---- */
 function syncAlBadge() {
   var b = document.querySelector("[data-alerts]"); if (!b) return;
@@ -1392,7 +1494,7 @@ function buildAlList() {
   box.innerHTML = "";
   var codes = [];
   for (var c in ALERTS) if (ALERTS[c] && ALERTS[c].length) codes.push(c);
-  if (!codes.length) { box.innerHTML = '<div class="alempty">暂无提醒 · 画好线后手指靠线,点弹出的「＋提醒」就挂上了</div>'; return; }
+  if (!codes.length) { box.innerHTML = '<div class="alempty">暂无提醒 · 电脑右键/手机长按画线或图面价位即可挂(免输价)</div>'; return; }
   codes.forEach(function (cd) {
     var nm = cd;
     for (var i = 0; i < S.codes.length; i++) if (S.codes[i][0] === cd) { nm = S.codes[i][1] || cd; break; }
@@ -1459,7 +1561,7 @@ function draw() {
     S._degraded = true;
     try { hint("⚠ 渲染异常已降级为简K（画线/副图暂隐）· 控制台[draw]有错误明细 · 反馈请带此截图"); } catch (e3) {}
   }
-  try { alRepos(); } catch (e4) {} // ks-0910-42: 提醒钮随图重挂(平移/缩放/拖线后跟线走)
+  try { reposDgPanel(); } catch (e4) {} // ks-1012: 设置面板随图重挂(平移/缩放/拖线后跟对象走)
 }
 function drawFallback() {
   var ctx = cv.getContext("2d");
@@ -1791,6 +1893,13 @@ function drawReal() {
   });
   }
   // ICT 叠加层 + 昨高低 + 监测面板（同样裁切在主图区内）
+  // ks-1012: 本股已挂提醒的价位/强弱T值集合——renderOneDrawing 把挂了提醒的线画成细虚线(先于所有画线渲染构建, 无首帧滞后)
+  S._alPx = null; S._alTq = null;
+  var _alArr9 = ALERTS[S.active];
+  if (_alArr9 && _alArr9.length) {
+    S._alPx = {}; S._alTq = {};
+    _alArr9.forEach(function (a9) { if (a9.kind === "tqs") S._alTq[Math.round(+a9.val * 10)] = 1; else S._alPx[Math.round(+a9.val * 1000)] = 1; });
+  }
   ctx.save();
   ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
   renderICT(ctx, v);
@@ -1804,6 +1913,7 @@ function drawReal() {
   renderBSMeasure(ctx, v); // ks-0906-8: B1→S1 测幅箭头(差几元/几点直接标图上)
   ctx.restore();
   renderRtflow(ctx, v);
+  renderDdxPane(ctx, v); // ks-1012任务二: DDX独立副图(指标▾[DDX]两态)
   renderCtrl(ctx, v);
   renderTqs(ctx, v);
   renderExtraPanes(ctx, v);
@@ -1914,7 +2024,7 @@ function alHitAt(pt) { // ks-0920-35: 铃铛命中检测
   for (var i = hs.length - 1; i >= 0; i--) { var h = hs[i]; if (pt.x >= h.x0 && pt.x <= h.x1 && pt.y >= h.y0 && pt.y <= h.y1) return h; }
   return null;
 }
-function hitTest(pt) {
+function hitTest(pt, soft) { // soft=true 时锁定对象也可命中(点选弹设置面板/长按弹菜单用); 默认跳过锁定=穿透不挡手
   var v = view(); if (!v) return -1;
   var im = idxMap(v);
   var right = v.padL + (v.i1 - v.i0) * v.step;
@@ -1922,6 +2032,7 @@ function hitTest(pt) {
   var best = -1, bestD = 20;
   for (var idx = 0; idx < dl.length; idx++) {
     var dg = dl[idx], pts = ptsOf(v, im, dg.pts);
+    if (!soft && dg.locked) continue; // ks-1012: 锁定穿透——选中/拖拽/删选全跳过, 新画线落锚不受任何已有图形影响
     if (!pts) continue;
     var d = Infinity, t = dg.type;
     if (t === "freedraw" || t === "poly") { for (var fs = 0; fs < pts.length - 1; fs++) d = Math.min(d, distSeg(pt.x, pt.y, pts[fs], pts[fs + 1])); }
@@ -1997,7 +2108,7 @@ function placeAnchor(pt) {
   S.selected = -1;
   var need = needPts(S.tool);
   if (S.pending.length >= need) {
-    dlist().push({ type: S.tool, pts: S.pending.slice() });
+    dlist().push({ type: S.tool, pts: S.pending.slice(), color: S.drawColor }); // ks-1012: 新线用抽屉色板当前色
     S.selected = dlist().length - 1;
     S.pending = []; S.ghost = null;
     hint("「" + toolName(S.tool) + "」已完成 · 按住画线可整体拖动 · 拖锚点(黄点)微调 · 「删选」删除");
@@ -2059,7 +2170,8 @@ cv.addEventListener("touchstart", function (e) {
   // ks-0906-15: TV式时间轴横拉缩放——单指按住底部日期轴左右拖=横向缩放(右拉放大/左拉缩小)
   var vv0 = view();
   if (vv0 && !S.tool && pt.y > vv0.bottom + 2) { T = { mode: "hzoom", lx: pt.x, c0: S.count || (vv0.i1 - vv0.i0) }; hint("时间轴缩放 · 右拉放大 左拉缩小"); return; }
-  if (S.tool === "freedraw" && !S.drawLock) {
+  ksCloseOverlays(); // ks-1012: 新手势先收面板/菜单(点图表任意处=收起)
+  if (S.tool === "freedraw") { // ks-1012: 画图工具永不受锁影响——锁只保护旧图形, 不限制新作画
     var aF = anchorAt(pt);
     if (aF) S.pending.push(aF);
     S.selected = -1;
@@ -2068,7 +2180,7 @@ cv.addEventListener("touchstart", function (e) {
     draw();
     return;
   }
-  if (S.tool && !S.drawLock) { placeAnchor(pt); T = { mode: "draw" }; return; }
+  if (S.tool) { placeAnchor(pt); T = { mode: "draw" }; return; }
   // 右侧价格轴：上下拖动 = 纵向缩放（不影响画图和平移）
   if (pt.x > cv.clientWidth - 64) { T = { mode: "yzoom", ly: pt.y, z0: S.yZoom }; hint(""); return; }
   if (S.rngMode) { T = { mode: "rng", x0: pt.x }; var _vr0 = view(); if (_vr0) { var _ir0 = _vr0.I(pt.x); S.rng = { a: _ir0, b: _ir0 }; } draw(); return; } // ks-0909-31: 区间统计拖选
@@ -2081,12 +2193,33 @@ cv.addEventListener("touchstart", function (e) {
     return;
   }
   if (S.alSel) { S.alSel = null; draw(); }
-  var hit0 = hitTest(pt);
+  var hit0 = hitTest(pt); // 硬命中: 锁定的图形跳过=穿透, 手指落上去不选中不拖动
   if (hit0 >= 0) {
     S.selected = hit0;
-    T = S.drawLock ? { mode: "idle", x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: false } : { mode: "drag", idx: hit0, ai: pickAnchor(hit0, pt), lx: pt.x, ly: pt.y, x0: pt.x, y0: pt.y, t0: Date.now(), moved: false };
-    hint("按住拖动：移整线 · 拖黄点：调锚点 · 「删选」删除");
+    T = { mode: "drag", idx: hit0, ai: pickAnchor(hit0, pt), lx: pt.x, ly: pt.y, x0: pt.x, y0: pt.y, t0: Date.now(), moved: false };
+    var _cx0 = e.touches[0].clientX, _cy0 = e.touches[0].clientY, _pt0 = { x: pt.x, y: pt.y };
+    T.lpm = setTimeout(function () { // ks-1012: 按住不动约500ms=弹设提醒菜单(移动即取消, 不误触)
+      if (T && T.mode === "drag" && !T.moved) {
+        T.menu = true;
+        if (navigator.vibrate) navigator.vibrate(12);
+        openAlMenu(_pt0, _cx0, _cy0);
+      }
+    }, 500);
+    hint("按住拖动：移整线 · 拖黄点：调锚点 · 轻点：设置");
     syncTools(); draw();
+    return;
+  }
+  var _soft0 = hitTest(pt, true); // 软命中: 按在锁定的图形上——不吃点击不进拖动, 但轻点可弹设置面板/长按可挂提醒
+  if (_soft0 >= 0) {
+    T = { mode: "idleLk", idx: _soft0, x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: false };
+    var _cx1 = e.touches[0].clientX, _cy1 = e.touches[0].clientY, _pt1 = { x: pt.x, y: pt.y };
+    T.lpm = setTimeout(function () {
+      if (T && T.mode === "idleLk" && !T.moved) {
+        T.menu = true;
+        if (navigator.vibrate) navigator.vibrate(12);
+        openAlMenu(_pt1, _cx1, _cy1);
+      }
+    }, 500);
     return;
   }
   T = { mode: "idle", x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: false };
@@ -2126,7 +2259,11 @@ cv.addEventListener("touchmove", function (e) {
     draw();
     return;
   }
-  if (T.mode === "drag") { dragBy(T, pt); return; }
+  if (T.mode === "drag") {
+    if (T.lpm && (Math.abs(pt.x - T.x0) > 4 || Math.abs(pt.y - T.y0) > 4)) { clearTimeout(T.lpm); T.lpm = null; } // ks-1012: 手一动就别弹菜单
+    dragBy(T, pt);
+    return;
+  }
   if (T.mode === "draw") {
     var _gh = anchorAt(pt);
     if (_gh) { S.ghost = _gh; T.moved = true; }
@@ -2154,6 +2291,7 @@ cv.addEventListener("touchmove", function (e) {
   if (Math.abs(pt.x - T.x0) + Math.abs(pt.y - T.y0) > 9) {
     T.moved = true;
     if (T.lp) { clearTimeout(T.lp); T.lp = null; }
+    if (T.lpm) { clearTimeout(T.lpm); T.lpm = null; } // ks-1012: 锁定图形上按住后拖动=正常平移图表, 菜单取消
     T.mode = "pan";
     T.axis = Math.abs(pt.x - T.x0) >= Math.abs(pt.y - T.y0) ? "h" : "v";
   }
@@ -2180,10 +2318,14 @@ cv.addEventListener("touchend", function (e) {
   if (e.touches.length > 0) return;
   if (!T) return;
   if (T.lp) { clearTimeout(T.lp); T.lp = null; }
+  if (T.lpm) { clearTimeout(T.lpm); T.lpm = null; }
   if (T.mode === "drag") {
     if (T.moved) { store(); }
-    else { S.selected = T.idx; hint("已选中画线 · 按住可拖动 · 「删选」删除"); syncTools(); }
+    else if (!T.menu) { S.selected = T.idx; hint("已选中 · 面板可改色/锁定"); openDgPanel(T.idx); syncTools(); } // ks-1012: 轻点=选中+弹设置面板(长按弹过菜单则不再弹面板)
     draw();
+  }
+  else if (T.mode === "idleLk") { // ks-1012: 轻点锁定的图形=弹设置面板(解锁/换色的唯一入口); 拖动过了=平移图表, 不弹
+    if (!T.moved && !T.menu) { S.selected = T.idx; openDgPanel(T.idx); syncTools(); draw(); }
   }
   else if (T.mode === "draw") {
     // ks-0916-52: 拖动落点松手即提交第二锚点(此前虚影消失要再点一次)
@@ -2192,7 +2334,7 @@ cv.addEventListener("touchend", function (e) {
       _gp2.push(S.ghost);
       var _need2 = needPts(S.tool);
       if (_gp2.length >= _need2) {
-        dlist().push({ type: S.tool, pts: _gp2 });
+        dlist().push({ type: S.tool, pts: _gp2, color: S.drawColor }); // ks-1012
         S.selected = dlist().length - 1;
         S.pending = []; S.tool = null;
         hint("「" + toolName(S.tool) + "」已完成 · 按住画线可整体拖动 · 拖锚点(黄点)微调 · 「删选」删除");
@@ -2207,7 +2349,7 @@ cv.addEventListener("touchend", function (e) {
   else if (T.mode === "roller") { rollerDo(T.rid); }
   else if (T.mode === "free") {
     if (S.pending.length >= 2) {
-      dlist().push({ type: "freedraw", pts: S.pending.slice() });
+      dlist().push({ type: "freedraw", pts: S.pending.slice(), color: S.drawColor }); // ks-1012
       S.selected = dlist().length - 1;
       store();
       hint("画笔完成 · 按住可整体拖动 · 「删选」删除");
@@ -2243,10 +2385,12 @@ cv.addEventListener("touchend", function (e) {
 /* ================= 鼠标支持（电脑上打开时）：拖拽平移 / 滚轮缩放 / 点击落锚画线 / 长按十字线 ================= */
 var M = null;
 cv.addEventListener("mousedown", function (e) {
+  if (e.button !== 0) return; // ks-1012: 右键留给设提醒菜单(contextmenu), 中键不抢手势
   e.preventDefault();
   var pt = posT(e);
+  ksCloseOverlays(); // ks-1012: 点画布任意处收面板/菜单
   if (!S.tool && rollerHit(pt)) { rollerDo(rollerHit(pt)); return; } // ks-0906-18: 滚筒按钮
-  if (S.tool === "freedraw" && !S.drawLock) {
+  if (S.tool === "freedraw") { // ks-1012: 画图工具永不受锁影响
     var aM = anchorAt(pt);
     if (aM) S.pending.push(aM);
     M = { free: true, lx: pt.x };
@@ -2254,18 +2398,17 @@ cv.addEventListener("mousedown", function (e) {
     draw();
     return;
   }
-  if (S.tool && !S.drawLock) { placeAnchor(pt); return; }
+  if (S.tool) { placeAnchor(pt); return; }
   if (pt.x > cv.clientWidth - 64) { M = { yzoom: true, ly: pt.y, z0: S.yZoom }; hint(""); return; }
   if (S.rngMode) { M = { rng: true, x0: pt.x }; var _vm0 = view(); if (_vm0) { var _im0 = _vm0.I(pt.x); S.rng = { a: _im0, b: _im0 }; } draw(); return; } // ks-0909-31
   var _ab0 = alHitAt(pt); // ks-0920-35: 鼠标同触屏, 点铃铛选中/取消
   if (_ab0) { if (S.alSel && S.alSel.ai === _ab0.ai) S.alSel = null; else { S.alSel = { ai: _ab0.ai }; S.selected = -1; hint("已选中提醒 · 点「删除」移除"); } syncTools(); draw(); return; }
   if (S.alSel) { S.alSel = null; draw(); }
-  var hit0 = hitTest(pt);
+  var hit0 = hitTest(pt); // 硬命中: 锁定的图形穿透(电脑上锁定的图形单击无动作, 双击=设置面板, 右键=挂提醒)
   if (hit0 >= 0) {
     S.selected = hit0;
-    if (!S.drawLock) M = { drag: true, idx: hit0, ai: pickAnchor(hit0, pt), lx: pt.x, ly: pt.y, x0: pt.x, y0: pt.y, t0: Date.now(), moved: false, cross: false };
-    else M = { x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: false, cross: false };
-    hint("按住拖动：移整线 · 拖黄点：调锚点 · 「删选」删除");
+    M = { drag: true, idx: hit0, ai: pickAnchor(hit0, pt), lx: pt.x, ly: pt.y, x0: pt.x, y0: pt.y, t0: Date.now(), moved: false, cross: false };
+    hint("按住拖动：移整线 · 拖黄点：调锚点 · 双击：设置 · 右键：挂提醒");
     syncTools(); draw();
     return;
   }
@@ -2282,7 +2425,7 @@ cv.addEventListener("mousedown", function (e) {
 });
 cv.addEventListener("mousemove", function (e) {
   var pt = posT(e);
-  if (S.tool && !S.drawLock) { S.ghost = anchorAt(pt); draw(); return; }
+  if (S.tool) { S.ghost = anchorAt(pt); draw(); return; }
   if (!M) {
     // 悬停即出十字线+金额（不用按住），移出画布消失
     S.cross = { x: pt.x, y: pt.y, hover: true };
@@ -2334,7 +2477,7 @@ window.addEventListener("mouseup", function () {
   if (M.lp) { clearTimeout(M.lp); M.lp = null; }
   if (M.free) {
     if (S.pending.length >= 2) {
-      dlist().push({ type: "freedraw", pts: S.pending.slice() });
+      dlist().push({ type: "freedraw", pts: S.pending.slice(), color: S.drawColor }); // ks-1012
       S.selected = dlist().length - 1;
       store();
       hint("画笔完成 · 按住可整体拖动 · 「删选」删除");
@@ -2374,6 +2517,8 @@ cv.addEventListener("wheel", function (e) {
 cv.addEventListener("dblclick", function (e) {
   var pt = posT(e);
   if (pt.x > cv.clientWidth - 64) { S.yZoom = 1; S.yOff = 0; hint(""); draw(); return; }
+  var _dh = hitTest(pt, true); // ks-1012: 软命中(锁定的也算)——双击图形=弹设置面板; 没按在图形上才是副图放大
+  if (_dh >= 0) { S.selected = _dh; hint("已选中 · 面板可改色/锁定/到价提示"); openDgPanel(_dh); syncTools(); draw(); return; }
   togglePane(paneAt(view(), pt.y));
 });
 cv.addEventListener("mouseleave", function () {
@@ -2619,6 +2764,20 @@ function ksFibDialogJL() {
 function buildTools() {
   var el = document.querySelector("[data-tools]");
   el.innerHTML = "";
+  // ks-1012: 抽屉头部=8色板——选的是"新画的线"用的色; 已画的线在各自设置面板里单独改色
+  var pal = document.createElement("div");
+  pal.className = "ksPalRow";
+  DCOLORS.forEach(function (c) {
+    var d = document.createElement("button");
+    d.type = "button"; d.className = "ksPalDot"; d.style.background = c;
+    d.title = "新画的线用此色";
+    d.addEventListener("click", function () {
+      S.drawColor = c; store(); syncPal();
+      hint("新画线颜色已选 · 已画的线不受影响（轻点图形可单独改色）");
+    });
+    pal.appendChild(d);
+  });
+  el.appendChild(pal);
   // ks-0907-03: 操作钮(删选等)前置——用户指定: 删选藏在所有画线工具最后,手机上要横划半天,不方便
   [["区间", function () {
     // ks-0909-31: 区间统计开关(东财同款)——开了横拖选段出统计卡; 关掉清选区
@@ -2635,7 +2794,11 @@ function buildTools() {
     if (S.pending.length) { S.pending.pop(); hint("已撤一个点"); draw(); }
   }],
   ["删选", function () {
-    if (S.selected >= 0) { dlist().splice(S.selected, 1); S.selected = -1; store(); hint("已删除"); syncTools(); draw(); }
+    if (S.selected >= 0) {
+      var _dsel = dlist()[S.selected];
+      if (_dsel && _dsel.locked) { hint("这条已锁定 · 先在设置面板(轻点它)解锁再删"); return; } // ks-1012: 删除自动跳过锁定
+      dlist().splice(S.selected, 1); S.selected = -1; store(); hint("已删除"); closeDgPanel(); syncTools(); draw();
+    }
   }],
   ["清空", function () {
     // ks-0909-30: 价位线已跨周期可见,清空要连带扫掉本票其它周期的价位线,否则"清了还在"; 日期锚的线(趋势/蝴蝶等)仍只清本周期
@@ -2644,11 +2807,16 @@ function buildTools() {
       if (k === dkey() || k.indexOf(pre) !== 0) return;
       DRAW[k] = (DRAW[k] || []).filter(function (d) {
         var isPx = (d.type === "hline" || d.type === "buy") && d.pts && d.pts.length && d.pts[0].p != null && !d.pts[0].pane;
+        if (isPx && d.locked) return true; // ks-1012: 锁定的价位线保留
         if (isPx) swept++;
         return !isPx;
       });
     });
-    if (dlist().length || swept) { DRAW[dkey()] = []; S.selected = -1; store(); hint(swept ? "本周期画线+各周期价位线已清空" : "本周期画线已清空"); syncTools(); draw(); }
+    if (dlist().length || swept) {
+      DRAW[dkey()] = (DRAW[dkey()] || []).filter(function (d) { return d.locked; }); // ks-1012: 锁定的图形清空时保留
+      S.selected = -1; store(); hint(swept ? "本周期画线+各周期价位线已清空 · 锁定的保留" : "本周期画线已清空 · 锁定的保留");
+      closeDgPanel(); syncTools(); draw();
+    }
   }],
   ["Fib设", function () { ksFibDialogJL(); }],
   ["副图上置", function () {
@@ -2674,27 +2842,98 @@ function buildTools() {
     b.setAttribute("data-tool", t[0]);
     b.addEventListener("click", function () {
       if (S.favPick) { toggleFav("tool:" + t[0]); return; } // 挑选模式: 点按钮=收藏/取消收藏, 不触发工具
-      if (S.tool === t[0]) { var _doneP = t[0] === "poly" && S.pending.length >= 2; if (_doneP) { dlist().push({ type: "poly", pts: S.pending.slice() }); S.selected = dlist().length - 1; store(); } S.tool = null; S.pending = []; S.ghost = null; if (_doneP) hint("折线已完成 · 「删选」可删 · 按住可整体拖"); else hint(""); syncTools(); draw(); }
+      if (S.tool === t[0]) { var _doneP = t[0] === "poly" && S.pending.length >= 2; if (_doneP) { dlist().push({ type: "poly", pts: S.pending.slice(), color: S.drawColor }); S.selected = dlist().length - 1; store(); } S.tool = null; S.pending = []; S.ghost = null; if (_doneP) hint("折线已完成 · 「删选」可删 · 按住可整体拖"); else hint(""); syncTools(); draw(); }
       else if (t[2] === 0) {
         var pr = prompt("输入价格（如 44.2）");
         var pv2 = parseFloat(pr);
         if (pr != null && pv2 > 0 && S.kl.length) {
-          dlist().push({ type: "hline", pts: [{ d: S.kl[S.kl.length - 1][0], p: pv2 }] });
+          dlist().push({ type: "hline", pts: [{ d: S.kl[S.kl.length - 1][0], p: pv2 }], color: S.drawColor }); // ks-1012
           S.selected = dlist().length - 1;
           store(); hint("已加价格线 " + fwp(pv2) + " · 长按可拖动 · 「删选」删除");
         } else if (pr != null) hint("价格无效");
         S.tool = null;
       }
       else {
-        if (S.drawLock) { hint("画线已锁定 · 点顶部「已锁\uD83D\uDD12」一键解锁"); var _lb = document.getElementById("ksBarLockBtn"); if (_lb) { _lb.classList.remove("lkFlash"); void _lb.offsetWidth; _lb.classList.add("lkFlash"); } }
-        else { S.tool = t[0]; S.pending = []; S.selected = -1;
-        hint("「" + t[1] + "」已激活 · 依次点 " + t[2] + " 个点（主图/副图都能落点）"); }
+        closeDgPanel(); // ks-1012: 开始画线收面板
+        S.tool = t[0]; S.pending = []; S.selected = -1;
+        hint("「" + t[1] + "」已激活 · 依次点 " + t[2] + " 个点（主图/副图都能落点）· 锁定的图形不挡落锚");
       }
       syncTools(); draw();
     });
     el.appendChild(b);
   });
+  // ks-1012: 抽屉底部=本股提醒列表(逐条✕可删) + 一键全部锁定/全部解锁(替代原全局锁)
+  var alSec = document.createElement("div");
+  alSec.className = "ksAlSec"; alSec.id = "ksAlSec";
+  el.appendChild(alSec);
+  var lkRow = document.createElement("div");
+  lkRow.className = "ksLkRow";
+  var mkLk = function (label, lockTo, title) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "btn"; b.textContent = label; b.title = title;
+    b.addEventListener("click", function () {
+      var dl9 = visList(), n9 = 0;
+      dl9.forEach(function (d) { if (!!d.locked !== lockTo) { d.locked = lockTo; n9++; } });
+      if (lockTo) { S.selected = -1; closeDgPanel(); }
+      store(); draw(); syncTools();
+      hint(lockTo ? "已全部锁定(屏上 " + dl9.length + " 个图形) · 拖不动·删不掉·不挡手 · 各自仍可在设置面板解锁"
+                  : "已全部解锁 · 全部恢复可拖动");
+    });
+    lkRow.appendChild(b);
+  };
+  mkLk("🔒 一键全部锁定", true, "屏上所有画线图形各自上锁(含跨周期价位线); 会话内新画的线不受影响");
+  mkLk("🔓 全部解锁", false, "屏上所有画线图形统一解锁");
+  el.appendChild(lkRow);
+  refreshAlSec();
   syncTools();
+}
+function syncPal() { // 色板当前色高亮(选中圈)
+  document.querySelectorAll(".ksPalDot").forEach(function (d) {
+    d.classList.toggle("on", d.style.background && rgbToHex(d.style.background) === S.drawColor || d.style.background === S.drawColor);
+  });
+}
+function rgbToHex(c) {
+  var m = /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/.exec(c || "");
+  if (!m) return c;
+  function h2(v) { var s = (+v).toString(16); return s.length < 2 ? "0" + s : s; }
+  return "#" + h2(m[1]) + h2(m[2]) + h2(m[3]);
+}
+function refreshAlSec() { // 画线抽屉里的"本股提醒"区(挂提醒/删提醒后即时刷新)
+  var box = document.getElementById("ksAlSec");
+  if (!box) return;
+  box.innerHTML = "";
+  var arr = ALERTS[S.active] || [];
+  var hd = document.createElement("div");
+  hd.className = "hd";
+  var sp = document.createElement("span");
+  sp.textContent = "本股提醒 · " + arr.length + " 条" + (arr.length ? "" : " · 长按画线/右键可挂");
+  hd.appendChild(sp);
+  if (arr.length) {
+    var clr = document.createElement("button");
+    clr.type = "button"; clr.textContent = "清空本股提醒";
+    clr.addEventListener("click", function () {
+      if (!confirm("清空本股全部提醒？")) return;
+      ALERTS[S.active] = []; storeAlerts(); buildAlList(); refreshAlSec(); hint("本股提醒已清空"); draw();
+    });
+    hd.appendChild(clr);
+  }
+  box.appendChild(hd);
+  arr.forEach(function (a, ai) {
+    var r = document.createElement("div");
+    r.className = "ksAlRow" + (a.armed ? "" : " off");
+    var l = document.createElement("span");
+    l.textContent = (a.kind === "px" ? "价 " + (+a.val).toFixed(2) : "强弱T " + (+a.val).toFixed(0)) + " · " + (a.note || "") + (a.armed ? " · 监听中" : " · 已触发");
+    r.appendChild(l);
+    var x = document.createElement("button");
+    x.type = "button"; x.className = "x"; x.textContent = "✕"; x.title = "删除这条提醒";
+    x.addEventListener("click", function () {
+      ALERTS[S.active].splice(ai, 1);
+      if (!ALERTS[S.active].length) delete ALERTS[S.active];
+      S.alSel = null; storeAlerts(); buildAlList(); refreshAlSec(); hint("已删除该条提醒"); draw();
+    });
+    r.appendChild(x);
+    box.appendChild(r);
+  });
 }
 function syncTools() {
   document.querySelectorAll("[data-tools] > button").forEach(function (b) { if (b.title === "展开/收起指标行") b.classList.toggle("on", !S.indsOff); });
@@ -2704,7 +2943,7 @@ function syncTools() {
   document.querySelectorAll("[data-rng]").forEach(function (b) {
     b.classList.toggle("on", !!S.rngMode);
   });
-  alSyncSel(); // ks-0910-41: 选中态变化→＋提醒跟随选中线常驻/收起
+  syncPal(); // ks-1012: 色板当前色高亮同步
 }
 function syncTop() {
   var q = S.quote;
@@ -2737,7 +2976,7 @@ function setFresh(ok) {
   el.className = "fresh" + (ok ? "" : " bad");
 }
 function loadAll(reset) {
-  if (alBtn) { alBtn.style.display = "none"; _alHov = null; } // ks-0909-33: 审计A1——换股/换周期/跳转都走这里,统一收按钮清悬停,杜绝给新股挂旧价提醒
+  ksCloseOverlays(); // ks-0909-33精神保留: 换股/换周期/跳转统一收面板+菜单, 杜绝给新股留旧股的弹层
   hint("加载K线数据…");
   var _lkCode = S.active, _lkKlt = normalizeKlt(S.klt); // ks-0920-37: 快照请求时的票/周期, 回调校验防换票张冠李戴
   fetchKline(_lkCode, S.klt, function (err, kl, name) {
@@ -2761,7 +3000,7 @@ function loadAll(reset) {
         if (dl2[aj].type === "hline" && (dl2[aj].auto || (dl2[aj].tag && (/^[BS]\d+$/.test(dl2[aj].tag) || dl2[aj].tag.indexOf("低吸") === 0 || dl2[aj].tag.indexOf("高抛") === 0)))) { dl2.splice(aj, 1); chg = true; }
       }
       (S.urlLines || []).forEach(function (it) {
-        var hl = { type: "hline", pts: [{ d: d0, p: it.p }], auto: true };
+        var hl = { type: "hline", pts: [{ d: d0, p: it.p }], auto: true, locked: true }; // ks-1012: 档位线自带锁(防手滑), 首锚点亮🔒; 要动它=轻点弹设置面板解锁
         if (it.tag) hl.tag = it.tag;
         dl2.push(hl); chg = true;
       });
@@ -5234,7 +5473,42 @@ function renderCtrl(ctx, v) {
     ctx.fillStyle = lc;
     ctx.fillText(lv + " " + Math.round(cur), right - 4, y2 + 9);
   }
-  // ks-0907-13: DDX60金线叠在控盘柱上, 只陈列不加标识; ks-0910 B5: 口径=官方f57主力净占比60日均值(缺f57回退: 近60日主力净额累计/估算成交额×100,除权票不可跨期比)
+  // ks-1012任务二: DDX金线已从控盘柱上撤走——独立成DDX副图(renderDdxPane), 指标▾里[DDX]两态开关; 控盘柱专心当柱子
+  return;
+}
+/* ================= ks-1012任务二: DDX独立副图 —— 指标▾[DDX]开=本幅图; 关=不占位主图满高 =================
+   日线: 淡色主力净额柱(红进绿出,东财口径)+DDX60金线(官方净占比优先); 分钟: DDX20走势线; 角标口径+时点; 缺数如实说原因 */
+function renderDdxPane(ctx, v) {
+  if (!S.ind.ddx || !v.ddxH || noFund(S.active)) return;
+  var kl = S.kl, n = kl.length;
+  var y2 = v.ddxY, h2 = v.ddxH;
+  var right = v.padL + (v.i1 - v.i0) * v.step;
+  var i2;
+  gridSt(ctx);
+  ctx.beginPath(); ctx.moveTo(v.padL, y2); ctx.lineTo(right, y2); ctx.stroke();
+  ctx.fillStyle = DIM; ctx.font = "9px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.fillText("DDX" + (S.fflowStale ? "·缓存" : ""), v.padL + 4, y2 + 9);
+  var base = y2 + h2 - 3;
+  // ks-1012任务二: 日线垫淡色主力净额柱(红进绿出·零轴居中)——金线DDX60是主角, 柱给量能参照, 30%透明不抢线
+  if (S.klt === "101" && S.fflow && S.fflow.length) {
+    var _fmb = {}; S.fflow.forEach(function (r) { _fmb[r.d] = parseFloat(r.main) || 0; });
+    var _bMx = 0;
+    for (var _bi = v.i0; _bi < v.i1; _bi++) { var _bv0 = _fmb[kl[_bi][0]]; if (_bv0 != null && Math.abs(_bv0) > _bMx) _bMx = Math.abs(_bv0); }
+    if (_bMx > 0) {
+      var _zy = y2 + 11 + (h2 - 16) / 2, _bw = Math.max(1, v.step * 0.5);
+      ctx.strokeStyle = "rgba(141,163,152,0.22)"; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(v.padL, _zy); ctx.lineTo(right, _zy); ctx.stroke();
+      for (var _bj = v.i0; _bj < v.i1; _bj++) {
+        var _bv2 = _fmb[kl[_bj][0]];
+        if (_bv2 == null) continue;
+        var _bh = Math.abs(_bv2) / _bMx * (h2 - 16) / 2;
+        ctx.fillStyle = _bv2 >= 0 ? "rgba(244,101,95,0.26)" : "rgba(46,189,127,0.26)";
+        var _bx = v.X(_bj) - _bw / 2;
+        ctx.fillRect(_bx, _bv2 >= 0 ? _zy - _bh : _zy, _bw, Math.max(1, _bh));
+      }
+    }
+  }
+  // ks-0907-13: DDX60金线(原叠在控盘柱上,ks-1012任务二迁入本副图); ks-0910 B5: 口径=官方f57主力净占比60日均值(缺f57回退: 近60日主力净额累计/估算成交额×100,除权票不可跨期比)
   // 回测(4票×180日·新浪资金流): 控盘≥50+金线5日上行 后10日+6.8%/胜率57% vs 金线下行 +0.9%/48% → 金线方向=柱子真假的验证器
   var _ddxOk = false;
   var _ddxSrc = ""; // ks-0909-34: 附图右下角口径角标(数据源+时点), 附图不再"画了但不知道是哪天的数"
@@ -5256,7 +5530,7 @@ function renderCtrl(ctx, v) {
       // ks-0910 B5修: 60天全有官方f57主力净占比→DDX60=净占比均值(除权票跨期可比);缺f57(备用通道/旧缓存)才回退"量×价"估算成交额口径
       if (ok2) { if (pc === 60) { ddx[i2] = ps / 60; _ddxVia = "pct"; } else if (as > 0) { ddx[i2] = ms / as * 100; if (!_ddxVia) _ddxVia = "est"; } }
     }
-    if (drawDdxLine(ctx, v, ddx, Math.max(59, v.i0), v.i1, base, h2, y2, right, "")) {
+    if (drawDdxLine(ctx, v, ddx, Math.max(59, v.i0), v.i1, base, h2, y2, right, "", "DDX")) {
       _ddxOk = true;
       if (S.klt === "101") _ddxSrc = "日线DDX60·" + (_ddxVia === "pct" ? "官方净占比" : "估算成交额") + "·截至" + S.fflow[S.fflow.length - 1].d.slice(5) + (S.fflowStale ? "·缓存" : ""); // ks-0909-34角标; ks-0910 B5补口径标
     }
@@ -5284,7 +5558,7 @@ function renderCtrl(ctx, v) {
         }
         if (ok3 && as3 > 0) ddxm[i2] = ms3 / as3 * 100;
       }
-      if (drawDdxLine(ctx, v, ddxm, Math.max(W20 - 1, v.i0), v.i1, base, h2, y2, right, "20")) {
+      if (drawDdxLine(ctx, v, ddxm, Math.max(W20 - 1, v.i0), v.i1, base, h2, y2, right, "20", "DDX")) {
         _ddxOk = true;
         _ddxSrc = MIN_LB[S.klt] + "DDX·" + rd[rd.length - 1].t.slice(11, 16); // ks-0909-34: 角标"5分DDX·14:55"
       }
@@ -5313,15 +5587,15 @@ function renderCtrl(ctx, v) {
       }
     }
     ctx.font = "9px Menlo, monospace";
-    var _tW2 = ctx.measureText("主力控盘" + (S.fflowStale ? "·缓存" : "")).width; // ks-0909-35: 同让位面板标题,防叠字
+    var _tW2 = ctx.measureText("DDX" + (S.fflowStale ? "·缓存" : "")).width; // ks-0909-35: 同让位面板标题,防叠字
     ctx.font = "8.5px Menlo, monospace"; ctx.textAlign = "left";
     ctx.fillStyle = "rgba(141,151,166,0.85)";
-    ctx.fillText(_dst, v.padL + 12 + _tW2, y2 + 9);
+    ctx.fillText(_dst, v.padL + 8 + _tW2, y2 + 9);
   }
-  // ks-0907-05: 进出场三角全删(用户定:标了对不上=不该标), 面板只留柱子本身, 时机看强弱T
 }
+
 // ks-0907-16: DDX线公共绘制——转向变色(升=金 #ffd21f / 降=灰蓝 #6b7a94) + 白色MA10均线 + 末端读数(5期方向↑↓)
-function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag) {
+function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) { // tT=所在副图标题(读数让位测量用,默认主力控盘); ks-1012任务二: DDX独立副图传"DDX"
   var dLo = 1e18, dHi = -1e18, i;
   for (i = Math.max(0, i0); i < i1; i++) { var x = ddx[i]; if (x != null) { if (x < dLo) dLo = x; if (x > dHi) dHi = x; } }
   if (!(dHi > -1e17 && dHi > dLo)) return false;
@@ -5364,7 +5638,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag) {
     for (var j3 = di - 5; j3 >= Math.max(0, i0); j3--) if (ddx[j3] != null) { d5 = ddx[j3]; break; }
     var dir = d5 != null ? (ddx[di] > d5 ? "↑" : (ddx[di] < d5 ? "↓" : "")) : "";
     ctx.font = "9px Menlo, monospace";
-    var _tW = ctx.measureText("主力控盘" + (S.fflowStale ? "·缓存" : "")).width; // ks-0909-35: 读数让位面板标题(·缓存后缀会把标题顶长),防叠字
+    var _tW = ctx.measureText((tT || "主力控盘") + (S.fflowStale ? "·缓存" : "")).width; // ks-0909-35: 读数让位面板标题(·缓存后缀会把标题顶长),防叠字
     ctx.font = "bold 8px Menlo, monospace"; ctx.textAlign = "left";
     ctx.fillStyle = (ma[di] != null) ? (ddx[di] >= ma[di] ? "#f4655f" : "#2ebd7f") : "#ffd21f";
     ctx.fillText("DDX" + tag + (ddx[di] >= 0 ? "+" : "") + ddx[di].toFixed(1) + dir, v.padL + 12 + _tW, y2 + 9);
@@ -5572,7 +5846,7 @@ function renderExtraPanes(ctx, v) {
   }
 }
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["sixsig", "六信号"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["sixsig", "六信号"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
@@ -5644,17 +5918,7 @@ function buildInds() {
     hint(S.pdhlMode === "off" ? "昨高昨低已关闭 · 今高今低由「今高低」钮独立控制" : (S.pdhlMode === "week" ? "显示上周高/低 + 上周蜡烛" : "显示昨日高/低 + 昨日蜡烛"));
   });
   el.appendChild(pb);
-  // 画线锁: 锁住后画图工具不生效、已有画线拖不动, 防手滑误碰(买卖线/画线全部冻住)
-  var lk = document.createElement("button");
-  lk.className = "btn tabbtn" + (S.drawLock ? " on" : "");
-  lk.type = "button"; lk.id = "ksDrawLockBtn"; lk.textContent = S.drawLock ? "🔒画线锁" : "🔓画线";
-  lk.addEventListener("click", function () {
-    S.drawLock = !S.drawLock;
-    if (S.drawLock) { S.tool = null; S.pending = []; S.ghost = null; S.selected = -1; }
-    store(); buildInds(); syncTools(); draw();
-    hint(S.drawLock ? "画线已锁定 · 所有画线拖不动改不了" : "画线已解锁 · 可正常画线拖动");
-  });
-  el.appendChild(lk);
+  // ks-1012: 全局画线锁退役——改为每个图形自带一把锁(轻点图形→设置面板里锁), 批量操作在「画线」抽屉底部(一键全部锁定/全部解锁)
   INDS.forEach(function (t) {
     var b = document.createElement("button");
     b.className = "btn tabbtn" + (S.ind[t[0]] ? " on" : "");
@@ -5740,7 +6004,11 @@ function applyUrl() {
         };
         // 金粼0913深夜: 删除/清空不再代理找按钮, 直接调引擎内部(同页上下文), 且必给反馈——无可清内容也明说, 档位水位线(S.urlLines)保留
         mk("删除", function () {
-          if (S.selected >= 0 && dlist()[S.selected]) { dlist().splice(S.selected, 1); S.selected = -1; store(); hint("已删除选中的画线"); syncTools(); draw(); }
+          if (S.selected >= 0 && dlist()[S.selected]) {
+            var _dsel2 = dlist()[S.selected];
+            if (_dsel2 && _dsel2.locked) { hint("这条已锁定 · 先在设置面板(轻点它)解锁再删"); return; } // ks-1012
+            dlist().splice(S.selected, 1); S.selected = -1; store(); closeDgPanel(); hint("已删除选中的画线"); syncTools(); draw();
+          }
           else if (S.alSel && ALERTS[S.active] && ALERTS[S.active][S.alSel.ai]) { // ks-0920-35: 铃铛选中态兜底删除
             ALERTS[S.active].splice(S.alSel.ai, 1);
             if (!ALERTS[S.active].length) delete ALERTS[S.active];
@@ -5754,25 +6022,20 @@ function applyUrl() {
             if (k === dkey() || k.indexOf(pre) !== 0) return;
             DRAW[k] = (DRAW[k] || []).filter(function (d) {
               var isPx = (d.type === "hline" || d.type === "buy") && d.pts && d.pts.length && d.pts[0].p != null && !d.pts[0].pane;
+              if (isPx && d.locked) return true; // ks-1012: 锁定的价位线保留
               if (isPx) swept++;
               return !isPx;
             });
           });
-          DRAW[dkey()] = []; S.selected = -1; store();
-          hint(had || swept ? (swept ? "本周期画线+各周期价位线已清空 · 档位水位线保留" : "本周期画线已清空 · 档位水位线保留") : "本周期没有画线 · 档位水位线保留");
+          DRAW[dkey()] = (DRAW[dkey()] || []).filter(function (d) { return d.locked; }); // ks-1012: 锁定的图形保留
+          S.selected = -1; store(); closeDgPanel();
+          hint(had || swept ? (swept ? "本周期画线+各周期价位线已清空 · 锁定与档位线保留" : "本周期画线已清空 · 锁定与档位线保留") : "本周期没有画线 · 锁定的保留");
           syncTools(); draw();
         }, "一键清空本股画线(含各周期价位线; 档位水位线保留)");
         mk("隐藏", function () {
           S.linesHidden = !S.linesHidden; this.classList.toggle("on", S.linesHidden);
           draw(); hint(S.linesHidden ? "画线已隐藏 · 再点恢复" : "画线已恢复显示");
         }, "隐藏/显示全部画线(只影响显示)");
-        var _lkBtn = mk("锁定", function () {
-          var lk2 = document.getElementById("ksDrawLockBtn");
-          if (lk2) lk2.click();
-          this.textContent = S.drawLock ? "已锁🔒" : "锁定";
-          this.classList.toggle("on", !!S.drawLock);
-        }, "画线锁: 锁住后拖不动改不了");
-        if (_lkBtn) { _lkBtn.id = "ksBarLockBtn"; _lkBtn.style.minWidth = "48px"; _lkBtn.style.fontWeight = "700"; _lkBtn.style.color = "#ffd21f"; _lkBtn.textContent = S.drawLock ? "已锁\uD83D\uDD12" : "锁定"; _lkBtn.classList.toggle("on", !!S.drawLock); }
         mk("提醒", function () { var a = document.querySelector("[data-alerts]"); if (a) a.click(); }, "提醒汇总");
         mk("K/线", function () { S.lineMode = !S.lineMode; this.classList.toggle("on", S.lineMode); draw(); hint(S.lineMode ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         document.body.insertBefore(bar, document.body.firstChild);
@@ -5803,7 +6066,7 @@ function applyUrl() {
         if (it.tag === "B") { iB++; it.tag = "B" + iB; }
         else if (it.tag === "S") { iS++; it.tag = "S" + iS; }
       });
-      if (arr.length) { S.urlLines = arr; S.drawLock = true; } // ks-0906-8: 带档位线进来默认锁线,防手滑拖动买卖线;点右下🔒或指标行解锁
+      if (arr.length) { S.urlLines = arr; } // ks-0906-8精神保留: 带档位线进来默认锁线防手滑——ks-1012改为档位线对象自带locked:true(loadAll落线时写入), 不再动全局
     }
     // hq-mobile 传今日买卖点: trades=YYYY-MM-DD HH:MM,s|b,价格;... —— 画到K线上(东财那种B/S标记)
     var trades = q.get("trades");
@@ -5831,23 +6094,7 @@ function applyUrl() {
       S.lineMode = true;
       S.toolsOff = true; // simple模式: 画线/指标行收进工具▾(点一下展开),图占满;不污染主站偏好
       document.body.classList.add("simple");
-      // ks-0906-8: simple/内嵌模式指标行收起来了,锁钮会找不到——放一个浮动锁钮在图右下
-      if (!document.getElementById("lockFab")) {
-        var lf = document.createElement("button");
-        lf.id = "lockFab"; lf.type = "button";
-        lf.style.cssText = "position:fixed;right:10px;bottom:88px;z-index:60;width:54px;height:54px;border-radius:27px;border:2px solid #e8c56888;background:#161b24;color:#e8c568;font-size:23px;opacity:.96;padding:0;box-shadow:0 2px 12px #0009";
-        lf.textContent = S.drawLock ? "🔒" : "🔓";
-        lf.addEventListener("click", function () {
-          S.drawLock = !S.drawLock;
-          if (S.drawLock) { S.tool = null; S.pending = []; S.ghost = null; S.selected = -1; }
-          lf.textContent = S.drawLock ? "🔒" : "🔓";
-          lf.style.borderColor = S.drawLock ? "#f58b8e" : "#e8c56888";
-          lf.style.color = S.drawLock ? "#f58b8e" : "#e8c568";
-          store(); buildInds(); syncTools(); draw();
-          hint(S.drawLock ? "画线已锁定 · 买卖线拖不动" : "画线已解锁 · 可拖动画线");
-        });
-        document.body.appendChild(lf);
-      }
+      // ks-0906-8原浮动锁钮已撤(ks-1012): 全局锁退役——档位线自带locked, 其它图形各自带锁; simple模式要用锁=轻点图形进设置面板
     }
     // 无 trades 参数时: 同域读 hq-mobile 的做T流水(tlog_v2), 直接打开K站也有B/S标记
     // ks-0907-28: 不再只读当天——历史每天的买卖位置全部上日K(按日期落到对应K线); 近120笔防糊屏
@@ -5868,7 +6115,7 @@ applyUrl();
 try { if (!S.simple && !localStorage.getItem("ks_toolsoff_v1")) { S.toolsOff = true; localStorage.setItem("ks_toolsoff_v1", "1"); store(); } } catch (e) {} // 画线/指标两行默认收进"工具▾"(点一下展开),股票/周期常驻——顶栏从四排瘦成两排
 buildTabs(); buildPeriods(); buildTools(); buildInds(); buildFavs(); syncCollapse();
 loadAll(true);
-hint("<span class=dim>长按出十字线 · 点工具画线 ｜ 东财公开数据有延迟 · 画线存本机 · 非投资建议</span>");
+hint("<span class=dim>长按十字线 · 点工具画线 · 轻点图形=设置(换色/锁定) · 右键/长按=挂提醒 ｜ 东财数据有延迟 · 画线存本机 · 非投资建议</span>");
 </script>
 </body>
 </html>
