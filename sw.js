@@ -1,3 +1,4 @@
+/* jinlin sw v205 — 2026-10-12午: 缓存名 →v205, 配合 v0.84.64 批[jl-1122 三区域字体提亮批(纯CSS零逻辑)——①浮球面板: 档位价格11px/.95→12px#fff/700, S/B标签淡粉薄荷→亮红#ff5459/亮绿#49ecad+700, %+触及%+已触标签+标题副行+失守/强势度行提亮 ②卡片股票名夜态统一#fff+700(仅color/weight, 布局竖横排日态零动) ③到站牌价格<i>统一#fff/700/9.5px, 五状态色覆盖转白(状态信号由边框/底色/标签b承担); 背景/玻璃/透明度/计算逻辑/水位判定零触碰; KEEP=205+204] */
 /* jinlin sw v204 — 2026-10-12: 缓存名 →v204, 配合 v0.84.63 批[提交① 全局小字白字基准对齐(纯显示层): 范围内小字 color:#FFFFFF/weight600/12px·v2七档刻度opacity .4→.9恢复可辨·#home .glass承托rgba(8,15,26,.52)·微热深底rgba(10,16,28,.55); 只动颜色/字重/字号/承托背景, 布局/DOM/class/背景系统/逻辑零触碰——背景: 62批(jl-1121,壳v203)从未上线, 线上v202壳cache-first一直伺服61版index, 且首推漏发sw.js故index白推; 本批成对升壳+引用升号一步到位: jl_event_log.js ?v=1→2, jl_sector_strength.js ?v=3→4(防Pages max-age=600旧缓存驻留), jlv2.js ?v=12沿用(对线上?v=11已是新URL); KEEP=204+202(清v203死壳: 62指数斐波卡批00:19已revert, 5分钟内装上的203壳一并清除)] */
 /* jinlin sw v203 — 2026-10-12凌晨: 缓存名 →v203, 配合 v0.84.62 批[jl-1121 三卡消失根治+九因子宫格展示补全——①根因: jlv2.js?v=11被GitHub Pages弱网截断(实测26661/76738字节)+max-age=600坏缓存驻留10分钟→script无声失败→三卡全灭; index引用改jlv2.js?v=12新URL一步绕开一切坏缓存 ②温度v2九因子展示补全: 最高连板副行挂股票名·题材(主概念mc>二级行业>池hybk)/热点板块持续板块名上副行/涨停跌停标签改数量/炸板率副行挂炸板数/涨停数/ATR波动率改"ATR14/价"去解释小字; 纯渲染层零数据链变更; SHELL预缓存列表与fetch策略零改动(jlv2按既定设计非壳文件不缓存拉取即最新); KEEP=203+202] */
 /* jinlin sw v202 — 2026-10-11夜: 缓存名 →v202, 配合 v0.84.61 批[jl-1120 斐波标签行常显亮白批(纯显示层, 判定逻辑/数据零触碰)——①共振卡斐波行全档常显: 正常区也显示「斐波·正常区 0.786~1.618 · 价a~价b」(位置+价位, 原正常区不渲染) ②P5补齐价位「斐波·0.786 下方 价」与其他档对齐 ③弃灰改亮白#fff+微光晕(用户反馈: 透明亮卡上小灰字看不清), P0/P1红、P2/P3黄、P4绿不变 ④zone判定/fibRisk结构因子/stamp记录/状态机零改动; KEEP=202+201] */
@@ -107,8 +108,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v204'; /* 提交① v0.84.63: 全局小字白字基准对齐批(纯显示层四文件); 缓存名成对升版(旧注释: v203 jl-1121 九因子宫格批—62=jl-1120指数斐波卡批, 上线5分钟即revert; 63跳号避混淆) */
-const KEEP = ['jinlin-shell-v204', 'jinlin-shell-v202'];
+const C = 'jinlin-shell-v205'; /* jl-1122 v0.84.64: 三区域字体提亮批(纯CSS); 缓存名成对升版(旧注释: v204 提交①全局小字白字批) */
+const KEEP = ['jinlin-shell-v205', 'jinlin-shell-v204'];
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
