@@ -1,7 +1,7 @@
-/* jl_sector_ff_snap.js — jl-1128 v0.84.73 T7-0 板块资金日快照层（独立文件 · 零侵入）
+/* jl_sector_ff_snap.js — jl-1129 v0.84.74 T7-0 板块资金日快照层（独立文件 · 零侵入）
  * 依《② T7-0 schema v1 冻结书 2026-10-12》实施, 字段/通道/闸门/保留策略一律以冻结书为准, 本文件不得自行扩展字段。
- * 部署前修正登记(2026-10-12深夜, 本地headless验收发现, 非schema级): ①clist补ut参数(主应用同端点均携带, 模块原遗漏)
- *   ②zth锚点比对补YYYYMMDD无连字符格式(zt_hist键=POOLZT.date即qdate原值, 原恒不匹配成死分支)。记录结构零改动。
+ * 修正登记(均非schema级, 记录结构零改动): ①clist补ut参数(主应用同端点均携带, 模块原遗漏) ②zth锚点比对补YYYYMMDD格式
+ *   ③(jl-1129热修, 2026-10-13晨盘前实测复现)回补盘前闸反转——原"9999-99-99"上限恒含当日, 盘中回补把当日累计值当终值写库并挡住盘后clist; 改为盘前仅允许d<今日。
  * 职责: 板块资金历史留档(当前站内仅当日缓存 jl_sector_ff_v1, 无任何历史)——供 T7 轮动/主线/资金迁移回看。
  * 存储: IndexedDB jinlin_secff / daily(主键d, 250交易日) + meta(板块代码表, 来自首次clist成功)。
  * 红线: ①零业务侵入——不代理不覆写产品钩子, 不改任何既有存储/显示, 只写自家IDB;
@@ -19,7 +19,7 @@
 (function () {
   "use strict";
   if (window.__JLT7__) return; /* 双重加载保护 */
-  var VER = "t7s1", DB_NAME = "jinlin_secff", DB_VER = 1, KEEP_D = 250, TICK_MS = 30 * 60e3;
+  var VER = "t7s2", DB_NAME = "jinlin_secff", DB_VER = 1, KEEP_D = 250, TICK_MS = 30 * 60e3;
   var P2 = "https://push2.eastmoney.com", P2D = "https://push2delay.eastmoney.com", P2X = "https://push2ex.eastmoney.com";
   var UT = "7eea3edcaed734bea9cbfc24409ed989";
   var CLIST_FIELDS = "f12,f14,f62,f66,f84"; /* 冻结书字段集(f3已裁决移除) */
@@ -173,10 +173,10 @@
       var cal = await fetchDk("90." + boards[0].f12, 120); /* 日历基准=单板块f51序列 */
       if (!cal || !cal.klines || !cal.klines.length) { busyBf = false; return; }
       var calDates = cal.klines.map(function (k) { return String(k).split(",")[0]; });
-      var allowToday = hhmmNow() >= 1505 ? ymd() : "9999-99-99"; /* 盘前不补当日(盘中末行为当日累计) */
+      var t0 = ymd(), afterClose = hhmmNow() >= 1505; /* 修正3(jl-1129, 2026-10-13晨盘前实测复现): 原上限"9999-99-99"按字典序恒大于任何真实日期→盘前/盘中运行时当日入回补集, 把当日累计中值当终值写库(ok:1)并挡住盘后clist主路; 修正为盘前仅允许d<今日, 收盘后(≥15:05)方允许当日 */
       var recs = await allRecs();
       var byD = {}; (recs || []).forEach(function (r) { byD[r.d] = r; });
-      var missing = calDates.filter(function (d) { return d <= allowToday && needHeal(byD[d], boards.length); });
+      var missing = calDates.filter(function (d) { return (d < t0 || (afterClose && d === t0)) && needHeal(byD[d], boards.length); });
       if (!missing.length) { busyBf = false; return; }
       var missSet = {}; missing.forEach(function (d) { missSet[d] = true; });
       var perD = {}; missing.forEach(function (d) { perD[d] = { rows: [], tc: null }; });
