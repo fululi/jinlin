@@ -1,3 +1,7 @@
+/* jinlin sw v216 — 2026-10-13午后: 配合 v0.84.75 批[ks-1013: PHVL分时模块正式上线(docx四文件逐字) —
+   ①phvl-intraday/draw/draw.es5/createCardIntraday 正式版内嵌(⑨轴语义: 正常尺寸轴端=真实高低,
+   昨收离区间超一个区间宽不进轴; 181项配套测试/2000项等价全过) ②持仓卡内嵌96px分时小图+大图分时态
+   ③VWAP均价修复: 东财f57(元)/f56(手)÷100换算(d11两处同源单位错, 未上线未暴露) ④默认周期=分时 */
 /* jinlin sw v215 — 2026-10-13晨: 缓存名→v215, 配合 v0.84.74 批[jl-1129: T7-0回补盘前闸热修——原jl-1128回补路上限"9999-99-99"按字典序恒大于任何真实日期, 盘前/盘中运行会把当日累计中值当终值写库(ok:1)并挡住盘后clist主路(晨间盘前实测复现); 修正=盘前仅允许d<今日入回补集, ≥15:05后方纳入当日; 记录结构零改动; index(73→74)+sw(壳v214→v215, KEEP=215+214)+ff_snap(?v=1→2)成对提交] */
 /* jinlin sw v214 — 2026-10-12深夜: 缓存名→v214, 配合 v0.84.73 批[jl-1128: T7-0基础数据层上线(昨夜落码批重编号——原jl-1121/1122与线上63/64批撞号从未部署, 两文件内容零改动, 仅批号/版本串更新)——①jl_t6_probe.js: T6信号环境探针(纯观察者, 龙池主推落库时留档环境当场读数, 零UI零侵入) ②jl_sector_ff_snap.js: T7-0板块资金日快照层(依schema v1冻结书2026-10-12, IDB jinlin_secff, 250交易日留档, ≥15:05+当日锚点+当日无记录三闸防qdate陷阱, 回补路daykline 200ms节流) ③index仅挂载两script(?v=1新URL防Pages max-age=600); 纯数据采集层: 无UI/无首页视觉改动/无状态机/T5/T6展示零触碰; SHELL预缓存列表与fetch策略零改动(jl_*非壳文件不缓存拉取即最新); index(72→73)+sw(壳v213→v214, KEEP=214+213)成对提交] */
 /* jinlin sw v213 — 2026-10-12晚: 缓存名→v213, 配合 v0.84.72 [jl-1127: 版本号可读化——顶栏版本v0.84.62以来一直7px薄荷绿+JS前静态兜底'v0.84.62'写死, 人眼/VLM均读不清(今日用户报'显示62'乌龙的根因)。本批: ①版本号10px/700/纯白(点按诊断功能保留) ②静态兜底字同步data-ver ③纯显示层, 数据/算法/接口零触碰; index(71→72)+sw(壳v212→v213, KEEP=213+212)成对提交] */
@@ -115,8 +119,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v215'; /* jl-1129 v0.84.74: 回补盘前闸热修; 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v215', 'jinlin-shell-v214'];
+const C = 'jinlin-shell-v216'; /* ks-1013 v0.84.75: PHVL分时模块正式上线; 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v216', 'jinlin-shell-v215']; /* KEEP=216+215 沿用历代模式(当前+上一版平滑过渡) */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
