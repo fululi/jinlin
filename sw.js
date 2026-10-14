@@ -1,3 +1,4 @@
+/* jinlin sw v217 — 2026-10-14: 缓存名→v217, 配合 v0.84.76 批[ks-1013: 分时十字光标(PHVLCross 正式方案, 替换昨夜内嵌版)——①phvl-cross.js 独立模块: 十字线画在自己的覆盖画布(pointer-events:none), 分时图画布一个像素不碰不重画; 只读 geom()/on() 接口听坐标与重画通知 ②手势: 长按220ms出现(之前点按/滚动/翻卡照旧不拦截), 出现后拖动才拦截, 松手留1.5s再消失, 松手点击吞掉防误触; 鼠标悬停即出移开消失 ③phvl-intraday 仅新增 geom()/on() 只读接口(纯度契约保持: 零监听零DOM零存储) ④接线: 大图分时+持仓卡小图两处 attach, deck翻卡(pointerup判dx)加pointer守卫, 换股/切周期/进分时三处销毁控制器 ⑤用户验收测试53项+模块188项+overlap 19442对全过, tiny/card与基线零回归; index(75→76)+sw(壳v216→v217, KEEP=217+216)成对提交] */
 /* jinlin sw v216 — 2026-10-13午后: 配合 v0.84.75 批[ks-1013: PHVL分时模块正式上线(docx四文件逐字) —
    ①phvl-intraday/draw/draw.es5/createCardIntraday 正式版内嵌(⑨轴语义: 正常尺寸轴端=真实高低,
    昨收离区间超一个区间宽不进轴; 181项配套测试/2000项等价全过) ②持仓卡内嵌96px分时小图+大图分时态
@@ -119,8 +120,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v216'; /* ks-1013 v0.84.75: PHVL分时模块正式上线; 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v216', 'jinlin-shell-v215']; /* KEEP=216+215 沿用历代模式(当前+上一版平滑过渡) */
+const C = 'jinlin-shell-v217'; /* ks-1013 v0.84.76: PHVLCross分时十字光标; 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v217', 'jinlin-shell-v216']; /* KEEP=217+216 沿用历代模式(当前+上一版平滑过渡) */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
