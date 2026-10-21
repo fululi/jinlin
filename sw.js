@@ -1,3 +1,4 @@
+/* jinlin sw v218 — 2026-10-21: 缓存名→v218, 配合 v0.84.77 批[jl-1130: 腾讯报价分支观测交易日+观测单调化——治"盘中仍显示未开市"(10-20 13:06 / 10-21 09:31 实机复现, 刷新无效, 腾讯同刻显示交易中): ①根因(Node桩实证): importEastmoneyQuotes全档死代码(定义于index行1388, 全文无调用), 唯一在跑的importTencentQuotes成功后只写字段不观测交易日, jlLastTradeDay停留在日K缓存末根/jl_tdo_v1的昨观测日(如10-20), jlMktPhaseJL判ltd≠td→"未开市" ②修法两处: a.报价回调以a[30]前8位(报价自带日期)调jlObserveTradeDayJL, 不用行1246墙钟quoteDate(节假日会误判), 双护栏=日期格式校验+不得晚于今日; b.jlObserveTradeDayJL单调化(jl-A1b, 外部审计kimi的A1补测发现: 无条件覆盖会让日K缓存末根把报价写入的今天打回昨天)——旧观测不得回退更新观测 ③验证: Node桩15场景32断言全过——S1复现未开市/S2对照盘中/T1修后盘中/S6a独立复证A1残余洞(仅1246会被旧观测打回)/S6b完整修复(拒旧观测回流)/T2假日10-03+T2b假日周一10-05+T3周六10-24均保持未开市/T4未来戳拒收/T5残缺不误判; 外部互证: kimi A1补测/A2复跑(planNext语义不变)独立过 ④红线: computeTierJL/ratchetJL/calibJL/磁吸/kAdj/失守状态机(sbBreachRowsJL等)零触碰; index(76→77)+sw(壳v217→v218, KEEP=218+217)成对提交] */
 /* jinlin sw v217 — 2026-10-14: 缓存名→v217, 配合 v0.84.76 批[ks-1013: 分时十字光标(PHVLCross 正式方案, 替换昨夜内嵌版)——①phvl-cross.js 独立模块: 十字线画在自己的覆盖画布(pointer-events:none), 分时图画布一个像素不碰不重画; 只读 geom()/on() 接口听坐标与重画通知 ②手势: 长按220ms出现(之前点按/滚动/翻卡照旧不拦截), 出现后拖动才拦截, 松手留1.5s再消失, 松手点击吞掉防误触; 鼠标悬停即出移开消失 ③phvl-intraday 仅新增 geom()/on() 只读接口(纯度契约保持: 零监听零DOM零存储) ④接线: 大图分时+持仓卡小图两处 attach, deck翻卡(pointerup判dx)加pointer守卫, 换股/切周期/进分时三处销毁控制器 ⑤用户验收测试53项+模块188项+overlap 19442对全过, tiny/card与基线零回归; index(75→76)+sw(壳v216→v217, KEEP=217+216)成对提交] */
 /* jinlin sw v216 — 2026-10-13午后: 配合 v0.84.75 批[ks-1013: PHVL分时模块正式上线(docx四文件逐字) —
    ①phvl-intraday/draw/draw.es5/createCardIntraday 正式版内嵌(⑨轴语义: 正常尺寸轴端=真实高低,
@@ -120,8 +121,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v217'; /* ks-1013 v0.84.76: PHVLCross分时十字光标; 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v217', 'jinlin-shell-v216']; /* KEEP=217+216 沿用历代模式(当前+上一版平滑过渡) */
+const C = 'jinlin-shell-v218'; /* jl-1130 v0.84.77: 腾讯报价分支观测交易日+单调化,治盘中未开市; 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v218', 'jinlin-shell-v217']; /* KEEP=218+217 沿用历代模式(当前+上一版平滑过渡) */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
