@@ -1,0 +1,38 @@
+--- "tmp/\345\244\215\347\256\227\345\231\250_v2.2.1_\346\270\205\347\220\206\344\277\256\345\244\215\345\211\215\345\244\207\344\273\275.py"	2026-10-22 13:45:17.000000000 +0800
++++ "download/\346\234\200\347\273\210\345\256\241\346\237\245\344\272\244\344\273\230/\345\274\200\347\233\230\345\215\226\344\271\260\345\233\236_v2_\347\246\273\347\272\277\345\244\215\347\256\227\345\231\250.py"	2026-10-22 13:45:36.000000000 +0800
+@@ -37,6 +37,8 @@
+ #   候选快照写入 open(cand,"w") 未捕获 OSError → 已修: 提取为共用函数 write_candidate(),
+ #   捕获 OSError → 明确错误信息 + 退出码5(与退出码表"5=IO/网络错误"一致);
+ #   新增 --test-writefail 定点测试(子进程级): 断言退出码=5、错误信息、无任何统计输出;
++#   追加(第四轮审查意见): 定点测试临时目录改为 mkdtemp 全新独占子目录, rmtree 仅删自建目录,
++#   WRITEFAIL_TMP 指向已有目录时不会误删其中其他文件;
+ #   未改动: 交易公式/统计代码/联网取数逻辑/15项自检/行情快照(本轮未重跑自检, 未重新抓取行情)
+ import json, sys, os, hashlib, statistics, urllib.request, datetime, math
+ from decimal import Decimal, ROUND_HALF_UP
+@@ -255,17 +257,21 @@
+ def test_writefail():
+     """定点测试(v2.2.1, 响应第三轮终审): 候选快照写入失败(OSError) → 退出码5且无任何统计输出。
+     以子进程实际执行 --write-candidate-dry(本地有效快照 + 不可写目标路径), 不联网、不重跑15项自检。
+-    不可写路径构造: 目标路径的父组件为普通文件 → open() 必然抛 OSError(Linux/Windows均可复现)。"""
+-    import subprocess, shutil
++    不可写路径构造: 目标路径的父组件为普通文件 → open() 必然抛 OSError(Linux/Windows均可复现)。
++    清理安全性(第四轮审查修正): 临时目录为 WRITEFAIL_TMP(缺省=脚本目录)内 mkdtemp 全新独占子目录,
++    结束时 rmtree 仅删除该自建子目录 —— WRITEFAIL_TMP 指向已有目录时不会误删其中其他文件。"""
++    import subprocess, shutil, tempfile
+     script = os.path.abspath(__file__); base = os.path.dirname(script)
+     snap_path = os.path.join(base, DEFAULT_SNAP)
+     if not os.path.exists(snap_path):
+         die(f"定点测试需要快照文件: {snap_path}", 2)
+-    work = os.environ.get("WRITEFAIL_TMP") or os.path.join(base, ".writefail_tmp")
++    parent = os.environ.get("WRITEFAIL_TMP") or base
++    if not os.path.isdir(parent):
++        die(f"WRITEFAIL_TMP 须为已存在目录: {parent} —— 请指定有效父目录", 5)
+     try:
+-        os.makedirs(work, exist_ok=True)
++        work = tempfile.mkdtemp(prefix="writefail_test_", dir=parent)  # 全新独占子目录
+     except OSError as e:
+-        die(f"定点测试临时目录创建失败({work}): {e} —— IO错误", 5)
++        die(f"定点测试独占子目录创建失败({parent}): {e} —— IO错误", 5)
+     try:
+         blocker = os.path.join(work, "blocker_file_as_parent")
+         with open(blocker, "w") as f:

@@ -1,0 +1,320 @@
+--- "tmp/\345\244\215\347\256\227\345\231\250_v2.1_\345\244\207\344\273\275.py"	2026-10-22 13:24:23.000000000 +0800
++++ "download/\346\234\200\347\273\210\345\256\241\346\237\245\344\272\244\344\273\230/\345\274\200\347\233\230\345\215\226\344\271\260\345\233\236_v2_\347\246\273\347\272\277\345\244\215\347\256\227\345\231\250.py"	2026-10-22 13:25:47.000000000 +0800
+@@ -1,12 +1,38 @@
+ #!/usr/bin/env python3
+-# 开盘卖买回·v2.1 离线复算器(固定窗口·不复权真实价·快照哈希校验)
+-# v2.1 修正(响应终审意见):
+-#   1) 哈希不匹配 → 立即中止拒绝计算(此前仅提示后继续, 已废除)
+-#   2) 强制完整性门检: 样本数/首尾日期/单调无重复/不越窗/非周末/OHLC合法/锚点合法, 任一不过即中止
+-#   3) 联网取数改为每标的一次请求, 行情与锚点(2023-07-03前收)同响应派生, 并检测左端漂移
+-#   4) 新增 --selftest 故障注入自检
++# 开盘卖买回·v2.2 离线复算器(固定窗口·不复权真实价·快照哈希校验)
+ # 用法: python3 开盘卖买回_v2_离线复算器.py [快照.json] | --selftest
+-import json, sys, os, hashlib, statistics, urllib.request, datetime
++#   缺省读取脚本同目录的 行情快照_2023-07-04_2026-10-21_不复权.json
++#   快照缺失时联网拉取腾讯不复权数据(每标的一次请求, 锚点同响应派生)
++# 正式口径: 不复权真实价(腾讯qfq为减法复权, 改变日内比值, 不适用本策略, 仅留作对照)
++#
++# ── 固定哈希的绑定对象与算法(v2.2 单一化) ─────────────────────────────
++#   对象: 规范序列化字节串 canon = json.dumps(snap, sort_keys=True,
++#         ensure_ascii=True, separators=(",", ":")) 的 UTF-8 字节
++#   算法: SHA-256, 固定值见 SNAP_SHA256
++#   文件路径依次执行: JSON解析 → 文件原始字节==canon(重排版即拒) →
++#         完整性门检 → sha256(文件字节)==SNAP_SHA256
++#   交付快照由 final_deliver.py 以 canon 原样落盘, 两口径恒等(已实测)
++#
++# ── 联网回退(v2.2 重设计, 不再以旧固定哈希验收新数据) ──────────────────
++#   完整性门检(通用规则, 与固定哈希无关)通过后与固定哈希比对:
++#   一致(=线上历史未变) → 进入统计;
++#   不一致 → 仅落盘 候选快照_待审核_XXXXXXXX.json 并退出码4, 不输出任何统计,
++#   待人工审核后作为新基准快照交付
++#
++# ── 退出码 ────────────────────────────────────────────────────────────
++#   0=通过  1=哈希/口径不匹配  2=完整性门检失败(含非法JSON/类型/非有限值)
++#   3=自检存在FAIL  4=联网数据与固定快照不一致(已生成候选快照)  5=IO/网络错误
++#
++# v2.2 修正(响应第二轮终审, 仅改校验与测试, 公式/策略/行情/统计零改动):
++#   阻断1 哈希口径单一化, 文件路径强制 文件字节==规范字节, 两口径恒等已实测
++#   阻断2 联网回退改为"候选快照生成器", 不复用旧固定哈希作新数据的验收门
++#   阻断3 锚点三重校验: 键名绑定2023-07-03 + 四值正有限 + OHLC包络;
++#         另查 meta.anchor_prev_close 一致、锚点日未混入窗口
++#   防御  NaN/Infinity/字符串价格/bars非列表/节点非对象/非法JSON/读写与网络失败
++#         → 明确退出码拒绝, 不以异常栈崩溃
++#   自检  15场景全部以子进程实际执行校验入口, 记录原始输出+退出码,
++#         并断言失败场景无任何统计输出
++import json, sys, os, hashlib, statistics, urllib.request, datetime, math
+ from decimal import Decimal, ROUND_HALF_UP
+ 
+ FEE = 0.001; START = "2023-07-04"; EXCL = "2026-10-22"
+@@ -14,12 +40,17 @@
+ SNAP_SHA256 = "8b1defe07d9f116c7ca3c42c7f7c5d662819e7966dad0f426209f33c533fdf19"
+ DEFAULT_SNAP = "行情快照_2023-07-04_2026-10-21_不复权.json"
+ CODES = [("sh600105", "永鼎股份"), ("sh603986", "兆易创新")]
++AKEY = "anchor_" + ANCHOR_DATE.replace("-", "_")
+ 
+ def die(msg, code=1):
+     print(f"[中止] {msg}"); sys.exit(code)
+ 
++def canon_of(snap):
++    return json.dumps(snap, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
++
+ def hash_of(snap):
+-    return hashlib.sha256(json.dumps(snap, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode()).hexdigest()
++    """固定哈希的唯一定义: SHA-256(规范序列化字节串)"""
++    return hashlib.sha256(canon_of(snap).encode("utf-8")).hexdigest()
+ 
+ def fetch_unadj(code):
+     """每标的一次请求(900根), 锚点与窗口行情同响应派生, 不二次请求"""
+@@ -28,98 +59,179 @@
+     d = json.load(urllib.request.urlopen(req, timeout=20))
+     return [{"d": r[0], "o": float(r[1]), "c": float(r[2]), "h": float(r[3]), "l": float(r[4])} for r in d["data"][code]["day"]]
+ 
++def _num(x):
++    """合法价格: int/float(排除bool), 有限, >0"""
++    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x) and x > 0
++
+ def validate(snap):
+-    """强制完整性门检, 返回错误清单(空=通过)"""
++    """完整性门检(通用规则, 与固定哈希无关), 返回错误清单(空=通过)"""
+     errs = []
+-    present = [c for c, _ in CODES if c in snap]
++    if not isinstance(snap, dict):
++        return [f"快照顶层结构非法({type(snap).__name__}), 应为JSON对象"]
++    meta = snap.get("meta")
++    if not isinstance(meta, dict):
++        errs.append("缺meta或meta非对象")
++    elif meta.get("anchor_prev_close") != ANCHOR_DATE:
++        errs.append(f"meta.anchor_prev_close={meta.get('anchor_prev_close')!r} ≠ 锚点日 {ANCHOR_DATE}")
+     for c, _ in CODES:
+         if c not in snap: errs.append(f"缺标的 {c}")
+     for code, name in CODES:
+-        if code not in present: continue
+-        node = snap[code]; bars = node.get("bars", [])
+-        dates = [b[0] for b in bars]
+-        if len(bars) != EXPECTED_N:
+-            errs.append(f"{name}: 样本数 {len(bars)} ≠ {EXPECTED_N} (窗口漂移或截断)")
+-        if not dates or dates[0] != FIRST or dates[-1] != LAST:
+-            errs.append(f"{name}: 首尾日期 {dates and dates[0]}→{dates and dates[-1]} ≠ {FIRST}→{LAST}")
+-        if len(set(dates)) != len(dates): errs.append(f"{name}: 存在重复日期")
+-        if dates != sorted(dates): errs.append(f"{name}: 日期非单调递增")
+-        a = node.get("anchor_2023_07_03")
+-        if not a or len(a) != 4 or any((not isinstance(x, (int, float))) or x <= 0 for x in a):
+-            errs.append(f"{name}: 锚点({ANCHOR_DATE}前收)缺失或非法")
+-        bar_errs = 0
+-        for b in bars:
++        if code not in snap: continue
++        node = snap[code]
++        if not isinstance(node, dict):
++            errs.append(f"{name}: 标的节点非对象({type(node).__name__})"); continue
++        # 锚点三重校验: 键名绑定锚点日 / 数值合法 / OHLC包络
++        if AKEY not in node:
++            errs.append(f"{name}: 缺锚点键 {AKEY} (锚点须与 {ANCHOR_DATE} 结构绑定)")
++        else:
++            a = node[AKEY]
++            if not isinstance(a, list) or len(a) != 4:
++                errs.append(f"{name}: 锚点非长度4数组")
++            elif not all(_num(x) for x in a):
++                errs.append(f"{name}: 锚点含非正值/非有限数/类型非法")
++            elif a[2] < max(a[0], a[1]) or a[3] > min(a[0], a[1]):
++                errs.append(f"{name}: 锚点OHLC不包络开收")
++        bars = node.get("bars")
++        if not isinstance(bars, list):
++            errs.append(f"{name}: bars非列表({type(bars).__name__})"); continue
++        dates, bad = [], 0
++        for i, b in enumerate(bars):
+             e = None
+-            if len(b) != 5: e = f"字段数{len(b)}≠5"
++            if not isinstance(b, (list, tuple)) or len(b) != 5:
++                e = f"bar#{i} 非数组或字段数≠5"
+             else:
+                 d, o, c, h, l = b
+-                try:
+-                    if datetime.date.fromisoformat(d).weekday() >= 5: e = "周末(非交易日)"
+-                except ValueError: e = f"非法日期{d}"
+-                if not e and not (START <= d < EXCL): e = "日期越窗"
+-                if not e and (min(o, c, l) <= 0 or h <= 0): e = "价格非正"
+-                if not e and (h < max(o, c) or l > min(o, c)): e = "高低价不包络开收"
++                if not isinstance(d, str):
++                    e = f"bar#{i} 日期非字符串"
++                else:
++                    try:
++                        if datetime.date.fromisoformat(d).weekday() >= 5: e = f"bar#{i} 周末(非交易日)"
++                    except ValueError:
++                        e = f"bar#{i} 非法日期{d!r}"
++                    if not e and not (START <= d < EXCL): e = f"bar#{i} 日期越窗"
++                    if not e: dates.append(d)
++                if not e and not all(_num(x) for x in (o, c, h, l)):
++                    e = f"bar#{i} 价格非正值/非有限/类型非法"
++                if not e and (h < max(o, c) or l > min(o, c)):
++                    e = f"bar#{i} 高低价不包络开收"
+             if e:
+-                errs.append(f"{name} {b[0] if b else '?'}: {e}"); bar_errs += 1
+-                if bar_errs >= 5: errs.append(f"{name}: ...(逐日问题仅列前5项)"); break
++                errs.append(f"{name}: {e}"); bad += 1
++                if bad >= 5: errs.append(f"{name}: ...(逐日问题仅列前5项)"); break
++        if len(bars) != EXPECTED_N: errs.append(f"{name}: 样本数 {len(bars)} ≠ {EXPECTED_N} (窗口漂移或截断)")
++        if not dates or dates[0] != FIRST or dates[-1] != LAST:
++            errs.append(f"{name}: 首尾日期 {dates[0] if dates else '无'}→{dates[-1] if dates else '无'} ≠ {FIRST}→{LAST}")
++        if len(set(dates)) != len(dates): errs.append(f"{name}: 存在重复日期")
++        if dates != sorted(dates): errs.append(f"{name}: 日期非单调递增")
++        if ANCHOR_DATE in dates: errs.append(f"{name}: 锚点日 {ANCHOR_DATE} 混入窗口bar")
+     return errs
+ 
+-def run_gates(snap, mode):
+-    h = hash_of(snap)
+-    if h != SNAP_SHA256:
+-        die(f"哈希不匹配(实测 {h} ≠ 预期 {SNAP_SHA256}) [{mode}] —— 拒绝计算")
+-    errs = validate(snap)
+-    if errs:
+-        print("[完整性门检] 未通过:"); [print("  -", e) for e in errs]
+-        die("数据完整性校验失败 —— 拒绝计算", 2)
+-    print(f"[门检通过] sha256一致 · 两股 n={EXPECTED_N} · {FIRST}→{LAST} · 日期单调无重复/非周末/不越窗 · OHLC包络 · 锚点合法")
+-
+ def load_snapshot():
+     path = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("-") else os.path.join(os.path.dirname(os.path.abspath(__file__)), DEFAULT_SNAP)
+     if os.path.exists(path):
+-        raw = open(path, "rb").read()
++        try:
++            raw = open(path, "rb").read()
++        except OSError as e:
++            die(f"快照文件读取失败: {e}", 5)
++        try:
++            snap = json.loads(raw)
++        except Exception as e:
++            die(f"快照文件非合法JSON: {e}", 2)
++        if canon_of(snap).encode("utf-8") != raw:
++            die(f"文件字节与规范序列化不一致(重排版/编码差异, {len(raw)} vs {len(canon_of(snap).encode('utf-8'))} 字节) —— 固定哈希绑定规范字节串, 拒绝计算", 1)
++        errs = validate(snap)
++        if errs:
++            print("[完整性门检] 未通过:"); [print("  -", e) for e in errs]
++            die("数据完整性校验失败 —— 拒绝计算", 2)
+         if hashlib.sha256(raw).hexdigest() != SNAP_SHA256:
+-            die(f"快照文件哈希不匹配: {os.path.basename(path)} —— 拒绝计算")
++            die(f"哈希不匹配: sha256(文件字节)={hashlib.sha256(raw).hexdigest()} ≠ {SNAP_SHA256} —— 拒绝计算", 1)
+         print(f"[快照] {os.path.basename(path)} sha256 校验通过")
+-        snap = json.loads(raw)
+-    else:
+-        print(f"[快照缺失: {path}] 联网拉取腾讯不复权(每标的一次请求, 锚点同响应派生)...")
+-        snap = {"meta": {"source": "tencent newfqkline fq='' (不复权真实价)", "window": f"{START} <= d < {EXCL}", "anchor_prev_close": ANCHOR_DATE, "codes": {}}}
+-        for code, name in CODES:
+-            rows = fetch_unadj(code)  # 唯一一次请求
+-            win = [r for r in rows if START <= r["d"] < EXCL]
+-            ai = [i for i, r in enumerate(rows) if r["d"] == ANCHOR_DATE]
+-            if not ai or ai[0] + 1 >= len(rows) or rows[ai[0] + 1]["d"] != FIRST:
+-                die(f"{name}: 线上取数左端已漂移(最早bar {rows[0]['d']}), 无法锚定 {ANCHOR_DATE} 前收 —— 请改用快照离线运行")
+-            a = rows[ai[0]]
+-            snap[code] = {"name": name, "anchor_2023_07_03": [a["o"], a["c"], a["h"], a["l"]],
+-                          "bars": [[r["d"], r["o"], r["c"], r["h"], r["l"]] for r in win]}
+-    run_gates(snap, "离线快照" if os.path.exists(path) else "联网数据")
++        print(f"[门检通过] 规范哈希=文件字节哈希={SNAP_SHA256[:16]}… · 两股 n={EXPECTED_N} · {FIRST}→{LAST} · 单调无重复/非周末/不越窗/OHLC包络 · 锚点三重校验(键名绑{ANCHOR_DATE}+数值+包络)")
++        return snap
++    # ── 联网路径: 候选快照生成器(不复用旧固定哈希验收新数据) ──
++    print(f"[快照缺失] {path} → 联网拉取腾讯不复权数据(每标的一次请求, 锚点同响应派生)...")
++    snap = {"meta": {"source": "tencent newfqkline fq='' (不复权真实价)", "window": f"{START} <= d < {EXCL}", "anchor_prev_close": ANCHOR_DATE, "codes": {}}}
++    for code, name in CODES:
++        try:
++            rows = fetch_unadj(code)
++        except Exception as e:
++            die(f"联网取数失败({code}): {e} —— 中止, 未产生任何统计", 5)
++        win = [r for r in rows if START <= r["d"] < EXCL]
++        ai = [i for i, r in enumerate(rows) if r["d"] == ANCHOR_DATE]
++        if not ai or ai[0] + 1 >= len(rows) or rows[ai[0] + 1]["d"] != FIRST:
++            die(f"{name}: 线上取数左端已漂移(最早bar {rows[0]['d']}), 无法锚定 {ANCHOR_DATE} 前收 —— 请改用快照离线运行", 2)
++        a = rows[ai[0]]
++        snap[code] = {"name": name, AKEY: [a["o"], a["c"], a["h"], a["l"]],
++                      "bars": [[r["d"], r["o"], r["c"], r["h"], r["l"]] for r in win]}
++    errs = validate(snap)
++    if errs:
++        print("[完整性门检] 未通过:"); [print("  -", e) for e in errs]
++        die("联网数据完整性校验失败 —— 拒绝计算", 2)
++    ch = hash_of(snap)
++    if ch != SNAP_SHA256:
++        cand = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"候选快照_待审核_{ch[:8]}.json")
++        open(cand, "w").write(canon_of(snap))
++        print(f"[联网数据] 完整性门检通过, 但 sha256={ch} ≠ 固定快照 {SNAP_SHA256}")
++        print(f"[候选快照] 已写入 {os.path.basename(cand)} —— 仅生成待审核快照, 不进入固定快照统计")
++        die("联网数据与固定快照不一致: 请人工审核候选快照后, 再作为新基准快照交付", 4)
++    print(f"[联网数据] 完整性门检通过, sha256 与固定快照逐字节一致({ch[:16]}…) → 进入统计")
+     return snap
+ 
+ def selftest():
+-    """故障注入: 验证两道门检确实拦截"""
+-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), DEFAULT_SNAP)
+-    if not os.path.exists(path): die("自检需要快照文件")
+-    good = json.loads(open(path, "rb").read())
+-    if hash_of(good) != SNAP_SHA256: die("自检需有效快照(哈希不符)")
+-    def mut(): return json.loads(json.dumps(good))
+-    t = []
+-    b = mut(); b["sh600105"]["bars"][10][2] += 0.01
+-    t.append(("哈希门·篡改价格", hash_of(b) != SNAP_SHA256))
+-    b = mut(); b["sh600105"]["bars"] = b["sh600105"]["bars"][:-3]
+-    t.append(("完整性门·样本截断(796)", len(validate(b)) > 0))
+-    b = mut(); b["sh600105"]["bars"][0][0] = "2023-07-05"
+-    t.append(("完整性门·首日漂移", len(validate(b)) > 0))
+-    b = mut(); b["sh600105"]["bars"][5][3] = 0.0
+-    t.append(("完整性门·OHLC破损", len(validate(b)) > 0))
+-    b = mut(); b["sh600105"]["bars"][7][0] = b["sh600105"]["bars"][6][0]
+-    t.append(("完整性门·重复日期", len(validate(b)) > 0))
+-    b = mut(); b.pop("sh603986")
+-    t.append(("完整性门·缺标的", len(validate(b)) > 0))
+-    npass = sum(ok for _, ok in t)
+-    for name, ok in t: print(f"  [{'PASS' if ok else 'FAIL'}] {name}")
+-    print(f"[自检] {npass}/{len(t)} 项通过"); sys.exit(0 if npass == len(t) else 3)
++    """故障注入自检(v2.2): 每项以子进程实际执行本校验入口, 记录原始输出与退出码,
++    并断言失败场景无任何统计输出。可用 SELFTEST_TMP 指定临时目录(缺省脚本旁 .selftest_tmp)"""
++    import subprocess, shutil
++    script = os.path.abspath(__file__); base = os.path.dirname(script)
++    snap_path = os.path.join(base, DEFAULT_SNAP)
++    if not os.path.exists(snap_path): die(f"自检需要快照文件: {snap_path}", 2)
++    raw = open(snap_path, "rb").read()
++    if hashlib.sha256(raw).hexdigest() != SNAP_SHA256: die("自检需有效快照(哈希不符)", 1)
++    good = json.loads(raw)
++    work = os.environ.get("SELFTEST_TMP") or os.path.join(base, ".selftest_tmp")
++    os.makedirs(work, exist_ok=True)
++
++    def write_canon(p, s): open(p, "w", encoding="utf-8").write(canon_of(s))
++
++    def mut_price(s):
++        b = s["sh600105"]["bars"][10]
++        b[2] = b[1] if b[2] != b[1] else b[3]  # 包络安全的收盘价篡改
++
++    SC = [
++        ("正常路径(交付快照)", None, 0, None),
++        ("哈希门·篡改价格(保持OHLC包络)", mut_price, 1, None),
++        ("口径门·重排版(语义不变)", None, 1, lambda p: open(p, "w", encoding="utf-8").write(json.dumps(good, indent=2, ensure_ascii=False))),
++        ("完整性·样本截断", lambda s: s["sh600105"]["bars"].pop(), 2, None),
++        ("完整性·首日漂移", lambda s: s["sh600105"]["bars"][0].__setitem__(0, "2023-07-05"), 2, None),
++        ("完整性·重复日期", lambda s: s["sh600105"]["bars"][7].__setitem__(0, s["sh600105"]["bars"][6][0]), 2, None),
++        ("完整性·OHLC破损", lambda s: s["sh600105"]["bars"][5].__setitem__(3, 0.0), 2, None),
++        ("完整性·缺标的", lambda s: s.pop("sh603986"), 2, None),
++        ("完整性·锚点OHLC不包络", lambda s: s["sh600105"].__setitem__(AKEY, [3.54, 3.45, 3.40, 3.60]), 2, None),
++        ("完整性·锚点键名错绑日期", lambda s: s["sh600105"].__setitem__("anchor_2023_07_02", s["sh600105"].pop(AKEY)), 2, None),
++        ("防御·NaN价格", lambda s: s["sh600105"]["bars"][10].__setitem__(2, float("nan")), 2, None),
++        ("防御·Infinity价格", lambda s: s["sh600105"]["bars"][10].__setitem__(2, float("inf")), 2, None),
++        ("防御·字符串价格", lambda s: s["sh600105"]["bars"][10].__setitem__(2, "6.5"), 2, None),
++        ("防御·bars非列表", lambda s: s["sh600105"].__setitem__("bars", {"oops": 1}), 2, None),
++        ("防御·非法JSON", None, 2, lambda p: open(p, "wb").write(b"{oops")),
++    ]
++    npass = 0
++    try:
++        for idx, (name, fn, want, writer) in enumerate(SC):
++            p = os.path.join(work, f"{idx:02d}_{name[:12]}.json")
++            if writer: writer(p)
++            elif fn:
++                s = json.loads(json.dumps(good)); fn(s); write_canon(p, s)
++            else: open(p, "wb").write(raw)
++            r = subprocess.run([sys.executable, script, p], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
++            out = (r.stdout + ("\n[stderr] " + r.stderr if r.stderr.strip() else "")).strip()
++            has_stats = "胜率" in out
++            ok = (r.returncode == want) and (has_stats == (want == 0))
++            npass += ok
++            print(f"### [{idx+1:02d}/{len(SC)}] {name} → 退出码={r.returncode}(期望{want}) 统计输出={'有' if has_stats else '无'} [{'PASS' if ok else 'FAIL'}]")
++            for ln in out.splitlines(): print("    " + ln)
++            print()
++    finally:
++        shutil.rmtree(work, ignore_errors=True)
++    print(f"[自检] {npass}/{len(SC)} 项通过 (全部为子进程实际执行校验入口; 失败场景已断言无任何统计输出)")
++    sys.exit(0 if npass == len(SC) else 3)
+ 
+ if __name__ == "__main__" and "--selftest" in sys.argv:
+     selftest()

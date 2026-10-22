@@ -1,0 +1,33 @@
+══════════════════════════════════════════════════
+ 复算器 v2.2.1 定点测试证据·清理安全性修复后重跑(生成于 2026-10-22 13:46:09)
+ 本轮范围: 仅修 --test-writefail 清理逻辑 + 重跑该定点测试 + 语法检查
+ 未做: 重跑15项自检 / 联网抓取 / 正常统计 / 结论文件更新 / 提交部署
+══════════════════════════════════════════════════
+
+── 修复说明 ──
+ 旧: work=WRITEFAIL_TMP 或 .writefail_tmp, 结束时 rmtree(work) 会递归删除整个目录
+ 新: 在 WRITEFAIL_TMP(缺省=脚本目录)内 mkdtemp 创建全新独占子目录 writefail_test_*,
+     rmtree 仅删除该自建子目录; WRITEFAIL_TMP 非已存在目录时报错退出码5
+
+── 一、语法检查 ──
+python3 -m py_compile 开盘卖买回_v2_离线复算器.py → 通过
+
+── 二、重跑 --test-writefail (WRITEFAIL_TMP指向含既有文件的已有目录) ──
+ 测试前目录内容: 既有重要文件.txt
+### [定点] 候选快照写入失败(OSError) → 退出码=5(期望5) 统计输出=无 [PASS]
+    [快照] 行情快照_2023-07-04_2026-10-21_不复权.json sha256 校验通过
+    [门检通过] 规范哈希=文件字节哈希=8b1defe07d9f116c… · 两股 n=799 · 2023-07-04→2026-10-21 · 单调无重复/非周末/不越窗/OHLC包络 · 锚点三重校验(键名绑2023-07-03+数值+包络)
+    [中止] 候选快照写入失败(/home/z/my-project/share/agent-model/6ad986eb5a794f5672c6f5a4/tmp/wf_parent_既有目录/writefail_test_fhesdsjo/blocker_file_as_parent/candidate_should_fail.json): [Errno 20] Not a directory: '/home/z/my-project/share/agent-model/6ad986eb5a794f5672c6f5a4/tmp/wf_parent_既有目录/writefail_test_fhesdsjo/blocker_file_as_parent/candidate_should_fail.json' —— IO错误
+
+  断言·退出码=5(IO错误, 与退出码表一致): PASS
+  断言·错误信息含'候选快照写入失败': PASS
+  断言·无任何统计输出: PASS
+[定点测试退出码=0]
+
+── 三、清理安全性核验 ──
+ 测试后目录内容: 既有重要文件.txt
+ 哨兵文件存在且内容完好: PASS
+ 无 writefail_test_* 残留: PASS
+
+── 四、本轮diff文件 ──
+ 见 复算器diff_v2.2到v2.2.1.txt (累计, 已刷新含本轮清理修复)
