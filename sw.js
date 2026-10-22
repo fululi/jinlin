@@ -1,3 +1,4 @@
+/* jinlin sw v225 — 2026-10-22: 缓存名→v225, 配合 v0.84.84 批[ks-1022e: 壳层弱网黑屏根治——用户两报黑屏皆撞换版窗口(11:02/11:28/11:33三连推, 手机SW换代清旧缓存+新壳CDN拉取慢+fetch干等网络=一直'网络加载中'); ①KEEP扩到3版, 跳版换代时上一版缓存仍在 ②fetch缓存miss时8秒超时兜底——网络没回先用任一旧壳垫(旧版能跑), 网络版晚到照入缓存; 纯壳层批: ks.html零改动; index(83→84, data-sw v224→v225)+sw(壳v224→v225, KEEP=225+224+223)成对提交] */
 /* jinlin sw v224 — 2026-10-22: 缓存名→v224, 配合 v0.84.83 批[ks-1022d定案: LIQ已扫判向修正——82版按side分向(BSL上冲/SSL下破)与真实数据矛盾(BSL挂现价下/SSL挂现价上); 定案: LIQ位本质=低点语义(止损/支撑带), 价格低价触及该位下方即被扫——统一判与side无关; 效果=大跌后上方一排已穿越旧位全消, 仅留现价下方未破支撑/目标; 真实茅台321根复跑+mock双顶下跌断言+VLM视觉(上方无/下方S LIQ)三验; index(82→83, data-sw v223→v224)+sw(壳v223→v224, KEEP=224+223)成对提交] */
 /* jinlin sw v223 — 2026-10-22: 缓存名→v223, 配合 v0.84.82 批[ks-1022d: LIQ流动性已扫失效——BSL/SSL生成后价格再触该位即扫掉, 已扫不再画不再当目标(用户实证: 292.25→273大跌中上方仍挂一排早已被穿越的B LIQ); 过滤后BSL必在现价上方(反弹目标)/SSL必在下方(下跌目标), 与底部评分栏口径一致; kl列序实证[qfqday路径: 日期/开/低/收/高/量]BSL看[4]高列/SSL看[2]低列; 验证: 双顶下跌mock——已扫BSL×3+已扫SSL全删, 仅剩未扫下方SSL目标(ictCalc断言+方向自洽); index(81→82, data-sw v222→v223)+sw(壳v222→v223, KEEP=223+222)成对提交] */
 /* jinlin sw v222 — 2026-10-22: 缓存名→v222, 配合 v0.84.81 批[ks-1022全批: K线大图(PHVLD)高低区移植——①ks.html: 高低区带(90日回看·3段深浅)顶部「高位区 29.25」底部「低位区 27.38」白字白线, 橙「高」红「低」字戳+虚线跨幅, 独立版指标行[高低区]开关记忆, ②ks-1022b: ★收藏栏默认入[★高低区]一键开关(新档favs默认+老档一次性迁移ks_phvlfav_1), ③ks-1022c: 金粼嵌入态默认开(applyUrl口径与atri/ob同列), 嵌入开关=「指标▾」抽屉, ④ks-1019: 大K线十字线统一220ms长按+松手留1.5s(与分时PHVLCross同节奏); 嵌入iframe stamp v=1012b→1022拉新ks; 验证: 独立版+嵌入版VLM视觉+像素差(903/828)+node --check全过; 线上78/79/80批(index侧jl-A4/A2/3a)与本批零重叠(diff实证ks.html两侧实质差异=仅本批); index(80→81, data-sw v221→v222)+sw(壳v221→v222, KEEP=222+221)成对提交] */
@@ -127,8 +128,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v224'; /* v0.84.81: ks-1022全批(K线高低区+十字线统一+收藏栏/嵌入默认开); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v224', 'jinlin-shell-v223']; /* KEEP=222+221 沿用历代模式(当前+上一版平滑过渡) */
+const C = 'jinlin-shell-v225'; /* v0.84.81: ks-1022全批(K线高低区+十字线统一+收藏栏/嵌入默认开); 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v225', 'jinlin-shell-v224', 'jinlin-shell-v223']; /* ks-1022e: KEEP扩到3版——跳版换代(如v222→v224错过中间版)时仍有上一版缓存可兜底, activate不再把可用旧壳删光 */ /* KEEP=222+221 沿用历代模式(当前+上一版平滑过渡) */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -159,7 +160,13 @@ self.addEventListener('fetch', e => {
     caches.open(C).then(c => c.match(e.request, { ignoreSearch: true }))  /* jl-1060: 只匹配当前壳缓存——原先全局匹配会把KEEP的旧壳缓存里陈年ks.html喂给iframe, 新玻璃永远到不了手机(房主面板仍死黑根因) */
       .then(m => {
         if (m) { bg.catch(() => {}); return m; }            // 有缓存: 先秒出,新版后台入缓存,下次刷新即新(不再3.5s竞跑)
-        return bg.catch(() => caches.match('index.html').then(x => { if (x) return x; throw new Error('no-shell'); }));  // 缓存全空: 等网络,失败回退缓存任一 index
+        /* ks-1022e: 弱网8秒兜底——换代清缓存后新壳没拉到时, 原逻辑干等网络(用户手机连github.io慢=一直"网络加载中"黑屏);
+           改为8秒内网络没回就先用任一旧壳缓存垫上(旧版完全能跑, 网络版晚到照常入缓存下次刷新即新) */
+        var to = new Promise(function (res) { setTimeout(function () { res(null); }, 8000); });
+        return Promise.race([bg.catch(function () { return null; }), to]).then(function (r) {
+          if (r) return r;
+          return caches.match('index.html').then(function (x) { if (x) return x; throw new Error('no-shell'); });
+        });
       })
   );
 });
