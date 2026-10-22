@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.84.99" data-sw="jinlin-shell-v240"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.84.101" data-sw="jinlin-shell-v242"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -423,7 +423,7 @@ canvas,.previewChart,.chart,.subWrapJL,.homeChartWrap,.holdingChartWrapJL{-webki
 .fundJL{margin-top:8px;border:1px solid rgba(255,215,130,0.16);border-radius:10px;background:rgba(255,255,255,0.045);overflow:hidden}
 .fundTglJL{display:flex;justify-content:space-between;align-items:center;width:100%;padding:7px 9px;background:none;border:0;color:#FFFFFF;font-size:10.5px;cursor:pointer;min-height:34px}
 .fundTglJL b{color:#81e6d9;font-weight:500;font-size:10.5px;flex:none;white-space:nowrap}.fundTglJL{gap:6px;flex-wrap:wrap}.fundTglJL .fundLiveJL{white-space:nowrap;margin-left:auto}
-.fundLiveJL{font-size:12px;font-weight:600}.fundNetJL{font-style:normal;font-size:9.5px;white-space:nowrap}
+.fundLiveJL{font-size:12px;font-weight:600}.fundNetJL{font-style:normal;font-size:9.5px;white-space:nowrap}.fundAmpJL{font-style:normal;font-size:11px;font-weight:700;color:#ffd21f;white-space:nowrap;flex:none} /* ks-1151fix10b: 亮黄11px700(用户: 灰字看不见) */
 .fundLiveJL.up{color:#ff5459}.fundLiveJL.dn{color:#3bf0ac}
 .fundBodyJL{padding:2px 9px 9px}
 .fundGridJL{display:grid;grid-template-columns:1fr;gap:8px}
@@ -1333,6 +1333,12 @@ document.addEventListener("visibilitychange", () => {
       if (_flv) {
         _flv.textContent = money(s.base) + " " + pct(s.pct);
         _flv.className = "fundLiveJL " + cls(s.pct);
+      }
+      const _fa = el.querySelector("[data-fund-amp]"); /* ks-1151fix10: 持仓卡实时走势行加日内振幅%(高低/昨收, 用户例: 永鼎当日6.7%); 随行情刷新实时变 */
+      if (_fa) {
+        const _h = Number(s.high) || 0, _l = Number(s.low) || 0;
+        const _pv = (Number(s.base) > 0 && Number.isFinite(Number(s.pct)) && Number(s.pct) > -99) ? Number(s.base) / (1 + Number(s.pct) / 100) : (Number(s.prevClose) || 0); /* ks-1151fix10b: 昨收同quoteRowsJL口径(价/1+pct推导, 不信s.prevClose脏字段)——同卡两处振幅恒一致 */
+        _fa.textContent = (_h > 0 && _l > 0 && _pv > 0) ? "\u632F\u5E45 " + ((_h - _l) / _pv * 100).toFixed(2) + "%" : "";
       }
       const _sb = el.querySelector(".sbTopJL");
       if (_sb && s) {
@@ -2480,7 +2486,7 @@ document.addEventListener("visibilitychange", () => {
     let _px0 = -99, _mg = 99;
     tks.forEach((o) => { if (o.x - _px0 > 0) _mg = Math.min(_mg, o.x - _px0); _px0 = o.x; });
     const _fkFs = _mg < 11 ? Math.max(6.5, 8.5 * _mg / 11) : 8.5;
-    const ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:9px 2px 1px">' + tks.map((o) => '<span class="ftk" style="position:absolute;left:' + o.x.toFixed(1) + '%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ' + o.c + '" style="font-size:' + _fkFs.toFixed(1) + 'px">' + o.v.toFixed(2) + '</strong><b style="font-size:' + (_fkFs * 0.88).toFixed(1) + 'px">' + o.r + '</b></span>').join("") + "</div>";
+    const ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:14px 2px 1px">' /* ks-1151fix10: 数字行下移9→14px离开渐变条(用户箭头指定) */ + '' + tks.map((o) => '<span class="ftk" style="position:absolute;left:' + o.x.toFixed(1) + '%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ' + o.c + '" style="font-size:' + _fkFs.toFixed(1) + 'px">' + o.v.toFixed(2) + '</strong><b style="font-size:' + (_fkFs * 0.88).toFixed(1) + 'px">' + o.r + '</b></span>').join("") + "</div>";
     const _dqHi = Number(ix && ix.high) || 0, _dqLo = Number(ix && ix.low) || 0;
     const stKey = useLeg ? (p > bHi ? "brkH" : p < bLo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid") : (p > pr.hi ? "brkH" : p < pr.lo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid");
     const stMap = useLeg ? { brkH: ["▲破段高·强势", "r"], brkL: ["▼破段低", "g"], high: ["近段高·防回调", "r"], low: ["近段低·看支撑", "g"], mid: ["段内", ""] } : { brkH: ["▲破预判高·强势", "r"], brkL: ["▼破预判低", "g"], high: ["高位·防回调", "r"], low: ["低位·看支撑", "g"], mid: ["中段", ""] };
@@ -3908,7 +3914,7 @@ document.addEventListener("visibilitychange", () => {
             }
           }
         }, 12e3);
-        fr.src = "ks.html?embed=1&ksT=1&v=1151a&code=" + encodeURIComponent(code) + "&name=" + encodeURIComponent((byCode(code) || {}).name || code) + (lines2 ? "&lines=" + encodeURIComponent(lines2) : ""); /* jl-1031: 嵌入传透明标记; ks-1012: v=1006b→1012a 画线系统改造批防旧缓存 */
+        fr.src = "ks.html?embed=1&ksT=1&v=1151c&code=" + encodeURIComponent(code) + "&name=" + encodeURIComponent((byCode(code) || {}).name || code) + (lines2 ? "&lines=" + encodeURIComponent(lines2) : ""); /* jl-1031: 嵌入传透明标记; ks-1012: v=1006b→1012a 画线系统改造批防旧缓存 */
       }
       const cr = $("crossReadout");
       if (cr) cr.textContent = "K-STATION \u5F15\u64CE \xB7 \u56FE\u5185\u5DE5\u5177\u884C\uFF1A\u5468\u671F/\u6307\u6807/\u753B\u7EBF/\u63D0\u9192\uFF08\u672A\u5F00\u76D8\u4E3A\u6700\u8FD1\u4EA4\u6613\u65E5\u6570\u636E\uFF09";
@@ -4523,7 +4529,7 @@ function posRulerJL(s) {
     const qc = p > 0 ? p : Number(lb.c) || 0;
     const liveQ = s.quoteReady === true && p > 0, chg = pc > 0 && p > 0 ? p - pc : 0;
     const hero = `<div class="dqHeroJL"><b style="color:${p > 0 ? col(p) : "#eef9fc"}">${p > 0 ? p.toFixed(dc) : "—"}</b>${liveQ ? `<small style="color:${col(p)}">${chg >= 0 ? "+" : ""}${chg.toFixed(dc)}${Number.isFinite(pctV) ? " " + (pctV >= 0 ? "+" : "") + pctV.toFixed(2) + "%" : ""}</small>` : ""}</div>`; /* jl-1021: 参考图层级——大价+涨跌额/率同行, 五列降级其下平铺 */
-    const r1 = hero + `<div class="tvQuoteJL tvQuoteMainJL">${it("开", qo)}${it("高", qh)}${it("低", ql)}${it(typeof mktLiveJL === "function" && mktLiveJL() ? "实时" : "收", qc)}${pc > 0 ? `<span class="tqCell"><u>昨收</u><b class="tqPc" style="color:${prevBar2 && Number(prevBar2.c) > 0 && pc > 0 ? (pc > Number(prevBar2.c) + 1e-9 ? "#ff6b6b" : pc < Number(prevBar2.c) - 1e-9 ? "#1fdc93" : "#eef9fc") : "#eef9fc"}">${pc.toFixed(dc)}</b></span>` : `<span class="tqCell"><u>昨收</u><b style="color:#eef9fc">—</b></span>`}</div>`; /* jl-1023+1048: 休市信息由列标签「收」承担; 日期尾巴已随持仓行整块删除(定案: 做T不联动+太挤) */
+    const r1 = hero + `<div class="tvQuoteJL tvQuoteMainJL">${it("开", qo)}${it("高", qh)}${it("低", ql)}${it(typeof mktLiveJL === "function" && mktLiveJL() ? "实时" : "收", qc)}${pc > 0 ? `<span class="tqCell"><u>昨收</u><b class="tqPc" style="color:${prevBar2 && Number(prevBar2.c) > 0 && pc > 0 ? (pc > Number(prevBar2.c) + 1e-9 ? "#ff6b6b" : pc < Number(prevBar2.c) - 1e-9 ? "#1fdc93" : "#eef9fc") : "#eef9fc"}">${pc.toFixed(dc)}</b></span>` : `<span class="tqCell"><u>昨收</u><b style="color:#eef9fc">—</b></span>`}${qh > 0 && ql > 0 && pc > 0 ? `<span class="tqCell"><u>振幅</u><b style="color:#ffd21f;font-weight:700">${((qh - ql) / pc * 100).toFixed(2)}%</b></span>` : `<span class="tqCell"><u>振幅</u><b style="color:#ffd21f">—</b></span>`}</div>`; /* jl-1023+1048: 休市信息由列标签「收」承担; 日期尾巴已随持仓行整块删除(定案: 做T不联动+太挤) */
     /* jl-1048 定案(05:48): 持仓行整块下卡——做T挂单与持仓字段不联动(死数)且卡面还是太挤: 09-30日期尾巴+3,400股/成本/浮盈亏%/中波段L→H·起·回调 全删; 持仓编辑器(facts·股数/成本/盈亏/本金)与做T记账在T区原样; 温度计段低/段高·共振筹码·资金流·水位球不动 */
     return r1;
   }
@@ -4588,7 +4594,7 @@ function posRulerHTMLJL(s) {
       let _px0 = -99, _mg = 99;
       tks.forEach((o) => { if (o.x - _px0 > 0) _mg = Math.min(_mg, o.x - _px0); _px0 = o.x; });
       const _fkFs = _mg < 11 ? Math.max(6.5, 8.5 * _mg / 11) : 8.5;
-      ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:9px 2px 1px">' + tks.map((o) => `<span class="ftk" style="position:absolute;left:${o.x.toFixed(1)}%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ${o.c}" style="font-size:${_fkFs.toFixed(1)}px">${o.v.toFixed(2)}</strong><b style="font-size:${(_fkFs * .88).toFixed(1)}px">${o.r}</b></span>`).join("") + "</div>";
+      ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:14px 2px 1px">' /* ks-1151fix10: 数字行下移9→14px离开渐变条(用户箭头指定) */ + '' + tks.map((o) => `<span class="ftk" style="position:absolute;left:${o.x.toFixed(1)}%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ${o.c}" style="font-size:${_fkFs.toFixed(1)}px">${o.v.toFixed(2)}</strong><b style="font-size:${(_fkFs * .88).toFixed(1)}px">${o.r}</b></span>`).join("") + "</div>";
     }
   }
   const _candV = _swState && Number(_swState.pullLow) > 0 ? Math.min(Number(_swState.pullLow), p, Number(s.low) > 0 ? Number(s.low) : Infinity) : 0;
@@ -17900,7 +17906,7 @@ var RLMCore = (function () {
       open = !!st[s.code];
     } catch (e) {
     }
-    return `<div class="fundJL"><button type="button" class="fundTglJL" data-fund-toggle="${s.code}"><b>${open ? "\u25BE" : "\u25B8"} \u8D44\u91D1\u6D41 \xB7 \u5B9E\u65F6\u8D70\u52BF</b><i class="fundNetJL" data-fund-net="${s.code}"></i><span class="fundLiveJL ${cls(Number(s.pct) || 0)}" data-fund-live="${s.code}">${s.quoteReady === true ? money(s.base) + " " + pct(s.pct) : "\u884C\u60C5\u8FDE\u63A5\u4E2D\u2026"}</span></button><div class="fundBodyJL" data-fund-body="${s.code}" style="display:${open ? "block" : "none"}"></div></div>`;
+    return `<div class="fundJL"><button type="button" class="fundTglJL" data-fund-toggle="${s.code}"><b>${open ? "\u25BE" : "\u25B8"} \u8D44\u91D1\u6D41 \xB7 \u5B9E\u65F6\u8D70\u52BF</b><i class="fundNetJL" data-fund-net="${s.code}"></i><span class="fundLiveJL ${cls(Number(s.pct) || 0)}" data-fund-live="${s.code}">${s.quoteReady === true ? money(s.base) + " " + pct(s.pct) : "\u884C\u60C5\u8FDE\u63A5\u4E2D\u2026"}</span><i class="fundAmpJL" data-fund-amp="${s.code}">${(() => { const _h = Number(s.high) || 0, _l = Number(s.low) || 0; const _pv = (Number(s.base) > 0 && Number.isFinite(Number(s.pct)) && Number(s.pct) > -99) ? Number(s.base) / (1 + Number(s.pct) / 100) : (Number(s.prevClose) || 0); /* ks-1151fix10b: 昨收同quoteRowsJL口径(价/1+pct推导, 不信s.prevClose脏字段)——同卡两处振幅恒一致 */ return (_h > 0 && _l > 0 && _pv > 0) ? "\u632F\u5E45 " + ((_h - _l) / _pv * 100).toFixed(2) + "%" : ""; })()}</i></button><div class="fundBodyJL" data-fund-body="${s.code}" style="display:${open ? "block" : "none"}"></div></div>`;
   }
   const FUND_CACHE_JL = {};
   function drawFundPriceJL(cv, pts, pre) {

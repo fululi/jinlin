@@ -1,3 +1,4 @@
+/* jinlin sw v242 — 2026-10-23凌晨: ks-1151fix10批上线(ks.html: ①五日档默认窗口48→240根根修(旧只显1日) ②日界跳空带分钟级恒显(撤VI门控, 撤文字, 蓝0.22) ③线图白线+线色芯片白黄橙粉绿 ④BOLL/提醒等fix9基座) + index.html: ①四价行第6格'振幅%'(亮黄) ②资金流行振幅(亮黄11px700) ③温度计fibTicks数字行9→14px下移。基于v0.84.99斐波批回退后基座重打。版本号跳到v0.84.101/壳v242: 避开被回退批占过的v.100/v241(手机若有残壳缓存对号自愈不触发)。成对: index(data-ver .101, data-sw v242, iframe戳1151a→1151c)。KEEP留v241(回退批残壳)与v240 */
 /* jinlin sw v240 — 2026-10-23凌晨: 斐波五件套批——activeLegJL单一真源(jl-P1)+温度计中/日波段Fib分离(jl-P0-1/2/3)+接回档R2c含作废兜底(jl-P0-4)+中波段块反弹档真源+posRuler前缀规范化(jl-P2); 壳号成对升240=旧端自愈刷新拿新index.html(上个commit只换函数未升壳, SW喂旧缓存致手机端看不到), KEEP=240+239+238 */
 /* jinlin sw v239 — 2026-10-23凌晨: ks-1151fix9批(ks.html大改: 分时十字线右价签根修+BOLL接入分时+VI跨日钳制+乱帧根修+副图接入+高低点提醒接TS+J日BOLL三线加亮并入)——ks.html在SHELL缓存, 壳号成对升239强制手机重拉; 配套 v0.84.98: index(data-ver .98, data-sw v239, iframe戳v=1022l→1151a)。上批 .97 的ks.html右轴改动jl-1151b已并入fix9基座(padR自适应公式原样保留)。手机端若仍见旧版: 顶栏更新条点按硬更新一次即透 */
 /* jinlin sw v233 — 2026-10-22夜: ks-1145(ks.html分时线染色+默认翻开)改了SHELL内ks.html, 壳号成对升233——不改壳号手机端SWignoreSearch继续喂旧ks.html=黑图; 旧注v231/v232头纟存:  缓存名→v231, 配合 v0.84.90 批[ks-1022g-fix: VI修正(用户验收批准)——①检测段删除条件双→单: 后续影线碰到缺口靠价格侧的边(看涨低点≤缺口上沿/看跌高点≥缺口下沿)即消, 价格跳空跨过整个缺口也能删(旧双条件版此场景漏删); 列序注释写死实证[1]开[2]高[3]低[4]收; ②渲染下沿线-0.5→+0.5与上沿对称; 验证: 单测9/9+原套7/7+真实行情双向审计8票共1227个VI形态(删1171个每个带影线碰边证据, 留66个向后扫零碰边, A/B违例0); 版对二次重排: 87/v228组装撞jl-1141(重排至44bc98f对齐89/v230)后再撞jl-1141h2(b802e94 89/v230), 再重排至b802e94之上对齐90/v231, VI修正diff字节不变; index(89→90, data-sw v230→v231, iframe戳v=1022g→1022i)+sw(壳v230→v231, KEEP=231+230+229)成对提交] */
@@ -135,8 +136,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v240'; /* v0.84.89: jl-1141h2 UI再修(冒泡根治+右下+玻璃+可拖拽); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v240', 'jinlin-shell-v239', 'jinlin-shell-v238']; /* KEEP=229+228+227, 三版容量沿用 */
+const C = 'jinlin-shell-v242'; /* v0.84.89: jl-1141h2 UI再修(冒泡根治+右下+玻璃+可拖拽); 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v242', 'jinlin-shell-v241', 'jinlin-shell-v240']; /* KEEP=229+228+227, 三版容量沿用 */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
