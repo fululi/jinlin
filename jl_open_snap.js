@@ -97,7 +97,7 @@
    *   导出失败不影响页面(全程try/catch静默)。
    *
    * 【状态四分法(用户确认)】每字段独立 {state, src, asOf}:
-   *   ok=来源在且有当日值 / stale=来源在但过期(值保留) /
+   *   fresh=来源在且有当日值 / stale=来源在但过期(值保留, 过期≠当时无信号) /
    *   missing=来源存在但无值 / unreadable=模块读不到(保留原因)。
    *   unreadable 永不记成 missing。stale 口径以手机日历日为参考线;
    *   记录归属日 d 以 a[30] 报价日期为准(dSrc:"quote"), 手动无报价
@@ -105,9 +105,9 @@
    *   收盘后可用手动入口留档, 见交付说明)。
    * ===================================================================== */
   var VER = "os1", KEY = "jl_osnap_v1", KEY_ON = "jl_osnap_on_v1", KEY_UI = "jl_osnap_ui_v1";
-  var WINS = [["09:26", "092600", "092959"], ["09:35", "093500", "093959"], ["10:00", "100000", "100459"]];
+  var WINS = [["09:26", "092600", "092959"], ["09:35", "093500", "093959"], ["09:55", "095500", "095959"], ["10:00", "100000", "100459"]]; /* 2026-10-22加窗: 09:55噪声收敛点, 四窗语义=竞价末/开盘后/收敛/半盘 */
   var ARM_MIN = 2;            /* 预筛放宽±2分钟(手机钟, 只决定是否考虑发请求) */
-  var TICK_MS = 20e3, REQ_MS = 8e3, CAP_RECS = 120, CAP_MAN_DAY = 30, KEEP_DAYS = 10;
+  var TICK_MS = 20e3, REQ_MS = 8e3, CAP_RECS = 300, CAP_MAN_DAY = 30, KEEP_DAYS = 60; /* 2026-10-22: 60日留档(4窗×60=240固定+手动余量60), 供9:55规则攒验证样本 */
   var MAX_ATT = 2, RETRY_MS = 20e3; /* 放宽件(2026-10-22 11:04): 同窗首次+重试1次, 重试间隔≥20秒 */
   var LS = (typeof localStorage !== "undefined") ? localStorage : null;
   var DOC = (typeof document !== "undefined") ? document : null;
@@ -209,14 +209,14 @@
     if (!stOk(r)) return { state: r.state, src: "jinlin_mtemp_v1", asOf: null };
     var v = r.v || {}, d = v.data || {};
     var age = v.at ? Date.now() - v.at : Infinity; /* 12:33定则: 外部键at由主包真实钟写入, 读侧用真实钟对齐写入方(有意区分——注入钟不伪造外部缓存新鲜度) */
-    return { state: (v.at && d && d.t !== undefined) ? (age > 15 * 60e3 ? "stale" : "ok") : "missing",
+    return { state: (v.at && d && d.t !== undefined) ? (age > 15 * 60e3 ? "stale" : "fresh") : "missing",
       src: "jinlin_mtemp_v1", asOf: v.at || null, t: d.t, up: d.up, down: d.down, flat: d.flat, amt: d.amt, fund: d.fund };
   }
   function capTv2() { /* 温度v2 jlv2_snap_v1 {date, ok, t, up, down} */
     var r = readJ("jlv2_snap_v1");
     if (!stOk(r)) return { state: r.state, src: "jlv2_snap_v1", asOf: null };
     var v = r.v || {};
-    return { state: v.date ? (v.date === ymd() ? "ok" : "stale") : "missing", src: "jlv2_snap_v1",
+    return { state: v.date ? (v.date === ymd() ? "fresh" : "stale") : "missing", src: "jlv2_snap_v1",
       asOf: v.date || null, ok: v.ok, t: v.t, up: v.up, down: v.down };
   }
   function capSecF() { /* 板块资金 jl_sector_ff_v1 {板块:{amt,pct,d}} 全表; 13:26审查件: 合法JSON但值非对象(如null)→按空表missing不中断, 修复前Object.keys(null)抛错吞掉整次响应 */
@@ -230,7 +230,7 @@
       if (dd > maxD) maxD = dd;
       rows.push({ k: k, amt: e && e.amt, pct: e && e.pct, d: dd });
     });
-    return { state: n ? (maxD === ymd() ? "ok" : "stale") : "missing", src: "jl_sector_ff_v1", asOf: maxD || null, n: n, rows: rows };
+    return { state: n ? (maxD === ymd() ? "fresh" : "stale") : "missing", src: "jl_sector_ff_v1", asOf: maxD || null, n: n, rows: rows };
   }
   function capMf() { /* 4指数主力净额 jl_mf_hist_v1 {d, hist:{指数:[{d,main}]}} 取各指数末行 */
     var r = readJ("jl_mf_hist_v1");
@@ -240,7 +240,7 @@
       var a = v.hist[k];
       if (Array.isArray(a) && a.length) { var la = a[a.length - 1]; rows.push({ k: k, d: la && la.d, main: la && la.main }); }
     });
-    return { state: rows.length ? (v.d === ymd() ? "ok" : "stale") : "missing", src: "jl_mf_hist_v1", asOf: v.d || null, rows: rows };
+    return { state: rows.length ? (v.d === ymd() ? "fresh" : "stale") : "missing", src: "jl_mf_hist_v1", asOf: v.d || null, rows: rows };
   }
   function capMemo(manualMode) { /* 档位 jinlin_tier_memo_v1 原样记 dk/顶层d/planNext/S1/B1(补充约束2/4); 三态保真(11:50审查件): 缺失=undefined|null→null, 明确false→false, true→true, 空档位数组→null 不伪造不丢字段 */
     var r = readJ("jinlin_tier_memo_v1");
@@ -258,13 +258,13 @@
         anchor: rr.anchor === undefined ? null : rr.anchor,
         lastComputed: manualMode ? true : undefined }; /* 手动=上次计算值(标注) */
     });
-    return { state: Object.keys(codes).length ? (v.d === ymd() ? "ok" : "stale") : "missing", src: "jinlin_tier_memo_v1", asOf: v.d || null, codes: codes };
+    return { state: Object.keys(codes).length ? (v.d === ymd() ? "fresh" : "stale") : "missing", src: "jinlin_tier_memo_v1", asOf: v.d || null, codes: codes };
   }
   function capStrong() { /* 强势评分 jinlin_strong_day_v1 {d, m:{code:{...}}} 原样取 m[code] */
     var r = readJ("jinlin_strong_day_v1");
     if (!stOk(r)) return { state: r.state, src: "jinlin_strong_day_v1", asOf: null, codes: null };
     var v = r.v || {};
-    return { state: v.m && Object.keys(v.m).length ? (v.d === ymd() ? "ok" : "stale") : "missing", src: "jinlin_strong_day_v1", asOf: v.d || null, codes: v.m || {} };
+    return { state: v.m && Object.keys(v.m).length ? (v.d === ymd() ? "fresh" : "stale") : "missing", src: "jinlin_strong_day_v1", asOf: v.d || null, codes: v.m || {} };
   }
   function capFf() { /* 个股资金 jl_ff_v1 {code:{rows:[{d,main,mainPct}],t,src}} 取末行; ch=数据子通道(em-min等) */
     var r = readJ("jl_ff_v1");
@@ -355,7 +355,7 @@
         f: ffEntry(ff, h.code), k: manualMode ? capK(h.code) : null };
     });
   }
-  function trimStore(store) { /* 只裁自己的数组: 上限120条 + 保留最近10个有记录的自然日(12:04定案: 按有记录日计, 周末/停牌空档不按日历回数; 12:23审查件: 天数按"去重日期"算——第10新有记录日的当日全部记录整日保留, 不把同日多条当多条天数, 也不按第10新"条"截断) */
+  function trimStore(store) { /* 只裁自己的数组: 上限300条 + 保留最近60个有记录的自然日(12:04定案: 按有记录日计, 周末/停牌空档不按日历回数; 12:23审查件: 天数按"去重日期"算——第60新有记录日的当日全部记录整日保留, 不把同日多条当多条天数, 也不按第60新"条"截断) */
     var recs = store.recs;
     if (recs.length > CAP_RECS) recs = recs.slice(recs.length - CAP_RECS);
     if (recs.length) {
