@@ -1,3 +1,4 @@
+/* jinlin sw v227 — 2026-10-22: 缓存名→v227, 配合 v0.84.86 批[ks-1022g: VI实体缺口(LuxAlgo官方口径)——①算法: 前根收盘→后根开盘的实体缺口, 且两根影线范围重叠(区间内只有影线交易过, 连影线都没碰的纯真空跳空=opening gap不算VI), 0.05%噪音过滤, 影线碰回区间即删, 官方上限留最近100个; ②画法: 蜡烛之间两条蓝色短线+浅蓝带标在缺口发生处(不外延伸, 蓝=与红绿K线区分), 旁标+VI/-VI方向小字不带价格数字; ③指标行独立[VI]开关+状态记忆, 金粼嵌入态默认开(与OB/FVG同族); 验证: 单测7/7(含真空跳空排除)+mock数据断言3/3+VLM视觉四图(mock/真茅台/开关开/开关关)+真实按钮点击路径(S.ind.vi 翻转)+diff实证仅VI批次49行; index(85→86, data-sw v226→v227, iframe戳v=1022e→1022g)+sw(壳v226→v227, KEEP=227+226+225)成对提交] */
 /* jinlin sw v226 — 2026-10-22: 缓存名→v226, 配合 v0.84.85 批[ks-1022fg: LIQ方向重定+视觉重画——B=红买B等低点对(下方支撑,触破删)/S=绿卖S等高点对(上方压力,触破删), 用户批准推送; 补提交: index/ks已在前一commit(477532c)先推, sw组装断言失误漏推本件——速补防自愈banner循环] */
 /* jinlin sw v224 — 2026-10-22: 缓存名→v224, 配合 v0.84.83 批[ks-1022d定案: LIQ已扫判向修正——82版按side分向(BSL上冲/SSL下破)与真实数据矛盾(BSL挂现价下/SSL挂现价上); 定案: LIQ位本质=低点语义(止损/支撑带), 价格低价触及该位下方即被扫——统一判与side无关; 效果=大跌后上方一排已穿越旧位全消, 仅留现价下方未破支撑/目标; 真实茅台321根复跑+mock双顶下跌断言+VLM视觉(上方无/下方S LIQ)三验; index(82→83, data-sw v223→v224)+sw(壳v223→v224, KEEP=224+223)成对提交] */
 /* jinlin sw v223 — 2026-10-22: 缓存名→v223, 配合 v0.84.82 批[ks-1022d: LIQ流动性已扫失效——BSL/SSL生成后价格再触该位即扫掉, 已扫不再画不再当目标(用户实证: 292.25→273大跌中上方仍挂一排早已被穿越的B LIQ); 过滤后BSL必在现价上方(反弹目标)/SSL必在下方(下跌目标), 与底部评分栏口径一致; kl列序实证[qfqday路径: 日期/开/低/收/高/量]BSL看[4]高列/SSL看[2]低列; 验证: 双顶下跌mock——已扫BSL×3+已扫SSL全删, 仅剩未扫下方SSL目标(ictCalc断言+方向自洽); index(81→82, data-sw v222→v223)+sw(壳v222→v223, KEEP=223+222)成对提交] */
@@ -128,8 +129,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v226'; /* v0.84.81: ks-1022全批(K线高低区+十字线统一+收藏栏/嵌入默认开); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v226', 'jinlin-shell-v225', 'jinlin-shell-v224']; /* KEEP=226+225+224, ks-1022e三版容量沿用 */
+const C = 'jinlin-shell-v227'; /* v0.84.81: ks-1022全批(K线高低区+十字线统一+收藏栏/嵌入默认开); 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v227', 'jinlin-shell-v226', 'jinlin-shell-v225']; /* KEEP=226+225+224, ks-1022e三版容量沿用 */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(

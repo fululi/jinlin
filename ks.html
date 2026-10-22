@@ -3159,7 +3159,7 @@ function swingsOf(kl) {
   return { sh: sh, sl: sl, hh: hh };
 }
 function ictCalc(kl) {
-  var out = { fvg: [], liq: [], struct: [], ob: [] };
+  var out = { fvg: [], vi: [], liq: [], struct: [], ob: [] };
   var n = kl.length, i, j;
   // FVG：近200根三蜡烛缺口；跟踪回补进度，只画未补完的剩余缺口
   for (i = Math.max(2, n - 200); i < n; i++) {
@@ -3184,6 +3184,23 @@ function ictCalc(kl) {
     } else mg.push({ i: z.i, top: z.top, bot: z.bot, bull: z.bull, part: z.part });
   });
   out.fvg = mg;
+  // ks-1022g: VI 实体缺口(LuxAlgo 官方口径)——前根收盘→后根开盘之间的实体缺口, 且两根蜡烛的
+  // 影线范围仍重叠(区间内只有影线交易过); 连影线都没碰过的纯真空跳空是 opening gap, 不算VI;
+  // 之后任何一根K线影线碰回区间即删(触碰即消); 官方上限保留最近100个
+  var viMin = kl[n - 1][4] * 0.0005; // 缺口小于现价0.05%视为噪音不标(A股最小变动1分钱跳档太多)
+  for (i = Math.max(1, n - 200); i < n; i++) {
+    var _pc = kl[i - 1][4], _no = kl[i][1];
+    if (_no - _pc > viMin && kl[i][3] <= kl[i - 1][2]) { // 看涨: 后开>前收 且 后根低≤前根高(影线重叠)
+      var okV = true;
+      for (j = i + 1; j < n; j++) if (kl[j][2] >= _pc && kl[j][3] <= _no) { okV = false; break; }
+      if (okV) out.vi.push({ i: i, top: _no, bot: _pc, bull: true });
+    } else if (_pc - _no > viMin && kl[i][2] >= kl[i - 1][3]) { // 看跌: 后开<前收 且 后根高≥前根低
+      var okV2 = true;
+      for (j = i + 1; j < n; j++) if (kl[j][2] >= _no && kl[j][3] <= _pc) { okV2 = false; break; }
+      if (okV2) out.vi.push({ i: i, top: _pc, bot: _no, bull: false });
+    }
+  }
+  if (out.vi.length > 100) out.vi = out.vi.slice(-100);
   var sw = swingsOf(kl);
   var tol = kl[n - 1][4] * 0.002;
   // 流动性：近120根内等高(BSL)/等低(SSL)摆动点
@@ -3662,7 +3679,7 @@ function renderAutoTri(ctx, v) {
   }
 }
 function renderICT(ctx, v) {
-  if (!S.ind.fvg && !S.ind.liq && !S.ind.ms && !S.ind.ob) return;
+  if (!S.ind.fvg && !S.ind.liq && !S.ind.ms && !S.ind.ob && !S.ind.vi) return;
   var kl = S.kl, n = kl.length;
   if (n < 30) return;
   var ic = ictCalc(kl);
@@ -3688,6 +3705,24 @@ function renderICT(ctx, v) {
         ctx.font = "8.5px -apple-system, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
         ctx.fillText("FVG" + (z.part ? "·半" : ""), x0 + 2, (yT + yB) / 2);
       }
+    });
+  }
+  if (S.ind.vi) {
+    // ks-1022g: VI(LuxAlgo Volume Imbalance)——蜡烛之间的实体空隙用两条蓝色短线标出来(蓝与红绿K线区分),
+    // 画在缺口发生处不外延伸; 旁边只标+VI/-VI方向小字, 不写价格数字
+    var _vz = ic.vi.filter(function (z) { return z.i >= v.i0 - 2 && z.i <= v.i1 + 2; });
+    _vz.forEach(function (z) {
+      var xa = v.X(z.i - 1), xb = v.X(z.i) + v.step * 0.9;
+      var yT = v.Y(z.top), yB = v.Y(z.bot);
+      ctx.fillStyle = "rgba(77,159,255,0.16)";
+      ctx.fillRect(xa, yT, xb - xa, Math.max(1, yB - yT));
+      ctx.strokeStyle = "rgba(77,159,255,0.92)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(xa, Math.round(yT) + 0.5); ctx.lineTo(xb, Math.round(yT) + 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xa, Math.round(yB) + 0.5); ctx.lineTo(xb, Math.round(yB) - 0.5); ctx.stroke();
+      ctx.fillStyle = "#6fb2ff";
+      ctx.font = "bold 8.5px -apple-system, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(z.bull ? "+VI" : "-VI", xb + 2, (yT + yB) / 2);
     });
   }
   if (S.ind.liq) {
@@ -6114,7 +6149,7 @@ function renderExtraPanes(ctx, v) {
   }
 }
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
@@ -6203,6 +6238,16 @@ function buildInds() {
       el.appendChild(b);
       return;
     }
+    if (t[0] === "vi") {
+      b.addEventListener("click", function () {
+        if (S.favPick) { toggleFav("ind:vi"); return; }
+        S.ind.vi = !S.ind.vi;
+        store(); buildInds(); draw();
+        hint(S.ind.vi ? "VI 实体缺口: 前收→后开跳空两线一带 · 影线碰回即消(LuxAlgo口径)" : "VI 已关闭");
+      });
+      el.appendChild(b);
+      return;
+    }
     if (t[0] === "rlm") {
       /* 0928 用户实测反馈后加的专属分支：反应位按钮除了开关，点一下用 ks 自带的 hint 条
          弹一行短统计。图上不再常驻 HUD 文字——那行会被页面上方的时间元素挡住，
@@ -6247,7 +6292,7 @@ function applyUrl() {
       document.documentElement.classList.remove("theme-la", "theme-lc"); if (typeof S !== "undefined") S.theme = ""; // 金粼0913: 内嵌强制深色, 与金粼底融合
       // 金粼0913晚: 内嵌默认开 三角/SR/OB/VOL叠加/BSL·SSL流动性; 关掉 ICT 结构标记(ms)——BOS 只留三角突破那一枚(上黄下红, 部署版自带)
       // 金粼0913深夜(口径定案): 每次打开都恢复默认开——隐藏/删除只是本次会话有效, 不做跨会话持久化, 重开必须看到指标在
-      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.phvl = true; /* ks-1022c: 嵌入态每次打开恢复高低区显示(与金粼默认开口径一致) */ S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
+      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.vi = true; /* ks-1022g: 嵌入态默认开VI实体缺口(与OB/FVG同族) */ S.ind.volMain = true; S.ind.phvl = true; /* ks-1022c: 嵌入态每次打开恢复高低区显示(与金粼默认开口径一致) */ S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
       S.lineMode = false; // 金粼0914: 内嵌大图必须是蜡烛K线——存档里 lineMode=true 会把主图变成蓝色收盘价折线(用户看到的"实时线盖图"), 内嵌强制蜡烛, 可用紧凑条「K/线」切回
       // 金粼0913晚(重打在部署版上): 单行抽屉紧凑条(周期/画线/指标/幅图 + 删除/清空/隐藏/锁定/提醒), 替代☰多行展开
       if (!document.getElementById("ksBarJL")) {
