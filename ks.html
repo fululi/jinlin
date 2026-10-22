@@ -809,7 +809,8 @@ function view() {
   var n = S.kl.length;
   if (!n) return null;
   var w = cv.clientWidth, hh = cv.clientHeight;
-  var padL = 6, padR = 48, padT = 10, padB = 18;
+  var _plW = String(S.kl[n - 1][4].toFixed(dec())).length; /* jl-1151b: 轴宽按绿色现价签实际字符数定, 8px字再收窄(用户定: 宽度往右缩, K线横屏更宽)——兆易"276.75"6字符=37/指数7字符=42/低价股26 */
+  var padL = 6, padR = Math.max(26, Math.round(_plW * 4.8) + 8), padT = 10, padB = 18;
   var plotW = w - padL - padR;
   var avail = hh - padT - padB;
   var volH = (S.ind.volMain && S.bigPane !== "vol") ? 0 : Math.round(avail * 0.085); // ks-0906-13: VOL叠加主图时不占副图位(点VOL放大仍出大副图)
@@ -1601,20 +1602,22 @@ function drawReal() {
   var kl = S.kl, i0 = v.i0, i1 = v.i1;
   var d2 = dec();
   // 网格 + 右侧价格轴（自适应整数刻度：1/2/2.5/5 步进，约 6-9 条）
-  ctx.font = "11px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; // v.52: 价格轴字放大
+  ctx.font = "8px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; /* jl-1151b: 轴字号对齐绿色现价签(bold 8px, 用户定"跟绿色价格数字一样大就行"); 原v.52放大到11让位 */
   var range = v.hi - v.lo;
   var raw = range / 12; // hq-mobile请求: 刻度加密, 价位看得准
   var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
   var niceStep = mag;
   [1, 2, 2.5, 5, 10].forEach(function (m2) { if (raw >= mag * m2) niceStep = mag * m2; });
+  var _gd = (niceStep % 1 === 0) ? 0 : ((niceStep * 10) % 1 === 0 ? 1 : d2); /* jl-1151b: 整数步进刻度砍掉".00"(用户定: 320.00→320省空间); 半步2.5留1位小数, 更小步/ETF按原d2 */
   for (var gp2 = Math.ceil(v.lo / niceStep) * niceStep; gp2 <= v.hi; gp2 += niceStep) {
     var gy = v.Y(gp2);
     gridSt(ctx);
     ctx.beginPath(); ctx.moveTo(v.padL, gy); ctx.lineTo(v.padL + (i1 - i0) * v.step, gy); ctx.stroke();
     ctx.fillStyle = "#f2fbfd"; // v.52: 价格轴不要灰, 亮白(用户0916)
-    ctx.fillText(gp2.toFixed(d2), v.padL + (i1 - i0) * v.step + 4, gy);
+    ctx.fillText(gp2.toFixed(_gd), v.padL + (i1 - i0) * v.step + 4, gy);
   }
   // 底部日期轴 + 竖直分隔线（ks-0907-27: 按真实时间分界——日K=每月1号/分钟=每日开盘, 不再等分乱切; 最多6条防拥挤）
+  ctx.font = "11px Menlo, monospace"; /* jl-1151: 日期轴字号不动, 只缩价格轴 */
   ctx.textAlign = "center";
   var ticks = [];
   for (var di = i0 + 1; di < i1; di++) {
