@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ks-1022fg (2026-10-22): LIQ方向重定+视觉重画——B=红"买B"等低点对(现价下方支撑/低买参考, 低价触及即失守删), S=绿"卖S"等高点对(新加摆动高点检测, 现价上方压力/高卖参考, 高价触及即被扫删); 圆角色块中文标签+1.5px虚线; 评分栏/图例同步(上方压力S/下方支撑B)。原BSL/SSL双低点对=方向拧(用户两图实证: 跌中上方一排B/S贴最低点), 旧S用UP红色与涨同色加重混乱。ks-1022b(1022-上午)的原批注: [高低区]默认入★收藏栏关, 不动指标行收起设计; 上一批: ks-1019 (2026-10-21): K线页大图十字线与jinlin统一——①长按门槛420→220ms(与分时/持仓大图PHVLCross同节奏) ②松手十字线保留1.5s再消失(原立即关闭, 松手瞬间信息卡消失读不到开高低收) ③新手势开始自动清保留期残留线; 触摸路径以外的画线/平移/缩放/面板/鼠标悬停全部零改动; 配套 index.html iframe缓存戳v=1012b→v=1019a + sw壳v218 -->
+<!-- ks-1022g-fix (2026-10-22 下午): VI修正(用户验收批准)——①检测段删除条件双→单: 后续影线碰到缺口靠价格侧的边(看涨低点≤上沿/看跌高点≥下沿)即消, 价格跳空跨过整个缺口也能删(旧双条件版此场景漏删); 列序注释写死实证[1]开[2]高[3]低[4]收(与swingsOf/FVG/EMA同一套); ②渲染下沿线-0.5→+0.5与上沿对称; 验证: 单测9/9+原套7/7+真实行情双向审计8票(891+336个VI形态, 删的全带影线碰边证据/留的向后扫零碰边/违例0)+用户点名兆易创新/永鼎VLM视觉抽查; index(86→87, 壳v227→v228, 戳v=1022g→1022h)+sw成对提交。原批 ks-1022fg (2026-10-22): LIQ方向重定+视觉重画——B=红"买B"等低点对(现价下方支撑/低买参考, 低价触及即失守删), S=绿"卖S"等高点对(新加摆动高点检测, 现价上方压力/高卖参考, 高价触及即被扫删); 圆角色块中文标签+1.5px虚线; 评分栏/图例同步(上方压力S/下方支撑B)。原BSL/SSL双低点对=方向拧(用户两图实证: 跌中上方一排B/S贴最低点), 旧S用UP红色与涨同色加重混乱。ks-1022b(1022-上午)的原批注: [高低区]默认入★收藏栏关, 不动指标行收起设计; 上一批: ks-1019 (2026-10-21): K线页大图十字线与jinlin统一——①长按门槛420→220ms(与分时/持仓大图PHVLCross同节奏) ②松手十字线保留1.5s再消失(原立即关闭, 松手瞬间信息卡消失读不到开高低收) ③新手势开始自动清保留期残留线; 触摸路径以外的画线/平移/缩放/面板/鼠标悬停全部零改动; 配套 index.html iframe缓存戳v=1012b→v=1019a + sw壳v218 -->
 <html lang="zh-CN" data-page-node-id="6D2T8EvdYeQCCUJBLfBYbE">
 <head data-page-node-id="RFoIjQ3gWo31cj0DVYxMoy">
 <meta charset="utf-8" data-page-node-id="e4EwOyQyDp841sEuZeXoET">
@@ -3186,17 +3186,19 @@ function ictCalc(kl) {
   out.fvg = mg;
   // ks-1022g: VI 实体缺口(LuxAlgo 官方口径)——前根收盘→后根开盘之间的实体缺口, 且两根蜡烛的
   // 影线范围仍重叠(区间内只有影线交易过); 连影线都没碰过的纯真空跳空是 opening gap, 不算VI;
-  // 之后任何一根K线影线碰回区间即删(触碰即消); 官方上限保留最近100个
+  // 影线碰回缺口靠价格侧的边即删(触碰即消); 官方上限保留最近100个
+  // ks-1022g-fix: 列序实证 kl[i]=[日期,开,高,低,收,量]→[1]开[2]高[3]低[4]收(与swingsOf/FVG/EMA同一套);
+  //   删除条件由双条件改单条件——后续影线碰到缺口靠价格侧那条边就消, 价格跳空跨过整个缺口也能删(用户审查)
   var viMin = kl[n - 1][4] * 0.0005; // 缺口小于现价0.05%视为噪音不标(A股最小变动1分钱跳档太多)
   for (i = Math.max(1, n - 200); i < n; i++) {
     var _pc = kl[i - 1][4], _no = kl[i][1];
     if (_no - _pc > viMin && kl[i][3] <= kl[i - 1][2]) { // 看涨: 后开>前收 且 后根低≤前根高(影线重叠)
       var okV = true;
-      for (j = i + 1; j < n; j++) if (kl[j][2] >= _pc && kl[j][3] <= _no) { okV = false; break; }
+      for (j = i + 1; j < n; j++) if (kl[j][3] <= _no) { okV = false; break; } // 影线低点碰回缺口上沿即消
       if (okV) out.vi.push({ i: i, top: _no, bot: _pc, bull: true });
-    } else if (_pc - _no > viMin && kl[i][2] >= kl[i - 1][3]) { // 看跌: 后开<前收 且 后根高≥前根低
+    } else if (_pc - _no > viMin && kl[i][2] >= kl[i - 1][3]) { // 看跌: 后开<前收 且 后根高≥前根低(影线重叠)
       var okV2 = true;
-      for (j = i + 1; j < n; j++) if (kl[j][2] >= _no && kl[j][3] <= _pc) { okV2 = false; break; }
+      for (j = i + 1; j < n; j++) if (kl[j][2] >= _no) { okV2 = false; break; } // 影线高点碰回缺口下沿即消
       if (okV2) out.vi.push({ i: i, top: _pc, bot: _no, bull: false });
     }
   }
@@ -3719,7 +3721,7 @@ function renderICT(ctx, v) {
       ctx.strokeStyle = "rgba(77,159,255,0.92)";
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(xa, Math.round(yT) + 0.5); ctx.lineTo(xb, Math.round(yT) + 0.5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(xa, Math.round(yB) + 0.5); ctx.lineTo(xb, Math.round(yB) - 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(xa, Math.round(yB) + 0.5); ctx.lineTo(xb, Math.round(yB) + 0.5); ctx.stroke(); /* ks-1022g-fix: 下沿与上沿对称 +0.5 */
       ctx.fillStyle = "#6fb2ff";
       ctx.font = "bold 8.5px -apple-system, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
       ctx.fillText(z.bull ? "+VI" : "-VI", xb + 2, (yT + yB) / 2);
