@@ -1,3 +1,4 @@
+<!-- ks-1151fix10d (2026-10-23凌晨, 三轮): 用户引外部分析核查三件——①分时删renderDailyLevels(核查结论: 分析修法对根因描述不对——v.Y本就是引擎轴没画错, 那条贴顶浅线是"今开"虚线、兆易高开低走开在顶上属正常价位, 但六条日线级与引擎昨收/高低/价签重复=多余, 删; 成本线保留) ②分时BOLL 14→60(缠线根因, K线路径14零触碰) ③分时藏◀▶死钮(panTime改S.end引擎不认)——三处全采纳。红撞红主因=BOLL(14)贴价格+红区叠色, 60撑开后分离, 颜色不动(用户fix9自选亮红黄绿)。fix10b原批 -->
 <!-- ks-1151fix10b (2026-10-23凌晨, 二轮验收): ①日界跳空带撤文字标注(用户: "跳空"俩字多余) ②线色循环撤青(与VI蓝带撞色), 白/黄/橙/粉/绿 ③五日档默认窗口48→240根根修(旧只显1日=用户"没看到缺口"主因) ④跳空带撤VI门控(分钟级恒显, 新开档VI默认关也见) ⑤对比度0.16→0.22。fix10原批 -->
 <!-- ks-1151fix10 (2026-10-23凌晨, 验收版未推送): ①日界跳空显式标注——VI口径只认影线重叠失衡(ks-1022g), 纯真空隔夜跳空全被排除=五日图缺口无从看(用户腾讯五日对照); 分钟级档(1/5/15/30/60/5D)在日界处画VI同款蓝双线+跳空幅%(完全回补=暗+虚线+「补」), 开关随指标▾VI ②线图改持仓实时走势同款白线(撤蓝线蓝底), 线色可切(线图钮旁色芯片: 白/黄/青/粉/绿循环, 持久化) ③[宿主index侧] 持仓卡资金流行加"振幅%"(日内高低/昨收) ④[宿主index侧] 温度计价格数字行下移6px离开上方小图。fix9原批 -->
 <!-- ks-1151fix9 (2026-10-23凌晨): ①分时高低点提醒接入(持仓页同款)——TS引擎options传swingAlert(命名空间按票'ksTS:'+code, 引擎内建60s去重+首帧只prime不弹toast防刷屏), 页面补toast桥=hint条显示+500ms×18帧引擎redraw驱动新标记9s闪烁(引擎flashKeys机制本就齐, 只缺重画驱动); ②BOLL三线加亮(用户定: 蜡烛图上原色发闷晃眼)——up暗红→亮红rgba(255,72,72,.95)/mid暗金→亮黄rgba(255,220,64,.95)/dn暗绿→亮绿rgba(64,255,168,.95), K线与分时两处同改+值标签#e8c568→#ffe169; ③分时十字线信息框加"日内高低差%"(用户例: 永鼎当日高低6.7%)——S.ts.P全日极值/昨收; ④并入线上v0.84.97右轴自适应(用户jl-1151b): _plW按现价签字符数×4.8+8钳[26,∞), 轴字号11→8px对齐绿签, 整数步进刻度砍.00(_gd), 日期轴字号不动; ⑤正式化——返回/持仓跳转还原线上行为, 版本徽标只在独立态显示(嵌入态不扰宿主), 调试HUD改URL带?debug=1才开。fix8原批 -->
@@ -1990,6 +1991,7 @@ function drawReal() {
   renderAutoTri(ctx, v);
   renderDailyLevels(ctx, v);
   renderCostLine(ctx, v);
+  var _tp8 = document.querySelector(".tpan"); if (_tp8 && _tp8.style.display === "none") _tp8.style.display = ""; /* ks-1151fix10d: K线路径还原◀▶平移钮 */
   renderPHVLMarksJL(ctx, v); /* ks-1022: PHVL高低点标记·顶层 */
   renderFundStamps(ctx, v); // ks-0906-27: 只留低位"吸"单字戳(回测唯一正超额)
   renderSixSigJL(ctx, v); // ks-0929-53: 六信号戳(买侧转/仓/加在K线下方, 卖侧顶/清/离在上方)
@@ -4770,7 +4772,7 @@ function renderBollTSJL(ctx, v) { /* ks-1151fix8: 分时BOLL(14,2)——bollArr�
   if (!S.ind.boll || !v || !v.ts) return;
   var kl = S.kl; if (!kl || kl.length < 15) return;
   try {
-    var bb = bollArr(kl, 14, 2), d2 = dec(), drew = false;
+    var bb = bollArr(kl, 60, 2), d2 = dec(), drew = false; /* ks-1151fix10d: 14→60——1分bar上BOLL(14)与价格同幅度波动三线缠白线(用户"红黄绿糊成一团"); 60根≈一小时通道, 带宽平滑一眼可辨; K线路径L1761的(14,2)零触碰 */
     [["up", "rgba(255,72,72,0.95)"], ["mid", "rgba(255,220,64,0.95)"], ["dn", "rgba(64,255,168,0.95)"]].forEach(function (bp) { /* ks-1151fix9: BOLL加亮(用户定: 蜡烛图上原暗色发闷)——亮红/亮黄/亮绿, K线与分时两处同改 */
       ctx.strokeStyle = bp[1]; ctx.lineWidth = 1.1; ctx.beginPath();
       var bs = false;
@@ -4793,6 +4795,7 @@ function renderBollTSJL(ctx, v) { /* ks-1151fix8: 分时BOLL(14,2)——bollArr�
   } catch (eB8) { if (window.console) console.warn("[ts.boll]", eB8); }
 }
 function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引擎(逐字搬运)画专用画布主图区(高=容器-副图占位), 副图与叠加层画在主画布; 全部经geom同一坐标系; fix7: 副图接入(VOL自绘+DDX/控盘/强弱T/实时主力/主力净额渲染器零改动直吃vTS)+跟随式左右标签+过渡帧rAF追画; fix8: +BOLL三线叠加 */
+  var _tp9 = document.querySelector(".tpan"); if (_tp9) _tp9.style.display = "none"; /* ks-1151fix10d: 分时藏◀▶平移钮(panTime改S.end, 分时引擎按241点铺满不认窗口=死钮误导, 用户截图y≈563那对) */
   var kl = S.kl;
   if (!kl || !kl.length || !S.ts.dayKey) { ctx.fillStyle = "#93a89c"; ctx.font = "13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("分时数据加载中…", w / 2, hh / 2); return; }
   var lay = tsLayoutJL(hh);
@@ -4832,8 +4835,7 @@ function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引�
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, g.plotBottom + 1); ctx.clip();
   try { renderICT(ctx, v); } catch (e1) { if (window.console) console.warn("[ts.ict]", e1); }
   try { renderBollTSJL(ctx, v); } catch (eB9) { if (window.console) console.warn("[ts.boll]", eB9); } /* ks-1151fix8: BOLL三线(自吞异常不拖垮主图) */
-  try { renderDailyLevels(ctx, v); } catch (e2) { if (window.console) console.warn("[ts.lvl]", e2); }
-  try { renderCostLine(ctx, v); } catch (e3) { if (window.console) console.warn("[ts.cost]", e3); }
+  try { renderCostLine(ctx, v); } catch (e3) { if (window.console) console.warn("[ts.cost]", e3); } /* ks-1151fix10d: 撤renderDailyLevels调用——昨高/昨低/今开/今高/今低/最新六线与引擎昨收线+高低标记+跟随价签全重复(用户图: 兆易高开低走, 今开浅灰虚线贴顶横穿像杂线); 成本线保留(坐标走引擎轴正确, 持仓成本分时要看) */
   try { renderCYQ(ctx, v); } catch (e6) { if (window.console) console.warn("[ts.cyq]", e6); }
   try { renderVP(ctx, v); } catch (e7) { if (window.console) console.warn("[ts.vp]", e7); }
   try { renderDrawings(ctx, v); } catch (e4) { if (window.console) console.warn("[ts.draw]", e4); }
