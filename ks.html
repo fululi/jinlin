@@ -1,3 +1,4 @@
+<!-- ks-1151fix10f (2026-10-23 05:1x, 五轮): 分时带改VWAP±2σ(用户引外部方案: 当日锚定无预热空窗/不受昨尾盘污染/与蓝均价同族/只画上下轨虚线; 60周期被否后14缠白线, 第三方案试用裁决)。fix10e原批 -->
 <!-- ks-1151fix10e (2026-10-23 05:03, 四轮): 分时BOLL撤回14(60被用户实测否——断崖日带子滞后成残影); fix10d另两处(删分时renderDailyLevels/藏◀▶死钮)保留。fix10d原批 -->
 <!-- ks-1151fix10d (2026-10-23凌晨, 三轮): 用户引外部分析核查三件——①分时删renderDailyLevels(核查结论: 分析修法对根因描述不对——v.Y本就是引擎轴没画错, 那条贴顶浅线是"今开"虚线、兆易高开低走开在顶上属正常价位, 但六条日线级与引擎昨收/高低/价签重复=多余, 删; 成本线保留) ②分时BOLL 14→60(缠线根因, K线路径14零触碰) ③分时藏◀▶死钮(panTime改S.end引擎不认)——三处全采纳。红撞红主因=BOLL(14)贴价格+红区叠色, 60撑开后分离, 颜色不动(用户fix9自选亮红黄绿)。fix10b原批 -->
 <!-- ks-1151fix10b (2026-10-23凌晨, 二轮验收): ①日界跳空带撤文字标注(用户: "跳空"俩字多余) ②线色循环撤青(与VI蓝带撞色), 白/黄/橙/粉/绿 ③五日档默认窗口48→240根根修(旧只显1日=用户"没看到缺口"主因) ④跳空带撤VI门控(分钟级恒显, 新开档VI默认关也见) ⑤对比度0.16→0.22。fix10原批 -->
@@ -4769,32 +4770,41 @@ function tsAxesJL(ctx, v) { /* ks-1151fix7: 跟随式左右标签——右价格
     ctx.fillStyle = pc >= 0 ? "#ff6f66" : "#35d99a"; ctx.textAlign = "left"; ctx.fillText(tx, g.l + 4, yl);
   }
 }
-function renderBollTSJL(ctx, v) { /* ks-1151fix8: 分时BOLL(14,2)——bollArr吃S.kl全量320根1分bar(跨日连续, 与K线口径同式), 只画当日段[dayStart,n)经v.X/v.Y映射; 引擎y轴按当日价格适配, 带超出上下沿自然截断(K线同行为); 三线色+值标签=K线路径L1739同款; 开关=指标▾BOLL(S.ind.boll), 与K线共用 */
+function renderBollTSJL(ctx, v) { /* ks-1151fix10f: 分时带=当日锚定VWAP±2σ(成交量加权, 从开盘累计)——用户引外部方案替换滚动BOLL: ①无预热空窗(开盘15根即出线, fix10d的60周期要等60分钟=用户图"10:30才画线"错源) ②不受昨日尾盘污染(当日dayStart锚定) ③与引擎蓝色均价线同族(中心≈均价) ④只画上下轨虚线不画中轨(不与蓝均价线重叠) ⑤V型日σ含全天趋势, 带宽但中心有锚——用户试用裁决, 不行回14(滚动口径在K线路径L1761从未动) */
   if (!S.ind.boll || !v || !v.ts) return;
-  var kl = S.kl; if (!kl || kl.length < 15) return;
-  try {
-    var bb = bollArr(kl, 14, 2), d2 = dec(), drew = false; /* ks-1151fix10e: 分时BOLL撤回14——fix10d的60实测被用户否: 兆易尾盘断崖日, 60周期带滞后成"残影"(带口朝上挂高位, 价格白线坠出下轨, 视觉"更奇怪"); 用户指令改回原口径14(缠是缠但跟得紧), K线路径的(14,2)从头没动过 */
-    [["up", "rgba(255,72,72,0.95)"], ["mid", "rgba(255,220,64,0.95)"], ["dn", "rgba(64,255,168,0.95)"]].forEach(function (bp) { /* ks-1151fix9: BOLL加亮(用户定: 蜡烛图上原暗色发闷)——亮红/亮黄/亮绿, K线与分时两处同改 */
-      ctx.strokeStyle = bp[1]; ctx.lineWidth = 1.1; ctx.beginPath();
-      var bs = false;
-      for (var bj = v.i0; bj < v.i1; bj++) {
-        if (bb[bp[0]][bj] == null) continue;
-        if (!bs) { ctx.moveTo(v.X(bj), v.Y(bb[bp[0]][bj])); bs = true; drew = true; }
-        else ctx.lineTo(v.X(bj), v.Y(bb[bp[0]][bj]));
-      }
-      if (bs) ctx.stroke();
-    });
-    if (drew) {
-      var bli = v.i1 - 1;
-      if (bb.mid[bli] != null) {
-        ctx.textAlign = "left"; ctx.font = "9.5px Menlo, monospace"; ctx.textBaseline = "middle";
-        var bt = "BOLL U " + bb.up[bli].toFixed(d2) + "  M " + bb.mid[bli].toFixed(d2) + "  L " + bb.dn[bli].toFixed(d2);
-        ctx.fillStyle = "#ffe169"; /* ks-1151fix9: 值标签随中轨亮黄 */
-        ctx.fillText(bt, v.padL + 4, v.pTop + 33);
+  var kl = S.kl, ds = S.ts.dayStart, n = kl ? kl.length : 0;
+  if (!kl || n - ds < 20) return;
+  var K = 2, MINBARS = 15, sw = 0, swp = 0, swp2 = 0, up = [], dn = [], lu = null, ld = null, lm = null, i;
+  for (i = ds; i < n; i++) {
+    var c = +kl[i][4], w = +kl[i][5];
+    if (c > 0 && w > 0) {
+      sw += w; swp += w * c; swp2 += w * c * c;
+      if (i - ds + 1 >= MINBARS) {
+        var m = swp / sw, sd = Math.sqrt(Math.max(0, swp2 / sw - m * m));
+        lm = m; lu = m + K * sd; ld = m - K * sd;
       }
     }
-  } catch (eB8) { if (window.console) console.warn("[ts.boll]", eB8); }
+    up.push(lu); dn.push(ld);
+  }
+  if (lu == null) return;
+  try {
+    [[up, "rgba(255,72,72,0.9)"], [dn, "rgba(64,255,168,0.9)"]].forEach(function (L) {
+      ctx.strokeStyle = L[1]; ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.beginPath();
+      var st = false;
+      for (var j = 0; j < L[0].length; j++) {
+        if (L[0][j] == null) continue;
+        var x = v.X(ds + j), y = v.Y(L[0][j]);
+        if (!st) { ctx.moveTo(x, y); st = true; } else ctx.lineTo(x, y);
+      }
+      if (st) ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    var d2 = dec();
+    ctx.textAlign = "left"; ctx.font = "9.5px Menlo, monospace"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffe169";
+    ctx.fillText("VWAP\u00b1" + K + "\u03c3  \u4e0a " + lu.toFixed(d2) + "  \u5747 " + lm.toFixed(d2) + "  \u4e0b " + ld.toFixed(d2), v.padL + 4, v.pTop + 33);
+  } catch (eB) { if (window.console) console.warn("[ts.boll]", eB); }
 }
+
 function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引擎(逐字搬运)画专用画布主图区(高=容器-副图占位), 副图与叠加层画在主画布; 全部经geom同一坐标系; fix7: 副图接入(VOL自绘+DDX/控盘/强弱T/实时主力/主力净额渲染器零改动直吃vTS)+跟随式左右标签+过渡帧rAF追画; fix8: +BOLL三线叠加 */
   var _tp9 = document.querySelector(".tpan"); if (_tp9) _tp9.style.display = "none"; /* ks-1151fix10d: 分时藏◀▶平移钮(panTime改S.end, 分时引擎按241点铺满不认窗口=死钮误导, 用户截图y≈563那对) */
   var kl = S.kl;
