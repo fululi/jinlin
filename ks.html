@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- ks-1022b (2026-10-22): [高低区]默认入★收藏栏(新档favs默认+老档一次性迁移标记ks_phvlfav_1), 收藏栏常驻顶栏一步开关, 不动指标行收起设计; 上一批: ks-1019 (2026-10-21): K线页大图十字线与jinlin统一——①长按门槛420→220ms(与分时/持仓大图PHVLCross同节奏) ②松手十字线保留1.5s再消失(原立即关闭, 松手瞬间信息卡消失读不到开高低收) ③新手势开始自动清保留期残留线; 触摸路径以外的画线/平移/缩放/面板/鼠标悬停全部零改动; 配套 index.html iframe缓存戳v=1012b→v=1019a + sw壳v218 -->
 <html lang="zh-CN" data-page-node-id="6D2T8EvdYeQCCUJBLfBYbE">
 <head data-page-node-id="RFoIjQ3gWo31cj0DVYxMoy">
 <meta charset="utf-8" data-page-node-id="e4EwOyQyDp841sEuZeXoET">
@@ -609,10 +610,10 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
+  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawColor: "#ffd21f", pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式; ks-1012: drawColor=抽屉色板当前色(新画线用)
-  favs: [], favPick: false, favHide: false, // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
+  favs: ["ind:phvl"], favPick: false, favHide: false, /* ks-1022b: 高低区默认入收藏栏(常驻顶栏一步开关) */ // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
   theme: "d", // ks-0906-20: d=纯黑 lc=外黑内白 la=纯白
 };
 function applyTheme() {
@@ -648,14 +649,16 @@ function restore() {
     if (o.monOpen != null) S.monOpen = !!o.monOpen;
     if (o.draw) DRAW = o.draw;
     if (o.collapsed != null) S.collapsed = !!o.collapsed;
+    if (S.ind.phvl == null) S.ind.phvl = true; /* ks-1022: 旧档无phvl补默认开 */
     if (o.indsOff != null) S.indsOff = !!o.indsOff; /* jl-1015 */
     S.toolsOff = (o.toolsOff != null) ? !!o.toolsOff : false; // 画图工具默认展开(用户高频使用画线)
   S.indsOff = (o.indsOff != null) ? !!o.indsOff : true; /* jl-1015: 指标行默认收起 */
     if (o.favs && o.favs.length) S.favs = o.favs;
+    if (!localStorage.getItem("ks_phvlfav_1") && S.favs.indexOf("ind:phvl") < 0) { S.favs.push("ind:phvl"); try { localStorage.setItem("ks_phvlfav_1", "1"); } catch (eK2b) {} } /* ks-1022b: 老档一次性补收藏高低区(不动v4/ind, 可自行取消收藏) */
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
     if (window.KS_T) { S.theme = "d"; applyTheme(); } /* jl-1061: 嵌入态强制深色主题——存档是浅色主题, 浅灰网格/价签/十字线压在玻璃上全看不清; 独立版主题不受影响 */
-    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false };
+    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false, phvl: true };
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
@@ -1903,10 +1906,12 @@ function drawReal() {
   }
   ctx.save();
   ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
+  renderPHVLJL(ctx, v); /* ks-1022: PHVL高低区带·底层 */
   renderICT(ctx, v);
   renderAutoTri(ctx, v);
   renderDailyLevels(ctx, v);
   renderCostLine(ctx, v);
+  renderPHVLMarksJL(ctx, v); /* ks-1022: PHVL高低点标记·顶层 */
   renderFundStamps(ctx, v); // ks-0906-27: 只留低位"吸"单字戳(回测唯一正超额)
   renderSixSigJL(ctx, v); // ks-0929-53: 六信号戳(买侧转/仓/加在K线下方, 卖侧顶/清/离在上方)
   renderMonitor(ctx, v);
@@ -2158,6 +2163,7 @@ function dragBy(Tx, pt) {
 var T = null; // 触摸会话
 cv.addEventListener("touchstart", function (e) {
   e.preventDefault();
+  if (S._crossTk1019) { clearTimeout(S._crossTk1019); S._crossTk1019 = null; if (S.cross) { S.cross = null; draw(); } } /* ks-1019: 新手势先清松手保留期内的残留十字线 */
   if (e.touches.length === 2) {
     if (T && T.lp) { clearTimeout(T.lp); }
     var dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -2229,10 +2235,10 @@ cv.addEventListener("touchstart", function (e) {
       T.mode = "cross";
       S.cross = { x: T.lx, y: T.y0 };
       if (navigator.vibrate) navigator.vibrate(8);
-      hint("十字线 · 滑动查看每根K线 · 松手关闭");
+      hint("十字线 · 滑动查看每根K线 · 松手留1.5秒");
       draw();
     }
-  }, 420);
+  }, 220); /* ks-1019: 长按门槛420→220ms, 与jinlin分时/持仓大图(PHVLCross 220ms)同节奏, 按分时节奏抬手即可触发 */
 }, { passive: false });
 cv.addEventListener("touchmove", function (e) {
   e.preventDefault();
@@ -2358,7 +2364,10 @@ cv.addEventListener("touchend", function (e) {
     S.pending = []; S.ghost = null; S.tool = null;
     syncTools(); draw();
   }
-  else if (T.mode === "cross") { S.cross = null; hint(""); draw(); }
+  else if (T.mode === "cross") { /* ks-1019: 松手保留1.5s再关, 留时间读高低/开收/涨跌; 新手势开始时touchstart已清本计时与残留线 */
+    if (S._crossTk1019) clearTimeout(S._crossTk1019);
+    S._crossTk1019 = setTimeout(function () { S._crossTk1019 = null; S.cross = null; hint(""); draw(); }, 1500);
+  }
   else if (T.mode === "rng") { // ks-0909-31: 单点(没拖出区间)=清除; 拖出区间=保留统计卡
     if (S.rng && S.rng.a === S.rng.b) { S.rng = null; hint(""); }
     else if (S.rng) hint("区间统计已出 · 单点图面清除 · 再点「区间」退出模式");
@@ -3757,6 +3766,248 @@ function rollerDo(id) {
   draw(); return true;
 }
 /* ================= 持仓成本线（直读 hq-mobile 的 portfolio_v2,同域名 localStorage 共享） ================= */
+(function () { /* phvl-polyfill(ks-1022): 老WebView无ctx.roundRect会整布不出图 */
+  var P = typeof CanvasRenderingContext2D !== "undefined" && CanvasRenderingContext2D.prototype;
+  if (!P || P.roundRect) return;
+  P.roundRect = function (x, y, w, h, r) {
+    r = Math.min(typeof r === "number" ? r : 0, w / 2, h / 2);
+    this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath();
+  };
+})();
+  function _phvlArm2(n) { return Math.max(3, Math.min(12, Math.round(n / 16))); }
+  function _phvlScan2(highs, lows, N) {
+    var n = highs.length, out = [];
+    for (var i = N; i < n - N; i++) {
+      var isH = true, isL = true;
+      for (var k = 1; k <= N; k++) {
+        if (!(highs[i] > highs[i - k]) || !(highs[i] >= highs[i + k])) isH = false;
+        if (!(lows[i] < lows[i - k]) || !(lows[i] <= lows[i + k])) isL = false;
+        if (!isH && !isL) break;
+      }
+      if (isH) out.push({ idx: i, type: "H", price: highs[i] });
+      if (isL) out.push({ idx: i, type: "L", price: lows[i] });
+    }
+    out.sort(function (a, b) { return a.idx - b.idx || (a.type === "H" ? -1 : 1); });
+    return out;
+  }
+  function _phvlAlt2(pivots) {
+    var res = [];
+    for (var j = 0; j < pivots.length; j++) {
+      var p = pivots[j], last = res.length ? res[res.length - 1] : null;
+      if (!last || last.type !== p.type) { res.push({ idx: p.idx, type: p.type, price: p.price }); continue; }
+      var better = p.type === "H" ? p.price > last.price : p.price < last.price;
+      if (better) res[res.length - 1] = { idx: p.idx, type: p.type, price: p.price };
+    }
+    return res;
+  }
+  function _phvlSwing2(pivots, minSwing) {
+    var cur = pivots;
+    for (var guard = 0; guard < 20; guard++) {
+      var drop = {}, has = false;
+      for (var i = 0; i < cur.length; i++) {
+        var a = i > 0 ? Math.abs(cur[i].price - cur[i - 1].price) : Infinity;
+        var b = i < cur.length - 1 ? Math.abs(cur[i].price - cur[i + 1].price) : Infinity;
+        if (Math.max(a === Infinity ? 0 : a, b === Infinity ? 0 : b) < minSwing) { drop[i] = 1; has = true; }
+      }
+      if (!has) break;
+      var next = [];
+      for (var i2 = 0; i2 < cur.length; i2++) if (!drop[i2]) next.push(cur[i2]);
+      next = _phvlAlt2(next);
+      if (next.length === cur.length) break;
+      cur = next;
+    }
+    return cur;
+  }
+  function _phvlCompute(highs, lows, opt) {
+    opt = opt || {};
+    var n = highs.length;
+    if (n < 3 || lows.length !== n) return [];
+    var mapFn = function (arr, neg) {
+      var out = [];
+      for (var z = 0; z < arr.length; z++) {
+        var v = arr[z];
+        out.push(typeof v === "number" && isFinite(v) ? v : (neg ? -Infinity : Infinity));
+      }
+      return out;
+    };
+    highs = mapFn(highs, true);
+    lows = mapFn(lows, false);
+    var N = opt.N || _phvlArm2(n);
+    var dayStart = (typeof opt.dayStart === "number" && isFinite(opt.dayStart) && Math.floor(opt.dayStart) === opt.dayStart) ? Math.min(Math.max(opt.dayStart, 0), n - 1) : 0;
+    var maxCount = opt.maxCount || 6;
+    var minGap = opt.minGap || Math.max(3, Math.round(n / 14));
+
+    var hi = -Infinity, lo = Infinity;
+    for (var i = 0; i < n; i++) { if (highs[i] > hi) hi = highs[i]; if (lows[i] < lo) lo = lows[i]; }
+    var range = hi - lo;
+    if (!isFinite(range) || !(range > 0)) return [];
+    var minSwing = range * (opt.minSwingPct != null ? opt.minSwingPct : 0.08);
+
+    var piv = _phvlSwing2(_phvlAlt2(_phvlScan2(highs, lows, N)), minSwing);
+
+    for (var j = 0; j < piv.length; j++) {
+      var prev = piv[j - 1], next = piv[j + 1];
+      var amp = Math.max(prev ? Math.abs(piv[j].price - prev.price) : 0, next ? Math.abs(piv[j].price - next.price) : 0) / range;
+      var span = Math.min(prev ? piv[j].idx - prev.idx : n, next ? next.idx - piv[j].idx : n) / n;
+      piv[j].score = amp * (0.5 + span);
+      piv[j].confirmed = true;
+      piv[j].extreme = false;
+    }
+
+    var hIdx = -1, lIdx = -1;
+    for (var i3 = dayStart; i3 < n; i3++) {
+      if (isFinite(highs[i3]) && (hIdx < 0 || highs[i3] > highs[hIdx])) hIdx = i3;
+      if (isFinite(lows[i3]) && (lIdx < 0 || lows[i3] < lows[lIdx])) lIdx = i3;
+    }
+    var exs = [];
+    if (hIdx >= 0) exs.push({ idx: hIdx, type: "H", price: highs[hIdx] });
+    if (lIdx >= 0) exs.push({ idx: lIdx, type: "L", price: lows[lIdx] });
+    var kept = [];
+    for (var e = 0; e < exs.length; e++) {
+      var same = null;
+      for (var q = 0; q < piv.length; q++) if (piv[q].idx === exs[e].idx && piv[q].type === exs[e].type) same = piv[q];
+      kept.push({ idx: exs[e].idx, type: exs[e].type, price: exs[e].price, extreme: true, confirmed: same ? true : (n - 1 - exs[e].idx) >= N, score: Infinity });
+    }
+
+    var cand = [];
+    for (var c2 = 0; c2 < piv.length; c2++) {
+      if (piv[c2].idx < dayStart) continue;
+      var dup = false;
+      for (var k3 = 0; k3 < kept.length; k3++) if (kept[k3].idx === piv[c2].idx && kept[k3].type === piv[c2].type) dup = true;
+      if (!dup) cand.push(piv[c2]);
+    }
+    cand.sort(function (a, b) { return b.score - a.score; });
+    for (var c3 = 0; c3 < cand.length; c3++) {
+      if (kept.length >= maxCount) break;
+      var ok = true;
+      for (var k4 = 0; k4 < kept.length; k4++) if (Math.abs(kept[k4].idx - cand[c3].idx) < minGap) ok = false;
+      if (ok) kept.push(cand[c3]);
+    }
+    return kept.sort(function (a, b) { return a.idx - b.idx; });
+  }
+  function drawPHVL(ctx, marks, o) {
+    var card = o.mode === 'card', fs = card ? 10 : 11;
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    var k, m, px, py, isH, col, s, txt, w, tot, tx, cy, bx, by;
+    ctx.save();
+    ctx.font = fs + 'px -apple-system,"PingFang SC",sans-serif';
+    ctx.textBaseline = 'middle';
+    for (k = 0; k < marks.length; k++) {
+      m = marks[k];
+      px = o.x(m.idx); py = o.y(m.price); isH = m.type === 'H';
+      if (m.extreme) {
+        col = isH ? o.hiColor : o.loColor; s = card ? 12 : 14;
+        if (!o.noLine) {                           // noLine:true => 只画「高/低」标记和价格，不画那根向右的虚线
+          ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.strokeStyle = col;
+          ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(o.right, py); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        txt = m.price.toFixed(o.decimals == null ? 2 : o.decimals); w = ctx.measureText(txt).width; tot = s + 3 + w;
+        tx = clamp(px - tot / 2, o.left + 1, o.right - tot - 1);
+        cy = clamp(isH ? py - s * 0.9 - 2 : py + s * 0.9 + 2, o.top + s / 2, o.bottom - s / 2);
+        if (o.boxes) { o.boxes.push({ kind: 'label', x: tx, y: cy - s / 2, w: tot, h: s }); if (!o.noLine) o.boxes.push({ kind: 'line', x: px, y: py - 0.5, w: o.right - px, h: 1 }); }
+        ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(tx, cy - s / 2, s, s, 3); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(isH ? '高' : '低', tx + s / 2, cy + 0.5);
+        ctx.fillStyle = o.textColor; ctx.textAlign = 'left'; ctx.fillText(txt, tx + s + 3, cy);
+      } else if ((!card || o.stamps) && m.confirmed) {
+        s = card ? 11 : 14; bx = clamp(px - s / 2, o.left, o.right - s); by = clamp(isH ? py - s - 8 : py + 8, o.top, o.bottom - s);
+        if (o.boxes) o.boxes.push({ kind: 'stamp', x: Math.min(bx, px - 1), y: Math.min(by, py), w: Math.max(s, Math.abs(px - bx) + 2), h: s + 8 });
+        ctx.strokeStyle = isH ? o.hiColor : o.loColor; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(px, isH ? by + s : by); ctx.lineTo(px, py); ctx.stroke();
+        ctx.fillStyle = isH ? o.hiColor : o.loColor;
+        ctx.beginPath(); ctx.roundRect(bx, by, s, s, 3); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+        ctx.fillText(isH ? '高' : '低', bx + s / 2, by + s / 2 + 0.5);
+      }
+    }
+    ctx.restore();
+  }
+  
+  /**
+   * 高位区/低位区分界线（同花顺价位指数同款，实线版）。要在曲线之前调用（画在底层）。
+   * series 价格序列；o: { x,y,left,right,lo,hi, zoneHi=0.8, zoneLo=0.2, band,
+   *   hiLine(白细线), loLine(蓝线), hiFill(红), loFill(蓝), hiTagText, fs }
+   * 分界线价位 = lo + 比例 × (hi-lo)；高位线以上的曲线部分填 hiFill，低位线以下填 loFill
+   * band:true（K线用）= 线到极值之间铺整块色带，不跟曲线走
+   */
+  function drawZones(ctx, series, o) {
+    var zh = o.zoneHi == null ? 0.8 : o.zoneHi, zl = o.zoneLo == null ? 0.2 : o.zoneLo, fs = o.fs || 10;
+    var pH = o.lo + zh * (o.hi - o.lo), pL = o.lo + zl * (o.hi - o.lo);
+    var yH = o.y(pH), yL = o.y(pL), n = series.length;
+    var lines, j, L, yy, col, txt, tc, w, h, bx, shift, ty;
+    ctx.save();
+    function fill(yLine, clampFn, color) {
+      var i;
+      ctx.globalAlpha = 0.28; ctx.fillStyle = color; ctx.beginPath();
+      ctx.moveTo(o.x(0), yLine);
+      for (i = 0; i < n; i++) ctx.lineTo(o.x(i), o.y(clampFn(series[i])));
+      ctx.lineTo(o.x(n - 1), yLine); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    if (o.band) {
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = o.loFill; ctx.fillRect(o.left, yL, o.right - o.left, o.y(o.lo) - yL);
+      ctx.fillStyle = o.hiFill; ctx.fillRect(o.left, o.y(o.hi), o.right - o.left, yH - o.y(o.hi));
+      ctx.globalAlpha = 1;
+    } else {
+      fill(yL, function (v) { return Math.min(v, pL); }, o.loFill);
+      fill(yH, function (v) { return Math.max(v, pH); }, o.hiFill);
+    }
+    ctx.font = fs + 'px -apple-system,"PingFang SC",sans-serif'; ctx.textBaseline = 'middle';
+    lines = [[yH, o.hiLine, '高位区', o.hiTagText || '#fff'], [yL, o.loLine, '低位区', '#fff']];
+    for (j = 0; j < lines.length; j++) {
+      L = lines[j]; yy = L[0]; col = L[1]; txt = L[2]; tc = L[3];
+      ctx.lineWidth = 1; ctx.strokeStyle = col;
+      if (o.dash) ctx.setLineDash(o.dash);
+      ctx.beginPath(); ctx.moveTo(o.left, yy); ctx.lineTo(o.right, yy); ctx.stroke();
+      if (o.dash) ctx.setLineDash([]);
+      w = ctx.measureText(txt).width + 6; h = fs + 3; bx = o.right - w - 1;
+      // tagAvoid:两条线靠得太近时，高位区标签上移、低位区标签下移，避免叠字
+      shift = o.tagAvoid && (yL - yH) < h + 2; ty = yy + (shift ? (j === 0 ? -(h / 2 + 1) : (h / 2 + 1)) : 0);
+      if (o.zoneTags !== false) {                 // zoneTags:false => 只画线，不画「高位区/低位区」标签（极小卡用）
+        ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(bx, ty - h / 2, w, h, 2); ctx.fill();
+        ctx.fillStyle = tc; ctx.textAlign = 'center'; ctx.fillText(txt, bx + w / 2, ty + 0.5);
+      }
+    }
+    ctx.restore();
+  }
+/* ============ ks-1022: PHVL 分时高低点移植(jinlin侧逐字代码 + ks坐标适配) ============
+   与jinlin分时/持仓大图同一套算法与视觉: 高位区/低位区色带 + 高低点[高/低]字戳+价格+虚线。
+   指标行[高低区]开关(S.ind.phvl, 默认开, store存档); 数据=当前可视窗K线bars(i0..i1)。 */
+function renderPHVLJL(ctx, v) { /* 区带·底层(画在ICT/昨高低之下) */
+  try {
+    if (!S.ind.phvl || !v || S.kl.length < 3) return;
+    var H = [], L = [], i;
+    for (i = v.i0; i < v.i1; i++) { H.push(S.kl[i][2]); L.push(S.kl[i][3]); }
+    if (H.length < 3) return;
+    var hi = -Infinity, lo = Infinity;
+    for (i = 0; i < H.length; i++) { if (H[i] > hi) hi = H[i]; if (L[i] < lo) lo = L[i]; }
+    if (!(isFinite(hi) && isFinite(lo) && hi > lo)) return;
+    drawZones(ctx, [], {
+      x: function (ix) { return v.X(v.i0 + ix); }, y: v.Y,
+      left: v.padL, right: v.w - v.padR, top: v.pTop + 2, bottom: v.pTop + v.priceH - 2,
+      lo: lo, hi: hi, band: true, fs: 10,
+      hiLine: "rgba(255,255,255,.65)", loLine: "rgba(138,180,255,.55)",
+      hiFill: "rgba(255,84,89,.5)", loFill: "rgba(63,168,96,.45)"
+    });
+  } catch (ePHZ) { /* ks-1012-d3同款: 失败不拖垮主图 */ }
+}
+function renderPHVLMarksJL(ctx, v) { /* 高低点标记·顶层(K线之上) */
+  try {
+    if (!S.ind.phvl || !v || S.kl.length < 3) return;
+    var H = [], L = [], i;
+    for (i = v.i0; i < v.i1; i++) { H.push(S.kl[i][2]); L.push(S.kl[i][3]); }
+    if (H.length < 3) return;
+    var marks = _phvlCompute(H, L, { maxCount: 6 });
+    if (!marks || !marks.length) return;
+    drawPHVL(ctx, marks, {
+      x: function (ix) { return v.X(v.i0 + ix); }, y: v.Y,
+      left: v.padL, right: v.w - v.padR, top: v.pTop + 2, bottom: v.pTop + v.priceH - 2,
+      mode: "full", decimals: 2,
+      textColor: "#eef6f9", hiColor: "#f5a623", loColor: "#e5484d"
+    });
+  } catch (ePHM) { }
+}
 function renderCostLine(ctx, v) {
   try {
     if (!S.ind.cost) return;
@@ -5847,7 +6098,7 @@ function renderExtraPanes(ctx, v) {
   }
 }
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["sixsig", "六信号"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["fvg", "FVG"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["solid", "实线"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
@@ -5980,7 +6231,7 @@ function applyUrl() {
       document.documentElement.classList.remove("theme-la", "theme-lc"); if (typeof S !== "undefined") S.theme = ""; // 金粼0913: 内嵌强制深色, 与金粼底融合
       // 金粼0913晚: 内嵌默认开 三角/SR/OB/VOL叠加/BSL·SSL流动性; 关掉 ICT 结构标记(ms)——BOS 只留三角突破那一枚(上黄下红, 部署版自带)
       // 金粼0913深夜(口径定案): 每次打开都恢复默认开——隐藏/删除只是本次会话有效, 不做跨会话持久化, 重开必须看到指标在
-      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
+      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.volMain = true; S.ind.phvl = true; /* ks-1022c: 嵌入态每次打开恢复高低区显示(与金粼默认开口径一致) */ S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
       S.lineMode = false; // 金粼0914: 内嵌大图必须是蜡烛K线——存档里 lineMode=true 会把主图变成蓝色收盘价折线(用户看到的"实时线盖图"), 内嵌强制蜡烛, 可用紧凑条「K/线」切回
       // 金粼0913晚(重打在部署版上): 单行抽屉紧凑条(周期/画线/指标/幅图 + 删除/清空/隐藏/锁定/提醒), 替代☰多行展开
       if (!document.getElementById("ksBarJL")) {
