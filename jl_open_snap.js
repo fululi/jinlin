@@ -33,7 +33,9 @@
    *   手动与采样开关无关(开关只闸定时采样), 单日上限30条(超限拒绝不删旧)。
    *
    * 【存储与写隔离(补充3/约束3)】只写自有键: jl_osnap_v1(记录) +
-   *   jl_osnap_on_v1(开关); 请求标记写失败→不发请求(11:50, 防刷新超发);
+   *   jl_osnap_on_v1(开关) + jl_osnap_ui_v1(15:12 UI位置持久化, KEY_UI);
+ *   请求标记写失败→不发请求(11:50, 防刷新超发); KEY_UI写失败静默(仅回
+ *   默认右下角, 不影响任何采样行为);
    *   manual() 记录写失败→返回 ok:false reason:store-write-fail(12:04, 不假报成功);
    *   记录键坏 JSON→空壳继续跑且原文片段(前8192字符)装进 _rawTxt 随键保全(12:04不空壳
  *   覆盖; 12:33口径: 上限8192, 超长保全片段而非全文);其余
@@ -79,12 +81,16 @@
  *   桩测试口径: makeDoc默认iframe桩contentWindow=global(既有用例零改动——模块
  *   请求时清键, 用例tick后设值不受影响); iso隔离模式专测并发归属(C1-C3)。
  *
- * 【14:59 UI热修(用户截图圈定"丑死")】迷你面板改双态: 默认收起成左下角小药丸
- *   ("快照os1 ✓✗· 手N"单行, 圆角999, 点击展开); 展开态=紧凑三行(标题+✕收起/
- *   状态行/短按钮[采样:开|记一次|导出|复制]一行), 修前常驻全展开+4个长文字按钮
- *   (导出开盘快照JSON/现在记录一次…)换行堆成~150px深色大块压在账户区上——截图
- *   判丑的根因; 展开面板高度约减半, 药丸态~22px; st.uiRoot/uiOpen/uiToggle供
- *   桩测试; boot/initUI的interval在Node下unref(防桩测试进程挂起)。
+ * 【15:12 UI再修(用户15:10截图实测四投诉)】①✕点不掉的根因=冒泡: 收起时renderUI
+ *   把展开handler挂回root, 同一次click继续冒泡到root又把面板展开——"永远关不
+ *   掉"(程序化click可稳定复现); 修复=✕与全部按钮onclick先stopPropagation。
+ *   ②默认位置左下→右下(导航栏上方, 左侧碍事)。③风格对齐页面玻璃系: 白5%+
+ *   blur(14) saturate(1.2)+青灰边#8eb6bd系(即.glass/.segJL一族, 修前#0d1b23近
+ *   实心与持仓面板透明度不搭)。④整体可拖拽: pointer事件+touch-action:none(手
+ *   机拖动不滚动页面), 位移≥5px才算拖(防误触), 位置持久化jl_osnap_ui_v1+视口
+ *   钳制, 拖完400ms内吞掉合成click防误展开; 按钮/✕不参与拖拽只点按。桩测试
+ *   口径: 桩addEventListener为空操作, 拖拽仅真浏览器验证; U3冒泡回归经
+ *   st.uiClose(带事件对象断言stopPropagation被调用)。
  *
  * 【导出(补充8)】"导出开盘快照JSON": 页面内生成文件, 文件名带日期
    *   jl_open_snap_YYYYMMDD.json; 失败(或用户点"复制模式")弹文本框供复制;
@@ -98,7 +104,7 @@
    *   时 dSrc:"phone" 如实标注。T7 板块资金史不进开盘快照(开盘窗恒空,
    *   收盘后可用手动入口留档, 见交付说明)。
    * ===================================================================== */
-  var VER = "os1", KEY = "jl_osnap_v1", KEY_ON = "jl_osnap_on_v1";
+  var VER = "os1", KEY = "jl_osnap_v1", KEY_ON = "jl_osnap_on_v1", KEY_UI = "jl_osnap_ui_v1";
   var WINS = [["09:26", "092600", "092959"], ["09:35", "093500", "093959"], ["10:00", "100000", "100459"]];
   var ARM_MIN = 2;            /* 预筛放宽±2分钟(手机钟, 只决定是否考虑发请求) */
   var TICK_MS = 20e3, REQ_MS = 8e3, CAP_RECS = 120, CAP_MAN_DAY = 30, KEEP_DAYS = 10;
@@ -534,8 +540,8 @@
     try { if (!tryDownload()) copyModal(); } catch (e) {}
   }
 
-  /* ---------- 迷你面板(14:59热修: 双态——默认收起小药丸, 点开紧凑面板; 自注入, 全内联样式, id唯一前缀) ---------- */
-  var uiTimer = 0, uiRoot = null, uiOpen = false;
+  /* ---------- 迷你面板(15:12再修: ①✕冒泡bug——收起后root的展开handler被同一次click冒泡重新触发=永远关不掉, 全部按钮加stopPropagation; ②默认右下角(左侧碍事, 用户15:10投诉); ③玻璃风对齐页面.glass系(白5%+blur14+saturate1.2+青灰边); ④整体可拖拽(pointer事件+touch-action:none, 位移≥5px才算拖, 位置持久化jl_osnap_ui_v1+视口钳制); 自注入, 全内联样式, id唯一前缀 ---------- */
+  var uiTimer = 0, uiRoot = null, uiOpen = false, uiPos = null, uiJustDragged = 0;
   function winMarks(d) { /* 三窗状态紧凑标记 ✓✗· */
     var store = readStore(), s = "";
     WINS.forEach(function (w) {
@@ -545,28 +551,88 @@
     });
     return s;
   }
-  function renderUI() { /* 双态重绘: 药丸=单行圆角999点击展开; 展开=紧凑三行+✕收起(按钮短文案一行不换行) */
+  function uiDefPos() { /* 默认右下角(底部导航上方) */
+    var w = Math.max(DOC.documentElement.clientWidth || 0, 320), h = Math.max(DOC.documentElement.clientHeight || 0, 480);
+    return { l: Math.max(0, w - 124), t: Math.max(0, h - 96) };
+  }
+  function uiClamp(p) { /* 钳制在视口内保持全可见 */
+    var w = DOC.documentElement.clientWidth || 320, h = DOC.documentElement.clientHeight || 480;
+    var bw = (uiRoot && uiRoot.offsetWidth) || 110, bh = (uiRoot && uiRoot.offsetHeight) || 28;
+    return { l: Math.min(Math.max(0, Math.round(p.l)), Math.max(0, w - bw)), t: Math.min(Math.max(0, Math.round(p.t)), Math.max(0, h - bh)) };
+  }
+  function uiReadPos() {
+    try {
+      var p = JSON.parse(LS.getItem(KEY_UI) || "null");
+      if (p && typeof p.l === "number" && typeof p.t === "number") return p;
+    } catch (e) {}
+    return null;
+  }
+  function uiWritePos(p) { try { LS.setItem(KEY_UI, JSON.stringify(p)); } catch (e) {} }
+  function uiApplyPos() {
+    uiPos = uiClamp(uiPos || uiReadPos() || uiDefPos());
+    uiRoot.style.left = uiPos.l + "px"; uiRoot.style.top = uiPos.t + "px";
+    uiRoot.style.right = "auto"; uiRoot.style.bottom = "auto";
+  }
+  function uiClose(e) { /* ✕收起(15:12): 必须stopPropagation——否则收起后同一次click冒泡到root触发刚挂上的展开handler, 面板"永远关不掉"(用户线上实证) */
+    try { if (e && e.stopPropagation) e.stopPropagation(); } catch (e0) {}
+    uiOpen = false; renderUI();
+  }
+  function wireDrag(el) { /* 整体拖拽(pointer): 按钮/✕不拖只点按; 位移<5px不算拖(防误触); 拖后400ms内吞掉click防拖完误展开 */
+    var sx = 0, sy = 0, ox = 0, oy = 0, down = false, moved = false;
+    el.addEventListener("pointerdown", function (e) {
+      try {
+        var t = e.target;
+        if (t && ((t.tagName === "BUTTON") || (t._tag === "button"))) return; /* 按钮区=点按不拖 */
+        down = true; moved = false;
+        sx = e.clientX; sy = e.clientY;
+        var p = uiPos || uiReadPos() || uiDefPos();
+        ox = p.l; oy = p.t;
+        try { el.style.opacity = ".8"; } catch (e1) {}
+        try { if (el.setPointerCapture && e.pointerId != null) el.setPointerCapture(e.pointerId); } catch (e2) {}
+      } catch (e0) {}
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (!down) return;
+      var dx = (e.clientX || sx) - sx, dy = (e.clientY || sy) - sy;
+      if (!moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+      moved = true;
+      uiPos = uiClamp({ l: ox + dx, t: oy + dy });
+      el.style.left = uiPos.l + "px"; el.style.top = uiPos.t + "px";
+      el.style.right = "auto"; el.style.bottom = "auto";
+    });
+    function up() {
+      if (!down) return;
+      down = false;
+      try { el.style.opacity = ""; } catch (e1) {}
+      if (moved) { uiWritePos(uiPos); uiJustDragged = Date.now(); } /* 记时间戳: 拖完的合成click不当作点按 */
+    }
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+  }
+  function renderUI() { /* 双态重绘: 药丸=单行圆角999点击展开; 展开=紧凑三行+✕收起(玻璃风) */
     try {
       if (!uiRoot || !BROWSER) return;
       try { while (uiRoot.firstChild) uiRoot.removeChild(uiRoot.firstChild); } catch (e0) {}
       uiRoot.onclick = null;
       if (!uiOpen) {
-        uiRoot.style.cssText = "position:fixed;left:8px;bottom:60px;z-index:34;background:#0d1b23d9;border:1px solid #2a5a6acc;border-radius:999px;padding:4px 10px;font:600 10.5px/1.3 -apple-system,sans-serif;color:#9fd7e8;cursor:pointer;user-select:none;max-width:62vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+        uiRoot.style.cssText = "position:fixed;left:0;top:0;z-index:34;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;background:rgba(255,255,255,0.055);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid #8eb6bd66;border-radius:999px;padding:4px 10px;font:600 10.5px/1.3 -apple-system,sans-serif;color:#eafffd;max-width:62vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+        uiApplyPos();
         uiRoot.textContent = "快照os1 " + winMarks(ymd()) + " 手" + manCount(readStore(), ymd());
-        uiRoot.onclick = function () { uiOpen = true; renderUI(); };
+        uiRoot.onclick = function () { if (Date.now() - uiJustDragged < 400) return; uiOpen = true; renderUI(); };
         return;
       }
-      uiRoot.style.cssText = "position:fixed;left:8px;bottom:60px;z-index:34;background:#0d1b23ee;border:1px solid #2a5a6a;border-radius:9px;padding:6px 8px;font:11px/1.5 -apple-system,sans-serif;color:#cfeaf4;max-width:238px";
+      uiRoot.style.cssText = "position:fixed;left:0;top:0;z-index:34;touch-action:none;user-select:none;-webkit-user-select:none;background:rgba(255,255,255,0.055);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);border:1px solid #8eb6bd66;border-radius:10px;padding:7px 9px;font:11px/1.5 -apple-system,sans-serif;color:#eafffd;max-width:240px;box-shadow:0 6px 18px #0007";
+      uiApplyPos();
       var hd = DOC.createElement("div");
-      hd.style.cssText = "font-weight:600;color:#9fd7e8;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center";
+      hd.style.cssText = "font-weight:600;color:#9fd7e8;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;cursor:grab";
       var tt = DOC.createElement("span"); tt.textContent = "开盘快照 os1"; hd.appendChild(tt);
       var x = DOC.createElement("button"); x.type = "button"; x.textContent = "✕"; x.title = "收起";
-      x.style.cssText = "border:0;background:none;color:#7fa9b9;font:600 12px/1 -apple-system,sans-serif;cursor:pointer;padding:0 2px";
-      x.onclick = function () { uiOpen = false; renderUI(); };
+      x.style.cssText = "border:1px solid #8eb6bd44;border-radius:7px;background:rgba(255,255,255,0.08);color:#cfeaf4;font:600 12px/1 -apple-system,sans-serif;cursor:pointer;padding:4px 10px";
+      x.onclick = uiClose;
       hd.appendChild(x);
       var stat = DOC.createElement("div");
       stat.id = "jlOsnapStat";
-      stat.style.cssText = "color:#8fb9c9;margin-bottom:5px;white-space:nowrap";
+      stat.style.cssText = "color:#a9c9d6;margin-bottom:6px;white-space:nowrap";
       var store = readStore(), d = ymd(), s = "";
       WINS.forEach(function (w) {
         var ok = store.recs.some(function (r) { return r.type === "win" && !r.manual && r.d === d && r.win === w[0]; });
@@ -579,8 +645,11 @@
       function btn(id, txt, fn) {
         var b = DOC.createElement("button");
         b.type = "button"; b.id = id; b.textContent = txt;
-        b.style.cssText = "padding:2px 7px;border:1px solid #2a5a6a;border-radius:6px;background:#123243;color:#cfeaf4;font-size:10px;cursor:pointer;white-space:nowrap";
-        b.onclick = function () { try { fn(); } catch (e) {} };
+        b.style.cssText = "padding:3px 9px;border:1px solid #8eb6bd44;border-radius:7px;background:rgba(255,255,255,0.08);color:#eafffd;font-size:10.5px;cursor:pointer;white-space:nowrap";
+        b.onclick = function (e) { /* 15:12: 一律stopPropagation防冒泡误触root */
+          try { if (e && e.stopPropagation) e.stopPropagation(); } catch (e0) {}
+          try { fn(); } catch (e1) {}
+        };
         return b;
       }
       row.appendChild(btn("jlOsnapOnBtn", "采样:" + (on() ? "开" : "关"), function () { toast("采样开关→" + (toggle() ? "开" : "关") + "(只闸定时采样, 手动不受限)"); renderUI(); }));
@@ -613,10 +682,12 @@
       if (DOC.getElementById("jlOsnapRoot")) return;
       var root = DOC.createElement("div");
       root.id = "jlOsnapRoot";
-      uiRoot = root; uiOpen = false; /* 14:59热修: 默认收起药丸 */
+      uiRoot = root; uiOpen = false; uiPos = null; uiJustDragged = 0; /* 双态+可拖拽(15:12) */
       st.uiRoot = root; /* 桩测试钩子(只读) */
       st.uiOpen = function () { return uiOpen; };
       st.uiToggle = function (v) { uiOpen = (arguments.length ? !!v : !uiOpen); renderUI(); };
+      st.uiClose = uiClose; /* 15:12: ✕冒泡回归桩测入口 */
+      wireDrag(root); /* 拖拽(真浏览器: pointer事件; 桩: addEventListener为空操作不影响) */
       (DOC.body || DOC.documentElement).appendChild(root);
       renderUI();
       if (uiTimer) clearInterval(uiTimer);

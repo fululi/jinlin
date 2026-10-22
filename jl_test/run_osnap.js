@@ -183,13 +183,13 @@ function test(name, fn) {
 }
 
 /* ── B. 源码级写隔离断言(约束3/补充3) ──────────────────────────── */
-test("写隔离: setItem 调用点仅2处(writeStore唯一记录入口+toggle开关), 且只绑 KEY/KEY_ON", () => {
+test("写隔离: setItem 调用点仅3处(writeStore+toggle开关+UI位置), 且只绑 KEY/KEY_ON/KEY_UI", () => {
   const vars = [...SRC.matchAll(/\.setItem\(\s*([A-Za-z_$][\w$]*)\s*,/g)].map((m) => m[1]);
-  assert.strictEqual(vars.length, 2, "写点=writeStore(KEY)+toggle(KEY_ON), 实得 " + vars.length + ": " + vars.join(","));
-  vars.forEach((v) => assert.ok(v === "KEY" || v === "KEY_ON", "出现非自有键变量: " + v));
-  assert.ok(/var VER = "os1", KEY = "jl_osnap_v1", KEY_ON = "jl_osnap_on_v1";/.test(SRC), "KEY/KEY_ON 常量绑定必须唯一且为自有键");
+  assert.strictEqual(vars.length, 3, "写点=writeStore(KEY)+toggle(KEY_ON)+uiWritePos(KEY_UI), 实得 " + vars.length + ": " + vars.join(","));
+  vars.forEach((v) => assert.ok(v === "KEY" || v === "KEY_ON" || v === "KEY_UI", "出现非自有键变量: " + v));
+  assert.ok(/var VER = "os1", KEY = "jl_osnap_v1", KEY_ON = "jl_osnap_on_v1", KEY_UI = "jl_osnap_ui_v1";/.test(SRC), "KEY/KEY_ON/KEY_UI 常量绑定必须唯一且为自有键");
   const literals = [...SRC.matchAll(/setItem\(\s*["']([^"']+)["']/g)].map((m) => m[1]);
-  literals.forEach((k) => assert.ok(k === "jl_osnap_v1" || k === "jl_osnap_on_v1", "出现字面量键: " + k));
+  literals.forEach((k) => assert.ok(k === "jl_osnap_v1" || k === "jl_osnap_on_v1" || k === "jl_osnap_ui_v1", "出现字面量键: " + k));
 });
 test("写隔离: 零禁用函数调用(档位四函数+jlSafeSetJL)", () => {
   assert.strictEqual(SRC.match(/\b(tiersViewJL|computeTierJL|tierLevelsJL|ratchetJL|jlSafeSetJL)\s*\(/g), null);
@@ -1298,24 +1298,39 @@ test("写隔离: 报价端点只有 qt.gtimg.cn, 零东财域名(em-min仅为缓
   });
 }
 
-/* ── U. UI双态(14:59热修·用户截图圈定"丑死"): 默认收起药丸→点击展开→收起回药丸 ── */
+/* ── U. UI(15:12再修): 双态+✕冒泡回归 ── */
 {
   global.location = { href: "https://fululi.github.io/" }; /* 仅本块伪造令BROWSER=true, 用毕即删 */
   try {
     const doc = makeDoc();
     const api = freshMod(seedDay(), doc);
-    test("UI双态(14:59热修): 默认收起药丸→点击展开→toggle收起回药丸", () => {
+    test("UI双态(15:12): 默认收起药丸(右下/玻璃风)→点击展开→toggle收起", () => {
       const root = api.st.uiRoot;
       assert.ok(root, "uiRoot已挂(st.uiRoot钩子)");
-      assert.strictEqual(api.st.uiOpen(), false, "默认收起(修前常驻全展开=丑源)");
+      assert.strictEqual(api.st.uiOpen(), false, "默认收起");
       assert.ok(/快照os1/.test(root.textContent || ""), "药丸文案含快照os1");
-      assert.ok((root.style.cssText || "").indexOf("999px") >= 0, "药丸圆角999单行");
+      const css = root.style.cssText || "";
+      assert.ok(css.indexOf("999px") >= 0, "药丸圆角999单行");
+      assert.ok(css.indexOf("backdrop-filter:blur(14px)") >= 0, "玻璃风=页面.glass系(blur14)");
+      assert.ok(css.indexOf("touch-action:none") >= 0, "可拖拽touch-action:none");
+      assert.ok(css.indexOf("#0d1b23") < 0, "弃近实心深底(与持仓透明度不搭)");
       root.onclick(); /* 药丸点击→展开 */
       assert.strictEqual(api.st.uiOpen(), true, "点击药丸展开");
       assert.ok((root.style.cssText || "").indexOf("999px") < 0, "展开态换紧凑面板样式");
       api.st.uiToggle(false); /* 收起 */
       assert.strictEqual(api.st.uiOpen(), false, "toggle(false)收起");
       assert.ok((root.style.cssText || "").indexOf("999px") >= 0, "收起回药丸样式");
+    });
+    test("U3 ✕冒泡回归(15:12): uiClose必须stopPropagation并收起——修前收起后root展开handler被同一次click冒泡重新触发=永远关不掉", () => {
+      const root = api.st.uiRoot;
+      api.st.uiToggle(true); /* 展开 */
+      assert.strictEqual(api.st.uiOpen(), true, "先展开");
+      let stopped = 0;
+      const fakeEv = { stopPropagation() { stopped += 1; } };
+      api.st.uiClose(fakeEv); /* 真实✕点击链路 */
+      assert.strictEqual(stopped, 1, "✕收起先stopPropagation(断冒泡)");
+      assert.strictEqual(api.st.uiOpen(), false, "收起生效");
+      assert.ok((root.style.cssText || "").indexOf("999px") >= 0, "回药丸");
     });
   } finally { delete global.location; }
 }
