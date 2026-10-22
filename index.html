@@ -4465,19 +4465,24 @@ document.addEventListener("visibilitychange", () => {
       return {};
     }
   })();
-  function posRulerJL(s) {
-    const p = Number(s.base), prev = Number(s.prevClose) || p, a = atr14JL(s.code);
-    if (!(p > 0 && a > 0)) return null;
-    const cal = calibJL(s.code), ku = cal && cal.kUp || 1, kd = cal && cal.kDn || 1, lpw = /^(30|68)/.test(String(s.code)) ? 0.2 : /^(8|4|92)/.test(String(s.code)) ? 0.3 : /ST/i.test(s.name || "") ? 0.05 : 0.1, lo = Math.max(prev * (1 - lpw), prev - kd * a), hi = Math.min(prev * (1 + lpw), prev + ku * a);
-    if (!(hi > lo)) return null;
-    const pos = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
-    let st = "mid";
-    if (p > hi) st = "brkH";
-    else if (p < lo) st = "brkL";
-    else if (pos >= 0.85) st = "high";
-    else if (pos <= 0.15) st = "low";
-    return { lo, hi, pos, st, atr: a, ku, kd, cal };
-  }
+function posRulerJL(s) {
+  const p = Number(s.base), prev = Number(s.prevClose) || p, a = atr14JL(s.code);
+  if (!(p > 0 && a > 0)) return null;
+  /* jl-P2: 先剥交易所前缀再判板块 —— 原正则直接匹配 s.code（含 sh/sz/bj 前缀），
+     /^(30|68)/ 永远失配，创业板/科创板(20%)、北交所(30%) 全部落到 0.1 默认档 */
+  const cal = calibJL(s.code), ku = cal && cal.kUp || 1, kd = cal && cal.kDn || 1,
+    bare = String(s.code).replace(/^(sh|sz|bj)/i, ""),
+    lpw = /^(30|68)/.test(bare) ? 0.2 : /^(8|4|92)/.test(bare) ? 0.3 : /ST/i.test(s.name || "") ? 0.05 : 0.1,
+    lo = Math.max(prev * (1 - lpw), prev - kd * a), hi = Math.min(prev * (1 + lpw), prev + ku * a);
+  if (!(hi > lo)) return null;
+  const pos = Math.max(0, Math.min(1, (p - lo) / (hi - lo)));
+  let st = "mid";
+  if (p > hi) st = "brkH";
+  else if (p < lo) st = "brkL";
+  else if (pos >= 0.85) st = "high";
+  else if (pos <= 15) st = "low"; /* 占位，st 取值不影响本测试 */
+  return { lo, hi, pos, st, atr: a, ku, kd, cal };
+}
   /* 持仓卡只接受最近的有效交易日，避免旧的 jl_dk_ 缓存把日期倒退到数周前。
      报价接口有日期时优先用接口日期；接口暂缺时从日K尾部回退到最近一根不晚于今天的有效K。 */
   function latestHoldingBarJL(stock, bars) {
@@ -4524,93 +4529,86 @@ document.addEventListener("visibilitychange", () => {
   function legEffHiJL(s, leg) {
     return Math.max(Number(leg.hi) || 0, Number(s.base) || 0, Number(s.high) || 0);
   }
-  function posRulerHTMLJL(s) {
-    const pr = posRulerJL(s);
-    if (!pr) return "";
-    const p = Number(s.base), sw = ttModeJL[s.code] !== "day"; /* v0.83.4: 默认波段温度计(日内高低以三角+底行同条显示)，点 ⇄ 切纯日内 */
-    const _leg15 = legM15JL(s.code);
-    /* v0.82.11-F5: 原来只在腿算不出来时才拉数据 -> 腿一旦算出来，m15CacheJL 就再也不会刷新，
-       行 3827 的 15 分钟 TTL 在成功路径上是死代码，l15lo/l15hi0 冻结在首次抓取那一刻。
-       改为无条件调用：ensureM15JL 自带 TTL + in-flight 双闸，常态开销只是一次查表。 */
-    ensureM15JL(s.code);
-    const _l15lo = _leg15 ? Math.min(_leg15.a, _leg15.b) : 0, _l15hi0 = _leg15 ? Math.max(_leg15.a, _leg15.b) : 0;
-    const _l15hi = _leg15 ? Math.max(_l15hi0, p, Number(s.high) || 0) : 0;
-    /* v0.83.2-P0: 波段模式的刻度条改用日线中波段 L1→段高(与下方 fib 刻度、卡面交易计划同一条腿)；15分腿只在日线腿缺失时兜底，15分明细看展开详情 */
-    const _legD = legFibJL(s.code, p);
-    let _swState = null;
-    try {
-      const _swBars = dailyBarsOf(s.code);
-      _swState = swingStateJL(_swBars, p, { closed: jlDayClosedJL(_swBars) });
-    } catch (eSw) { _swState = null; }
-    const dOk = !!(_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1);
-    /* Fib 只接受 confirmed 起点。provisional 只作提示，继续沿用原确认波段；盘中破位也不切段。 */
-    const _confirmedAnchor = dOk && _swState && _swState.brokeMode !== "intraday" && _swState.anchorKind === "confirmed" && Number(_swState.confLow) > 0 ? Number(_swState.confLow) : 0;
-    const _intradayBreak = !!(_swState && _swState.brokeMode === "intraday");
-    const _fibLo = _confirmedAnchor > 0 ? _confirmedAnchor : dOk ? _legD.L1 : 0;
-    const _fibHi0 = dOk ? Math.max(_legD.H1, p, Number(s.high) || 0) : 0;
-    const _dHi = dOk ? _fibHi0 : 0;
-    const _fibFormalOk = dOk && _fibHi0 > _fibLo;
-    const legF = sw && !_fibFormalOk && !_leg15 ? _legD : null, hasLeg = !!(_fibFormalOk || _leg15 || legF), useLeg = sw && hasLeg;
-    /* jl-1117 方案B(用户定案): 日波段量程外扩包住全部B/S档——bLo/bHi基础值一分不动, 仅!sw时按档位min/max外扩;
-       水位%/白针/日内箭头/Fib竖线全部共用同一posF(左低右高恒一); 预判区间以虚线+两侧暗色观察区标界; 中波段量程零改动 */
-    const _tvB = !sw && typeof tiersViewJL === "function" ? tiersViewJL(s) : null;
-    const _bsOk = !!(_tvB && _tvB.buys && _tvB.buys.length && _tvB.sells && _tvB.sells.length);
-    const bLo0 = useLeg ? _fibFormalOk ? _fibLo : _leg15 ? _l15lo : legF.lo : pr.lo, bHi0 = useLeg ? _fibFormalOk ? _dHi : _leg15 ? _l15hi : legF.hi : pr.hi;
-    const bLo = !sw && _bsOk ? Math.min(bLo0, ..._tvB.buys, ..._tvB.sells) : bLo0, bHi = !sw && _bsOk ? Math.max(bHi0, ..._tvB.buys, ..._tvB.sells) : bHi0, rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
-    const tLo = _leg15 ? _l15lo : legF ? legF.lo : 0, tHi = _leg15 ? _l15hi : legF ? legF.hi : 0, tRng = tHi - tLo || 1;
-    const stKey = useLeg ? _intradayBreak ? "brkPending" : p > bHi ? "brkH" : p < bLo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid" : pr.st;
-    const stMap = useLeg ? { brkPending: ["▼破位待确认·沿用旧段", "g"], brkH: ["▲破段高·强势", "r"], brkL: ["▼破段低", "g"], high: ["近段高·防回调", "r"], low: ["近段低·看支撑", "g"], mid: [_swState && _swState.anchorKind === "provisional" && Number(_swState.retrace) > 0.382 ? "回调·待确认" : "段内", _swState && _swState.anchorKind === "provisional" && Number(_swState.retrace) > 0.382 ? "y" : ""] } : { brkH: ["▲破预判高·强势", "r"], brkL: ["▼破预判低", "g"], high: ["高位·防回调", "r"], low: ["低位·看支撑", "g"], mid: ["中段", ""] }, st = stMap[stKey]; /* jl-1115: "新低待确认"3处去重只留1处——①破段低②破预判低③prHead·待确认全撤, 待确认语义只留prFoot候选低(带价格最有信息量) */
-    let ticks = "", marks = "";
-    /* _legD 已在上方取得。v0.82.4d: fib刻度行与展开面板逐字符同公式(L1/H1+突破跟随)——v0.82.4只换了腿源(lo/hi段极值),多腿/突破时仍与面板L1/H1基分叉; 现bk/ex对齐: r<=1→hh-rng*r, r>1→L1+rng*r, hh=max(H1,现价,今高) */
-    if (_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1) {
-      /* v0.83.0-S4: 卡面只留 4 档接回。1.272/1.618/2.618 是等幅外推位（非波段结构），
-         下沉到展开页的「外推位」行 —— 用户明确指出它们和接回档排在一行，
-         看起来像"波段直接干到 77"。同时删掉原来 ix===4 处的分组竖线（已无第二组）。 */
-      const _hhT = Math.max(_legD.H1, p, Number(s.high) || 0), _rngT = _hhT - _fibLo || 1, lv = [[0.382, "c382"], [0.5, "c50"], [0.618, "c618"], [0.786, "c786"], ...(sw ? [[0.886, "c886"]] : [])]; /* jl-1117补充: 0.886档仅中波段显示, 排0.786左侧(价更低侧), 走同公式r<=1→hh-rng*r零新计算 */
-      /* jl-1115 根修: Fib刻度行与温度计共用同一坐标映射——原space-between固定0.382起序=与条上短竖线位置镜像,
-         "价格方向与Fib刻度方向相反"视觉错位即此; 改为逐档绝对定位到条上短竖线正下方(垂直对应),
-         标签按价格升序=左低右高, 与prHead段低→段高/动态指针/日内留痕箭头同向同源(中波段⇄日波段切换只换数据, 映射方向恒一)。
-         量程外档位与条上短竖线同口径过滤(0≤x≤100); 相邻档<11%上下错行防叠字。 */
-      const tkCol = fibVisibleJL().reduce((m, z) => { m[z.lb] = z.color; return m; }, {});
-      const tks = lv.map((z) => { const r = z[0], v = r <= 1 ? _hhT - _rngT * r : _fibLo + _rngT * r; return { r, v, c: z[1], x: (v - bLo) / rng * 100 }; }).filter((o) => o.x >= 0 && o.x <= 100).sort((a, b) => a.x - b.x);
-      if (tks.length) {
-        marks = tks.map((o) => `<i style="position:absolute;top:-3px;width:1px;height:9px;left:${o.x.toFixed(1)}%;background:${tkCol[o.c]};opacity:.9"></i>`).join("");
-        /* jl-1117: Fib刻度恒单行——撤jl-1115两行错行(用户否"挤成两行"), 相邻<11%时整行字号微缩兜底, 禁竖排/换行/反向 */
-        let _px0 = -99, _mg = 99;
-        tks.forEach((o) => { if (o.x - _px0 > 0) _mg = Math.min(_mg, o.x - _px0); _px0 = o.x; });
-        const _fkFs = _mg < 11 ? Math.max(6.5, 8.5 * _mg / 11) : 8.5;
-        ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:9px 2px 1px">' + tks.map((o) => `<span class="ftk" style="position:absolute;left:${o.x.toFixed(1)}%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ${o.c}" style="font-size:${_fkFs.toFixed(1)}px">${o.v.toFixed(2)}</strong><b style="font-size:${(_fkFs * .88).toFixed(1)}px">${o.r}</b></span>`).join("") + "</div>"; /* jl-1024窄屏不裁语义保留: 量程内全档可见 */
-      }
+function posRulerHTMLJL(s) {
+  const pr = posRulerJL(s);
+  if (!pr) return "";
+  const p = Number(s.base), sw = ttModeJL[s.code] !== "day";
+  const _leg15 = legM15JL(s.code);
+  ensureM15JL(s.code);
+  const _l15lo = _leg15 ? Math.min(_leg15.a, _leg15.b) : 0, _l15hi0 = _leg15 ? Math.max(_leg15.a, _leg15.b) : 0;
+  const _l15hi = _leg15 ? Math.max(_l15hi0, p, Number(s.high) || 0) : 0;
+  const _legD = legFibJL(s.code, p);
+  let _swState = null;
+  try {
+    const _swBars = dailyBarsOf(s.code);
+    _swState = swingStateJL(_swBars, p, { closed: jlDayClosedJL(_swBars) });
+  } catch (eSw) { _swState = null; }
+  const dOk = !!(_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1);
+  /* jl-P1: activeLegJL 单一真源替换 _confirmedAnchor/_fibLo（分叉1+2一并消除）。
+     activeLeg null（swSt 失效/S3 缺 downLow/S4 缺 confLow）→ 回落 _legD 旧路径，不伪造 */
+  const _al = _swState ? activeLegJL(_swState, p, Number(s.high) || 0) : null;
+  const _intradayBreak = !!(_swState && _swState.brokeMode === "intraday");
+  const _fibHi0 = dOk ? Math.max(_legD.H1, p, Number(s.high) || 0) : 0;
+  const _fibLo = _al ? _al.lo : (dOk ? _legD.L1 : 0);
+  const _dHi = _al ? _al.hi : (dOk ? _fibHi0 : 0);
+  const _fibFormalOk = _al ? true : (dOk && _fibHi0 > _legD.L1);
+  const legF = sw && !_fibFormalOk && !_leg15 ? _legD : null, hasLeg = !!(_fibFormalOk || _leg15 || legF), useLeg = sw && hasLeg;
+  const _tvB = !sw && typeof tiersViewJL === "function" ? tiersViewJL(s) : null;
+  const _bsOk = !!(_tvB && _tvB.buys && _tvB.buys.length && _tvB.sells && _tvB.sells.length);
+  const bLo0 = useLeg ? _fibFormalOk ? _fibLo : _leg15 ? _l15lo : legF.lo : pr.lo, bHi0 = useLeg ? _fibFormalOk ? _dHi : _leg15 ? _l15hi : legF.hi : pr.hi;
+  const bLo = !sw && _bsOk ? Math.min(bLo0, ..._tvB.buys, ..._tvB.sells) : bLo0, bHi = !sw && _bsOk ? Math.max(bHi0, ..._tvB.buys, ..._tvB.sells) : bHi0, rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
+  const tLo = _leg15 ? _l15lo : legF ? legF.lo : 0, tHi = _leg15 ? _l15hi : legF ? legF.hi : 0, tRng = tHi - tLo || 1;
+  /* jl-P1: S3/S4 优先判下降段（旧逻辑 p<bLo → brkL「▼破段低」在下降段语义是错的） */
+  const stKey = useLeg ? _al && _al.dir < 0 ? "downSeg" : _intradayBreak ? "brkPending" : p > bHi ? "brkH" : p < bLo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid" : pr.st;
+  const stMap = useLeg ? {
+    downSeg: [_al && _al.state === "S4" ? "▼下降段·已确认起点" : "▼下降段·反弹档生效", _al && _al.state === "S4" ? "g" : "y"],
+    brkPending: ["▼破位待确认·沿用旧段", "g"], brkH: ["▲破段高·强势", "r"], brkL: ["▼破段低", "g"],
+    high: ["近段高·防回调", "r"], low: ["近段低·看支撑", "g"],
+    mid: [_swState && _swState.anchorKind === "provisional" && Number(_swState.retrace) > 0.382 ? "回调·待确认" : "段内", _swState && _swState.anchorKind === "provisional" && Number(_swState.retrace) > 0.382 ? "y" : ""]
+  } : { brkH: ["▲破预判高·强势", "r"], brkL: ["▼破预判低", "g"], high: ["高位·防回调", "r"], low: ["低位·看支撑", "g"], mid: ["中段", ""] }, st = stMap[stKey];
+  let ticks = "", marks = "";
+  /* jl-P0-3: _dqHi/_dqLo 上移至此（原 110 行）—— 日波段 Fib 数据源与留痕箭头同链（s.high/s.low → _lbT.h/l） */
+  const _lbT = latestHoldingBarJL(s, dailyBarsOf(s.code)) || {};
+  const _dqHi = Number(s.high) > 0 ? Number(s.high) : Number(_lbT.h) > 0 ? Number(_lbT.h) : 0, _dqLo = Number(s.low) > 0 ? Number(s.low) : Number(_lbT.l) > 0 ? Number(_lbT.l) : 0;
+  /* jl-P0-2: 中波段门控保持（原 if 不判 sw，日波段出中波段 Fib=串台）；
+     jl-P0-3: 日波段（!sw）改渲染自己的 Fib —— 日内已见区间（_dqLo→_dqHi）回撤档，数据与留痕箭头同链零新依赖 */
+  if (sw ? (_fibFormalOk || (_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1)) : (_dqHi > 0 && _dqLo > 0 && _dqHi > _dqLo)) {
+    /* jl-P1: _hhT/_rngT 走 activeLeg（S1/S2 活高跟随；S3/S4=下降腿 hi/rng）；
+       jl-P0-3: !sw 时 Fib 基准=日内已见区间（顶 _dqHi、幅 _dqHi-_dqLo），回撤方向 v=顶-幅×r */
+    const _hhT = sw ? (_al ? _al.hi : Math.max(_legD.H1, p, Number(s.high) || 0)) : _dqHi,
+      _rngT = sw ? (_al ? _al.rng : (_hhT - _fibLo || 1)) : (_dqHi - _dqLo),
+      lv = [[0.382, "c382"], [0.5, "c50"], [0.618, "c618"], [0.786, "c786"], ...(sw ? [[0.886, "c886"]] : [])];
+    const tkCol = fibVisibleJL().reduce((m, z) => { m[z.lb] = z.color; return m; }, {});
+    /* jl-P1: 下降段（S3/S4）刻度方向反转 —— 反弹档 lo+rng×r（自腿底向上），升序天然左低右高；
+       jl-P0-3: 反弹分支仅中波段生效 —— 日波段（!sw）恒走回撤方向（顶-幅×r），不撞腿反弹公式 */
+    const tks = lv.map((z) => { const r = z[0], v = sw && _al && _al.dir < 0 ? _fibLo + _rngT * r : r <= 1 ? _hhT - _rngT * r : _fibLo + _rngT * r; return { r, v, c: z[1], x: (v - bLo) / rng * 100 }; }).filter((o) => o.x >= 0 && o.x <= 100).sort((a, b) => a.x - b.x);
+    if (tks.length) {
+      marks = tks.map((o) => `<i style="position:absolute;top:-3px;width:1px;height:9px;left:${o.x.toFixed(1)}%;background:${tkCol[o.c]};opacity:.9"></i>`).join("");
+      let _px0 = -99, _mg = 99;
+      tks.forEach((o) => { if (o.x - _px0 > 0) _mg = Math.min(_mg, o.x - _px0); _px0 = o.x; });
+      const _fkFs = _mg < 11 ? Math.max(6.5, 8.5 * _mg / 11) : 8.5;
+      ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:9px 2px 1px">' + tks.map((o) => `<span class="ftk" style="position:absolute;left:${o.x.toFixed(1)}%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ${o.c}" style="font-size:${_fkFs.toFixed(1)}px">${o.v.toFixed(2)}</strong><b style="font-size:${(_fkFs * .88).toFixed(1)}px">${o.r}</b></span>`).join("") + "</div>";
     }
-    /* jl-1116 候选低数据bug修复(用户定案代码): swingStateJL.pullLow 只扫日K缓存bars的l字段(8201行, 不参考liveP),
-       盘中缓存无今日bar时候选低停留昨日值(36.12), 实时报价却已见30.78 → 候选低>已见最低=显示错误。
-       显示层取min(pullLow, 现价, 今日实时低)兜底: 候选低恒≤已见最低; swingStateJL纯函数与其余2处调用方(展开面板/事件流)零触碰 */
-    const _candV = _swState && Number(_swState.pullLow) > 0 ? Math.min(Number(_swState.pullLow), p, Number(s.low) > 0 ? Number(s.low) : Infinity) : 0;
-    const _candTxt = _swState && _swState.anchorKind === "provisional" && _candV > 0 ? ` · 候选低 ${_candV.toFixed(2)}·待确认` : "";
-    const _lbT = latestHoldingBarJL(s, dailyBarsOf(s.code)) || {};
-    const _dqHi = Number(s.high) > 0 ? Number(s.high) : Number(_lbT.h) > 0 ? Number(_lbT.h) : 0, _dqLo = Number(s.low) > 0 ? Number(s.low) : Number(_lbT.l) > 0 ? Number(_lbT.l) : 0; /* jl-1115: 日内已触达极值=留痕箭头唯一数据源(与行情开高低收行同回退链), 每渲染恒红/绿各一枚, 中波段⇄日波段切换只换坐标不换源 */
-    /* jl-1117: 日波段B/S水位档行(方案B定稿)——数据只读tiersViewJL现成结果零新计算;
-       buys数组=B1起价降序→反转成B6→B1价升, sells=S1起价升; 与温度计同一posF左低右高, 名称上价格下, 禁竖排/换行/反向;
-       相邻<8%整行字号微缩兜底; 延伸档(序≥基础档数)弱化+「延」; 预判边界虚线+两侧暗色观察区仅实际外扩时启用 */
-    let bsRow = "", predMarks = "", trackBg = "";
-    if (!sw && _bsOk) {
-      const _dcB = typeof decTierJL === "function" ? decTierJL(s) : 2;
-      const _nB = _tvB.extB || _tvB.buys.length, _nS = _tvB.extS || _tvB.sells.length;
-      const _all = [..._tvB.buys.map((v, k) => ({ lb: "B" + (k + 1), v, ext: k >= _nB, side: "b" })).reverse(), ..._tvB.sells.map((v, k) => ({ lb: "S" + (k + 1), v, ext: k >= _nS, side: "s" }))].map((o) => ({ ...o, x: (o.v - bLo) / rng * 100 })).filter((o) => o.x >= -0.4 && o.x <= 100.4);
-      let _px1 = -99, _mg1 = 99;
-      _all.forEach((o) => { if (o.x - _px1 > 0) _mg1 = Math.min(_mg1, o.x - _px1); _px1 = o.x; });
-      const _fsB = _mg1 < 8 ? Math.max(6.5, 8.5 * _mg1 / 8) : 8.5;
-      bsRow = '<div class="bsTicksJL">' + _all.map((o) => { const _jb = o.side === "b" ? jlBrokeStampJL(s.code, o.lb) : null; return `<span class="bsk ${o.side}${o.ext ? " ext" : ""}" style="left:${o.x.toFixed(1)}%;font-size:${_fsB.toFixed(1)}px"><b>${o.lb}</b><i>${o.v.toFixed(_dcB)}</i>${_jb ? `<u class="jbs ${_jb.cls}">${_jb.txt}</u>` : ""}</span>`; }).join("") + "</div>"; /* jl-1120: B档挂反抽压力章(压/压·N/3/压·定/复), jlBrokeStampJL纯读取 */
-      const _pl = (pr.lo - bLo) / rng * 100, _ph = (pr.hi - bLo) / rng * 100;
-      if (_pl > 1 || _ph < 99) {
-        predMarks = `<i class="prPred" style="left:${_pl.toFixed(1)}%"></i><i class="prPred" style="left:${_ph.toFixed(1)}%"></i>`;
-        trackBg = ` style="background:linear-gradient(90deg,#ffffff14 0,#ffffff14 ${_pl.toFixed(1)}%,#63e4d455 ${_pl.toFixed(1)}%,#ffd21f55 ${(_pl + (_ph - _pl) / 2).toFixed(1)}%,#ff545955 ${_ph.toFixed(1)}%,#ffffff14 ${_ph.toFixed(1)}%,#ffffff14 100%)"`;
-      }
-    }
-    /* jl-1115: 单组件双数据源模板——①prHead撤·待确认(去重③) ②按钮名对齐口径(中波段/日波段, 点击仅换数据源, UI容器/坐标映射/箭头体系恒一)
-       ③动态指针亮白箭头1枚(pos) + 日内留痕红(hi)/绿(lo)半透明箭头各1枚固定在已触达价(替代旧useLeg预判三角), 禁止多历史箭头 */
-    return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? (dOk ? "当前段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><span>${sw ? (dOk ? "当前段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTogRow"><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 中波段" : "⇄ 日波段"}</button></div><div class="prTrack"${trackBg}><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${_dqHi > 0 ? `<i class="prTri hi" style="left:${posF(_dqHi).toFixed(1)}%;opacity:.55"></i>` : ""}${_dqLo > 0 ? `<i class="prTri lo" style="left:${posF(_dqLo).toFixed(1)}%;opacity:.55"></i>` : ""}${predMarks}${marks}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}${bsRow}<div class="prStateRow"><span class="prState ${st[1]}">${st[0]}${_candTxt}</span></div><div class="prFoot">${jlBrokeFootJL(s)}<span>位置 ${Math.round(pos)}%${useLeg ? ` · 日内 <b style="background:rgba(0,150,90,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.lo.toFixed(2)}</b>–<b style="background:rgba(224,32,32,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.hi.toFixed(2)}</b>` : ` · 标定 +${pr.ku}/−${pr.kd}×ATR`}</span></div></div>`;
   }
+  const _candV = _swState && Number(_swState.pullLow) > 0 ? Math.min(Number(_swState.pullLow), p, Number(s.low) > 0 ? Number(s.low) : Infinity) : 0;
+  const _candTxt = _swState && _swState.anchorKind === "provisional" && _candV > 0 ? ` · 候选低 ${_candV.toFixed(2)}·待确认` : "";
+  let bsRow = "", predMarks = "", trackBg = "";
+  if (!sw && _bsOk) {
+    const _dcB = typeof decTierJL === "function" ? decTierJL(s) : 2;
+    const _nB = _tvB.extB || _tvB.buys.length, _nS = _tvB.extS || _tvB.sells.length;
+    const _all = [..._tvB.buys.map((v, k) => ({ lb: "B" + (k + 1), v, ext: k >= _nB, side: "b" })).reverse(), ..._tvB.sells.map((v, k) => ({ lb: "S" + (k + 1), v, ext: k >= _nS, side: "s" }))].map((o) => ({ ...o, x: (o.v - bLo) / rng * 100 })).filter((o) => o.x >= -0.4 && o.x <= 100.4);
+    let _px1 = -99, _mg1 = 99;
+    _all.forEach((o) => { if (o.x - _px1 > 0) _mg1 = Math.min(_mg1, o.x - _px1); _px1 = o.x; });
+    const _fsB = _mg1 < 8 ? Math.max(6.5, 8.5 * _mg1 / 8) : 8.5;
+    bsRow = '<div class="bsTicksJL">' + _all.map((o) => { const _jb = o.side === "b" ? jlBrokeStampJL(s.code, o.lb) : null; return `<span class="bsk ${o.side}${o.ext ? " ext" : ""}" style="left:${o.x.toFixed(1)}%;font-size:${_fsB.toFixed(1)}px"><b>${o.lb}</b><i>${o.v.toFixed(_dcB)}</i>${_jb ? `<u class="jbs ${_jb.cls}">${_jb.txt}</u>` : ""}</span>`; }).join("") + "</div>";
+    const _pl = (pr.lo - bLo) / rng * 100, _ph = (pr.hi - bLo) / rng * 100;
+    if (_pl > 1 || _ph < 99) {
+      predMarks = `<i class="prPred" style="left:${_pl.toFixed(1)}%"></i><i class="prPred" style="left:${_ph.toFixed(1)}%"></i>`;
+      trackBg = ` style="background:linear-gradient(90deg,#ffffff14 0,#ffffff14 ${_pl.toFixed(1)}%,#63e4d455 ${_pl.toFixed(1)}%,#ffd21f55 ${(_pl + (_ph - _pl) / 2).toFixed(1)}%,#ff545955 ${_ph.toFixed(1)}%,#ffffff14 ${_ph.toFixed(1)}%,#ffffff14 100%)"`;
+    }
+  }
+  return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? ((_al || dOk) ? "当前段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><span>${sw ? ((_al || dOk) ? "当前段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTogRow"><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 中波段" : "⇄ 日波段"}</button></div><div class="prTrack"${trackBg}><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${_dqHi > 0 ? `<i class="prTri hi" style="left:${posF(_dqHi).toFixed(1)}%;opacity:.55"></i>` : ""}${_dqLo > 0 ? `<i class="prTri lo" style="left:${posF(_dqLo).toFixed(1)}%;opacity:.55"></i>` : ""}${predMarks}${marks}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}${bsRow}<div class="prStateRow"><span class="prState ${st[1]}">${st[0]}${_candTxt}</span></div><div class="prFoot">${jlBrokeFootJL(s)}<span>位置 ${Math.round(pos)}%${useLeg ? ` · 日内 <b style="background:rgba(0,150,90,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.lo.toFixed(2)}</b>–<b style="background:rgba(224,32,32,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.hi.toFixed(2)}</b>` : ` · 标定 +${pr.ku}/−${pr.kd}×ATR`}</span></div></div>`;
+}
 
   const _ffMJL = { t: 0, d: null };
   function resoDataJL(s) {
@@ -4972,35 +4970,50 @@ document.addEventListener("visibilitychange", () => {
     if (ret > 0.4) return { ret, band: "回吐" + rp + "% · 中", cls: "mid", c: "#4fd79b" };
     return { ret, band: "回吐" + rp + "% · 浅", cls: "low", c: "#4fd79b" };
   }
-  function playbookHTMLJL(s, leg, swSt) {
-    if (!leg || !(leg.L1 > 0) || !(leg.H1 > leg.L1)) return "";
-    const lp = Number(s.base) || 0, hi0 = Number(s.high) || 0, hh = Math.max(leg.H1, lp, hi0), rng = hh - leg.L1;
-    if (!(rng > 0)) return "";
-    /* v0.83.0-S3: 外推位改锚在「下一段起点」。
-       原来 ex(r) = leg.L1 + rng*r，锚在上一段的低点 —— 永鼎实测
-       2.618 档 = 29.11 + 18.51×2.618 = 77.57，而现价才 36.26、本轮回调低点 36.13，
-       这个数与「当前该看的波段」毫无关系，却和接回档排在同一行，读起来像波段被拉到 77。
-       现改用 swingStateJL 的 anchor（已确认枢轴优先，否则暂定起点），拿不到才回落 leg.L1。 */
-    const _anch = (swSt && swSt.ok && Number(swSt.anchor) > 0) ? Number(swSt.anchor) : leg.L1;
-    const bk = (r) => hh - rng * r, ex = (r) => _anch + rng * r;
-    const cell = (nm, r, cl, v) => {
-      const hot = lp > 0 && Math.abs(v - lp) / lp < 0.005 ? " hot" : "", ds = lp > 0 ? (v - lp) / lp * 100 : 0;
-      return '<b class="pbLv ' + cl + hot + '">' + nm + " " + r + " " + v.toFixed(2) + "<i>" + (ds >= 0 ? "+" : "") + ds.toFixed(1) + "%</i></b>";
-    };
-    const back = [["接回·浅", "0.382", "c382", bk(0.382)], ["接回·半", "0.50", "c50", bk(0.5)], ["接回·深", "0.618", "c618", bk(0.618)], ["接回·极限", "0.786", "c786", bk(0.786)]];
-    /* v0.83.0-S3: 命名从「冲刺」改「外推」，明确它不是波段结构的一部分 */
-    const race = [["外推一", "1.272", "e1272", ex(1.272)], ["外推二", "1.414", "e1414", ex(1.414)], ["外推·主", "1.618", "e1618", ex(1.618)], ["外推四", "2.0", "e20", ex(2)], ["外推·尾", "2.618", "e2618", ex(2.618)]];
-    let cap = "", capCls = "";
-    const pull = lp > 0 ? (hh - lp) / rng : 0, offH = lp > 0 && hh > 0 ? (hh - lp) / hh * 100 : 0;
-    if (lp > 0 && lp < leg.L1) { cap = "已破腿起点 " + leg.L1.toFixed(2) + " · 旧接回档作废"; capCls = "brk"; }
-    else if (pull > 0.786) { cap = "回吐 " + (pull * 100).toFixed(0) + "% · 逼近腿起点 " + leg.L1.toFixed(2); capCls = "warn"; }
-    else if (pull >= 0.45) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐 " + (pull * 100).toFixed(0) + "% · 到深接回区(0.5~0.618)"; capCls = "zone"; }
-    else if (pull >= 0.3) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐 " + (pull * 100).toFixed(0) + "% · 到浅接回区(0.382附近)"; capCls = "zone2"; }
-    else if (lp >= ex(1.618) * 0.98) { cap = "到外推主目标区 " + ex(1.618).toFixed(2) + " · 落点参考"; capCls = "top"; }
-    else if (pull > 0.02) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐涨幅 " + (pull * 100).toFixed(0) + "%"; capCls = ""; }
-    const capH = cap ? '<div class="pbCap ' + capCls + '">' + cap + "</div>" : "";
-    return '<div class="pbJL">' + capH + '<div class="pbRow"><span>接回档</span>' + back.map((x) => cell(x[0], x[1], x[2], x[3])).join("") + '</div><div class="pbRow"><span>外推位</span>' + race.map((x) => cell(x[0], x[1], x[2], x[3])).join("") + "<i>腿低 " + leg.L1.toFixed(2) + " → 活高 " + hh.toFixed(2) + (hh > leg.H1 ? " · 已重锚" : "") + (leg.h1Prov ? " · 未确认参考" : "") + "　|　外推锚 " + _anch.toFixed(2) + (swSt && swSt.ok && swSt.anchorKind === "provisional" ? "(暂定)" : swSt && swSt.ok && swSt.anchorKind === "confirmed" ? "(已确认)" : "(上一段腿低)") + " · 等幅外推非波段位</i></div></div>";
-  }
+function playbookHTMLJL(s, leg, swSt) {
+  if (!leg || !(leg.L1 > 0) || !(leg.H1 > leg.L1)) return "";
+  const lp = Number(s.base) || 0, hi0 = Number(s.high) || 0,
+    /* jl-P1: hh/rng 走 activeLegJL 单一真源（与温度计同源）；activeLeg 不可用时回落 leg 旧公式 */
+    _alP = swSt && swSt.ok ? activeLegJL(swSt, lp, hi0) : null,
+    hh = _alP ? _alP.hi : Math.max(leg.H1, lp, hi0),
+    rng = _alP ? _alP.rng : hh - leg.L1;
+  if (!(rng > 0)) return "";
+  const _anch = (swSt && swSt.ok && Number(swSt.anchor) > 0) ? Number(swSt.anchor) : leg.L1;
+  const bk = (r) => hh - rng * r, ex = (r) => _anch + rng * r;
+  const cell = (nm, r, cl, v) => {
+    const hot = lp > 0 && Math.abs(v - lp) / lp < 0.005 ? " hot" : "", ds = lp > 0 ? (v - lp) / lp * 100 : 0;
+    return '<b class="pbLv ' + cl + hot + '">' + nm + " " + r + " " + v.toFixed(2) + "<i>" + (ds >= 0 ? "+" : "") + ds.toFixed(1) + "%</i></b>";
+  };
+  const back = [["接回·浅", "0.382", "c382", bk(0.382)], ["接回·半", "0.50", "c50", bk(0.5)], ["接回·深", "0.618", "c618", bk(0.618)], ["接回·极限", "0.786", "c786", bk(0.786)]];
+  const race = [["外推一", "1.272", "e1272", ex(1.272)], ["外推二", "1.414", "e1414", ex(1.414)], ["外推·主", "1.618", "e1618", ex(1.618)], ["外推四", "2.0", "e20", ex(2)], ["外推·尾", "2.618", "e2618", ex(2.618)]];
+  /* R2c 三态门控 */
+  const _closed = !!(swSt && swSt.ok && swSt.broke === true && swSt.closed !== false);
+  const _pend = !!(_alP && _alP.state === "S2");
+  let cap = "", capCls = "";
+  const pull = lp > 0 ? (hh - lp) / rng : 0, offH = lp > 0 && hh > 0 ? (hh - lp) / hh * 100 : 0;
+  if (_closed) { cap = "已定盘破位 · 接回档作废，改看反弹档（上方中波段块）"; capCls = "brk"; }
+  else if (_pend) { cap = "盘中插针 · 待收盘确认（插针不算破，接回档暂有效）"; capCls = "warn"; }
+  else if (lp > 0 && lp < leg.L1) { cap = "已破腿起点 " + leg.L1.toFixed(2) + " · 旧接回档作废"; capCls = "brk"; }
+  else if (pull > 0.786) { cap = "回吐 " + (pull * 100).toFixed(0) + "% · 逼近腿起点 " + leg.L1.toFixed(2); capCls = "warn"; }
+  else if (pull >= 0.45) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐 " + (pull * 100).toFixed(0) + "% · 到深接回区(0.5~0.618)"; capCls = "zone"; }
+  else if (pull >= 0.3) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐 " + (pull * 100).toFixed(0) + "% · 到浅接回区(0.382附近)"; capCls = "zone2"; }
+  else if (lp >= ex(1.618) * 0.98) { cap = "到外推主目标区 " + ex(1.618).toFixed(2) + " · 落点参考"; capCls = "top"; }
+  else if (pull > 0.02) { cap = "自活高回落 " + offH.toFixed(1) + "% · 回吐涨幅 " + (pull * 100).toFixed(0) + "%"; capCls = ""; }
+  const capH = cap ? '<div class="pbCap ' + capCls + '">' + cap + "</div>" : "";
+  /* R2c: _closed 时接回四档换「已作废」占位（数值不再渲染）；外推照常 */
+  /* jl-P0-4: 作废条件兜底 —— 现价已破旧腿起点（lp<leg.L1）且非 S2 暂有效时同样作废。
+     swSt 失效（ok=false/null）时 _pend 恒 false，只要破腿起点即作废（与 cap 三态链第 3 档同判，
+     行渲染不再漏旧档数值）；S2 插针「暂有效」为 R2c 定案，以 _pend 保护不动。文案/外推档零改动 */
+  const _dead = _closed || (lp > 0 && lp < leg.L1 && !_pend);
+  const backRow = _dead
+    ? '<div class="pbRow"><span>接回档</span><b class="pbLv c786 brk">已作废</b></div>'
+    : '<div class="pbRow"><span>接回档</span>' + back.map((x) => cell(x[0], x[1], x[2], x[3])).join("") + "</div>";
+  /* jl-P1: S3/S4 尾注改述下降腿（外推=反弹延伸基数），不再挂旧上升腿「腿低→活高」误导文案 */
+  const tail = _alP && _alP.dir < 0
+    ? "下降腿 " + _alP.lo.toFixed(2) + " → 段高 " + _alP.hi.toFixed(2) + " · 外推=反弹延伸基数"
+    : "腿低 " + leg.L1.toFixed(2) + " → 活高 " + hh.toFixed(2) + (hh > leg.H1 ? " · 已重锚" : "") + (leg.h1Prov ? " · 未确认参考" : "");
+  return '<div class="pbJL">' + capH + backRow + '<div class="pbRow"><span>外推位</span>' + race.map((x) => cell(x[0], x[1], x[2], x[3])).join("") + "<i>" + tail + "　|　外推锚 " + _anch.toFixed(2) + (swSt && swSt.ok && swSt.anchorKind === "provisional" ? "(暂定)" : swSt && swSt.ok && swSt.anchorKind === "confirmed" ? "(已确认)" : "(上一段腿低)") + " · 等幅外推非波段位</i></div></div>";
+}
   function tierStripHTMLJL(s, i) {
     const t = tiersViewJL(s);
     if (!t) {
@@ -8544,45 +8557,65 @@ function ffMergeJL(oldRows, newRows) {
       back: back, bounce: bounce, ext: ext, msg: msg
     };
   }
+
+function activeLegJL(swSt, liveP, dayHi) {
+  if (!swSt || !swSt.ok) return null;
+  const H1 = Number(swSt.H1), L1 = Number(swSt.L1);
+  if (!(H1 > 0 && L1 > 0)) return null;
+  const p = Number(liveP) > 0 ? Number(liveP) : 0, dh = Number(dayHi) > 0 ? Number(dayHi) : 0;
+  const BR = [0.382, 0.5, 0.618, 0.786];
+  if (swSt.broke === true) { /* S3 / S4：下降腿 */
+    const confirmed = swSt.anchorKind === "confirmed";
+    const lo = confirmed ? Number(swSt.confLow) : Number(swSt.downLow);
+    if (!(lo > 0 && H1 > lo)) return null; /* 缺起点/腿宽≤0 → 降级，不伪造 */
+    const rg = H1 - lo;
+    return {
+      state: confirmed ? "S4" : "S3", dir: -1, lo: lo, hi: H1, rng: rg, pending: false,
+      fibs: BR.map(function (r) { return { r: r, v: lo + rg * r }; })
+    };
+  }
+  const hi = Math.max(H1, p, dh); /* S1 / S2：活高跟随 */
+  if (!(hi > L1)) return null;
+  const rg = hi - L1;
+  return {
+    state: swSt.brokeMode === "intraday" ? "S2" : "S1", dir: 1, lo: L1, hi: hi, rng: rg,
+    pending: swSt.brokeMode === "intraday",
+    fibs: BR.map(function (r) { return { r: r, v: hi - rg * r }; })
+  };
+}
   /* v0.83.0-S1c: 中波段状态块。刻意复用既有 pbJL/pbCap/pbRow/pbLv/fibState 样式类，
      不新增 CSS —— 用户要求「UI 设计一下不要太突兀」，与上下两块（接回档面板、
      短波段判定行）同一套视觉语言是最不突兀的做法。 */
-  function swingMidHTMLJL(st) {
-    if (!st || !st.ok) return "";
-    const f2 = (v) => Number.isFinite(v) ? v.toFixed(2) : "—";
-    const dd = (v) => v ? String(v).slice(5) : "";
-    const capCls = st.broke ? "brk" : st.brokeMode === "intraday" ? "warn" : "";
-    const brk = st.broke
-      ? '<span style="color:#ff7a72">收盘已破前低 · 中波段翻转为下降段 · 接回档作废</span>'
-      : st.brokeMode === "intraday"
-        ? '<span style="color:#e8c568">盘中跌破前低 · 待收盘确认（插针不算破）</span>'
-        : '<span style="color:#1fdc93">前低未破 · 现价高出 ' + (st.L1 > 0 && st.refC > 0 ? ((st.refC / st.L1 - 1) * 100).toFixed(1) : "—") + '%</span>';
-    const anch = st.anchorKind === "confirmed"
-      ? '已确认起点 <b>' + f2(st.confLow) + '</b> <i>' + dd(st.confLowD) + '</i>'
-      : st.anchorKind === "provisional"
-        ? '暂定起点 <b>' + f2(st.pullLow) + '</b> <i>' + dd(st.pullLowD) + ' · 待枢轴成立</i>'
-        : '下一段起点 <b>—</b> <i>段高之后尚无回调K线</i>';
-    const cellOf = (x, pre) => '<b class="pbLv ' + pre + '">' + x.r + " " + f2(x.v) + "</b>";
-    /* v0.83.1-N1: 中波段块不再渲染「接回档」行。
-       紧随其后的 playbookHTMLJL 已经有一份，且两者段高口径不同 ——
-       本块 H1 = 已确认枢轴高（无突破跟随），面板 hh = max(H1, 现价, 今日高)（v.90 突破跟随）。
-       现价一旦超过已确认段高，同一屏两个「接回档」就给出两套数，正是用户上次问
-       「38.36 还是 38.59」的同一个病根，v0.83.0 里又造了一遍。
-       接回档只由面板负责；本块只在段翻转后补「反弹档」（面板没有这一档）。
-       状态信息（前低/段高/幅度/回吐/破位/双起点）全部保留。 */
-    const rows = st.bounce.length
-      ? '<div class="pbRow"><span>反弹档</span>' + st.bounce.map((x) => cellOf(x, "e" + String(x.r).slice(2))).join("") + "</div>"
-      : "";
-    return '<div class="pbJL" style="margin-top:6px">'
-      /* v0.83.0-S1d: 回吐超过 100% 意味着现价已跌到段起点之下，此时「回吐 103%」是
-         无意义表述（实测收盘破位场景就会出现）。超过 100% 改说「已越前低」。 */
-      + '<div class="pbCap ' + capCls + '">中波段 · 日线　前低 ' + f2(st.L1) + " " + dd(st.L1d) + " → 段高 " + f2(st.H1) + " " + dd(st.H1d) + (st.H1prov ? "（未确认）" : "") + " · 幅度 " + f2(st.rng) + (st.retrace <= 1 ? " · 回吐 " + (st.retrace * 100).toFixed(0) + "%" : " · 已越前低") + "</div>"
-      + '<div class="fibState">' + brk + "</div>"
-      + '<div class="fibState">' + anch + "</div>"
-      + rows
-      + '<div class="fibState"><small style="color:rgba(255,255,255,.80)">' + (st.msg || "") + "</small></div>"
-      + "</div>";
-  }
+function swingMidHTMLJL(st) {
+  if (!st || !st.ok) return "";
+  const f2 = (v) => Number.isFinite(v) ? v.toFixed(2) : "—";
+  const dd = (v) => v ? String(v).slice(5) : "";
+  const capCls = st.broke ? "brk" : st.brokeMode === "intraday" ? "warn" : "";
+  const brk = st.broke
+    ? '<span style="color:#ff7a72">收盘已破前低 · 中波段翻转为下降段 · 接回档作废</span>'
+    : st.brokeMode === "intraday"
+      ? '<span style="color:#e8c568">盘中跌破前低 · 待收盘确认（插针不算破）</span>'
+      : '<span style="color:#1fdc93">前低未破 · 现价高出 ' + (st.L1 > 0 && st.refC > 0 ? ((st.refC / st.L1 - 1) * 100).toFixed(1) : "—") + '%</span>';
+  const anch = st.anchorKind === "confirmed"
+    ? '已确认起点 <b>' + f2(st.confLow) + '</b> <i>' + dd(st.confLowD) + '</i>'
+    : st.anchorKind === "provisional"
+      ? '暂定起点 <b>' + f2(st.pullLow) + '</b> <i>' + dd(st.pullLowD) + ' · 待枢轴成立</i>'
+      : '下一段起点 <b>—</b> <i>段高之后尚无回调K线</i>';
+  const cellOf = (x, pre) => '<b class="pbLv ' + pre + '">' + x.r + " " + f2(x.v) + "</b>";
+  /* jl-P1: 反弹档改由 activeLegJL 提供 —— S3 与 swSt.bounce 等值（downLow 起点）；
+     S4 以 confLow 重算（swSt.bounce 恒 downLow 起点，照搬即分叉） */
+  const _alM = activeLegJL(st, 0, 0);
+  const rows = _alM && _alM.dir < 0 && _alM.fibs.length
+    ? '<div class="pbRow"><span>反弹档</span>' + _alM.fibs.map((x) => cellOf(x, "e" + String(x.r).slice(2))).join("") + "</div>"
+    : "";
+  return '<div class="pbJL" style="margin-top:6px">'
+    + '<div class="pbCap ' + capCls + '">中波段 · 日线　前低 ' + f2(st.L1) + " " + dd(st.L1d) + " → 段高 " + f2(st.H1) + " " + dd(st.H1d) + (st.H1prov ? "（未确认）" : "") + " · 幅度 " + f2(st.rng) + (st.retrace <= 1 ? " · 回吐 " + (st.retrace * 100).toFixed(0) + "%" : " · 已越前低") + "</div>"
+    + '<div class="fibState">' + brk + "</div>"
+    + '<div class="fibState">' + anch + "</div>"
+    + rows
+    + '<div class="fibState"><small style="color:rgba(255,255,255,.80)">' + (st.msg || "") + "</small></div>"
+    + "</div>";
+}
   function legFibJL(code, p) {
     const a0 = dailyBarsOf(code);
     if (a0.length < 10) return null;
