@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ks-1022b (2026-10-22): [高低区]默认入★收藏栏(新档favs默认+老档一次性迁移标记ks_phvlfav_1), 收藏栏常驻顶栏一步开关, 不动指标行收起设计; 上一批: ks-1019 (2026-10-21): K线页大图十字线与jinlin统一——①长按门槛420→220ms(与分时/持仓大图PHVLCross同节奏) ②松手十字线保留1.5s再消失(原立即关闭, 松手瞬间信息卡消失读不到开高低收) ③新手势开始自动清保留期残留线; 触摸路径以外的画线/平移/缩放/面板/鼠标悬停全部零改动; 配套 index.html iframe缓存戳v=1012b→v=1019a + sw壳v218 -->
+<!-- ks-1022fg (2026-10-22): LIQ方向重定+视觉重画——B=红"买B"等低点对(现价下方支撑/低买参考, 低价触及即失守删), S=绿"卖S"等高点对(新加摆动高点检测, 现价上方压力/高卖参考, 高价触及即被扫删); 圆角色块中文标签+1.5px虚线; 评分栏/图例同步(上方压力S/下方支撑B)。原BSL/SSL双低点对=方向拧(用户两图实证: 跌中上方一排B/S贴最低点), 旧S用UP红色与涨同色加重混乱。ks-1022b(1022-上午)的原批注: [高低区]默认入★收藏栏关, 不动指标行收起设计; 上一批: ks-1019 (2026-10-21): K线页大图十字线与jinlin统一——①长按门槛420→220ms(与分时/持仓大图PHVLCross同节奏) ②松手十字线保留1.5s再消失(原立即关闭, 松手瞬间信息卡消失读不到开高低收) ③新手势开始自动清保留期残留线; 触摸路径以外的画线/平移/缩放/面板/鼠标悬停全部零改动; 配套 index.html iframe缓存戳v=1012b→v=1019a + sw壳v218 -->
 <html lang="zh-CN" data-page-node-id="6D2T8EvdYeQCCUJBLfBYbE">
 <head data-page-node-id="RFoIjQ3gWo31cj0DVYxMoy">
 <meta charset="utf-8" data-page-node-id="e4EwOyQyDp841sEuZeXoET">
@@ -256,7 +256,7 @@
   <b class="g">吸</b>主力进散户出·只在60日区间下半部盖(回测唯一正超额) · 派/恐/洗已回测证伪下线<br>
   主力控盘: <b class="r">红</b>≥100 <b class="o">橙</b>≥50 <b class="y">黄</b>低(量价) · <b class="y">[DDX]</b>指标▾里开=独立副图(日线淡柱=主力净额红进绿出+DDX60金线·升金降灰·白线MA10,回测+6.8% vs +0.9%;分钟=DDX20同源口径) · 关=不占屏<br>
   <b class="y">★</b>冲进高位区≥80(过热) · <b class="g">★</b>跌进低位区≤20(超卖) · ●连排=单边延续<br>
-  <b class="r">BOS↓</b>下破 · <b class="g">BOS↑</b>上破 · SR/OB/BSL·SSL 只显示英文短签<br>
+  <b class="r">BOS↓</b>下破 · <b class="g">BOS↑</b>上破 · LIQ: 红虚线买B=下方支撑参考 绿虚线卖S=上方压力参考, 触破自动消失<br>
   <b class="y">▲B/▼S</b>你的买卖画线 · <b class="o">⚠1.618</b>扩展到位别追<br>
   <b class="y">▽量缩新高</b>(琥珀·日线): 收盘20日新高+量&lt;前20日峰值×0.7+60日高位 —— 中性信息=锁仓或背离,结合DDX看; 92样本回测T+5均+7.5%, <b>不是卖点</b>(VOL对应量柱同步描边) · DDX附图右下角标口径时点(如"5分DDX·14:55"/"日线DDX·截至09-08")
 </div>
@@ -3150,12 +3150,13 @@ function smaNulls(arr, n) {
   return out;
 }
 function swingsOf(kl) {
-  var sh = [], sl = [];
+  var sh = [], sl = [], hh = [];
   for (var i = 2; i < kl.length - 2; i++) {
     if (kl[i][2] > kl[i - 1][2] && kl[i][2] > kl[i - 2][2] && kl[i][2] >= kl[i + 1][2] && kl[i][2] >= kl[i + 2][2]) sh.push(i);
     if (kl[i][3] < kl[i - 1][3] && kl[i][3] < kl[i - 2][3] && kl[i][3] <= kl[i + 1][3] && kl[i][3] <= kl[i + 2][3]) sl.push(i);
+    if (kl[i][4] > kl[i - 1][4] && kl[i][4] > kl[i - 2][4] && kl[i][4] >= kl[i + 1][4] && kl[i][4] >= kl[i + 2][4]) hh.push(i); /* ks-1022f: 摆动高点(局部顶) */
   }
-  return { sh: sh, sl: sl };
+  return { sh: sh, sl: sl, hh: hh };
 }
 function ictCalc(kl) {
   var out = { fvg: [], liq: [], struct: [], ob: [] };
@@ -3197,7 +3198,7 @@ function ictCalc(kl) {
       }
     }
   }
-  eq(sw.sh, 2, "BSL"); eq(sw.sl, 3, "SSL");
+  eq(sw.sh, 2, "B"); eq(sw.sl, 3, "B"); eq(sw.hh, 4, "S"); /* ks-1022f: B=低点对双源(回调低sh+探底V底sl, 去重合并), S=高点对(hh新加) */ /* ks-1022f: 方向重定——B=等低点对(下方支撑/低买参考), S=等高点对(上方压力/高卖参考); 原BSL/SSL双双画低处=方向拧(用户两图实证: 跌中上方挂一排B/S贴最低点) */
   // 同侧相近价位的流动性线合并去重（保留摆动点最新的一条）
   out.liq.sort(function (a, b) { return b.i - a.i; });
   var lm = [];
@@ -3208,11 +3209,11 @@ function ictCalc(kl) {
     lm.push(L);
   });
   out.liq = lm;
-  // ks-1022d: 流动性已扫失效——BSL/SSL 形成后价格再触该位即扫掉, 已扫的不画不再当目标(用户实证: 292.25→273大跌中
-  // 上方仍挂一排早已被穿越的 B LIQ)。过滤后 BSL 必在现价上方(反弹目标)/SSL 必在下方(下跌目标), 与底部评分栏口径一致。
+  // ks-1022f: LIQ方向重定——B=等低点对(现价下方支撑, 低价触及即失守删), S=等高点对(现价上方压力, 高价触及即被扫删)。
+  // 留在图上的: B=下方未破支撑(低买参考), S=上方未碰压力(高卖参考); 已扫/失守一律消失。
   out.liq = out.liq.filter(function (L) {
     for (var t2 = L.i + 1; t2 < n; t2++) {
-      if (kl[t2][2] <= L.p) return false; /* ks-1022d定案: LIQ位=低点语义(止损/支撑带), 价格低价触及该位下方即被扫——统一判, 与side无关; kl[2]=低(qfqday路径实证) */
+      if (L.side === "B" ? kl[t2][2] <= L.p : kl[t2][4] >= L.p) return false; /* ks-1022f: B低价触及=失守删, S高价触及=被扫删 */
     }
     return true;
   });
@@ -3692,15 +3693,22 @@ function renderICT(ctx, v) {
   if (S.ind.liq) {
     ic.liq.forEach(function (L) {
       if (L.i < v.i0 - 5) return;
-      var isB = L.side === "BSL";
-      var col = isB ? "#ffd21f" : "#ff6f66";
+      var isB = L.side === "B";
+      // ks-1022g: 一眼可读——B=红(UP色,买,下方支撑)/S=绿(DN色,卖,上方压力), 与全站红涨绿跌一致;
+      // 1.5px虚线(参考位感,区别于均线实线) + 左端色块圆角标签白字"买B/卖S+价位"(旧8.5px英文小字手机看不清)
+      var col = isB ? UP : DN;
       var y = v.Y(L.p), x0 = Math.max(v.padL, v.X(L.i));
-      // ks-0916-51: 用户"LIQ框换细横线"——删填充色带, 1.8虚线改1px细实线
-      ctx.strokeStyle = col; ctx.lineWidth = 1;
+      ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
       ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(right, y); ctx.stroke();
-      ctx.fillStyle = col; ctx.font = "bold 8.5px Menlo, monospace";
-      ctx.textAlign = "left"; ctx.textBaseline = "bottom";
-      ctx.fillText((isB ? "B LIQ " : "S LIQ ") + L.p.toFixed(d2), x0 + 2, y - 2);
+      ctx.setLineDash([]);
+      var txt = (isB ? "买B " : "卖S ") + L.p.toFixed(d2);
+      ctx.font = "bold 9.5px -apple-system, sans-serif";
+      var tw = ctx.measureText(txt).width + 10;
+      var ly = y - 17; if (ly < v.padT + 2) ly = y + 4;
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.roundRect(x0, ly, tw, 14, 4); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(txt, x0 + 5, ly + 7.5);
     });
   }
   if (S.ind.ms) {
@@ -5517,10 +5525,10 @@ function renderMonitor(ctx, v) {
   // 5b. 流动性目标（最近的上方BSL / 下方SSL）
   var bsl = null, ssl = null;
   ic2.liq.forEach(function (L) {
-    if (L.side === "BSL" && L.p > last && (!bsl || L.p < bsl)) bsl = L.p;
-    if (L.side === "SSL" && L.p < last && (!ssl || L.p > ssl)) ssl = L.p;
+    if (L.side === "S" && L.p > last && (!bsl || L.p < bsl)) bsl = L.p;
+    if (L.side === "B" && L.p < last && (!ssl || L.p > ssl)) ssl = L.p;
   });
-  if (bsl || ssl) rows.push(["流动性 " + (bsl ? "上方BSL " + bsl.toFixed(dec()) + " +" + (bsl / last * 100 - 100).toFixed(1) + "%" : "") + (bsl && ssl ? " · " : "") + (ssl ? "下方SSL " + ssl.toFixed(dec()) + " -" + (100 - ssl / last * 100).toFixed(1) + "%" : ""), "#b78cff"]);
+  if (bsl || ssl) rows.push(["流动性 " + (bsl ? "上方压力S " + bsl.toFixed(dec()) + " +" + (bsl / last * 100 - 100).toFixed(1) + "%" : "") + (bsl && ssl ? " · " : "") + (ssl ? "下方支撑B " + ssl.toFixed(dec()) + " -" + (100 - ssl / last * 100).toFixed(1) + "%" : ""), "#b78cff"]);
   // 6. 收敛三角形态（近50根摆动点：突破计入评分，末端未破只提示）
   var tr2 = triDetect(kl);
   if (tr2) {
