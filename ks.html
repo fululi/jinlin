@@ -3208,6 +3208,14 @@ function ictCalc(kl) {
     lm.push(L);
   });
   out.liq = lm;
+  // ks-1022d: 流动性已扫失效——BSL/SSL 形成后价格再触该位即扫掉, 已扫的不画不再当目标(用户实证: 292.25→273大跌中
+  // 上方仍挂一排早已被穿越的 B LIQ)。过滤后 BSL 必在现价上方(反弹目标)/SSL 必在下方(下跌目标), 与底部评分栏口径一致。
+  out.liq = out.liq.filter(function (L) {
+    for (var t2 = L.i + 1; t2 < n; t2++) {
+      if (L.side === "BSL" ? kl[t2][4] >= L.p : kl[t2][2] <= L.p) return false; /* kl列序实测: [2]=低[4]=高(qfqday路径); BSL上冲扫/SSL下破扫 */
+    }
+    return true;
+  });
   // 结构：收盘突破最近摆动高/低 → BOS（顺势）/CHoCH（逆势反转），并标记订单块
   var trend = 0, lastSH = null, lastSL = null, lastBreak = -1;
   var all = [];

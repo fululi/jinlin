@@ -1,3 +1,4 @@
+/* jinlin sw v223 — 2026-10-22: 缓存名→v223, 配合 v0.84.82 批[ks-1022d: LIQ流动性已扫失效——BSL/SSL生成后价格再触该位即扫掉, 已扫不再画不再当目标(用户实证: 292.25→273大跌中上方仍挂一排早已被穿越的B LIQ); 过滤后BSL必在现价上方(反弹目标)/SSL必在下方(下跌目标), 与底部评分栏口径一致; kl列序实证[qfqday路径: 日期/开/低/收/高/量]BSL看[4]高列/SSL看[2]低列; 验证: 双顶下跌mock——已扫BSL×3+已扫SSL全删, 仅剩未扫下方SSL目标(ictCalc断言+方向自洽); index(81→82, data-sw v222→v223)+sw(壳v222→v223, KEEP=223+222)成对提交] */
 /* jinlin sw v222 — 2026-10-22: 缓存名→v222, 配合 v0.84.81 批[ks-1022全批: K线大图(PHVLD)高低区移植——①ks.html: 高低区带(90日回看·3段深浅)顶部「高位区 29.25」底部「低位区 27.38」白字白线, 橙「高」红「低」字戳+虚线跨幅, 独立版指标行[高低区]开关记忆, ②ks-1022b: ★收藏栏默认入[★高低区]一键开关(新档favs默认+老档一次性迁移ks_phvlfav_1), ③ks-1022c: 金粼嵌入态默认开(applyUrl口径与atri/ob同列), 嵌入开关=「指标▾」抽屉, ④ks-1019: 大K线十字线统一220ms长按+松手留1.5s(与分时PHVLCross同节奏); 嵌入iframe stamp v=1012b→1022拉新ks; 验证: 独立版+嵌入版VLM视觉+像素差(903/828)+node --check全过; 线上78/79/80批(index侧jl-A4/A2/3a)与本批零重叠(diff实证ks.html两侧实质差异=仅本批); index(80→81, data-sw v221→v222)+sw(壳v221→v222, KEEP=222+221)成对提交] */
 /* jinlin sw v221 — 2026-10-21: 缓存名→v221, 配合 v0.84.80 批[3a: 档价解冻三件, 4行代码全在 computeTierJL——f1: 延伸档触发看日高日低(卖侧 Math.max(p,hi>0?hi:0) 买侧 Math.min(p,lo>0?lo:Infinity), 盘中冲过S3/跌破B3即长S4/S5兜住, 盘后无高低价退回老逻辑); f2+b2: ap 与 _curA 分母 p→prev(昨收), 档数门控与分位口径一天定一次不跟盘中价晃; 另2行=版本号; 其余18红线函数零字节动(全文件diff自证); 互验: 千日×6档0偏差+统计逐字复现(智谱/kimi双侧互锁, md5双向对表29249cb3)+换位复核rel中位0.52/p95 1.12/abs p95 4.27; B1跳空锚点0.5×a原样留3b(两处同改硬规矩已立: computeTierJL活锚+calibJL采样); index(79→80, data-sw v219→v221)+sw(壳v220→v221, KEEP=221+220)成对提交] */
 /* jinlin sw v220 — 2026-10-21: 缓存名→v220, 配合 v0.84.79 批[jl-A4: 盘后留痕行——盘后梯子顶行可见「今日触及 S1 41.08 · 09:30–09:45」(多档同触S前B后全列一行; 枚举走台账key不走计划数组, 今日触过明日计划没有的档照样列; 老条目只显档名不编数; 盘中不渲染避免与已触✓双通道; 时间=检测时刻前向落桶15分bar, ≥15:00封顶14:45–15:00, 硬套A3回溯区间=捏造bar故不共用); 写点 checkTierTouchJL st[key]=1→{v,t}(v=当日触档价, t=检测时刻; 熔断判定前写入, 静默照记); 兼容: 读者全按真值判定, {v,t}与=1零迁移; 回滚79→78安全; 验证: 33桩全过(kimi 20:31交卷)+红线19函数逐字一致+kimi md5对死92c29b7b; 红线: 档价链/A1A2A3通道零触碰; index(78→79, data-sw v219→v220)+sw(壳v219→v220, KEEP=220+219)成对提交] */
@@ -125,8 +126,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v222'; /* v0.84.81: ks-1022全批(K线高低区+十字线统一+收藏栏/嵌入默认开); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v222', 'jinlin-shell-v221']; /* KEEP=222+221 沿用历代模式(当前+上一版平滑过渡) */
+const C = 'jinlin-shell-v223'; /* v0.84.81: ks-1022全批(K线高低区+十字线统一+收藏栏/嵌入默认开); 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v223', 'jinlin-shell-v222']; /* KEEP=222+221 沿用历代模式(当前+上一版平滑过渡) */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
