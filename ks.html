@@ -1,3 +1,4 @@
+<!-- ks-1151fix2 (2026-10-22深夜): 分时引擎改专用画布S._tsCv垫底——fix1让引擎直接画主画布, 引擎写内联style.width/height压过CSS100%把主画布钉死(嵌入态iframe先小后大加载被小尺寸钉住, 用户两图实证K线/分时变窄不铺满); 现引擎画自己的canvas(尺寸从#chartwrap容器取, 切断自量反馈环), 主画布透明只画ICT/画线/十字线叠加层, 切出分时即display:none; K线高度宽度逻辑零改动。原批 -->
 <!-- ks-1151 (2026-10-22夜): 分时(TS)显示模式接入——周期档新增「分时」(PERIODS/PSTRIP首位), 数据层=1分通道(normalizeKlt TS→1, 五日档先例); 引擎=createCardIntraday及PHVL依赖从index v0.84.93逐字搬运(IIFE隔离, 引擎内drawPHVL=index新版, ks自有旧版K线渲染器零触碰); 结构标记=同一份ictCalc(320根1分bar)经geom()时间映射渲染(BOS/OB/FVG/VI/LIQ跟实时走, 计算层零改动); 均价=东财1分通道补f57真成交额(Σ额/Σ量/100, index L9633同式), TX兜底无额=不画均价不沿用旧帧不造近似(D2); 30s报价只updateLast引擎末点(S.kl/ICT输入零污染, K12); 切入TS快照K线视图态/切回恢复+TS身份持久化(D1/K5); 非当日两点锚线TS下隐藏切回恢复(D3); 吸/六信号/监测/BS测幅/反应位/RLM/Cyq/VP=TS下v1隐藏(D4); VOL副图TS下不显示(v2评估); 极值口径=分钟收盘(ks报价无tick级高低, N2); 验证: node桩测试52/52(引擎/drawPHVL新旧副本逐字节同一性+ictCalc等golden+tsPrepare均价公式+sess映射+零污染断言)+内联脚本node --check全过; index(93→94, data-sw v237→v238, iframe戳1022l→1023a)+sw(壳v237→v238)成对提交 -->
 <!DOCTYPE html>
 <!-- ks-1022g-fix (2026-10-22 下午): VI修正(用户验收批准)——①检测段删除条件双→单: 后续影线碰到缺口靠价格侧的边(看涨低点≤上沿/看跌高点≥下沿)即消, 价格跳空跨过整个缺口也能删(旧双条件版此场景漏删); 列序注释写死实证[1]开[2]高[3]低[4]收(与swingsOf/FVG/EMA同一套); ②渲染下沿线-0.5→+0.5与上沿对称; 验证: 单测9/9+原套7/7+真实行情双向审计8票(891+336个VI形态, 删的全带影线碰边证据/留的向后扫零碰边/违例0)+用户点名兆易创新/永鼎VLM视觉抽查; index(86→87, 壳v227→v228, 戳v=1022g→1022h)+sw成对提交。原批 ks-1022fg (2026-10-22): LIQ方向重定+视觉重画——B=红"买B"等低点对(现价下方支撑/低买参考, 低价触及即失守删), S=绿"卖S"等高点对(新加摆动高点检测, 现价上方压力/高卖参考, 高价触及即被扫删); 圆角色块中文标签+1.5px虚线; 评分栏/图例同步(上方压力S/下方支撑B)。原BSL/SSL双低点对=方向拧(用户两图实证: 跌中上方一排B/S贴最低点), 旧S用UP红色与涨同色加重混乱。ks-1022b(1022-上午)的原批注: [高低区]默认入★收藏栏关, 不动指标行收起设计; 上一批: ks-1019 (2026-10-21): K线页大图十字线与jinlin统一——①长按门槛420→220ms(与分时/持仓大图PHVLCross同节奏) ②松手十字线保留1.5s再消失(原立即关闭, 松手瞬间信息卡消失读不到开高低收) ③新手势开始自动清保留期残留线; 触摸路径以外的画线/平移/缩放/面板/鼠标悬停全部零改动; 配套 index.html iframe缓存戳v=1012b→v=1019a + sw壳v218 -->
@@ -2667,6 +2668,7 @@ function setKlt(k) {
   if (k === "TS") { if (!S.ts.saved || S.ts.saved.klt === "TS") S.ts.saved = { klt: S.klt, count: S.count, end: S.end, yZoom: S.yZoom, yOff: S.yOff, rng: S.rng, selected: S.selected }; } /* ks-1151 K5: 切入TS前快照K线视图态 */
   else { if (S.ts.saved && S.ts.saved.klt === k) S.ts.restore = S.ts.saved; /* ks-1151 K5/D1: 切回原档=loadAll回调恢复, 临时TS态不覆盖原K线态 */ S.ts.saved = null; }
   S.ts.on = (k === "TS");
+  if (S._tsCv) S._tsCv.style.display = S.ts.on ? "" : "none"; /* ks-1151fix2: 切出分时即隐藏引擎画布, 主画布蜡烛照旧铺满 */
   S.klt = k; S.kl = []; S.end = 0; S.count = 0; S.pending = []; S.selected = -1; S.yZoom = 1; S.yOff = 0; S.rng = null; // ks-0909-31: 换周期清选区(索引是旧周期的)
   store(); buildPeriods(); loadAll(true);
 }
@@ -4637,16 +4639,22 @@ function tsFetchJL(code, klt, cb) { /* K8/D2: 仅TS档东财优先(真成交额f
 function drawTSJL(ctx, w, hh) { /* K10: 分时模式渲染——引擎(逐字搬运)独占画布置底层, ks叠加层经geom()只读映射; 蜡烛路径零改动 */
   var kl = S.kl;
   if (!kl || !kl.length || !S.ts.dayKey) { ctx.fillStyle = "#93a89c"; ctx.font = "13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("分时数据加载中…", w / 2, hh / 2); return; }
+  if (!S._tsCv || !S._tsCv.parentElement) { /* ks-1151fix2: 引擎专用画布, 垫在主画布之下——引擎每次绘制会写内联style.width/height(持仓卡独占小画布的正常行为), fix1让它直接画主画布=内联px压过CSS 100%把主画布尺寸钉死(嵌入态iframe先小后大加载时被小尺寸钉住, K线/分时全变窄=用户23:45两图实证); 专用画布后主画布永不被写样式, 尺寸从容器取切断自量反馈环 */
+    S._tsCv = document.createElement("canvas");
+    S._tsCv.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none";
+    cv.parentElement.insertBefore(S._tsCv, cv);
+  }
+  S._tsCv.style.display = "";
   if (S._tsEngineCode !== S.active) { S._tsEngine = null; S._tsEngineCode = S.active; }
   if (!S._tsEngine) {
     S._tsOpts = { preClose: function () { return S.ts.pre; },
       zones: true, zoneHi: 0.7, zoneLo: 0.3, zoneHiLine: "#ff4fa3", zoneLoLine: "#3b82f6", zoneHiFill: "#ff4fa3", zoneLoFill: "#3b82f6", zoneHiTagText: "#fff",
       hiColor: "#ff4fa3", loColor: "#6aa8ff", axis: "fit", preLineSolid: true, swingAmp: true, bg: "#0a0e0b",
-      width: function () { return cv.clientWidth; }, height: 140 }; /* 持仓详情大图同参数(index L9645区); swingAlert不传=到点提醒留持仓侧防双弹; ks报价无tick级高低, extremePrice不传=极值取分钟收盘口径(N2) */
-    S._tsEngine = ksIntradayFactoryJL(cv, S._tsOpts);
+      width: function () { return (S._tsCv.parentElement && S._tsCv.parentElement.clientWidth) || cv.clientWidth; }, height: 140 }; /* 持仓详情大图同参数(index L9645区); swingAlert不传=到点提醒留持仓侧防双弹; ks报价无tick级高低, extremePrice不传=极值取分钟收盘口径(N2) */
+    S._tsEngine = ksIntradayFactoryJL(S._tsCv, S._tsOpts);
     S._tsEngine.setSeries(S.ts.P || [], S.ts.A || [], S.ts.T || []); /* ks-1151fix1: 首次建引擎立即喂已备好的三数组——原实现等下一次定时刷新才setSeries, 盘后5分钟档=首进长时间"分时数据不足"(用户23:00截图实证) */
   }
-  S._tsOpts.height = Math.max(60, cv.clientHeight || hh);
+  S._tsOpts.height = Math.max(60, (S._tsCv.parentElement && S._tsCv.parentElement.clientHeight) || hh);
   S._tsEngine.redraw();
   var g = S._tsEngine.geom();
   if (!g) { ctx.fillStyle = "#93a89c"; ctx.font = "13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("分时数据不足(＜2点)…", w / 2, hh / 2); return; }
