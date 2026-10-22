@@ -1298,6 +1298,28 @@ test("写隔离: 报价端点只有 qt.gtimg.cn, 零东财域名(em-min仅为缓
   });
 }
 
+/* ── U. UI双态(14:59热修·用户截图圈定"丑死"): 默认收起药丸→点击展开→收起回药丸 ── */
+{
+  global.location = { href: "https://fululi.github.io/" }; /* 仅本块伪造令BROWSER=true, 用毕即删 */
+  try {
+    const doc = makeDoc();
+    const api = freshMod(seedDay(), doc);
+    test("UI双态(14:59热修): 默认收起药丸→点击展开→toggle收起回药丸", () => {
+      const root = api.st.uiRoot;
+      assert.ok(root, "uiRoot已挂(st.uiRoot钩子)");
+      assert.strictEqual(api.st.uiOpen(), false, "默认收起(修前常驻全展开=丑源)");
+      assert.ok(/快照os1/.test(root.textContent || ""), "药丸文案含快照os1");
+      assert.ok((root.style.cssText || "").indexOf("999px") >= 0, "药丸圆角999单行");
+      root.onclick(); /* 药丸点击→展开 */
+      assert.strictEqual(api.st.uiOpen(), true, "点击药丸展开");
+      assert.ok((root.style.cssText || "").indexOf("999px") < 0, "展开态换紧凑面板样式");
+      api.st.uiToggle(false); /* 收起 */
+      assert.strictEqual(api.st.uiOpen(), false, "toggle(false)收起");
+      assert.ok((root.style.cssText || "").indexOf("999px") >= 0, "收起回药丸样式");
+    });
+  } finally { delete global.location; }
+}
+
 /* ── N. 异常防护(13:26审查件): 合法JSON结构异常/持仓条目异常不中断 ── */
 {
   /* N1: 持仓数组含 null/数字/字符串/无码对象→跳过异常条目, 合法条目照常记账 */

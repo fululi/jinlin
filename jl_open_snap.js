@@ -79,6 +79,13 @@
  *   桩测试口径: makeDoc默认iframe桩contentWindow=global(既有用例零改动——模块
  *   请求时清键, 用例tick后设值不受影响); iso隔离模式专测并发归属(C1-C3)。
  *
+ * 【14:59 UI热修(用户截图圈定"丑死")】迷你面板改双态: 默认收起成左下角小药丸
+ *   ("快照os1 ✓✗· 手N"单行, 圆角999, 点击展开); 展开态=紧凑三行(标题+✕收起/
+ *   状态行/短按钮[采样:开|记一次|导出|复制]一行), 修前常驻全展开+4个长文字按钮
+ *   (导出开盘快照JSON/现在记录一次…)换行堆成~150px深色大块压在账户区上——截图
+ *   判丑的根因; 展开面板高度约减半, 药丸态~22px; st.uiRoot/uiOpen/uiToggle供
+ *   桩测试; boot/initUI的interval在Node下unref(防桩测试进程挂起)。
+ *
  * 【导出(补充8)】"导出开盘快照JSON": 页面内生成文件, 文件名带日期
    *   jl_open_snap_YYYYMMDD.json; 失败(或用户点"复制模式")弹文本框供复制;
    *   导出失败不影响页面(全程try/catch静默)。
@@ -527,25 +534,66 @@
     try { if (!tryDownload()) copyModal(); } catch (e) {}
   }
 
-  /* ---------- 迷你面板(自注入, 全内联样式, id 唯一前缀) ---------- */
-  var uiTimer = 0;
-  function paintUI() {
+  /* ---------- 迷你面板(14:59热修: 双态——默认收起小药丸, 点开紧凑面板; 自注入, 全内联样式, id唯一前缀) ---------- */
+  var uiTimer = 0, uiRoot = null, uiOpen = false;
+  function winMarks(d) { /* 三窗状态紧凑标记 ✓✗· */
+    var store = readStore(), s = "";
+    WINS.forEach(function (w) {
+      var ok = store.recs.some(function (r) { return r.type === "win" && !r.manual && r.d === d && r.win === w[0]; });
+      var miss = store.recs.some(function (r) { return r.type === "miss" && r.d === d && r.win === w[0]; });
+      s += ok ? "✓" : (miss ? "✗" : "·");
+    });
+    return s;
+  }
+  function renderUI() { /* 双态重绘: 药丸=单行圆角999点击展开; 展开=紧凑三行+✕收起(按钮短文案一行不换行) */
     try {
-      if (!BROWSER) return;
-      var el = DOC.getElementById("jlOsnapStat");
-      if (!el) return;
+      if (!uiRoot || !BROWSER) return;
+      try { while (uiRoot.firstChild) uiRoot.removeChild(uiRoot.firstChild); } catch (e0) {}
+      uiRoot.onclick = null;
+      if (!uiOpen) {
+        uiRoot.style.cssText = "position:fixed;left:8px;bottom:60px;z-index:34;background:#0d1b23d9;border:1px solid #2a5a6acc;border-radius:999px;padding:4px 10px;font:600 10.5px/1.3 -apple-system,sans-serif;color:#9fd7e8;cursor:pointer;user-select:none;max-width:62vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+        uiRoot.textContent = "快照os1 " + winMarks(ymd()) + " 手" + manCount(readStore(), ymd());
+        uiRoot.onclick = function () { uiOpen = true; renderUI(); };
+        return;
+      }
+      uiRoot.style.cssText = "position:fixed;left:8px;bottom:60px;z-index:34;background:#0d1b23ee;border:1px solid #2a5a6a;border-radius:9px;padding:6px 8px;font:11px/1.5 -apple-system,sans-serif;color:#cfeaf4;max-width:238px";
+      var hd = DOC.createElement("div");
+      hd.style.cssText = "font-weight:600;color:#9fd7e8;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center";
+      var tt = DOC.createElement("span"); tt.textContent = "开盘快照 os1"; hd.appendChild(tt);
+      var x = DOC.createElement("button"); x.type = "button"; x.textContent = "✕"; x.title = "收起";
+      x.style.cssText = "border:0;background:none;color:#7fa9b9;font:600 12px/1 -apple-system,sans-serif;cursor:pointer;padding:0 2px";
+      x.onclick = function () { uiOpen = false; renderUI(); };
+      hd.appendChild(x);
+      var stat = DOC.createElement("div");
+      stat.id = "jlOsnapStat";
+      stat.style.cssText = "color:#8fb9c9;margin-bottom:5px;white-space:nowrap";
       var store = readStore(), d = ymd(), s = "";
       WINS.forEach(function (w) {
         var ok = store.recs.some(function (r) { return r.type === "win" && !r.manual && r.d === d && r.win === w[0]; });
         var miss = store.recs.some(function (r) { return r.type === "miss" && r.d === d && r.win === w[0]; });
         s += w[0] + (ok ? "✓" : (miss ? "✗" : "·")) + " ";
       });
-      s += "| 手" + manCount(store, d) + " 失" + st.wFail;
-      el.textContent = s;
-      var bt = DOC.getElementById("jlOsnapOnBtn");
-      if (bt) bt.textContent = "采样:" + (on() ? "开" : "关");
+      stat.textContent = s + "| 手" + manCount(store, d) + " 失" + st.wFail;
+      var row = DOC.createElement("div");
+      row.style.cssText = "display:flex;gap:4px;flex-wrap:wrap";
+      function btn(id, txt, fn) {
+        var b = DOC.createElement("button");
+        b.type = "button"; b.id = id; b.textContent = txt;
+        b.style.cssText = "padding:2px 7px;border:1px solid #2a5a6a;border-radius:6px;background:#123243;color:#cfeaf4;font-size:10px;cursor:pointer;white-space:nowrap";
+        b.onclick = function () { try { fn(); } catch (e) {} };
+        return b;
+      }
+      row.appendChild(btn("jlOsnapOnBtn", "采样:" + (on() ? "开" : "关"), function () { toast("采样开关→" + (toggle() ? "开" : "关") + "(只闸定时采样, 手动不受限)"); renderUI(); }));
+      row.appendChild(btn("", "记一次", function () {
+        var r = manual();
+        toast(r.ok ? "已记手动快照 manual:true(不占固定时点)" : "未记:" + r.reason);
+      }));
+      row.appendChild(btn("", "导出", function () { doExport(); }));
+      row.appendChild(btn("", "复制", function () { copyModal(); }));
+      uiRoot.appendChild(hd); uiRoot.appendChild(stat); uiRoot.appendChild(row);
     } catch (e) {}
   }
+  function paintUI() { renderUI(); }
   function toast(msg) {
     try {
       if (!BROWSER) return;
@@ -565,34 +613,15 @@
       if (DOC.getElementById("jlOsnapRoot")) return;
       var root = DOC.createElement("div");
       root.id = "jlOsnapRoot";
-      root.style.cssText = "position:fixed;left:8px;bottom:64px;z-index:34;background:#0d1b23ee;border:1px solid #2a5a6a;border-radius:9px;padding:6px 8px;font:11px/1.5 -apple-system,sans-serif;color:#cfeaf4;max-width:230px";
-      var hd = DOC.createElement("div");
-      hd.style.cssText = "font-weight:600;color:#9fd7e8;margin-bottom:4px";
-      hd.textContent = "开盘快照 os1";
-      var stat = DOC.createElement("div");
-      stat.id = "jlOsnapStat";
-      stat.style.cssText = "color:#8fb9c9;margin-bottom:5px;white-space:nowrap";
-      var row = DOC.createElement("div");
-      row.style.cssText = "display:flex;gap:5px;flex-wrap:wrap";
-      function btn(id, txt, fn) {
-        var b = DOC.createElement("button");
-        b.type = "button"; b.id = id; b.textContent = txt;
-        b.style.cssText = "padding:3px 8px;border:1px solid #2a5a6a;border-radius:6px;background:#123243;color:#cfeaf4;font-size:10.5px;cursor:pointer";
-        b.onclick = function () { try { fn(); } catch (e) {} };
-        return b;
-      }
-      row.appendChild(btn("jlOsnapOnBtn", "采样:开", function () { toast("采样开关→" + (toggle() ? "开" : "关") + "(只闸定时采样, 手动不受限)"); paintUI(); }));
-      row.appendChild(btn("", "现在记录一次", function () {
-        var r = manual();
-        toast(r.ok ? "已记手动快照 manual:true(不占固定时点)" : "未记:" + r.reason);
-      }));
-      row.appendChild(btn("", "导出开盘快照JSON", function () { doExport(); }));
-      row.appendChild(btn("", "复制模式", function () { copyModal(); }));
-      root.appendChild(hd); root.appendChild(stat); root.appendChild(row);
+      uiRoot = root; uiOpen = false; /* 14:59热修: 默认收起药丸 */
+      st.uiRoot = root; /* 桩测试钩子(只读) */
+      st.uiOpen = function () { return uiOpen; };
+      st.uiToggle = function (v) { uiOpen = (arguments.length ? !!v : !uiOpen); renderUI(); };
       (DOC.body || DOC.documentElement).appendChild(root);
-      paintUI();
+      renderUI();
       if (uiTimer) clearInterval(uiTimer);
-      uiTimer = setInterval(paintUI, 30e3); /* 状态行低频刷新, 只读 */
+      uiTimer = setInterval(paintUI, 30e3); /* 状态低频刷新, 只读 */
+      if (uiTimer && uiTimer.unref) uiTimer.unref(); /* Node桩: 防进程挂起 */
     } catch (e) {}
   }
 
@@ -602,7 +631,8 @@
       if (BROWSER) {
         if (DOC.readyState === "loading") DOC.addEventListener("DOMContentLoaded", function () { initUI(); }, { once: true });
         else initUI();
-        setInterval(function () { tick(); }, TICK_MS);
+        var ti = setInterval(function () { tick(); }, TICK_MS);
+        if (ti && ti.unref) ti.unref(); /* Node桩(伪location测UI): 防进程挂起 */
       }
     } catch (e) {}
   }
