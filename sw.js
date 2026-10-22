@@ -1,3 +1,4 @@
+/* jinlin sw v246 — 2026-10-23: ks-1151fix10e——分时BOLL撤回14周期(fix10d改的60被用户实测否: 断崖日60周期带子滞后成残影, 用户指令改回); 删分时renderDailyLevels与藏◀▶死钮两处保留. 版本仍v0.85, 戳1151e→1151f */
 /* jinlin sw v245 — 2026-10-23凌晨: ks-1151fix10d(分时三修)上线——①分时撤renderDailyLevels(今开虚线高开日贴顶像杂线, 六线与引擎昨收/高低/价签重复; 成本线保留) ②分时BOLL 14→60(1分bar上14缠价格糊成一团, K线路径14零触碰) ③分时藏◀▶死钮(panTime改S.end引擎不认, K线还原). 版本仍v0.85, 戳1151d→1151e, 用户核查外部分析后定案 */
 /* jinlin sw v244 — 2026-10-23: v0.85维护补丁——四价行昨收/振幅根修: pc推导撤quoteReady门控(用户手机实证: 昨收格吃脏s.prevClose=27.88, 真昨收29.54; 振幅7.17%应为6.77%). 版本号仍v0.85, 壳v244带缓存失效, ks.html与iframe戳1151d不动 */
 /* jinlin sw v243 — 2026-10-23: 纯版本号修订批(用户定: v0.84.101→直接v0.85, 不走小数点后三位)。内容与v242批完全相同(fix10全套已在线), 仅改号: index data-ver 0.85 + data-sw v243 + iframe戳1151d, ks徽标v0.85。壳号连带升防已吃到v242(101版)的手机残壳——顶栏会弹'新版v243'点按即透 */
@@ -139,8 +140,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v245'; /* v0.84.89: jl-1141h2 UI再修(冒泡根治+右下+玻璃+可拖拽); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v245', 'jinlin-shell-v244', 'jinlin-shell-v243']; /* KEEP=229+228+227, 三版容量沿用 */
+const C = 'jinlin-shell-v246'; /* v0.84.89: jl-1141h2 UI再修(冒泡根治+右下+玻璃+可拖拽); 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v246', 'jinlin-shell-v245', 'jinlin-shell-v244']; /* KEEP=229+228+227, 三版容量沿用 */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
