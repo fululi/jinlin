@@ -3212,7 +3212,7 @@ function ictCalc(kl) {
   // 上方仍挂一排早已被穿越的 B LIQ)。过滤后 BSL 必在现价上方(反弹目标)/SSL 必在下方(下跌目标), 与底部评分栏口径一致。
   out.liq = out.liq.filter(function (L) {
     for (var t2 = L.i + 1; t2 < n; t2++) {
-      if (L.side === "BSL" ? kl[t2][4] >= L.p : kl[t2][2] <= L.p) return false; /* kl列序实测: [2]=低[4]=高(qfqday路径); BSL上冲扫/SSL下破扫 */
+      if (kl[t2][2] <= L.p) return false; /* ks-1022d定案: LIQ位=低点语义(止损/支撑带), 价格低价触及该位下方即被扫——统一判, 与side无关; kl[2]=低(qfqday路径实证) */
     }
     return true;
   });
