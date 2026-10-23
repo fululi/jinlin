@@ -41,9 +41,18 @@
 
   /* —— 价格: DOM hero(持仓卡激活页) → jl_dk_ 末根收盘 —— */
   function priceOf(code) {
+    /* jl-1143e 修跨票串台: 原实现无脑取"当前激活股票"的现价, 展开兆易时永鼎的卡也吃到兆易的价
+       (真机 2026-10-23 实证: 600105 落盘 p=294.15=兆易价, 回补判定全错)。现在仅当激活卡片
+       文本里的6位代码与本卡一致才采DOM现价, 否则落日K收盘。 */
     try {
-      var act = $("article.stock.active .dqHeroJL b") || $(".dqHeroJL b");
-      if (act) { var v = num(String(act.textContent).replace(/,/g, "")); if (v > 0) return { p: v, src: "live" }; }
+      var art = $("article.stock.active");
+      if (art) {
+        var mc = String(art.textContent || "").match(/\b(\d{6})\b/);
+        if (mc && mc[1] === bare(code)) {
+          var b = art.querySelector(".dqHeroJL b");
+          if (b) { var v = num(String(b.textContent).replace(/,/g, "")); if (v > 0) return { p: v, src: "live" }; }
+        }
+      }
     } catch (e) {}
     try {
       var dk = readJ("jl_dk_" + bare(code));
@@ -64,15 +73,29 @@
   }
   function sectorOf(st) {
     var sec = null;
-    try { var cm = window.__JL_CONCEPTS__; var rec = cm && cm[bare(st.code)]; if (rec) sec = rec.l1 || null; } catch (e) {}
-    if (!sec && st.industry) sec = st.industry;
-    if (!sec) return { sec: null, amt: null, d: null };
+    /* jl-1143f 修板块取不到: __JL_CONCEPTS__ 顶层是 {ver,filtered,map:{代码:{l1,l2,...}}} 包装,
+       原代码直接 cm[code] 永远 undefined → 板块恒"未知暂缺"(真机 2026-10-23 实证)。
+       另: jl_sector_ff_v1 的键是申万风格板块名(如"通信设备"), 先 l2 精确/模糊再 l1, 防"通信"糊到"通信服务"。 */
+    var cands = [];
+    try {
+      var cm = window.__JL_CONCEPTS__;
+      var tbl = cm && (cm.map || cm);
+      var rec = tbl && tbl[bare(st.code)];
+      if (rec) { if (rec.l2) cands.push(rec.l2); if (rec.l1 && rec.l1 !== rec.l2) cands.push(rec.l1); }
+    } catch (e) {}
+    if (!cands.length && st.industry) cands.push(st.industry);
+    if (!cands.length) return { sec: null, amt: null, d: null };
+    sec = cands[0];
     var sf = readJ("jl_sector_ff_v1") || {};
-    var r = sf[sec];
-    if (r && num(r.amt) != null) return { sec: sec, amt: num(r.amt), d: r.d || null };
-    for (var k in sf) if (k.indexOf(sec) >= 0 || sec.indexOf(k) >= 0) { r = sf[k]; if (r && num(r.amt) != null) return { sec: k, amt: num(r.amt), d: r.d || null }; }
+    for (var ci = 0; ci < cands.length; ci++) {
+      var nm = cands[ci];
+      var r = sf[nm];
+      if (r && num(r.amt) != null) return { sec: nm, amt: num(r.amt), d: r.d || null };
+      for (var k in sf) if (k.indexOf(nm) >= 0 || nm.indexOf(k) >= 0) { r = sf[k]; if (r && num(r.amt) != null) return { sec: k, amt: num(r.amt), d: r.d || null }; }
+    }
     return { sec: sec, amt: null, d: null };
   }
+
   function ffOf(code) {
     /* jl-1143d: 行结构对齐真实写入方 jl_ff_v1[code].rows=[{t,main(元),sup}] (旧读 .m/.d 恒空) */
     var c = readJ("jl_ff_v1"); c = c && c[bare(code)];
