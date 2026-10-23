@@ -1,3 +1,4 @@
+<!-- ks-1151m (2026-10-24): 分时摆动标记挂历史分位——P1–P99完整表二分查表(与index jl-1160/1162同TB同口径, 首标记参照盘中反向极值不含隔夜缺口); 标签描边字'P97'式样(删'超'字, ≥95亮金#FFD94A其余白); 点按toast两行: 本段A→B ±x%（Pn）｜ 日高/日低 价(HH:MM)以来 ±x%（Pn）; 引擎增tipAt+cv点击桥; index iframe戳1151k→1151m -->
 <!-- ks-1151fix11n (2026-10-24): 日界跳空带两修——①分时屏蔽(S.ts守卫, 兆易实证: 昨收276.75隔夜缺口蓝带错挂分时图, 跳空带是K线日界语义不该进分时) ②回补方向分色与VI同色卡(上方涨回去补=黄/下方跌回来补=青蓝/已回补暗虚线), 原恒蓝77,159,255不分方向 -->
 <!-- ks-1151fix11m (2026-10-24): fib加1.13/3.618两档(1.13=亮青#7ff2e0, 3.618=粉珊瑚#ffb3c7, 默认开, 纯数字标签, 面板开关自动跟随; 老配置无此两键走默认开, 零感知) -->
 <!-- ks-1151fix11L (2026-10-23深夜): fib彻底退回原版——fix11g自动扩轴/fix11j封顶/fix11k边签全部撤除(fibAxisExtJL与两处调用点、边签收集+渲染全删), 渲染回到最初"轴外档位超±30px直接不画", 坐标映射引擎原生零干预 -->
@@ -1566,6 +1567,14 @@ function openAlMenu(pt, cx, cy) { // pt=画布内坐标; cx/cy=屏幕坐标(菜�
   });
 }
 // 电脑: 右键图面任意处弹设提醒菜单(浏览器菜单屏蔽)
+cv.addEventListener("click", function (e) { /* ks-1151m: 分时点分位标签看详情 */
+  try {
+    if (!(S.ts && S.ts.on && S._tsEngine && S._tsEngine.tipAt)) return;
+    var rC = cv.getBoundingClientRect();
+    var tp = S._tsEngine.tipAt(e.clientX - rC.left, e.clientY - rC.top);
+    if (tp && typeof toast === "function") toast(tp);
+  } catch (eT2) { }
+});
 cv.addEventListener("contextmenu", function (e) {
   e.preventDefault();
   var pt = posT(e);
@@ -4177,6 +4186,15 @@ function rollerDo(id) {
    的 _phvlArm2/_phvlScan2/_phvlAlt2/_phvlSwing2/_phvlCompute/drawPHVL(新版,含jl-1150a段振幅)/drawZones/createCardIntraday, 零改写;
    IIFE 作用域隔离: 引擎内部解析到本块新版 drawPHVL, ks 主文档自有的旧版 drawPHVL/renderPHVLJL/renderPHVLMarksJL(K线档用)一字节不碰。
    对外只暴露 ksIntradayFactoryJL(=createCardIntraday 工厂)。 */
+  function swingPercJL(code, depth, isH) {
+    var TB = {"600105":{"up":[1.01,1.03,1.04,1.05,1.07,1.08,1.1,1.11,1.12,1.13,1.16,1.18,1.2,1.21,1.22,1.23,1.25,1.26,1.28,1.3,1.31,1.33,1.34,1.37,1.38,1.4,1.41,1.43,1.45,1.47,1.5,1.52,1.54,1.55,1.57,1.6,1.61,1.64,1.66,1.68,1.7,1.73,1.76,1.79,1.81,1.84,1.85,1.88,1.91,1.94,1.96,1.99,2.02,2.07,2.1,2.13,2.17,2.23,2.27,2.29,2.33,2.38,2.43,2.47,2.54,2.57,2.61,2.69,2.75,2.81,2.88,2.94,2.98,3.03,3.08,3.13,3.19,3.25,3.3,3.35,3.43,3.55,3.66,3.75,3.86,3.92,4.0,4.09,4.2,4.37,4.48,4.63,4.75,5.04,5.27,5.64,5.95,6.38,7.39],"dn":[1.01,1.02,1.04,1.05,1.07,1.08,1.1,1.11,1.13,1.14,1.16,1.17,1.18,1.21,1.23,1.24,1.26,1.28,1.3,1.32,1.33,1.35,1.36,1.38,1.4,1.41,1.43,1.44,1.46,1.48,1.49,1.51,1.52,1.54,1.56,1.58,1.61,1.64,1.66,1.68,1.69,1.71,1.74,1.76,1.78,1.8,1.82,1.85,1.87,1.9,1.93,1.96,1.98,2.01,2.03,2.06,2.08,2.12,2.15,2.16,2.18,2.21,2.25,2.29,2.33,2.38,2.42,2.46,2.49,2.53,2.56,2.61,2.66,2.71,2.75,2.79,2.84,2.91,2.94,2.98,3.04,3.11,3.19,3.28,3.34,3.42,3.52,3.61,3.73,3.8,3.96,4.04,4.23,4.43,4.69,5.12,5.51,5.96,6.77]},"603986":{"up":[1.01,1.03,1.04,1.05,1.06,1.08,1.09,1.1,1.12,1.14,1.15,1.17,1.18,1.2,1.21,1.22,1.24,1.25,1.27,1.28,1.3,1.32,1.34,1.35,1.37,1.4,1.41,1.43,1.45,1.47,1.48,1.5,1.52,1.54,1.56,1.58,1.6,1.62,1.64,1.66,1.68,1.7,1.73,1.76,1.78,1.8,1.82,1.84,1.86,1.88,1.91,1.94,1.97,2.01,2.02,2.06,2.09,2.14,2.16,2.19,2.21,2.25,2.29,2.33,2.4,2.43,2.46,2.49,2.52,2.57,2.64,2.68,2.71,2.76,2.8,2.84,2.93,3.0,3.07,3.13,3.17,3.23,3.31,3.39,3.5,3.62,3.7,3.85,3.98,4.15,4.29,4.54,4.68,4.9,5.1,5.31,5.88,6.34,6.93],"dn":[1.01,1.02,1.03,1.05,1.06,1.07,1.09,1.1,1.11,1.12,1.14,1.15,1.16,1.17,1.18,1.19,1.21,1.22,1.23,1.25,1.27,1.29,1.31,1.32,1.34,1.36,1.37,1.39,1.41,1.43,1.46,1.47,1.49,1.51,1.53,1.55,1.57,1.59,1.61,1.64,1.67,1.68,1.69,1.72,1.74,1.76,1.78,1.81,1.83,1.85,1.88,1.9,1.93,1.96,1.98,2.0,2.05,2.08,2.11,2.13,2.16,2.17,2.19,2.22,2.26,2.29,2.31,2.35,2.38,2.41,2.44,2.48,2.52,2.56,2.6,2.63,2.68,2.77,2.8,2.86,2.91,2.96,3.05,3.13,3.23,3.33,3.41,3.46,3.55,3.65,3.78,3.89,4.04,4.12,4.34,4.48,4.78,5.2,5.91]},"_":{"up":[1.01,1.03,1.04,1.05,1.06,1.08,1.1,1.11,1.12,1.14,1.15,1.17,1.19,1.21,1.22,1.23,1.24,1.26,1.28,1.29,1.31,1.32,1.34,1.36,1.38,1.4,1.41,1.43,1.45,1.47,1.49,1.51,1.53,1.55,1.57,1.59,1.61,1.63,1.65,1.66,1.69,1.71,1.75,1.77,1.79,1.82,1.84,1.86,1.88,1.91,1.94,1.97,2.0,2.03,2.07,2.1,2.14,2.17,2.21,2.25,2.28,2.32,2.37,2.41,2.45,2.5,2.54,2.58,2.63,2.7,2.75,2.79,2.84,2.92,2.98,3.03,3.09,3.13,3.19,3.26,3.33,3.38,3.49,3.61,3.69,3.79,3.9,4.0,4.12,4.26,4.44,4.6,4.73,4.98,5.18,5.59,5.9,6.37,7.11],"dn":[1.01,1.02,1.03,1.05,1.06,1.08,1.09,1.1,1.12,1.13,1.14,1.16,1.17,1.18,1.2,1.22,1.23,1.25,1.27,1.29,1.31,1.33,1.34,1.36,1.37,1.39,1.4,1.42,1.44,1.46,1.48,1.49,1.51,1.53,1.54,1.57,1.59,1.61,1.64,1.66,1.68,1.69,1.72,1.74,1.76,1.78,1.8,1.83,1.85,1.88,1.9,1.93,1.96,1.98,2.01,2.03,2.08,2.1,2.13,2.15,2.17,2.19,2.22,2.26,2.29,2.33,2.36,2.4,2.43,2.47,2.51,2.55,2.59,2.63,2.68,2.74,2.78,2.82,2.89,2.94,2.98,3.05,3.13,3.22,3.31,3.38,3.46,3.53,3.64,3.75,3.85,3.98,4.12,4.28,4.48,4.77,5.16,5.71,6.34]}};
+    var a = (TB[code] || TB._)[isH ? 'up' : 'dn'];
+    if (!(depth > 0)) return null;
+    var lo = 0, hi = 99;
+    while (lo < hi) { var mid = (lo + hi) >> 1; if (a[mid] <= depth) lo = mid + 1; else hi = mid; }
+    return Math.max(1, lo);
+  }
+function _tsIdxTmJL(i) { var m2 = i < 120 ? 570 + i : 780 + (i - 120); var hh = Math.floor(m2 / 60), mm = m2 % 60; return (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm; } /* ks-1151m: 分钟idx→HH:MM(与index jl-1162同式) */
 var ksIntradayFactoryJL = (function () {
 function _phvlArm2(n) { return Math.max(3, Math.min(12, Math.round(n / 16))); }
 function _phvlScan2(highs, lows, N) {
@@ -4290,89 +4308,233 @@ function _phvlCompute(highs, lows, opt) {
     return kept.sort(function (a, b) { return a.idx - b.idx; });
   }
 function drawPHVL(ctx, marks, o) {
-    var card = o.mode === 'card', fs = card ? 10 : 11;
-    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-    var k, m, px, py, isH, col, s, txt, w, tot, tx, cy, bx, by;
-    /* jl-1150a: 段振幅标注——每个标记相对前一标记的幅度%(高=+/低=-), 门槛o.ampMin(默认1.5%); 纯显示层 */
-    var amps = null, ampMin = o.ampMin == null ? 1.5 : o.ampMin;
-    if (o.amp) {
-      amps = [];
-      for (var a0 = 1; a0 < marks.length; a0++) {
-        var _pa = marks[a0 - 1], _pb = marks[a0];
-        if (_pa.price > 0 && _pb.price > 0) {
-          var _av = (_pb.price - _pa.price) / _pa.price * 100;
-          if (Math.abs(_av) >= ampMin) amps[a0] = (_pb.type === 'H' ? '+' : '-') + Math.abs(_av).toFixed(1) + '%';
-        }
+  var card = o.mode === 'card', fs = card ? 10 : 11;
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  var k, m, px, py, isH, col, s, txt, w, tot, tx, cy, bx, by;
+  /* jl-1150a: 段振幅标注——每个标记相对前一标记的幅度%(高=+/低=-), 门槛o.ampMin(默认1.5%); 纯显示层 */
+  var amps = null, ampMin = o.ampMin == null ? 1.5 : o.ampMin;
+  if (o.amp) {
+    amps = [];
+    for (var a0 = 1; a0 < marks.length; a0++) {
+      var _pa = marks[a0 - 1], _pb = marks[a0];
+      if (_pa.price > 0 && _pb.price > 0) {
+        var _av = (_pb.price - _pa.price) / _pa.price * 100;
+        if (Math.abs(_av) >= ampMin) amps[a0] = (_pb.type === 'H' ? '+' : '-') + Math.abs(_av).toFixed(1) + '%';
       }
     }
-    var fKeys = o.flashKeys || null, fPh = o.flashPh || 0; /* jl-1150b: 新确认标记脉冲圈 */
-    ctx.save();
-    ctx.font = fs + 'px -apple-system,"PingFang SC",sans-serif';
-    ctx.textBaseline = 'middle';
-    for (k = 0; k < marks.length; k++) {
-      m = marks[k];
-      px = o.x(m.idx); py = o.y(m.price); isH = m.type === 'H';
-      if (m.extreme) {
-        col = isH ? o.hiColor : o.loColor; s = card ? 12 : 14;
-        if (!o.noLine) {                           // noLine:true => 只画「高/低」标记和价格，不画那根向右的虚线
-          ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.strokeStyle = col;
-          ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(o.right, py); ctx.stroke();
-          ctx.setLineDash([]);
-        }
-        txt = m.price.toFixed(o.decimals == null ? 2 : o.decimals); w = ctx.measureText(txt).width;
-        var ampT = amps && amps[k] ? amps[k] : '', ampW = ampT ? ctx.measureText(ampT).width + 3 : 0;
-        tot = s + 3 + w + ampW;
-        tx = clamp(px - tot / 2, o.left + 1, o.right - tot - 1);
-        cy = clamp(isH ? py - s * 0.9 - 2 : py + s * 0.9 + 2, o.top + s / 2, o.bottom - s / 2);
-        if (o.boxes) { o.boxes.push({ kind: 'label', x: tx, y: cy - s / 2, w: tot, h: s }); if (!o.noLine) o.boxes.push({ kind: 'line', x: px, y: py - 0.5, w: o.right - px, h: 1 }); }
-        ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(tx, cy - s / 2, s, s, 3); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(isH ? '高' : '低', tx + s / 2, cy + 0.5);
-        ctx.fillStyle = o.textColor; ctx.textAlign = 'left'; ctx.fillText(txt, tx + s + 3, cy);
-        if (ampT) { ctx.fillStyle = col; ctx.fillText(ampT, tx + s + 3 + w + 3, cy); }
-        if (fKeys && fKeys[m.type + '@' + m.idx]) { /* jl-1150e: 闪烁加强——双圈+辉光+标记本体明暗脉冲 */
-          ctx.save();
-          ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(fPh * Math.PI * 2));
-          ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(tx, cy - s / 2, s, s, 3); ctx.fill();
-          ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10; ctx.lineWidth = 2.5;
-          ctx.globalAlpha = Math.max(0, 1 - fPh);
-          ctx.beginPath(); ctx.arc(tx + s / 2, cy, s * (0.8 + fPh * 1.3), 0, Math.PI * 2); ctx.stroke();
-          var _ph2 = (fPh + 0.5) % 1; ctx.globalAlpha = Math.max(0, 1 - _ph2);
-          ctx.beginPath(); ctx.arc(tx + s / 2, cy, s * (0.8 + _ph2 * 1.3), 0, Math.PI * 2); ctx.stroke();
-          ctx.restore();
-        }
-      } else if ((!card || o.stamps) && m.confirmed) {
-        s = card ? 11 : 14; bx = clamp(px - s / 2, o.left, o.right - s); by = clamp(isH ? py - s - 8 : py + 8, o.top, o.bottom - s);
-        if (o.boxes) o.boxes.push({ kind: 'stamp', x: Math.min(bx, px - 1), y: Math.min(by, py), w: Math.max(s, Math.abs(px - bx) + 2), h: s + 8 });
-        ctx.strokeStyle = isH ? o.hiColor : o.loColor; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(px, isH ? by + s : by); ctx.lineTo(px, py); ctx.stroke();
-        ctx.fillStyle = isH ? o.hiColor : o.loColor;
-        ctx.beginPath(); ctx.roundRect(bx, by, s, s, 3); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-        ctx.fillText(isH ? '高' : '低', bx + s / 2, by + s / 2 + 0.5);
-        if (amps && amps[k]) { /* jl-1150a: 摆动戳旁标段振幅 */
-          ctx.fillStyle = isH ? o.hiColor : o.loColor; ctx.font = (fs - 2) + 'px -apple-system,"PingFang SC",sans-serif';
-          var _ay = clamp(isH ? by - 8 : py - 9, o.top + 5, o.bottom - 5); /* jl-1150d: 振幅放上方(用户定: 往上面放一放); 低戳上方=价格点之上, 防压线 */
-          if (_ay > by - 2) { /* 贴顶放不下 → 挪到戳右侧, 防压字 */
-            ctx.textAlign = 'left'; ctx.fillText(amps[k], clamp(bx + s + 3, o.left + 1, o.right - 30), by + s / 2 + 0.5);
-          } else { ctx.textAlign = 'center'; ctx.fillText(amps[k], clamp(bx + s / 2, o.left + 14, o.right - 14), _ay); }
-          ctx.font = fs + 'px -apple-system,"PingFang SC",sans-serif';
-        }
-        if (fKeys && fKeys[m.type + '@' + m.idx]) { /* jl-1150e: 同上加強版 */
-          var _fcol = isH ? o.hiColor : o.loColor;
-          ctx.save();
-          ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(fPh * Math.PI * 2));
-          ctx.fillStyle = _fcol; ctx.beginPath(); ctx.roundRect(bx, by, s, s, 3); ctx.fill();
-          ctx.strokeStyle = _fcol; ctx.shadowColor = _fcol; ctx.shadowBlur = 10; ctx.lineWidth = 2.5;
-          ctx.globalAlpha = Math.max(0, 1 - fPh);
-          ctx.beginPath(); ctx.arc(bx + s / 2, by + s / 2, s * (0.8 + fPh * 1.3), 0, Math.PI * 2); ctx.stroke();
-          var _ph3 = (fPh + 0.5) % 1; ctx.globalAlpha = Math.max(0, 1 - _ph3);
-          ctx.beginPath(); ctx.arc(bx + s / 2, by + s / 2, s * (0.8 + _ph3 * 1.3), 0, Math.PI * 2); ctx.stroke();
-          ctx.restore();
-        }
-      }
-    }
-    ctx.restore();
   }
+  /* jl-1160b: 每个已标高/低点挂历史分位——无门槛都标; 腿深=相对前一标记(r=1%锯齿同口径);
+     首标记参照=当日盘中反向极值(o.series, 低戳用运行高点/高戳用运行低点), 剔除隔夜缺口——标定分布按日重置不含缺口, 参照须同口径 */
+  var pcts = null, tipsT = null, pcN = null, _lastLab = null;
+  function _tierC(p) { return p >= 95 ? '#F2C14E' : p >= 80 ? '#9CC3FF' : '#8A94A6'; } /* jl-1160c: 样板定稿三档 */
+  if (o.percCode) {
+    pcts = []; tipsT = []; pcN = [];
+    var _dc = o.decimals == null ? 2 : o.decimals;
+    for (var p0 = 0; p0 < marks.length; p0++) {
+      var _pm2 = marks[p0], _dp2 = 0, _rf = 0;
+      if (p0 > 0 && marks[p0 - 1].price > 0) _rf = marks[p0 - 1].price;
+      else if (o.series && o.series.length) {
+        var _sr = o.series, _ei = Math.min(_pm2.idx, _sr.length - 1), _q = 0;
+        for (var _q2 = 0; _q2 <= _ei; _q2++) { var _sv = _sr[_q2]; if (_sv > 0) { if (!_q) _q = _sv; if (_pm2.type === 'H') { if (_sv < _q) _q = _sv; } else { if (_sv > _q) _q = _sv; } } }
+        _rf = _q;
+      }
+      if (_rf > 0) {
+        _dp2 = Math.abs(_pm2.price - _rf) / _rf * 100;
+        var _sg = _pm2.price >= _rf ? '+' : '-';
+        if (p0 > 0) tipsT[p0] = '\u672c\u6bb5 ' + _rf.toFixed(_dc) + '\u2192' + _pm2.price.toFixed(_dc) + ' ' + _sg + _dp2.toFixed(1) + '%';
+      }
+      var _pc2 = _dp2 > 0 ? swingPercJL(String(o.percCode), _dp2, _pm2.type === 'H') : null;
+      if (_pc2 != null) { pcts[p0] = _pc2 + '%'; pcN[p0] = _pc2; if (tipsT[p0]) tipsT[p0] += '\uff08\u5206\u4f4d' + _pc2 + '%\uff09'; }
+      /* jl-1160c: 第二行——自日内低(高戳)/自日内高(低戳) */
+      if (o.series && o.series.length) {
+        var _sr2 = o.series, _ei2 = Math.min(_pm2.idx, _sr2.length - 1), _rH = 0, _rL = 0, _iH2 = 0, _iL2 = 0;
+        for (var _q3 = 0; _q3 <= _ei2; _q3++) { var _sv2 = _sr2[_q3]; if (_sv2 > 0) { if (!_rH) { _rH = _sv2; _rL = _sv2; _iH2 = _q3; _iL2 = _q3; } if (_sv2 > _rH) { _rH = _sv2; _iH2 = _q3; } if (_sv2 < _rL) { _rL = _sv2; _iL2 = _q3; } } }
+        var _ra = _pm2.type === 'H' ? _rL : _rH, _raI = _pm2.type === 'H' ? _iL2 : _iH2;
+        if (_ra > 0 && _ra !== _pm2.price) {
+          var _dp3 = Math.abs(_pm2.price - _ra) / _ra * 100, _pc3 = swingPercJL(String(o.percCode), _dp3, _pm2.type === 'H');
+          var _sg3 = _pm2.price >= _ra ? '+' : '-';
+          var _row2 = (_pm2.type === 'H' ? '\u65e5\u4f4e ' : '\u65e5\u9ad8 ') + _ra.toFixed(_dc) + '(' + _tsIdxTmJL(_raI) + ')\u4ee5\u6765 ' + _sg3 + _dp3.toFixed(1) + '%' + (_pc3 != null ? '\uff08\u5206\u4f4d' + _pc3 + '%\uff09' : '');
+          tipsT[p0] = tipsT[p0] ? tipsT[p0] + ' \uff5c ' + _row2 : _row2;
+        }
+      }
+    }
+  }
+  var fKeys = o.flashKeys || null, fPh = o.flashPh || 0; /* jl-1150b: 新确认标记脉冲圈 */
+  ctx.save();
+  ctx.font = fs + 'px -apple-system,"PingFang SC",sans-serif';
+  ctx.textBaseline = 'middle';
+  for (k = 0; k < marks.length; k++) {
+    m = marks[k];
+    px = o.x(m.idx); py = o.y(m.price); isH = m.type === 'H';
+    if (m.extreme) {
+      col = isH ? o.hiColor : o.loColor; s = card ? 12 : 14;
+      if (!o.noLine) {                           // noLine:true => 只画「高/低」标记和价格，不画那根向右的虚线
+        ctx.setLineDash([3, 3]); ctx.lineWidth = 1; ctx.strokeStyle = col;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(o.right, py); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      txt = m.price.toFixed(o.decimals == null ? 2 : o.decimals); w = ctx.measureText(txt).width;
+      var ampT = amps && amps[k] ? amps[k] : '', ampW = ampT ? ctx.measureText(ampT).width + 3 : 0;
+      var pctT = pcts && pcts[k] ? pcts[k] : '', pctW = 0, pctF = 'bold 11px -apple-system,"PingFang SC",sans-serif'; /* jl-1160b: 深色实底白粗体 */
+      if (pctT) { ctx.save(); ctx.font = pctF; pctW = ctx.measureText(pctT).width + 10; ctx.restore(); }
+      tot = s + 3 + w + ampW + pctW;
+      tx = clamp(px - tot / 2, o.left + 1, o.right - tot - 1);
+      cy = clamp(isH ? py - s * 0.9 - 2 : py + s * 0.9 + 2, o.top + s / 2, o.bottom - s / 2);
+      if (_lastLab && tx < _lastLab.x2 && tx + tot > _lastLab.x1 && Math.abs(cy - _lastLab.cy) < 17) { cy = clamp(cy + (isH ? -(s + 9) : (s + 9)), o.top + s / 2, o.bottom - s / 2); } /* jl-1160b: 两点太近错开 */
+      _lastLab = { x1: tx, x2: tx + tot, cy: cy };
+      if (o.boxes) { o.boxes.push({ kind: 'label', x: tx, y: cy - s / 2, w: tot, h: s }); if (!o.noLine) o.boxes.push({ kind: 'line', x: px, y: py - 0.5, w: o.right - px, h: 1 }); }
+      if (o.tips && tipsT && tipsT[k]) o.tips.push({ x: tx, y: cy - 9, w: tot, h: 18, tip: tipsT[k] }); /* jl-1160b */
+      ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(tx, cy - s / 2, s, s, 3); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(isH ? '高' : '低', tx + s / 2, cy + 0.5);
+      ctx.fillStyle = o.textColor; ctx.textAlign = 'left'; ctx.fillText(txt, tx + s + 3, cy);
+      if (ampT) { ctx.fillStyle = col; ctx.fillText(ampT, tx + s + 3 + w + 3, cy); }
+      if (pctT) { /* jl-1160d: 无底块——白字细深描边(金纹上也读得出); ≥95 极端值亮金 */
+        ctx.save(); ctx.font = pctF;
+        var _chx = tx + s + 3 + w + ampW + 4;
+        ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(5,10,16,0.9)';
+        ctx.textAlign = 'left';
+        ctx.strokeText(pctT, _chx, cy);
+        ctx.fillStyle = (pcN[k] >= 95) ? '#FFD94A' : '#FFFFFF';
+        ctx.fillText(pctT, _chx, cy);
+        ctx.restore();
+      }
+      if (fKeys && fKeys[m.type + '@' + m.idx]) { /* jl-1150e: 闪烁加强——双圈+辉光+标记本体明暗脉冲 */
+        ctx.save();
+        ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(fPh * Math.PI * 2));
+        ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(tx, cy - s / 2, s, s, 3); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 9; /* ks-1151fix11: chip文字闪烁期亮白闪(用户12:15点名"字也亮白色一闪一闪"), 继承globalAlpha脉冲 */
+        ctx.textAlign = 'center'; ctx.fillText(isH ? '高' : '低', tx + s / 2, cy + 0.5);
+        ctx.textAlign = 'left'; ctx.fillText(txt, tx + s + 3, cy);
+        if (ampT) ctx.fillText(ampT, tx + s + 3 + w + 3, cy);
+        if (pctT) { /* jl-1160d: 闪烁层同描边字 */
+          ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(5,10,16,0.9)';
+          ctx.strokeText(pctT, tx + s + 3 + w + ampW + 4, cy);
+          ctx.fillStyle = (pcN[k] >= 95) ? '#FFD94A' : '#ffffff';
+          ctx.fillText(pctT, tx + s + 3 + w + ampW + 4, cy);
+        }
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10; ctx.lineWidth = 2.5;
+        ctx.globalAlpha = Math.max(0, 1 - fPh);
+        ctx.beginPath(); ctx.arc(tx + s / 2, cy, s * (0.8 + fPh * 1.3), 0, Math.PI * 2); ctx.stroke();
+        var _ph2 = (fPh + 0.5) % 1; ctx.globalAlpha = Math.max(0, 1 - _ph2);
+        ctx.beginPath(); ctx.arc(tx + s / 2, cy, s * (0.8 + _ph2 * 1.3), 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+    } else if ((!card || o.stamps) && m.confirmed) {
+      s = card ? 11 : 14; bx = clamp(px - s / 2, o.left, o.right - s); by = clamp(isH ? py - s - 8 : py + 8, o.top, o.bottom - s);
+      if (o.boxes) o.boxes.push({ kind: 'stamp', x: Math.min(bx, px - 1), y: Math.min(by, py), w: Math.max(s, Math.abs(px - bx) + 2), h: s + 8 });
+      ctx.strokeStyle = isH ? o.hiColor : o.loColor; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px, isH ? by + s : by); ctx.lineTo(px, py); ctx.stroke();
+      ctx.fillStyle = isH ? o.hiColor : o.loColor;
+      ctx.beginPath(); ctx.roundRect(bx, by, s, s, 3); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+      ctx.fillText(isH ? '高' : '低', bx + s / 2, by + s / 2 + 0.5);
+      var _stT = (amps && amps[k] ? amps[k] : '') + (pcts && pcts[k] ? ((amps && amps[k] ? ' ' : '') + pcts[k]) : ''); /* jl-1160: 振幅+分位同挂 */
+      if (_stT) { /* jl-1160b: 摆动戳旁标(振幅+分位)深色实底白粗体11px, 防压线 */
+        ctx.save(); ctx.font = 'bold 11px -apple-system,"PingFang SC",sans-serif';
+        var _tw = ctx.measureText(_stT).width + 10;
+        var _ay = clamp(isH ? by - 12 : py - 13, o.top + 8, o.bottom - 8);
+        var _tX, _tA;
+        if (_ay > by - 4) { _tA = 'left'; _tX = clamp(bx + s + 3, o.left + 1, o.right - _tw - 1); _ay = by + s / 2; }
+        else { _tA = 'center'; _tX = clamp(bx + s / 2, o.left + _tw / 2 + 1, o.right - _tw / 2 - 1); }
+        var _bx0 = _tA === 'center' ? _tX - _tw / 2 : _tX;
+        /* jl-1160d: 无底块描边字 */
+        ctx.lineWidth = 2.5; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(5,10,16,0.9)'; ctx.textAlign = _tA;
+        var _sx = _tA === 'center' ? _tX : _bx0 + 5;
+        ctx.strokeText(_stT, _sx, _ay + 0.5);
+        ctx.fillStyle = (pcN && pcN[k] != null && pcN[k] >= 95) ? '#FFD94A' : '#FFFFFF';
+        ctx.fillText(_stT, _sx, _ay + 0.5);
+        ctx.restore();
+        if (o.tips && tipsT && tipsT[k]) o.tips.push({ x: _bx0, y: _ay - 8, w: _tw, h: 16, tip: tipsT[k] });
+      }
+      if (fKeys && fKeys[m.type + '@' + m.idx]) { /* jl-1150e: 同上加強版 */
+        var _fcol = isH ? o.hiColor : o.loColor;
+        ctx.save();
+        ctx.globalAlpha = 0.55 + 0.45 * Math.abs(Math.sin(fPh * Math.PI * 2));
+        ctx.fillStyle = _fcol; ctx.beginPath(); ctx.roundRect(bx, by, s, s, 3); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 8; ctx.textAlign = 'center'; ctx.fillText(isH ? '高' : '低', bx + s / 2, by + s / 2 + 0.5); ctx.shadowBlur = 0; /* ks-1151fix11: 摆动戳字同闪亮白 */
+        ctx.strokeStyle = _fcol; ctx.shadowColor = _fcol; ctx.shadowBlur = 10; ctx.lineWidth = 2.5;
+        ctx.globalAlpha = Math.max(0, 1 - fPh);
+        ctx.beginPath(); ctx.arc(bx + s / 2, by + s / 2, s * (0.8 + fPh * 1.3), 0, Math.PI * 2); ctx.stroke();
+        var _ph3 = (fPh + 0.5) % 1; ctx.globalAlpha = Math.max(0, 1 - _ph3);
+        ctx.beginPath(); ctx.arc(bx + s / 2, by + s / 2, s * (0.8 + _ph3 * 1.3), 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+/**
+ * 高位区/低位区分界线（同花顺价位指数同款，实线版）。要在曲线之前调用（画在底层）。
+ * series 价格序列；o: { x,y,left,right,lo,hi, zoneHi=0.8, zoneLo=0.2, band,
+ *   hiLine(白细线), loLine(蓝线), hiFill(红), loFill(蓝), hiTagText, fs }
+ * 分界线价位 = lo + 比例 × (hi-lo)；高位线以上的曲线部分填 hiFill，低位线以下填 loFill
+ * band:true（K线用）= 线到极值之间铺整块色带，不跟曲线走
+ */
+function drawZones(ctx, series, o) {
+  var zh = o.zoneHi == null ? 0.8 : o.zoneHi, zl = o.zoneLo == null ? 0.2 : o.zoneLo, fs = o.fs || 10;
+  var pH = o.lo + zh * (o.hi - o.lo), pL = o.lo + zl * (o.hi - o.lo);
+  var yH = o.y(pH), yL = o.y(pL), n = series.length;
+  var lines, j, L, yy, col, txt, tc, w, h, bx, shift, ty;
+  ctx.save();
+  function fill(yLine, clampFn, color) {
+    var i;
+    ctx.globalAlpha = 0.28; ctx.fillStyle = color; ctx.beginPath();
+    ctx.moveTo(o.x(0), yLine);
+    for (i = 0; i < n; i++) ctx.lineTo(o.x(i), o.y(clampFn(series[i])));
+    ctx.lineTo(o.x(n - 1), yLine); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  if (o.band) {
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = o.loFill; ctx.fillRect(o.left, yL, o.right - o.left, o.y(o.lo) - yL);
+    ctx.fillStyle = o.hiFill; ctx.fillRect(o.left, o.y(o.hi), o.right - o.left, yH - o.y(o.hi));
+    ctx.globalAlpha = 1;
+  } else {
+    fill(yL, function (v) { return Math.min(v, pL); }, o.loFill);
+    fill(yH, function (v) { return Math.max(v, pH); }, o.hiFill);
+  }
+  ctx.font = fs + 'px -apple-system,"PingFang SC",sans-serif'; ctx.textBaseline = 'middle';
+  lines = [[yH, o.hiLine, '高位区', o.hiTagText || '#fff'], [yL, o.loLine, '低位区', '#fff']];
+  for (j = 0; j < lines.length; j++) {
+    L = lines[j]; yy = L[0]; col = L[1]; txt = L[2]; tc = L[3];
+    ctx.lineWidth = 1; ctx.strokeStyle = col;
+    if (o.dash) ctx.setLineDash(o.dash);
+    ctx.beginPath(); ctx.moveTo(o.left, yy); ctx.lineTo(o.right, yy); ctx.stroke();
+    if (o.dash) ctx.setLineDash([]);
+    w = ctx.measureText(txt).width + 6; h = fs + 3; bx = o.right - w - 1;
+    // tagAvoid:两条线靠得太近时，高位区标签上移、低位区标签下移，避免叠字
+    shift = o.tagAvoid && (yL - yH) < h + 2; ty = yy + (shift ? (j === 0 ? -(h / 2 + 1) : (h / 2 + 1)) : 0);
+    if (o.zoneTags !== false) {                 // zoneTags:false => 只画线，不画「高位区/低位区」标签（极小卡用）
+      ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(bx, ty - h / 2, w, h, 2); ctx.fill();
+      ctx.fillStyle = tc; ctx.textAlign = 'center'; ctx.fillText(txt, bx + w / 2, ty + 0.5);
+    }
+  }
+  ctx.restore();
+}
+function _phvlKHL(bars) {
+  var H = [], L = [];
+  for (var i = 0; i < bars.length; i++) {
+    var hv = bars[i] && (bars[i].high != null ? bars[i].high : bars[i].h), lv = bars[i] && (bars[i].low != null ? bars[i].low : bars[i].l);
+    H.push(isFinite(hv) ? hv : -Infinity);
+    L.push(isFinite(lv) ? lv : Infinity);
+  }
+  return [H, L];
+}
+function _phvlKZones(g, bars, o) {
+  if (!o.zones || bars.length < 3) return;
+  var HL = _phvlKHL(bars), hi = -Infinity, lo = Infinity;
+  for (var i = 0; i < HL[0].length; i++) { if (HL[0][i] > hi) hi = HL[0][i]; if (HL[1][i] < lo) lo = HL[1][i]; }
+  if (!(isFinite(hi) && isFinite(lo) && hi > lo)) return;
+  drawZones(g, [], { x: o.x, y: o.y, left: o.left, right: o.right, top: o.top, bottom: o.bottom, lo: lo, hi: hi, band: true, fs: o.size === "small" ? 9 : 10, zoneHi: o.zoneHi, zoneLo: o.zoneLo, hiLine: o.hiLine || "#fff", loLine: o.loLine || "#3b82f6", hiFill: o.hiFill || "#e5484d", loFill: o.loFill || "#3b82f6", hiTagText: o.hiTagText || "#222" });
+}
+function _phvlKMarks(g, bars, o) {
+  if (bars.length < 3) return [];
+  var HL = _phvlKHL(bars), small = o.size === "small";
+  var marks = _phvlCompute(HL[0], HL[1], { maxCount: small ? 4 : 6, dayStart: o.dayStart });
+  drawPHVL(g, marks, { x: o.x, y: o.y, left: o.left, right: o.right, top: o.top, bottom: o.bottom, mode: small ? "card" : "full", stamps: small, boxes: o.boxes, textColor: o.textColor || "#eee", hiColor: o.hiColor || "#f5a623", loColor: o.loColor || "#e5484d", decimals: o.decimals != null ? o.decimals : 2 });
+  return marks;
+}
 function drawZones(ctx, series, o) {
     var zh = o.zoneHi == null ? 0.8 : o.zoneHi, zl = o.zoneLo == null ? 0.2 : o.zoneLo, fs = o.fs || 10;
     var pH = o.lo + zh * (o.hi - o.lo), pL = o.lo + zl * (o.hi - o.lo);
@@ -4422,6 +4584,7 @@ function createCardIntraday(canvas, o) {
         for (kk in PC) if (o[kk] === undefined) o[kk] = PC[kk];
       }
       var prices = [], avgs = [], times = [], lastMarks = [], visible = true;
+      var _tipBoxes = []; /* ks-1151m: 分位标签点按热区(与index jl-1160b同款, 画布pointer-events:none故走tipAt桥) */
       var geo = null, subs = [];                                  /* ks-1013: 只读坐标快照 + 重画通知(供 PHVLCross 十字线等外部只读使用) */
       function notify(kind) { for (var q = 0; q < subs.length; q++) { try { subs[q](kind); } catch (eN) { } } }
       function fin(v) { return typeof v === 'number' && isFinite(v); }
@@ -4619,11 +4782,12 @@ function createCardIntraday(canvas, o) {
             g.restore();
           }
         }
+        _tipBoxes.length = 0; /* ks-1151m: 每帧清热点 */
         drawPHVL(g, lastMarks, { mode: 'card', x: x, y: y, left: l, right: w - r, top: 0, bottom: plotBottom,
           stamps: o.swingMarks !== false, /* jl-1142: 补画已确认摆动点小字戳; swingMarks:false 可关 */
           textColor: txt, hiColor: rv(o.hiColor, '#ff4fa3'), loColor: rv(o.loColor, '#e5484d'), /* ks-1012-d9: 高标签亮粉+白字(用户定稿), 低标签红保持 */
           amp: o.swingAmp === true, flashKeys: _fkSet, flashPh: _fkPh, /* jl-1150 */
-          decimals: DEC, boxes: o.boxes, noLine: o.extremeLine === false });
+          decimals: DEC, boxes: o.boxes, noLine: o.extremeLine === false, percCode: rv(o.swingCode, ''), refPrice: pre, series: p, tips: _tipBoxes }); /* ks-1151m */
   
         // 四角价格 / 涨跌幅标签、昨收标签
         /* 所有尺寸都检查：「高/低」chip 压住的角标让位不画；紧贴轴时昨收线常贴边，被昨收线穿行的角标也让位 */
@@ -4715,7 +4879,8 @@ function createCardIntraday(canvas, o) {
         },
         setVisible: function (v) { visible = !!v; if (visible) draw(); notify('visibility'); },
         isVisible: function () { return visible; },
-        marks: function () { return lastMarks; }
+        marks: function () { return lastMarks; },
+        tipAt: function (cx, cy) { for (var _t2 = _tipBoxes.length - 1; _t2 >= 0; _t2--) { var _b2 = _tipBoxes[_t2]; if (cx >= _b2.x - 2 && cx <= _b2.x + _b2.w + 2 && cy >= _b2.y - 2 && cy <= _b2.y + _b2.h + 2) return _b2.tip; } return null; } /* ks-1151m */
       };
     }
   var computePHVL = _phvlCompute;
@@ -4841,6 +5006,7 @@ function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引�
       zones: true, zoneHi: 0.7, zoneLo: 0.3, zoneHiLine: "#ff4fa3", zoneLoLine: "#3b82f6", zoneHiFill: "#ff4fa3", zoneLoFill: "#3b82f6", zoneHiTagText: "#fff",
       hiColor: "#ff4fa3", loColor: "#6aa8ff", axis: "fit", preLineSolid: true, swingAmp: true, bg: "#0a0e0b",
       swingAlert: "ksTS:" + (S.active || ""), swingAlertName: function () { return S.name || S.active || ""; }, /* ks-1151fix9: 分时高低点提醒(持仓页同款)——引擎扫lastMarks新确认点/日内极值刷新→toast+9s闪烁, 60s去重+首帧只prime; 命名空间按票, 换票=引擎重建换空间重prime不弹 */
+      swingCode: function () { return S.active || ''; }, /* ks-1151m: 分位查表按票 */
       width: function () { return cv.clientWidth || 300; }, height: _ch };
     S._tsEngine = ksIntradayFactoryJL(S._tsCv, S._tsOpts);
     S._tsEngineH = _ch;
