@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v247"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v248"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -29,7 +29,7 @@
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", paint); else paint();
   })();</script>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.84.99</title><style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.84.103</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 52% at 94% 38%,rgba(255,217,94,.38),transparent 65%),radial-gradient(ellipse 80% 50% at 85% 0%,rgba(255,217,94,.18),transparent 60%),radial-gradient(ellipse 70% 60% at 10% 10%,rgba(120,20,45,.35),transparent 65%),radial-gradient(ellipse 90% 70% at 50% 45%,rgba(70,12,40,.30),transparent 70%),linear-gradient(160deg,#1a0508 0%,#2b0817 45%,#170510 100%);background-attachment:fixed;color:#eff9fc;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none} /* jl-1068 v0.84.15: 定案：撤掉持仓小图Fib画图按钮(只要趋势线), Fib引擎代码保留不删;  持仓小图画线条按钮文字误用JS转义写在HTML区→渲染成\u2571乱码(截图实证), 改回真实UTF-8字符: ╱线/∿Fib/锁/隐/删/5色点; 其余不动 --><!-- jl-1081~1083 v0.84.29(三合一, 全部只提示预警不做自动交易): ①龙池"斐波那契波段"加分项——扫描worker抓完K线原样喂给持仓卡同源 legFibJL(同一函数零改公式, 龙池价位与温度计逐位一致), 命中口径=上涨正式波段+段幅≥15%+回撤0.30~0.45(0.382附近)+近3收站上0.382档企稳+距1.618扩展位≥5%空间, 各层+10分(加分项非硬门槛); 列表∿标+卡片显示波段区间/0.382位/1.618位/当前回撤; realCache临时挂载用完还原不占jl_dk_配额 ②B/S球"档位失守监控"——跌破买档15分钟(可配jinlin_breach_cfg_v1)不收回记失守, Bn±0.5%内震荡=到档停留不算; 黄=日内累计≥2档「已连续跌穿N档,档位买点逻辑警戒,暂停加仓」/橙=60分钟内≥2档「下滑加速,建议考虑先减仓」/红=最深档失守含开盘<最深档×0.97跳空「已跌穿最深买档,档位体系失效,建议减仓观察,待企稳再决策」; 诱多=早盘强势候选/确认后触发黄色→直升橙+标注; 球按级别变色(wy/wo/wr), 每级每票当日只弹一次横幅, 面板显示失守档位列表/现价所在档/距最深档空间; 面板"失守演示"按钮=合成数据黄/橙/红各一例 ③强势度评分+卖飞治理——9:25竞价出证据(个股高开≥3%且上证高开≥0.5%=候选, 评分=高开/量比估/大盘共振/缺口不回补四维), 9:40~10:10不回补缺口+量比≥1.5确认; 确认票S档触及改"待确认"(琥珀), 触线后15分钟不收回或14:45尾盘复核才转正提示; 移动卖出参考(trailing)=日内高点回落2%, 破线一次性提示; 弱势日行为不变。红线遵守: 不碰资金流/离线资金/大盘异动/B-S球原有触档算法, 零新增外部接口, 假期断档冻结(jlMktPhaseJL闸) --><!-- jl-1066 v0.84.13(看图反馈批): ①emoji管理菜单(手/锁/眼/垃圾桶)全撤——换TradingView式底部玻璃色条(白金橙绿红5色点+✕删), 选中画线才出现 ②持仓小图画线入口恢复(jl-1006撤的线/Fib按钮回归, 引擎原样)+单线换色生效(draw1读ln.color) ③小图闪动根治——tsWait自愈改一次性(Set守卫)+renderDeck数据未变不重建innerHTML(deck卡片小图频繁重建=闪动真因) ④⏰补齐: 持仓小图工具栏加⏰按钮(自动对准当前票)+提醒金线标记扩展到小图 ⑤大K线图(KS全屏)=ks.html体系, 其🔔提醒/+提醒健在; KS单线换色下轮 --><!-- jl-1065 v0.84.12(K线组件专项, 只动bigChart交互层): ①十字线抖动根治——新增透明overlay层, 指针移动只重绘overlay(十字线+左右玻璃标签+底部时间), 主图canvas零重绘完全静止; 手势(平移/缩放/画线)起手自动回落原生路径 ②左右涨跌幅/右侧价格/时间标签黑底→玻璃(rgba白.14+.95白字) ③小闹钟恢复——⏰按钮前置工具栏首位+图上金色虚线+⏰常显(夜背景切合) ④趋势线: ↗趋势按钮(首位引导入口)+点线弹玻璃菜单(拖动/锁定/隐藏/删除), 单线lock跳过命中检测/hide跳过渲染, 隐藏线点原位置可唤回 ⑤主图+幅图通用(画线系统本就按pane存储) --><!-- jl-1064 v0.84.11(视觉批·只动颜色字重不动布局字号业务逻辑): ①龙池筛选工具栏+扫描横幅深黑实心→统一玻璃rgba(255,255,255,.075)+blur14 saturate1.7+描边.10+圆角12 ②背景顶层加右深金baseglow rgba(160,110,35,.38) ③文字全面提亮加粗: body基线500, 元信息灰字→亮白.8/500-600, 数值.95/.8+.85/600-700, 提示字统一≥.75/500+终扫残留12处灰字提亮+ladRow已触行.55→.65(禁<.6文字); H清查: 全码唯一H=枢轴kind(小图computeTierJL/ks zzPivotsJL,大写=已确认/小写=未确认),资金卡温度卡渲染无H输出, 标题700, 指数小卡.85/600/13px, --secondary.74→.80 ④资金预警风险分溢出修复: 条与数值间距8px+条flex收缩min44px+数值flex:none ⑤终扫见响应报告; ks.html零改动 --><!-- jl-1063 v0.84.10(152仍雾蒙蒙, 要独立版KeyStation原色): 雾根因=仍有半透明+模糊叠加——①ks嵌入态背景改实心#0a0e0b, backdrop-filter全关(与独立版深色主题逐像素一致) ②外壳叠加层0.22→transparent(只留薄荷描边) ③保留: 全出血/缓存根修/强制深色主题 --><!-- jl-1062 v0.84.9(定案): 玻璃实验终止, ks嵌入面板调回原黑——盾0.30→0.42+blur10(=v0.84.5观感), 外壳叠加0.08→0.22(原值); 保留: 手机全出血/缓存锁定当前壳/嵌入态强制深色主题(亮线可读)/工具条蓝青统一; 独立版与算法零影响 --><!-- jl-1061 v0.84.8(实拍: 玻璃生效但网格/价签/十字线全看不清): 根因=K线Station存档是浅色主题——浅灰结构线压在玻璃上无对比——①嵌入态强制深色主题(独立版主题选择不受影响, 存档不覆盖) ②玻璃0.14→0.30+blur12(深色线条有暗底对比, 仍透极光不回死黑) ③画布/指标算法零改动, 非大修 --><!-- jl-1060 v0.84.7(实拍: 面板仍死黑不match): 根因=SW全局ignoreSearch缓存匹配把KEEP旧壳缓存里的陈年ks.html喂给iframe, v0.84.6玻璃改动根本没送到手机——①sw.js运行时匹配锁定当前壳C(陈旧投喂根除, 离线回退链不变) ②ks嵌入态工具条/文字绿灰→主UI蓝青玻璃家族(仅ksT, 独立版/主题零影响) ③零数据/业务逻辑改动 --><!-- jl-1059 v0.84.6(截图圈注): ①手机chartMode全出血——@media430取消舞台padding24px/设备95vw居中/圆角, K线图铺满手机不再两侧空带 ②ks玻璃减淡——玻璃盾0.42→0.14+blur14, 外壳叠加层0.22→0.10, 极光背景透出与首页卡片玻璃一致, 不再死黑不搭(UI统一) ③零数据/业务逻辑改动 --><!-- jl-1058: 整页嵌死手机宽——任一页超宽不再把整个文档拖成可左右平移 */#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:rgba(26,18,10,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05)} /* jl-1036: 容器层深色玻璃兜底 */body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;height:100dvh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05);display:block} /* jl-1036 */body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#EAF0F8}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#FFFFFF;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -148,7 +148,7 @@ body.ksEmbed .phone.chartMode #chartPage .chartHeading{padding-left:12px;padding
 /* === 0913 回退横版：一张舒展+窄轨竖名；active 卡内容区可上下滑看全 === */
 .deck{flex-direction:row;gap:7px;height:472px;align-items:stretch;overflow-x:auto;overflow-y:hidden;touch-action:pan-y pinch-zoom}
 .stock{flex:0 0 32px;width:auto;min-width:0}
-.stock.active{flex:0 0 264px}
+.stock.active{flex:0 0 350px}
 .rail{position:absolute;inset:0;height:auto;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px;padding:15px 0;text-align:center}
 .rail .num{font:500 9px monospace;color:rgba(255,255,255,.8);flex:none;order:0}
 .rail .name{writing-mode:vertical-rl;letter-spacing:3px;font-size:13px;color:#fff;margin:0;display:block;flex:none;order:0;max-height:76%;overflow:hidden}
@@ -511,7 +511,20 @@ body:not(.day) .rail .name{color:#fff;font-weight:700}
 @media (prefers-reduced-motion:reduce){.sbStarJL.fw{animation:none}}  /* jl-1097同规: 静态色仍可见 */
 .sbDingBtn{font:600 9px/1 -apple-system,"PingFang SC",sans-serif;color:#9df5d3;border:1px solid #1fdc9355;border-radius:7px;padding:4px 7px;background:#1fdc9314}
 .sbDingBtn.off{color:#8fa398;border-color:#81e6d933;background:transparent}
-</style><!-- v.51 摘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
+/* jl-v100: 持仓卡温度计排版层——Fib行在条上贴条/B-S贴条下/排版位与真实刻点分离+引导线/高对比配色去描边（仅#holds，#home大盘温度计走idxFibRulerHTMLJL不受影响） */
+#holds .posRulerJL .prTrack{margin:2px 3px 6px}
+#holds .fibTicksJL{position:relative;overflow:visible;height:24px;margin:1px 2px 0;display:block}
+#holds .ftk{display:flex;flex-direction:column;align-items:center;line-height:1.2;gap:0}
+#holds .ftk strong{font-size:8.5px;font-weight:700;font-family:ui-monospace,Menlo,monospace;text-shadow:none;padding:0 1px}
+#holds .ftk b{font-size:7.5px;font-weight:650;text-shadow:none}
+#holds .fibTicksJL .ftk strong.pbLv.c382{color:#7fd0ff}#holds .fibTicksJL .ftk strong.pbLv.c50{color:#e8c2ff}#holds .fibTicksJL .ftk strong.pbLv.c618{color:#ffe45c}#holds .fibTicksJL .ftk strong.pbLv.c786{color:#ffc590}#holds .fibTicksJL .ftk strong.pbLv.c886{color:#8ff5ff}#holds .fibTicksJL .ftk strong.pbLv.e1272{color:#9df1ff}#holds .fibTicksJL .ftk strong.pbLv.e1618{color:#ff9de2}#holds .fibTicksJL .ftk b{color:#f2fafc}
+#holds .ftkNone{display:block;font-size:8.5px;color:#8fa3ad;text-align:center;line-height:24px}
+#holds .bsTicksJL{position:relative;overflow:visible;height:32px;margin:0 2px}
+#holds .bsk{font-size:7px}
+#holds .bsk b,#holds .bsk i{text-shadow:none}
+#holds .bsk.b b,#holds .bsk.b i{color:#3DE1AD}
+#holds .bsk.s b,#holds .bsk.s i{color:#EA3323}
+</style><!-- v.51 棘除Kimi悬浮球(sdk-seed.js): 挡K线放大/画线按钮, 用户0916亲令删除 --><base target="_blank">
 
 <style id="jlTypoJL">/* jl-1089 v0.84.35 全站Typography可读性批(纯视觉层·零业务逻辑·零新网络请求): ①玻璃上白字统一 text-shadow:0 1px 2px rgba(0,0,0,.35)(day亮色主题复位) ②涨跌值/影响类标签改实底pill+白字600-700·圆角8px·红rgba(224,32,32,.92)/绿rgba(0,150,90,.92)(红涨绿跌语义不变仅换载体) ③数据密集区(筹码行/ETF列表/事件卡/轨迹区)加稳定底层 ④数字列 tabular-nums ⑤低透明度白字提亮(.70-.80→.78/.88) */
 /* ——— 玻璃白字 text-shadow(day 模式复位) ——— */
@@ -4542,6 +4555,34 @@ function posRulerJL(s) {
   function legEffHiJL(s, leg) {
     return Math.max(Number(leg.hi) || 0, Number(s.base) || 0, Number(s.high) || 0);
   }
+/* jl-v100: 排版层——labels真实刻点tx不动, 排版位lx可移动; 三级: 真位平铺→最小位移→整行主动铺满(总宽<=100%才有解); 返回null=两行也悬, 调用方交替拆两行 */
+function spreadRowJL(items, lo, hi) {
+  const its = items.slice().sort((a, b) => a.tx - b.tx), n = its.length;
+  if (!n) return [];
+  const ok = (xs) => { for (let i = 0; i < n; i++) { if (xs[i] - its[i].w / 2 < lo - 0.01 || xs[i] + its[i].w / 2 > hi + 0.01) return false; if (i && xs[i] - its[i].w / 2 < xs[i - 1] + its[i - 1].w / 2 - 0.01) return false; } return true; };
+  let xs = its.map((o) => Math.max(lo + o.w / 2, Math.min(hi - o.w / 2, o.tx)));
+  if (ok(xs)) return its.map((o, i) => ({ lx: xs[i], tx: o.tx, moved: Math.abs(xs[i] - o.tx) > 0.4, ref: o.ref }));
+  const totW = its.reduce((s2, o) => s2 + o.w, 0);
+  if (totW <= hi - lo) { /* v8.1: 真位平铺不下就整行主动铺满(从可用左界到右界均分), 不挤中间 */
+    const gap = (hi - lo - totW) / (n + 1); let cur = lo + gap;
+    return its.map((o) => { const lx = cur + o.w / 2; cur += o.w + gap; return { lx, tx: o.tx, moved: Math.abs(lx - o.tx) > 0.4, ref: o.ref }; });
+  }
+  for (let it = 0; it < 30; it++) { /* 整行也铺满不下(总宽超界)才退回最小位移 */
+    for (let i = 1; i < n; i++) { const nd = xs[i - 1] + its[i - 1].w / 2 + its[i].w / 2; if (xs[i] < nd) xs[i] = nd; }
+    for (let i = n - 2; i >= 0; i--) { const lm = xs[i + 1] - its[i + 1].w / 2 - its[i].w / 2; if (xs[i] > lm) xs[i] = lm; }
+  }
+  if (ok(xs)) return its.map((o, i) => ({ lx: xs[i], tx: o.tx, moved: Math.abs(xs[i] - o.tx) > 0.4, ref: o.ref }));
+  return null;
+}
+function layoutRowJL(items) { /* {rows:[[lay..]]|两行} ; 两行=按tx交替拆分, 引导线只画第一行 */
+  const one = spreadRowJL(items, 1, 99);
+  if (one) return { rows: [one] };
+  const a = [], b = [];
+  items.slice().sort((x, y) => x.tx - y.tx).forEach((o, i) => (i % 2 ? b : a).push(o));
+  const ra = spreadRowJL(a, 1, 99), rb = spreadRowJL(b, 1, 99);
+  if (ra && rb) return { rows: [ra, rb] };
+  return null;
+}
 function posRulerHTMLJL(s) {
   const pr = posRulerJL(s);
   if (!pr) return "";
@@ -4568,8 +4609,12 @@ function posRulerHTMLJL(s) {
   const legF = sw && !_fibFormalOk && !_leg15 ? _legD : null, hasLeg = !!(_fibFormalOk || _leg15 || legF), useLeg = sw && hasLeg;
   const _tvB = !sw && typeof tiersViewJL === "function" ? tiersViewJL(s) : null;
   const _bsOk = !!(_tvB && _tvB.buys && _tvB.buys.length && _tvB.sells && _tvB.sells.length);
+  /* jl-v102: _dq/_extDir 前移——外推档要参与尺面上下界 */
+  const _lbT = latestHoldingBarJL(s, dailyBarsOf(s.code)) || {};
+  const _dqHi = Number(s.high) > 0 ? Number(s.high) : Number(_lbT.h) > 0 ? Number(_lbT.h) : 0, _dqLo = Number(s.low) > 0 ? Number(s.low) : Number(_lbT.l) > 0 ? Number(_lbT.l) : 0;
+  const _rngD = _dqHi - _dqLo, _extDir = !sw && _dqLo > 0 && _rngD > 0 ? (p > _dqHi - _rngD * 0.382 ? 1 : p < _dqHi - _rngD * 0.786 ? -1 : 0) : 0; /* jl-v101: 涨出0.382档=上方外推, 跌穿0.786档=下方外推 */
   const bLo0 = useLeg ? _fibFormalOk ? _fibLo : _leg15 ? _l15lo : legF.lo : pr.lo, bHi0 = useLeg ? _fibFormalOk ? _dHi : _leg15 ? _l15hi : legF.hi : pr.hi;
-  const bLo = !sw && _bsOk ? Math.min(bLo0, ..._tvB.buys, ..._tvB.sells) : bLo0, bHi = !sw && _bsOk ? Math.max(bHi0, ..._tvB.buys, ..._tvB.sells) : bHi0, rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
+  const bLo = Math.min(!sw && _bsOk ? Math.min(bLo0, ..._tvB.buys, ..._tvB.sells) : bLo0, ...(_extDir < 0 ? [_dqHi - _rngD * 1.272, _dqHi - _rngD * 1.618] : [])), bHi = Math.max(!sw && _bsOk ? Math.max(bHi0, ..._tvB.buys, ..._tvB.sells) : bHi0, ...(_extDir > 0 ? [_dqLo + _rngD * 1.272, _dqLo + _rngD * 1.618] : [])), /* jl-v102: 外推档触发时尺面同步外扩 */ rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
   const tLo = _leg15 ? _l15lo : legF ? legF.lo : 0, tHi = _leg15 ? _l15hi : legF ? legF.hi : 0, tRng = tHi - tLo || 1;
   /* jl-P1: S3/S4 优先判下降段（旧逻辑 p<bLo → brkL「▼破段低」在下降段语义是错的） */
   const stKey = useLeg ? _al && _al.dir < 0 ? "downSeg" : _intradayBreak ? "brkPending" : p > bHi ? "brkH" : p < bLo ? "brkL" : pos >= 85 ? "high" : pos <= 15 ? "low" : "mid" : pr.st;
@@ -4581,8 +4626,6 @@ function posRulerHTMLJL(s) {
   } : { brkH: ["▲破预判高·强势", "r"], brkL: ["▼破预判低", "g"], high: ["高位·防回调", "r"], low: ["低位·看支撑", "g"], mid: ["中段", ""] }, st = stMap[stKey];
   let ticks = "", marks = "";
   /* jl-P0-3: _dqHi/_dqLo 上移至此（原 110 行）—— 日波段 Fib 数据源与留痕箭头同链（s.high/s.low → _lbT.h/l） */
-  const _lbT = latestHoldingBarJL(s, dailyBarsOf(s.code)) || {};
-  const _dqHi = Number(s.high) > 0 ? Number(s.high) : Number(_lbT.h) > 0 ? Number(_lbT.h) : 0, _dqLo = Number(s.low) > 0 ? Number(s.low) : Number(_lbT.l) > 0 ? Number(_lbT.l) : 0;
   /* jl-P0-2: 中波段门控保持（原 if 不判 sw，日波段出中波段 Fib=串台）；
      jl-P0-3: 日波段（!sw）改渲染自己的 Fib —— 日内已见区间（_dqLo→_dqHi）回撤档，数据与留痕箭头同链零新依赖 */
   if (sw ? (_fibFormalOk || (_legD && _legD.L1 > 0 && _legD.H1 > _legD.L1)) : (_dqHi > 0 && _dqLo > 0 && _dqHi > _dqLo)) {
@@ -4590,17 +4633,24 @@ function posRulerHTMLJL(s) {
        jl-P0-3: !sw 时 Fib 基准=日内已见区间（顶 _dqHi、幅 _dqHi-_dqLo），回撤方向 v=顶-幅×r */
     const _hhT = sw ? (_al ? _al.hi : Math.max(_legD.H1, p, Number(s.high) || 0)) : _dqHi,
       _rngT = sw ? (_al ? _al.rng : (_hhT - _fibLo || 1)) : (_dqHi - _dqLo),
-      lv = [[0.382, "c382"], [0.5, "c50"], [0.618, "c618"], [0.786, "c786"], ...(sw ? [[0.886, "c886"]] : [])];
+      lv = [[0.382, "c382"], [0.5, "c50"], [0.618, "c618"], [0.786, "c786"], ...(sw ? [[0.886, "c886"]] : _extDir ? [[1.272, "e1272"], [1.618, "e1618"]] : [])]; /* jl-v101: 日波段涨出0.382档/跌穿0.786档自动出外推 */
     const tkCol = fibVisibleJL().reduce((m, z) => { m[z.lb] = z.color; return m; }, {});
     /* jl-P1: 下降段（S3/S4）刻度方向反转 —— 反弹档 lo+rng×r（自腿底向上），升序天然左低右高；
        jl-P0-3: 反弹分支仅中波段生效 —— 日波段（!sw）恒走回撤方向（顶-幅×r），不撞腿反弹公式 */
-    const tks = lv.map((z) => { const r = z[0], v = sw && _al && _al.dir < 0 ? _fibLo + _rngT * r : r <= 1 ? _hhT - _rngT * r : _fibLo + _rngT * r; return { r, v, c: z[1], x: (v - bLo) / rng * 100 }; }).filter((o) => o.x >= 0 && o.x <= 100).sort((a, b) => a.x - b.x);
+    const tks = lv.map((z) => { const r = z[0], v = sw && _al && _al.dir < 0 ? _fibLo + _rngT * r : r <= 1 ? _hhT - _rngT * r : sw ? _fibLo + _rngT * r : _extDir < 0 ? _hhT - _rngT * r : _dqLo + _rngT * r; return { r, v, c: z[1], x: (v - bLo) / rng * 100 }; }).filter((o) => o.x >= -0.4 && o.x <= 100.4).sort((a, b) => a.x - b.x); /* jl-v100: 边档保留(真实刻点原样, 排版位可夹) */
     if (tks.length) {
-      marks = tks.map((o) => `<i style="position:absolute;top:-3px;width:1px;height:9px;left:${o.x.toFixed(1)}%;background:${tkCol[o.c]};opacity:.9"></i>`).join("");
-      let _px0 = -99, _mg = 99;
-      tks.forEach((o) => { if (o.x - _px0 > 0) _mg = Math.min(_mg, o.x - _px0); _px0 = o.x; });
-      const _fkFs = _mg < 11 ? Math.max(6.5, 8.5 * _mg / 11) : 8.5;
-      ticks = '<div class="fibTicksJL" style="position:relative;overflow:visible;height:21px;margin:14px 2px 1px">' /* ks-1151fix10: 数字行下移9→14px离开渐变条(用户箭头指定) */ + '' + tks.map((o) => `<span class="ftk" style="position:absolute;left:${o.x.toFixed(1)}%;top:0;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ${o.c}" style="font-size:${_fkFs.toFixed(1)}px">${o.v.toFixed(2)}</strong><b style="font-size:${(_fkFs * .88).toFixed(1)}px">${o.r}</b></span>`).join("") + "</div>";
+      marks = tks.map((o) => `<i style="position:absolute;top:-3px;width:1px;height:9px;left:${o.x.toFixed(1)}%;background:${fibColorJL(o.r)};opacity:.9"></i>`).join("");
+      /* jl-v100: 字号固定8.5去描边; 排版位lx(铺开)与真实刻点tx(marks/引导线)分离 */
+      const _layF = layoutRowJL(tks.map((o) => ({ tx: o.x, w: Math.max(o.v.toFixed(2).length * 5.7, String(o.r).length * 4.8) / 316 * 100, ref: o })));
+      if (_layF) {
+        const _rw = _layF.rows;
+        ticks = '<div class="fibTicksJL" style="height:' + (_rw.length > 1 ? 36 : 24) + 'px">' + _rw.map((r2, ri) => {
+          const _svgF = ri === 0 ? r2.filter((q) => q.moved).map((q) => `<line x1="${q.lx.toFixed(1)}" y1="0" x2="${q.tx.toFixed(1)}" y2="9" stroke="${fibColorJL(q.ref.r)}" stroke-width="0.55" stroke-dasharray="1.2 1" opacity=".6"/>`).join("") : "";
+          return (_svgF ? `<svg style="position:absolute;left:0;top:13px;width:100%;height:9px;overflow:visible" viewBox="0 0 100 9" preserveAspectRatio="none">${_svgF}</svg>` : "") + r2.map((q) => { const o = q.ref; return `<span class="ftk" style="position:absolute;left:${q.lx.toFixed(1)}%;top:${ri * 12}px;transform:translateX(-50%);white-space:nowrap"><strong class="pbLv ${o.c}" style="font-size:8.5px;text-shadow:none">${o.v.toFixed(2)}</strong><b style="font-size:7.5px;text-shadow:none">${o.r}</b></span>`; }).join("");
+        }).join("") + "</div>";
+      }
+    } else if (!sw) {
+      ticks = '<div class="fibTicksJL"><span class="ftkNone">日内区间未取到</span></div>'; /* jl-v100: 占位灰字不伪造 */
     }
   }
   const _candV = _swState && Number(_swState.pullLow) > 0 ? Math.min(Number(_swState.pullLow), p, Number(s.low) > 0 ? Number(s.low) : Infinity) : 0;
@@ -4610,17 +4660,23 @@ function posRulerHTMLJL(s) {
     const _dcB = typeof decTierJL === "function" ? decTierJL(s) : 2;
     const _nB = _tvB.extB || _tvB.buys.length, _nS = _tvB.extS || _tvB.sells.length;
     const _all = [..._tvB.buys.map((v, k) => ({ lb: "B" + (k + 1), v, ext: k >= _nB, side: "b" })).reverse(), ..._tvB.sells.map((v, k) => ({ lb: "S" + (k + 1), v, ext: k >= _nS, side: "s" }))].map((o) => ({ ...o, x: (o.v - bLo) / rng * 100 })).filter((o) => o.x >= -0.4 && o.x <= 100.4);
-    let _px1 = -99, _mg1 = 99;
-    _all.forEach((o) => { if (o.x - _px1 > 0) _mg1 = Math.min(_mg1, o.x - _px1); _px1 = o.x; });
-    const _fsB = _mg1 < 8 ? Math.max(6.5, 8.5 * _mg1 / 8) : 8.5;
-    bsRow = '<div class="bsTicksJL">' + _all.map((o) => { const _jb = o.side === "b" ? jlBrokeStampJL(s.code, o.lb) : null; return `<span class="bsk ${o.side}${o.ext ? " ext" : ""}" style="left:${o.x.toFixed(1)}%;font-size:${_fsB.toFixed(1)}px"><b>${o.lb}</b><i>${o.v.toFixed(_dcB)}</i>${_jb ? `<u class="jbs ${_jb.cls}">${_jb.txt}</u>` : ""}</span>`; }).join("") + "</div>";
+    /* jl-v100: B/S排版层——7px亮青/亮红; 真实刻点marks挂条下沿(top:3px), 位移画引导线 */
+    marks += _all.map((o) => `<i style="position:absolute;top:3px;width:1px;height:5px;left:${o.x.toFixed(1)}%;background:${o.side === "b" ? "#3DE1AD" : "#EA3323"};opacity:.75"></i>`).join("");
+    const _layB = layoutRowJL(_all.map((o) => ({ tx: o.x, w: Math.max(o.lb.length + (o.ext ? 1 : 0), o.v.toFixed(_dcB).length) * 4.8 / 316 * 100, ref: o })));
+    if (_layB) {
+      const _rwB = _layB.rows;
+      bsRow = '<div class="bsTicksJL" style="height:' + (_rwB.length > 1 ? 46 : 32) + 'px">' + _rwB.map((r2, ri) => {
+        const _svgB = ri === 0 ? r2.filter((q) => q.moved).map((q) => `<line x1="${q.tx.toFixed(1)}" y1="0" x2="${q.lx.toFixed(1)}" y2="5" stroke="${q.ref.side === "b" ? "#3DE1AD" : "#EA3323"}" stroke-width="0.5" stroke-dasharray="1.2 1" opacity=".55"/>`).join("") : "";
+        return (_svgB ? `<svg style="position:absolute;left:0;top:1px;width:100%;height:5px;overflow:visible" viewBox="0 0 100 5" preserveAspectRatio="none">${_svgB}</svg>` : "") + r2.map((q) => { const o = q.ref; const _jb = o.side === "b" ? jlBrokeStampJL(s.code, o.lb) : null; return `<span class="bsk ${o.side}${o.ext ? " ext" : ""}" style="left:${q.lx.toFixed(1)}%;top:${7 + ri * 13}px"><b>${o.lb}</b><i>${o.v.toFixed(_dcB)}</i>${_jb ? `<u class="jbs ${_jb.cls}">${_jb.txt}</u>` : ""}</span>`; }).join("");
+      }).join("") + "</div>";
+    }
     const _pl = (pr.lo - bLo) / rng * 100, _ph = (pr.hi - bLo) / rng * 100;
     if (_pl > 1 || _ph < 99) {
       predMarks = `<i class="prPred" style="left:${_pl.toFixed(1)}%"></i><i class="prPred" style="left:${_ph.toFixed(1)}%"></i>`;
       trackBg = ` style="background:linear-gradient(90deg,#ffffff14 0,#ffffff14 ${_pl.toFixed(1)}%,#63e4d455 ${_pl.toFixed(1)}%,#ffd21f55 ${(_pl + (_ph - _pl) / 2).toFixed(1)}%,#ff545955 ${_ph.toFixed(1)}%,#ffffff14 ${_ph.toFixed(1)}%,#ffffff14 100%)"`;
     }
   }
-  return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? ((_al || dOk) ? "当前段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><span>${sw ? ((_al || dOk) ? "当前段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTogRow"><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 中波段" : "⇄ 日波段"}</button></div><div class="prTrack"${trackBg}><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${_dqHi > 0 ? `<i class="prTri hi" style="left:${posF(_dqHi).toFixed(1)}%;opacity:.55"></i>` : ""}${_dqLo > 0 ? `<i class="prTri lo" style="left:${posF(_dqLo).toFixed(1)}%;opacity:.55"></i>` : ""}${predMarks}${marks}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${ticks}${bsRow}<div class="prStateRow"><span class="prState ${st[1]}">${st[0]}${_candTxt}</span></div><div class="prFoot">${jlBrokeFootJL(s)}<span>位置 ${Math.round(pos)}%${useLeg ? ` · 日内 <b style="background:rgba(0,150,90,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.lo.toFixed(2)}</b>–<b style="background:rgba(224,32,32,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.hi.toFixed(2)}</b>` : ` · 标定 +${pr.ku}/−${pr.kd}×ATR`}</span></div></div>`;
+  return `<div class="posRulerJL ${stKey}"><div class="prHead"><span>${sw ? ((_al || dOk) ? "当前段低 " : "15分低 ") + bLo.toFixed(2) : "预判低 " + pr.lo.toFixed(2)}</span><span>${sw ? ((_al || dOk) ? "当前段高 " : "15分高 ") + bHi.toFixed(2) : "预判高 " + pr.hi.toFixed(2)}</span></div><div class="prTogRow"><button class="prTog" data-tt="${s.code}">${sw ? "⇄ 中波段" : "⇄ 日波段"}</button></div>${ticks}<div class="prTrack"${trackBg}><i class="prFill" style="width:${pos.toFixed(1)}%"></i>${_dqHi > 0 ? `<i class="prTri hi" style="left:${posF(_dqHi).toFixed(1)}%;opacity:.55"></i>` : ""}${_dqLo > 0 ? `<i class="prTri lo" style="left:${posF(_dqLo).toFixed(1)}%;opacity:.55"></i>` : ""}${predMarks}${marks}<i class="prNeedle" style="left:${pos.toFixed(1)}%"></i></div>${bsRow}<div class="prStateRow"><span class="prState ${st[1]}">${st[0]}${_candTxt}</span></div><div class="prFoot">${jlBrokeFootJL(s)}<span>位置 ${Math.round(pos)}%${useLeg ? ` · 日内 <b style="background:rgba(0,150,90,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.lo.toFixed(2)}</b>–<b style="background:rgba(224,32,32,.92);color:#fff;font-weight:600;border-radius:8px;padding:0 4px">${pr.hi.toFixed(2)}</b>` : ` · 标定 +${pr.ku}/−${pr.kd}×ATR`}</span></div></div>`;
 }
 
   const _ffMJL = { t: 0, d: null };
