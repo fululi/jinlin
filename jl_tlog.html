@@ -29,6 +29,8 @@
 <div class="card" id="snap"></div>
 <h2>② 做T闭环证据 jl_tloop_log_v1（每窗±2分钟内每票每日各记一条）</h2>
 <div class="card" id="tloop"></div>
+<h2>③ 诊断：板块资金为什么暂缺 / 卖出价从哪来</h2>
+<div class="card" id="diag"></div>
 <h2>原始 JSON</h2>
 <pre id="raw"></pre>
 <script>
@@ -68,6 +70,15 @@
     th+='</table><div class="mut">今日 '+tlog.length+' 条 / 全部 '+log.length+' 条</div>';
   }
   document.getElementById("tloop").innerHTML=th;
+
+  /* ③ 诊断 */
+  var sfAll=readJ("jl_sector_ff_v1")||{}, tlog=readJ("tlog_v2")||[];
+  var dh='<div>jl_sector_ff_v1 现有板块键（'+Object.keys(sfAll).length+'个）：</div><pre>'+esc(Object.keys(sfAll).join("、")||"（空）")+'</pre>';
+  var secSeen={};
+  (log||[]).forEach(function(x){ if(x.d===td) secSeen[x.code]=x.sec; });
+  dh+='<div>tloop 今日日志里记到的板块名：</div><pre>'+esc(JSON.stringify(secSeen))+'</pre>';
+  dh+='<div>tlog_v2 最近 10 条（卖出价锚点的来源）：</div><pre>'+esc(JSON.stringify(tlog.slice(-10),null,1))+'</pre>';
+  document.getElementById("diag").innerHTML=dh;
 
   document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log},null,1);
   document.getElementById("exp").onclick=function(){
