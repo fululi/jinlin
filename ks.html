@@ -1,3 +1,4 @@
+<!-- ks-1151fix11L (2026-10-23深夜): fib彻底退回原版——fix11g自动扩轴/fix11j封顶/fix11k边签全部撤除(fibAxisExtJL与两处调用点、边签收集+渲染全删), 渲染回到最初"轴外档位超±30px直接不画", 坐标映射引擎原生零干预 -->
 <!-- ks-1151fix11j (2026-10-23晚): fib扩轴封顶(用户兆易实证: 段幅142的fib 0=245→2.618=387把分时轴顶撑到387, 全天294压成一小条)——扩轴只收"行情可视中枢±0.75倍行情幅"以内的档位价, 超封顶档位线照画但不撑轴; K线/分时同口径。fix11i原批 -->
 <!-- ks-1151fix11i (2026-10-23): 降级横幅内联[draw]错误明细(iPhone无控制台, 截图即回传, 用户v6实证降级)——首行消息+栈顶帧。fix11h原批 -->
 <!-- ks-1151fix11h (2026-10-23): VI按回补方向着色(用户: ±号搞晕, 以颜色区分)——缺口在上方·要涨回去补=黄色, 缺口在下方·要跌回来补=青蓝色, 标签去±只留VI; 检测口径(ks-1022g)零改动只动渲染。fix11g原批 -->
@@ -875,53 +876,16 @@ function tsVolJL(ctx, v) { /* ks-1151fix7: 分时VOL副图——当日每分钟�
   ctx.fillText("VOL·分钟", v.padL + 2, v0 + 2);
   ctx.restore();
 }
-function fibAxisExtJL(capHi, capLo) { /* ks-1151fix11g: 扫描当前图主图fib, 已开档位价的轴外极值; fix11j: cap封顶——超过cap的档位不参与扩轴(兆易实证: 段幅142的fib把轴撑到387, 全天294压成一条) */
-  try {
-    var kl = S.kl; if (!kl || !kl.length) return null;
-    var last = kl[kl.length - 1][4]; if (!(last > 0)) return null;
-    var on = ksFibOnJL(); if (!on.length) return null;
-    var dl = dlist(), hi = -1e18, lo = 1e18, found = false;
-    for (var i = 0; i < dl.length; i++) {
-      var dg = dl[i];
-      if (!dg || dg.type !== "fib" || !dg.pts || dg.pts.length < 2) continue;
-      if (dg.pts[0].pane) continue; /* 副图fib不影响主价格轴 */
-      if (S.ts && S.ts.on) { /* 分时与渲染同口径: 仅当日两点锚 */
-        var _tod = true;
-        for (var _tq = 0; _tq < 2; _tq++) { var _ad = dg.pts[_tq] && dg.pts[_tq].d; if (_ad && tsDateKeyJL(_ad) !== S.ts.dayKey) { _tod = false; break; } }
-        if (!_tod) continue;
-      }
-      var p1 = dg.pts[0].p, p2 = dg.pts[1].p; if (!(p1 > 0) || !(p2 > 0)) continue;
-      for (var fi = 0; fi < on.length; fi++) {
-        var pr = p1 + (p2 - p1) * on[fi];
-        if (capHi != null && pr > capHi) continue; /* fix11j: 超封顶档位不撑轴 */
-        if (capLo != null && pr < capLo) continue;
-        if (pr > hi) hi = pr;
-        if (pr < lo) lo = pr;
-        found = true;
-      }
-    }
-    return found ? { hi: hi, lo: lo } : null;
-  } catch (e) { return null; }
-}
 function tsViewJL(g, lay) { /* ks-1151fix4/fix7: 分时坐标映射唯一构造点——view()与drawTSJL共用; fix7副图布局lay注入(与K线同一套pane字段, 副图渲染器零改动可吃) */
   var kl = S.kl, dayStart = S.ts.dayStart, n = kl.length;
   var inset = (g.plotBottom < 70) ? 6 : 16, yT = inset, yB = g.plotBottom - inset;
-  var v = { w: g.w, hh: g.h, ts: true, i0: dayStart, i1: n, n: n, step: (g.w - g.l - g.r) / 240, padL: g.l, padR: 48, padT: yT,
+  return { w: g.w, hh: g.h, ts: true, i0: dayStart, i1: n, n: n, step: (g.w - g.l - g.r) / 240, padL: g.l, padR: 48, padT: yT,
     priceH: yB - yT, pTop: yT, bottom: lay.bottom, vMax: 1,
     volY: lay.volY, volH: lay.volH, macdY: 0, macdH: 0, zzY: 0, zzH: 0, rtY: lay.rtY, rtH: lay.rtH, ddxY: lay.ddxY, ddxH: lay.ddxH, zlyyY: lay.zlyyY, zlyyH: lay.zlyyH, ctrlY: lay.ctrlY, ctrlH: lay.ctrlH, tqsY: lay.tqsY, tqsH: lay.tqsH,
     X: function (i) { return i >= dayStart ? g.xOfIdx(i - dayStart) : -1e4; },
     I: function (x) { var i = g.idxAtX(x) + dayStart; return Math.max(dayStart, Math.min(n - 1, i)); },
     Y: function (p) { return g.yOfPrice(p); }, P: function (y) { return g.priceAtY(y); },
     hi: g.priceAtY(yT), lo: g.priceAtY(yB), _rlab: [], _llab: [], _tlab: [] };
-  var _mid9 = (v.hi + v.lo) / 2, _rad9 = (v.hi - v.lo) * 0.75; /* fix11j: 分时扩轴封顶=行情中枢±0.75倍行情幅 */
-  var _fbx = fibAxisExtJL(_mid9 + _rad9, _mid9 - _rad9); /* ks-1151fix11g: 分时扩轴——档位价超出引擎mid±dev范围时, Y/P改走扩后线性映射(与drawTSJL同源, 白线随轴同步缩放) */
-  if (_fbx && (_fbx.hi > v.hi || _fbx.lo < v.lo)) {
-    var _hi = Math.max(v.hi, _fbx.hi), _lo = Math.min(v.lo, _fbx.lo);
-    v.hi = _hi; v.lo = _lo;
-    v.Y = function (p) { return yT + (_hi - p) / (_hi - _lo) * (yB - yT); };
-    v.P = function (y) { return _hi - (y - yT) / (yB - yT) * (_hi - _lo); };
-  }
-  return v;
 }
 function view() {
   if (S.ts && S.ts.on && S._tsEngine) { var _gTS = S._tsEngine.geom(); if (_gTS) return tsViewJL(_gTS, tsLayoutJL(cv.clientHeight || 0)); } /* ks-1151fix4: 分时模式=引擎geom时间坐标, 与drawTSJL显示同源 */
@@ -967,9 +931,6 @@ function view() {
     if (S.kl[i][5] > vMax) vMax = S.kl[i][5];
   }
   if (!(hi > lo)) { hi = lo + 1; }
-  var _mid9 = (hi + lo) / 2, _rad9 = (hi - lo) * 0.75; /* fix11j: K线扩轴封顶=可视中枢±0.75倍可视幅 */
-  var _fbx = fibAxisExtJL(_mid9 + _rad9, _mid9 - _rad9); /* ks-1151fix11g: fib已开档位价并入可视范围再定轴(yZoom/yOff仍在其上生效, 用户手动缩平移优先) */
-  if (_fbx) { if (_fbx.hi > hi) hi = _fbx.hi; if (_fbx.lo < lo) lo = _fbx.lo; }
   // 价格轴纵向缩放（右侧价格轴上下拖动：上拉放大 / 下拉缩小）
   if (S.yZoom && S.yZoom !== 1) {
     var midP = (hi + lo) / 2, halfP = (hi - lo) / 2 / S.yZoom;
