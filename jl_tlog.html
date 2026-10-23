@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>快照/闭环日志查看 · jinlin</title>
+<style>
+  body{margin:0;background:#0b1620;color:#eef9fc;font:14px/1.6 -apple-system,"PingFang SC",sans-serif;padding:14px}
+  h1{font-size:16px;margin:4px 0 12px}
+  h2{font-size:14px;margin:18px 0 6px;color:#7fd8ff}
+  .card{background:#12222f;border:1px solid #23414f;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  td,th{padding:4px 6px;border-bottom:1px solid #1d3442;text-align:left;white-space:nowrap}
+  th{color:#7fd8ff;font-weight:600}
+  .ok{color:#1fdc93}.bad{color:#ff6b6b}.mut{color:#9fb3c8}
+  pre{background:#0e1b26;border-radius:8px;padding:8px;font-size:11px;overflow:auto;max-height:300px;white-space:pre-wrap;word-break:break-all}
+  .btn{display:inline-block;background:#155e75;color:#eafcff;border-radius:999px;padding:8px 16px;margin:6px 6px 0 0;text-decoration:none}
+  .btn:active{opacity:.7}
+</style>
+</head>
+<body>
+<h1>jl_osnap_v1 / jl_tloop_log_v1 验收查看 <span class="mut" id="now"></span></h1>
+<div class="card">
+  <a class="btn" href="javascript:location.reload()">刷新</a>
+  <a class="btn" href="javascript:void(0)" id="exp">导出全部 JSON</a>
+  <a class="btn" href="./index.html">回工作台</a>
+</div>
+<h2>① 开盘快照 jl_osnap_v1（今日五窗：09:26 / 09:35 / 09:55 / 10:00 / 14:45）</h2>
+<div class="card" id="snap"></div>
+<h2>② 做T闭环证据 jl_tloop_log_v1（每窗±2分钟内每票每日各记一条）</h2>
+<div class="card" id="tloop"></div>
+<h2>原始 JSON</h2>
+<pre id="raw"></pre>
+<script>
+(function(){
+  var WINS=["09:26","09:35","09:55","10:00","14:45"];
+  function readJ(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+  function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+  function esc(s){return String(s==null?"—":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
+  var td=today();
+  document.getElementById("now").textContent=td;
+
+  /* ① osnap */
+  var snap=readJ("jl_osnap_v1"), sh="";
+  if(!snap||!snap.recs){sh='<span class="bad">键不存在或无 recs——采样器未落盘</span>'}
+  else{
+    sh='<table><tr><th>窗口</th><th>今日记录</th><th>报价日</th><th>明细</th></tr>';
+    WINS.forEach(function(w){
+      var r=null;
+      snap.recs.forEach(function(x){if(x.type==="win"&&x.win===w&&x.d===td)r=x});
+      var miss=snap.recs.filter(function(x){return x.win===w&&x.d===td&&x.type!=="win"}).length;
+      sh+='<tr><td>'+w+'</td><td>'+(r?'<span class="ok">✓ 已固定</span>':(miss?'<span class="bad">miss×'+miss+'</span>':'<span class="mut">无记录</span>'))+'</td><td>'+esc(r&&r.d)+'</td><td>'+(r?esc(JSON.stringify(r).slice(0,120)):"")+'</td></tr>';
+    });
+    sh+='</table><div class="mut">历史: recs 共 '+snap.recs.length+' 条；今日全部条目 '+snap.recs.filter(function(x){return x.d===td}).length+' 条（含 miss）</div>';
+  }
+  document.getElementById("snap").innerHTML=sh;
+
+  /* ② tloop */
+  var log=readJ("jl_tloop_log_v1"), th="";
+  if(!log||!log.length){th='<span class="bad">键不存在或为空——今天还没有任何窗口记录（只有打开持仓详情页时才会落盘）</span>'}
+  else{
+    var tlog=log.filter(function(x){return x.d===td});
+    th='<table><tr><th>窗口</th><th>代码</th><th>价</th><th>温度</th><th>评分</th><th>判定</th></tr>';
+    if(!tlog.length)th+='<tr><td colspan="6" class="mut">今日无记录；日志共 '+log.length+' 条，最近一条 '+esc(log[log.length-1].d+" "+log[log.length-1].w+" "+log[log.length-1].code)+'</td></tr>';
+    tlog.forEach(function(x){
+      th+='<tr><td>'+esc(x.w)+'</td><td>'+esc(x.code)+'</td><td>'+esc(x.p)+'</td><td>'+esc(x.temp)+'</td><td>'+esc(x.score)+'</td><td>'+esc(x.verdict)+'</td></tr>';
+    });
+    th+='</table><div class="mut">今日 '+tlog.length+' 条 / 全部 '+log.length+' 条</div>';
+  }
+  document.getElementById("tloop").innerHTML=th;
+
+  document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log},null,1);
+  document.getElementById("exp").onclick=function(){
+    try{
+      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log},null,1)],{type:"application/json"});
+      var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jinlin_验收_"+td+".json";a.click();
+    }catch(e){alert("导出失败: "+e)}
+  };
+})();
+</script>
+</body>
+</html>
