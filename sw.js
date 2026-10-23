@@ -145,8 +145,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v254'; /* v0.84.104: fix11批——弹窗组(分时高低点醒目弹窗/chip白闪/toast z-index) + ks侧fib自动扩轴/VI回补分色/降级自诊断; 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v254', 'jinlin-shell-v253', 'jinlin-shell-v252', 'jinlin-shell-v251']; /* KEEP=252+251+250, 三版容量沿用 */
+const C = 'jinlin-shell-v255'; /* v0.84.104: fix11批——弹窗组(分时高低点醒目弹窗/chip白闪/toast z-index) + ks侧fib自动扩轴/VI回补分色/降级自诊断; 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v255', 'jinlin-shell-v254', 'jinlin-shell-v253', 'jinlin-shell-v252', 'jinlin-shell-v251']; /* KEEP=252+251+250, 三版容量沿用 */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
