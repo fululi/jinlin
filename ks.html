@@ -1,3 +1,6 @@
+<!-- ks-1151fix11i (2026-10-23): 降级横幅内联[draw]错误明细(iPhone无控制台, 截图即回传, 用户v6实证降级)——首行消息+栈顶帧。fix11h原批 -->
+<!-- ks-1151fix11h (2026-10-23): VI按回补方向着色(用户: ±号搞晕, 以颜色区分)——缺口在上方·要涨回去补=黄色, 缺口在下方·要跌回来补=青蓝色, 标签去±只留VI; 检测口径(ks-1022g)零改动只动渲染。fix11g原批 -->
+<!-- ks-1151fix11g (2026-10-23): 斐波自动扩轴(用户实证: 分时挪进大K线后 fib 2.618 被裁顶看不到)——K线view()与分时tsViewJL同口径: 当前图已开fib档位价并入价格轴范围(TradingView同款自动扩轴); 安全带=单档钳到现价±2倍段幅, 防远古画线压扁图; 分时沿用"仅当日fib"口径(tsDateKeyJL守卫)。fix10f原批 -->
 <!-- ks-1151fix10f (2026-10-23 05:1x, 五轮): 分时带改VWAP±2σ(用户引外部方案: 当日锚定无预热空窗/不受昨尾盘污染/与蓝均价同族/只画上下轨虚线; 60周期被否后14缠白线, 第三方案试用裁决)。fix10e原批 -->
 <!-- ks-1151fix10e (2026-10-23 05:03, 四轮): 分时BOLL撤回14(60被用户实测否——断崖日带子滞后成残影); fix10d另两处(删分时renderDailyLevels/藏◀▶死钮)保留。fix10d原批 -->
 <!-- ks-1151fix10d (2026-10-23凌晨, 三轮): 用户引外部分析核查三件——①分时删renderDailyLevels(核查结论: 分析修法对根因描述不对——v.Y本就是引擎轴没画错, 那条贴顶浅线是"今开"虚线、兆易高开低走开在顶上属正常价位, 但六条日线级与引擎昨收/高低/价签重复=多余, 删; 成本线保留) ②分时BOLL 14→60(缠线根因, K线路径14零触碰) ③分时藏◀▶死钮(panTime改S.end引擎不认)——三处全采纳。红撞红主因=BOLL(14)贴价格+红区叠色, 60撑开后分离, 颜色不动(用户fix9自选亮红黄绿)。fix10b原批 -->
@@ -242,7 +245,7 @@
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
 </head>
-<body data-page-node-id="HNiVlflFjLy4h9C7kZni9s"><div id="ksBadgeJL" style="position:fixed;left:6px;bottom:2px;z-index:99999;font:700 10px/1.4 -apple-system,sans-serif;color:#ffd21f;background:rgba(10,14,11,.82);border:1px solid #ffd21f55;border-radius:6px;padding:2px 7px;pointer-events:none;display:none">ks-1151fix10 · 验收版(未推送)</div><script>(function(){try{if(!/[?&](embed|ksT)=/.test(location.search)){var b=document.getElementById("ksBadgeJL");if(b)b.style.display="block";}}catch(e){}})();</script>
+<body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 
 <div class="topbar" data-page-node-id="rkFiWqJwDe8rCQLnZupxAU" data-topbar>
   <span class="name" data-name data-page-node-id="HSvpyYau4ZaBRgMZBt1eLp">—</span>
@@ -871,16 +874,53 @@ function tsVolJL(ctx, v) { /* ks-1151fix7: 分时VOL副图——当日每分钟�
   ctx.fillText("VOL·分钟", v.padL + 2, v0 + 2);
   ctx.restore();
 }
+function fibAxisExtJL() { /* ks-1151fix11g: 扫描当前图主图fib, 已开档位价的轴外极值; 现价±2倍段幅安全带 */
+  try {
+    var kl = S.kl; if (!kl || !kl.length) return null;
+    var last = kl[kl.length - 1][4]; if (!(last > 0)) return null;
+    var on = ksFibOnJL(); if (!on.length) return null;
+    var dl = dlist(), hi = -1e18, lo = 1e18, found = false;
+    for (var i = 0; i < dl.length; i++) {
+      var dg = dl[i];
+      if (!dg || dg.type !== "fib" || !dg.pts || dg.pts.length < 2) continue;
+      if (dg.pts[0].pane) continue; /* 副图fib不影响主价格轴 */
+      if (S.ts && S.ts.on) { /* 分时与渲染同口径: 仅当日两点锚 */
+        var _tod = true;
+        for (var _tq = 0; _tq < 2; _tq++) { var _ad = dg.pts[_tq] && dg.pts[_tq].d; if (_ad && tsDateKeyJL(_ad) !== S.ts.dayKey) { _tod = false; break; } }
+        if (!_tod) continue;
+      }
+      var p1 = dg.pts[0].p, p2 = dg.pts[1].p; if (!(p1 > 0) || !(p2 > 0)) continue;
+      var band = Math.abs(p2 - p1) * 2; if (!(band > 0)) band = Math.abs(p1) * 0.5;
+      for (var fi = 0; fi < on.length; fi++) {
+        var pr = p1 + (p2 - p1) * on[fi];
+        if (pr > last + band) pr = last + band;
+        if (pr < last - band) pr = last - band;
+        if (pr > hi) hi = pr;
+        if (pr < lo) lo = pr;
+        found = true;
+      }
+    }
+    return found ? { hi: hi, lo: lo } : null;
+  } catch (e) { return null; }
+}
 function tsViewJL(g, lay) { /* ks-1151fix4/fix7: 分时坐标映射唯一构造点——view()与drawTSJL共用; fix7副图布局lay注入(与K线同一套pane字段, 副图渲染器零改动可吃) */
   var kl = S.kl, dayStart = S.ts.dayStart, n = kl.length;
   var inset = (g.plotBottom < 70) ? 6 : 16, yT = inset, yB = g.plotBottom - inset;
-  return { w: g.w, hh: g.h, ts: true, i0: dayStart, i1: n, n: n, step: (g.w - g.l - g.r) / 240, padL: g.l, padR: 48, padT: yT,
+  var v = { w: g.w, hh: g.h, ts: true, i0: dayStart, i1: n, n: n, step: (g.w - g.l - g.r) / 240, padL: g.l, padR: 48, padT: yT,
     priceH: yB - yT, pTop: yT, bottom: lay.bottom, vMax: 1,
     volY: lay.volY, volH: lay.volH, macdY: 0, macdH: 0, zzY: 0, zzH: 0, rtY: lay.rtY, rtH: lay.rtH, ddxY: lay.ddxY, ddxH: lay.ddxH, zlyyY: lay.zlyyY, zlyyH: lay.zlyyH, ctrlY: lay.ctrlY, ctrlH: lay.ctrlH, tqsY: lay.tqsY, tqsH: lay.tqsH,
     X: function (i) { return i >= dayStart ? g.xOfIdx(i - dayStart) : -1e4; },
     I: function (x) { var i = g.idxAtX(x) + dayStart; return Math.max(dayStart, Math.min(n - 1, i)); },
     Y: function (p) { return g.yOfPrice(p); }, P: function (y) { return g.priceAtY(y); },
     hi: g.priceAtY(yT), lo: g.priceAtY(yB), _rlab: [], _llab: [], _tlab: [] };
+  var _fbx = fibAxisExtJL(); /* ks-1151fix11g: 分时扩轴——档位价超出引擎mid±dev范围时, Y/P改走扩后线性映射(与drawTSJL同源, 白线随轴同步缩放) */
+  if (_fbx && (_fbx.hi > v.hi || _fbx.lo < v.lo)) {
+    var _hi = Math.max(v.hi, _fbx.hi), _lo = Math.min(v.lo, _fbx.lo);
+    v.hi = _hi; v.lo = _lo;
+    v.Y = function (p) { return yT + (_hi - p) / (_hi - _lo) * (yB - yT); };
+    v.P = function (y) { return _hi - (y - yT) / (yB - yT) * (_hi - _lo); };
+  }
+  return v;
 }
 function view() {
   if (S.ts && S.ts.on && S._tsEngine) { var _gTS = S._tsEngine.geom(); if (_gTS) return tsViewJL(_gTS, tsLayoutJL(cv.clientHeight || 0)); } /* ks-1151fix4: 分时模式=引擎geom时间坐标, 与drawTSJL显示同源 */
@@ -926,6 +966,8 @@ function view() {
     if (S.kl[i][5] > vMax) vMax = S.kl[i][5];
   }
   if (!(hi > lo)) { hi = lo + 1; }
+  var _fbx = fibAxisExtJL(); /* ks-1151fix11g: fib已开档位价并入可视范围再定轴(yZoom/yOff仍在其上生效, 用户手动缩平移优先) */
+  if (_fbx) { if (_fbx.hi > hi) hi = _fbx.hi; if (_fbx.lo < lo) lo = _fbx.lo; }
   // 价格轴纵向缩放（右侧价格轴上下拖动：上拉放大 / 下拉缩小）
   if (S.yZoom && S.yZoom !== 1) {
     var midP = (hi + lo) / 2, halfP = (hi - lo) / 2 / S.yZoom;
@@ -1643,7 +1685,9 @@ function draw() {
     try { drawFallback(); } catch (e2) {}
     // ks-0909-30: 降级必须可见——0907-29的买卖点bug被保险静默吞了两天,"线看不到"查了三轮; 以后降级直接亮条,谁都能一眼看出是异常不是没数据
     S._degraded = true;
-    try { hint("⚠ 渲染异常已降级为简K（画线/副图暂隐）· 控制台[draw]有错误明细 · 反馈请带此截图"); } catch (e3) {}
+    /* ks-1151fix11i: iPhone拿不到控制台, 错误明细直接上横幅——首行消息+栈顶帧, 截图即回传 */
+    var _dm = ""; try { _dm = String(e && e.message || e).slice(0, 90); var _st = String(e && e.stack || ""); var _fr = _st.split("\n")[1] || ""; _fr = _fr.replace(/^\s*at\s*/, "").slice(0, 80); if (_fr) _dm += " @" + _fr; } catch (e5) {}
+    try { hint("⚠ 渲染异常已降级为简K · " + _dm + " · 反馈请带此截图"); } catch (e3) {}
   }
   try { reposDgPanel(); } catch (e4) {} // ks-1012: 设置面板随图重挂(平移/缩放/拖线后跟对象走)
 }
@@ -3824,15 +3868,17 @@ function renderICT(ctx, v) {
     _vz.forEach(function (z) {
       var xa = Math.max(v.padL, v.X(z.i - 1)), xb = v.X(z.i) + v.step * 0.9; /* ks-1151fix8: TS跨日缺口z.i=dayStart时X(z.i-1)=-1e4→万px巨矩形; 钳到padL; K线模式X恒≥padL零影响 */
       var yT = v.Y(z.top), yB = v.Y(z.bot);
-      ctx.fillStyle = "rgba(77,159,255,0.16)";
+      /* ks-1151fix11h: VI颜色=回补方向——bear(缺口在上·涨回去补)=黄, bull(缺口在下·跌回来补)=青蓝 */
+      var _viC = z.bull ? "64,208,224" : "255,210,31";
+      ctx.fillStyle = "rgba(" + _viC + ",0.16)";
       ctx.fillRect(xa, yT, xb - xa, Math.max(1, yB - yT));
-      ctx.strokeStyle = "rgba(77,159,255,0.92)";
+      ctx.strokeStyle = "rgba(" + _viC + ",0.92)";
       ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(xa, Math.round(yT) + 0.5); ctx.lineTo(xb, Math.round(yT) + 0.5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(xa, Math.round(yB) + 0.5); ctx.lineTo(xb, Math.round(yB) + 0.5); ctx.stroke(); /* ks-1022g-fix: 下沿与上沿对称 +0.5 */
-      ctx.fillStyle = "#6fb2ff";
+      ctx.fillStyle = z.bull ? "#5fd8e8" : "#ffd21f";
       ctx.font = "bold 8.5px -apple-system, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText(z.bull ? "+VI" : "-VI", xb + 2, (yT + yB) / 2);
+      ctx.fillText("VI", xb + 2, (yT + yB) / 2);
     });
   }
   if (S.klt === "1" || S.klt === "5" || S.klt === "15" || S.klt === "30" || S.klt === "60" || S.klt === "5D") { /* ks-1151fix10b: 跳空带撤VI门控(用户开着VI才见=新开档VI默认关→"没看到"实证); 分钟级K线恒显日界跳空带, 不再依赖指标开关 */ /* ks-1151fix10: 日界跳空(隔夜缺口)显式标注——VI口径(ks-1022g)只认影线重叠的失衡, 纯真空隔夜跳空全被排除, 五日图上缺口无从看(用户: 腾讯五日一眼能看出缺口位置); 分钟级档在日界处单独画: VI同款蓝双线+缺口幅%, 完全回补的画暗+虚线+「补」 */
