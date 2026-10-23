@@ -1,3 +1,5 @@
+<!-- ks-1151fix11n (2026-10-24): 日界跳空带两修——①分时屏蔽(S.ts守卫, 兆易实证: 昨收276.75隔夜缺口蓝带错挂分时图, 跳空带是K线日界语义不该进分时) ②回补方向分色与VI同色卡(上方涨回去补=黄/下方跌回来补=青蓝/已回补暗虚线), 原恒蓝77,159,255不分方向 -->
+<!-- ks-1151fix11m (2026-10-24): fib加1.13/3.618两档(1.13=亮青#7ff2e0, 3.618=粉珊瑚#ffb3c7, 默认开, 纯数字标签, 面板开关自动跟随; 老配置无此两键走默认开, 零感知) -->
 <!-- ks-1151fix11L (2026-10-23深夜): fib彻底退回原版——fix11g自动扩轴/fix11j封顶/fix11k边签全部撤除(fibAxisExtJL与两处调用点、边签收集+渲染全删), 渲染回到最初"轴外档位超±30px直接不画", 坐标映射引擎原生零干预 -->
 <!-- ks-1151fix11j (2026-10-23晚): fib扩轴封顶(用户兆易实证: 段幅142的fib 0=245→2.618=387把分时轴顶撑到387, 全天294压成一小条)——扩轴只收"行情可视中枢±0.75倍行情幅"以内的档位价, 超封顶档位线照画但不撑轴; K线/分时同口径。fix11i原批 -->
 <!-- ks-1151fix11i (2026-10-23): 降级横幅内联[draw]错误明细(iPhone无控制台, 截图即回传, 用户v6实证降级)——首行消息+栈顶帧。fix11h原批 -->
@@ -1038,8 +1040,8 @@ function anchorXY(v, im, a) {
   return { x: v.X(i), y: yOfPane(v, a.pane, a.p), i: i };
 }
 var FIB_R = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.414, 1.618, 2.618];
-/* jl-1007: Fib 显示设置与主文档同键互通(jinlin_fib_cfg_v1), 13档含0.886/4.618 */
-var KS_FIB_DEF = [[0,"0","#f2f5f3"],[0.236,"0.236","#8fa9c9"],[0.382,"0.382","#57a7ff"],[0.5,"0.5","#c792ea"],[0.618,"0.618","#ffd21f"],[0.786,"0.786","#ff9a5c"],[0.886,"0.886","#90aeb9"],[1,"1","#f2f5f3"],[1.272,"1.272","#6ee7ff"],[1.414,"1.414","#72d8c2"],[1.618,"1.618","#e8c568"],[2.618,"2.618","#ff8a80"],[4.618,"4.618","#ff5f9e"]];
+/* jl-1007: Fib 显示设置与主文档同键互通(jinlin_fib_cfg_v1), 15档含0.886/1.13/3.618/4.618 */
+var KS_FIB_DEF = [[0,"0","#f2f5f3"],[0.236,"0.236","#8fa9c9"],[0.382,"0.382","#57a7ff"],[0.5,"0.5","#c792ea"],[0.618,"0.618","#ffd21f"],[0.786,"0.786","#ff9a5c"],[0.886,"0.886","#90aeb9"],[1,"1","#f2f5f3"],[1.13,"1.13","#7ff2e0"],[1.272,"1.272","#6ee7ff"],[1.414,"1.414","#72d8c2"],[1.618,"1.618","#e8c568"],[2.618,"2.618","#ff8a80"],[3.618,"3.618","#ffb3c7"],[4.618,"4.618","#ff5f9e"]]; /* ks-1151fix11m: +1.13/+3.618两档(用户定: 默认开, 纯数字无花名) */
 function ksFibCfgJL() { var c = null; try { c = JSON.parse(localStorage.getItem("jinlin_fib_cfg_v1") || "null"); } catch (e) {} var vis = c && c.vis ? c.vis : {}, col = c && c.col ? c.col : {}; return KS_FIB_DEF.map(function (z) { return { r: z[0], lb: z[1], color: col[z[1]] || z[2], on: vis[z[1]] !== false }; }); }
 function ksFibOnJL() { return ksFibCfgJL().filter(function (z) { return z.on; }).map(function (z) { return z.r; }); }
 function ksFibColorJL(r) { var c9 = ksFibCfgJL(); for (var i9 = 0; i9 < c9.length; i9++) if (Math.abs(c9[i9].r - r) < 1e-9) return c9[i9].color; return "#d5e0d8"; }
@@ -1997,6 +1999,7 @@ function drawReal() {
   ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
   renderPHVLJL(ctx, v); /* ks-1022: PHVL高低区带·底层 */
   renderICT(ctx, v);
+  try { renderGapsJL(ctx, v); } catch (eG9) { if (window.console) console.warn("[gaps]", eG9); }
   renderAutoTri(ctx, v);
   renderDailyLevels(ctx, v);
   renderCostLine(ctx, v);
@@ -3795,6 +3798,32 @@ function renderAutoTri(ctx, v) {
     ctx.fillText("BOS", _ax + 5, _ay);
   }
 }
+function renderGapsJL(ctx, v) { /* ks-1151fix11n: 日界跳空带从renderICT抽出独立恒显(原住renderICT被"指标全关早退"拦截=指标全关时跳空带永不画, 与fix10b恒显意图相悖); 逻辑逐行搬运, 仅补自带kl/n声明(原吃renderICT局部变量) */
+  var kl = S.kl, n = kl.length;
+  if (!(S.ts && S.ts.on) && (S.klt === "1" || S.klt === "5" || S.klt === "15" || S.klt === "30" || S.klt === "60" || S.klt === "5D")) { /* ks-1151fix11n: 分时屏蔽日界跳空带——跳空带=日界隔夜缺口(K线坐标语义), 分时是当日VWAP坐标系, 混画=昨收缺口错挂当日图(兆易实证: 276.75下蓝带); 分钟级K线照画 */ /* ks-1151fix10b: 跳空带撤VI门控(用户开着VI才见=新开档VI默认关→"没看到"实证); 分钟级K线恒显日界跳空带, 不再依赖指标开关 */ /* ks-1151fix10: 日界跳空(隔夜缺口)显式标注——VI口径(ks-1022g)只认影线重叠的失衡, 纯真空隔夜跳空全被排除, 五日图上缺口无从看(用户: 腾讯五日一眼能看出缺口位置); 分钟级档在日界处单独画: VI同款蓝双线+缺口幅%, 完全回补的画暗+虚线+「补」 */
+    var _ogMin = kl[n - 1][4] * 0.0005;
+    for (var _oi = Math.max(1, v.i0); _oi < Math.min(n, v.i1); _oi++) {
+      var _dk1 = String(kl[_oi - 1][0]).slice(0, 10), _dk2 = String(kl[_oi][0]).slice(0, 10);
+      if (_dk1 === _dk2 || _dk2.length < 10) continue;
+      var _pc9 = kl[_oi - 1][4], _no9 = kl[_oi][1];
+      if (!(_pc9 > 0) || Math.abs(_no9 - _pc9) <= _ogMin) continue;
+      var _bull9 = _no9 > _pc9, _top9 = Math.max(_no9, _pc9), _bot9 = Math.min(_no9, _pc9), _filled9 = false;
+      for (var _oj = _oi; _oj < n; _oj++) { if (_bull9 ? (kl[_oj][3] <= _bot9) : (kl[_oj][2] >= _top9)) { _filled9 = true; break; } }
+      var _xa9 = Math.max(v.padL, v.X(_oi - 1)), _xb9 = v.X(_oi) + v.step * 0.9;
+      var _yT9 = v.Y(_top9), _yB9 = v.Y(_bot9);
+      /* ks-1151fix11n: 跳空带分色与VI同色卡——缺口在上方·要涨回去补=黄, 在下方·要跌回来补=青蓝; 已回补=暗色虚线 */
+      var _gc9 = _bull9 ? "64,208,224" : "255,210,31"; /* _bull9=今开>昨收=缺口在下方=跌回来补=青蓝; 低开缺口在上方=涨回去补=黄 */
+      ctx.fillStyle = "rgba(" + _gc9 + "," + (_filled9 ? "0.12" : "0.22") + ")"; /* fix10b: 0.16/0.08→0.22/0.12 提一档对比度 */
+      ctx.fillRect(_xa9, _yT9, _xb9 - _xa9, Math.max(1, _yB9 - _yT9));
+      ctx.strokeStyle = "rgba(" + _gc9 + "," + (_filled9 ? "0.5" : "0.92") + ")";
+      ctx.lineWidth = 1; if (_filled9) ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(_xa9, Math.round(_yT9) + 0.5); ctx.lineTo(_xb9, Math.round(_yT9) + 0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(_xa9, Math.round(_yB9) + 0.5); ctx.lineTo(_xb9, Math.round(_yB9) + 0.5); ctx.stroke();
+      ctx.setLineDash([]);
+      /* ks-1151fix10b: 用户定"跳空俩字多余"——文字标注撤, 只留蓝色带标记缺口位置(线在日界跳变本身已可见) */
+    }
+  }
+}
 function renderICT(ctx, v) {
   if (!S.ind.fvg && !S.ind.liq && !S.ind.ms && !S.ind.ob && !S.ind.vi) return;
   var kl = S.kl, n = kl.length;
@@ -3843,27 +3872,6 @@ function renderICT(ctx, v) {
       ctx.font = "bold 8.5px -apple-system, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
       ctx.fillText("VI", xb + 2, (yT + yB) / 2);
     });
-  }
-  if (S.klt === "1" || S.klt === "5" || S.klt === "15" || S.klt === "30" || S.klt === "60" || S.klt === "5D") { /* ks-1151fix10b: 跳空带撤VI门控(用户开着VI才见=新开档VI默认关→"没看到"实证); 分钟级K线恒显日界跳空带, 不再依赖指标开关 */ /* ks-1151fix10: 日界跳空(隔夜缺口)显式标注——VI口径(ks-1022g)只认影线重叠的失衡, 纯真空隔夜跳空全被排除, 五日图上缺口无从看(用户: 腾讯五日一眼能看出缺口位置); 分钟级档在日界处单独画: VI同款蓝双线+缺口幅%, 完全回补的画暗+虚线+「补」 */
-    var _ogMin = kl[n - 1][4] * 0.0005;
-    for (var _oi = Math.max(1, v.i0); _oi < Math.min(n, v.i1); _oi++) {
-      var _dk1 = String(kl[_oi - 1][0]).slice(0, 10), _dk2 = String(kl[_oi][0]).slice(0, 10);
-      if (_dk1 === _dk2 || _dk2.length < 10) continue;
-      var _pc9 = kl[_oi - 1][4], _no9 = kl[_oi][1];
-      if (!(_pc9 > 0) || Math.abs(_no9 - _pc9) <= _ogMin) continue;
-      var _bull9 = _no9 > _pc9, _top9 = Math.max(_no9, _pc9), _bot9 = Math.min(_no9, _pc9), _filled9 = false;
-      for (var _oj = _oi; _oj < n; _oj++) { if (_bull9 ? (kl[_oj][3] <= _bot9) : (kl[_oj][2] >= _top9)) { _filled9 = true; break; } }
-      var _xa9 = Math.max(v.padL, v.X(_oi - 1)), _xb9 = v.X(_oi) + v.step * 0.9;
-      var _yT9 = v.Y(_top9), _yB9 = v.Y(_bot9);
-      ctx.fillStyle = "rgba(77,159,255," + (_filled9 ? "0.12" : "0.22") + ")"; /* fix10b: 0.16/0.08→0.22/0.12 提一档对比度 */
-      ctx.fillRect(_xa9, _yT9, _xb9 - _xa9, Math.max(1, _yB9 - _yT9));
-      ctx.strokeStyle = "rgba(77,159,255," + (_filled9 ? "0.5" : "0.92") + ")";
-      ctx.lineWidth = 1; if (_filled9) ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(_xa9, Math.round(_yT9) + 0.5); ctx.lineTo(_xb9, Math.round(_yT9) + 0.5); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(_xa9, Math.round(_yB9) + 0.5); ctx.lineTo(_xb9, Math.round(_yB9) + 0.5); ctx.stroke();
-      ctx.setLineDash([]);
-      /* ks-1151fix10b: 用户定"跳空俩字多余"——文字标注撤, 只留蓝色带标记缺口位置(线在日界跳变本身已可见) */
-    }
   }
   if (S.ind.liq) {
     ic.liq.forEach(function (L) {
@@ -4854,6 +4862,7 @@ function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引�
   var v = tsViewJL(g, lay); v.vMax = vMax7;
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, g.plotBottom + 1); ctx.clip();
   try { renderICT(ctx, v); } catch (e1) { if (window.console) console.warn("[ts.ict]", e1); }
+  try { renderGapsJL(ctx, v); } catch (eG9) { if (window.console) console.warn("[ts.gaps]", eG9); }
   try { renderBollTSJL(ctx, v); } catch (eB9) { if (window.console) console.warn("[ts.boll]", eB9); } /* ks-1151fix8: BOLL三线(自吞异常不拖垮主图) */
   try { renderCostLine(ctx, v); } catch (e3) { if (window.console) console.warn("[ts.cost]", e3); } /* ks-1151fix10d: 撤renderDailyLevels调用——昨高/昨低/今开/今高/今低/最新六线与引擎昨收线+高低标记+跟随价签全重复(用户图: 兆易高开低走, 今开浅灰虚线贴顶横穿像杂线); 成本线保留(坐标走引擎轴正确, 持仓成本分时要看) */
   try { renderCYQ(ctx, v); } catch (e6) { if (window.console) console.warn("[ts.cyq]", e6); }
