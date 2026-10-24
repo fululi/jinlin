@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head>
 <link rel="stylesheet" href="lowopen-rebound.css">
-<link rel="stylesheet" href="folds.css?v=2">
+<link rel="stylesheet" href="folds.css?v=3">
 <script>
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
@@ -8472,11 +8472,52 @@ function ffMergeJL(oldRows, newRows) {
     const position = anchor && p > 0 ? p > anchor.upper ? "现价高于上沿" : p < anchor.lower ? "现价低于下沿" : "现价在参考区内" : "";
     return { code: bare, params, anchor, beforeOpen, sessionDay, notices, position, error: params.ok ? "" : params.why };
   }
+  function atrSwingLevelsJL(rows, cur, atr) {
+    const f = (v) => Number.isFinite(v) ? v.toFixed(2) : "—";
+    const signed = (v, unit) => !Number.isFinite(v) ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + (unit || "");
+    const group = (label, levels) => '<div class="atrFibColsJL"><span>' + label + '</span><span>候选价</span><span>差价 / 幅度</span></div><div class="atrFibLevelsJL">' + levels.map((x) => {
+      const d = x.v - cur, near = Math.abs(d) <= Math.max(cur * 0.002, atr * 0.03);
+      return '<div class="atrFibLevelJL' + (near ? ' isNear' : '') + '"><span class="ratio">' + x.r.toFixed(3) + '</span><span class="price">' + f(x.v) + '</span><span class="distance"><b>' + signed(d, ' 元') + '</b><small>' + signed(cur > 0 ? d / cur * 100 : NaN, '%') + ' · ' + signed(atr > 0 ? d / atr : NaN, ' ATR') + '</small></span></div>';
+    }).join("") + '</div>';
+    return group;
+  }
+  function atrSwingHTMLJL(stock, m, bars) {
+    if (!bars || bars.length < 10 || !m.params.ok) return "";
+    const live = stock && stock.quoteReady === true && Number(stock.base) > 0;
+    const cur = live ? Number(stock.base) : Number(bars[bars.length - 1].c);
+    if (!(cur > 0)) return "";
+    const st = swingStateJL(bars, cur, { closed: jlDayClosedJL(bars) });
+    if (!st || !st.ok) return "";
+    const f = (v) => Number.isFinite(v) ? v.toFixed(2) : "—", dd = (d) => d ? String(d).slice(5) : "—";
+    const curD = live ? (atrQuoteDayJL(stock) || bars[bars.length - 1].t) : bars[bars.length - 1].t;
+    const atr = m.params.atr, group = atrSwingLevelsJL(bars, cur, atr);
+    const priceCls = Number(stock.prevClose) > 0 ? (cur > stock.prevClose ? "up" : cur < stock.prevClose ? "dn" : "") : "";
+    const H = Number(st.H1), L = Number(st.downLow), confirmed = st.anchorKind === "confirmed";
+    const c = confirmed ? Number(st.confLow) : cur, cD = confirmed ? st.confLowD : curD;
+    let down = "";
+    if (H > 0 && L > 0 && H > L) {
+      const R = H - L;
+      down = '<section class="atrFibSectionJL"><div class="atrFibSectionHeadJL"><h2>下跌情景</h2><span>' + (confirmed ? '锚点已确认' : '待确认') + '</span></div>'
+        + '<div class="atrFibAnchorsJL"><span class="up">H<b>' + f(H) + '</b><small>' + dd(st.H1d) + '</small>' + (st.H1prov ? '待确认' : '') + '</span><span class="dn">L<b>' + f(L) + '</b><small>' + dd(st.downLowD) + '</small>' + (confirmed ? '' : '待确认') + '</span></div>'
+        + '<div class="atrFibNowJL"><span>现价</span><b class="' + priceCls + '">' + f(cur) + '</b><small>' + dd(curD) + ' · ATR5＝' + f(atr) + '</small></div>'
+        + group('回抽位', [0.382, 0.618, 0.786].map((r) => ({ r, v: L + r * R })))
+        + group('下跌延伸', [1.272, 1.618, 2.618].map((r) => ({ r, v: L - (r - 1) * R }))) + '</section>';
+    }
+    let up = "";
+    if (H > 0 && L > 0 && H > L && c > 0) {
+      up = '<section class="atrFibSectionJL atrFibUpsideJL"><div class="atrFibSectionHeadJL"><h2>上行情景</h2><span>' + (confirmed ? 'C 已确认' : 'C 待确认') + '</span></div>'
+        + '<div class="atrFibAnchorsJL"><span class="dn">L<b>' + f(L) + '</b><small>' + dd(st.downLowD) + '</small></span><span class="up">H<b>' + f(H) + '</b><small>' + dd(st.H1d) + '</small></span><span>C<b>' + f(c) + '</b><small>' + dd(cD) + '</small>' + (confirmed ? '' : '待确认') + '</span></div>'
+        + group('向上投影', [1, 1.272, 1.618].map((r) => ({ r, v: c + r * (H - L) }))) + '</section>';
+    }
+    if (!down && !up) return '<div class="atrFibEmptyJL">日级锚点数据暂缺</div>';
+    return down + up + '<div class="atrFibStatusJL"><b>' + (confirmed ? '锚点已确认' : '锚点未确认') + '</b><span>低点下移则重算</span></div>';
+  }
   function atrOpenHTMLJL(stock) {
     const m = atrOpenModelJL(stock); if (!m) return "";
+    let reviewDaily = [];
     try {
+      reviewDaily = dailyBarsOf(m.code);
       if (window.JLReviewStats) {
-        const reviewDaily = dailyBarsOf(m.code);
         JLReviewStats.observeATR(stock, m, reviewDaily);
         JLReviewStats.observeFib(stock, reviewDaily, { m15: jlM15BarsOf(m.code), m1: realCache.get(m.code + "|分时") || [], m5: realCache.get(m.code + "|5分") || [] });
       }
@@ -8487,7 +8528,8 @@ function ffMergeJL(oldRows, newRows) {
     const notes = m.notices.map((x) => '<div class="atrNoticeJL">' + x + '</div>').join("");
     const preview = ATR5_OPEN_CODES_JL[m.code].fridayPreview;
     const friday = preview ? '<div class="atrFridayJL"><div>周五回推 · 10-22参数 → 10-23开盘</div><div class="atrOpenValsJL"><span>下沿 <strong class="dn">' + f(preview.lower) + '</strong></span><span>上沿 <strong class="up">' + f(preview.upper) + '</strong></span><span>周五开盘 <b>' + f(preview.open) + '</b></span></div></div>' : '';
-    return '<details class="atrOpenJL foldJL" data-atr-open="' + m.code + '" open><summary class="atrOpenHeadJL"><b>ATR</b><small>参数日 ' + (p.paramDate || '—') + '</small></summary><div class="foldBodyJL"><div class="atrOpenValsJL">' + vals + '</div>' + friday + stale + notes + '</div></details>';
+    const swing = atrSwingHTMLJL(stock, m, reviewDaily);
+    return '<details class="atrOpenJL atrSwingJL foldJL" data-atr-open="' + m.code + '" open><summary class="atrOpenHeadJL"><span class="atrSwingTitleJL"><b>ATR · Fib</b><small>日级中波段候选区</small></span><small>ATR5 ' + f(p.atr) + '</small></summary><div class="foldBodyJL"><section class="atrFibSectionJL atrFibOpenJL"><div class="atrFibSectionHeadJL"><h2>开盘参考区</h2><span>参数日 ' + (p.paramDate || '—') + '</span></div><div class="atrOpenValsJL">' + vals + '</div>' + friday + stale + notes + '</section>' + swing + '</div></details>';
   }
   function refreshAtrOpenJL(stock, card) {
     if (!stock || !card) return;
