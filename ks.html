@@ -2797,27 +2797,25 @@ cv.addEventListener("touchstart", function (e) {
   if (hit0 >= 0) {
     S.selected = hit0;
     T = { mode: "drag", idx: hit0, ai: pickAnchor(hit0, pt), lx: pt.x, ly: pt.y, x0: pt.x, y0: pt.y, t0: Date.now(), moved: false };
-    var _cx0 = e.touches[0].clientX, _cy0 = e.touches[0].clientY, _pt0 = { x: pt.x, y: pt.y };
-    T.lpm = setTimeout(function () { // ks-1012: 按住不动约500ms=弹设提醒菜单(移动即取消, 不误触)
+    T.lpm = setTimeout(function () { // 长按画线=单图形设置(颜色/线型/锁定); 移动即取消
       if (T && T.mode === "drag" && !T.moved) {
         T.menu = true;
         if (navigator.vibrate) navigator.vibrate(12);
-        openAlMenu(_pt0, _cx0, _cy0);
+        openDgPanel(hit0); syncTools(); draw();
       }
     }, 500);
-    hint("按住拖动：移整线 · 拖黄点：调锚点 · 轻点：设置");
+    hint("按住拖动：移整线 · 拖黄点：调锚点 · 长按：设置");
     syncTools(); draw();
     return;
   }
-  var _soft0 = hitTest(pt, true); // 软命中: 按在锁定的图形上——不吃点击不进拖动, 但轻点可弹设置面板/长按可挂提醒
+  var _soft0 = hitTest(pt, true); // 锁定的图形也可长按进设置解锁/换色
   if (_soft0 >= 0) {
     T = { mode: "idleLk", idx: _soft0, x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: false };
-    var _cx1 = e.touches[0].clientX, _cy1 = e.touches[0].clientY, _pt1 = { x: pt.x, y: pt.y };
     T.lpm = setTimeout(function () {
       if (T && T.mode === "idleLk" && !T.moved) {
         T.menu = true;
         if (navigator.vibrate) navigator.vibrate(12);
-        openAlMenu(_pt1, _cx1, _cy1);
+        openDgPanel(_soft0); syncTools(); draw();
       }
     }, 500);
     return;
@@ -3006,12 +3004,23 @@ cv.addEventListener("mousedown", function (e) {
   var _ab0 = alHitAt(pt); // ks-0920-35: 鼠标同触屏, 点铃铛选中/取消
   if (_ab0) { if (S.alSel && S.alSel.ai === _ab0.ai) S.alSel = null; else { S.alSel = { ai: _ab0.ai }; S.selected = -1; hint("已选中提醒 · 点「删除」移除"); } syncTools(); draw(); return; }
   if (S.alSel) { S.alSel = null; draw(); }
-  var hit0 = hitTest(pt); // 硬命中: 锁定的图形穿透(电脑上锁定的图形单击无动作, 双击=设置面板, 右键=挂提醒)
+  var hit0 = hitTest(pt); // 硬命中: 锁定的图形穿透, 长按仍可进设置
   if (hit0 >= 0) {
     S.selected = hit0;
     M = { drag: true, idx: hit0, ai: pickAnchor(hit0, pt), lx: pt.x, ly: pt.y, x0: pt.x, y0: pt.y, t0: Date.now(), moved: false, cross: false };
-    hint("按住拖动：移整线 · 拖黄点：调锚点 · 双击：设置 · 右键：挂提醒");
+    M.lpm = setTimeout(function () {
+      if (M && M.drag && !M.moved) { M.menu = true; openDgPanel(M.idx); syncTools(); draw(); }
+    }, 500);
+    hint("按住拖动：移整线 · 拖黄点：调锚点 · 长按：设置 · 右键：挂提醒");
     syncTools(); draw();
+    return;
+  }
+  var _softM = hitTest(pt, true);
+  if (_softM >= 0) {
+    M = { x0: pt.x, y0: pt.y, lx: pt.x, ly: pt.y, t0: Date.now(), moved: false, cross: false, idx: _softM };
+    M.lpm = setTimeout(function () {
+      if (M && !M.moved) { M.menu = true; S.selected = M.idx; openDgPanel(M.idx); syncTools(); draw(); }
+    }, 500);
     return;
   }
   S.selected = -1; syncTools();
@@ -3039,7 +3048,7 @@ cv.addEventListener("mousemove", function (e) {
     draw();
     return;
   }
-  if (M.drag) { dragBy(M, pt); return; }
+  if (M.drag) { if (!M.menu) dragBy(M, pt); return; }
   if (M.free) {
     if (Math.abs(pt.x - M.lx) > 5) {
       var aM2 = anchorAt(pt);
@@ -3076,6 +3085,7 @@ cv.addEventListener("mousemove", function (e) {
 window.addEventListener("mouseup", function () {
   if (!M) return;
   if (M.lp) { clearTimeout(M.lp); M.lp = null; }
+  if (M.lpm) { clearTimeout(M.lpm); M.lpm = null; }
   if (M.free) {
     if (S.pending.length >= 2) {
       dlist().push({ type: "freedraw", pts: S.pending.slice(), color: S.drawColor }); // ks-1012
@@ -3090,7 +3100,7 @@ window.addEventListener("mouseup", function () {
   }
   if (M.drag) {
     if (M.moved) { store(); }
-    else { S.selected = M.idx; hint("已选中画线 · 按住可拖动 · 「删选」删除"); }
+    else if (!M.menu) { S.selected = M.idx; hint("已选中画线 · 按住可拖动 · 「删选」删除"); }
     syncTools(); draw();
   }
   else if (M.cross) { S.cross = null; hint(""); draw(); }
