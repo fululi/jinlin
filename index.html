@@ -10115,6 +10115,81 @@ function swingMidHTMLJL(st) {
     }
     return out;
   }
+  var GAPLOG_CODES_JL = ['600489', '600176', '603986', '600105'];
+  async function gapLogSweepJL() {
+    try {
+      if (document.hidden) return;
+      for (var i = 0; i < GAPLOG_CODES_JL.length; i++) {
+        var code = GAPLOG_CODES_JL[i], pf = jlPfxJL(code), g = {};
+        for (var k of [1, 5, 15, 30]) { try { g[k] = await loadTencentKline(pf, k); } catch (e) { g[k] = null; } }
+        collectGapsJL._t && delete collectGapsJL._t[code];
+        collectGapsJL(code, [['日', dailyBarsOf(code)], ['30分', g[30]], ['15分', g[15]], ['5分', g[5]], ['1分', g[1]]]);
+      }
+    } catch (e) { }
+  }
+  setTimeout(gapLogSweepJL, 20000); setInterval(gapLogSweepJL, 1800000);
+  function gapLogLoadJL() { try { return JSON.parse(localStorage.getItem('jl_gaplog_v1') || '{}') || {}; } catch (e) { return {}; } }
+  function collectGapsJL(code, lv) {
+    try {
+      if (GAPLOG_CODES_JL.indexOf(String(code).replace(/\D/g, '')) < 0) return;
+      var _n = Date.now(); collectGapsJL._t = collectGapsJL._t || {}; if (_n - (collectGapsJL._t[code] || 0) < 300000) return; collectGapsJL._t[code] = _n;
+      var st = (typeof stocks !== 'undefined' && stocks.find(function (x) { return x.code === code; })) || {};
+      var log = gapLogLoadJL(), chg = 0, dg = function (t) { return String(t || '').replace(/\D/g, ''); };
+      var fmt = function (t) { var d = dg(t); return d.length >= 12 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) + ' ' + d.slice(8, 10) + ':' + d.slice(10, 12) : d.length >= 8 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) : ''; };
+      var put = function (k, r) { var o = log[k]; if (!o) { log[k] = r; chg = 1; } else if (!o.ft && r.ft) { o.ft = r.ft; chg = 1; } };
+      lv.forEach(function (L) {
+        var b = L[1]; if (!b || b.length < 3) return;
+        for (var i = 1; i < b.length; i++) {
+          var p0 = b[i - 1], c0 = b[i]; if (!p0 || !c0) continue;
+          var vm = c0.c * 0.0005, bull = c0.o - p0.c > vm, bear = p0.c - c0.o > vm;
+          if (!bull && !bear) continue;
+          if (L[0] !== '日' && dg(p0.t).slice(0, 8) !== dg(c0.t).slice(0, 8)) continue;
+          var ft = '';
+          for (var j = i + 1; j < b.length; j++) if (bull ? b[j].l <= c0.o : b[j].h >= c0.o) { ft = fmt(b[j].t); break; }
+          var lo = bull ? p0.c : c0.o, hi = bull ? c0.o : p0.c;
+          put(code + '|' + L[0] + '|' + dg(c0.t) + '|' + lo.toFixed(2), { c: code, n: st.name || '', lv: L[0], dr: bull ? 1 : -1, lo: +lo.toFixed(2), hi: +hi.toFixed(2), ct: fmt(c0.t), ft: ft });
+        }
+      });
+      var m1 = (lv.find(function (x) { return x[0] === '1分'; }) || [])[1] || [], days = {}, order = [];
+      m1.forEach(function (x) { var d = dg(x.t).slice(0, 8); if (!d) return; if (!days[d]) { days[d] = []; order.push(d); } days[d].push(x); });
+      for (var q = 1; q < order.length; q++) {
+        var pb = days[order[q - 1]], cb = days[order[q]], pc = pb[pb.length - 1].c, op = cb[0].o;
+        if (!(pc > 0) || Math.abs(op / pc - 1) < 0.001) continue;
+        var up = op > pc, ft2 = '';
+        for (var z = 0; z < cb.length; z++) if (up ? cb[z].l <= pc : cb[z].h >= pc) { ft2 = fmt(cb[z].t); break; }
+        put(code + '|开|' + order[q], { c: code, n: st.name || '', lv: '开', dr: up ? 1 : -1, lo: +Math.min(pc, op).toFixed(2), hi: +Math.max(pc, op).toFixed(2), pc: pc, op: op, ct: fmt(cb[0].t), ft: ft2 });
+      }
+      if (chg) {
+        var cut = new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10), ks = Object.keys(log);
+        ks.forEach(function (k) { if (log[k].lv !== '开' && log[k].ft && String(log[k].ct) < cut) delete log[k]; });
+        ks = Object.keys(log); if (ks.length > 3500) { ks.sort(function (a, c) { return String(log[a].ct) < String(log[c].ct) ? -1 : 1; }).slice(0, ks.length - 3500).forEach(function (k) { delete log[k]; }); }
+        localStorage.setItem('jl_gaplog_v1', JSON.stringify(log));
+      }
+    } catch (e) { }
+  }
+  function gapLogCsvJL() {
+    var log = gapLogLoadJL(), q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+    var rows = Object.keys(log).map(function (k) { return log[k]; }).sort(function (a, b) { return a.c === b.c ? (String(a.ct) < String(b.ct) ? 1 : -1) : (a.c < b.c ? -1 : 1); });
+    var H = ['代码', '名称', '类型', '周期', '方向', '补回方式', '下沿', '上沿', '缺口%', '昨收', '开盘价', '出现时间', '补回时间', '状态', '当天补回', '隔几个日历日补回'];
+    var lines = rows.map(function (r) {
+      var mid = (r.lo + r.hi) / 2, pct = mid > 0 ? ((r.hi - r.lo) / mid * 100).toFixed(2) : '';
+      var isO = r.lv === '开', d0 = String(r.ct).slice(0, 10), d1 = String(r.ft || '').slice(0, 10);
+      var gap = r.ft && d0 && d1 ? Math.round((Date.parse(d1) - Date.parse(d0)) / 864e5) : '';
+      return [r.c, r.n, isO ? '开盘缺口' : 'VI缺口', ({ '1分': '1M', '5分': '5M', '15分': '15M', '30分': '30M', '日': 'D', '开': '开' })[r.lv] || r.lv, isO ? (r.dr > 0 ? '高开' : '低开') : (r.dr > 0 ? '上缺口' : '下缺口'), r.dr > 0 ? '需下跌补' : '需上涨补', r.lo, r.hi, pct, isO ? r.pc : '', isO ? r.op : '', r.ct, r.ft || '', r.ft ? '已补' : '未补', r.ft ? (gap === 0 ? '是' : '否') : '', gap].map(q).join(',');
+    });
+    return '﻿' + H.map(q).join(',') + '\n' + lines.join('\n');
+  }
+  function gapLogExportJL() {
+    try {
+      var n = Object.keys(gapLogLoadJL()).length;
+      if (!n) { toast('缺口台账还是空的，开一次持仓卡后再导出'); return; }
+      var a = document.createElement('a'), d = new Date(), p2 = function (x) { return (x < 10 ? '0' : '') + x; };
+      a.href = URL.createObjectURL(new Blob([gapLogCsvJL()], { type: 'text/csv;charset=utf-8' }));
+      a.download = '金粼缺口台账_' + d.getFullYear() + p2(d.getMonth() + 1) + p2(d.getDate()) + '.csv';
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+      toast('已导出 ' + n + ' 条缺口记录');
+    } catch (e) { toast('导出失败'); }
+  }
   function renderGapRowJL(code, m1rows, cv, price, pre, B, T) {
     try {
       var host = cv.parentNode, row = host.querySelector('.hldGapRowJL');
@@ -10125,6 +10200,7 @@ function swingMidHTMLJL(st) {
         Promise.all([loadTencentKline(jlPfxJL(code), 5).catch(function () { return null; }), loadTencentKline(jlPfxJL(code), 15).catch(function () { return null; }), loadTencentKline(jlPfxJL(code), 30).catch(function () { return null; })]).then(function (r) { G.m5 = r[0]; G.m15 = r[1]; G.m30 = r[2]; G.at = Date.now(); G.fly = 0; try { renderGapRowJL(code, m1rows, cv, price, pre, B, T); } catch (e) { } }).catch(function () { G.fly = 0; });
       }
       var lv = [['日', dailyBarsOf(code)], ['30分', G.m30], ['15分', G.m15], ['5分', G.m5], ['1分', m1rows.map(function (x) { return { t: x.t, o: +x.o, c: +x.c, h: +x.h, l: +x.l }; })]];
+      collectGapsJL(code, lv);
       var open = row.getAttribute('data-open') === '1', items = [], opn = null;
       var RT = { '600105': { '1分': [[50, 66], [61, 77]], '5分': [[57, 73], [68, 84]], '15分': [[65, 71], [64, 80]], 开: [[54, 61, 62, 24], [68, 73, 76, 35]] }, '603986': { '1分': [[50, 64], [58, 73]], '5分': [[43, 60], [56, 69]], '15分': [[57, 70], [44, 58]], 开: [[46, 50, 55, 22], [49, 57, 60, 29]] } }[String(code).replace(/\D/g, '')] || null;
       var dot = function (c, hollow) { return '<i style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + (hollow ? 'transparent;border:1px solid rgba(255,255,255,.7)' : c) + ';box-shadow:0 0 0 1px rgba(0,0,0,.55);margin-right:2px;vertical-align:1px"></i>'; };
@@ -19270,10 +19346,10 @@ var RLMCore = (function () {
       if (deadN) poolH += " · ⚠剔除无数据" + deadN + "只（停牌/退市·不计入胜率）";
       h += row("② 龙池主推 T+1", poolH);
       h += row("③ 资金背离", frN + " 条 · v.78 起连续2日同向才入册 · 实测单日资金无预测力，仅作背景记录");
-      h += '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" id="judgeRe99" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">重算</button><button type="button" id="judgeCsv99" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">复制CSV（三段台账）</button></div><p style="font-size:10px;color:rgba(255,255,255,.88) /* jl-0929-12: 小字不用灰, 提亮 */;margin-top:8px;line-height:1.8">审判只读本地台账自动统计，不构成操作建议；样本不足时不判定。</p>';
+      h += '<div style="display:flex;gap:8px;margin-top:10px"><button type="button" id="judgeRe99" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">重算</button><button type="button" id="judgeCsv99" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">复制CSV（三段台账）</button></div><div style="display:flex;gap:8px;margin-top:8px"><button type="button" id="gapLogBtnJL" style="flex:1;min-height:44px;border:1px solid #81e6d955;border-radius:9px;background:#81e6d914;color:#bcefeb;font-size:12px">导出缺口台账（CSV文件）</button></div><p style="font-size:10px;color:rgba(255,255,255,.88) /* jl-0929-12: 小字不用灰, 提亮 */;margin-top:8px;line-height:1.8">审判只读本地台账自动统计，不构成操作建议；样本不足时不判定。</p>';
       sec.innerHTML = h;
       $("judgeRe99").onclick = judgeRender99;
-      $("judgeCsv99").onclick = judgeCsv99;
+      $("judgeCsv99").onclick = judgeCsv99; $("gapLogBtnJL").onclick = gapLogExportJL;
     } catch (e) {
     }
   }
