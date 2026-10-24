@@ -28,7 +28,7 @@
   var CFG = {
     etfs: [["1.510300", "沪深300ETF", "510300"], ["1.510500", "中证500ETF", "510500"], ["1.512100", "中证1000ETF", "512100"], ["1.510880", "红利ETF", "510880"]],
     idx: [["1.000300", "沪深300"], ["1.000001", "上证指数"], ["0.399006", "创业板指"]],
-    ice: { dtBig: 50, zbRate: 40, lb: 2, prem: -2 },        // 冰点规则组阈值
+    ice: { dtBig: 50, zbRate: 40, lb: 2, prem: -2, minN: 10 }, // 冰点规则组阈值; minN: 涨停+跌停合计不足时"跌停≥涨停×2"比值腿不判(盘初小样本误报)
     coldT: 30,                                              // 温度低于此直接判冷点
     hot: { zt: 100, lb: 6, prem: 4 },                       // 高潮（对偶状态）
     bounce: { dtJump: 8, zbFail: 35 },                      // 温度快升但涨停扩散失败
@@ -174,6 +174,14 @@
     var d = today();
     var sn = lsGet("jlv2_snap_v1", null); if (sn && sn.date === d) S.snap = sn;
     S.hist = lsGet("jlv2_temp_hist_v1", {});
+    (function () { /* 温度修: 旧版按打开页面的日期记史, 周末/节假日会复制上一交易日一条→冰点后第N天/Δ温度错位; 清掉周末键+与前一条成交额完全相同的复制键 */
+      var ks = Object.keys(S.hist).sort(), pv = null, ch = 0;
+      ks.forEach(function (k) {
+        var w = new Date(k + "T12:00:00").getDay(), e = S.hist[k] || {};
+        if (w === 0 || w === 6 || (pv && pv.amt && e.amt === pv.amt)) { delete S.hist[k]; ch = 1; } else pv = e;
+      });
+      if (ch) lsSet("jlv2_temp_hist_v1", S.hist);
+    })();
     var po = lsGet("jlv2_pool_v1", null); if (po && po.date === d) S.pool = po;
     var pr = lsGet("jlv2_prem_v1", null); if (pr && pr.date === d) S.prem = pr;
     var at = lsGet("jlv2_atr_v1", null); if (at && at.date === d) S.atr = at;
@@ -190,23 +198,39 @@
 
   /* ---------- 抓取 ---------- */
   function fetchSnap(cb) {
-    jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&secids=1.000001,0.399001&fields=f6,f12,f48,f104,f105,f106&ut=" + UT, function (e, d) {
+    jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&secids=1.000001,0.399001&fields=f6,f12,f48,f104,f105,f106,f124&ut=" + UT, function (e, d) {
       if (e || !d || !d.data || !d.data.diff || !d.data.diff.length) { cb(e || new Error("snap")); return; }
-      var up = 0, dn = 0, fl = 0, amt = 0;
-      d.data.diff.forEach(function (r) { up += +r.f104 || 0; dn += +r.f105 || 0; fl += +r.f106 || 0; amt += +r.f6 || 0; });
+      var up = 0, dn = 0, fl = 0, amt = 0, ts = 0;
+      d.data.diff.forEach(function (r) { up += +r.f104 || 0; dn += +r.f105 || 0; fl += +r.f106 || 0; amt += +r.f6 || 0; if ((+r.f124 || 0) > ts) ts = +r.f124; });
       if (!(up > 0)) { cb(new Error("snap-empty")); return; }
-      var upR = up / Math.max(1, up + dn);
-      var t = Math.max(0, Math.min(100, Math.round(50 + (upR - 0.5) * 100)));
-      S.snap = { date: today(), t: t, up: up, down: dn, flat: fl, amt: amt, at: hhmm(String(nowMin()).padStart(4, "0")) };
-      lsSet("jlv2_snap_v1", S.snap);
-      var h = lsGet("jlv2_temp_hist_v1", {});
-      var y = h[today()] || {};
-      h[today()] = { t: t, zt: y.zt, dt: y.dt, zbr: y.zbr, state: y.state, amt: Math.round(amt) };
-      var ks = Object.keys(h).sort(); if (ks.length > 90) ks.slice(0, ks.length - 90).forEach(function (k) { delete h[k]; });
-      lsSet("jlv2_temp_hist_v1", h); S.hist = h;
+      /* 温度修: f124=行情时间(秒)→数据所属交易日td/数据时刻hm; 缺f124时工作日当今天、周末不认 */
+      var wd = new Date().getDay(), dd = ts > 1e9 ? new Date(ts * 1e3) : null;
+      var r = { src: "v2", td: dd ? dd.toLocaleDateString("sv-SE") : (wd >= 1 && wd <= 5 ? today() : null), hm: dd ? dd.toTimeString().slice(0, 5) : "", up: up, down: dn, flat: fl, amt: amt, at: Date.now() };
+      ingestSnap(r);
+      try { window.__jlMtSnap = r; document.dispatchEvent(new CustomEvent("jl:mtsnap", { detail: r })); } catch (eE) {}
       cb(null, S.snap);
     });
   }
+  /* 温度修: v1/v2 两张温度卡共用同一次采样(谁新用谁)——原 v1 15分钟采一次、v2 每分钟采一次, 同屏两个温度对不上 */
+  function ingestSnap(r) {
+    var upR = r.up / Math.max(1, r.up + r.down);
+    var t = Math.max(0, Math.min(100, Math.round(50 + (upR - 0.5) * 100)));
+    S.snap = { date: today(), td: r.td, t: t, up: r.up, down: r.down, flat: r.flat, amt: r.amt, at: r.hm || hhmm(String(nowMin()).padStart(4, "0")), ms: r.at };
+    lsSet("jlv2_snap_v1", S.snap);
+    if (!r.td) return; /* 认不出交易日(周末且缺f124)→不写日史 */
+    var h = lsGet("jlv2_temp_hist_v1", {});
+    var y = h[r.td] || {};
+    h[r.td] = { t: t, zt: y.zt, dt: y.dt, zbr: y.zbr, state: y.state, amt: Math.round(r.amt) };
+    var ks = Object.keys(h).sort(); if (ks.length > 90) ks.slice(0, ks.length - 90).forEach(function (k) { delete h[k]; });
+    lsSet("jlv2_temp_hist_v1", h); S.hist = h;
+  }
+  document.addEventListener("jl:mtsnap", function (ev) {
+    var r = ev && ev.detail;
+    if (!r || r.src === "v2" || (S.snap && S.snap.ms >= r.at)) return;
+    ingestSnap(r);
+    try { paint(); } catch (eP) {}
+  });
+  function curTd() { return (S.snap && S.snap.td) || today(); } /* 温度修: 当前数据所属交易日(周末=上周五), 比"昨日"都以它为准 */
   function fetchIdx(cb) {
     jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&secids=" + CFG.idx.map(function (x) { return x[0]; }).join(",") + "&fields=f12,f14,f3&ut=" + UT, function (e, d) {
       if (e || !d || !d.data || !d.data.diff || !d.data.diff.length) { cb(e || new Error("idx")); return; }
@@ -613,9 +637,11 @@
     var zb = po && po.zb ? po.zb.n : null, dt = po && po.dt ? po.dt.n : null;
     var zbr = (zb != null && zt != null && (zt + zb) > 0) ? Math.round(zb / (zt + zb) * 100) : null;
     var prem = pr ? pr.avg : null;
-    var r1 = dt != null && zt != null ? (dt >= CFG.ice.dtBig || dt >= zt * 2) : null;
+    /* 温度修: 开盘前/池子未出时涨停=跌停=炸板=0, 原式 0>=0×2 判"跌停≥涨停×2"成立、空池最高连板0判"≤2板"成立→盘前误报冷点; 三池全空=未知, 比值腿要求涨停+跌停≥minN */
+    var poolEmpty = !(zt || zb || dt);
+    var r1 = dt != null && zt != null && !poolEmpty ? (dt >= CFG.ice.dtBig || (dt + zt >= CFG.ice.minN && dt >= zt * 2)) : null;
     var r2 = zbr != null ? (zbr >= CFG.ice.zbRate) : null;
-    var r3 = lb != null ? (lb <= CFG.ice.lb) : null;
+    var r3 = lb != null && !poolEmpty ? (lb <= CFG.ice.lb) : null;
     var r4 = prem != null ? (prem <= CFG.ice.prem) : null;
     var met = [r1, r2, r3, r4].filter(function (x) { return x === true; }).length;
     var known = [r1, r2, r3, r4].filter(function (x) { return x != null; }).length;
@@ -624,18 +650,20 @@
     else if (known >= 3 && met >= 3) state = "冰点";
     else if (sn.t <= CFG.coldT || (known >= 2 && met >= 2)) state = "冷点";
     else state = "正常";
-    // 写入日史（供 冰点后第N天 / Δ温度）
-    var h = lsGet("jlv2_temp_hist_v1", {}), y0 = h[today()] || {};
-    h[today()] = { t: sn.t, zt: zt, dt: dt, zbr: zbr, state: state, amt: y0.amt };
-    var ks = Object.keys(h).sort(); if (ks.length > 90) ks.slice(0, ks.length - 90).forEach(function (k) { delete h[k]; });
-    lsSet("jlv2_temp_hist_v1", h); S.hist = h;
+    // 写入日史（供 冰点后第N天 / Δ温度）——温度修: 只在数据交易日=今天时写(周末/节假日/盘前数据属上一交易日, 而池子按今天日期取=空, 写进去会把上一交易日的状态冲掉)
+    if (sn.td && sn.td === today()) {
+      var h = lsGet("jlv2_temp_hist_v1", {}), y0 = h[sn.td] || {};
+      h[sn.td] = { t: sn.t, zt: zt, dt: dt, zbr: zbr, state: state, amt: y0.amt };
+      var ks = Object.keys(h).sort(); if (ks.length > 90) ks.slice(0, ks.length - 90).forEach(function (k) { delete h[k]; });
+      lsSet("jlv2_temp_hist_v1", h); S.hist = h;
+    }
     return { zt: zt, lb: lb, zb: zb, dt: dt, zbr: zbr, prem: prem, r: [r1, r2, r3, r4], met: met, state: state };
   }
   function iceDaysAgo(st) {
-    var ks = Object.keys(S.hist).sort();
+    var ks = Object.keys(S.hist).sort(), cd = curTd();
     var n = 0;
     for (var i = ks.length - 1; i >= 0; i--) {
-      if (ks[i] === today()) continue;
+      if (ks[i] >= cd) continue;
       if (S.hist[ks[i]].state === "冰点") return n + 1;
       n++;
       if (n > 5) break;
@@ -714,10 +742,10 @@
   window.__JLDtDetailJL = function () { S.dtOpen = !S.dtOpen; paint(); };
   function renderTemp() {
     var st = deriveState(), sn = S.snap;
-    var yk = Object.keys(S.hist).filter(function (k) { return k < today(); }).pop();
+    var yk = Object.keys(S.hist).filter(function (k) { return k < curTd(); }).sort().pop(); /* 温度修: 以数据交易日为"今天"+排序后取上一条 */
     var yv = yk ? S.hist[yk] : null;
     var dt2 = sn && yv && yv.t != null ? sn.t - yv.t : null; /* jl-1084: 补sn判空——跨零点重载snap按日期闸不恢复(null)+温度史留昨日条目(有t)→原式对null取.t抛TypeError→paint死→boot()首句崩→9个抓取全不调度→三卡永久消失(休市无mktLive轮询自愈); 判空后走699行既有"采样中…"降级路径 */
-    var head = '<b>市场温度 · v2</b><small>采样 ' + (sn ? sn.at : "—") + ' · 东财沪深快照 · 自建通道</small>';
+    var head = '<b>市场温度 · v2</b><small>采样 ' + (sn ? (sn.td && sn.td !== today() ? sn.td.slice(5) + " " : "") + sn.at : "—") + ' · 东财沪深快照 · 自建通道</small>'; /* 温度修: 数据不属今天(周末/盘前)时带日期, 免把上一交易日看成今天 */
     if (!sn) { return { head: head, sum: '<span class="jsum">采样中… 点标题展开</span>', body: "" }; }
     var zbr = st ? st.zbr : null;
     var sumParts = [];
@@ -774,8 +802,8 @@
       var iceD = iceDaysAgo(st.state);
       var items = [
         [st.state === "冰点", "冰点当日", "风险释放接近极端 · 次日重点观察止跌与强势股修复"],
-        [st.state === "冰点" && iceD === 1, "冰点后第1天", "观察是否止跌、强势股是否修复"],
-        [st.state === "冰点" && iceD >= 2, "冰点后第2天", "确认修复是否扩散"],
+        [st.state !== "冰点" && iceD === 1, "冰点后第1天", "观察是否止跌、强势股是否修复"], /* 温度修: 原条件要求今天也是冰点→冰点后的修复日永远不提示 */
+        [st.state !== "冰点" && iceD >= 2, "冰点后第" + iceD + "天", "确认修复是否扩散"],
         [st.state === "冷点", "冷点阶段", "减少追高 · 优先关注低位启动"],
         [dt2 != null && dt2 >= CFG.bounce.dtJump && (st.zbr != null && yzbr != null && st.zbr >= CFG.bounce.zbFail), "温度快升 + 涨停扩散失败", "警惕冲高回落"]
       ].filter(function (x) { return x[0]; });
@@ -793,12 +821,20 @@
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——质疑"1.44万亿是多了还是少了", 额度差才是人话 */
-    if (!S.snap || !isFinite(S.snap.amt)) return null;
-    var ks = Object.keys(S.hist).filter(function (k) { return k < today() && S.hist[k].amt > 1e11; }).sort();
-    if (!ks.length) return null;
-    var pv = S.hist[ks[ks.length - 1]].amt;
-    return { diff: S.snap.amt - pv, prev: pv };
+    /* 温度修: 改同时段对比——今天截至HH:MM累计额 vs 上一交易日截至同一分钟累计额, 两边都取腾讯分钟曲线(沪000001+深综399106, jlv2_amt_v1)同口径;
+       原式拿今天盘中累计去比昨天最后一次采样(≈全天), 盘中恒显示缩量。上一交易日曲线没覆盖到当前分钟→不比(不拿半天当全天) */
+    if (!S.tx || !S.tx.slots || !S.tx.date) return null;
+    var tk = Object.keys(S.tx.slots).sort(); if (!tk.length) return null;
+    var last = tk[tk.length - 1], cur = 0; tk.forEach(function (k) { cur += S.tx.slots[k]; });
+    var days = (lsGet("jlv2_amt_v1", {}) || {}).days || {};
+    var pk = Object.keys(days).filter(function (k) { return k < S.tx.date; }).sort().pop(); if (!pk) return null;
+    var pd = days[pk], pks = Object.keys(pd).sort();
+    if (!pks.length || pks[pks.length - 1] < last) return null;
+    var pv = 0; pks.forEach(function (k) { if (k <= last) pv += pd[k]; });
+    if (!(pv > 0) || !(cur > 0)) return null;
+    return { diff: cur - pv, prev: pv, hm: last.slice(0, 2) + ":" + last.slice(2) };
   }
+  window.__jlAmtSameTime = amtDiffBase; /* 温度修: 给 index.html v1 温度卡共用, 两张卡同一个成交额对比 */
   function amtDiff() { var a = amtDiffBase(); return a && a.prev ? a.diff / a.prev * 100 : null; }
   function fmtAmtDiff(v) { /* ±额度差: 元→万亿/亿 */
     var y = v / 1e8;
@@ -810,7 +846,7 @@
     if (S.snap && isFinite(S.snap.amt)) return (S.snap.amt / 1e12).toFixed(2) + "万亿";
     return "—";
   }
-  function amtDiffSub() { var d = amtDiff(); return d != null ? "较昨日 · " + (d >= 0 ? "+" : "") + d.toFixed(1) + "%" : "今日总额 · 昨日基准缺失(历史采样一天后自动补上)"; }
+  function amtDiffSub() { var a = amtDiffBase(), d = amtDiff(); return d != null ? "较上一交易日同时段(截至" + a.hm + ") · " + (d >= 0 ? "+" : "") + d.toFixed(1) + "%" : "今日总额 · 上一交易日同时段基准缺失(需该日完整分钟曲线)"; }
   function amtDiffCls() { var d = amtDiff(); return d == null ? "mu" : (d >= 0 ? "up" : "dn"); }
   function renderGjd() {
     var stx = deriveStruct();

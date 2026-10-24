@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v260"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v261"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -2590,9 +2590,11 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       }).join("") + "</svg>";
     }
     const amtEl = $("mtAmtJL");
-    if (amtEl) amtEl.innerHTML = "\u6CAA\u6DF1\u6210\u4EA4 " + (d.amt / 1e8).toFixed(0) + "\u4EBF" + (d.amtDiff != null ? " \xB7 \u8F83\u524D\u65E5 " + ((d.amtDiff >= 0 ? "+" : "") + (d.amtDiff / 1e8).toFixed(0) + "\u4EBF") : "") + " \xB7 \u4E0A\u6DA8 " + d.up + " \u5BB6 \xB7 \u4E0B\u8DCC " + d.down + " \u5BB6" + (d.fund != null ? '<br><span class="mtd fund" data-mtd="fund">\u4E3B\u529B\u51C0\u989D <b class="' + (d.fund >= 0 ? "up" : "dn") + '">' + fmtFundJL(d.fund) + "</b> \xB7 " + d.verdict + "</span>" : "");
+    const sa = typeof window.__jlAmtSameTime === "function" ? window.__jlAmtSameTime() : null; /* \u6E29\u5EA6\u4FEE: \u6210\u4EA4\u989D\u6539"\u8F83\u4E0A\u4E00\u4EA4\u6613\u65E5\u540C\u65F6\u6BB5"(jlv2.js \u817E\u8BAF\u5206\u949F\u66F2\u7EBF, \u4E0Ev2\u5361\u540C\u4E00\u4E2A\u6570); \u539F"\u8F83\u524D\u65E5"=\u4ECA\u5929\u76D8\u4E2D\u7D2F\u8BA1\u6BD4\u6628\u5929\u6700\u540E\u4E00\u6B21\u91C7\u6837, \u76D8\u4E2D\u6052\u504F\u4F4E */
+    if (amtEl) amtEl.innerHTML = "\u6CAA\u6DF1\u6210\u4EA4 " + (d.amt / 1e8).toFixed(0) + "\u4EBF" + (sa ? " \xB7 \u8F83\u4E0A\u4E00\u4EA4\u6613\u65E5\u540C\u65F6\u6BB5 " + ((sa.diff >= 0 ? "+" : "") + (sa.diff / 1e8).toFixed(0) + "\u4EBF") : "") + " \xB7 \u4E0A\u6DA8 " + d.up + " \u5BB6 \xB7 \u4E0B\u8DCC " + d.down + " \u5BB6" + (d.fund != null ? '<br><span class="mtd fund" data-mtd="fund">\u4E3B\u529B\u51C0\u989D <b class="' + (d.fund >= 0 ? "up" : "dn") + '">' + fmtFundJL(d.fund) + "</b> \xB7 " + d.verdict + "</span>" : "");
     const u = $("mtUpdatedJL");
-    if (u) u.textContent = "\u91C7\u6837 " + d.time + " \xB7 \u4E1C\u8D22\u5168A" + (d.cov != null && d.cov < 95 ? " \u8986\u76D6" + d.cov + "%" : "") + " \xB7 \u70B9\u6211\u91CD\u91C7";
+    const td0 = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), dd0 = d.td || (mtempJL.at ? new Date(mtempJL.at).toLocaleDateString("sv-SE") : ""); /* \u6E29\u5EA6\u4FEE: \u6570\u636E\u4E0D\u5C5E\u4ECA\u5929(\u5468\u672B/\u8282\u5047\u65E5/\u76D8\u524D)\u65F6\u5E26\u65E5\u671F, \u539F\u53EA\u663E\u793A\u65F6\u523B\u2192\u4E0A\u4E00\u4EA4\u6613\u65E5\u7684\u6570\u770B\u7740\u50CF\u4ECA\u5929 */
+    if (u) u.textContent = "\u91C7\u6837 " + (dd0 && dd0 !== td0 ? dd0.slice(5) + " " : "") + d.time + " \xB7 \u4E1C\u8D22\u5168A" + (d.cov != null && d.cov < 95 ? " \u8986\u76D6" + d.cov + "%" : "") + " \xB7 \u70B9\u6211\u91CD\u91C7";
   }
   function loadMTempJL(force) {
     /* v0.82.3: 温度换骨架——东财clist翻页全A采样在风控下必败("一直失败"根因, 实测连发全量空返+IP封禁)。
@@ -2623,31 +2625,16 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
         if (u) u.textContent = "采样失败 · 点我重试";
         return;
       }
-      const old = mtempJL.data || {}, upR = acc.up / Math.max(1, acc.up + acc.down);
-      const t = Math.max(0, Math.min(100, Math.round(50 + (upR - 0.5) * 100))); /* v0.82.4: 纯涨跌比映射(涨跌停项随池子摘除) */
-      let prevAmt = null;
-      try {
-        const h = JSON.parse(localStorage.getItem("jinlin_mtemp_amt_v1") || "{}"), today = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), keys = Object.keys(h).filter((k) => k < today && h[k] > 1e11).sort();
-        if (keys.length) prevAmt = h[keys[keys.length - 1]];
-        h[today] = Math.round(acc.amt);
-        localStorage.setItem("jinlin_mtemp_amt_v1", JSON.stringify(h));
-      } catch (e) {
-      }
-      const data = { t, up: acc.up, down: acc.down, flat: acc.flat, amt: acc.amt, amtDiff: prevAmt != null ? acc.amt - prevAmt : null, bu: old.bu || [0, 0, 0, 0], bd: old.bd || [0, 0, 0, 0], fund: Number.isFinite(old.fund) ? old.fund : null, verdict: old.verdict || "—", cov: null, time: (/* @__PURE__ */ new Date()).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) };
-      mtempJL.data = data;
-      mtempJL.at = now;
-      try {
-        localStorage.setItem("jinlin_mtemp_v1", JSON.stringify({ at: now, data }));
-      } catch (e) {
-      }
-      renderMTempJL();
-      renderMarketFundsJL();
+      const r = { src: "v1", td: acc.td, hm: acc.hm, up: acc.up, down: acc.down, flat: acc.flat, amt: acc.amt, at: now };
+      applyMTempSnapJL(r, true);
+      try { window.__jlMtSnap = r; document.dispatchEvent(new CustomEvent("jl:mtsnap", { detail: r })); } catch (e) {} /* 温度修: 广播给 jlv2.js v2卡共用同一次采样 */
       loadMTempDeepJL();
     };
     const eatSnap = (d) => {
       const arr = d && d.data && d.data.diff || [];
-      let up = 0, dn = 0, fl = 0, am = 0;
+      let up = 0, dn = 0, fl = 0, am = 0, ts = 0;
       arr.forEach((q) => {
+        if ((Number(q.f124) || 0) > ts) ts = Number(q.f124); /* 温度修: f124=行情时间(秒), 定数据所属交易日 */
         up += Number(q.f104) || 0;
         dn += Number(q.f105) || 0;
         fl += Number(q.f106) || 0;
@@ -2662,8 +2649,11 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       acc.down = dn;
       acc.flat = fl;
       acc.amt = am;
+      const dd = ts > 1e9 ? new Date(ts * 1e3) : null, wd = (/* @__PURE__ */ new Date()).getDay();
+      acc.td = dd ? dd.toLocaleDateString("sv-SE") : (wd >= 1 && wd <= 5 ? (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") : null);
+      acc.hm = dd ? dd.toTimeString().slice(0, 5) : "";
     };
-    const snapUrl = (h) => h + "/api/qt/ulist.np/get?fltt=2&invt=2&secids=1.000001,0.399001&fields=f6,f12,f48,f104,f105,f106&ut=" + JL_UT;
+    const snapUrl = (h) => h + "/api/qt/ulist.np/get?fltt=2&invt=2&secids=1.000001,0.399001&fields=f6,f12,f48,f104,f105,f106,f124&ut=" + JL_UT;
     emJsonp(snapUrl("https://push2.eastmoney.com"), (e, d) => {
       if (!e && d && d.data && (d.data.diff || []).length) {
         eatSnap(d);
@@ -2675,6 +2665,26 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
     }, 8e3);
     /* v0.82.4: 涨跌停池两路已摘（定案取消温度卡涨跌停）——历史见 git */
   }
+  /* 温度修: 一次快照→v1卡数据。own=本卡自己采的(重置覆盖率、记TTL); 否则是 v2 卡广播来的更新样本, 只换涨跌家数/成交额, 不动TTL以免挡掉本卡的分桶/主力净额深采 */
+  function applyMTempSnapJL(r, own) {
+    const old = mtempJL.data || {}, upR = r.up / Math.max(1, r.up + r.down);
+    const t = Math.max(0, Math.min(100, Math.round(50 + (upR - 0.5) * 100))); /* v0.82.4: 纯涨跌比映射(涨跌停项随池子摘除) */
+    const data = { t, td: r.td, up: r.up, down: r.down, flat: r.flat, amt: r.amt, bu: old.bu || [0, 0, 0, 0], bd: old.bd || [0, 0, 0, 0], fund: Number.isFinite(old.fund) ? old.fund : null, verdict: old.verdict || "—", cov: own ? null : (old.cov != null ? old.cov : null), time: r.hm || new Date(r.at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) };
+    mtempJL.data = data;
+    mtempJL.snapAt = r.at;
+    if (own) mtempJL.at = r.at;
+    try {
+      localStorage.setItem("jinlin_mtemp_v1", JSON.stringify({ at: mtempJL.at || 0, data }));
+    } catch (e) {
+    }
+    renderMTempJL();
+    renderMarketFundsJL();
+  }
+  document.addEventListener("jl:mtsnap", (ev) => {
+    const r = ev && ev.detail;
+    if (!r || r.src === "v1" || !(r.at > (mtempJL.snapAt || mtempJL.at || 0))) return;
+    applyMTempSnapJL(r, false);
+  });
   function loadMTempDeepJL() {
     /* v0.82.3: 增强通道(原clist全A翻页)——只补分桶bu/bd、主力净额fund、钻取明细rows、覆盖率cov。
        东财风控下常失败, 一律静默(主指标已由快通道出数, 不再弹"采样失败"不自动重试)。 */
