@@ -82,19 +82,6 @@
 .day .posFoldHeadJL b,
 .day .trJL .trHead b { color: #122d38; }
 .day .atrOpenHeadJL b { color: #8a5b00; }
-.atrReviewExportJL {
-  float: right;
-  min-height: 26px;
-  margin-top: 7px;
-  padding: 3px 9px;
-  border: 1px solid rgba(255, 255, 255, .24);
-  border-radius: 7px;
-  background: transparent;
-  color: #fff;
-  font: 650 10px/1.2 -apple-system, "PingFang SC", sans-serif;
-  cursor: pointer;
-}
-.day .atrReviewExportJL { color: #122d38; border-color: rgba(18, 45, 56, .3); }
 @media (max-width: 380px) {
   .foldJL > summary { padding-left: 8px; }
   .foldJL .foldBodyJL { padding-left: 8px; padding-right: 8px; }
