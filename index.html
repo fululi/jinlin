@@ -5133,6 +5133,11 @@ function playbookHTMLJL(s, leg, swSt) {
   function freshQuoteJL(s) {
     return quoteDay8JL(s) === (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE").replace(/-/g, "");
   }
+  function freshOpenJL(s) { /* jl-1024w: 当日开盘价已到 = 报价日期是今天且报价时刻≥09:25(竞价撮合后)。开盘前腾讯仍回上一交易日整份报价, open/high/low 都是旧的; 只认 quoteAt, 不用墙钟 quoteDate */
+    if (!freshQuoteJL(s) || !(Number(s.open) > 0)) return false;
+    const q = String(s.quoteAt || ""), d = /^\d{13}$/.test(q) ? new Date(+q) : /^\d{10}$/.test(q) ? new Date(+q * 1e3) : null;
+    return (d ? d.getHours() * 100 + d.getMinutes() : +(q.replace(/\D/g, "").slice(8, 12) || 0)) >= 925;
+  }
   function touchWinJL(t) { /* jl-A4: 台账触档检测时刻→所在15分钟bar窗口 "09:30–09:45"; 与A3 sbTouchRangeJL 语义不同(彼=bar结束时刻回溯15分, 此=时钟时刻前向落桶), 刻意不共用防误用; ≥15:00 封顶 14:45–15:00(收盘竞价打印归收盘bar) */
     const m = /^(\d{1,2}):(\d{2})$/.exec(String(t || "")); if (!m) return "";
     const b = Math.min(Math.floor((+m[1] * 60 + +m[2]) / 15) * 15, 885), f = (x) => String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
@@ -8391,7 +8396,7 @@ function ffMergeJL(oldRows, newRows) {
     seedPrevJL(stock);
     const p = Number(stock.base), prev = Number(stock.prevClose) || p, a = rmaAtrJL(stock.code);
     if (!(p > 0 && a > 0)) return null;
-    const _nw2 = /* @__PURE__ */ new Date(), planNext = ((m2) => m2 >= 905 || m2 < 545)(_nw2.getHours() * 60 + _nw2.getMinutes()), op = Number(stock.open), hi = Number(stock.high), lo = Number(stock.low), db = dailyBarsOf(stock.code), todayAmp = planNext ? 0 : hi > 0 && lo > 0 ? hi - lo : db.length ? db.at(-1).h - db.at(-1).l : 0, lastTR = (() => { const _tdy2 = _nw2.toLocaleDateString("sv-SE"), _intr = db.length && String(db.at(-1).t).slice(0, 10) === _tdy2 && _nw2.getHours() * 60 + _nw2.getMinutes() < 910, b1 = db.at(_intr ? -2 : -1), b0 = db.at(_intr ? -3 : -2); return b1 && b0 ? Math.max(b1.h - b1.l, Math.abs(b1.h - b0.c), Math.abs(b1.l - b0.c)) : 0; })(), base = Math.max(a * ATR_FLOOR_JL, lastTR * 0.6), anchor = planNext ? p : op > 0 && Math.abs(op - prev) >= 0.5 * a ? op : prev, ap = a / prev * 100;
+    const _nw2 = /* @__PURE__ */ new Date(), planNext = ((m2) => m2 >= 905 || m2 < 545)(_nw2.getHours() * 60 + _nw2.getMinutes()), _fo2 = freshOpenJL(stock) /* jl-1024w: 09:05~开盘前报价还是上一交易日的, 旧开/高/低不进锚和延伸档 */, op = _fo2 ? Number(stock.open) : 0, hi = _fo2 ? Number(stock.high) : 0, lo = _fo2 ? Number(stock.low) : 0, db = dailyBarsOf(stock.code), todayAmp = planNext ? 0 : hi > 0 && lo > 0 ? hi - lo : db.length ? db.at(-1).h - db.at(-1).l : 0, lastTR = (() => { const _tdy2 = _nw2.toLocaleDateString("sv-SE"), _intr = db.length && String(db.at(-1).t).slice(0, 10) === _tdy2 && _nw2.getHours() * 60 + _nw2.getMinutes() < 910, b1 = db.at(_intr ? -2 : -1), b0 = db.at(_intr ? -3 : -2); return b1 && b0 ? Math.max(b1.h - b1.l, Math.abs(b1.h - b0.c), Math.abs(b1.l - b0.c)) : 0; })(), base = Math.max(a * ATR_FLOOR_JL, lastTR * 0.6), anchor = planNext ? p : op > 0 && Math.abs(op - prev) >= 0.5 * a ? op : prev, ap = a / prev * 100;
     const _atS2 = rmaAtrSeriesJL(db), _r120 = [], _curA = prev > 0 ? a / prev : 0;
     for (let _i2 = Math.max(14, db.length - 120); _i2 < db.length; _i2++) _atS2[_i2] > 0 && db[_i2].c > 0 && _r120.push(_atS2[_i2] / db[_i2].c);
     let _q2 = 0.5;
