@@ -18,7 +18,8 @@
    jl-1121 v0.84.60: 温度v2九因子宫格展示补全(纯渲染层·零数据链变更·零新增请求)——①最高连板: ZT池聚合一处落存最高lbc行(名称/代码/行业入池缓存top字段, 旧缓存无top自然降级原样), 宫格副行显示 股票名·题材(主概念mc优先→二级行业→池hybk兜底) ②热点板块持续: 板块名上副行(离线聚合/在线兜底两路同口径), 均幅与涨幅榜首留副行注 ③涨停/跌停宫格标签改"涨停数量/跌停数量" ④炸板率副行挂 炸板数/涨停数(deriveState现成, 口径=炸板/(涨停+炸板)) ⑤ATR波动率标签改"ATR14/价"去解释小字(副行仅留"上证"); jsum折叠摘要/规则组/状态机/阈值/异动卡零触碰
    原则：现有模块一律不动；本模块自建抓取(JSONP)+自建缓存(jlv2_*)；卡样=透亮玻璃
    （底 ≤rgba(255,255,255,.04)、无深色渐变遮罩、无backdrop模糊、细青边#81e6d92e、文字亮白#eef9fc）
-   阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。 */
+   阈值全部集中在 CFG，便于回测校准；仅为状态描述，不构成操作建议。
+   温度量化批 temp-q1 2026-10-25: sum行与tnow行加分位P(近20交易日温度史百分位, tempPctJL)+Δ30分盘中动量(mom30JL, 读主模块序列 jinlin_mtemp_series_v1)——均纯显示层, 温度公式/状态机/九因子/抓取链零触碰。 */
 (function () {
   "use strict";
   if (window.__JLV2__) return;
@@ -702,6 +703,23 @@
     if (!st) return "#FFFFFF";
     return st.state === "冰点" || st.state === "冷点" ? "#5ad0ff" : st.state === "高潮" ? "#ff5459" : "#FFFFFF";
   }
+  /* 温度量化 temp-q1(纯显示层, 温度公式/状态机/九因子/抓取链零触碰): 分位P=当日温度在近20个交易日温度史(jlv2_temp_hist_v1, 排除当日)中的百分位, 样本≥8才显示; Δ30分=盘中动量(读主模块序列 jinlin_mtemp_series_v1, 与v1卡同一个数, 取距当前25~45分钟的样本) */
+  function tempPctJL(t) {
+    try {
+      var d0 = today(), ks = Object.keys(S.hist).filter(function (k) { return k < d0; }).sort().slice(-20);
+      if (ks.length < 8 || t == null) return null;
+      return Math.round(ks.filter(function (k) { return S.hist[k].t <= t; }).length / ks.length * 100);
+    } catch (e) { return null; }
+  }
+  function mom30JL(sn) {
+    try {
+      var se = JSON.parse(localStorage.getItem("jinlin_mtemp_series_v1") || "null");
+      if (!se || se.td !== sn.td || !/^\d{2}:\d{2}$/.test(sn.at || "")) return null;
+      var s = se.s || [], f = function (h) { return +h.slice(0, 2) * 60 + +h.slice(3, 5); }, nm = f(sn.at);
+      for (var i = s.length - 1; i >= 0; i--) { var g = nm - f(s[i][0]); if (g >= 25) return g <= 45 ? sn.t - s[i][1] : null; }
+      return null;
+    } catch (e) { return null; }
+  }
   /* jl-1080: 热点板块持续——离线板块映射聚合主模块温度逐股涨跌(jinlin_mtemp_v1.data.rows, 增强通道顺手持久化) → 行业涨幅榜首
      板块上涨占比+平均涨幅; 样本<8不参榜(防小板块霸榜); 连日数独立键jlv2_hotoff_v1(与在线jlv2_hot_v1互不污染); 无数据=映射未覆盖 */
   function calcHotSector() {
@@ -752,6 +770,9 @@
     var zc = tColJL(sn.t), sc = sColJL(st); /* jl-B2: 温度数字=温区色, 状态标签=状态机色 */
     sumParts.push('<span class="mono" style="color:' + zc + ';font-weight:700">' + sn.t + '</span> ' + (st && st.state !== "正常" ? '<span class="' + statePill(st.state) + '" style="font-size:12px;padding:1px 7px;color:' + sc + ';border-color:' + sc + '">' + st.state + '</span>' : '<span class="mu" style="color:' + sc + '">平</span>'));
     if (dt2 != null && dt2 !== 0) sumParts.push('<span class="' + (dt2 > 0 ? "up" : "dn") + ' mono">' + (dt2 > 0 ? "▲" : "▼") + Math.abs(dt2) + '</span>');
+    var tqP = tempPctJL(sn.t), tqM = mom30JL(sn); /* 温度量化 temp-q1: 分位P(20日温度史)+Δ30分动量 */
+    if (tqP != null) sumParts.push('<span class="mono">P' + tqP + '·20日</span>');
+    if (tqM != null) sumParts.push('<span class="' + (tqM > 0 ? "up" : "dn") + ' mono">30分' + (tqM > 0 ? "+" : "") + tqM + '</span>');
     if (st && st.zt != null) sumParts.push('<span class="mono">涨停' + st.zt + '/跌停' + (st.dt == null ? "—" : st.dt) + '</span>');
     if (zbr != null) sumParts.push('<span class="mono">炸板' + zbr + '%</span>');
     var alertDot = st && (st.state === "冰点" || st.state === "高潮") ? '<span class="dot" style="color:#ff5459"></span>' : (st && st.state === "冷点" ? '<span class="dot" style="color:#ffd21f"></span>' : "");
@@ -812,7 +833,7 @@
     }
     var body =
       scale +
-      '<div class="tnow" style="margin-top:8px"><b style="color:' + zc + '">' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '" style="color:' + sc + ';border-color:' + sc + '">' + (st ? st.state : "—") + '</span><span style="font-size:12px;color:#FFFFFF">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span></div>' +
+      '<div class="tnow" style="margin-top:8px"><b style="color:' + zc + '">' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '" style="color:' + sc + ';border-color:' + sc + '">' + (st ? st.state : "—") + '</span><span style="font-size:12px;color:#FFFFFF">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span>' + (tqP != null ? '<span style="font-size:12px;color:#FFFFFF">20日分位 P' + tqP + '</span>' : '') + '</div>' +
       '<div class="fgrid">' + grid + '</div>' +
       (S.dtOpen && dtr ? dtDetailHtml(dtr) : "") + /* jl-1080: 跌停明细展开层(点"跌停"数字切换) */
       '<div class="jh">冰点判定 · 规则组（非阈值）</div>' + rules +
