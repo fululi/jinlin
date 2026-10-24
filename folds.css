@@ -1,0 +1,89 @@
+.foldJL,
+.fundJL {
+  margin: 7px 0 9px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 10px;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.foldJL > summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 30px 8px 10px;
+  list-style: none;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  background: transparent !important;
+}
+.foldJL > summary::-webkit-details-marker { display: none; }
+.foldJL > summary::marker { content: ""; }
+.foldJL > summary::after,
+.fundTglJL::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-right: 1px solid rgba(255, 255, 255, .48);
+  border-bottom: 1px solid rgba(255, 255, 255, .48);
+  transform: translateY(-65%) rotate(-45deg);
+  transition: transform 150ms ease;
+}
+.foldJL[open] > summary::after,
+.fundTglJL.isOpen::after { transform: translateY(-35%) rotate(45deg); }
+.fundTglJL { position: relative; padding-right: 30px; }
+.day .foldJL > summary::after,
+.day .fundTglJL::after { border-color: rgba(18, 45, 56, .55); }
+.foldJL .foldBodyJL { padding: 0 10px 9px; }
+.atrOpenJL { padding: 0; }
+.atrOpenHeadJL b {
+  color: #ffd76b;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: .08em;
+}
+.atrOpenHeadJL small { color: #fff; font-size: 10px; }
+.atrFridayJL {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, .13);
+  color: #ffd76b;
+  font-size: 9px;
+}
+.lowOpenJL { padding: 0; }
+.lowOpenJL .lowOpenBodyJL { padding: 0 10px 10px; }
+.lowOpenNowJL i::after { content: none; }
+.posFoldJL > summary,
+.factsFoldJL > summary { min-height: 22px; padding-top: 3px; padding-bottom: 3px; }
+.resoFoldJL > summary { min-height: 32px; padding-top: 5px; padding-bottom: 5px; }
+.resoFoldJL > summary b { color: #fff; font-size: 12px; }
+.posFoldJL .posRulerJL { margin: 0; }
+.resoFoldJL .foldBodyJL { padding-top: 3px; }
+.factsFoldJL { display: block !important; padding: 0 !important; }
+.factsFoldJL .foldBodyJL { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.day .resoFoldJL > summary b { color: #122d38; }
+.trJL { padding: 0; color: #fff; }
+.trJL .trHead { margin: 0; }
+.trJL .trHead b { color: #fff; }
+.trJL .foldBodyJL { padding-top: 2px; }
+.fundJL { overflow: hidden; }
+.fundTglJL { min-height: 38px; }
+.day .foldJL > summary,
+.day .foldJL > summary::after,
+.day .posFoldHeadJL b,
+.day .trJL .trHead b { color: #122d38; }
+.day .atrOpenHeadJL b { color: #8a5b00; }
+@media (max-width: 380px) {
+  .foldJL > summary { padding-left: 8px; }
+  .foldJL .foldBodyJL { padding-left: 8px; padding-right: 8px; }
+  .lowOpenJL .lowOpenBodyJL { padding-left: 8px; padding-right: 8px; }
+}

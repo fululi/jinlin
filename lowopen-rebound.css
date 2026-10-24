@@ -1,0 +1,71 @@
+.lowOpenJL{margin:0 0 9px;padding:0;border:0;border-radius:0;background:transparent!important;color:#fff;font-size:11px;line-height:1.6;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.lowOpenJL summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:8px 0;list-style:none;cursor:pointer;user-select:none;background:transparent!important}
+.lowOpenJL summary::-webkit-details-marker{display:none}
+.lowOpenJL summary>span:first-child{display:flex;align-items:baseline;gap:8px;min-width:0}
+.lowOpenJL summary b{font-size:12px;font-weight:600;letter-spacing:.02em;color:#fff}
+.lowOpenJL summary small{color:#fff;font-size:10px;font-weight:400;white-space:nowrap}
+.lowOpenNowJL{display:flex;align-items:center;gap:7px;color:#fff;white-space:nowrap}
+.lowOpenNowJL i{display:flex;align-items:center;gap:4px;color:#fff;font-size:10px;font-style:normal}
+.lowOpenNowJL i:after{content:"›";font-size:16px;line-height:1;transition:transform .18s ease}
+.lowOpenJL[open] .lowOpenNowJL i:after{transform:rotate(90deg)}
+.lowOpenBodyJL{padding:0 0 10px;background:transparent!important}
+.lowOpenAnchorJL{display:flex;justify-content:space-between;gap:8px;color:#fff;font-size:10px}
+.lowOpenAnchorJL b{color:#fff;font-family:ui-monospace,Menlo,monospace;font-weight:500}
+.lowOpenAnchorJL small{margin-left:5px;color:#fff;font-size:10px}
+.lowOpenAnchorJL .lowHighJL,.lowOpenAnchorJL .lowHighJL b{color:#ff7676}
+.lowOpenAnchorJL .lowLowJL,.lowOpenAnchorJL .lowLowJL b{color:#3bf0ac}
+.lowOpenAnchorJL .lowHighJL small,.lowOpenAnchorJL .lowLowJL small{color:#fff}
+.lowOpenCurrentJL{display:flex;align-items:baseline;justify-content:center;gap:7px;margin:7px 0 0;color:#fff;font-size:10px;text-align:center}
+.lowOpenCurrentJL b{font-family:ui-monospace,Menlo,monospace;font-size:16px;font-weight:650;font-variant-numeric:tabular-nums}
+.lowOpenCurrentJL b.up{color:var(--red)}
+.lowOpenCurrentJL b.down{color:var(--green)}
+.lowOpenCurrentJL b.flat{color:#fff}
+.lowOpenLevelsJL{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:5px 0 8px;background:transparent!important;border:0}
+.lowOpenLevelsJL>span{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:2px;padding:2px 0;background:transparent!important}
+.lowOpenLevelsJL .lowOpenArrowJL{position:absolute;left:-17px;bottom:3px;color:#ffd76b;font-size:14px;font-style:normal;line-height:1}
+.lowOpenIdleJL{margin:5px 0;color:#fff;font-size:10px;text-align:center}
+.lowOpenStateJL{margin:5px 0 0;font-size:10px;text-align:left}
+.lowOpenStateJL.pending{color:#ffd76b}
+.lowOpenStateJL.confirmed{color:#3bf0ac}
+.lowOpenStateJL.na{color:#fff}
+.lowOpenLevelsJL small{color:#ffd76b;font-family:ui-monospace,Menlo,monospace;font-size:10px}
+.lowOpenLevelsJL b{color:#fff;font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:550;font-variant-numeric:tabular-nums}
+.lowOpenPriceJL{display:flex;justify-content:space-between;color:#fff;font-size:10px}
+.lowOpenPriceJL b{margin-left:4px;color:#fff;font-family:ui-monospace,Menlo,monospace;font-weight:500}
+.lowOpenFootJL{margin-top:5px;color:#fff;font-size:10px}
+.lowOpenFootJL .lowPendingJL{color:#ffd76b}
+.day .lowOpenJL .lowHighJL,.day .lowOpenJL .lowHighJL b{color:#c73f4b}
+.day .lowOpenJL .lowLowJL,.day .lowOpenJL .lowLowJL b{color:#087f62}
+.day .lowOpenJL .lowHighJL small,.day .lowOpenJL .lowLowJL small{color:#122d38}
+.day .lowOpenJL .lowOpenLevelsJL small,.day .lowOpenJL .lowPendingJL{color:#8a5b00}
+.day .lowOpenJL,.day .lowOpenJL summary b,.day .lowOpenJL summary small,.day .lowOpenNowJL,.day .lowOpenNowJL i,.day .lowOpenAnchorJL,.day .lowOpenAnchorJL b,.day .lowOpenAnchorJL small,.day .lowOpenLevelsJL small,.day .lowOpenLevelsJL b,.day .lowOpenPriceJL,.day .lowOpenPriceJL b,.day .lowOpenFootJL{color:#122d38}
+.day .lowOpenJL,.day .lowOpenJL summary,.day .lowOpenBodyJL,.day .lowOpenLevelsJL,.day .lowOpenLevelsJL>span{background:transparent!important}
+.fibDualGridJL{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;background:transparent!important}
+.fibStackJL{min-width:0;background:transparent!important}
+.fibStackJL h4{margin:0 0 5px;color:#fff;font-size:11px;font-weight:600}
+.highStackJL{padding-left:12px;border-left:1px solid rgba(255,255,255,.16)}
+.highHeadJL{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-bottom:5px}
+.highHeadJL h4{margin:0}
+.highHeadJL>span{display:flex;gap:3px}
+.highHeadJL button{padding:1px 4px;border:1px solid rgba(255,255,255,.28);border-radius:4px;background:transparent;color:#fff;font-size:9px;line-height:1.5}
+.highHeadJL button.on{border-color:#ffd76b;color:#ffd76b;background:transparent}
+.fibAnchorsJL{display:flex;flex-direction:column;gap:1px;min-height:34px;color:#fff;font-size:9px;line-height:1.55}
+.fibAnchorsJL span{display:flex;align-items:baseline;gap:4px}
+.fibAnchorsJL b{font-family:ui-monospace,Menlo,monospace;font-weight:550}
+.fibAnchorsJL small{color:#fff;font-size:9px}
+.fibAnchorsJL .lowHighJL,.fibAnchorsJL .lowHighJL b{color:#ff7676}
+.fibAnchorsJL .lowLowJL,.fibAnchorsJL .lowLowJL b{color:#3bf0ac}
+.fibAnchorsJL .lowHighJL small,.fibAnchorsJL .lowLowJL small{color:#fff}
+.fibStackJL .lowOpenCurrentJL{justify-content:flex-start;margin:4px 0 3px;text-align:left}
+.fibStackJL .lowOpenCurrentJL b{font-size:15px}
+.fibStackJL .lowOpenLevelsJL{display:flex;flex-direction:column;gap:3px;margin:3px 0 5px}
+.fibStackJL .lowOpenLevelsJL>span{display:grid;grid-template-columns:43px minmax(0,1fr);align-items:baseline;gap:3px;padding:1px 0}
+.fibStackJL .lowOpenLevelsJL small{font-size:9px}
+.fibStackJL .lowOpenLevelsJL b{font-size:12px}
+.fibStackJL .lowOpenLevelsJL .lowOpenArrowJL{left:-13px;bottom:2px;font-size:11px}
+.fibStackJL .lowOpenStateJL{margin-top:4px;font-size:9px;white-space:nowrap}
+.day .fibStackJL h4,.day .fibAnchorsJL,.day .fibAnchorsJL small,.day .highHeadJL button{color:#122d38}
+.day .fibAnchorsJL .lowHighJL,.day .fibAnchorsJL .lowHighJL b{color:#c73f4b}
+.day .fibAnchorsJL .lowLowJL,.day .fibAnchorsJL .lowLowJL b{color:#087f62}
+.day .highStackJL{border-color:rgba(18,45,56,.18)}
+@media(max-width:380px){.lowOpenJL summary{gap:5px}.lowOpenJL summary>span:first-child{gap:5px}.fibDualGridJL{gap:9px}.highStackJL{padding-left:9px}.fibStackJL .lowOpenLevelsJL>span{grid-template-columns:39px minmax(0,1fr)}.fibStackJL .lowOpenLevelsJL b{font-size:11px}}
