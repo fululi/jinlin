@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v259"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v260"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -5626,7 +5626,7 @@ function playbookHTMLJL(s, leg, swSt) {
   let JLPOOL = null;
   try {
     const _jp = JSON.parse(localStorage.getItem("jl_pool_v1"));
-    if (_jp && _jp.L) JLPOOL = _jp;
+    if (_jp && _jp.v === 2 && _jp.L) JLPOOL = _jp; /* jl-pool-v2-review: 旧规则榜不直接恢复为主推 */
   } catch (e) {
   }
   let JLPOOL_RUN = false, JLPOOL_IDX10 = 0, JLPOOL_HOT = /* @__PURE__ */ new Set(), JLPOOL_PROG = "", JLPOOL_PCT = 0;
@@ -5665,6 +5665,23 @@ function playbookHTMLJL(s, leg, swSt) {
     let s = String(dt).slice(0, 10);
     if (/^\d{8}$/.test(s)) s = s.slice(0, 4) + "-" + s.slice(4, 6) + "-" + s.slice(6, 8);
     return s === jlLastTradeDay() || jlTradeDayObs !== "" && s === jlTradeDayObs || window.__jlPoolAsOf && s === window.__jlPoolAsOf;
+  }
+  /* jl-pool-v2 (本地副本): 龙池规则改动参数。MIN_FUND_DAYS/炸板否决是硬规则; FUND_W/HOT_PEN/BLOWOFF_VETO 是【未回测的初值】——
+     FUND_W=1、HOT_PEN=0、BLOWOFF_VETO=false 即回到原行为。 */
+  const JLPOOL_V2 = {
+    MIN_FUND_DAYS: 3,      /* 资金历史少于该天数: f5/n10/c2 置 null 不计分, 不进主推(标"资金待确认") */
+    FUND_W: 0.5,           /* 资金分项权重倍数(1=原); 满分分母同步按 72/60/55/60 + 40*FUND_W 重算, 分数仍是百分制 */
+    HOT_PEN: 6,            /* 近5根里每个封板涨停/炸板事件扣分 */
+    HOT_CAP: 2,            /* 最多计几个事件(扣分上限 = HOT_PEN*HOT_CAP) */
+    BLOWOFF_VETO: true     /* 高位+放量+长上影 → 降观察 */
+  };
+  const poolDenJL = (layer) => ({ start: 72, zs: 60, eb: 55, trend: 60 })[layer] + 40 * JLPOOL_V2.FUND_W;
+  const poolHotPenJL = (x) => JLPOOL_V2.HOT_PEN * Math.min(JLPOOL_V2.HOT_CAP, (x.lu5 || 0) + (x.bomb5 || 0));
+  /* jl-pool-v2-review: 天数未知也不能证明满3日；MIN_FUND_DAYS=0 时仍恢复原行为。 */
+  const poolFundShortJL = (x) => !!x && JLPOOL_V2.MIN_FUND_DAYS > 0 && (!Number.isFinite(Number(x.fundDays)) || Number(x.fundDays) < JLPOOL_V2.MIN_FUND_DAYS);
+  const poolFundDaysTextJL = (x) => x && x.fundDays != null && Number.isFinite(Number(x.fundDays)) ? "仅 " + Number(x.fundDays) + " 日" : "天数未知";
+  function jlFundShortNullJL(x) {
+    if (poolFundShortJL(x)) { x.f5 = null; x.n10 = null; x.c2 = null; }
   }
   function geneScoreJL(g) {
     return Math.min(g || 0, 4) * 5;
@@ -5766,15 +5783,31 @@ function playbookHTMLJL(s, leg, swSt) {
     }();
     const vols = kl.slice(Math.max(0, n - 120)).map((x) => x.v).sort((a, b) => a - b);
     const volPct120 = vols.length ? vols.filter((v) => v <= kl[i].v).length / vols.length : null;
-    const rg0 = kl[i].h - kl[i].l, upperShadow = rg0 > 0 ? (kl[i].h - Math.max(kl[i].c, cs[i - 1])) / rg0 : 0;
+    const rg0 = kl[i].h - kl[i].l, upperShadow = rg0 > 0 ? (kl[i].h - Math.max(kl[i].c, kl[i].o)) / rg0 : 0; /* jl-pool-v2-review: 上影线相对实体(开/收), 不是昨收 */
     const closeOffHigh = kl[i].h > 0 ? (kl[i].h - kl[i].c) / kl[i].h : 0;
+    /* jl-pool-v2: 炸板 = 信号日(盘中=实时bar)最高触到涨停价、收盘没封住, 口径与上面 isLUc 一致(容 1 分);
+       bomb5/lu5 = 近5根(含信号日)里炸板/封板涨停次数；无涨跌幅限制日不算。 */
+    let bomb = 0, bomb5 = 0, lu5 = 0, luPx = 0, sbH = 0;
+    {
+      const _bars = liveBar ? kl.concat([liveBar]) : kl;
+      for (let _k5 = _bars.length - 1; _k5 >= Math.max(1, _bars.length - 5); _k5--) {
+        const _pc5 = _bars[_k5 - 1].c, _px5 = _pc5 > 0 ? Math.round(_pc5 * (1 + _luR) * 100 + 1e-6) / 100 : 0;
+        if (!(_px5 > 0) || _bars[_k5].h / _pc5 - 1 > _luR + 0.005) continue;
+        const _t5 = _bars[_k5].h >= _px5 - 0.011, _s5 = _bars[_k5].c >= _px5 - 0.011;
+        if (_t5 && !_s5) bomb5++;
+        else if (_t5 && _s5) lu5++;
+        if (_k5 === _bars.length - 1) { bomb = _t5 && !_s5 ? 1 : 0; luPx = _px5; sbH = _bars[_k5].h; }
+      }
+    }
     // jl-0920-38: 单日形态改3日确认——近3个已完成bar里≥2日命中才计风险族(治单日噪音误杀)
-    let us3 = 0, coh3 = 0, vp3 = 0;
+    let us3 = 0, coh3 = 0, pr3 = 0, vp3 = 0;
     for (let _k3 = Math.max(1, i - 2); _k3 <= i; _k3++) {
-      const _b3 = kl[_k3], _p3c = kl[_k3 - 1].c;
-      const _rg3 = _b3.h - _b3.l;
-      if (_rg3 > 0 && (_b3.h - Math.max(_b3.c, _p3c)) / _rg3 >= 0.35) us3++;
-      if (_b3.h > 0 && (_b3.h - _b3.c) / _b3.h >= 0.08) coh3++;
+      const _b3 = kl[_k3], _rg3 = _b3.h - _b3.l;
+      const _usHit = _rg3 > 0 && (_b3.h - Math.max(_b3.c, _b3.o)) / _rg3 >= 0.35;
+      const _cohHit = _b3.h > 0 && (_b3.h - _b3.c) / _b3.h >= 0.08;
+      if (_usHit) us3++;
+      if (_cohHit) coh3++;
+      if (_usHit || _cohHit) pr3++; /* jl-pool-v2-review: 同一日命中两种价格形态也只算1日 */
       if (vols.length && vols.filter((v) => v <= _b3.v).length / vols.length >= 0.95) vp3++;
     }
     const up = cs[i] > e20[i];
@@ -5789,22 +5822,35 @@ function playbookHTMLJL(s, leg, swSt) {
     for (let j = i; j >= 1 && cs[j] > cs[j - 1]; j--) upDays++;
     let emaDays = 0;
     for (let j = i; j >= 20 && cs[j] > e20[j]; j--) emaDays++;
-    return { code, name, close: liveBar ? liveBar.c : cs[i], pct: liveBar ? +((liveBar.c / cs[i] - 1) * 100).toFixed(2) : +pct2.toFixed(2), ctrl: ctrl[i], pos: +pos.toFixed(2), wash, p20: +p20.toFixed(1), gene, lu20, vr, dc5: +dc5.toFixed(1), volPct120: volPct120 != null ? +volPct120.toFixed(3) : null, upperShadow: +upperShadow.toFixed(3), closeOffHigh: +closeOffHigh.toFixed(3), us3, coh3, vp3, layer, upDays, emaDays, d: liveBar ? liveBar.d : kl[i].d, yd: p10 - JLPOOL_IDX10 >= 80 ? 1 : 0 };
+    return { code, name, close: liveBar ? liveBar.c : cs[i], pct: liveBar ? +((liveBar.c / cs[i] - 1) * 100).toFixed(2) : +pct2.toFixed(2), ctrl: ctrl[i], pos: +pos.toFixed(2), wash, p20: +p20.toFixed(1), gene, lu20, vr, dc5: +dc5.toFixed(1), volPct120: volPct120 != null ? +volPct120.toFixed(3) : null, upperShadow: +upperShadow.toFixed(3), closeOffHigh: +closeOffHigh.toFixed(3), us3, coh3, pr3, vp3, bomb, bomb5, lu5, luPx, bh: sbH, layer, upDays, emaDays, d: liveBar ? liveBar.d : kl[i].d, yd: p10 - JLPOOL_IDX10 >= 80 ? 1 : 0 };
   }
   function poolEvidenceJL(x) {
     const f = {};
     if (x.pos > 0.9 || x.p20 > 35) f.position = ["\u9AD8\u4F4D/\u52A0\u901F\u4F4D\u7F6E"];
-    // jl-0920-38: 量/价两族改3日确认(us3/coh3/vp3=近3日命中次数,旧快照无该字段回退单日口径)
+    // jl-0920-38: 量/价两族改3日确认(pr3/vp3=近3日实际命中日数,旧快照无pr3时用保守口径)
     if (x.vp3 != null ? x.vp3 >= 2 : x.volPct120 >= 0.95) f.volume = ["\u4E2A\u80A1120\u65E5\u91CF\u5206\u4F4D\u5F02\u5E38(3\u65E5\u786E\u8BA4)"];
-    if (x.us3 != null || x.coh3 != null ? (x.us3 || 0) + (x.coh3 || 0) >= 2 : x.upperShadow >= 0.35 || x.closeOffHigh >= 0.08) f.price = ["\u4EF7\u683C\u627F\u63A5\u5931\u8D25(3\u65E5\u786E\u8BA4)"];
+    if (x.pr3 != null ? x.pr3 >= 2 : x.us3 != null || x.coh3 != null ? Math.max(x.us3 || 0, x.coh3 || 0) >= 2 : x.upperShadow >= 0.35 || x.closeOffHigh >= 0.08) f.price = ["\u4EF7\u683C\u627F\u63A5\u5931\u8D25(3\u65E5\u786E\u8BA4)"];
     if (x.outStreak >= 2 && x.d0 < 0) f.funds = ["\u8FDE\u7EED\u8D44\u91D1\u6D41\u51FA"];
     return f;
+  }
+  function poolVetoJL(x) { /* jl-pool-v2: 硬否决——炸板; 高位+放量+长上影(可关)。top 层是到顶预警, 不否决 */
+    if (!x || x.layer === "top") return null;
+    if (!Number.isFinite(x.bomb)) return { status: "炸板待确认", reason: "候选未按 v2 日K复算炸板，不能排除炸板 · 不进主推 · 请实盘重扫" };
+    if (x.bomb) return { status: "炸板观察", reason: "当日最高 " + x.bh + " 触涨停价 " + x.luPx + " 但收盘未封住(现 " + x.close + ")" };
+    if (JLPOOL_V2.BLOWOFF_VETO) {
+      const ev = poolEvidenceJL(x);
+      if (ev.position && ev.volume && ((x.us3 || 0) >= 1 || x.upperShadow >= 0.35)) return { status: "高位放量长上影", reason: "高位+放量+近3日长上影, 派发顶特征" };
+    }
+    return null;
   }
   function poolGateJL(x) {
     const reasons = [];
     if (!x || !jlPoolFresh(x.d)) return { ok: false, status: "\u6570\u636E\u8FC7\u671F", reasons: ["\u65E5K\u6570\u636E\u8FC7\u671F"], families: [] };
-    if (!jlPoolFresh(x.d0Date)) return { ok: false, status: "\u6570\u636E\u8FC7\u671F", reasons: ["\u8D44\u91D1\u6570\u636E\u8FC7\u671F"], families: [] };
-    if (x.f10 === void 0 || x.d0 === void 0 || x.fundSourceValid !== true || x.fundStatus === "\u63A5\u53E3\u9650\u6D41" || x.fundStatus === "\u63A5\u53E3\u65AD\u7EBF" || x.fundStatus === "\u6682\u7F3A") return { ok: false, status: "\u8BC1\u636E\u4E0D\u8DB3", reasons: [x.fundStatus || "\u8D44\u91D1\u5B57\u6BB5\u7F3A\u5931"], families: [] };
+    if (!jlPoolFresh(x.d0Date)) return { ok: false, status: "数据过期", reasons: ["资金数据过期"], families: [] };
+    const _vt = poolVetoJL(x);
+    if (_vt) return { ok: false, status: _vt.status, reasons: [_vt.reason], families: [] };
+    if (poolFundShortJL(x)) return { ok: false, status: "资金待确认", reasons: ["资金历史" + poolFundDaysTextJL(x) + "(要求至少 " + JLPOOL_V2.MIN_FUND_DAYS + " 日), 不计5日/10日统计, 不进主推"], families: [] };
+    if (!Number.isFinite(x.d0) || !Number.isFinite(x.f10) || x.fundSourceValid !== true || x.fundStatus === "\u63A5\u53E3\u9650\u6D41" || x.fundStatus === "\u63A5\u53E3\u65AD\u7EBF" || x.fundStatus === "\u6682\u7F3A") return { ok: false, status: "\u8BC1\u636E\u4E0D\u8DB3", reasons: [x.fundStatus || "\u8D44\u91D1\u5B57\u6BB5\u7F3A\u5931"], families: [] };
     const ev = poolEvidenceJL(x), fam = Object.keys(ev);
     // jl-0920-38: 双族一票否决改扣分制——start/zs/eb打分层只标注不拒(扣分在scoreOfJL,zs豁免position族); trend/top非打分层维持原拒绝进RISK
     if (fam.length >= 2 && ["start", "zs", "eb"].indexOf(x.layer) < 0) return { ok: false, status: "\u6D3E\u53D1\u98CE\u9669", reasons: [fam.map((k) => ev[k][0]).join(" + ")], families: fam };
@@ -5819,35 +5865,39 @@ function playbookHTMLJL(s, leg, swSt) {
   function poolObserveGateJL(x) {
     if (!x || !jlPoolFresh(x.d)) return { ok: false, status: "\u6570\u636E\u8FC7\u671F", reasons: ["\u65E5K\u6570\u636E\u8FC7\u671F"], families: [] };
     const ev = poolEvidenceJL(x), fam = Object.keys(ev);
-    if (fam.length >= 2) return { ok: true, status: "\u98CE\u9669\u89C2\u5BDF", reasons: [fam.map((k) => ev[k][0]).join(" + ")], families: fam, risk: 1 };
+    if (fam.length >= 2) return { ok: true, status: "风险观察", reasons: [fam.map((k) => ev[k][0]).join(" + ")], families: fam, risk: 1 };
+    const _vt = poolVetoJL(x);
+    if (_vt) return { ok: true, status: _vt.status, reasons: [_vt.reason], families: fam, watch: 1 };
     if (!jlPoolFresh(x.d0Date)) return { ok: true, status: "\u8D44\u91D1\u5F85\u786E\u8BA4", reasons: ["\u8D44\u91D1\u65E5\u671F\u672A\u786E\u8BA4\xB7\u6570\u636E\u65E5" + (x.d0Date || "?") + "\xB7\u95E8\u69DB\u65E5" + jlLastTradeDay()], families: fam, watch: 1 };
-    if (x.f10 === void 0 || x.d0 === void 0 || x.fundSourceValid !== true || x.fundStatus === "\u63A5\u53E3\u9650\u6D41" || x.fundStatus === "\u63A5\u53E3\u65AD\u7EBF" || x.fundStatus === "\u6682\u7F3A") return { ok: true, status: x.fundStatus || "\u8D44\u91D1\u6682\u7F3A", reasons: [x.fundStatus || "\u8D44\u91D1\u5B57\u6BB5\u7F3A\u5931"], families: fam, watch: 1 };
-    if (x.d0 < 0) return { ok: true, status: "\u8D44\u91D1\u8F6C\u5F31\u5F85\u786E\u8BA4", reasons: ["\u8D44\u91D1\u8F6C\u8D1F"], families: fam, watch: 1 };
+    if (poolFundShortJL(x)) return { ok: true, status: "资金待确认", reasons: ["资金历史" + poolFundDaysTextJL(x) + "(要求至少 " + JLPOOL_V2.MIN_FUND_DAYS + " 日)"], families: fam, watch: 1 };
+    if (!Number.isFinite(x.d0) || !Number.isFinite(x.f10) || x.fundSourceValid !== true || x.fundStatus === "\u63A5\u53E3\u9650\u6D41" || x.fundStatus === "\u63A5\u53E3\u65AD\u7EBF" || x.fundStatus === "\u6682\u7F3A") return { ok: true, status: x.fundStatus || "\u8D44\u91D1\u6682\u7F3A", reasons: [x.fundStatus || "\u8D44\u91D1\u5B57\u6BB5\u7F3A\u5931"], families: fam, watch: 1 };
+    if (x.d0 < 0) return { ok: true, status: "资金转弱待确认", reasons: ["\u8D44\u91D1\u8F6C\u8D1F"], families: fam, watch: 1 };
     return { ok: true, status: "\u76D8\u4E2D\u89C2\u5BDF", reasons: [], families: fam, watch: 1 };
   }
   const poolSortKeyJL = (x) => x.score != null ? 1e3 + x.score : x.layer === "trend" ? x.ctrl || 0 : x.layer === "top" ? Math.round((x.pos || 0) * 100) : -1e9;
   function scoreOfJL(x) {
     if (!poolEligibleJL(x)) return null;
-    const ind = JLPOOL_HOT.has(x.ind) ? 1 : 0;
+    const ind = JLPOOL_HOT.has(x.ind) ? 1 : 0, FW = JLPOOL_V2.FUND_W;
     let sc = 0;
     if (x.layer === "start") {
-      sc = (x.c2 ? 40 : x.f5 > 0 ? 20 : 0) + geneScoreJL(x.gene) + (x.pos < 0.4 ? 20 : x.pos < 0.5 ? 12 : 6) + ind * 20 + (x.vr >= 1.5 ? 12 : 0);
+      sc = (x.c2 ? 40 : x.f5 > 0 ? 20 : 0) * FW + geneScoreJL(x.gene) + (x.pos < 0.4 ? 20 : x.pos < 0.5 ? 12 : 6) + ind * 20 + (x.vr >= 1.5 ? 12 : 0);
     } else if (x.layer === "zs") {
-      sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 25 : x.f10 > 0 ? 15 : 0) + (x.p20 >= 30 ? 25 : x.p20 >= 20 ? 18 : 12) + geneScoreJL(x.gene) + ind * 15;
+      sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 25 : x.f10 > 0 ? 15 : 0) * FW + (x.p20 >= 30 ? 25 : x.p20 >= 20 ? 18 : 12) + geneScoreJL(x.gene) + ind * 15;
     } else if (x.layer === "eb") {
-      sc = (x.f5 > 0 ? 40 : 0) + geneScoreJL(x.gene) + (x.wash >= 5 ? 20 : 10) + ind * 15;
+      sc = (x.f5 > 0 ? 40 : 0) * FW + geneScoreJL(x.gene) + (x.wash >= 5 ? 20 : 10) + ind * 15;
     } else if (x.layer === "trend") {
       /* v0.82.8-P9: trend 层此前落到 else return null -> 永远无分 -> 排序/卡面/精选全拿不到它。
          按 JLPOOL_DESC 的 trend 定义(站EMA20 + 控制分>=50 + 资金新鲜度先验 + 参考仓别重仓)给分，
          骨架照 zs 层降权。权重是可回测初值，要调直接改这四个数。 */
-      sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 28 : x.f10 > 0 ? 15 : 0) + (x.emaDays >= 20 ? 25 : x.emaDays >= 10 ? 15 : 6) + geneScoreJL(x.gene) + ind * 15;
+      sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 28 : x.f10 > 0 ? 15 : 0) * FW + (x.emaDays >= 20 ? 25 : x.emaDays >= 10 ? 15 : 6) + geneScoreJL(x.gene) + ind * 15;
     } else return null;
-    sc = Math.round(sc / ({ start: 112, zs: 100, eb: 95, trend: 100 })[x.layer] * 100);
+    sc = Math.round(sc / poolDenJL(x.layer) * 100);
     if (x.fib && x.fib.hit) sc += 10;  /* jl-1081: 斐波那契波段加分(定案+10, 各层通用, 非硬门槛) */
     // jl-0920-38: 删d0<0再×0.7双重惩罚(gate资金量级门槛已拦,d0<0仍记reason展示)
     // jl-0920-38: 证据族扣分制(每命中1族-12分; zs主升层豁免position高位族——高位本是zs目标形态)
     const _fam9 = Object.keys(poolEvidenceJL(x)).filter((k) => !(x.layer === "zs" && k === "position"));
     if (_fam9.length) sc = Math.max(0, sc - 12 * _fam9.length);
+    sc = Math.max(0, sc - poolHotPenJL(x)); /* jl-pool-v2: 近5根涨停/炸板降权 */
     return sc;
   }
   function jlEmGet(url) {
@@ -5897,7 +5947,7 @@ function playbookHTMLJL(s, leg, swSt) {
     try {
       if (!x || !x.fundSourceValid || !x.d0Date) return;
       const k = "jl_pool_ff_rt_v1", m = JSON.parse(localStorage.getItem(k) || "{}");
-      m[String(code).slice(2)] = { d0: x.d0, d0Date: x.d0Date, d0Stale: x.d0Stale, f5: x.f5, f10: x.f10, n10: x.n10, c2: x.c2, outStreak: x.outStreak, ts: Date.now() };
+      m[String(code).slice(2)] = { d0: x.d0, d0Date: x.d0Date, d0Stale: x.d0Stale, f5: x.f5, f10: x.f10, n10: x.n10, c2: x.c2, outStreak: x.outStreak, fundDays: x.fundDays, ts: Date.now() };
       const ks = Object.keys(m);
       if (ks.length > 600) ks.sort((a, b) => (m[a].ts || 0) - (m[b].ts || 0)).slice(0, ks.length - 600).forEach((k2) => { delete m[k2]; });
       localStorage.setItem(k, JSON.stringify(m));
@@ -5983,7 +6033,7 @@ function playbookHTMLJL(s, leg, swSt) {
     };
     async function one(x) {
       const off = await jlFfOffLoadJL(), oe = off && off.d[x.code.slice(2)];
-      const _lc = jlFfCacheGetJL(x.code), _lcNewer = !!(_lc && jlFfCacheNewerJL(_lc.d0Date, off && off.asof)); /* jl-1027/1028: 纯函数择新 */
+      const _lc = jlFfCacheGetJL(x.code), _lcNewer = !!(_lc && _lc.fundDays >= JLPOOL_V2.MIN_FUND_DAYS && jlFfCacheNewerJL(_lc.d0Date, off && off.asof)); /* jl-pool-v2: 旧缓存无 fundDays(可能是单日资金)或不足3日 → 不用, 重拉日资金 */ /* jl-1027/1028: 纯函数择新 */
       if (window.__jlPoolRT && window.__jlFfDayFailJL === true) { /* jl-1045: 轻量日K优先, 分钟重通道(240根/只)仅在日K整体失效时启用, 治东财风控致只剩1只主升 */
         try {
           const _sec = (x.code.indexOf("sh") === 0 ? "1." : "0.") + x.code.slice(2);
@@ -6010,6 +6060,7 @@ function playbookHTMLJL(s, leg, swSt) {
             x.f10 = _nets.reduce((a, v) => a + v, 0);
             x.n10 = _nets.filter((v) => v > 0).length;
             x.c2 = _nets.length >= 2 && _nets[_nets.length - 1] > 0 && _nets[_nets.length - 2] > 0 ? 1 : 0;
+            x.fundDays = _nets.length; jlFundShortNullJL(x); /* jl-pool-v2: 分钟实时通道只有当日1个数 → fundDays=1, f5/n10/c2 置 null */
             let _st = 0;
             for (let q0 = _nets.length - 1; q0 >= 0 && _nets[q0] < 0; q0--) _st++;
             x.outStreak = _st;
@@ -6024,7 +6075,7 @@ function playbookHTMLJL(s, leg, swSt) {
         x.fundSourceValid = true;
         x.fundStatus = "本地·" + String(_lc.d0Date).slice(5);
         x.d0 = _lc.d0; x.d0Date = _lc.d0Date; x.d0Stale = _lc.d0Date === jlLastTradeDay() ? 0 : 1;
-        x.f5 = _lc.f5; x.f10 = _lc.f10; x.n10 = _lc.n10; x.c2 = _lc.c2; x.outStreak = _lc.outStreak || 0;
+        x.f5 = _lc.f5; x.f10 = _lc.f10; x.n10 = _lc.n10; x.c2 = _lc.c2; x.outStreak = _lc.outStreak || 0; x.fundDays = _lc.fundDays;
         pfProgJL("本地资金·" + String(_lc.d0Date).slice(5));
         return;
       }
@@ -6050,6 +6101,8 @@ function playbookHTMLJL(s, leg, swSt) {
             x.d0 = f62b;
             x.d0Date = jlLastTradeDay();
             x.d0Stale = 0;
+            /* jl-pool-v2-review: f62 只有当日值；清掉复用对象上的旧历史，禁止新旧拼接过门/入缓存。 */
+            x.fundDays = 1; x.f5 = null; x.f10 = null; x.n10 = null; x.c2 = null; x.outStreak = 0;
             jlFfCachePutJL(x.code, x); /* jl-1027 */
             pfProgJL("实时/当日盘中");
             return;
@@ -6064,18 +6117,19 @@ function playbookHTMLJL(s, leg, swSt) {
         const rows0 = d && d.data && d.data.klines ? d.data.klines.map((s2) => s2.split(",")) : [];
         const ltd = jlLastTradeDay();
         const minsP = (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes(), rowsF = rows0.filter((r2) => String(r2[0]) < ltd || minsP >= 905 && String(r2[0]) <= ltd);
-        const rows = rowsF.length ? rowsF : rows0;
-        const nets = rows.map((r) => +r[1]);
+        const rows = rowsF.length ? rowsF : rows0, rowsV = rows.filter((r2) => r2[0] && Number.isFinite(+r2[1]));
+        const nets = rowsV.map((r) => +r[1]);
         if (nets.length >= 1) {
           x.fundSourceValid = true;
           x.fundStatus = "\u5B9E\u65F6/\u6700\u8FD1\u6709\u6548";
           x.d0 = nets[nets.length - 1];
-          x.d0Date = rows[rows.length - 1] && rows[rows.length - 1][0] || "";
+          x.d0Date = rowsV[rowsV.length - 1] && rowsV[rowsV.length - 1][0] || "";
           x.d0Stale = jlPoolFresh(x.d0Date) ? 0 : 1;
           x.f5 = nets.slice(-5).reduce((a, v) => a + v, 0);
           x.f10 = nets.reduce((a, v) => a + v, 0);
           x.n10 = nets.filter((v) => v > 0).length;
           x.c2 = nets.length >= 2 && nets[nets.length - 1] > 0 && nets[nets.length - 2] > 0 ? 1 : 0;
+          x.fundDays = nets.length; jlFundShortNullJL(x);
           let st = 0;
           for (let q = nets.length - 1; q >= 0 && nets[q] < 0; q--) st++;
           x.outStreak = st;
@@ -6086,7 +6140,7 @@ function playbookHTMLJL(s, leg, swSt) {
               const du = await jlEmGet("https://push2delay.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62&secids=" + (x.code.indexOf("sh") === 0 ? "1." : "0.") + x.code.slice(2));
               const f62 = du && du.data && du.data.diff && du.data.diff[0] ? +du.data.diff[0].f62 : NaN;
               if (Number.isFinite(f62)) {
-                const dn10 = nets.slice(-10);
+                const dn10 = nets.concat([f62]).slice(-10); /* jl-pool-v2-review: 当日f62必须进入5/10日窗口, 不能当日d0拼接旧历史 */
                 x.d0 = f62;
                 x.d0Date = td2;
                 x.d0Stale = 0;
@@ -6095,6 +6149,7 @@ function playbookHTMLJL(s, leg, swSt) {
                 x.f10 = dn10.reduce((a, v) => a + v, 0);
                 x.n10 = dn10.filter((v) => v > 0).length;
                 x.c2 = dn10.length >= 2 && dn10[dn10.length - 1] > 0 && dn10[dn10.length - 2] > 0 ? 1 : 0;
+                x.fundDays = dn10.length; jlFundShortNullJL(x);
                 let st2 = 0;
                 for (let q2 = dn10.length - 1; q2 >= 0 && dn10[q2] < 0; q2--) st2++;
                 x.outStreak = st2;
@@ -6358,6 +6413,7 @@ function playbookHTMLJL(s, leg, swSt) {
     cand.forEach((x) => {
       x.gate = poolGateJL(x);
       if (!x.gate.ok) {
+        x.score = null; /* jl-pool-v2-review: 降观察/风险时清除复用对象上的旧分，不评分不主推。 */
         const og = poolObserveGateJL(x);
         x.obsGate = og;
         if (og.ok && og.risk) {
@@ -6387,7 +6443,7 @@ function playbookHTMLJL(s, leg, swSt) {
     for (const k in RISK) RISK[k] = RISK[k].slice(0, 20);
     const _prevD0tr = JLPOOL && JLPOOL.d0 || "";
     if (JLPOOL && JLPOOL.L) jlSafeSetJL("jl_pool_prev_v1", JSON.stringify(JLPOOL));
-      JLPOOL = { date: jlYMD(/* @__PURE__ */ new Date()), ts: (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5), d0, uni: uniN, L, OBS, RISK, rejectStats, src: srcTag || "live", holdCheck: poolHoldCheckJL(heldRows) };
+      JLPOOL = { v: 2, date: jlYMD(/* @__PURE__ */ new Date()), ts: (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5), d0, uni: uniN, L, OBS, RISK, rejectStats, src: srcTag || "live", holdCheck: poolHoldCheckJL(heldRows) };
     try {
       poolTrackUpdJL(d0, _prevD0tr);
     } catch (eTr) {
@@ -6397,11 +6453,10 @@ function playbookHTMLJL(s, leg, swSt) {
       ["start", "zs", "eb"].forEach((k) => {
         (L[k] || []).filter((x) => x.score != null && x.score >= 60).slice(0, 3).forEach((x) => _pk.push({ code: x.code, name: x.name, layer: x.layer, score: x.score, close: x.close, hy: x.ind || JLPOOL_HY[x.code] || "", d0: x.d0 != null ? +x.d0.toFixed(0) : null, f5: x.f5 != null ? +x.f5.toFixed(0) : null, pos: x.pos, ctrl: x.ctrl != null ? +x.ctrl.toFixed(0) : null }));
       });
-      if (_pk.length) {
-        const _lg = JSON.parse(localStorage.getItem("jl_pool_picks_v1") || "{}");
-        _lg[jlYMD(/* @__PURE__ */ new Date())] = { d0, ts: (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5), picks: _pk };
-        jlSafeSetJL("jl_pool_picks_v1", JSON.stringify(_lg));
-      }
+      /* jl-pool-v2-review: 空主推也覆盖同日旧日志；历史其他交易日不改。 */
+      const _lg = JSON.parse(localStorage.getItem("jl_pool_picks_v1") || "{}");
+      _lg[jlYMD(/* @__PURE__ */ new Date())] = { d0, ts: (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5), picks: _pk };
+      jlSafeSetJL("jl_pool_picks_v1", JSON.stringify(_lg));
     } catch (e) {
     }
     try { jlPoolAnchorSetJL(d0); } catch (eAn) {} /* jl-1028: 实盘定稿即更新锚点 */
@@ -6422,7 +6477,7 @@ function playbookHTMLJL(s, leg, swSt) {
       try {
         const rs = await fetch("./pool_latest.json?_=" + Date.now(), { cache: "no-store" });
         const snap = rs.ok ? await rs.json() : null;
-        if (snap && snap.L && snap.d0) {
+        if (snap && snap.v === 2 && snap.L && snap.d0) { /* jl-pool-v2-review: 无版本戳快照未经新硬规则，不直接上屏 */
           /* v0.82.12-P15: 不再无条件用静态快照覆盖本地榜。
              仓库里的 pool_latest.json 是 hq 管道产物，管道停更后它永远停在旧日期
              (实测 date=d0=2026-09-21, ts=15:16)。原逻辑只判 snap && snap.L && snap.d0
@@ -6435,7 +6490,7 @@ function playbookHTMLJL(s, leg, swSt) {
              return 在 try 内，行 5256 的 finally 仍会复位 JLPOOL_RUN 并 renderWatch。 */
           const _snapD0 = String(snap.d0 || snap.date || "");
           let _locP = null;
-          try { _locP = JSON.parse(localStorage.getItem("jl_pool_v1") || "null"); } catch (eLc) { _locP = null; }
+          try { _locP = JSON.parse(localStorage.getItem("jl_pool_v1") || "null"); if (!_locP || _locP.v !== 2) _locP = null; } catch (eLc) { _locP = null; }
           const _locD0 = String((_locP && (_locP.d0 || _locP.date)) || "");
           const _ancD0 = jlPoolAnchorGetJL(); /* jl-1028: 锚点=用户实盘扫到过的最新日, 不被核销 */
           if (jlPoolShouldKeepLocalJL(_locD0, _ancD0, _snapD0)) { /* jl-1028: 纯函数决策——本地榜或锚点 >= 快照即保留, 旧快照压不过 */
@@ -6580,7 +6635,7 @@ function playbookHTMLJL(s, leg, swSt) {
         /* jl-1085: 断点改纯时间戳判定——原 ck.date===今天 的比对在跨零点后把 90 分钟窗口内的
            新断点直接作废(实测23:33扫到22%被锁屏/刷新中断, 00:05后重扫date不匹配=从头再来),
            90分钟ts窗口本身已防隔夜旧断点, date比对冗余且在零点后有害 */
-        if (ck && ck.uniLen === UNI.length && Date.now() - (ck.ts || 0) < 54e5) {
+        if (ck && ck.v === 2 && ck.uniLen === UNI.length && Date.now() - (ck.ts || 0) < 54e5) { /* jl-pool-v2: 无 v 戳=旧版断点, 候选缺炸板字段, 弃用重扫 */
           cand = ck.cand || [];
           done = ck.done || 0;
           fail = ck.fail || 0;
@@ -6633,7 +6688,7 @@ function playbookHTMLJL(s, leg, swSt) {
           done++;
           if (done % 600 === 0) {
             try {
-              localStorage.setItem("jl_scan_ckpt_v1", JSON.stringify({ date: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), uniLen: UNI.length, idx, cand: cand.length > 800 ? cand.slice(-800) : cand /* jl-0929-12: 断点保留量400→800, 截断偏向缓解 */, done, fail, ts: Date.now() }));
+              localStorage.setItem("jl_scan_ckpt_v1", JSON.stringify({ v: 2, date: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), uniLen: UNI.length, idx, cand: cand.length > 800 ? cand.slice(-800) : cand /* jl-0929-12: 断点保留量400→800, 截断偏向缓解 */, done, fail, ts: Date.now() }));
             } catch (e) {
             }
           }
@@ -6653,7 +6708,7 @@ function playbookHTMLJL(s, leg, swSt) {
         return;
       }
       try {
-        localStorage.setItem("jl_scan_ckpt_v1", JSON.stringify({ date: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), uniLen: UNI.length, idx: UNI.length, cand: cand.length > 800 ? cand.slice(-800) : cand /* jl-0929-12: 断点保留量400→800, 截断偏向缓解 */, done, fail, ts: Date.now(), stage: "scan-done" }));
+        localStorage.setItem("jl_scan_ckpt_v1", JSON.stringify({ v: 2, date: (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), uniLen: UNI.length, idx: UNI.length, cand: cand.length > 800 ? cand.slice(-800) : cand /* jl-0929-12: 断点保留量400→800, 截断偏向缓解 */, done, fail, ts: Date.now(), stage: "scan-done" }));
       } catch (e) {
       }
       const dc = {};
@@ -6752,7 +6807,8 @@ function playbookHTMLJL(s, leg, swSt) {
       }
       return '<div class="poolFundFx"><span class="fxLbl">\u8D44\u91D1\u6D41\u5411</span><span class="fxN">' + (x.fundStatus || "\u672A\u786E\u8BA4") + " \xB7 \u8865\u62C9\u4E2D \xB7 \u4E0D\u8FDB\u8BC4\u5206</span></div>";
     }
-    let s2 = '<div class="poolFundFx"><span class="fxLbl">\u8D44\u91D1\u6D41\u5411</span>' + _fxG("\u4E3B\u529B\u5F53\u65E5", x.d0) + _fxG("5\u65E5", x.f5) + _fxG("10\u65E5", x.f10) + '<span class="fxN">\u6D41\u5165' + x.n10 + "/10\u5929";
+    if (poolFundShortJL(x)) return '<div class="poolFundFx"><span class="fxLbl">资金流向</span>' + _fxG("主力当日", x.d0) + '<span class="fxN">资金历史' + poolFundDaysTextJL(x) + ' \xB7 待确认 \xB7 不计 5日/10日 \xB7 资金日 ' + String(x.d0Date || "").slice(5) + '</span></div>';
+    let s2 = '<div class="poolFundFx"><span class="fxLbl">资金流向</span>' + _fxG("主力当日", x.d0) + _fxG("5\u65E5", x.f5) + _fxG("10\u65E5", x.f10) + '<span class="fxN">\u6D41\u5165' + x.n10 + "/10\u5929";
     if (x.c2) s2 += " \xB7 \u8FDE\u7EED2\u65E5\u6D41\u5165";
     if (x.outStreak >= 2) s2 += " \xB7 \u8FDE\u7EED" + x.outStreak + "\u65E5\u6D41\u51FA";
     s2 += " \xB7 \u8D44\u91D1\u65E5 " + String(x.d0Date || "").slice(5);
@@ -6964,14 +7020,15 @@ function playbookHTMLJL(s, leg, swSt) {
   }
   function poolScoreReplayJL(x) {
     let sc = 0;
-    if (x.layer === "start") sc = (x.c2 ? 40 : x.f5 > 0 ? 20 : 0) + geneScoreJL(x.gene) + (x.pos < 0.4 ? 20 : x.pos < 0.5 ? 12 : 6) + (x.vr >= 1.5 ? 12 : 0);
-    else if (x.layer === "zs") sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 25 : x.f10 > 0 ? 15 : 0) + (x.p20 >= 30 ? 25 : x.p20 >= 20 ? 18 : 12) + geneScoreJL(x.gene);
-    else if (x.layer === "eb") sc = (x.f5 > 0 ? 40 : 0) + geneScoreJL(x.gene) + (x.wash >= 5 ? 20 : 10);
+    if (x.layer === "start") sc = (x.c2 ? 40 : x.f5 > 0 ? 20 : 0) * JLPOOL_V2.FUND_W + geneScoreJL(x.gene) + (x.pos < 0.4 ? 20 : x.pos < 0.5 ? 12 : 6) + (x.vr >= 1.5 ? 12 : 0);
+    else if (x.layer === "zs") sc = (x.n10 >= 7 ? 40 : x.n10 >= 5 ? 25 : x.f10 > 0 ? 15 : 0) * JLPOOL_V2.FUND_W + (x.p20 >= 30 ? 25 : x.p20 >= 20 ? 18 : 12) + geneScoreJL(x.gene);
+    else if (x.layer === "eb") sc = (x.f5 > 0 ? 40 : 0) * JLPOOL_V2.FUND_W + geneScoreJL(x.gene) + (x.wash >= 5 ? 20 : 10);
     else return null;
-    sc = Math.round(sc / ({ start: 112, zs: 100, eb: 95 })[x.layer] * 100);
+    sc = Math.round(sc / poolDenJL(x.layer) * 100);
     // jl-0920-38: 与scoreOfJL同步删×0.7+证据族扣分制(回放无3日字段,自动回退单日口径)
     const _famR = Object.keys(poolEvidenceJL(x)).filter((k) => !(x.layer === "zs" && k === "position"));
     if (_famR.length) sc = Math.max(0, sc - 12 * _famR.length);
+    sc = Math.max(0, sc - poolHotPenJL(x));
     return sc;
   }
   const poolTrajCacheJL = {};
@@ -7048,13 +7105,18 @@ function playbookHTMLJL(s, leg, swSt) {
       const row = { d: T, layer: hit ? hit.layer : null, close: hit ? hit.close : +slice[slice.length - 1][2], pct: hit ? hit.pct : null, d0: d0v, status: "", sc: null };
       if (!hit) row.status = "out";
       else {
-        const x = Object.assign({}, hit, { d0: d0v, f10, f5, outStreak: st, n10: n10.filter((v) => v > 0).length, c2: n10.length >= 2 && n10[n10.length - 1] > 0 && n10[n10.length - 2] > 0 ? 1 : 0 });
+        const x = Object.assign({}, hit, { d0: d0v, f10, f5, outStreak: st, fundDays: n10.length, n10: n10.filter((v) => v > 0).length, c2: n10.length >= 2 && n10[n10.length - 1] > 0 && n10[n10.length - 2] > 0 ? 1 : 0 });
         const _ev2 = poolEvidenceJL(x), fam = Object.keys(_ev2);
         if (fam.length >= 2) {
           row.status = "risk";
           row.why = fam.map((k) => _ev2[k][0]).join(" + ");
         }
         else if (!nets || !d0fresh) row.status = "noff";
+        else if (poolVetoJL(x)) {
+          row.status = "veto";
+          row.why = poolVetoJL(x).status + ": " + poolVetoJL(x).reason;
+        }
+        else if (poolFundShortJL(x)) row.status = "short";
         else if (d0v >= 1e7 || f10 >= 1.5e8 && d0v > -5e7) {
           row.status = "ok";
           row.sc = poolScoreReplayJL(x);
@@ -7068,7 +7130,7 @@ function playbookHTMLJL(s, leg, swSt) {
   }
   function poolTrajHTMLJL(bare, name, d) {
     if (d.err) return '<div class="trajErrJL">' + d.err + "</div>";
-    const STATUS = { ok: ["合格·过资金门", "rgba(0,150,90,.92)"], obs: ["观察·资金未过门", "rgba(138,96,12,.92)"], risk: ["风险·派发信号", "rgba(224,32,32,.92)"], noff: ["资金日期未确认", "rgba(74,86,96,.92)"], out: ["出池·当日无分层", "rgba(80,88,96,.92)"] }; /* jl-1089: 色值换实底pill背景(模板 style 由 color: 改 background:), 状态语义与结构不变 */
+    const STATUS = { ok: ["合格·过资金门", "rgba(0,150,90,.92)"], obs: ["观察·资金未过门", "rgba(138,96,12,.92)"], risk: ["风险·派发信号", "rgba(224,32,32,.92)"], noff: ["资金日期未确认", "rgba(74,86,96,.92)"], veto: ["炸板/顶部形态·降观察", "rgba(138,96,12,.92)"], short: ["资金不足" + JLPOOL_V2.MIN_FUND_DAYS + "日·待确认", "rgba(74,86,96,.92)"], out: ["出池·当日无分层", "rgba(80,88,96,.92)"] }; /* jl-1089: 色值换实底pill背景(模板 style 由 color: 改 background:), 状态语义与结构不变 */
     const now = /* @__PURE__ */ new Date(), mn = now.getHours() * 60 + now.getMinutes(), tdy = jlYMD(now);
     let h = "";
     d.rows.forEach((r) => {
@@ -7135,7 +7197,7 @@ function playbookHTMLJL(s, leg, swSt) {
     const OBS = P.OBS || {}, RISK = P.RISK || {};
     const obsN = Object.values(OBS).reduce((a, arr) => a + arr.length, 0), riskN = Object.values(RISK).reduce((a, arr) => a + arr.length, 0);
     if (obsN && (!window.__poolSoloJL || window.__poolSoloJL === "obs")) {
-      html += plHead("obs", "\u{1F50E} \u89C2\u5BDF \xB7 \u8D44\u91D1\u5F85\u786E\u8BA4", "#6ef0dc", obsN, "\u8FC7\u4E86\u5F62\u6001\u5C42\u4F46\u8D44\u91D1\u8BC1\u636E\u672A\u9F50\uFF0C\u4E0D\u8BC4\u5206\u4E0D\u4E3B\u63A8");
+      html += plHead("obs", "\u{1F50E} 观察 \xB7 待确认/否决", "#6ef0dc", obsN, "过了形态层但资金/炸板证据未齐，或触发炸板/高位放量长上影否决，不评分不主推");
       for (const k in OBS) html += OBS[k].map((x) => poolRowJL(x, "OBS")).join("");
       html += "</div>";
     }
@@ -7180,7 +7242,8 @@ function playbookHTMLJL(s, leg, swSt) {
   function poolJxDataJL() {
     if (!POOLJX) {
       try {
-        POOLJX = JSON.parse(localStorage.getItem("jl_jx_v2") || "null");
+        const _jx = JSON.parse(localStorage.getItem("jl_jx_v2") || "null");
+        if (_jx && _jx.v === 2) POOLJX = _jx; /* jl-pool-v2-review: 旧精选缓存未经资金/炸板复核 */
       } catch (e) {
       }
     }
@@ -7189,17 +7252,16 @@ function playbookHTMLJL(s, leg, swSt) {
       fetch("https://fululi.github.io/hq-mobile/alla_confirmed.json?_=" + Date.now(), { cache: "no-store" }).then((r) => r.json()).then((d) => {
         const F2 = d && d.final || {}, picks = [];
         [["start", "刚启动", "#ff9f6e"], ["zs", "主升", "#ff5f56"], ["eb", "二波", "#e8c568"]].forEach((L2) => {
-          const arr = F2[L2[0]] || [], x = arr.find((c2) => +c2.d0 >= 1e7 || +c2.f10 >= 1.5e8 && +c2.d0 > -5e7) || null;
+          /* jl-pool-v2-review: 外部管道必须显式提供 fundDays>=3 且 bomb===0；缺字段不再当安全。 */
+          const arr = F2[L2[0]] || [], x = arr.find((c2) => +c2.fundDays >= JLPOOL_V2.MIN_FUND_DAYS && c2.bomb === 0 && (+c2.d0 >= 1e7 || +c2.f10 >= 1.5e8 && +c2.d0 > -5e7)) || null;
           if (x) picks.push({ layer: L2[1], color: L2[2], code: String(x.code || "").slice(2), name: x.name || "", close: +x.close || 0, f5: +x.f5 || 0, d0: +x.d0 || 0, date: x.date || "" });
         });
-        if (picks.length) {
-          POOLJX = { picks, date: picks[0].date };
-          try {
-            localStorage.setItem("jl_jx_v2", JSON.stringify(POOLJX));
-          } catch (e) {
-          }
-          if (watchMode === "leaders") renderPoolJL();
+        POOLJX = { v: 2, picks, date: picks.length ? picks[0].date : "" };
+        try {
+          localStorage.setItem("jl_jx_v2", JSON.stringify(POOLJX));
+        } catch (e) {
         }
+        if (watchMode === "leaders") renderPoolJL();
       }).catch(() => {
       });
     }
@@ -7332,7 +7394,7 @@ function playbookHTMLJL(s, leg, swSt) {
           return null;
         }
       }(); /* jl-1037: 第三旧榜源(jl_pool_v1), 清缓存后边扫边看仍有底 */
-      if (P0 && P0.L) {
+      if (P0 && P0.v === 2 && P0.L) { /* jl-pool-v2-review: 扫描中也不展示旧规则主推 */
         under = '<div class="poolStale">\u626B\u63CF\u8FDB\u884C\u4E2D \xB7 \u4E0B\u65B9\u4E3A ' + (P0.d0 || P0.date || "?") + " \u65E7\u699C\uFF0C\u53EF\u8FB9\u626B\u8FB9\u770B\uFF0C\u4E0D\u7528\u7B49</div>" + poolNavHTMLJL(P0, "", false) + poolLayersHTMLJL(P0, "", true);
       } else {
         under += poolScanSkeletonJL();
@@ -7347,7 +7409,7 @@ function playbookHTMLJL(s, leg, swSt) {
         prev = JSON.parse(localStorage.getItem("jl_pool_prev_v1") || "null");
       } catch (e) {
       }
-      if (prev && prev.L) {
+      if (prev && prev.v === 2 && prev.L) { /* jl-pool-v2-review: 旧规则存档不冒充 v2 榜单 */
         box.innerHTML = poolJxHTMLJL() + poolZtHTMLJL() + '<div class="poolStale">' + (prev.d0 || prev.date || "?") + " \u65E7\u699C\u5B58\u6863 \xB7 \u65B0\u4EA4\u6613\u65E5\u5C1A\u672A\u626B\u51FA\u65B0\u699C \xB7 \u4EC5\u56DE\u987E\u4E0D\u88C5\u6D3B \xB7 \u70B9\u300C\u27F3 \u9F99\u6C60\u626B\u63CF\u300D\u5237\u65B0</div>" + poolNavHTMLJL(prev, "", false) + poolLayersHTMLJL(prev, "", true);
         return;
       }
@@ -7449,7 +7511,7 @@ function playbookHTMLJL(s, leg, swSt) {
       const pl = poolFindJL(s2.code);
       const wf = typeof watchFundHTMLJL === "function" ? watchFundHTMLJL(s2) : "";
       const plMeta = pl && JLPOOL_LAYERS.find((l) => l[0] === pl.layer);
-      const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u89c4\u5219\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? "\u8D44\u91D1\u5F85\u786E\u8BA4" : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
+      const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u89c4\u5219\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? ((pl.x.obsGate && pl.x.obsGate.status) || "资金待确认") : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
       return `<article class="watchItem" style="position:relative">${s2.qty > 0 && !s2.watch ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" type="button" style="position:absolute;right:6px;top:6px;z-index:20;width:28px;height:28px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s2)}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
     };
     const obs = rows.filter((s2) => !(s2.qty > 0) || s2.watch);
@@ -16497,7 +16559,7 @@ var RLMCore = (function () {
   setTimeout(() => {
     try {
       const ck = JSON.parse(localStorage.getItem("jl_scan_ckpt_v1") || "null");
-      if (ck && ck.date === (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") && Date.now() - (ck.ts || 0) < 54e5 && !JLPOOL_RUN) {
+      if (ck && ck.v === 2 && ck.date === (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE") && Date.now() - (ck.ts || 0) < 54e5 && !JLPOOL_RUN) {
         toast("\u26A1 \u9F99\u6C60\u6709\u672A\u5B8C\u5B9E\u76D8\u626B\u63CF \xB7 \u957F\u6309\u626B\u63CF\u94AE=\u5B9E\u76D8\u7EED\u8DD1\xB7\u70B9\u6309=\u79BB\u7EBF\u7EC8\u699C");
       }
     } catch (e) {
@@ -17480,6 +17542,7 @@ var RLMCore = (function () {
         if (x.gate.ok) {
           L[x.layer].push(x);
         } else {
+          x.score = null; /* jl-pool-v2-review: 补跑降级后不得保留旧规则分 */
           const og = poolObserveGateJL(x);
           x.obsGate = og;
           if (og.ok && og.risk) {
