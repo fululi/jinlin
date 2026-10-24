@@ -3,7 +3,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v255"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v253"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -10107,7 +10107,7 @@ function swingMidHTMLJL(st) {
     var out = [], n = b.length, vm = price * 0.0005, i, j;
     for (i = 1; i < n; i++) {
       var p0 = b[i - 1], c0 = b[i]; if (!p0 || !c0) continue;
-      var bull = c0.o - p0.c > vm && c0.l <= p0.h, bear = p0.c - c0.o > vm && c0.h >= p0.l;
+      var bull = c0.o - p0.c > vm, bear = p0.c - c0.o > vm;
       if (!bull && !bear) continue;
       var ok = !(self && (bull ? c0.l <= p0.c : c0.h >= p0.c));
       for (j = i + 1; j < n; j++) if (bull ? b[j].l <= c0.o : b[j].h >= c0.o) { ok = false; break; }
@@ -10122,24 +10122,25 @@ function swingMidHTMLJL(st) {
       var G = _gapLvJL[code] = _gapLvJL[code] || { at: 0 };
       if (Date.now() - G.at > 120000 && !G.fly) {
         G.fly = 1;
-        Promise.all([loadTencentKline(jlPfxJL(code), 5).catch(function () { return null; }), loadTencentKline(jlPfxJL(code), 15).catch(function () { return null; })]).then(function (r) { G.m5 = r[0]; G.m15 = r[1]; G.at = Date.now(); G.fly = 0; try { renderGapRowJL(code, m1rows, cv, price, pre, B, T); } catch (e) { } }).catch(function () { G.fly = 0; });
+        Promise.all([loadTencentKline(jlPfxJL(code), 5).catch(function () { return null; }), loadTencentKline(jlPfxJL(code), 15).catch(function () { return null; }), loadTencentKline(jlPfxJL(code), 30).catch(function () { return null; })]).then(function (r) { G.m5 = r[0]; G.m15 = r[1]; G.m30 = r[2]; G.at = Date.now(); G.fly = 0; try { renderGapRowJL(code, m1rows, cv, price, pre, B, T); } catch (e) { } }).catch(function () { G.fly = 0; });
       }
-      var lv = [['日', dailyBarsOf(code)], ['15分', G.m15], ['5分', G.m5], ['1分', m1rows.map(function (x) { return { t: x.t, o: +x.o, c: +x.c, h: +x.h, l: +x.l }; })]];
+      var lv = [['日', dailyBarsOf(code)], ['30分', G.m30], ['15分', G.m15], ['5分', G.m5], ['1分', m1rows.map(function (x) { return { t: x.t, o: +x.o, c: +x.c, h: +x.h, l: +x.l }; })]];
       var open = row.getAttribute('data-open') === '1', items = [], opn = null;
       var RT = { '600105': { '1分': [[50, 66], [61, 77]], '5分': [[57, 73], [68, 84]], '15分': [[65, 71], [64, 80]], 开: [[54, 61, 62, 24], [68, 73, 76, 35]] }, '603986': { '1分': [[50, 64], [58, 73]], '5分': [[43, 60], [56, 69]], '15分': [[57, 70], [44, 58]], 开: [[46, 50, 55, 22], [49, 57, 60, 29]] } }[String(code).replace(/\D/g, '')] || null;
       var dot = function (c, hollow) { return '<i style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + (hollow ? 'transparent;border:1px solid rgba(255,255,255,.7)' : c) + ';box-shadow:0 0 0 1px rgba(0,0,0,.55);margin-right:2px;vertical-align:1px"></i>'; };
       var hit = function (lo, hi) { var e = price * 0.002; return price >= lo - e && price <= hi + e; };
       var chip = function (it) {
-        if (it.done) return '<span style="white-space:nowrap;font-weight:800">' + dot(it.bull ? '#00f0ff' : '#ffff00') + '开✓' + it.t + '</span>';
-        var p = it.p ? ' <span style="color:#fff">次' + it.p[0] + ' 3日' + it.p[1] + '</span>' : '';
-        return '<span style="white-space:nowrap">' + dot(it.bull ? '#00f0ff' : '#ffff00') + '<span style="color:' + (it.bull ? '#00f0ff' : '#ffff00') + '">' + (it.bull ? '↓' : '↑') + '</span>' + ({ '1分': '1M', '5分': '5M', '15分': '15M', '日': 'D', '开': '开' }[it.lv] || it.lv) + ' ' + ((it.hi - it.lo) / price < 0.0015 ? String(+((it.lo + it.hi) / 2).toFixed(2)) : it.lo.toFixed(2) + '-' + it.hi.toFixed(2)) + (it.st ? '' : p) + (hit(it.lo, it.hi) ? ' <b style="border:1px solid #fff;border-radius:8px;padding:0 3px">在缺口内</b>' : '') + '</span>';
+        if (it.done) return '<span style="white-space:nowrap;font-weight:800">' + dot(it.bull ? '#00f0ff' : '#ffff00') + '<span style="color:' + (it.bull ? '#00f0ff' : '#ffff00') + '">' + (it.bull ? '↓' : '↑') + '</span>开 ' + (it.bull ? '高开 ' : '低开 ') + it.pr + ' ✓' + it.t + '</span>';
+        var p = it.p ? ' <span style="color:#fff">' + it.p[0] + '% 3d' + it.p[1] + '%</span>' : '';
+        var nL = it.ns ? it.ns.length : 1, hc = it.bull ? '#00f0ff' : '#ffff00', sty = nL >= 3 ? ';font-size:11px;font-weight:900;text-shadow:0 0 6px ' + hc + ',0 0 2px ' + hc + ',0 1px 2px rgba(0,0,0,.9)' : (nL === 2 ? ';font-weight:900' : '');
+        return '<span style="white-space:nowrap' + sty + '">' + dot(it.bull ? '#00f0ff' : '#ffff00') + '<span style="color:' + (it.bull ? '#00f0ff' : '#ffff00') + '">' + (it.bull ? '↓' : '↑') + '</span>' + ((it.ns && it.ns.length > 1 ? '' : ({ '1分': '1M', '5分': '5M', '15分': '15M', '30分': '30M', '日': 'D', '开': '开' }[it.lv] || it.lv) + ' ')) + ((it.hi - it.lo) / price < 0.0015 ? String(+((it.lo + it.hi) / 2).toFixed(2)) : it.lo.toFixed(2) + '-' + it.hi.toFixed(2)) + (it.ns && it.ns.length > 1 ? ' ×' + it.ns.length + ' ' + it.ns.slice().sort(function (u, v) { return ORD[v] - ORD[u]; }).map(function (k) { return { '1分': '1M', '5分': '5M', '15分': '15M', '30分': '30M', '日': 'D' }[k]; }).join(' ') : '') + (it.st ? '' : p) + (hit(it.lo, it.hi) ? ' <b style="border:1px solid #fff;border-radius:8px;padding:0 3px">在缺口内</b>' : '') + '</span>';
       };
       try {
         var b0 = B && B[0], op = b0 && Number(b0.o);
         if (pre > 0 && op > 0 && Math.abs(op / pre - 1) >= 0.001) {
           var up = op > pre, fi = -1, q;
           for (q = 0; q < B.length; q++) if (B[q] && (up ? B[q].l <= pre : B[q].h >= pre)) { fi = q; break; }
-          var ost = RT ? RT['开'][up ? 0 : 1] : null; opn = fi < 0 ? { lv: '开', lo: Math.min(op, pre), hi: Math.max(op, pre), bull: up, st: ost } : { done: 1, bull: up, t: T && T[fi] ? T[fi] : '', st: ost };
+          var ost = RT ? RT['开'][up ? 0 : 1] : null; opn = fi < 0 ? { lv: '开', lo: Math.min(op, pre), hi: Math.max(op, pre), bull: up, st: ost } : { done: 1, bull: up, t: T && T[fi] ? T[fi] : '', pr: pre.toFixed(2) + '→' + op.toFixed(2), st: ost };
         }
       } catch (eO) { }
       lv.forEach(function (L) {
@@ -10151,11 +10152,11 @@ function swingMidHTMLJL(st) {
         });
       });
       if (opn && !opn.done) items.push(opn);
-      var ORD = { '1分': 1, '5分': 5, '15分': 15, '日': 99 }, mg = [];
+      var ORD = { '1分': 1, '5分': 5, '15分': 15, '30分': 30, '日': 99 }, mg = [];
       items.forEach(function (it) {
         var m = it.lv === '开' ? null : mg.find(function (x) { return x.lv !== '开' && x.bull === it.bull && it.lo <= x.hi * 1.0005 && it.hi >= x.lo * 0.9995; });
         if (!m) { mg.push(Object.assign({ ns: [it.lv] }, it)); return; }
-        m.ns.push(it.lv); m.lo = Math.min(m.lo, it.lo); m.hi = Math.max(m.hi, it.hi);
+        if (m.ns.indexOf(it.lv) < 0) m.ns.push(it.lv); m.lo = Math.min(m.lo, it.lo); m.hi = Math.max(m.hi, it.hi);
         if (ORD[it.lv] > ORD[m.lv]) { m.lv = it.lv; m.p = it.p; }
       });
       items = mg;
