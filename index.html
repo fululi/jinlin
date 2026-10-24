@@ -5,7 +5,7 @@
 !(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
 </script>
 
-<script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v265"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<!-- v0.85 温度量化批 temp-q1 1025晨: 大盘温度卡——温度近20交易日分位P(读jlv2温度史, 排除当日)+Δ30分盘中动量(jinlin_mtemp_series_v1: ≥09:25才记/4分去重/160点, 集合竞价噪声不进)+九档幅度加权净宽; luLimJL修板块前缀优先(创业板/科创板ST=20%非5%, N/C新股无涨跌幅)+采样失败"示数为旧值"标记; 纯显示层, 温度公式/分区阈值/状态机/抓取链零触碰; 壳v265→266成对(sw.js KEEP=266+265+264) --><script id="jlVerJL" data-ver="0.85" data-sw="jinlin-shell-v266"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -2567,6 +2567,29 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
   function renderMTempJL() {
     const d = mtempJL.data;
     if (!d) return;
+    /* 温度量化 temp-q1(纯显示层, 温度公式与分区零触碰): 分位P=当日温度在近20个交易日温度史(jlv2_temp_hist_v1, 排除当日)中的百分位, 样本≥8才显示; Δ30分=30分钟动量(读 jinlin_mtemp_series_v1, 取距当前25~45分钟的样本, 集合竞价段不记) */
+    const mmTq = (h) => +String(h).slice(0, 2) * 60 + +String(h).slice(3, 5);
+    let pRank = null, d30 = null;
+    try {
+      const tdN = new Date().toLocaleDateString("sv-SE");
+      if (d.td === tdN) {
+        const h = JSON.parse(localStorage.getItem("jlv2_temp_hist_v1") || "{}");
+        const ks = Object.keys(h).filter((k) => k < tdN).sort().slice(-20);
+        if (ks.length >= 8 && d.t != null) pRank = Math.round(ks.filter((k) => h[k].t <= d.t).length / ks.length * 100);
+      }
+    } catch (e) {
+    }
+    try {
+      const se = JSON.parse(localStorage.getItem("jinlin_mtemp_series_v1") || "null");
+      const nowM = d.time && /^\d{2}:\d{2}$/.test(d.time) ? mmTq(d.time) : null;
+      if (se && se.td === d.td && nowM != null && (se.s || []).length >= 2) {
+        for (let i = se.s.length - 1; i >= 0; i--) {
+          const g = nowM - mmTq(se.s[i][0]);
+          if (g >= 25) { if (g <= 45) d30 = d.t - se.s[i][1]; break; }
+        }
+      }
+    } catch (e) {
+    }
     const set = (id, v) => {
       const e = $(id);
       if (e) e.textContent = v;
@@ -2594,12 +2617,14 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
         return "<g" + (c[3] ? ' class="mtd" data-mtd="' + c[3] + '" style="cursor:pointer"' : "") + '><rect x="' + x + '" y="' + (DH - DB - h) + '" width="' + w + '" height="' + h + '" rx="2" fill="' + c[2] + '"/><text x="' + tx + '" y="' + (DH - DB - h - 2) + '" font-size="10.5" fill="#FFFFFF" text-anchor="middle">' + c[1] + '</text><text x="' + tx + '" y="' + (DH - 7) + '" font-size="9" fill="#FFFFFF" text-anchor="middle">' + c[0] + "</text></g>";
       }).join("") + "</svg>";
     }
+    const tqWU = (d.bu || [0, 0, 0, 0])[0] * 8.5 + (d.bu || [0, 0, 0, 0])[1] * 6 + (d.bu || [0, 0, 0, 0])[2] * 3.5 + (d.bu || [0, 0, 0, 0])[3], tqWD = (d.bd || [0, 0, 0, 0])[0] + (d.bd || [0, 0, 0, 0])[1] * 3.5 + (d.bd || [0, 0, 0, 0])[2] * 6 + (d.bd || [0, 0, 0, 0])[3] * 8.5;
+    const nbJL = tqWU + tqWD > 0 ? Math.round((tqWU - tqWD) / (tqWU + tqWD) * 100) : null; /* 温度量化 temp-q1: 幅度加权净宽(九档桶权重>7%:8.5 / 7~5:6 / 5~2:3.5 / 2~0:1, >0=涨侧幅度占优), 深采分桶缺数时不显示 */
     const amtEl = $("mtAmtJL");
     const sa = typeof window.__jlAmtSameTime === "function" ? window.__jlAmtSameTime() : null; /* \u6E29\u5EA6\u4FEE: \u6210\u4EA4\u989D\u6539"\u8F83\u4E0A\u4E00\u4EA4\u6613\u65E5\u540C\u65F6\u6BB5"(jlv2.js \u817E\u8BAF\u5206\u949F\u66F2\u7EBF, \u4E0Ev2\u5361\u540C\u4E00\u4E2A\u6570); \u539F"\u8F83\u524D\u65E5"=\u4ECA\u5929\u76D8\u4E2D\u7D2F\u8BA1\u6BD4\u6628\u5929\u6700\u540E\u4E00\u6B21\u91C7\u6837, \u76D8\u4E2D\u6052\u504F\u4F4E */
-    if (amtEl) amtEl.innerHTML = "\u6CAA\u6DF1\u6210\u4EA4 " + (d.amt / 1e8).toFixed(0) + "\u4EBF" + (sa ? " \xB7 \u8F83\u4E0A\u4E00\u4EA4\u6613\u65E5\u540C\u65F6\u6BB5 " + ((sa.diff >= 0 ? "+" : "") + (sa.diff / 1e8).toFixed(0) + "\u4EBF") : "") + " \xB7 \u4E0A\u6DA8 " + d.up + " \u5BB6 \xB7 \u4E0B\u8DCC " + d.down + " \u5BB6" + (d.fund != null ? '<br><span class="mtd fund" data-mtd="fund">\u4E3B\u529B\u51C0\u989D <b class="' + (d.fund >= 0 ? "up" : "dn") + '">' + fmtFundJL(d.fund) + "</b> \xB7 " + d.verdict + "</span>" : "");
+    if (amtEl) amtEl.innerHTML = "\u6CAA\u6DF1\u6210\u4EA4 " + (d.amt / 1e8).toFixed(0) + "\u4EBF" + (sa ? " \xB7 \u8F83\u4E0A\u4E00\u4EA4\u6613\u65E5\u540C\u65F6\u6BB5 " + ((sa.diff >= 0 ? "+" : "") + (sa.diff / 1e8).toFixed(0) + "\u4EBF") : "") + " \xB7 \u4E0A\u6DA8 " + d.up + " \u5BB6 \xB7 \u4E0B\u8DCC " + d.down + " \u5BB6" + (nbJL != null ? " \xB7 \u51C0\u5BBD" + (nbJL > 0 ? "+" : "") + nbJL : "") + (d.fund != null ? '<br><span class="mtd fund" data-mtd="fund">\u4E3B\u529B\u51C0\u989D <b class="' + (d.fund >= 0 ? "up" : "dn") + '">' + fmtFundJL(d.fund) + "</b> \xB7 " + d.verdict + "</span>" : "");
     const u = $("mtUpdatedJL");
     const td0 = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), dd0 = d.td || (mtempJL.at ? new Date(mtempJL.at).toLocaleDateString("sv-SE") : ""); /* \u6E29\u5EA6\u4FEE: \u6570\u636E\u4E0D\u5C5E\u4ECA\u5929(\u5468\u672B/\u8282\u5047\u65E5/\u76D8\u524D)\u65F6\u5E26\u65E5\u671F, \u539F\u53EA\u663E\u793A\u65F6\u523B\u2192\u4E0A\u4E00\u4EA4\u6613\u65E5\u7684\u6570\u770B\u7740\u50CF\u4ECA\u5929 */
-    if (u) u.textContent = "\u91C7\u6837 " + (dd0 && dd0 !== td0 ? dd0.slice(5) + " " : "") + d.time + " \xB7 \u4E1C\u8D22\u5168A" + (d.cov != null && d.cov < 95 ? " \u8986\u76D6" + d.cov + "%" : "") + " \xB7 \u70B9\u6211\u91CD\u91C7";
+    if (u) u.textContent = "\u91C7\u6837 " + (dd0 && dd0 !== td0 ? dd0.slice(5) + " " : "") + d.time + " \xB7 \u4E1C\u8D22\u5168A" + (d.cov != null && d.cov < 95 ? " \u8986\u76D6" + d.cov + "%" : "") + (pRank != null ? " \xB7 \u5206\u4F4DP" + pRank + "(20\u65E5)" : "") + (d30 != null ? " \xB7 30\u5206" + (d30 > 0 ? "+" : "") + d30 : "") + " \xB7 \u70B9\u6211\u91CD\u91C7";
   }
   function loadMTempJL(force) {
     /* v0.82.3: 温度换骨架——东财clist翻页全A采样在风控下必败("一直失败"根因, 实测连发全量空返+IP封禁)。
@@ -2627,7 +2652,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       if (--left > 0) return;
       mtempJL.loading = false;
       if (bad || !(acc.up >= 0)) {
-        if (u) u.textContent = "采样失败 · 点我重试";
+        if (u) u.textContent = "采样失败 · 点我重试" + (mtempJL.data && mtempJL.data.t != null ? "（示数为旧值）" : ""); /* 温度量化 temp-q1: 失败时明示数字是旧值 */
         return;
       }
       const r = { src: "v1", td: acc.td, hm: acc.hm, up: acc.up, down: acc.down, flat: acc.flat, amt: acc.amt, at: now };
@@ -2682,6 +2707,19 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       localStorage.setItem("jinlin_mtemp_v1", JSON.stringify({ at: mtempJL.at || 0, data }));
     } catch (e) {
     }
+    try { /* 温度量化 temp-q1: 盘中温度序列——数据属今天且≥09:25才记(避开集合竞价噪声), 4分钟去重, 上限160点; 供Δ30分动量 */
+      const tdN = new Date().toLocaleDateString("sv-SE");
+      const hmS = r.hm || new Date(r.at).toTimeString().slice(0, 5); /* v2广播无hm→用客户端钟补, 4分去重桶吸收秒级钟差 */
+      if (r.td === tdN && hmS >= "09:25") {
+        const se = JSON.parse(localStorage.getItem("jinlin_mtemp_series_v1") || "null") || { td: tdN, s: [] };
+        if (se.td !== tdN) { se.td = tdN; se.s = []; }
+        const mmN = +hmS.slice(0, 2) * 60 + +hmS.slice(3, 5), last = se.s[se.s.length - 1];
+        if (!last || mmN - (+last[0].slice(0, 2) * 60 + +last[0].slice(3, 5)) >= 4) se.s.push([hmS, t]);
+        if (se.s.length > 160) se.s = se.s.slice(-160);
+        localStorage.setItem("jinlin_mtemp_series_v1", JSON.stringify(se));
+      }
+    } catch (e) {
+    }
     renderMTempJL();
     renderMarketFundsJL();
   }
@@ -2697,7 +2735,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
     mtempJL._deepLoading = true;
     const PZ = 100, acc = { up: 0, down: 0, flat: 0, amt: 0, rows: [], bu: [0, 0, 0, 0], bd: [0, 0, 0, 0] };
     let total = 0, sentPages = 0, donePages = 0, maxPn = 56;
-    const luLimJL = (c, n2) => /ST/i.test(n2 || "") ? 4.8 : /^(30|68)/.test(String(c || "").replace(/^(sh|sz)/, "")) ? 19.8 : /^(8|4|92)/.test(String(c || "").replace(/^(sh|sz)/, "")) ? 29.8 : 9.8;
+    const luLimJL = (c, n2) => /^[NC]/i.test(n2 || "") ? 999 : /^(8|4|92)/.test(String(c || "").replace(/^(sh|sz)/, "")) ? 29.8 : /^(30|68)/.test(String(c || "").replace(/^(sh|sz)/, "")) ? 19.8 : /ST/i.test(n2 || "") ? 4.8 : 9.8; /* 温度量化 temp-q1: 板块前缀优先于ST(创业板/科创板ST是20%非5%), N/C开头新股上市初期无涨跌幅(999=永不触发) */
     const eat = (p, amtW, q) => {
       acc.amt += amtW || 0;
       if (q && q.name) acc.rows.push({ c: String(q.code || "").replace(/^(sh|sz)/, ""), n: String(q.name), p, amt: Number(q.zljlr || 0) * 1e4 });
@@ -20122,7 +20160,7 @@ var RLMCore = (function () {
 <script src="jl_concept_map.js?v=1" defer></script>
 <script src="jl_event_log.js?v=2" defer></script>
 <!-- jl-1121 v0.84.62: 温度v2九因子宫格展示补全+三卡消失根治(基于线上v0.84.61最小手术)——【根治】今晚jlv2.js?v=11被GitHub Pages弱网截断(实测26661/76738字节)+max-age=600坏缓存驻留→script无声失败→三卡全灭; 引用改?v=12新URL一步绕开一切坏缓存。【展示补全】①最高连板: ZT池聚合一处落存最高lbc行(名称/代码/行业入jlv2_pool_v1.top, 旧缓存无top自然降级原样), 宫格副行显示 股票名·题材(主概念mc优先→二级行业→池hybk兜底) ②热点板块持续: 板块名上副行(离线聚合/在线兜底两路同口径), 持续天数上值行 ③涨停/跌停宫格标签改"涨停数量/跌停数量" ④炸板率副行挂 炸板数/涨停数(deriveState现成, 口径=炸板/(涨停+炸板)) ⑤ATR波动率标签改"ATR14/价"去解释小字(副行仅留"上证"); 纯渲染层零数据链变更零新增请求; jl-1120(v61)斐波标签/B档反抽内容零触碰; sw v202→v203配对 -->
-<script src="jlv2.js?v=12" defer></script>
+<script src="jlv2.js?v=13" defer></script>
 <!-- jl-1097 v0.84.43: 浮球触档强提示(定案"买卖档到了要亮要提示")——①球色分边: S档(卖位)触=红光/B档(买位)触=绿光/双边都触=琥珀, 静态变色+边框光晕为主(旧.hit纯红环动画在prefers-reduced-motion全灭动画下不可见, 新静态色不受影响), 触档口径r.hit=当日已触(高≥S档/低≤B档)天然亮到收盘 ②新增常驻徽标sbOrbBadgeJL贴球顶: 当日最新触档"名·档·时刻"(如"天奇·S2 09:32")纯派生态零存储, 新交易日触档时间归零自然消失, pointer-events:none不碰拖拽 ③新档脉冲520ms单拍→1.5s双拍 ④失守族(wr/wo/wy)优先级不变仍压触档色, 触档判定/失守监控/待确认转正/台账/评分链零触碰; sw v183→v184 --><!-- jl-1096 v0.84.42: 龙池板块标签全层补齐(接手昨日体检报告的备案修法)——新增jlConTagJL纯本地查表兜底(jl_concept_map.js jl-1086: 5929只·主概念mc永不为空·零网络), 接进行卡poolRowJL/主推卡ppSub/展开chip evChipsJL三个标签位: 行业口径(x.ind/JLPOOL_HY=f100同源)优先·主概念mc兜底; 根因=东财f100双路(扫描内push2 JSONP 9s/poolIndJL批量)被拒网络下行卡/展开chip全空, 且趋势层本就被poolIndJL显式排除=结构性无标签; evChips"行业"chip改"板块"兼容行业/概念双口径; 五层/观察/风险/主推一次补齐, 趋势层硬伤一并覆盖; 宇宙/资金判定/评分/层归置/涨停池链/sw资产清单零触碰; 斐波那契(jl-1081)零触碰 --><!-- jl-1077 v0.84.41: 龙池资金旧表退场(定案·三方台架验收)——①poolFFJL资金确认瀑布整支摘除if(oe){...}离线快照兜底分支: pool_ff.json(5060码)只保留宇宙名单角色, 资金判断不再回填旧表; 表内票实时全灭=fundStatus"暂缺"→门判"证据不足"落观察(刷不出来就是刷不出来); 旧版oe分支排在日K实时之前=表内票实时链结构性不可达(每次扫描必退16号的真根因), 摘除后实时链/分钟重通道对表内票复活 ②分钟重通道实时净额只认当日: _nets=[_net]不再与09-16旧史拼接, f5/f10/n10/c2/outStreak公式原样 ③涨停池卡"资金门过/未过(快照09-16)"标注停用旧快照 ④名单/宇宙构建/实时请求链/阈值/评分/观察页/离线终榜链原样未动; 台架: A表内+实时全灭=旧版离线快照·09-16直进判断vs新版暂缺零注入, B日K/E f62/D缓存与"旧摘兜底"逐字段一致=原逻辑不动, C2旧拼接实录2.71M vs 新版纯当日88M; 基线ddb03d4(v0.84.40)上重放; sw v181→v182 --><!-- jl-1094 v0.84.39 T4a第一阶段: 新增 jl_sector_strength.js(v1)可解释板块强度基础层——口径链mc>sec>hybk(B组键序); 四因子=涨幅/上涨率(jl-1080原式: Σpct/n, up/n, n<8不参评, 分组键换T4a口径)+涨停数(ZT池×口径)+事件扩散(T3 IDB当日记录聚合, 定义=成分股并集, 只读零重算); 成交额变化=数据不足·龙头强度=待定义仅候选; 快照独立IDB jinlin_secstr(k=day|30分桶|sector, 90天保留+12000上限); 红线: jlv2/T3/资金/龙池/universe/扫描频率/假期零触碰, 零新增网络请求, 不接龙池; title随批同步v0.84.39(38包title滞留一并补齐) -->
 <script src="jl_sector_strength.js?v=4" defer></script><!-- jl-1114 jl-C: ?v=2→3防旧缓存(body尾卡→.phone玻璃抽屉/灰字亮白加粗/手柄上拉下滑) -->
 <script src="jl_evidence.js" defer></script>
