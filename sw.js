@@ -147,8 +147,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v269'; /* 2026-10-25: ks-p2 K线页(副图图例/信息卡补额换手/右键与轻点TV式工具条/亮白字/阶段涨幅); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v269', 'jinlin-shell-v268', 'jinlin-shell-v267', 'jinlin-shell-v266', 'jinlin-shell-v265', 'jinlin-shell-v263', 'jinlin-shell-v262', 'jinlin-shell-v261', 'jinlin-shell-v260']; /* 保留当前版及近期缓存 */
+const C = 'jinlin-shell-v270'; /* 2026-10-25: ks-p2-5 K线页清爽化(副图轴签紧凑/底部提示条撤/抽屉浮层透明亮白/斐波TV式+档位勾选+→延伸/选中蓝白手柄/拖动rAF) + 全屏顶栏名称与透明 + 附图已隐藏钮撤; 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v270', 'jinlin-shell-v269', 'jinlin-shell-v268', 'jinlin-shell-v267', 'jinlin-shell-v266', 'jinlin-shell-v265', 'jinlin-shell-v263', 'jinlin-shell-v262', 'jinlin-shell-v261']; /* 保留当前版及近期缓存 */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
