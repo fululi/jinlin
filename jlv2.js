@@ -29,7 +29,8 @@
 
   var UT = "7eea3edcaed734bea9cbfc24409ed989";
   var CFG = {
-    etfs: [["1.510300", "沪深300ETF×4", "510300/310/330/159919", ["1.510300", "1.510310", "1.510330", "0.159919"]], ["1.510500", "中证500ETF", "510500"], ["1.512100", "中证1000ETF", "512100"], ["1.510880", "红利ETF", "510880"]],
+    etfs: [["1.510300", "沪深300ETF×4", "510300/310/330/159919", ["1.510300", "1.510310", "1.510330", "0.159919"]], ["1.510500", "中证500ETF", "510500"], ["1.512100", "中证1000ETF", "512100"], ["1.510880", "红利ETF", "510880"], ["1.510050", "上证50ETF", "510050"], ["1.588000", "科创50ETF", "588000"], ["0.159915", "创业板ETF", "159915"]], /* jl-C4: 0..3 结构判断用, 位次不动; 宽基合计=0(300×4)+4+5+6 */
+    gjdSum: [0, 4, 5, 6], shareSids: ["1.510300", "1.510310", "1.510330", "0.159919", "1.510050", "1.588000", "0.159915"],
     idx: [["1.000300", "沪深300"], ["1.000001", "上证指数"], ["0.399006", "创业板指"]],
     ice: { dtBig: 50, zbRate: 40, lb: 2, prem: -2, minN: 10 }, // 冰点规则组阈值; minN: 涨停+跌停合计不足时"跌停≥涨停×2"比值腿不判(盘初小样本误报)
     coldT: 30,                                              // 温度低于此直接判冷点
@@ -330,6 +331,38 @@
       }, i * 350);
     });
   }
+  /* jl-P2: ETF份额快照(ulist f38, 东财ETF该字段=基金份额, 待手机端确认). 按f124数据日存, 相邻两日份额差×最新价≈当日申赎金额 */
+  function fetchShares(cb) {
+    jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f12,f38,f124&secids=" + CFG.shareSids.join(",") + "&ut=" + UT, function (e, d) {
+      try {
+        var dl = !e && d && d.data && d.data.diff ? (Array.isArray(d.data.diff) ? d.data.diff : Object.values(d.data.diff)) : [];
+        var h = lsGet("jlv2_etf_share_v1", {}), n = 0;
+        dl.forEach(function (r) {
+          var sh = +r.f38, px = +r.f2, dd = r.f124 ? new Date(+r.f124 * 1e3).toLocaleDateString("sv-SE") : "";
+          if (!(sh > 0) || !(px > 0) || !dd) return;
+          (h[dd] = h[dd] || {})[String(r.f12)] = [sh, px]; n++;
+        });
+        if (n) { var ks = Object.keys(h).sort(); if (ks.length > 30) ks.slice(0, ks.length - 30).forEach(function (k) { delete h[k]; }); lsSet("jlv2_etf_share_v1", h); }
+      } catch (e2) {}
+      cb && cb();
+    });
+  }
+  function shareFlow() { /* 返回 {d, prev, amt(元), n} 或 null: 最近两个都有数据的日期, 份额差×最新价合计 */
+    var h = lsGet("jlv2_etf_share_v1", {}), ks = Object.keys(h).sort();
+    if (ks.length < 2) return { d: ks[0] || null, prev: null, amt: NaN, n: 0 };
+    var a = h[ks[ks.length - 1]], b = h[ks[ks.length - 2]], amt = 0, n = 0;
+    Object.keys(a).forEach(function (c) { if (b[c]) { amt += (a[c][0] - b[c][0]) * a[c][1]; n++; } });
+    return { d: ks[ks.length - 1], prev: ks[ks.length - 2], amt: n ? amt : NaN, n: n };
+  }
+  function gjdWide() { /* 宽基合计: 300×4 + 50 + 科创50 + 创业板, 四行都到且同一asOf才算 */
+    if (!S.etf) return null;
+    var rs = CFG.gjdSum.map(function (i) { return S.etf[i]; });
+    if (rs.some(function (r) { return !r || !isFinite(r.today); })) return null;
+    var asOf = rs[0].asOf;
+    if (rs.some(function (r) { return r.asOf !== asOf; })) return null;
+    var d5 = rs.reduce(function (a, r) { return a + (isFinite(r.d5) ? r.d5 : 0); }, 0);
+    return { today: rs.reduce(function (a, r) { return a + r.today; }, 0), d5: d5, asOf: asOf, isToday: rs[0].isToday };
+  }
   function fetchHot(cb) {
     jsonp(P2, "/api/qt/clist/get?pn=1&pz=3&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:90+t:2&fields=f3,f12,f14&ut=" + UT, function (e, d) {
       if (e || !d || !d.data || !d.data.diff || !d.data.diff.length) { cb(e || new Error("hot")); return; }
@@ -610,12 +643,14 @@
       var tx = S.tx;
       if (!tx || !tx.ok) { groups.push({ t: "指数异动", n: 0, html: dgText("jlv2:tx", "腾讯分钟源未到 · 稍后自动重试") }); return; }
       if (!tx.today) { /* 休市/未开盘: 冻结显示, 不随墙钟产新事件 */
+        S.idxEvLast = [];
         var mmdd = tx.date ? tx.date.slice(4, 6) + "-" + tx.date.slice(6, 8) : "";
         groups.push({ t: "指数异动", n: 0, html: '<div class="g2">休市冻结 · 分钟数据停在 ' + mmdd + '（不报错 · 开盘自动恢复）</div>' });
         groups.push({ t: "成交额异动", n: 0, html: '<div class="g2">休市冻结 · 量能基准 ' + mmdd + '</div>' });
         return;
       }
       var cf = CFG.tx, rowsI = "", nI = 0;
+      S.idxEvLast = []; /* jl-gate: 结构化存每指数最近一条异动, 供首页买入闸读 */
       cf.idx.forEach(function (ix) {
         var pts = tx.pts[ix[0]];
         if (!pts || pts.length < 2) return;
@@ -624,6 +659,7 @@
         var end = pts[pts.length - 1][0]; /* 数据尾=状态基准, 非墙钟 */
         var per = end - last.mn <= 10 ? "live" : (end - last.mn <= CFG.persistMin ? "warn" : "dead");
         if (per !== "dead") nI++;
+        S.idxEvLast.push({ name: ix[1], dir: last.dir, ago: end - last.mn, m1: last.m1, m5: last.m5, per: per });
         var amp = last.m5 != null ? "5分钟" + (last.m5 >= 0 ? "+" : "") + last.m5.toFixed(2) + "%" : "1分钟" + (last.m1 >= 0 ? "+" : "") + last.m1.toFixed(2) + "%";
         var sub = "自 " + hhmm(fromMin(last.start)) + " 起" + (last.m5 != null ? " · 近1分钟" + (last.m1 >= 0 ? "+" : "") + last.m1.toFixed(2) + "%" : "") + " · 1分" + cf.idx1m + "%/5分" + cf.idx5m + "%触发";
         rowsI += '<div class="ev"><span class="tm">' + hhmm(fromMin(last.mn)) + '</span><span class="tt"><b>' + ix[1] + (last.dir > 0 ? " 快拉" : " 快跳水") + ' · ' + amp + '</b><small>' + sub + '</small></span><span class="tags">' + tags(last.dir, per) + '</span></div>';
@@ -904,6 +940,7 @@
     var sumParts = [];
     if (stx) sumParts.push('<b class="' + (v === 1 || v === 2 ? "hl" : v === 3 ? "dn" : v === 0 ? "up" : "mu") + '" style="font-size:10.5px">' + VN[v] + '</b>');
     if (e300 && isFinite(e300.today)) sumParts.push('<span class="mono">300ETF ' + fmtYi(e300.today) + '</span>');
+    var _wd0 = gjdWide(); if (_wd0) sumParts.push('<span class="mono">宽基 ' + fmtYi(_wd0.today) + '</span>');
     var alertDot = v === 1 ? '<span class="dot" style="color:#ffd21f"></span>' : "";
     var rows = "";
     if (etfOk) {
@@ -918,6 +955,11 @@
         return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:12px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
       }).join("");
     } else rows = '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + "</div>"; /* jl-1075: 裸"未到"→降级卡(最后成功HH:MM+手动立即重试+指数退避上限5次; 收盘后mktLive停轮询也能自愈) */
+    var wd = gjdWide(), sf = shareFlow();
+    if (etfOk) {
+      rows += '<div class="row" style="margin-top:6px"><span>宽基合计<small style="margin-left:4px">300×4+50+科创50+创业板</small></span><span class="mono ' + (wd ? (wd.today >= 0 ? "up" : "dn") : "mu") + '">' + (wd ? fmtYi(wd.today) + ' · 近5日 ' + fmtYi(wd.d5) : "未齐") + '</span></div>';
+      rows += '<div class="row"><span>份额申赎(估)<small style="margin-left:4px">份额差×价</small></span><span class="mono ' + (isFinite(sf.amt) ? (sf.amt >= 0 ? "up" : "dn") : "mu") + '">' + (isFinite(sf.amt) ? fmtYi(sf.amt) + ' · ' + String(sf.d).slice(5) + ' vs ' + String(sf.prev).slice(5) : (sf.d ? "攒数据中 · 已有 " + String(sf.d).slice(5) : "份额数据暂缺")) + '</span></div>';
+    }
     var struct = "";
     if (stx) {
       /* jl-C3: 同步性改用各自"今日/近20日平均绝对值"倍数(rel), 不再用同一组亿元阈值(两只规模差很多倍); 1.5/0.5/1.0 为初值未回测 */
@@ -968,7 +1010,7 @@
   window.__JLV2S__ = S;
   window.__JLV2P__ = function () { try { paint(); } catch (e) {} };
   window.__JLV2C__ = CFG;
-  window.__JLV2T__ = { calcIdxEv: calcIdxEv, calcAmtEv: calcAmtEv, fetchTxMin: fetchTxMin }; /* jl-1077: 纯函数暴露, 便于回测校准 */
+  window.__JLV2T__ = { calcIdxEv: calcIdxEv, calcAmtEv: calcAmtEv, fetchTxMin: fetchTxMin, deriveState: deriveState, deriveStruct: deriveStruct, tempPctJL: tempPctJL, gjdWide: gjdWide, shareFlow: shareFlow }; /* jl-gate: 买入闸只读调用 */ /* jl-1077: 纯函数暴露, 便于回测校准 */
 
   function paint() {
     var root = ensureRoot();
@@ -1001,6 +1043,7 @@
     setTimeout(function () { fetchAtr(function () { paint(); fetchPremium(function () { paint(); }); }); }, 900);
     setTimeout(function () { fetchPools(function () { paint(); }); }, 1500);
     setTimeout(function () { fetchEtfs(function () { paint(); }); }, 2200);
+    setTimeout(function () { fetchShares(function () { paint(); }); }, 3200);
     setTimeout(function () { fetchHot(function () { paint(); }); }, 3000);
     setTimeout(function () { fetchOwnYd(function () { paint(); }); }, 3600);
     setTimeout(function () { fetchTxMin(function () { paint(); }); }, 4200); /* jl-1077: 指数/成交额自算 */
@@ -1010,7 +1053,7 @@
     if (!mktLive()) return;
     var n = Date.now();
     fetchSnap(function () { paint(); });
-    if (n - lastTick > CFG.refrEtf) { lastTick = n; fetchIdx(function () { paint(); }); fetchEtfs(function () { paint(); }); }
+    if (n - lastTick > CFG.refrEtf) { lastTick = n; fetchIdx(function () { paint(); }); fetchEtfs(function () { paint(); }); fetchShares(function () { paint(); }); }
     fetchPools(function () { paint(); });
     fetchTxMin(function () { paint(); }); /* jl-1077: 分钟级自算(60s), 休市时mktLive闸住=冻结 */
     paint();
