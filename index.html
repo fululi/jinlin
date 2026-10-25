@@ -2470,6 +2470,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       tr.push(Math.max(b.h - b.l, Math.abs(b.h - p.c), Math.abs(b.l - p.c)));
     }
     const atr = tr.reduce((a, v) => a + v, 0) / tr.length, today = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE"), qday = String(ix.quoteAt || "").replace(/\D/g, "").slice(0, 8), isToday = qday === today.replace(/-/g, ""), prev = isToday && Number(ix.prevClose) || bars.at(-1).c, lo = +(prev - atr * 0.62).toFixed(2), hi = +(prev + atr * 0.62).toFixed(2), actHi = isToday ? Number(ix.high) || null : null, actLo = isToday ? Number(ix.low) || null : null;
+    window.__predBandJL = { code: index, lo, hi, atr, prev }; /* jl-D1b: 给首页价格区间卡复用同一条ATR预期带 */
     let log = {};
     try {
       log = JSON.parse(localStorage.getItem("jinlin_pred_log_v1") || "{}");
@@ -14634,6 +14635,15 @@ var RLMCore = (function () {
         document.querySelector("#home .homeQuote .pnlLine").innerHTML = "<span>\u5F00 " + _v(ix.open) + "</span><span>\u9AD8 " + _v(ix.high) + "</span><span>\u4F4E " + _v(ix.low) + "</span>";
         const _hi = Number(ix.high), _lo = Number(ix.low), _pos = _fo && _hi > _lo ? Math.round((ix.base - _lo) / (_hi - _lo) * 100) : null;
         document.querySelector("#home .glass .pnlLine").innerHTML = "<span>\u4ECA\u65E5 \u4F4E " + _v(_lo) + " \u2014 \u9AD8 " + _v(_hi) + "</span><span>" + (_pos == null ? "\u7B49\u5F85\u5F00\u76D8" : "\u73B0\u4EF7\u5728\u533A\u95F4 " + _pos + "%") + "</span>";
+        /* jl-D1b: ATR预期带(与"大盘预判·ATR"卡同一口径 昨收±0.62×ATR14) + 轨道上标现价位置 */
+        const _bd = window.__predBandJL, _tk = document.querySelector("#home .glass .track");
+        if (_tk) {
+          let _at = document.getElementById("rangeAtrJL");
+          if (!_at) { _at = document.createElement("div"); _at.id = "rangeAtrJL"; _at.className = "pnlLine"; _at.style.marginTop = "4px"; _tk.after(_at); }
+          const _ok = _bd && _bd.code === index && _bd.lo > 0 && _bd.hi > _bd.lo, _out = _ok && (ix.base > _bd.hi || ix.base < _bd.lo);
+          _at.innerHTML = _ok ? "<span>\u9884\u671F " + money(_bd.lo) + " \u2014 " + money(_bd.hi) + "</span><span" + (_out ? ' style="color:#ffd21f"' : "") + ">" + (_out ? ix.base > _bd.hi ? "\u5DF2\u51B2\u51FA\u9884\u671F\u4E0A\u6CBF" : "\u5DF2\u8DCC\u7834\u9884\u671F\u4E0B\u6CBF" : "\u6628\u6536\xB10.62\xD7ATR14") + "</span>" : "<span>\u9884\u671F\u533A\u95F4\u8BA1\u7B97\u4E2D\u2026</span><span></span>";
+          _tk.innerHTML = _pos == null ? "" : '<i style="position:absolute;left:' + Math.max(0, Math.min(100, _pos)) + '%;top:-3px;width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 4px #0008;transform:translateX(-50%)"></i>';
+        }
       }
       _pt(() => drawOverviewChart($("homeChart"), index));
       if (homeFlowOn) _pt(() => {
