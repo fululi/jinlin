@@ -6,7 +6,7 @@
 </script>
 
 <!-- jl-ATRfix 1025晨: 持仓卡ATR带bug修复——带宽ATR原用atr[end-1]较采样口径滞后一日(兆易创新10-23案例: 10-23振幅26.5大震后, 旧代码周一仍用周四ATR15.20而非周五17.46, 带子偏窄15%); 对齐后带子=开盘±参数日ATR×P80系数; 注: 10-23穿带12.25元属P80设计遇P99.2日的预期尾部非算错; 壳v266→v267 --><!-- v0.85 温度量化批 temp-q1 1025晨: 大盘温度卡——温度近20交易日分位P(读jlv2温度史, 排除当日)+Δ30分盘中动量(jinlin_mtemp_series_v1: ≥09:25才记/4分去重/160点, 集合竞价噪声不进)+九档幅度加权净宽; luLimJL修板块前缀优先(创业板/科创板ST=20%非5%, N/C新股无涨跌幅)+采样失败"示数为旧值"标记; 纯显示层, 温度公式/分区阈值/状态机/抓取链零触碰; 壳v265→266成对(sw.js KEEP=266+265+264) --><!-- v0.86 1025 温度审查收尾批q1-r2·并入v269(底=58ef791): ①分位P口径标注——20日基准=各日末次采样(≈收盘温度), 卡面三处标签改"20日收盘"(v1头/v2sum/v2tnow); ②勘误——v266批注"纯显示层"不含luLimJL(涨停/跌停判定口径修正, 影响分档统计, 改法本身正确), 温度公式/分区阈值/状态机/九因子/抓取链仍零触碰; ③v2分位P(tempPctJL)改直读localStorage+显示加"数据属今天"闸(与v1同源同显隐); ④竞价显示行(jlv2)——工作日9:25前"冷点"改显"竞价", 仅显示层, 日史存原状态; ⑤atr5缓存键_v1→_v2——周末用旧算法打开过APP的, 10-23参数日缓存着15.20, 周一会命中旧缓存照显15.20, 升键强制重算; ⑥周五回推预览数字对齐修复后算法(兆易261.0719/282.5749·永鼎25.50/28.49); jlv2.js引用?v=13→15(跳14: Claude本地worktree占用该标识); 壳v268→v269成对 -->
-<script id="jlVerJL" data-ver="0.87" data-sw="jinlin-shell-v276"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.87" data-sw="jinlin-shell-v277"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -6644,6 +6644,48 @@ function playbookHTMLJL(s, leg, swSt) {
     });
     return out.sort((a2, b2) => b2.lv - a2.lv || a2.pct - b2.pct);
   }
+  /* jl-pool-ledger: v2 实盘台账——每次定榜存整张榜(L合格/O观察/R风险, 含主推与落选)+规则戳, 供离线算超额/落选对照/分数秩相关。
+     每个数据日只留"首次盘中扫描"(i)和"最后一次收盘后扫描"(p); 最多 40 个数据日。不改 jl_pool_picks_v1 与复盘页。 */
+  const JLPOOL_LEDGER_KEY = "jl_pool_ledger_v1", JLPOOL_LEDGER_MAXD = 40;
+  function jlPoolLedgerVerJL() {
+    const V = JLPOOL_V2;
+    return "v2|FW" + V.FUND_W + "|HP" + V.HOT_PEN + "x" + V.HOT_CAP + "|BV" + (V.BLOWOFF_VETO ? 1 : 0) + "|MF" + V.MIN_FUND_DAYS;
+  }
+  function jlPoolLedgerRowsJL(L, OBS, RISK, pickSet) {
+    const rows = [], num = (v) => (v == null || !Number.isFinite(+v) ? null : +v);
+    [["L", L], ["O", OBS], ["R", RISK]].forEach(([bk, B]) => {
+      Object.keys(B || {}).forEach((ly) => ((B || {})[ly] || []).forEach((x) => {
+        if (!x || !x.code) return;
+        const g = bk === "L" ? x.gate : x.obsGate;
+        rows.push([x.code, String(x.name || "").replace(/[,\s]/g, ""), x.layer || ly, bk, (g && g.status) || "", num(x.score), num(x.close), pickSet.has(x.code) ? 1 : 0, num(x.fundDays), num(x.bomb), (x.lu5 || 0) + (x.bomb5 || 0)]);
+      }));
+    });
+    return rows;
+  }
+  function jlPoolLedgerMergeJL(m, d0, ent) { /* 纯函数: 合并一次扫描进台账对象并裁剪, 返回新对象 */
+    const out = Object.assign({}, m || {}), slot = Object.assign({}, out[d0] || {});
+    if (ent.post) slot.p = ent; else if (!slot.i) slot.i = ent;
+    out[d0] = slot;
+    Object.keys(out).sort().slice(0, Math.max(0, Object.keys(out).length - JLPOOL_LEDGER_MAXD)).forEach((k) => { delete out[k]; });
+    return out;
+  }
+  function jlPoolLedgerPutJL(d0, L, OBS, RISK, picks) {
+    try {
+      const dk = String(d0 || "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) return;
+      const nw = new Date(), post = nw.getHours() * 60 + nw.getMinutes() >= 905 ? 1 : 0;
+      const ent = { ver: jlPoolLedgerVerJL(), ts: jlYMD(nw) + " " + nw.toTimeString().slice(0, 5), post, rows: jlPoolLedgerRowsJL(L, OBS, RISK, new Set((picks || []).map((x) => x.code))) };
+      let m = {};
+      try { m = JSON.parse(localStorage.getItem(JLPOOL_LEDGER_KEY) || "{}") || {}; } catch (e1) { m = {}; }
+      m = jlPoolLedgerMergeJL(m, dk, ent);
+      for (let t = 0; t < 4; t++) { /* 存不下: 丢最旧的一半数据日再试, 不影响榜单本身 */
+        if (jlSafeSetJL(JLPOOL_LEDGER_KEY, JSON.stringify(m))) return;
+        const ks = Object.keys(m).sort();
+        if (ks.length <= 1) return;
+        ks.slice(0, Math.ceil(ks.length / 2)).forEach((k) => { delete m[k]; });
+      }
+    } catch (e) {}
+  }
   function poolFinalizeJL(cand, d0, uniN, srcTag, heldRows) {
     const L = { start: [], zs: [], eb: [], trend: [], top: [] }, OBS = { start: [], zs: [], eb: [], trend: [], top: [] }, RISK = { start: [], zs: [], eb: [], trend: [], top: [] }, rejectStats = { stale: 0, risk: 0, insufficient: 0, observe: 0 };
     cand.forEach((x) => {
@@ -6693,6 +6735,7 @@ function playbookHTMLJL(s, leg, swSt) {
       const _lg = JSON.parse(localStorage.getItem("jl_pool_picks_v1") || "{}");
       _lg[jlYMD(/* @__PURE__ */ new Date())] = { d0, ts: (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5), picks: _pk };
       jlSafeSetJL("jl_pool_picks_v1", JSON.stringify(_lg));
+      jlPoolLedgerPutJL(d0, L, OBS, RISK, _pk); /* jl-pool-ledger */
     } catch (e) {
     }
     try { jlPoolAnchorSetJL(d0); } catch (eAn) {} /* jl-1028: 实盘定稿即更新锚点 */
@@ -8238,7 +8281,7 @@ function playbookHTMLJL(s, leg, swSt) {
   }
   try { // jl-0920-41: 清洗第二轮·白名单制——v1只清了日K/旧筹码,龙池/资金流/行业/温度/标定/涨停池等计算缓存残留照样喂脏数据;本轮除用户数据(持仓/画线/提醒/做T记录/设置/复盘台账)外,jl_*/jinlin_*全部清除,全部从接口重建
     if (localStorage.getItem("jl_purge_0920b") !== "1") {
-      const _keep = /^(jinlin_stocks_v2|jinlin_stocks_v2_bak|jinlin_research_v1|jinlin_preview_lines_v1|jinlin_preview_alerts_v1|jinlin_panes_v1|jinlin_ov_v1|jinlin_ov_sr_mig|jinlin_rlm_opt_v1|jinlin_trades_v1|jinlin_tier_alert_v1|jinlin_hldsub_v1|jl_fund_mode_v1|jinlin_ks_on|jinlin_yd_tab|jinlin_sborb_v1|jinlin_ffball_v1|jinlin_brokers_v1|jl_band_ledger_v1|jl_line_log_v1|jinlin_pred_log_v1|jl_fund_review_v1|jinlin_tt_v1|jinlin_tier_day_v1|jl_broke_v1|jinlin_ks_mig2|jl_pool_picks_v1|jl_pool_signals_v1|jl_purge_)/; /* v0.83.3: 龙池研究记录(主推跟踪/信号记录)加入永久保留，防止日后复制本段做新一轮清洗时误删; jl-1120: 反抽压力状态机记录jl_broke_v1加入保留(回填=0不重建, 误删即丢历史) */
+      const _keep = /^(jinlin_stocks_v2|jinlin_stocks_v2_bak|jinlin_research_v1|jinlin_preview_lines_v1|jinlin_preview_alerts_v1|jinlin_panes_v1|jinlin_ov_v1|jinlin_ov_sr_mig|jinlin_rlm_opt_v1|jinlin_trades_v1|jinlin_tier_alert_v1|jinlin_hldsub_v1|jl_fund_mode_v1|jinlin_ks_on|jinlin_yd_tab|jinlin_sborb_v1|jinlin_ffball_v1|jinlin_brokers_v1|jl_band_ledger_v1|jl_line_log_v1|jinlin_pred_log_v1|jl_fund_review_v1|jinlin_tt_v1|jinlin_tier_day_v1|jl_broke_v1|jinlin_ks_mig2|jl_pool_picks_v1|jl_pool_ledger_v1|jl_pool_signals_v1|jl_purge_)/; /* v0.83.3: 龙池研究记录(主推跟踪/信号记录)加入永久保留，防止日后复制本段做新一轮清洗时误删; jl-1120: 反抽压力状态机记录jl_broke_v1加入保留(回填=0不重建, 误删即丢历史) */
       const _pk = [];
       for (let _i = 0; _i < localStorage.length; _i++) {
         const _k = localStorage.key(_i);
@@ -19808,7 +19851,13 @@ var RLMCore = (function () {
         const r = fr[k];
         return [r.d, r.code, r.name, r.typ, r.ym, r.tpc].join(",");
       }).join("\n");
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(csv).then(() => toast("审判CSV已复制（三段台账）"), () => toast("复制失败"));
+      /* jl-pool-ledger: 龙池实盘台账(每数据日 i=首次盘中扫描 / p=最后一次收盘后扫描) */
+      const lgr = _jGet99("jl_pool_ledger_v1", {});
+      csv += "\n\n# 龙池台账\n规则,数据日,扫描时刻,收盘后,代码,名称,层,桶,状态,分,收盘,主推,资金天数,炸板,近5日板数\n" + Object.keys(lgr).sort().map((d) => ["i", "p"].map((sk) => {
+        const e = (lgr[d] || {})[sk];
+        return e && e.rows ? e.rows.map((r) => [e.ver, d, e.ts, e.post].concat(r.map((v) => (v == null ? "" : v))).join(",")).join("\n") : "";
+      }).filter(Boolean).join("\n")).filter(Boolean).join("\n");
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(csv).then(() => toast("审判CSV已复制（四段台账）"), () => toast("复制失败"));
       else toast("当前浏览器不支持自动复制");
     } catch (e) {
       toast("导出失败");
