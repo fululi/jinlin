@@ -1,3 +1,4 @@
+/* jinlin sw v269 — 2026-10-25: 温度审查收尾批q1-r2配对(缓存策略零变化, 仅C/KEEP升号+本注)——批内容见index.html v0.86注释: 分位P口径标注/luLimJL勘误/v2直读+今日闸/竞价显示行/atr5缓存键_v2/回推数字对齐 */
 /* jinlin sw v266 — 2026-10-25: 温度量化批temp-q1(接温度审查报告收尾)——v1卡: luLimJL板块前缀优先于ST(创业板/科创板ST涨跌幅4.8→19.8误标)+采样失败"示数为旧值"标记+温度近20交易日分位P+盘中Δ30分动量(jinlin_mtemp_series_v1序列, ≥09:25才记/4分去重/160点)+九档幅度加权净宽; v2卡: sum行加P·20日+30分动量(tempPctJL/mom30JL); 全部纯显示层, 温度公式/分区阈值/状态机/九因子/抓取链零触碰; 壳号成对升266, KEEP=266+265+264 */
 /* jinlin sw v252 — 2026-10-24: ks-1151fix11m——fib加1.13/3.618两档(默认开, 无花名). 版本仍v0.85, 戳1151j→1151k */
 /* jinlin sw v251 — 2026-10-23: ks-1151fix11L——fib扩轴三路实验(fix11g/j/k)整体撤回, 逐字节回到原版. 版本仍v0.85, 戳1151i→1151j */
@@ -146,8 +147,8 @@
    ②show()记忆所在页(sessionStorage jl_view_v1, hash导航最优先)——换版controllerchange自动reload不再跳回默认页("扫描暂停后跳回初始页"根因);
    红线: 资金通道/pool_ff.json/扫描筛选规则/T3日志器/断点续扫机制零触碰; 离线资金表09-16陈旧=已破案登记不修 */
 /* jinlin sw v181 — 2026-10-07: 缓存名 →v181, 配合 jl-1094 v0.84.39 T4a第一阶段——新增 jl_sector_strength.js?v=1(可解释板块强度基础层: 口径mc>sec>hybk, 四因子=涨幅/上涨率jl-1080原式n<8+涨停ZT池×口径+扩散T3-IDB当日记录聚合只读, 成交额=数据不足·龙头=待定义仅候选, 快照独立IDB jinlin_secstr 90天+12000上限); jlv2/jl_event_log/jl_concept_map/jl_sector_map 零改动; 资金通道/pool_ff/龙池/universe/扫描频率/T3语义零触碰; 零新增网络请求 */
-const C = 'jinlin-shell-v268'; /* 2026-10-25: ks-p2 K线页(副图图例/信息卡补额换手/右键与轻点TV式工具条/亮白字/阶段涨幅); 缓存名成对升版 */
-const KEEP = ['jinlin-shell-v268', 'jinlin-shell-v267', 'jinlin-shell-v266', 'jinlin-shell-v263', 'jinlin-shell-v262', 'jinlin-shell-v261', 'jinlin-shell-v260', 'jinlin-shell-v259', 'jinlin-shell-v258']; /* 保留当前版及近期缓存 */
+const C = 'jinlin-shell-v269'; /* 2026-10-25: ks-p2 K线页(副图图例/信息卡补额换手/右键与轻点TV式工具条/亮白字/阶段涨幅); 缓存名成对升版 */
+const KEEP = ['jinlin-shell-v269', 'jinlin-shell-v268', 'jinlin-shell-v267', 'jinlin-shell-v266', 'jinlin-shell-v265', 'jinlin-shell-v263', 'jinlin-shell-v262', 'jinlin-shell-v261', 'jinlin-shell-v260']; /* 保留当前版及近期缓存 */
 const SHELL = ['./', 'index.html', 'ks.html'];
 self.addEventListener('install', e => {
   e.waitUntil(
