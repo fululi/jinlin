@@ -12,8 +12,18 @@
   body.wide { flex-direction: row; }
   iframe { flex: 1 1 0; min-height: 0; min-width: 0; width: 100%; border: 0; display: block; background: #0a0e0b; }
   body.wide iframe { height: 100%; }
-  .sep { flex: none; height: 1px; background: rgba(255,255,255,0.16); }
-  body.wide .sep { width: 1px; height: auto; }
+  /* jl-1164: 中缝=可拖手柄(上下拖/左右拖调两图大小), 手柄里放三个小图标: 上下排、左右排、工具条收展 */
+  .sep { flex: none; position: relative; height: 14px; touch-action: none; cursor: row-resize; z-index: 40; }
+  body.wide .sep { width: 14px; height: auto; cursor: col-resize; }
+  .sep::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,0.16); }
+  body.wide .sep::before { top: 0; bottom: 0; left: 50%; right: auto; width: 1px; height: auto; }
+  .sep::after { content: ""; position: absolute; left: 50%; top: 50%; width: 30px; height: 3px; margin: -1px 0 0 -15px; border-radius: 3px; background: rgba(255,255,255,0.4); }
+  body.wide .sep::after { width: 3px; height: 30px; margin: -15px 0 0 -1px; }
+  .dblIcons { position: absolute; right: 36px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; }
+  body.wide .dblIcons { right: auto; left: 50%; top: 8px; transform: translateX(-50%); flex-direction: column; }
+  .dblIcons button { width: 24px; height: 20px; padding: 0; border: 1px solid rgba(255,255,255,.4); border-radius: 6px; background: rgba(10,22,32,.62); color: #fff; font-size: 10px; line-height: 1; display: flex; align-items: center; justify-content: center; opacity: .88; }
+  .dblIcons button.on { border-color: #81e6d9; background: rgba(129,230,217,.22); opacity: 1; }
+  .dblIcons svg { width: 14px; height: 12px; display: block; }
   #ksBarJL { display: none; }
 </style>
 </head>
@@ -27,27 +37,65 @@
   var base = "ks.html?" + q.toString() + (q.has("embed") ? "" : "&embed=1");
   var panes = [];
   for (var i = 0; i < 2; i++) {
-    if (i) { var sp = document.createElement("div"); sp.className = "sep"; document.body.appendChild(sp); }
+    if (i) { var sp = document.createElement("div"); sp.className = "sep"; sp.id = "ksDblSep"; document.body.appendChild(sp); }
     var f = document.createElement("iframe");
     f.title = "K线 " + (i + 1);
     f.src = base + "&pane=" + i;
     document.body.appendChild(f);
     panes.push(f);
   }
-  function layout() { document.body.classList.toggle("wide", innerWidth >= 900 && innerWidth > innerHeight); }
-  layout(); addEventListener("resize", layout);
+  // jl-1164: 方向(上下/左右)与比例: 记在本地; 没存过时沿用旧规则(宽屏横向才左右)
+  var sep = document.getElementById("ksDblSep"), DIR_K = "ks_dbl_dir_v1", RAT_K = "ks_dbl_ratio_v1", ratio = 0.5;
+  function getDir() { try { var d = localStorage.getItem(DIR_K); if (d === "v" || d === "h") return d; } catch (e) {} return (innerWidth >= 900 && innerWidth > innerHeight) ? "h" : "v"; }
+  try { var rr = parseFloat(localStorage.getItem(RAT_K)); if (rr >= 0.2 && rr <= 0.8) ratio = rr; } catch (e) {}
+  function kick() { panes.forEach(function (f) { try { f.contentWindow.dispatchEvent(new Event("resize")); } catch (e) {} }); }
+  function setRatio(r, save) {
+    ratio = Math.max(0.2, Math.min(0.8, r));
+    panes[0].style.flex = ratio + " 1 0"; panes[1].style.flex = (1 - ratio) + " 1 0";
+    if (save) { try { localStorage.setItem(RAT_K, String(ratio)); } catch (e) {} }
+  }
+  var bV, bH, bT;
+  function layout() {
+    var h = getDir() === "h";
+    document.body.classList.toggle("wide", h);
+    if (bV) { bV.classList.toggle("on", !h); bH.classList.toggle("on", h); }
+    setRatio(ratio, false); kick();
+  }
+  function svg(inner) { return '<svg viewBox="0 0 14 12" fill="none" stroke="#fff" stroke-width="1.2"><rect x="1" y="1" width="12" height="10" rx="1.5"/>' + inner + '</svg>'; }
+  var ic = document.createElement("div"); ic.className = "dblIcons"; sep.appendChild(ic);
+  function mkb(html, label, fn) { var b = document.createElement("button"); b.type = "button"; b.innerHTML = html; b.setAttribute("aria-label", label); b.addEventListener("pointerdown", function (e) { e.stopPropagation(); }); b.addEventListener("click", fn); ic.appendChild(b); return b; }
+  bV = mkb(svg('<line x1="1" y1="6" x2="13" y2="6"/>'), "上下排", function () { try { localStorage.setItem(DIR_K, "v"); } catch (e) {} layout(); });
+  bH = mkb(svg('<line x1="7" y1="1" x2="7" y2="11"/>'), "左右排", function () { try { localStorage.setItem(DIR_K, "h"); } catch (e) {} layout(); });
+  bT = mkb("\u25BC", "展开/收起工具条", function () { var show = proxy.style.display === "none"; proxy.style.display = show ? "" : "none"; try { localStorage.setItem("ks_dbl_bars_v1", show ? "1" : "0"); } catch (e) {} });
+  // 拖中缝调大小: 指针捕获, 手指滑出手柄也跟手; 松手后存比例
+  var dragging = false, raf = 0;
+  sep.addEventListener("pointerdown", function (e) { dragging = true; try { sep.setPointerCapture(e.pointerId); } catch (e2) {} e.preventDefault(); });
+  sep.addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    var wide = document.body.classList.contains("wide"), tot = wide ? innerWidth : innerHeight;
+    setRatio((wide ? e.clientX : e.clientY) / tot, false);
+    if (!raf) raf = requestAnimationFrame(function () { raf = 0; kick(); });
+  });
+  function endDrag() { if (!dragging) return; dragging = false; setRatio(ratio, true); kick(); }
+  sep.addEventListener("pointerup", endDrag); sep.addEventListener("pointercancel", endDrag);
+  addEventListener("resize", layout);
   // 十字线转发: 谁发来的就转给另一个
   addEventListener("message", function (e) {
     var m = e.data; if (!m || !m.ksX) return;
     panes.forEach(function (f, k) { if (k !== m.from && f.contentWindow && e.source !== f.contentWindow) { try { f.contentWindow.postMessage(m, "*"); } catch (e2) {} } });
   });
-  // 父页面兼容: 收起/展开工具条
+  // 父页面兼容: 收起/展开工具条; jl-1163: 双图自带三角按钮也走这里, 默认收起(ks_dbl_bars_v1=1 才展开)
   var proxy = document.getElementById("ksBarJL");
-  new MutationObserver(function () {
+  function applyBars() {
     var hide = proxy.style.display === "none";
+    bT.textContent = hide ? "\u25BC" : "\u25B2";
     panes.forEach(function (f) { try { var b = f.contentDocument.getElementById("ksBarJL"); if (b) b.style.display = hide ? "none" : ""; f.contentDocument.body.classList.remove("drw-periods", "drw-tools", "drw-inds", "drw-favs"); f.contentWindow.dispatchEvent(new Event("resize")); } catch (e) {} });
-  }).observe(proxy, { attributes: true, attributeFilter: ["style"] });
-  proxy.style.display = "";
+  }
+  new MutationObserver(applyBars).observe(proxy, { attributes: true, attributeFilter: ["style"] });
+  panes.forEach(function (f) { f.addEventListener("load", applyBars); }); // 窗格晚于外壳加载: 载完再按当前状态收/展一次
+  var _shown = false; try { _shown = localStorage.getItem("ks_dbl_bars_v1") === "1"; } catch (e) {}
+  proxy.style.display = _shown ? "" : "none";
+  layout();
   window.draw = function () { panes.forEach(function (f) { try { f.contentWindow.draw(); } catch (e) {} }); };
   Object.defineProperty(window, "S", { get: function () { try { return panes[0].contentWindow.S; } catch (e) { return undefined; } } });
 })();
