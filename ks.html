@@ -1578,7 +1578,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
   }
   else if (t === "fib") { // ks-p2-5: 对标TradingView——两锚点斜虚线 + 1px档位线(只画在两锚点之间, →延伸可开) + 档间淡色带 + 左端「0.618 (价)」
-    var p1 = dg.pts[0].p, p2 = dg.pts[1].p, fpn = dg.pts[0].pane;
+    var p1 = dg.pts[0].p, p2 = dg.pts[1].p, fpn = dg.pts[0].pane, FOC = dg.colorSet ? OC : null; // ks-p3-fix: 斐波默认按档位分色(TradingView式); 只有在工具条里主动选过颜色才统一单色(原来新画的斐波继承画线默认黄色→全黄)
     var fxa = Math.min(pts[0].x, pts[1].x), fxb = dg.ext ? right : Math.max(pts[0].x, pts[1].x);
     if (fxb - fxa < 2) fxb = fxa + 2;
     var FLV = fibLvOfJL(dg).slice().sort(function (a1, b1) { return a1 - b1; });
@@ -1587,14 +1587,14 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     if (frc) { ctx.beginPath(); ctx.rect(v.padL, frc.y, right - v.padL, frc.h); ctx.clip(); }
     var fys = FLV.map(function (r) { return yOfPane(v, fpn, p1 + (p2 - p1) * r); });
     for (var fi = 1; fi < FLV.length; fi++) { // 档间色带(取上一档颜色, 很淡)
-      var fcB = OC || ksFibColorJL(FLV[fi]);
+      var fcB = FOC || ksFibColorJL(FLV[fi]);
       ctx.globalAlpha = 0.09; ctx.fillStyle = fcB;
       ctx.fillRect(fxa, Math.min(fys[fi - 1], fys[fi]), fxb - fxa, Math.abs(fys[fi] - fys[fi - 1]));
     }
     ctx.globalAlpha = 1;
     ctx.lineWidth = 1;
     for (fi = 0; fi < FLV.length; fi++) {
-      ctx.strokeStyle = OC || ksFibColorJL(FLV[fi]);
+      ctx.strokeStyle = FOC || ksFibColorJL(FLV[fi]);
       ctx.setLineDash(dg.dash ? [6, 4] : []);
       ctx.beginPath(); ctx.moveTo(fxa, fys[fi]); ctx.lineTo(fxb, fys[fi]); ctx.stroke();
     }
@@ -1608,7 +1608,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
       if (yy - fLastY < 11) return; fLastY = yy;
       var lbF = FLV[k1] + " (" + fwp(p1 + (p2 - p1) * FLV[k1]) + ")", twF = ctx.measureText(lbF).width;
       var inF = fxa - twF - 5 < v.padL, lxF = inF ? fxa + 4 : fxa - twF - 5; // 左端放不下就挪进区间内, 并抬到线上方(不被线穿过)
-      ksHaloTextJL(ctx, lbF, lxF, inF ? yy - 6 : yy, OC || ksFibColorJL(FLV[k1]));
+      ksHaloTextJL(ctx, lbF, lxF, inF ? yy - 6 : yy, FOC || ksFibColorJL(FLV[k1]));
     });
     ctx.restore();
   }
@@ -1873,7 +1873,7 @@ function openDgPanel(idx) {
     function ibx(txt, title, cls, fn) { var b = document.createElement("button"); b.type = "button"; b.className = "ksMnI" + (cls ? " " + cls : ""); b.textContent = txt; b.title = title; b.addEventListener("click", function (e2) { e2.stopPropagation(); var dg2 = dlist()[S.dgPanel]; if (dg2) fn(dg2, b); }); return b; }
     DCOLORS.forEach(function (c) {
       var b = document.createElement("button"); b.type = "button"; b.className = "ksMnC"; b.style.background = c; b.setAttribute("data-c", c); b.title = "换成这个颜色";
-      b.addEventListener("click", function (e2) { e2.stopPropagation(); var dg2 = dlist()[S.dgPanel]; if (!dg2) return; dg2.color = c; S.drawColor = c; store(); draw(); dgFill(el, dg2); }); // ks-p2-5: 选的色同时作新画线默认色(抽屉色板已撤)
+      b.addEventListener("click", function (e2) { e2.stopPropagation(); var dg2 = dlist()[S.dgPanel]; if (!dg2) return; dg2.color = c; dg2.colorSet = true; S.drawColor = c; store(); draw(); dgFill(el, dg2); }); // ks-p2-5: 选的色同时作新画线默认色(抽屉色板已撤)
       bar.appendChild(b);
     });
     bar.appendChild(ibx("┅", "虚线/实线(原抽屉「线型」)", "dgDs", function (dg2) { dg2.dash = !dg2.dash; store(); draw(); dgFill(el, dg2); }));
@@ -1967,7 +1967,7 @@ function openAlMenu(pt, cx, cy) { // pt=画布内坐标; cx/cy=屏幕坐标(菜�
   if (dg) {
     DCOLORS.forEach(function (c) {
       var b = document.createElement("button"); b.type = "button"; b.className = "ksMnC" + (dg.color === c ? " on" : ""); b.style.background = c; b.title = "换成这个颜色";
-      b.addEventListener("click", function (e2) { e2.stopPropagation(); dg.color = c; store(); draw(); bar.querySelectorAll(".ksMnC").forEach(function (x) { x.classList.toggle("on", x === b); }); });
+      b.addEventListener("click", function (e2) { e2.stopPropagation(); dg.color = c; dg.colorSet = true; store(); draw(); bar.querySelectorAll(".ksMnC").forEach(function (x) { x.classList.toggle("on", x === b); }); });
       bar.appendChild(b);
     });
     bar.appendChild(ib(dg.locked ? "🔒" : "🔓", "点一下锁/解锁", dg.locked ? "on" : "", function (b) { dg.locked = !dg.locked; store(); draw(); b.textContent = dg.locked ? "🔒" : "🔓"; b.classList.toggle("on", !!dg.locked); hint(dg.locked ? "已锁定" : "已解锁"); }));
@@ -1975,18 +1975,8 @@ function openAlMenu(pt, cx, cy) { // pt=画布内坐标; cx/cy=屏幕坐标(菜�
   } else if (indK) {
     bar.appendChild(ib("🗑", "关掉这个副图(指标▾里可再打开)", "del", function () { closeAlMenu(); closeIndJL(indK); }));
   }
+  if (alv) bar.appendChild(ib("🔔", "到这个位置提醒我" + (alv.lv.kind === "px" ? " " + fwp(alv.lv.val) : " 强弱T " + alv.lv.val.toFixed(0)), "al", function () { closeAlMenu(); addKsAlert(alv.lv, alv.dg); })); /* 图标化: 提醒并入图标条, 无文字 */
   if (bar.childNodes.length) m.appendChild(bar);
-  if (mainOn.length) {
-    var chips = document.createElement("div"); chips.className = "ksMnChips";
-    mainOn.forEach(function (t) {
-      var c = document.createElement("button"); c.type = "button"; c.className = "ksMnChip"; c.title = "关掉" + t[1];
-      c.innerHTML = ""; c.appendChild(document.createTextNode(t[1] + " ")); var xx = document.createElement("b"); xx.textContent = "✕"; c.appendChild(xx);
-      c.addEventListener("click", function (e2) { e2.stopPropagation(); S.ind[t[0]] = false; store(); try { buildInds(); } catch (e) {} draw(); c.remove(); hint("已关闭「" + t[1] + "」· 指标▾里可再打开"); if (!chips.children.length) chips.remove(); });
-      chips.appendChild(c);
-    });
-    m.appendChild(chips);
-  }
-  if (alv) m.appendChild(ib("🔔 提醒" + (alv.lv.kind === "px" ? " " + fwp(alv.lv.val) : " 强弱T " + alv.lv.val.toFixed(0)), "到这个位置提醒我", "al", function () { closeAlMenu(); addKsAlert(alv.lv, alv.dg); }));
   document.body.appendChild(m);
   var mw = m.offsetWidth, mh = m.offsetHeight;
   var mx = Math.max(6, Math.min(window.innerWidth - mw - 6, (cx != null ? cx : window.innerWidth / 2) + 8));
@@ -2889,15 +2879,19 @@ function hitTest(pt, soft) { // soft=true 时锁定对象也可命中(点选弹�
         distSeg(pt.x, pt.y, { x: xa.x, y: yb }, { x: xb.x, y: yb }),
         distSeg(pt.x, pt.y, { x: xa.x, y: ya }, { x: xa.x, y: yb }),
         distSeg(pt.x, pt.y, { x: xb.x, y: ya }, { x: xb.x, y: yb }));
+      if (soft && pt.x >= xa.x && pt.x <= xb.x && pt.y >= ya && pt.y <= yb) d = Math.min(d, 8); // ks-p3-fix: 同斐波——右键/长按矩形内部也算点中; 拖动(硬命中)仍只认边框, 不挡拖图
     }
     else if (t === "fib") { // ks-p2-5: 命中=两锚点斜线 + 两锚点x区间内的档位线(→延伸时到右缘); 色带内部不命中, 免得大斐波挡住拖图
       var p1 = dg.pts[0].p, p2 = dg.pts[1].p;
       var fx0 = Math.min(pts[0].x, pts[1].x), fx1 = dg.ext ? right : Math.max(pts[0].x, pts[1].x);
       d = distSeg(pt.x, pt.y, pts[0], pts[1]);
       if (pt.x >= fx0 - 8 && pt.x <= fx1 + 8) {
+        var _fyMin = 1e9, _fyMax = -1e9;
         for (var fi = 0, _fh9 = fibLvOfJL(dg); fi < _fh9.length; fi++) {
-          d = Math.min(d, Math.abs(pt.y - yOfPane(v, dg.pts[0].pane, p1 + (p2 - p1) * _fh9[fi])));
+          var _fyy = yOfPane(v, dg.pts[0].pane, p1 + (p2 - p1) * _fh9[fi]);
+          d = Math.min(d, Math.abs(pt.y - _fyy)); _fyMin = Math.min(_fyMin, _fyy); _fyMax = Math.max(_fyMax, _fyy);
         }
+        if (soft && pt.y >= _fyMin && pt.y <= _fyMax) d = Math.min(d, 8); // ks-p3-fix: 点/右键色带内部也算点中(原只认档位线→常落到空白菜单); 拖动(硬命中)仍只认线, 不挡拖图
       }
     }
     else if (t === "tri") {
