@@ -6,7 +6,7 @@
 </script>
 
 <!-- jl-ATRfix 1025晨: 持仓卡ATR带bug修复——带宽ATR原用atr[end-1]较采样口径滞后一日(兆易创新10-23案例: 10-23振幅26.5大震后, 旧代码周一仍用周四ATR15.20而非周五17.46, 带子偏窄15%); 对齐后带子=开盘±参数日ATR×P80系数; 注: 10-23穿带12.25元属P80设计遇P99.2日的预期尾部非算错; 壳v266→v267 --><!-- v0.85 温度量化批 temp-q1 1025晨: 大盘温度卡——温度近20交易日分位P(读jlv2温度史, 排除当日)+Δ30分盘中动量(jinlin_mtemp_series_v1: ≥09:25才记/4分去重/160点, 集合竞价噪声不进)+九档幅度加权净宽; luLimJL修板块前缀优先(创业板/科创板ST=20%非5%, N/C新股无涨跌幅)+采样失败"示数为旧值"标记; 纯显示层, 温度公式/分区阈值/状态机/抓取链零触碰; 壳v265→266成对(sw.js KEEP=266+265+264) --><!-- v0.86 1025 温度审查收尾批q1-r2·并入v269(底=58ef791): ①分位P口径标注——20日基准=各日末次采样(≈收盘温度), 卡面三处标签改"20日收盘"(v1头/v2sum/v2tnow); ②勘误——v266批注"纯显示层"不含luLimJL(涨停/跌停判定口径修正, 影响分档统计, 改法本身正确), 温度公式/分区阈值/状态机/九因子/抓取链仍零触碰; ③v2分位P(tempPctJL)改直读localStorage+显示加"数据属今天"闸(与v1同源同显隐); ④竞价显示行(jlv2)——工作日9:25前"冷点"改显"竞价", 仅显示层, 日史存原状态; ⑤atr5缓存键_v1→_v2——周末用旧算法打开过APP的, 10-23参数日缓存着15.20, 周一会命中旧缓存照显15.20, 升键强制重算; ⑥周五回推预览数字对齐修复后算法(兆易261.0719/282.5749·永鼎25.50/28.49); jlv2.js引用?v=13→15(跳14: Claude本地worktree占用该标识); 壳v268→v269成对 -->
-<script id="jlVerJL" data-ver="0.87" data-sw="jinlin-shell-v281"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<script id="jlVerJL" data-ver="0.87" data-sw="jinlin-shell-v282"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -798,6 +798,8 @@ body:not(.day) .stage:before{display:none}
 .header{padding-top:max(12px,env(safe-area-inset-top,0px))} /* 顶栏让出刘海/状态栏安全区(页面被放到状态栏下时不再压住时钟) */
 /* jl-1160: 持仓页两侧竖条(未选中的窄卡)全透明——去玻璃底/描边/模糊/投影, 不再糊住相邻卡片边缘; 竖排名字与点击照旧 */
 .deck .stock:not(.active){background:transparent!important;border-color:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#home .homeQuote .label{color:#fff;font-size:13px;font-weight:700;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.55)} /* jl-1166: 首页指数标题亮白(原 .8 透明白+11px 太灰) */
+.day #home .homeQuote .label{color:#123b46;text-shadow:none}
 .toast{bottom:88px;z-index:9999}
 /* jl-1162: K线页股票行一行清爽: ‹返回 名称 代码 价格涨幅(小字) …… ⟨选股⟩ ⛶ ; 去掉重复的«»(与⟨⟩同为切股)、'· 分时'、'实时'; 行高 44→约28 让K线整体上移 */
 body.ksEmbed #chartPage .chSwJL:not(#chExpandJL){display:none!important}
@@ -11263,7 +11265,7 @@ function swingMidHTMLJL(st) {
     if (!c || !c.getClientRects().length) return null;
     const w = c.clientWidth, h = c.clientHeight;
     if (w < 10 || h < 10) return null;
-    const d = Math.min(devicePixelRatio || 1, 2);
+    const d = Math.min(devicePixelRatio || 1, 3);
     if (c.width !== Math.round(w * d) || c.height !== Math.round(h * d)) {
       c.width = Math.round(w * d);
       c.height = Math.round(h * d);
@@ -11287,7 +11289,7 @@ function swingMidHTMLJL(st) {
       } catch (_) {
         return null;
       }
-    })() : null, lo2 = homeRangePadJL(c, pane, predPad ? Math.min(lo, predPad.lo) : lo, predPad ? Math.max(hi, predPad.hi) : hi, code)[0], hi2 = homeRangePadJL(c, pane, predPad ? Math.min(lo, predPad.lo) : lo, predPad ? Math.max(hi, predPad.hi) : hi, code)[1], center = (lo2 + hi2) / 2 + (vp2 && pane === "price" ? vp2.offset : 0), span = (hi2 - lo2) * 1.22 / (vp2 && pane === "price" ? vp2.ys : 1), min = center - span / 2, max = center + span / 2, X = (i) => L + (i - start) / (count - 1) * (R - L), Y = (v) => T + (max - v) / span * (B - T), I = (px) => start + (px - L) / (R - L) * (count - 1), V = (py) => max - (py - T) / (B - T) * span;
+    })() : null, lo2 = homeRangePadJL(c, pane, predPad ? Math.min(lo, predPad.lo) : lo, predPad ? Math.max(hi, predPad.hi) : hi, code)[0], hi2 = homeRangePadJL(c, pane, predPad ? Math.min(lo, predPad.lo) : lo, predPad ? Math.max(hi, predPad.hi) : hi, code)[1], center = (lo2 + hi2) / 2 + (vp2 && pane === "price" ? (c.id === "homeChart" ? homeOffClampJL(vp2, lo2, hi2) : vp2.offset) : 0), span = (hi2 - lo2) * 1.22 / (vp2 && pane === "price" ? vp2.ys : 1), min = center - span / 2, max = center + span / 2, X = (i) => L + (i - start) / (count - 1) * (R - L), Y = (v) => T + (max - v) / span * (B - T), I = (px) => start + (px - L) / (R - L) * (count - 1), V = (py) => max - (py - T) / (B - T) * span;
     maps.set(c, { X, Y, I, V, R, B, L, T, w, h, code: code, period: period });
     return { c, x, w, h, bars, count, start, L, R, T, B, min, max, X, Y, I, V, pane, large };
   }
@@ -11306,6 +11308,82 @@ function swingMidHTMLJL(st) {
     } catch (_) {
     }
     return [lo2, hi2];
+  }
+  function homeOffClampJL(vp, lo2, hi2) { /* jl-1166: 首页图上下拖动夹紧——数据区间不能被拖出框外(原 offset 无界, 可拖到图全出框再拉回). 缩小(ys<1)时数据始终留在框内; 放大(ys>1)时只拖到数据两端为止 */
+    const rg = hi2 - lo2;
+    if (!(rg > 0) || !Number.isFinite(vp.offset)) return Number.isFinite(vp.offset) ? vp.offset : 0;
+    const span = rg * 1.22 / (vp.ys || 1), lim = Math.abs(rg - span) / 2 + span * 0.02;
+    vp._lim = lim;
+    if (vp.offset > lim) vp.offset = lim; else if (vp.offset < -lim) vp.offset = -lim;
+    return vp.offset;
+  }
+  function homeHaloTextJL(x, t2, tx, ty, col) { x.lineJoin = "round"; x.lineWidth = 3; x.strokeStyle = "rgba(4,12,18,0.85)"; x.strokeText(t2, tx, ty); x.fillStyle = col; x.fillText(t2, tx, ty); }
+  function homeDrawLineJL(x, line, sel, g) { /* jl-1166: 首页图画线对标K线页(ks.html): 趋势线=琥珀细线+端点圆点; 斐波=档间淡色带+档线只画在两锚点之间+左端「档 (价)」+两锚点斜虚线(档位/颜色与K线页同键 jinlin_fib_cfg_v1). 多点线(pts)仍走旧画法 */
+    const { X, Y, L, R, T, B, light } = g;
+    x.save();
+    x.beginPath(); x.rect(L, T, R - L, B - T); x.clip();
+    if (line.pts && line.pts.length) {
+      x.strokeStyle = sel ? "#ffd21f" : light ? "#9056c1" : "#d5b5ff"; x.lineWidth = sel ? 2.4 : 1.5; x.setLineDash([]);
+      x.beginPath(); x.moveTo(X(line.pts[0].i), Y(line.pts[0].v));
+      for (let k = 1; k < line.pts.length; k++) x.lineTo(X(line.pts[k].i), Y(line.pts[k].v));
+      x.stroke();
+    } else if (line.fib) {
+      const dv = line.b.v - line.a.v, ax = X(line.a.i), bx = X(line.b.i), ay = Y(line.a.v), by = Y(line.b.v);
+      const fxa = Math.min(ax, bx), fxb = Math.max(Math.max(ax, bx), fxa + 2);
+      const FL = fibVisibleJL().slice().sort((p1, p2) => p1.r - p2.r), fys = FL.map((z) => Y(line.a.v + dv * z.r));
+      for (let fi = 1; fi < FL.length; fi++) { /* 档间色带(取上一档之上这一档的颜色, 很淡) */
+        x.globalAlpha = 0.09; x.fillStyle = FL[fi].color;
+        x.fillRect(fxa, Math.min(fys[fi - 1], fys[fi]), fxb - fxa, Math.abs(fys[fi] - fys[fi - 1]));
+      }
+      x.globalAlpha = 1; x.lineWidth = 1; x.setLineDash([]);
+      FL.forEach((z, fi) => { x.strokeStyle = z.color; x.beginPath(); x.moveTo(fxa, fys[fi]); x.lineTo(fxb, fys[fi]); x.stroke(); });
+      x.setLineDash([4, 4]); x.strokeStyle = "rgba(235,242,237,0.55)";
+      x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke(); x.setLineDash([]);
+      x.font = "10px monospace"; x.textBaseline = "middle"; x.textAlign = "left";
+      let lastY = -99;
+      fys.map((y0, k0) => k0).sort((p1, p2) => fys[p1] - fys[p2]).forEach((k1) => {
+        const yy = fys[k1];
+        if (yy < T - 1 || yy > B + 1 || yy - lastY < 11) return;
+        lastY = yy;
+        const lb = FL[k1].lb + " (" + (line.a.v + dv * FL[k1].r).toFixed(2) + ")", tw = x.measureText(lb).width, inside = fxa - tw - 5 < L;
+        homeHaloTextJL(x, lb, inside ? fxa + 4 : fxa - tw - 5, inside ? yy - 6 : yy, FL[k1].color);
+      });
+    } else {
+      const ax = X(line.a.i), ay = Y(line.a.v), bx = X(line.b.i), by = Y(line.b.v);
+      x.strokeStyle = "#e6b43c"; x.fillStyle = "#e6b43c"; x.lineWidth = sel ? 1.6 : 1.1; x.setLineDash([]);
+      x.beginPath(); x.moveTo(ax, ay); x.lineTo(bx, by); x.stroke();
+      [[ax, ay], [bx, by]].forEach((q) => { x.beginPath(); x.arc(q[0], q[1], 2.4, 0, 7); x.fill(); });
+    }
+    x.restore();
+  }
+  function homeHiLoJL(x, bars, start, count, g) { /* jl-1166: 首页图可见窗口的最高/最低点标注(高=粉签/低=蓝签 + 价), 纯显示层 */
+    const { X, Y, L, R, T, B } = g, e0 = Math.min(bars.length - 1, start + count - 1);
+    let hiI = -1, loI = -1;
+    for (let i = Math.max(0, start); i <= e0; i++) {
+      const b0 = bars[i];
+      if (!b0 || !(b0.h > 0) || !(b0.l > 0)) continue;
+      if (hiI < 0 || b0.h > bars[hiI].h) hiI = i;
+      if (loI < 0 || b0.l < bars[loI].l) loI = i;
+    }
+    if (hiI < 0 || loI < 0 || bars[hiI].h === bars[loI].l) return null;
+    const out = [];
+    [[hiI, bars[hiI].h, true], [loI, bars[loI].l, false]].forEach((t2) => {
+      const px = X(t2[0]), py = Y(t2[1]);
+      if (!(px >= L - 1 && px <= R + 1)) return;
+      const col = t2[2] ? "#ff5f8f" : "#4aa8ff", txt = t2[1].toFixed(2);
+      x.save();
+      x.font = "9px monospace"; x.textBaseline = "middle"; x.textAlign = "left";
+      const tw = x.measureText(txt).width, by0 = Math.max(T - 2, Math.min(B - 12, t2[2] ? py - 17 : py + 5)), right = px + 15 + tw + 4 > R;
+      x.fillStyle = col; x.beginPath(); x.arc(px, py, 2.4, 0, 7); x.fill();
+      const bx0 = right ? px - 15 - tw - 4 : px + 2;
+      x.fillStyle = col; x.fillRect(bx0, by0, 13, 12);
+      x.fillStyle = "#fff"; x.font = "bold 9px sans-serif"; x.textAlign = "center"; x.fillText(t2[2] ? "高" : "低", bx0 + 6.5, by0 + 6.5);
+      x.font = "9px monospace"; x.textAlign = "left";
+      homeHaloTextJL(x, txt, bx0 + 16, by0 + 6.5, "#fff");
+      x.restore();
+      out.push({ hi: t2[2], i: t2[0], v: t2[1] });
+    });
+    return out;
   }
   const _predLogCacheJL = { t: 0, d: null };
   function drawOverviewChart(c, code, pane = "price", large = false) {
@@ -11473,48 +11551,11 @@ function swingMidHTMLJL(st) {
       x.fillText(ot, otx + 4, B + 12);
     }
     if (c.id === "homeChart" && pane === "price") {
-      const hkey = index + "|" + period + "|price", hsaved = homeLinesHidden ? [] : lines[hkey] || [], hd = draft && draft.home ? [draft] : [];
+      const hkey = index + "|" + period + "|price", hsaved = homeLinesHidden ? [] : lines[hkey] || [], hd = draft && draft.home ? [draft] : [], gH = { X, Y, L, R, T, B, light };
+      try { homeHiLoJL(x, bars, start, count, gH); } catch (eHL) { }
       [...hsaved, ...hd].forEach((line, li) => {
         const sel = li < hsaved.length && homeSel && homeSel.index === li;
-        x.save();
-        x.beginPath();
-        x.rect(L, T, R - L, B - T);
-        x.clip();
-        x.strokeStyle = sel ? "#ffd21f" : line.fib ? "#e8c568" : light ? "#9056c1" : "#d5b5ff";
-        x.lineWidth = sel ? 2.4 : 1.5;
-        x.beginPath();
-        if (line.pts && line.pts.length) { x.moveTo(X(line.pts[0].i), Y(line.pts[0].v)); for (let _pi2 = 1; _pi2 < line.pts.length; _pi2++) x.lineTo(X(line.pts[_pi2].i), Y(line.pts[_pi2].v)); } else {
-        x.moveTo(X(line.a.i), Y(line.a.v));
-        x.lineTo(X(line.b.i), Y(line.b.v));
-        }
-        x.stroke();
-        if (line.fib) {
-          const dv = line.b.v - line.a.v, FIBD = fibVisibleJL().map((z) => [z.r, z.color, z.lb]);
-          let lastLy = -99;
-          x.lineWidth = 0.8;
-          FIBD.forEach((fd) => {
-            const v2 = line.a.v + dv * fd[0], y2 = Y(v2);
-            if (y2 < T || y2 > B) return;
-            x.strokeStyle = fd[1] + "66";
-            x.setLineDash([4, 3]);
-            x.beginPath();
-            x.moveTo(L, y2);
-            x.lineTo(R, y2);
-            x.stroke();
-            x.setLineDash([]);
-            if (y2 - lastLy < 11) return;
-            lastLy = y2;
-            x.font = "8px monospace";
-            const _t2 = fd[2] + " " + v2.toFixed(2), _tw2 = x.measureText(_t2).width;
-            x.fillStyle = "rgba(4,16,24,0.85)";
-            x.fillRect(R - _tw2 - 6, y2 - 11, _tw2 + 6, 11);
-            x.fillStyle = fd[1];
-            x.textAlign = "right";
-            x.fillText(_t2, R - 4, y2 - 2);
-            x.textAlign = "left";
-          });
-        }
-        x.restore();
+        homeDrawLineJL(x, line, sel, gH);
         if (sel) {
           x.fillStyle = "#ffd21f";
           x.strokeStyle = "#041018";
@@ -11530,7 +11571,7 @@ function swingMidHTMLJL(st) {
           const ly = Math.max(T + 2, Math.min(B - 9, Y(line.b.v))), lt = line.b.v.toFixed(2) + (sel ? " \xD7" : "");
           x.font = "9px monospace";
           const lw = Math.max(40, x.measureText(lt).width + 8);
-          x.fillStyle = sel ? "#8a6d1f" : line.fib ? "#7a6227" : light ? "#9056c1" : "#6a4a93";
+          x.fillStyle = sel ? "#8a6d1f" : line.pts && line.pts.length ? (light ? "#9056c1" : "#6a4a93") : "#7a6227";
           x.fillRect(R + 1, ly - 7, lw, 14);
           x.fillStyle = "#fff";
           x.fillText(lt, R + 5, ly + 3);
@@ -16296,7 +16337,8 @@ var RLMCore = (function () {
             if (ln.fib) {
               const dvf = ln.b.v - ln.a.v, FIB_R = fibVisibleJL().map((z) => z.r);
               let hf = null;
-              for (const r2 of FIB_R) {
+              const _fxa = Math.min(ax, bx2) - 8, _fxb = Math.max(ax, bx2) + 8; /* jl-1166: 档线只画在两锚点之间, 命中也只认这一段 */
+              if (p.x >= _fxa && p.x <= _fxb) for (const r2 of FIB_R) {
                 const fy = m.Y(ln.a.v + dvf * r2), fd = Math.abs(p.y - fy);
                 if (fd <= 7 && (!hf || fd < hf)) hf = fd;
               }
@@ -16389,7 +16431,12 @@ var RLMCore = (function () {
             else if (gesture2 && gesture2.mode === "pan") {
               if (!gesture2.axis && Math.hypot(p.x - gesture2.x, p.y - gesture2.y) > 9) gesture2.axis = Math.abs(p.x - gesture2.x) >= Math.abs(p.y - gesture2.y) ? "h" : "v";
               if (gesture2.axis !== "v") hvp.end = clamp(gesture2.end - (p.x - gesture2.x) / (m.R - m.L) * (hvp.count - 1), hvp.count - 1, Math.max(hvp.count - 1, barsN().length - 1));
-              if (gesture2.axis !== "h") hvp.offset = gesture2.offset + (m.V(gesture2.y) - m.V(p.y));
+              if (gesture2.axis !== "h") { /* jl-1166: 夹紧到边界后重置拖动基准, 反向拖立即跟手(不留死区) */
+                let _o = gesture2.offset + (m.V(gesture2.y) - m.V(p.y));
+                const _lm = hvp._lim;
+                if (_lm != null && Math.abs(_o) > _lm) { const _oc = Math.max(-_lm, Math.min(_lm, _o)); gesture2.offset += _oc - _o; _o = _oc; }
+                hvp.offset = _o;
+              }
             }
           }
           paint();
