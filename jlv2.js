@@ -309,7 +309,8 @@
           var last = arr[arr.length - 1], prev = arr.slice(-21, -1).filter(function (r) { return isFinite(r.v); });
           var avgAbs = prev.length ? prev.reduce(function (a, r) { return a + Math.abs(r.v); }, 0) / prev.length : NaN;
           var d5 = arr.slice(-5).reduce(function (a, b) { return a + b.v; }, 0);
-          cb(null, { secid: e0[0], name: e0[1], code: e0[2], today: last.v, asOf: last.d, isToday: last.d === today(), rel: isFinite(avgAbs) && avgAbs > 0 ? last.v / avgAbs : NaN, d5: d5, arr: arr });
+          var out = { secid: e0[0], name: e0[1], code: e0[2], today: last.v, asOf: last.d, isToday: last.d === today(), rel: isFinite(avgAbs) && avgAbs > 0 ? last.v / avgAbs : NaN, d5: d5, arr: arr };
+          fetchVolRatio(sids, function (vr) { out.vr = vr; cb(null, out); }); /* jl-VR: 成交额量比, 同步性用 */
         };
         if (arr[arr.length - 1].d === today() || !mktLive() || nowMin() < 930) { fin(); return; }
         jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62,f124&secids=" + sids.join(",") + "&ut=" + UT, function (e2, d2) {
@@ -320,6 +321,45 @@
           } catch (e3) {}
           fin();
         });
+      });
+    });
+  }
+  /* jl-VR 成交量量比(Kimi回测 2024-05→2026-10 约580日): 分母=近20日截尾均值(去掉最高/最低各10%), 盘中按A股U型累计占比折算成全天口径.
+     多只合并(300×4)时用成交额相加(份额单价不同不能直接加量); 单只额比≈量比. 折算表样本仅6天, 作初值 */
+  var VR_FRAC = [[930, 0], [945, 0.17], [1030, 0.33], [1130, 0.63], [1300, 0.63], [1330, 0.70], [1430, 0.90], [1500, 1]];
+  function vrFracJL(hm) { /* hm=HHMM → 截至该时刻的全天成交累计占比(线性插值), 9:45前返回0(不判定) */
+    if (hm < 945) return 0;
+    if (hm >= 1500) return 1;
+    var toM = function (x) { return Math.floor(x / 100) * 60 + x % 100; }, t = toM(hm);
+    for (var i = 1; i < VR_FRAC.length; i++) {
+      var a = VR_FRAC[i - 1], b = VR_FRAC[i], ta = toM(a[0]), tb = toM(b[0]);
+      if (t <= tb) return tb === ta ? b[1] : a[1] + (b[1] - a[1]) * (t - ta) / (tb - ta);
+    }
+    return 1;
+  }
+  function trimMeanJL(a) { /* 截尾均值: 去掉最高/最低各10%(至少各1个, 样本≥5时) */
+    var v = a.filter(isFinite).slice().sort(function (x, y) { return x - y; }), k = v.length >= 5 ? Math.max(1, Math.floor(v.length * 0.1)) : 0;
+    v = v.slice(k, v.length - k);
+    return v.length ? v.reduce(function (x, y) { return x + y; }, 0) / v.length : NaN;
+  }
+  function volRatioCalc(rows, td, hm) { /* rows=[{d,a}]升序; 返回 {vr, frac, d, live} */
+    if (!rows || rows.length < 6) return null;
+    var last = rows[rows.length - 1], live = last.d === td && hm < 1500, frac = live ? vrFracJL(hm) : 1;
+    if (!(frac > 0)) return { vr: NaN, frac: 0, d: last.d, live: live };
+    var base = trimMeanJL(rows.slice(-21, -1).map(function (r) { return r.a; }));
+    return { vr: base > 0 ? last.a / frac / base : NaN, frac: frac, d: last.d, live: live };
+  }
+  function fetchVolRatio(sids, cb) {
+    var got = [], left = sids.length, bad = false;
+    sids.forEach(function (sid, j) {
+      jsonp(P2H, "/api/qt/stock/kline/get?secid=" + sid + "&klt=101&fqt=0&lmt=25&end=20500101&fields1=f1&fields2=f51,f57&ut=" + UT, function (e, d) {
+        if (e || !d || !d.data || !d.data.klines || !d.data.klines.length) bad = true; else got[j] = d.data.klines;
+        if (--left > 0) return;
+        if (bad) { cb(null); return; }
+        var m = {};
+        got.forEach(function (kl) { kl.forEach(function (r) { var p = r.split(","), o = m[p[0]] || (m[p[0]] = { n: 0, a: 0 }); o.n++; o.a += +p[1]; }); });
+        var rows = Object.keys(m).sort().filter(function (k) { return m[k].n === sids.length; }).map(function (k) { return { d: k, a: m[k].a }; });
+        try { cb(volRatioCalc(rows, today(), nowMin())); } catch (e2) { cb(null); }
       });
     });
   }
@@ -962,20 +1002,22 @@
     }
     var struct = "";
     if (stx) {
-      /* jl-C3: 同步性改用各自"今日/近20日平均绝对值"倍数(rel), 不再用同一组亿元阈值(两只规模差很多倍); 1.5/0.5/1.0 为初值未回测 */
-      var r1000 = etfOk && S.etf[2] && isFinite(S.etf[2].rel) ? S.etf[2].rel : null, r300 = e300 && isFinite(e300.rel) ? e300.rel : null;
-      var sync = r300 != null && r1000 != null
-        ? (r300 >= 1.5 && r1000 < 0.5 ? "托底集中于权重 · 中小盘未同步" : (r1000 >= 1 ? "中小盘有同步承接" : "承接一般"))
-        : "ETF数据未到";
+      /* jl-VR: 同步性改用成交量量比(Kimi回测定阈): 300×4 量比≥1.5=国家队活跃; 活跃日里 500 或 1000 任一 ≤0.65=中小盘掉队; 两只都 ≥1.0=同步承接 */
+      var vrOf = function (k) { var r = etfOk && S.etf[k]; return r && r.vr && isFinite(r.vr.vr) ? r.vr.vr : null; };
+      var v300 = vrOf(0), v500 = vrOf(1), v1000 = vrOf(2), vfr = e300 && e300.vr ? e300.vr.frac : null;
+      var sync = v300 != null && v500 != null && v1000 != null
+        ? (v300 >= 1.5 && (v500 <= 0.65 || v1000 <= 0.65) ? "托底集中于权重 · 中小盘未同步" : (v500 >= 1 && v1000 >= 1 ? "中小盘有同步承接" : "承接一般"))
+        : (vfr === 0 ? "开盘15分钟后判定" : "量比数据未到");
+      var vrTxt = v300 != null ? "量比 300×4 " + v300.toFixed(2) + (v500 != null ? " · 500 " + v500.toFixed(2) : "") + (v1000 != null ? " · 1000 " + v1000.toFixed(2) : "") + (vfr != null && vfr < 1 ? " · 已折算(" + Math.round(vfr * 100) + "%)" : "") : "";
       struct =
         '<div class="jh">市场结构判断</div>' +
         '<div class="row" style="border-bottom:none"><span class="bigState">' + VN[v] + '</span></div>' +
         '<div class="row" style="border-bottom:none"><small>沪深300 ' + pct(stx.p300) + ' × 上涨占比 ' + Math.round(stx.upR) + '%</small><small>' + (stx.pcy != null ? "创业板 " + pct(stx.pcy) : "") + '</small></div>' +
         '<div class="chips">' + VN.map(function (n, i) { return '<span class="chip' + (i === v ? " on" : "") + '">' + n + '</span>'; }).join("") + '</div>' +
-        '<div class="row" style="margin-top:8px"><span>中小盘同步性</span><span class="' + (sync.indexOf("未同步") >= 0 ? "hl" : "mu") + '" style="font-size:9.5px">' + sync + '</span></div>';
+        '<div class="row" style="margin-top:8px"><span>中小盘同步性</span><span class="' + (sync.indexOf("未同步") >= 0 ? "hl" : "mu") + '" style="font-size:9.5px">' + sync + '</span></div>' + (vrTxt ? '<div class="row" style="border-bottom:none"><small class="mono">' + vrTxt + '</small></div>' : "") + '';
     }
     var body = rows + struct +
-      '<div class="foot">ETF主力净额≠真实净流入（份额变动×净值）· 300ETF=510300/510310/510330/159919合计 · push2his fflow 日K(盘中今日用实时净额补) · 近5日=近5根日K合计 · 同步性=今日÷近20日平均绝对值 · 结构判断=沪深300涨跌×上涨占比交叉派生 · 托底不等于全面进攻</div>';
+      '<div class="foot">ETF主力净额≠真实净流入（份额变动×净值）· 300ETF=510300/510310/510330/159919合计 · push2his fflow 日K(盘中今日用实时净额补) · 近5日=近5根日K合计 · 同步性=成交额量比(今日÷近20日截尾均值, 盘中按U型累计占比折算; 300×4≥1.5活跃·500/1000任一≤0.65掉队·两只≥1.0承接) · 结构判断=沪深300涨跌×上涨占比交叉派生 · 托底不等于全面进攻</div>';
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function renderYd() {
