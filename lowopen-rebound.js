@@ -1,3 +1,4 @@
+/* v4 2026-10-25: jl-1164 highModel扩展档负价防御过滤(配对index.html ?v=4)——数学上仅锚无效才可达, 顺手加上; 其余零改动(样例锚/跨日尺规则不动, 真锚接入属Mac侧正式批) */
 (function (root) {
   "use strict";
 
@@ -45,7 +46,7 @@
     }
     function highModel(d, price) {
       const m = model(d.high, d.low, price, d.lowTime);
-      m.levels = [1.272, 1.618, 2.618].map(function (ratio) { return { ratio: ratio, price: d.low + (d.high - d.low) * ratio }; });
+      m.levels = [1.272, 1.618, 2.618].map(function (ratio) { return { ratio: ratio, price: d.low + (d.high - d.low) * ratio }; }).filter(function (x) { return Number.isFinite(x.price) && x.price > 0; }); /* jl-1164: 负价档不显示 */
       return m;
     }
     function highPanelHTML(mode, d, priceClass, hidden, price) {
