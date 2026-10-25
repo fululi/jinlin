@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>K-STATION 双图</title>
+<!-- ks-p3-14: 双图外壳——上下(宽屏≥900px 左右)两个 ks.html?pane=0|1, 各自周期; 十字线在这里转发给另一个窗格.
+     对金粼父页面(index.html)装成一个 ks.html: #ksBarJL 代理(「工具」收起/展开同时作用两个窗格)、window.draw、window.S(读第一个窗格) -->
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0e0b; overflow: hidden; }
+  body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  body.wide { flex-direction: row; }
+  iframe { flex: 1 1 0; min-height: 0; min-width: 0; width: 100%; border: 0; display: block; background: #0a0e0b; }
+  body.wide iframe { height: 100%; }
+  .sep { flex: none; height: 1px; background: rgba(255,255,255,0.16); }
+  body.wide .sep { width: 1px; height: auto; }
+  #ksBarJL { display: none; }
+</style>
+</head>
+<body>
+<div id="ksBarJL"></div>
+<script>
+"use strict";
+(function () {
+  var q = new URLSearchParams(location.search);
+  q.delete("pane");
+  var base = "ks.html?" + q.toString() + (q.has("embed") ? "" : "&embed=1");
+  var panes = [];
+  for (var i = 0; i < 2; i++) {
+    if (i) { var sp = document.createElement("div"); sp.className = "sep"; document.body.appendChild(sp); }
+    var f = document.createElement("iframe");
+    f.title = "K线 " + (i + 1);
+    f.src = base + "&pane=" + i;
+    document.body.appendChild(f);
+    panes.push(f);
+  }
+  function layout() { document.body.classList.toggle("wide", innerWidth >= 900 && innerWidth > innerHeight); }
+  layout(); addEventListener("resize", layout);
+  // 十字线转发: 谁发来的就转给另一个
+  addEventListener("message", function (e) {
+    var m = e.data; if (!m || !m.ksX) return;
+    panes.forEach(function (f, k) { if (k !== m.from && f.contentWindow && e.source !== f.contentWindow) { try { f.contentWindow.postMessage(m, "*"); } catch (e2) {} } });
+  });
+  // 父页面兼容: 收起/展开工具条
+  var proxy = document.getElementById("ksBarJL");
+  new MutationObserver(function () {
+    var hide = proxy.style.display === "none";
+    panes.forEach(function (f) { try { var b = f.contentDocument.getElementById("ksBarJL"); if (b) b.style.display = hide ? "none" : ""; f.contentDocument.body.classList.remove("drw-periods", "drw-tools", "drw-inds", "drw-favs"); f.contentWindow.dispatchEvent(new Event("resize")); } catch (e) {} });
+  }).observe(proxy, { attributes: true, attributeFilter: ["style"] });
+  proxy.style.display = "";
+  window.draw = function () { panes.forEach(function (f) { try { f.contentWindow.draw(); } catch (e) {} }); };
+  Object.defineProperty(window, "S", { get: function () { try { return panes[0].contentWindow.S; } catch (e) { return undefined; } } });
+})();
+</script>
+</body>
+</html>
