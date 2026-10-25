@@ -281,7 +281,7 @@
   body.embed .hint { display: none !important; }
   body.embed .hint.warn { display: block !important; position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; min-height: 0; border-top: none; background: rgba(40,10,8,0.75); color: #ffb4a8; pointer-events: none; } /* ks-p2-5: 用户定——嵌入页底部提示条整条撤(原独占一行, 图表往下拉满) */
   body.embed .tpan { display: none !important; } /* ks-p2-5: 右下大圆◀▶撤(左下已有小‹›, 右下有−+) */
-  body.embed #ksBarJL button { flex: none; font-family: inherit; font-size: 10px; line-height: 1.6; padding: 2px 7px; border-radius: 7px; border: 1px solid #87b7c43d; background: transparent; color: #a0b9c6; cursor: pointer; }
+  body.embed #ksBarJL button { flex: none; font-family: inherit; font-size: 10px; line-height: 1.6; padding: 2px 7px; border-radius: 7px; border: 1px solid #87b7c43d; background: transparent; color: #fff; cursor: pointer; }
   body.embed #ksBarJL button.on { color: #81e6d9; border-color: #81e6d9; }
   @keyframes lkFl { 50% { background: #ffd21f88; box-shadow: 0 0 12px #ffd21faa; } }
   body.embed #ksBarJL i.sep { width: 1px; height: 14px; background: #87b7c433; flex: none; margin: 0 2px; }
@@ -1777,6 +1777,7 @@ function renderPaneDrawings(ctx, v) {
   });
   // ks-0907-21: 已挂提醒的🔔标记——主图线按价位,强弱T附图线按0-100值;灰=已触发
   S._alHits = [];
+  try { migrateBareAlertsJL(); } catch (eMg) {} // ks-p3-fix: 旧版「价位」提醒补成真水平线(带换色/锁定/删除工具条)
   var _alArr = ALERTS[S.active];
   if (_alArr && _alArr.length && !S.simple) {
     ctx.font = "10px -apple-system, sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
@@ -1923,17 +1924,43 @@ function delAlSelJL() { // ks-p3-14: 删除选中的🔔提醒; 有删返回 tru
   S.alSel = null; storeAlerts(); try { buildAlList(); syncAlBadge(); syncTools(); } catch (e) {} hint("已删除选中的提醒"); draw();
   return true;
 }
+function dropAlertsOfLinesJL(gone) { // ks-p3-fix: 删水平线时, 连带删掉挂在这个价位上的提醒(提醒列表同步)
+  var arr = ALERTS[S.active]; if (!arr || !arr.length || !gone || !gone.length) return;
+  var n0 = arr.length;
+  var keep = arr.filter(function (a) {
+    if (a.kind !== "px") return true;
+    return !gone.some(function (g) { return g.type === "hline" && g.pts && g.pts[0] && g.pts[0].p > 0 && Math.abs(a.val / g.pts[0].p - 1) < 0.002; });
+  });
+  if (keep.length === n0) return;
+  if (keep.length) ALERTS[S.active] = keep; else delete ALERTS[S.active];
+  S.alSel = null; storeAlerts(); try { buildAlList(); syncAlBadge(); } catch (e) {}
+}
 function delDrawingJL(idx) { // ks-p2-menu: 删除某条画线(右键菜单✕/设置面板删除共用); 锁定的先解锁
   var dl = dlist(), dg = dl[idx]; if (!dg) return;
   if (dg.locked) { hint("这条已锁定 · 先解锁再删"); return; }
-  dl.splice(idx, 1); S.selected = -1; store(); closeDgPanel(); hint("已删除这条" + ksToolName(dg.type)); try { syncTools(); } catch (e) {} draw();
+  dl.splice(idx, 1); S.selected = -1; store(); dropAlertsOfLinesJL([dg]); closeDgPanel(); hint("已删除这条" + ksToolName(dg.type)); try { syncTools(); } catch (e) {} draw();
 }
 function closeAlMenu() { if (alMenuEl) { alMenuEl.remove(); alMenuEl = null; } }
+function migrateBareAlertsJL() { // 旧版空白处挂的纯价位提醒(note=「价位」, 没有线)→补一条同价位水平线, 备注改成实际价格; 只处理一次(note 改了就不再命中)
+  var arr = ALERTS[S.active]; if (!arr || !arr.length || !S.kl || !S.kl.length || S.simple === undefined) return;
+  var n = 0;
+  arr.forEach(function (a) {
+    if (a.kind !== "px" || a.note !== "价位" || !(a.val > 0)) return;
+    var has = dlist().some(function (d) { return d.type === "hline" && d.pts && d.pts[0] && Math.abs(d.pts[0].p / a.val - 1) < 0.002; });
+    if (!has) dlist().push({ type: "hline", pts: [{ d: S.kl[S.kl.length - 1][0], p: +(+a.val).toFixed(3) }], color: S.drawColor });
+    a.note = fwp(+a.val); n++;
+  });
+  if (n) { store(); storeAlerts(); try { buildAlList(); } catch (e) {} requestAnimationFrame(function () { draw(); }); }
+}
 function addKsAlert(lv, dg) {
   var code = S.active; if (!ALERTS[code]) ALERTS[code] = [];
   var dup = ALERTS[code].some(function (a) { return a.kind === lv.kind && Math.abs(a.val / lv.val - 1) < 0.002; });
   if (dup) { hint("这个" + (lv.kind === "px" ? "价位" : "位置") + "已挂过提醒"); return; }
-  var note = dg ? (dg.tag || ksToolName(dg.type)) : "价位";
+  if (!dg && lv.kind === "px" && S.kl && S.kl.length) { // ks-p3-fix: 空白处挂的纯价位提醒=同时落一条真·水平线(线本身就带 换色/锁定/删除 工具条, 点线/右键线与画线完全一致); 备注显示实际价格而非「价位」
+    var _hl = { type: "hline", pts: [{ d: S.kl[S.kl.length - 1][0], p: +lv.val.toFixed(3) }], color: S.drawColor };
+    dlist().push(_hl); dg = _hl; store();
+  }
+  var note = dg && lv.kind === "px" && dg.type === "hline" ? fwp(+lv.val) : dg ? (dg.tag || ksToolName(dg.type)) : "价位";
   ALERTS[code].push({ kind: lv.kind, val: +lv.val.toFixed(lv.kind === "tqs" ? 1 : 3), note: note, armed: true, ts: Date.now() });
   storeAlerts();
   hint("🔔 已挂提醒: " + (lv.kind === "px" ? "价 " + lv.val.toFixed(2) : "强弱T " + lv.val.toFixed(0)) + " · " + note + " · 现价触及时横幅+提示音(+系统通知) · 图上线变细虚线");
@@ -3657,24 +3684,25 @@ function buildTools() {
     if (S.selected >= 0) {
       var _dsel = dlist()[S.selected];
       if (_dsel && _dsel.locked) { hint("这条已锁定 · 先在设置面板(轻点它)解锁再删"); return; } // ks-1012: 删除自动跳过锁定
-      dlist().splice(S.selected, 1); S.selected = -1; store(); hint("已删除"); closeDgPanel(); syncTools(); draw();
+      dlist().splice(S.selected, 1); S.selected = -1; store(); dropAlertsOfLinesJL([_dsel]); hint("已删除"); closeDgPanel(); syncTools(); draw();
     }
   }],
   ["清空", function () {
     // ks-0909-30: 价位线已跨周期可见,清空要连带扫掉本票其它周期的价位线,否则"清了还在"; 日期锚的线(趋势/蝴蝶等)仍只清本周期
-    var swept = 0, pre = S.active + ":";
+    var swept = 0, pre = S.active + ":", gone9 = [];
     Object.keys(DRAW).forEach(function (k) {
       if (k === dkey() || k.indexOf(pre) !== 0) return;
       DRAW[k] = (DRAW[k] || []).filter(function (d) {
         var isPx = (d.type === "hline" || d.type === "buy") && d.pts && d.pts.length && d.pts[0].p != null && !d.pts[0].pane;
         if (isPx && d.locked) return true; // ks-1012: 锁定的价位线保留
-        if (isPx) swept++;
+        if (isPx) { swept++; gone9.push(d); }
         return !isPx;
       });
     });
     if (dlist().length || swept) {
+      gone9 = gone9.concat((DRAW[dkey()] || []).filter(function (d) { return !d.locked; }));
       DRAW[dkey()] = (DRAW[dkey()] || []).filter(function (d) { return d.locked; }); // ks-1012: 锁定的图形清空时保留
-      S.selected = -1; store(); hint(swept ? "本周期画线+各周期价位线已清空 · 锁定的保留" : "本周期画线已清空 · 锁定的保留");
+      S.selected = -1; store(); dropAlertsOfLinesJL(gone9); hint(swept ? "本周期画线+各周期价位线已清空 · 锁定的保留" : "本周期画线已清空 · 锁定的保留");
       closeDgPanel(); syncTools(); draw();
     }
   }],
@@ -3724,21 +3752,19 @@ function buildTools() {
   el.appendChild(alSec);
   var lkRow = document.createElement("div");
   lkRow.className = "ksLkRow";
-  var mkLk = function (label, lockTo, title) {
-    var b = document.createElement("button");
-    b.type = "button"; b.className = "btn"; b.textContent = label; b.title = title;
-    b.addEventListener("click", function () {
-      var dl9 = visList(), n9 = 0;
-      dl9.forEach(function (d) { if (!!d.locked !== lockTo) { d.locked = lockTo; n9++; } });
-      if (lockTo) { S.selected = -1; closeDgPanel(); }
-      store(); draw(); syncTools();
-      hint(lockTo ? "已全部锁定(屏上 " + dl9.length + " 个图形) · 拖不动·删不掉·不挡手 · 各自仍可在设置面板解锁"
-                  : "已全部解锁 · 全部恢复可拖动");
-    });
-    lkRow.appendChild(b);
-  };
-  mkLk("🔒 一键全部锁定", true, "屏上所有画线图形各自上锁(含跨周期价位线); 会话内新画的线不受影响");
-  mkLk("🔓 全部解锁", false, "屏上所有画线图形统一解锁");
+  var lkBtn = document.createElement("button"); // ks-p3-fix: 两个长按钮合成一把小锁(点一下: 屏上有没锁的→全锁; 已全锁→全解), 图标即当前状态
+  lkBtn.type = "button"; lkBtn.className = "btn"; lkBtn.id = "ksLkAll";
+  var lkAllOn = function () { var l9 = visList(); return l9.length > 0 && l9.every(function (d) { return d.locked; }); };
+  window.refreshLkAllJL = function () { var on = lkAllOn(); lkBtn.textContent = on ? "🔒" : "🔓"; lkBtn.title = on ? "屏上画线已全部锁定 · 点一下全部解锁" : "点一下把屏上所有画线全部锁定(已锁定的保持)"; lkBtn.classList.toggle("on", on); };
+  lkBtn.addEventListener("click", function () {
+    var dl9 = visList(), lockTo = !lkAllOn(), n9 = 0;
+    dl9.forEach(function (d) { if (!!d.locked !== lockTo) { d.locked = lockTo; n9++; } });
+    if (lockTo) { S.selected = -1; closeDgPanel(); }
+    store(); draw(); syncTools();
+    hint(lockTo ? "已全部锁定(屏上 " + dl9.length + " 个图形) · 拖不动·删不掉·不挡手 · 再点一下全部解锁" : "已全部解锁 · 全部恢复可拖动");
+  });
+  lkRow.appendChild(lkBtn);
+  window.refreshLkAllJL();
   el.appendChild(lkRow);
   refreshAlSec();
   syncTools();
@@ -3778,7 +3804,7 @@ function refreshAlSec() { // 画线抽屉里的"本股提醒"区(挂提醒/删�
     var r = document.createElement("div");
     r.className = "ksAlRow" + (a.armed ? "" : " off");
     var l = document.createElement("span");
-    l.textContent = (a.kind === "px" ? "价 " + (+a.val).toFixed(2) : "强弱T " + (+a.val).toFixed(0)) + " · " + (a.note || "") + (a.armed ? " · 监听中" : alFiredTxtJL(a));
+    l.textContent = (a.kind === "px" ? "价 " + (+a.val).toFixed(2) : "强弱T " + (+a.val).toFixed(0)) + (a.note && a.note !== fwp(+a.val) ? " · " + a.note : "") + (a.armed ? " · 监听中" : alFiredTxtJL(a));
     r.appendChild(l);
     var x = document.createElement("button");
     x.type = "button"; x.className = "x"; x.textContent = "✕"; x.title = "删除这条提醒";
@@ -3800,6 +3826,7 @@ function syncTools() {
     b.classList.toggle("on", !!S.rngMode);
   });
   syncPal(); // ks-1012: 色板当前色高亮同步
+  try { if (window.refreshLkAllJL) window.refreshLkAllJL(); } catch (eLk) {} // ks-p3-fix: 小锁图标跟随全锁状态
 }
 function syncTop() {
   var q = S.quote;
@@ -8444,7 +8471,7 @@ function applyUrl() {
       if (!document.getElementById("ksBarJL")) {
         var bar = document.createElement("div"); bar.id = "ksBarJL";
         var mk = function (label, fn, title) { var b = document.createElement("button"); b.type = "button"; b.textContent = label; if (title) b.title = title; b.addEventListener("click", fn); bar.appendChild(b); return b; };
-        [["周期", "periods"], ["画线", "tools"], ["指标", "inds"], ["幅图", "favs"]].forEach(function (dd) {
+        [["周期", "periods"], ["画线", "tools"], ["指标", "inds"]].forEach(function (dd) {
           mk(dd[0] + "▾", function () {
             var cls = "drw-" + dd[1], had = document.body.classList.contains(cls);
             document.body.classList.remove("drw-periods", "drw-tools", "drw-inds", "drw-favs");
@@ -8466,7 +8493,7 @@ function applyUrl() {
           S.linesHidden = !S.linesHidden; this.classList.toggle("on", S.linesHidden);
           draw(); hint(S.linesHidden ? "画线已隐藏 · 再点恢复" : "画线已恢复显示");
         }, "隐藏/显示全部画线(只影响显示)");
-        mk("提醒", function () { var a = document.querySelector("[data-alerts]"); if (a) a.click(); }, "提醒汇总");
+        // ks-p3-fix: 顶栏「提醒」撤(与画线抽屉里的「本股提醒」汇总重复, 用户定)
         var ctb = mk("K型▾", function () { ctypePopJL(this); }, "图表类型: 蜡烛/空心/美国线/平均K/面积"); // ks-p3-11
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)"); // ks-p3-14
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
