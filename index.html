@@ -1242,7 +1242,7 @@ document.addEventListener("visibilitychange", () => {
   const quoteMarketSymbolsJL = () => allMarketSymbolsJL();
   const eastQuoteCodes = () => allMarketSymbolsJL().map((s) => {
     const c = String(s.code);
-    return c.startsWith("sh") ? "1." + c.slice(2) : c.startsWith("sz") ? "0." + c.slice(2) : /^[6]/.test(c) ? "1." + c : "0." + c;
+    return c.startsWith("sh") ? "1." + c.slice(2) : c.startsWith("sz") ? "0." + c.slice(2) : /^[569]/.test(c) ? "1." + c : "0." + c; /* jl-D3: 沪市ETF(5开头)也走1., 与quoteSymbol同判法 */
   }).join(",");
   function quoteSymbol(code) {
     return /^(sh|sz)/.test(code) ? code : (/^[569]/.test(code) ? "sh" : "sz") + code;
@@ -1436,7 +1436,8 @@ document.addEventListener("visibilitychange", () => {
         list.forEach((q) => {
           var _a3, _b3, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l;
           const code = String(q.f12 || q.code || "").replace(/^0+([0-9]{6})$/, "$1");
-          const item = byCode(((_a3 = quoteMarketSymbolsJL().find((s) => s.code.endsWith(code))) == null ? void 0 : _a3.code) || "");
+          const _mk = q.f13 == null ? null : String(q.f13), _mkOf = (c) => /^sh/.test(c) ? "1" : /^sz/.test(c) ? "0" : /^[569]/.test(c) ? "1" : "0"; /* jl-D4: 按 市场.代码 匹配, 防上证指数000001与平安银行000001串价 */
+          const item = byCode(((_a3 = quoteMarketSymbolsJL().find((s) => s.code.endsWith(code) && (_mk == null || _mkOf(String(s.code)) === _mk))) == null ? void 0 : _a3.code) || "");
           if (!item) return;
           const prev = Number((_c2 = (_b3 = q.f18) != null ? _b3 : q.preClose) != null ? _c2 : item.base / (1 + item.pct / 100));
           const price = Number((_d2 = q.f2) != null ? _d2 : q.price);
@@ -1449,8 +1450,8 @@ document.addEventListener("visibilitychange", () => {
           item.low = Number((_l = (_k = q.f16) != null ? _k : item.low) != null ? _l : price);
           item.prevClose = prev;
           item.quoteAt = String(q.f124 || "");
-          try { jlObserveTradeDayJL(item.quoteDate); } catch (eObs) {} /* jl-1025: 报价回落即观测交易日 */
           item.quoteDate = String(q.f124 || "").slice(0, 8).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") || (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE");
+          try { jlObserveTradeDayJL(item.quoteDate); } catch (eObs) {} /* jl-1025: 报价回落即观测交易日; jl-D5: 先更新quoteDate再观测 */
           item.quoteReady = true;
           applied++;
         });
@@ -1462,7 +1463,7 @@ document.addEventListener("visibilitychange", () => {
       }
     };
     const sc = document.createElement("script");
-    sc.src = "https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f4,f12,f14,f15,f16,f17,f18,f124&secids=" + eastQuoteCodes() + "&cb=" + cb + "&_=" + Date.now();
+    sc.src = "https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f4,f12,f13,f14,f15,f16,f17,f18,f124&secids=" + eastQuoteCodes() + "&cb=" + cb + "&_=" + Date.now();
     sc.onerror = () => {
       clearTimeout(_to);
       delete window[cb];
@@ -1486,6 +1487,10 @@ document.addEventListener("visibilitychange", () => {
     const a = Math.abs(n);
     return (n >= 0 ? "+" : "\u2212") + (a >= 1e8 ? (a / 1e8).toFixed(2) + "\u4EBF" : Math.round(a / 1e4).toLocaleString() + "\u4E07");
   }
+  function mfTotalJL(rows) { /* jl-A1: 两市合计=上证指数+深证综指(不重叠); 深证成指/创业板指/沪深300与之重叠只单列不进合计. 缺任一腿=NaN */
+    const g = (n) => (rows || []).find((r) => r && r.name === n), a = g("\u4E0A\u8BC1\u6307\u6570"), b = g("\u6DF1\u8BC1\u7EFC\u6307");
+    return a && b && Number.isFinite(+a.amt) && Number.isFinite(+b.amt) ? +a.amt + +b.amt : NaN;
+  }
   function renderMarketFundsJL() {
     const box = $("marketFundsRows"), sum = $("marketFundsSummary"), tm = $("marketFundsUpdated");
     if (!box || !sum) return;
@@ -1495,7 +1500,7 @@ document.addEventListener("visibilitychange", () => {
     if (!rows.length && !marketFundsJL.loading) {
       try {
         const _h1042 = marketFundsJL.hist || (JSON.parse(localStorage.getItem("jl_mf_hist_v1") || "{}") || {}).hist || {};
-        const _n1042 = { "1.000001": "\u4E0A\u8BC1\u6307\u6570", "0.399001": "\u6DF1\u8BC1\u6210\u6307", "0.399006": "\u521B\u4E1A\u677F\u6307", "1.000300": "\u6CAA\u6DF1300" };
+        const _n1042 = { "\u4E0A\u8BC1": "\u4E0A\u8BC1\u6307\u6570", "\u6DF1\u7EFC": "\u6DF1\u8BC1\u7EFC\u6307", "\u6DF1\u6210": "\u6DF1\u8BC1\u6210\u6307", "\u521B\u4E1A": "\u521B\u4E1A\u677F\u6307", "\u6CAA\u6DF1300": "\u6CAA\u6DF1300" }; /* jl-A2: 键名与 loadMarketFundsJL 存hist时的键(上证/深综/深成/创业/沪深300)一致, 原用"1.000001"永远对不上 */
         const _fr1042 = [];
         Object.keys(_n1042).forEach(function (k1042) {
           const arr1042 = _h1042[k1042];
@@ -1514,10 +1519,10 @@ document.addEventListener("visibilitychange", () => {
       box.innerHTML = '<div class="marketFundRow"><span>\u5E02\u573A / \u677F\u5757\u8D44\u91D1</span><small>\u4E1C\u8D22\u8BF7\u6C42\u4E2D</small><strong>\u2026</strong></div>';
       return;
     }
-    const total = rows.reduce((a, r) => a + (Number(r.amt) || 0), 0);
-    sum.textContent = rows.length ? fmtFundJL(total) : mf != null ? fmtFundJL(mf) : marketFundsJL.error ? "\u6682\u4E0D\u53EF\u7528" : "\u7B49\u5F85\u6570\u636E";
-    sum.classList.toggle("mfPendJL", !(rows.length || mf != null));
-    let html = rows.length ? '<div class="marketFundRow"><span><b>\u56DB\u6307\u6570\u5408\u8BA1</b></span><small>' + (histTagJL ? histTagJL + " \u6536\u76D8\xB7\u4E3B\u529B\u51C0\u989D" : "\u4E3B\u529B\u51C0\u989D\xB7\u975E\u5168\u5E02\u573A") + '</small><strong class="' + (total >= 0 ? "up" : "down") + '">' + fmtFundJL(total) + "</strong></div>" + rows.map((r) => '<div class="marketFundRow"><span>' + r.name + "</span><small>" + (r.pct == null ? (r.tagJL || "\u4E3B\u529B\u51C0\u989D") : (r.pct >= 0 ? "+" : "") + Number(r.pct).toFixed(2) + "%") + (r.turnover != null ? " \xB7 \u6210\u4EA4 " + fmtFundJL(r.turnover) : "") + '</small><strong class="' + (r.amt >= 0 ? "up" : "down") + '">' + fmtFundJL(r.amt) + "</strong></div>").join("") : mf != null ? '<div class="marketFundRow"><span><b>\u5168A\u4E3B\u529B\u51C0\u989D</b></span><small>\u817E\u8BAF\u5168A\u91C7\u6837 ' + (mtempJL.data.cov != null ? mtempJL.data.cov + "%" : "") + (mtempJL.data.verdict ? " \xB7 " + mtempJL.data.verdict : "") + '</small><strong class="' + (mf >= 0 ? "up" : "down") + '">' + fmtFundJL(mf) + "</strong></div>" : '<div class="marketFundRow"><span>\u5E02\u573A\u6307\u6570\u8D44\u91D1</span><small>\u6570\u636E\u6E90\u672A\u8FD4\u56DE</small><strong>\u2014</strong></div>';
+    const total = mfTotalJL(rows);
+    sum.textContent = rows.length && Number.isFinite(total) ? fmtFundJL(total) : mf != null ? fmtFundJL(mf) : marketFundsJL.error ? "\u6682\u4E0D\u53EF\u7528" : "\u7B49\u5F85\u6570\u636E";
+    sum.classList.toggle("mfPendJL", !(rows.length && Number.isFinite(total) || mf != null));
+    let html = rows.length ? '<div class="marketFundRow"><span><b>\u6CAA\u6DF1\u4E24\u5E02\u5408\u8BA1</b></span><small>' + (histTagJL ? histTagJL + " \u6536\u76D8\xB7" : "") + "\u4E0A\u8BC1+\u6DF1\u8BC1\u7EFC\u6307\xB7\u4E3B\u529B\u51C0\u989D" + '</small><strong class="' + (Number.isFinite(total) ? total >= 0 ? "up" : "down" : "") + '">' + (Number.isFinite(total) ? fmtFundJL(total) : "\u2014") + "</strong></div>" + rows.map((r) => '<div class="marketFundRow"><span>' + r.name + "</span><small>" + (r.pct == null ? (r.tagJL || "\u4E3B\u529B\u51C0\u989D") : (r.pct >= 0 ? "+" : "") + Number(r.pct).toFixed(2) + "%") + (r.turnover != null ? " \xB7 \u6210\u4EA4 " + fmtFundJL(r.turnover) : "") + '</small><strong class="' + (r.amt >= 0 ? "up" : "down") + '">' + fmtFundJL(r.amt) + "</strong></div>").join("") : mf != null ? '<div class="marketFundRow"><span><b>\u5168A\u4E3B\u529B\u51C0\u989D</b></span><small>\u817E\u8BAF\u5168A\u91C7\u6837 ' + (mtempJL.data.cov != null ? mtempJL.data.cov + "%" : "") + (mtempJL.data.verdict ? " \xB7 " + mtempJL.data.verdict : "") + '</small><strong class="' + (mf >= 0 ? "up" : "down") + '">' + fmtFundJL(mf) + "</strong></div>" : '<div class="marketFundRow"><span>\u5E02\u573A\u6307\u6570\u8D44\u91D1</span><small>\u6570\u636E\u6E90\u672A\u8FD4\u56DE</small><strong>\u2014</strong></div>';
     if (sectors.length) html += '<div class="marketFundRow" style="grid-template-columns:1fr auto auto;margin-top:5px"><span><b>\u677F\u5757\u4E3B\u529B\u51C0\u6D41\u5165 Top5</b></span><small>\u884C\u4E1A\u8D44\u91D1\xB7\u5168\u5E02\u573A\u53E3\u5F84</small><strong>\u5B9E\u65F6</strong></div>' + sectors.map((r, ridx) => {
       const rel = typeof heatRelJL === "function" ? heatRelJL(r.name) : "";
       return '<div class="marketFundRow"><span>' + r.name + (rel ? ' <b style="color:#ffd21f;font-size:10px">\u5171\u632F\xB7' + rel + "</b>" : "") + "</span><small>" + (r.pct == null ? "\u677F\u5757\u8D44\u91D1" : (r.pct >= 0 ? "+" : "") + Number(r.pct).toFixed(2) + "%") + (Number.isFinite(r.sup) ? " \xB7 \u8D85\u5927 " + fmtFundJL(r.sup) : "") + (Number.isFinite(r.sml) ? " \xB7 \u5C0F\u5355 " + fmtFundJL(r.sml) : "") + '</small><strong class="' + (r.amt >= 0 ? "up" : "down") + '">' + fmtFundJL(r.amt) + "</strong></div>";
@@ -1555,7 +1560,7 @@ document.addEventListener("visibilitychange", () => {
     marketFundsJL.loading = true;
     marketFundsJL.error = false;
     renderMarketFundsJL();
-    const stamp = Date.now(), wanted = { "000001": "\u4E0A\u8BC1\u6307\u6570", "399001": "\u6DF1\u8BC1\u6210\u6307", "399006": "\u521B\u4E1A\u677F\u6307", "000300": "\u6CAA\u6DF1300" }, out = { rows: [], sectors: [] };
+    const stamp = Date.now(), wanted = { "000001": "\u4E0A\u8BC1\u6307\u6570", "399106": "\u6DF1\u8BC1\u7EFC\u6307", "399001": "\u6DF1\u8BC1\u6210\u6307", "399006": "\u521B\u4E1A\u677F\u6307", "000300": "\u6CAA\u6DF1300" }, out = { rows: [], sectors: [] };
     let left = 3;
     const finish = () => {
       if (--left > 0) return;
@@ -1590,7 +1595,7 @@ document.addEventListener("visibilitychange", () => {
     };
     const sc = document.createElement("script");
     sc.id = cb;
-    sc.src = "https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f6,f12,f13,f62,f184&secids=1.000001,0.399001,0.399006,1.000300&cb=" + cb + "&_=" + stamp;
+    sc.src = "https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f6,f12,f13,f62,f184&secids=1.000001,0.399106,0.399001,0.399006,1.000300&cb=" + cb + "&_=" + stamp;
     sc.onerror = () => {
       delete window[cb];
       sc.remove();
@@ -1620,7 +1625,7 @@ document.addEventListener("visibilitychange", () => {
       finish();
     };
     document.body.appendChild(sc2);
-    const histCodes = [["1.000001", "上证"], ["0.399001", "深成"], ["0.399006", "创业"], ["1.000300", "沪深300"]], hist = {};
+    const histCodes = [["1.000001", "上证"], ["0.399106", "深综"], ["0.399001", "深成"], ["0.399006", "创业"], ["1.000300", "沪深300"]], hist = {};
     let hLeft = histCodes.length, hFired = false;
     const hDone = () => {
       if (hFired) return;
@@ -1889,11 +1894,11 @@ document.addEventListener("visibilitychange", () => {
     renderResonanceJL();
   });
   function renderResonanceJL() {
-    const st = stocks[active], rows = marketFundsJL.rows || [], total = rows.reduce((a, r) => a + (Number(r.amt) || 0), 0), market = rows.length ? total >= 0 ? "\u4E3B\u529B\u51C0\u6D41\u5165" : "\u4E3B\u529B\u51C0\u6D41\u51FA" : "\u5E02\u573A\u8D44\u91D1\u6570\u636E\u6682\u7F3A";
+    const st = stocks[active], rows = marketFundsJL.rows || [], total = mfTotalJL(rows), market = rows.length && Number.isFinite(total) ? total >= 0 ? "\u4E3B\u529B\u51C0\u6D41\u5165" : "\u4E3B\u529B\u51C0\u6D41\u51FA" : "\u5E02\u573A\u8D44\u91D1\u6570\u636E\u6682\u7F3A";
     const _rt = $("reviewTitleJL");
     if (_rt) _rt.innerHTML = "日复盘 · " + (st ? st.name : "未选中") + " <small>汇总全部持仓 · 证据跟随选中股</small>";
     const el = document.querySelector("[data-market-resonance]");
-    if (el) { el.textContent = market + (rows.length ? " \xB7 " + fmtFundJL(total) : ""); el.classList.toggle("dimPendJL", !rows.length); }
+    if (el) { el.textContent = market + (rows.length && Number.isFinite(total) ? " \xB7 " + fmtFundJL(total) : ""); el.classList.toggle("dimPendJL", !rows.length); }
     const bars = dailyBarsOf(st == null ? void 0 : st.code), b = bars.at(-1), avg5 = bars.slice(-6, -1).map((x) => Number(x.v) || 0).filter(Boolean), avg = avg5.length ? avg5.reduce((a, v) => a + v, 0) / avg5.length : 0, vr = avg > 0 && b ? Number(b.v) / avg : null;
     const vf = document.querySelector("[data-volume-resonance]");
     if (vf) { vf.classList.toggle("dimPendJL", !b); vf.textContent = b ? vr ? `\u91CF\u6BD4 ${vr.toFixed(2)} \xB7 ${b.c >= b.o && vr >= 1 ? "\u4EF7\u6DA8\u91CF\u589E" : b.c < b.o && vr < 1 ? "\u4EF7\u8DCC\u91CF\u7F29" : "\u4EF7\u91CF\u5206\u5316"}` : "\u6210\u4EA4\u91CF " + fmtVol(b.v) : "\u6210\u4EA4\u91CF\u6570\u636E\u6682\u7F3A"; }
@@ -14619,11 +14624,15 @@ var RLMCore = (function () {
       document.querySelector("#home .amount").innerHTML = money(ix.base) + ` <span class="minor ${cls(ix.pct)}">${pct(ix.pct)}</span>`;
       document.querySelector("#home .amount").classList.remove("up", "down");
       if (page === "home" && overviewCross) {
-        const m = maps.get($("homeChart")), oi = m ? Math.max(0, Math.min(series(index, false).length - 1, Math.round(m.I(overviewCross.x)))) : 119, v = series(index, false)[oi], bp = v.o || 1, dp = (v.c - bp) / bp * 100;
+        const m = maps.get($("homeChart")), _sv = series(index, false), oi = m ? Math.max(0, Math.min(_sv.length - 1, Math.round(m.I(overviewCross.x)))) : 119, v = _sv[oi], bp = (period === "\u5206\u65F6" ? Number(ix.prevClose) : Number((_sv[oi - 1] || {}).c)) || v.o || 1, dp = (v.c - bp) / bp * 100; /* jl-D6: 十字线涨跌幅=相对昨收(分时)/相对前一根收盘(K线), 不再用本K线开盘 */
         document.querySelector("#home .amount").innerHTML = money(v.c) + ` <span class="minor ${dp >= 0 ? "up" : "down"}">${dp >= 0 ? "+" : ""}${dp.toFixed(2)}%</span>`;
       }
-      document.querySelector("#home .homeQuote .pnlLine").textContent = "\u5F00\u76D8 \xB7 \u6700\u9AD8 \xB7 \u6700\u4F4E \xB7 \u5B9E\u65F6";
-      document.querySelector("#home .glass .pnlLine").innerHTML = "<span>\u533A\u95F4</span><span>" + money(ix.base * 0.98) + " \u2014 " + money(ix.base * 1.02) + "</span>";
+      { /* jl-D1/D2: 报价块显示真实开/高/低; 价格区间改为今日真实 低—高(原为现价±2%假区间). 09:25前开高低是上一交易日的, 显示— */
+        const _fo = typeof freshOpenJL === "function" ? freshOpenJL(ix) : Number(ix.open) > 0, _v = (n) => _fo && Number(n) > 0 ? money(n) : "\u2014";
+        document.querySelector("#home .homeQuote .pnlLine").innerHTML = "<span>\u5F00 " + _v(ix.open) + "</span><span>\u9AD8 " + _v(ix.high) + "</span><span>\u4F4E " + _v(ix.low) + "</span>";
+        const _hi = Number(ix.high), _lo = Number(ix.low), _pos = _fo && _hi > _lo ? Math.round((ix.base - _lo) / (_hi - _lo) * 100) : null;
+        document.querySelector("#home .glass .pnlLine").innerHTML = "<span>\u4ECA\u65E5 \u4F4E " + _v(_lo) + " \u2014 \u9AD8 " + _v(_hi) + "</span><span>" + (_pos == null ? "\u7B49\u5F85\u5F00\u76D8" : "\u73B0\u4EF7\u5728\u533A\u95F4 " + _pos + "%") + "</span>";
+      }
       _pt(() => drawOverviewChart($("homeChart"), index));
       if (homeFlowOn) _pt(() => {
         let _hmJL = "fund";
@@ -19275,7 +19284,7 @@ var RLMCore = (function () {
     S.loading = true;
     if (!S.rows) {
       try {
-        const c = JSON.parse(localStorage.getItem("jl_gjd_rows_v1") || "null");
+        const c = JSON.parse(localStorage.getItem("jl_gjd_rows_v2") || "null");
         if (c && c.length) S.rows = c;
       } catch (e) {
       }
@@ -19285,14 +19294,20 @@ var RLMCore = (function () {
     } catch (e) {
     }
     try {
-      const d = await emFetchJL("/api/qt/stock/fflow/daykline/get?secid=1.510300&ut=" + JL_UT + "&lmt=25&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52");
-      const k = d && d.data && d.data.klines || [];
-      if (!k.length) { try { const _du = await emFetchJL("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62&secids=1.510300"); const _f62 = _du && _du.data && _du.data.diff && _du.data.diff[0] ? +_du.data.diff[0].f62 : NaN; if (Number.isFinite(_f62)) k.push(jlLastTradeDay() + "," + _f62); } catch (eU) {} } /* jl-1030: push2his不通时push2 ulist兜底(休市返回09-30值) */
+      /* jl-C1/C4: 国家队口径=4只沪深300ETF(510300/510310/510330/159919)主力净额合计; 按日期求和, 4只都有的日期才算; 换v2缓存键, 不与旧单只510300数据混用 */
+      const _gs = ["1.510300", "1.510310", "1.510330", "0.159919"];
+      const _gd = await Promise.all(_gs.map((sid) => emFetchJL("/api/qt/stock/fflow/daykline/get?secid=" + sid + "&ut=" + JL_UT + "&lmt=25&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52").catch(() => null)));
+      const _gok = _gd.filter((x) => x && x.data && x.data.klines && x.data.klines.length), _gm = {}, k = [];
+      if (_gok.length === _gs.length) {
+        _gok.forEach((x) => x.data.klines.forEach((r0) => { const a0 = String(r0).split(","); const o0 = _gm[a0[0]] || (_gm[a0[0]] = { n: 0, v: 0 }); o0.n++; o0.v += +a0[1]; }));
+        Object.keys(_gm).sort().forEach((d0) => { if (_gm[d0].n === _gs.length && Number.isFinite(_gm[d0].v)) k.push(d0 + "," + _gm[d0].v); });
+      }
+      if (!k.length) { try { const _du = await emFetchJL("/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62&secids=" + _gs.join(",")); const _dl = _du && _du.data && _du.data.diff ? (Array.isArray(_du.data.diff) ? _du.data.diff : Object.values(_du.data.diff)) : []; const _f62 = _dl.length === _gs.length ? _dl.reduce((a1, r1) => a1 + +r1.f62, 0) : NaN; if (Number.isFinite(_f62)) k.push(jlLastTradeDay() + "," + _f62); } catch (eU) {} } /* jl-1030: push2his不通时push2 ulist兜底(休市返回09-30值); jl-C: 原写法传完整URL被emFetchJL再拼主机→兜底从未生效, 改传path */
       if (k.length) {
         try { jlDgOkJL("gjd"); } catch (eO3) {} /* jl-1074: 有数即记lastOk+复位 */
         let hist = {};
         try {
-          hist = JSON.parse(localStorage.getItem("jl_gjd_hist_v1") || "{}") || {};
+          hist = JSON.parse(localStorage.getItem("jl_gjd_hist_v2") || "{}") || {};
         } catch (e) {
         }
         (S.rows || []).forEach((r2) => {
@@ -19304,8 +19319,8 @@ var RLMCore = (function () {
         });
         S.rows = Object.keys(hist).sort().slice(-60).map((d2) => ({ d: d2, m: hist[d2] }));
         try {
-          jlSafeSetJL("jl_gjd_hist_v1", JSON.stringify(hist));
-          jlSafeSetJL("jl_gjd_rows_v1", JSON.stringify(S.rows));
+          jlSafeSetJL("jl_gjd_hist_v2", JSON.stringify(hist));
+          jlSafeSetJL("jl_gjd_rows_v2", JSON.stringify(S.rows));
         } catch (e) {
         }
         S.at = Date.now();
@@ -19318,33 +19333,24 @@ var RLMCore = (function () {
     try {
       const _nd2 = /* @__PURE__ */ new Date(), _mn2 = _nd2.getHours() * 60 + _nd2.getMinutes();
       if (_nd2.getDay() >= 1 && _nd2.getDay() <= 5 && _mn2 >= 555 && _mn2 <= 905) {
-        const _tdy2 = jlYMD(_nd2), _p2 = "/api/qt/stock/fflow/kline/get?secid=1.510300&ut=" + JL_UT + "&lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=f51,f52";
-        let _dn2 = false;
-        const _tk2 = (dd) => {
-          if (_dn2) return;
-          const _kl = dd && dd.data && dd.data.klines;
-          if (!(_kl && _kl.length)) return;
-          const _la = String(_kl[_kl.length - 1]).split(",");
-          if (String(_la[0]).slice(0, 10) !== _tdy2) return;
-          const _m3 = +_la[1] / 1e8;
-          if (!Number.isFinite(_m3)) return;
-          _dn2 = true;
+        const _tdy2 = jlYMD(_nd2);
+        /* jl-C1: 盘中今日行=4只300ETF实时主力净额(ulist f62)合计, 报价时间f124须为今天且≥9:30才认 */
+        if (_mn2 >= 570) {
           try {
-            const _h2 = JSON.parse(localStorage.getItem("jl_gjd_hist_v1") || "{}") || {};
-            _h2[_tdy2] = _m3;
-            jlSafeSetJL("jl_gjd_hist_v1", JSON.stringify(_h2));
-            S.rows = Object.keys(_h2).sort().slice(-60).map((d3) => ({ d: d3, m: _h2[d3] }));
-            jlSafeSetJL("jl_gjd_rows_v1", JSON.stringify(S.rows));
+            const _gs2 = ["1.510300", "1.510310", "1.510330", "0.159919"];
+            const _du2 = await emFetchJL("/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62,f124&secids=" + _gs2.join(","));
+            const _dl2 = _du2 && _du2.data && _du2.data.diff ? (Array.isArray(_du2.data.diff) ? _du2.data.diff : Object.values(_du2.data.diff)) : [];
+            const _fresh2 = _dl2.length === _gs2.length && _dl2.every((r1) => r1.f124 && jlYMD(new Date(+r1.f124 * 1e3)) === _tdy2);
+            const _m3 = _fresh2 ? _dl2.reduce((a1, r1) => a1 + +r1.f62, 0) / 1e8 : NaN;
+            if (Number.isFinite(_m3)) {
+              const _h2 = JSON.parse(localStorage.getItem("jl_gjd_hist_v2") || "{}") || {};
+              _h2[_tdy2] = _m3;
+              jlSafeSetJL("jl_gjd_hist_v2", JSON.stringify(_h2));
+              S.rows = Object.keys(_h2).sort().slice(-60).map((d3) => ({ d: d3, m: _h2[d3] }));
+              jlSafeSetJL("jl_gjd_rows_v2", JSON.stringify(S.rows));
+            }
           } catch (e5) {}
-          try {
-            renderGjdJL();
-          } catch (e6) {}
-        };
-        ["https://push2.eastmoney.com", "https://push2delay.eastmoney.com", "https://push2his.eastmoney.com"].forEach((h2) => {
-          try {
-            emJsonp(h2 + _p2, (e4, dd) => { if (!e4) _tk2(dd); }, 8e3);
-          } catch (e7) {}
-        });
+        }
       }
     } catch (e8) {}
     S.loading = false;
@@ -19358,9 +19364,9 @@ var RLMCore = (function () {
     if (!g) return;
     const S = gjdStateJL(), rows = S.rows, ltd = typeof jlLastTradeDay === "function" ? jlLastTradeDay() : "";
     const _nd3 = /* @__PURE__ */ new Date(), _inSessGjd = [1, 2, 3, 4, 5].indexOf(_nd3.getDay()) >= 0 && _nd3.getHours() * 60 + _nd3.getMinutes() >= 555 && _nd3.getHours() * 60 + _nd3.getMinutes() <= 905; /* v0.82.4: 盘中窗(9:25-15:05)数据非今日时头部明示 */
-    if (!rows || !rows.length) { try { const _gr = JSON.parse(localStorage.getItem("jl_gjd_rows_v1") || "null"); if (_gr && _gr.length) { S.rows = _gr; rows = _gr; } } catch (eGr) {} } /* jl-1029 */
+    if (!rows || !rows.length) { try { const _gr = JSON.parse(localStorage.getItem("jl_gjd_rows_v2") || "null"); if (_gr && _gr.length) { S.rows = _gr; rows = _gr; } } catch (eGr) {} } /* jl-1029 */
     if (!rows || !rows.length) {
-      g.innerHTML = '<div class="marketFundsHead"><b>\u5927\u8D44\u91D1 \xB7 \u56FD\u5BB6\u961F<small style="font-weight:400;color:rgba(255,255,255,.80);margin-left:6px">\u6CAA\u6DF1300ETF\u4E3B\u529B\u53E3\u5F84</small></b><small>' + (S.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u4E1C\u8D22\u901A\u9053\u6682\u7F3A \xB7 \u81EA\u52A8\u91CD\u8BD5") + "</small></div>";
+      g.innerHTML = '<div class="marketFundsHead"><b>\u5927\u8D44\u91D1 \xB7 \u56FD\u5BB6\u961F<small style="font-weight:400;color:rgba(255,255,255,.80);margin-left:6px">4\u53EA\u6CAA\u6DF1300ETF\u5408\u8BA1\u4E3B\u529B\u53E3\u5F84</small></b><small>' + (S.loading ? "\u52A0\u8F7D\u4E2D\u2026" : "\u4E1C\u8D22\u901A\u9053\u6682\u7F3A \xB7 \u81EA\u52A8\u91CD\u8BD5") + "</small></div>";
       if (!S.loading) {
         const now2 = Date.now();
         if (now2 - (S.rtWin || 0) > 6e5) {
@@ -19404,7 +19410,7 @@ var RLMCore = (function () {
       else break;
     }
     bars += '<text x="' + (PL + (vw.length - 1) * slot + 1 + bw / 2) + '" y="' + (Y(last.m) - 4 < PT + 5 ? Y(last.m) + 13 : Y(last.m) - 4) + '" font-size="8.5" font-weight="700" fill="' + (last.m >= 0 ? "#ff9d97" : "#5fe3b8") + '" text-anchor="middle" style="paint-order:stroke" stroke="#081a27" stroke-width="2.4">' + (last.m >= 0 ? "+" : "\u2212") + Math.abs(last.m).toFixed(1) + "</text>";
-    g.innerHTML = '<div class="marketFundsHead"><b>\u5927\u8D44\u91D1 \xB7 \u56FD\u5BB6\u961F<small style="font-weight:400;color:rgba(255,255,255,.80);margin-left:6px">\u6CAA\u6DF1300ETF\u4E3B\u529B \xB7 ' + (last.d === ltd ? "\u4ECA\u65E5\u76D8\u4E2D" : "\u622A\u81F3 " + last.d.slice(5) + (_inSessGjd ? " \xB7 \u76D8\u4E2D\u901A\u9053\u672A\u53D6\u5230" : "")) + "</small></b><small>" + (streak > 0 ? "\u8FDE\u7EED" + streak + "\u5929\u51C0\u4E70" : streak < 0 ? "\u8FDE\u7EED" + -streak + "\u5929\u51C0\u5356" : "\u2014") + '</small></div><div style="display:flex;align-items:center;gap:10px;margin-top:2px"><div style="flex:none;min-width:88px"><div style="font-size:9px;color:rgba(255,255,255,.80)">' + (last.d === ltd ? "\u4ECA\u65E5\u51C0\u989D \xB7 \u76D8\u4E2D" : "\u51C0\u989D \xB7 \u622A\u81F3 " + last.d.slice(5)) + '</div><div style="font:700 20px/1.2 ui-monospace,Menlo,monospace;color:' + (last.m >= 0 ? "#ff9d97" : "#5fe3b8") + '">' + (last.m >= 0 ? "+" : "\u2212") + Math.abs(last.m).toFixed(2) + '<span style="font-size:10px;font-weight:400">\u4EBF</span></div><div style="font-size:9px;color:rgba(255,255,255,.88);margin-top:3px">5\u65E5 <b style="color:' + (s5 >= 0 ? "#ff9d97" : "#5fe3b8") + '">' + (s5 >= 0 ? "+" : "\u2212") + Math.abs(s5).toFixed(1) + '</b> \xB7 20\u65E5 <b style="color:' + (s20 >= 0 ? "#ff9d97" : "#5fe3b8") + '">' + (s20 >= 0 ? "+" : "\u2212") + Math.abs(s20).toFixed(1) + '</b></div></div><div style="flex:1;min-width:0"><svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;display:block"><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="rgba(135,183,196,.14)" stroke-width="0.5" stroke-dasharray="1.5,3"/>' + bars + '</svg></div></div><div style="font-size:8.5px;color:rgba(255,255,255,.80);margin-top:3px">\u7EA2\u67F1=\u4E3B\u529B\u51C0\u4E70 \xB7 \u7EFF\u67F1=\u51C0\u5356 \xB7 \u767D\u6846=\u6700\u65B0\u65E5 \xB7 510300\u6C47\u91D1\u589E\u6301\u4E3B\u901A\u9053 \xB7 \u4E1C\u8D225\u5206\u949F\u8282\u6D41</div>';
+    g.innerHTML = '<div class="marketFundsHead"><b>\u5927\u8D44\u91D1 \xB7 \u56FD\u5BB6\u961F<small style="font-weight:400;color:rgba(255,255,255,.80);margin-left:6px">4\u53EA300ETF\u5408\u8BA1\u4E3B\u529B \xB7 ' + (last.d === ltd ? "\u4ECA\u65E5\u76D8\u4E2D" : "\u622A\u81F3 " + last.d.slice(5) + (_inSessGjd ? " \xB7 \u76D8\u4E2D\u901A\u9053\u672A\u53D6\u5230" : "")) + "</small></b><small>" + (streak > 0 ? "\u8FDE\u7EED" + streak + "\u5929\u51C0\u4E70" : streak < 0 ? "\u8FDE\u7EED" + -streak + "\u5929\u51C0\u5356" : "\u2014") + '</small></div><div style="display:flex;align-items:center;gap:10px;margin-top:2px"><div style="flex:none;min-width:88px"><div style="font-size:9px;color:rgba(255,255,255,.80)">' + (last.d === ltd ? "\u4ECA\u65E5\u51C0\u989D \xB7 \u76D8\u4E2D" : "\u51C0\u989D \xB7 \u622A\u81F3 " + last.d.slice(5)) + '</div><div style="font:700 20px/1.2 ui-monospace,Menlo,monospace;color:' + (last.m >= 0 ? "#ff9d97" : "#5fe3b8") + '">' + (last.m >= 0 ? "+" : "\u2212") + Math.abs(last.m).toFixed(2) + '<span style="font-size:10px;font-weight:400">\u4EBF</span></div><div style="font-size:9px;color:rgba(255,255,255,.88);margin-top:3px">5\u65E5 <b style="color:' + (s5 >= 0 ? "#ff9d97" : "#5fe3b8") + '">' + (s5 >= 0 ? "+" : "\u2212") + Math.abs(s5).toFixed(1) + '</b> \xB7 20\u65E5 <b style="color:' + (s20 >= 0 ? "#ff9d97" : "#5fe3b8") + '">' + (s20 >= 0 ? "+" : "\u2212") + Math.abs(s20).toFixed(1) + '</b></div></div><div style="flex:1;min-width:0"><svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;display:block"><line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="rgba(135,183,196,.14)" stroke-width="0.5" stroke-dasharray="1.5,3"/>' + bars + '</svg></div></div><div style="font-size:8.5px;color:rgba(255,255,255,.80);margin-top:3px">\u7EA2\u67F1=\u4E3B\u529B\u51C0\u4E70 \xB7 \u7EFF\u67F1=\u51C0\u5356 \xB7 \u767D\u6846=\u6700\u65B0\u65E5 \xB7 510300\u6C47\u91D1\u589E\u6301\u4E3B\u901A\u9053 \xB7 \u4E1C\u8D225\u5206\u949F\u8282\u6D41</div>';
   }
   function triStateOfJL(c2) {
     const all = window.__v26tri || (window.__v26tri = {});
@@ -19773,7 +19779,7 @@ var RLMCore = (function () {
       poolD = jlYMD(d);
     }
     const R = { fx: null, zt: null, gjd: null, poolD };
-    const hist = _jGet99("jl_gjd_hist_v1", {}) || {};
+    const hist = _jGet99("jl_gjd_hist_v2", {}) || {};
     const hd = Object.keys(hist).sort();
     if (hd.length && Number.isFinite(+hist[hd[hd.length - 1]])) R.gjd = { d: hd[hd.length - 1], m: +hist[hd[hd.length - 1]] };
     let left = 2;
