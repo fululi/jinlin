@@ -285,6 +285,9 @@
   body.embed #ksBarJL button.on { color: #81e6d9; border-color: #81e6d9; }
   @keyframes lkFl { 50% { background: #ffd21f88; box-shadow: 0 0 12px #ffd21faa; } }
   body.embed #ksBarJL i.sep { width: 1px; height: 14px; background: #87b7c433; flex: none; margin: 0 2px; }
+  /* jl-1162: 工具条去底色/下边线(透明), 内边距收窄; 不浮动——浮在图上会盖住图自带的周期行(分时 1 5 15…) */
+  body.embed #ksBarJL { background: transparent; border-bottom: 0; padding: 1px 6px; }
+  body.embed #ksBarJL button { text-shadow: 0 1px 2px rgba(0,0,0,.85); }
   /* ks-0906-22: 主题三态挂html根元素(body背景会穿透到页面画布层,filter管不着=字变板不变的根因); invert(1)全量反色不灰蒙蒙, hue-rotate(180)保红涨绿跌; 纯黑(默认)/外黑内白(只反画布)/纯白(整页反色) */
   html.theme-lc [data-chart] { filter: invert(1) hue-rotate(180deg); }
   /* ks-0907-22: 纯白主题不再整页invert(根因:滤镜让按钮/弹层颜色全反+破坏fixed定位); 只反画布, UI给真浅色 */

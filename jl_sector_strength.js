@@ -274,13 +274,14 @@
   /* ============ 渲染: 底部玻璃抽屉(jl-C: body尾卡→挂.phone, bottom对齐底部tab54px; CSS自注入) ============ */
   var ROOT = null;
   var DRAG = { on: false, y0: 0, dy: 0, t0: 0 }; /* jl-C: 手柄拖拽态, paint()拖拽中跳过防DOM重建丢监听 */
-  var JSEC_CSS = "#jlsectroot{position:absolute;left:8px;right:8px;bottom:54px;z-index:33;overflow:hidden;pointer-events:none;max-height:32px;transition:max-height .34s cubic-bezier(.32,.72,.28,1);border-radius:16px 16px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.5);border-bottom:0;backdrop-filter:blur(14px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(14px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.2),0 -10px 34px rgba(0,10,40,.35)}" /* 根=裁剪容器: max-height 32(只露手柄)↔min(58vh,520px)开; 遮罩裁剪=隐藏体不压导航不吞点击 */
+  var JSEC_CSS = "#jlsectroot{position:absolute;left:8px;right:8px;bottom:54px;z-index:33;overflow:hidden;pointer-events:none;max-height:22px;transition:max-height .34s cubic-bezier(.32,.72,.28,1);border-radius:12px 12px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.4);border-bottom:0;backdrop-filter:blur(2px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(2px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}#jlsectroot.open{background:linear-gradient(145deg,rgba(14,20,30,.38),rgba(14,20,30,.3))}" /* 根=裁剪容器: max-height 32(只露手柄)↔min(58vh,520px)开; 遮罩裁剪=隐藏体不压导航不吞点击 */
     + "#jlsectroot.open{max-height:min(58vh,520px)}"
     + "body.ksFullJL #jlsectroot{display:none!important}" /* K线全屏模式nav隐藏, 抽屉同退场 */
-    + "#jlsectHandle{height:32px;display:flex;align-items:center;gap:7px;padding:0 12px;pointer-events:auto;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}" /* touch-action:none=拖拽不被页面滚动抢占 */
-    + "#jlsectHandle .jlsecGrab{flex:0 0 auto;width:30px;height:4px;border-radius:10px;background:rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.4)}"
-    + "#jlsectHandle b{font-size:12px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
-    + "#jlsectHandle small{font-size:12px;color:#FFFFFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
+    + "#jlsectHandle{height:22px;display:flex;align-items:center;gap:6px;padding:0 10px;pointer-events:auto;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}" /* touch-action:none=拖拽不被页面滚动抢占 */
+    + "#jlsectHandle .jlsecGrab{display:none;flex:0 0 auto;width:30px;height:4px;border-radius:10px;background:rgba(255,255,255,.55);box-shadow:0 1px 2px rgba(0,0,0,.4)}"
+    + "#jlsectHandle b{font-size:11px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
+    + "#jlsectHandle small{font-size:10px;color:#FFFFFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
+    + "#jlsectHandle small.jlsecNo{color:#ffd84a;font-size:9.5px;font-weight:700}"
     + "#jlsectHandle .jlsecArr{margin-left:auto;flex:0 0 auto;font-size:10px;color:#FFFFFF;font-weight:700;transition:transform .3s}"
     + "#jlsectroot.open .jlsecArr{transform:rotate(180deg)}"
     + "#jlsectBody{overflow-y:auto;max-height:calc(min(58vh,520px) - 34px);pointer-events:auto;overscroll-behavior:contain;padding:2px 11px 12px}" /* 内容区内滚, 关态被根裁剪自然无事件 */
@@ -353,7 +354,7 @@
     }
     /* jl-C: 白玻璃抽屉结构——手柄(拖条+标题+时点+箭头) + 内容区; 开合由ROOT.open类驱动max-height动画 */
     var prevB = document.getElementById("jlsectBody"), sc = prevB ? prevB.scrollTop : 0; /* 刷新保留滚动位置 */
-    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
+    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
     var nb = document.getElementById("jlsectBody");
@@ -377,8 +378,8 @@
     h.addEventListener("pointermove", function (e) {
       if (!DRAG.on) return;
       DRAG.dy = e.clientY - DRAG.y0;
-      var base = Math.max(32, Math.min(capH(), R.getBoundingClientRect().height - DRAG.dy));
-      R.style.maxHeight = Math.max(32, Math.min(capH(), base)) + "px"; /* 上拉(dy<0)抽屉变高, 下滑收矮, 32~capH夹紧 */
+      var base = Math.max(22, Math.min(capH(), R.getBoundingClientRect().height - DRAG.dy));
+      R.style.maxHeight = Math.max(22, Math.min(capH(), base)) + "px"; /* 上拉(dy<0)抽屉变高, 下滑收矮, 32~capH夹紧 */
     });
     function up() {
       if (!DRAG.on) return;
