@@ -1,6 +1,6 @@
 /* jl_sector_strength.js — jl-1094 v0.84.39 T4a第一阶段: 可解释板块强度基础层(独立新文件)
    外部JS视觉批 jl-B(2026-10-11, 只动浏览器层渲染, CORE计算/IDB/口径零触碰):
-   ①根卡墨绿(rgba(10,26,34,.72)+#81e6d9绿描边)退场→持仓页白玻璃同族(145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光/外投影族) ②开发术语人话化: "mtemp rows缺失"→"暂无板块数据", "无mtemp"→"暂无数据", 无涨幅数据的板块多卡"数据缺失"小块→合并一行 ③小灰字→白亮两色(数值.95/元信息.78), 红色逻辑#ff8b8f→亮红#ff5459, 卡标题#81e6d9→白 ④大K线图表背景: 评估结论=不属本文件(ks.html体系, v0.84.54已改深蓝香槟金), 本文件无图表对象
+   ①根卡墨绿(rgba(10,26,34,.72)+#81e6d9绿描边)退场→持仓页白玻璃同族(145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光/外投影族) ②开发术语人话化: "mtemp rows缺失"→"暂无强度数据", "无mtemp"→"暂无数据", 无涨幅数据的板块多卡"数据缺失"小块→合并一行 ③小灰字→白亮两色(数值.95/元信息.78), 红色逻辑#ff8b8f→亮红#ff5459, 卡标题#81e6d9→白 ④大K线图表背景: 评估结论=不属本文件(ks.html体系, v0.84.54已改深蓝香槟金), 本文件无图表对象
    jl-C批次(2026-10-11, 用户四点要求, 依旧只动渲染/交互层, CORE计算/IDB/口径/数据零触碰):
      ①挂载根修: body尾部(被甩到页面最底·导航之下·浏览器栏遮半截)→挂进.phone玻璃抽屉, absolute bottom=54对齐底部tab新高度(index.html jl-1114同步改), z=33(nav30之上/picker·news遮罩面板35/36之下, 弹层仍可盖抽屉)
      ②交互: 底部玻璃抽屉——手柄(拖条+标题+数据时点)常驻tab上方32px, 点按开合/上拉下滑手势(位移>28px或速度>0.45px/ms判向, 小抖动回弹), 开合=max-height裁剪动画(32px↔min(58vh,520px)), 内容区内滚+滚动位置跨刷新保留
@@ -339,7 +339,7 @@
     if (DRAG.on) return; /* jl-C: 拖拽中不重建DOM(手柄监听会丢), 60s下一轮补刷 */
     var R = ensureRoot();
     var has = !!(S.last && S.day);
-    var sub = has ? (S.day + " · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无板块数据"; /* jl-B: 开发术语(mtemp/口径链)退场, 人话化; jl-C: 移入手柄右侧 */
+    var sub = has ? (S.day + " · 强度样本 · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无强度数据"; /* jl-1166c: 明确这是强度样本，不是板块资金状态 */
     var body = "";
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
@@ -347,23 +347,23 @@
       var restMiss = restAll.filter(function (r) { return r.factors.avgPct.state === "miss"; }); /* jl-B: 无涨幅数据的板块→合并一行, 不再逐卡铺"数据缺失"小块 */
       var rest = restAll.filter(function (r) { return r.factors.avgPct.state !== "miss"; }).slice(0, 4);
       var unr = o.recs.filter(function (r) { return r.sector === CORE.UNATTR; })[0] || null;
-      body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无板块数据 · 当日样本未达统计口径</div>';
+      body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无强度排名 · 当日有效样本不足（板块资金不受影响）</div>';
       if (rest.length) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:6px 0 2px">— 样本不足的板块（事件/涨停侧仍跟踪）—</div>' + rest.map(secRow).join("");
       if (restMiss.length) {
         var names = restMiss.map(function (r) { return esc(r.sector); });
         var cap = names.slice(0, 8).join(" · ") + (names.length > 8 ? " 等" + names.length + "个" : "");
-        body += '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:4px 0 2px;line-height:1.7">暂无板块数据: <span style="color:rgba(255,255,255,.95);font-weight:700">' + cap + '</span>（事件/涨停侧仍跟踪）</div>';
+        body += '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:4px 0 2px;line-height:1.7">暂无强度数据: <span style="color:rgba(255,255,255,.95);font-weight:700">' + cap + '</span>（事件/涨停侧仍跟踪）</div>';
       }
       if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条（成分股" + unr.factors.evN.raw.codeN + " · 不作归属猜测）</div>";
       var st = S.stat || { mc: 0, sec: 0, hy: 0, unattr: 0 };
       body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径 | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
       body += '<div style="margin-top:6px"><button id="jlSecExp" style="font-size:9.5px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">导出快照JSON</button></div>';
     } else {
-      body = '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无板块数据 · 数据到达后自动计算</div>';
+      body = '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无强度数据 · 数据到达后自动计算（板块资金不受影响）</div>';
     }
     /* jl-C: 白玻璃抽屉结构——手柄(拖条+标题+时点+箭头) + 内容区; 开合由ROOT.open类驱动max-height动画 */
     var prevB = document.getElementById("jlsectBody"), sc = prevB ? prevB.scrollTop : 0; /* 刷新保留滚动位置 */
-    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
+    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
     var nb = document.getElementById("jlsectBody");
