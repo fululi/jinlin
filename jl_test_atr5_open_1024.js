@@ -18,10 +18,11 @@ const ctx = {
   rows: [],
   localStorage: { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)) },
   dailyBarsOf: () => ctx.rows,
+  atrSwingHTMLJL: () => '',
   jlLastTradeDay: () => ctx.observed || ''
 };
 vm.createContext(ctx);
-vm.runInContext('const ATR5_OPEN_CODES_JL = {"603986":{"highGap":"27/46=58.7%","fridayPreview":{"open":271.09,"lower":261.0942,"upper":282.5493}},"600105":{"highGap":"16/26=61.5%","fridayPreview":{"open":27,"lower":25.5167,"upper":28.4719}}};', ctx);
+vm.runInContext('const ATR5_OPEN_CODES_JL = {"603986":{"highGap":"27/46=58.7%"},"600105":{"highGap":"16/26=61.5%"}};', ctx);
 for (const n of ['jlDayClosedJL','atrLocalDayJL','atrQuoteDayJL','atr5ExpectedParamDateJL','atr5PercentileJL','atr5OpenParamsJL','atr5CacheKeyJL','atr5ReadCacheJL','atr5WriteCacheJL','atr5ParamsForJL','atrOpenModelJL','atrOpenHTMLJL']) vm.runInContext(fnSource(n), ctx);
 function bars(n = 140) {
   const out = [], d = new Date('2026-03-01T00:00:00');
@@ -48,7 +49,7 @@ ok('120 completed sessions and Wilder ATR5 available', baseParams.ok && basePara
 const savedRows = ctx.rows;
 ctx.rows = savedRows.slice(0, -1).concat([Object.assign({}, savedRows[savedRows.length - 1], { h: 999, l: .1 })]);
 const mutated = vm.runInContext('atr5OpenParamsJL(rows, new Date("2026-10-24T12:00:00"))', ctx);
-ok('day i TR excluded from day i ATR', Math.abs(mutated.atr - baseParams.atr) < 1e-12);
+ok('parameter-day TR feeds current ATR', mutated.atr > baseParams.atr);
 ctx.rows = savedRows;
 ok('p80 uses linear (n-1) interpolation', Math.abs(vm.runInContext('atr5PercentileJL(Array.from({length:120},(_,i)=>i+1),.8)', ctx) - 96.2) < 1e-12);
 function stock(code, open, tm, prevClose) { return { code, open, base: open + 1, prevClose, quoteReady: true, quoteAt: tm, quoteDate: tm.slice(0,4)+'-'+tm.slice(4,6)+'-'+tm.slice(6,8) }; }
@@ -87,7 +88,7 @@ ok('stale parameter date is explicit', stale.params.stale && vm.runInContext(`(f
 const bad = ctx.rows.slice(); bad[bad.length - 1] = Object.assign({}, bad[bad.length - 1], {h:.01});
 ok('OHLC anomaly fails closed', !vm.runInContext(`atr5OpenParamsJL(${JSON.stringify(bad)},new Date('2026-10-24T12:00:00')).ok`, ctx));
 const ui = vm.runInContext(`(function(){rows=${JSON.stringify(ctx.rows)};return atrOpenHTMLJL(${JSON.stringify(stock('603986',100,'20261026092500',100))});})()`, ctx);
-ok('page copy has date, edges and Friday preview', ui.includes('<b>ATR</b>') && ui.includes('参数日') && ui.includes('下沿') && ui.includes('上沿') && ui.includes('周五回推'));
+ok('current card has session open and no Friday preview', ui.includes('<b>ATR · Fib</b>') && ui.includes('参数日') && ui.includes('下沿') && ui.includes('上沿') && ui.includes('实际开盘 <b>100.00') && !ui.includes('周五回推') && !ui.includes('10-22参数'));
 const head = cp.execFileSync('git',['show','HEAD:index.html'],{encoding:'utf8',maxBuffer:16*1024*1024});
 for (const name of ['computeTierJL','magnetsJL','snapLvJL','zzThJL','zzPivotsJL','zzMergeSmallLegsJL']) {
   const current = fnSource(name), oldHtml = html; // fnSource reads current html; extract HEAD independently below.
