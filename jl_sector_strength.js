@@ -251,6 +251,15 @@
       var yd = lsGet("jinlin_yd_v1");
       var rows = mt && mt.data && mt.data.rows || null;
       var at = (mt && +mt.at) || 0;
+      /* jl-1168b 外修(2026-10-26): "数据时点"钉死显示层修复——jinlin_mtemp_v1.at 是 v1 温度卡
+         自有深采时刻(15分钟TTL), 盘中 jlv2 每分钟广播样本只更新 data.time 不动 at,
+         抽屉手柄于是永远显示开页那一刻(实测: at=10:11 钉死, data.time 已 10:16)。
+         显示取 at 与 data.time 的较新者; 不改 at 的 TTL 语义(它还门着 v1 的 15 分钟重采)。 */
+      var _dtt = mt && mt.data && mt.data.time;
+      if (_dtt && /^\d{1,2}:\d{2}$/.test(String(_dtt))) {
+        var _hp = String(_dtt).split(":"), _cand = new Date().setHours(+_hp[0], +_hp[1], 0, 0);
+        if (_cand > at) at = _cand;
+      }
       var day = (yd && yd.date) || (at ? new Date(at).toISOString().slice(0, 10) : null);
       if (!day) { S.last = null; paint(); return; }
       var ztPool = (yd && yd.zt && yd.zt.pool) || [];

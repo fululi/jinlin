@@ -6,7 +6,7 @@
 </script>
 
 <!-- jl-ATRfix 1025晨: 持仓卡ATR带bug修复——带宽ATR原用atr[end-1]较采样口径滞后一日(兆易创新10-23案例: 10-23振幅26.5大震后, 旧代码周一仍用周四ATR15.20而非周五17.46, 带子偏窄15%); 对齐后带子=开盘±参数日ATR×P80系数; 注: 10-23穿带12.25元属P80设计遇P99.2日的预期尾部非算错; 壳v266→v267 --><!-- v0.85 温度量化批 temp-q1 1025晨: 大盘温度卡——温度近20交易日分位P(读jlv2温度史, 排除当日)+Δ30分盘中动量(jinlin_mtemp_series_v1: ≥09:25才记/4分去重/160点, 集合竞价噪声不进)+九档幅度加权净宽; luLimJL修板块前缀优先(创业板/科创板ST=20%非5%, N/C新股无涨跌幅)+采样失败"示数为旧值"标记; 纯显示层, 温度公式/分区阈值/状态机/抓取链零触碰; 壳v265→266成对(sw.js KEEP=266+265+264) --><!-- v0.86 1025 温度审查收尾批q1-r2·并入v269(底=58ef791): ①分位P口径标注——20日基准=各日末次采样(≈收盘温度), 卡面三处标签改"20日收盘"(v1头/v2sum/v2tnow); ②勘误——v266批注"纯显示层"不含luLimJL(涨停/跌停判定口径修正, 影响分档统计, 改法本身正确), 温度公式/分区阈值/状态机/九因子/抓取链仍零触碰; ③v2分位P(tempPctJL)改直读localStorage+显示加"数据属今天"闸(与v1同源同显隐); ④竞价显示行(jlv2)——工作日9:25前"冷点"改显"竞价", 仅显示层, 日史存原状态; ⑤atr5缓存键_v1→_v2——周末用旧算法打开过APP的, 10-23参数日缓存着15.20, 周一会命中旧缓存照显15.20, 升键强制重算; ⑥周五回推预览数字对齐修复后算法(兆易261.0719/282.5749·永鼎25.50/28.49); jlv2.js引用?v=13→15(跳14: Claude本地worktree占用该标识); 壳v268→v269成对 -->
-<!-- v0.88 1026上午 jl-1166 胜率P₀埋点批(v5.4, 纯读取层零新增请求): 跳空缺口事件(开盘较昨收偏离≥0.1%×档: 规模1/3/5分+日1/3/5, 与jl_gaplog开档同阈值)→行存jinlin_winrate_log_v1(baseline+10:30/13:30/14:30/收盘四档, 同id幂等); 判局=日线回放(jl_dk_碰昨收)+开档ft分钟精度, 宁晚判不错判0; 超到期+10交易日无证据→弃案(meta.abandonedByLevel按level计数, 1169复盘页展示属下批); P₀两层收缩logit(30事件门槛)存jinlin_winrate_meta_v1; 自带60s定时器零耦合站内循环; 回滚=删插入块; 壳v283→v284成对 --><script id="jlVerJL" data-ver="0.88" data-sw="jinlin-shell-v284"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<!-- v0.88 1026上午 jl-1166 胜率P₀埋点批(v5.4, 纯读取层零新增请求): 跳空缺口事件(开盘较昨收偏离≥0.1%×档: 规模1/3/5分+日1/3/5, 与jl_gaplog开档同阈值)→行存jinlin_winrate_log_v1(baseline+10:30/13:30/14:30/收盘四档, 同id幂等); 判局=日线回放(jl_dk_碰昨收)+开档ft分钟精度, 宁晚判不错判0; 超到期+10交易日无证据→弃案(meta.abandonedByLevel按level计数, 1169复盘页展示属下批); P₀两层收缩logit(30事件门槛)存jinlin_winrate_meta_v1; 自带60s定时器零耦合站内循环; 回滚=删插入块; 壳v283→v284成对 --><script id="jlVerJL" data-ver="0.88.1" data-sw="jinlin-shell-v285"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -36,7 +36,7 @@
 <!-- v0.84.106 1023 fix11L: 斐波自动扩轴整体撤回(fix11g/j/k三路全撤, fibAxisExtJL与调用点全删), fib渲染/分时tsViewJL/K线view逐字节回到扩轴前原版。壳成对升v251, ks戳1151j -->
 <!-- v0.84.105 1023 fix11j: 斐波自动扩轴加天花板(中枢±0.75×行情幅)——兆易实证: 分时fib 0=245.57/1=299.61, 2.618=387把轴顶拉飞, 294日高压成窄带; 超天花板档位照画但不参与扩轴, K线/分时同口径。壳成对升v250, ks戳1151i -->
 <!-- v0.84.104 1023 fix11批(弹窗组, 基于103重打): 分时高低点提醒醒目化——jlPhvlPopJL专属弹窗(亮白大字+红绿辉光+脉冲4s), toast按"到高点/到低点"关键词分流; _j4 important压回全局animation:none!important(弹窗不可见根因); chip闪烁期亮白×2; toast z-index9999。ks侧同批: fib自动扩轴+VI回补分色+降级自诊断(戳1151h)。壳成对升v249 -->
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.87</title><style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.88.1</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 52% at 94% 38%,rgba(255,217,94,.38),transparent 65%),radial-gradient(ellipse 80% 50% at 85% 0%,rgba(255,217,94,.18),transparent 60%),radial-gradient(ellipse 70% 60% at 10% 10%,rgba(120,20,45,.35),transparent 65%),radial-gradient(ellipse 90% 70% at 50% 45%,rgba(70,12,40,.30),transparent 70%),linear-gradient(160deg,#1a0508 0%,#2b0817 45%,#170510 100%);background-attachment:fixed;color:#eff9fc;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none} /* jl-1068 v0.84.15: 定案：撤掉持仓小图Fib画图按钮(只要趋势线), Fib引擎代码保留不删;  持仓小图画线条按钮文字误用JS转义写在HTML区→渲染成\u2571乱码(截图实证), 改回真实UTF-8字符: ╱线/∿Fib/锁/隐/删/5色点; 其余不动 --><!-- jl-1081~1083 v0.84.29(三合一, 全部只提示预警不做自动交易): ①龙池"斐波那契波段"加分项——扫描worker抓完K线原样喂给持仓卡同源 legFibJL(同一函数零改公式, 龙池价位与温度计逐位一致), 命中口径=上涨正式波段+段幅≥15%+回撤0.30~0.45(0.382附近)+近3收站上0.382档企稳+距1.618扩展位≥5%空间, 各层+10分(加分项非硬门槛); 列表∿标+卡片显示波段区间/0.382位/1.618位/当前回撤; realCache临时挂载用完还原不占jl_dk_配额 ②B/S球"档位失守监控"——跌破买档15分钟(可配jinlin_breach_cfg_v1)不收回记失守, Bn±0.5%内震荡=到档停留不算; 黄=日内累计≥2档「已连续跌穿N档,档位买点逻辑警戒,暂停加仓」/橙=60分钟内≥2档「下滑加速,建议考虑先减仓」/红=最深档失守含开盘<最深档×0.97跳空「已跌穿最深买档,档位体系失效,建议减仓观察,待企稳再决策」; 诱多=早盘强势候选/确认后触发黄色→直升橙+标注; 球按级别变色(wy/wo/wr), 每级每票当日只弹一次横幅, 面板显示失守档位列表/现价所在档/距最深档空间; 面板"失守演示"按钮=合成数据黄/橙/红各一例 ③强势度评分+卖飞治理——9:25竞价出证据(个股高开≥3%且上证高开≥0.5%=候选, 评分=高开/量比估/大盘共振/缺口不回补四维), 9:40~10:10不回补缺口+量比≥1.5确认; 确认票S档触及改"待确认"(琥珀), 触线后15分钟不收回或14:45尾盘复核才转正提示; 移动卖出参考(trailing)=日内高点回落2%, 破线一次性提示; 弱势日行为不变。红线遵守: 不碰资金流/离线资金/大盘异动/B-S球原有触档算法, 零新增外部接口, 假期断档冻结(jlMktPhaseJL闸) --><!-- jl-1066 v0.84.13(看图反馈批): ①emoji管理菜单(手/锁/眼/垃圾桶)全撤——换TradingView式底部玻璃色条(白金橙绿红5色点+✕删), 选中画线才出现 ②持仓小图画线入口恢复(jl-1006撤的线/Fib按钮回归, 引擎原样)+单线换色生效(draw1读ln.color) ③小图闪动根治——tsWait自愈改一次性(Set守卫)+renderDeck数据未变不重建innerHTML(deck卡片小图频繁重建=闪动真因) ④⏰补齐: 持仓小图工具栏加⏰按钮(自动对准当前票)+提醒金线标记扩展到小图 ⑤大K线图(KS全屏)=ks.html体系, 其🔔提醒/+提醒健在; KS单线换色下轮 --><!-- jl-1065 v0.84.12(K线组件专项, 只动bigChart交互层): ①十字线抖动根治——新增透明overlay层, 指针移动只重绘overlay(十字线+左右玻璃标签+底部时间), 主图canvas零重绘完全静止; 手势(平移/缩放/画线)起手自动回落原生路径 ②左右涨跌幅/右侧价格/时间标签黑底→玻璃(rgba白.14+.95白字) ③小闹钟恢复——⏰按钮前置工具栏首位+图上金色虚线+⏰常显(夜背景切合) ④趋势线: ↗趋势按钮(首位引导入口)+点线弹玻璃菜单(拖动/锁定/隐藏/删除), 单线lock跳过命中检测/hide跳过渲染, 隐藏线点原位置可唤回 ⑤主图+幅图通用(画线系统本就按pane存储) --><!-- jl-1064 v0.84.11(视觉批·只动颜色字重不动布局字号业务逻辑): ①龙池筛选工具栏+扫描横幅深黑实心→统一玻璃rgba(255,255,255,.075)+blur14 saturate1.7+描边.10+圆角12 ②背景顶层加右深金baseglow rgba(160,110,35,.38) ③文字全面提亮加粗: body基线500, 元信息灰字→亮白.8/500-600, 数值.95/.8+.85/600-700, 提示字统一≥.75/500+终扫残留12处灰字提亮+ladRow已触行.55→.65(禁<.6文字); H清查: 全码唯一H=枢轴kind(小图computeTierJL/ks zzPivotsJL,大写=已确认/小写=未确认),资金卡温度卡渲染无H输出, 标题700, 指数小卡.85/600/13px, --secondary.74→.80 ④资金预警风险分溢出修复: 条与数值间距8px+条flex收缩min44px+数值flex:none ⑤终扫见响应报告; ks.html零改动 --><!-- jl-1063 v0.84.10(152仍雾蒙蒙, 要独立版KeyStation原色): 雾根因=仍有半透明+模糊叠加——①ks嵌入态背景改实心#0a0e0b, backdrop-filter全关(与独立版深色主题逐像素一致) ②外壳叠加层0.22→transparent(只留薄荷描边) ③保留: 全出血/缓存根修/强制深色主题 --><!-- jl-1062 v0.84.9(定案): 玻璃实验终止, ks嵌入面板调回原黑——盾0.30→0.42+blur10(=v0.84.5观感), 外壳叠加0.08→0.22(原值); 保留: 手机全出血/缓存锁定当前壳/嵌入态强制深色主题(亮线可读)/工具条蓝青统一; 独立版与算法零影响 --><!-- jl-1061 v0.84.8(实拍: 玻璃生效但网格/价签/十字线全看不清): 根因=K线Station存档是浅色主题——浅灰结构线压在玻璃上无对比——①嵌入态强制深色主题(独立版主题选择不受影响, 存档不覆盖) ②玻璃0.14→0.30+blur12(深色线条有暗底对比, 仍透极光不回死黑) ③画布/指标算法零改动, 非大修 --><!-- jl-1060 v0.84.7(实拍: 面板仍死黑不match): 根因=SW全局ignoreSearch缓存匹配把KEEP旧壳缓存里的陈年ks.html喂给iframe, v0.84.6玻璃改动根本没送到手机——①sw.js运行时匹配锁定当前壳C(陈旧投喂根除, 离线回退链不变) ②ks嵌入态工具条/文字绿灰→主UI蓝青玻璃家族(仅ksT, 独立版/主题零影响) ③零数据/业务逻辑改动 --><!-- jl-1059 v0.84.6(截图圈注): ①手机chartMode全出血——@media430取消舞台padding24px/设备95vw居中/圆角, K线图铺满手机不再两侧空带 ②ks玻璃减淡——玻璃盾0.42→0.14+blur14, 外壳叠加层0.22→0.10, 极光背景透出与首页卡片玻璃一致, 不再死黑不搭(UI统一) ③零数据/业务逻辑改动 --><!-- jl-1058: 整页嵌死手机宽——任一页超宽不再把整个文档拖成可左右平移 */#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:rgba(26,18,10,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05)} /* jl-1036: 容器层深色玻璃兜底 */body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;height:100dvh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05);display:block} /* jl-1036 */body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#EAF0F8}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#FFFFFF;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -1885,84 +1885,109 @@ document.addEventListener("visibilitychange", () => {
     if (loadSectorFundsJL.loading) return;
     if (Date.now() - (loadSectorFundsJL.failAt || 0) < 6e4) return;
     loadSectorFundsJL.loading = true;
-    const cb = "jinlinSector_" + Date.now();
+    /* jl-1168a 外修(2026-10-26): 板块资金翻页拉全。
+       实测东财 clist 每页硬上限 100 行(原请求 pz=300 实收 100), fs=m:90+t:2 全表 data.total=496。
+       原 pn=1 单发只拿到按 f62 降序的【流入侧 Top100】, 净流出板块——普跌日恰是 tloop 决策卡
+       "板块资金净流出·证据+1"最需要的输入——永远进不了表: "通信设备·板块资金暂缺"的根因;
+       且渲染层"板块不在表内就重拉"的钩子因永远缺键而每次渲染空转。
+       现: 第1页先到读 data.total 定余页数, 余页并行补发(封顶8页); 每页独立 8s 超时+onerror;
+       部分页失败保留已到数据(严格优于旧单页); 总有效行为零才走 _alt 降级链(零写入视同失败口径不变)。
+       _alt=2 ulist 兜底路径逐字保留(单发); 5分钟TTL不变, 每轮最多5发JSONP。 */
+    const live = { cbs: [], scripts: [], timers: [], pages: 0, back: 0, nOk: 0, closed: false };
+    const cleanup = () => {
+      live.cbs.forEach((c) => { try { delete window[c]; } catch (eC) {} });
+      live.scripts.forEach((s) => { try { s.remove(); } catch (eS) {} });
+      live.timers.forEach((t) => { try { clearTimeout(t); } catch (eT) {} });
+      live.cbs.length = 0; live.scripts.length = 0; live.timers.length = 0;
+    };
     const bail = () => {
       loadSectorFundsJL.loading = false;
       /* jl-0924-fix34c: 降级链 0→1→2。第 2 档退回原来的 ulist 三板块请求，
          保证 clist 全行业接口不可用时不比改动前更差。 */
       if ((loadSectorFundsJL._alt || 0) < 2) {
         loadSectorFundsJL._alt = (loadSectorFundsJL._alt || 0) + 1;
-        delete window[cb];
-        sc.remove();
         loadSectorFundsJL();
         return;
       }
       loadSectorFundsJL._alt = 0;
       loadSectorFundsJL.failAt = Date.now();
       try { window.__jlSectorFail = Date.now(); } catch (eF2) {} // jl-0929-11: 失败留痕
-      delete window[cb];
-      sc.remove();
       renderResonanceJL();
     };
-    window[cb] = (res) => {
-      var _a2, _n = 0;
-      try {
-        let a = ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.diff) || (res == null ? void 0 : res.data) || [];
-        if (!Array.isArray(a)) a = Object.values(a);
-        /* jl-0924-fix34b: 以响应里的 f14(行业名) 为准建表；硬编码 names 只作 _alt=2 兜底路径的补名。
-           行业名两侧都做 Ⅰ/Ⅱ/Ⅲ 后缀归一(与第2241行既有口径一致)，否则"半导体Ⅱ"匹配不上"半导体"。 */
-        const _legacyNames = { "BK0448": "\u901A\u4FE1\u8BBE\u5907", "BK1036": "\u534A\u5BFC\u4F53", "BK0546": "\u73BB\u7483\u73BB\u7EA4", "BK0732": "\u8D35\u91D1\u5C5E" };
-        a.forEach((r) => {
-          const k = String(r.f12 || r.code || "");
-          const nm = sectorNameNormJL(r.f14) || _legacyNames[k] || "";
-          if (!nm) return;
-          const _amt = Number(r.f62);
-          if (!Number.isFinite(_amt)) return;
-          sectorFundsJL[nm] = { amt: _amt, pct: Number(r.f3), name: nm, bk: k };
-          _n++;
-        });
-        /* jl-0929-11: 零写入视同失败——原代码空响应(data:null/解析异常/f62全缺)也走成功路径:
-           _at照打、failAt清零、_alt归零, 降级链永远轮不到, 页面死卡"板块资金接口暂未返回"
-           (0929用户报"所有持仓股板块资金都没有"的根因)。现在 _n===0 直接 bail 走 _alt 降级。 */
-        if (_n > 0) {
-          try { window.__jlSectorN = Object.keys(sectorFundsJL).length; } catch (eSn) {}
-          sectorFundsJL._at = Date.now(); // jl-0928-7: TTL时间戳
-          loadSectorFundsJL.failAt = 0;
-          loadSectorFundsJL._alt = 0;
-          try {
-            const _sf = JSON.parse(localStorage.getItem("jl_sector_ff_v1") || "{}") || {};
-            Object.keys(sectorFundsJL).forEach((k2) => {
-              const v2 = sectorFundsJL[k2];
-              if (v2 && Number.isFinite(v2.amt)) _sf[k2] = { amt: v2.amt, pct: v2.pct, d: typeof jlYMD === "function" ? jlYMD(new Date()) : "" };
-            });
-            jlSafeSetJL("jl_sector_ff_v1", JSON.stringify(_sf));
-          } catch (e2) {}
-        }
-      } catch (eCb) {
-        _n = 0; // 解析异常同样视同失败
-      }
-      clearTimeout(timer);
+    const settle = () => {
+      if (live.closed || live.back < live.pages) return;
+      live.closed = true;
+      cleanup();
       loadSectorFundsJL.loading = false;
-      delete window[cb];
-      sc.remove();
-      if (_n > 0) renderResonanceJL();
-      else bail(); // 空响应/异常=失败, 走 _alt 降级链(push2→push2delay→ulist四板块兜底), 尽端才置60s失败冷却
+      /* jl-0929-11: 零写入视同失败——空响应(data:null/解析异常/f62全缺)也走成功路径的旧坑不回潮,
+         总有效行为零直接 bail 走 _alt 降级, 尽端才置 60s 失败冷却。 */
+      if (live.nOk > 0) {
+        try { window.__jlSectorN = Object.keys(sectorFundsJL).length; } catch (eSn) {}
+        sectorFundsJL._at = Date.now(); // jl-0928-7: TTL时间戳
+        loadSectorFundsJL.failAt = 0;
+        loadSectorFundsJL._alt = 0;
+        try {
+          const _sf = JSON.parse(localStorage.getItem("jl_sector_ff_v1") || "{}") || {};
+          Object.keys(sectorFundsJL).forEach((k2) => {
+            const v2 = sectorFundsJL[k2];
+            if (v2 && Number.isFinite(v2.amt)) _sf[k2] = { amt: v2.amt, pct: v2.pct, d: typeof jlYMD === "function" ? jlYMD(new Date()) : "" };
+          });
+          jlSafeSetJL("jl_sector_ff_v1", JSON.stringify(_sf));
+        } catch (e2) {}
+        renderResonanceJL();
+      } else bail();
     };
-    const sc = document.createElement("script");
-    /* jl-0924-fix34a: 主路改为一次拉【全部行业板块】(约86个)，按 f14 行业名建表。
-         原来只请求 3 个硬编码 BK 码(0448/1036/0546)，于是任何不属于这 3 个行业的持仓股
-         都必然显示"所属板块 · 板块资金接口暂未返回"——用户报的 589420/600489 暂缺就是这个。
-         响应本来就带 f14(行业名)，原代码却把它扔掉、改用硬编码 names 表。
+    const fetchPage = (pn) => {
+      live.pages++;
+      const cb = "jinlinSector_" + Date.now() + "_p" + pn;
+      live.cbs.push(cb);
+      const sc = document.createElement("script");
+      live.scripts.push(sc);
+      const timer = setTimeout(() => { live.back++; settle(); }, 8e3);
+      live.timers.push(timer);
+      window[cb] = (res) => {
+        var _a2, _n = 0;
+        clearTimeout(timer);
+        try {
+          let a = ((_a2 = res == null ? void 0 : res.data) == null ? void 0 : _a2.diff) || (res == null ? void 0 : res.data) || [];
+          if (!Array.isArray(a)) a = Object.values(a);
+          /* jl-0924-fix34b: 以响应里的 f14(行业名) 为准建表；硬编码 names 只作 _alt=2 兜底路径的补名。
+             行业名两侧都做 Ⅰ/Ⅱ/Ⅲ 后缀归一(与第2241行既有口径一致)，否则"半导体Ⅱ"匹配不上"半导体"。 */
+          const _legacyNames = { "BK0448": "\u901A\u4FE1\u8BBE\u5907", "BK1036": "\u534A\u5BFC\u4F53", "BK0546": "\u73BB\u7483\u73BB\u7EA4", "BK0732": "\u8D35\u91D1\u5C5E" };
+          a.forEach((r) => {
+            const k = String(r.f12 || r.code || "");
+            const nm = sectorNameNormJL(r.f14) || _legacyNames[k] || "";
+            if (!nm) return;
+            const _amt = Number(r.f62);
+            if (!Number.isFinite(_amt)) return;
+            sectorFundsJL[nm] = { amt: _amt, pct: Number(r.f3), name: nm, bk: k };
+            _n++;
+          });
+        } catch (eCb) {
+          _n = 0; // 解析异常同样视同失败
+        }
+        if (_n > 0) live.nOk += _n;
+        /* jl-1168a: 首页带 data.total → 并行补发余页; ulist 兜底无 total 不补发 */
+        const _tot = (res && res.data && Number(res.data.total)) || 0;
+        if (pn === 1 && _tot > 100) {
+          const last = Math.min(8, Math.ceil(_tot / 100));
+          for (let p = 2; p <= last; p++) fetchPage(p);
+        }
+        live.back++;
+        settle();
+      };
+      /* jl-0924-fix34a: 主路拉【全部行业板块】按 f14 行业名建表(jl-1168a 起每页100翻页拉全, 见函数头注)。
          降级链: _alt=0 clist@push2 → _alt=1 clist@push2delay → _alt=2 原 ulist 三板块@push2。 */
         // jl-0929-11: ①补 ut 公开令牌(akshare与东财前端所有可用 clist 调用都带, 缺失时部分网络返空 data)
         //             ②_alt=2 兜底补 90.BK0732 贵金属(中金黄金所在板块, 东财官网核实板块码)
         sc.src = (loadSectorFundsJL._alt === 1 ? "https://push2delay.eastmoney.com" : "https://push2.eastmoney.com")
           + (loadSectorFundsJL._alt >= 2
               ? "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f3,f12,f14,f62&secids=90.BK0448,90.BK1036,90.BK0546,90.BK0732&ut=bd1d9ddb04089700cf9c27f6f7426281&cb=" + cb + "&_=" + Date.now()
-              : "/api/qt/clist/get?pn=1&pz=300&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:90+t:2&fields=f12,f14,f3,f62&ut=bd1d9ddb04089700cf9c27f6f7426281&cb=" + cb + "&_=" + Date.now());
-    sc.onerror = bail;
-    const timer = setTimeout(bail, 8e3);
-    document.body.appendChild(sc);
+              : "/api/qt/clist/get?pn=" + pn + "&pz=100&po=1&np=1&fltt=2&invt=2&fid=f62&fs=m:90+t:2&fields=f12,f14,f3,f62&ut=bd1d9ddb04089700cf9c27f6f7426281&cb=" + cb + "&_=" + Date.now());
+      sc.onerror = () => { clearTimeout(timer); live.back++; settle(); };
+      document.body.appendChild(sc);
+    };
+    fetchPage(1);
   }
   const ddxState = { key: "", rows: null, err: false, stale: false, loading: false };
   const FFK_CACHE_JL = {};
@@ -21391,7 +21416,7 @@ var RLMCore = (function () {
 <!-- jl-1121 v0.84.62: 温度v2九因子宫格展示补全+三卡消失根治(基于线上v0.84.61最小手术)——【根治】今晚jlv2.js?v=11被GitHub Pages弱网截断(实测26661/76738字节)+max-age=600坏缓存驻留→script无声失败→三卡全灭; 引用改?v=12新URL一步绕开一切坏缓存。【展示补全】①最高连板: ZT池聚合一处落存最高lbc行(名称/代码/行业入jlv2_pool_v1.top, 旧缓存无top自然降级原样), 宫格副行显示 股票名·题材(主概念mc优先→二级行业→池hybk兜底) ②热点板块持续: 板块名上副行(离线聚合/在线兜底两路同口径), 持续天数上值行 ③涨停/跌停宫格标签改"涨停数量/跌停数量" ④炸板率副行挂 炸板数/涨停数(deriveState现成, 口径=炸板/(涨停+炸板)) ⑤ATR波动率标签改"ATR14/价"去解释小字(副行仅留"上证"); 纯渲染层零数据链变更零新增请求; jl-1120(v61)斐波标签/B档反抽内容零触碰; sw v202→v203配对 -->
 <script src="jlv2.js?v=16" defer></script>
 <!-- jl-1097 v0.84.43: 浮球触档强提示(定案"买卖档到了要亮要提示")——①球色分边: S档(卖位)触=红光/B档(买位)触=绿光/双边都触=琥珀, 静态变色+边框光晕为主(旧.hit纯红环动画在prefers-reduced-motion全灭动画下不可见, 新静态色不受影响), 触档口径r.hit=当日已触(高≥S档/低≤B档)天然亮到收盘 ②新增常驻徽标sbOrbBadgeJL贴球顶: 当日最新触档"名·档·时刻"(如"天奇·S2 09:32")纯派生态零存储, 新交易日触档时间归零自然消失, pointer-events:none不碰拖拽 ③新档脉冲520ms单拍→1.5s双拍 ④失守族(wr/wo/wy)优先级不变仍压触档色, 触档判定/失守监控/待确认转正/台账/评分链零触碰; sw v183→v184 --><!-- jl-1096 v0.84.42: 龙池板块标签全层补齐(接手昨日体检报告的备案修法)——新增jlConTagJL纯本地查表兜底(jl_concept_map.js jl-1086: 5929只·主概念mc永不为空·零网络), 接进行卡poolRowJL/主推卡ppSub/展开chip evChipsJL三个标签位: 行业口径(x.ind/JLPOOL_HY=f100同源)优先·主概念mc兜底; 根因=东财f100双路(扫描内push2 JSONP 9s/poolIndJL批量)被拒网络下行卡/展开chip全空, 且趋势层本就被poolIndJL显式排除=结构性无标签; evChips"行业"chip改"板块"兼容行业/概念双口径; 五层/观察/风险/主推一次补齐, 趋势层硬伤一并覆盖; 宇宙/资金判定/评分/层归置/涨停池链/sw资产清单零触碰; 斐波那契(jl-1081)零触碰 --><!-- jl-1077 v0.84.41: 龙池资金旧表退场(定案·三方台架验收)——①poolFFJL资金确认瀑布整支摘除if(oe){...}离线快照兜底分支: pool_ff.json(5060码)只保留宇宙名单角色, 资金判断不再回填旧表; 表内票实时全灭=fundStatus"暂缺"→门判"证据不足"落观察(刷不出来就是刷不出来); 旧版oe分支排在日K实时之前=表内票实时链结构性不可达(每次扫描必退16号的真根因), 摘除后实时链/分钟重通道对表内票复活 ②分钟重通道实时净额只认当日: _nets=[_net]不再与09-16旧史拼接, f5/f10/n10/c2/outStreak公式原样 ③涨停池卡"资金门过/未过(快照09-16)"标注停用旧快照 ④名单/宇宙构建/实时请求链/阈值/评分/观察页/离线终榜链原样未动; 台架: A表内+实时全灭=旧版离线快照·09-16直进判断vs新版暂缺零注入, B日K/E f62/D缓存与"旧摘兜底"逐字段一致=原逻辑不动, C2旧拼接实录2.71M vs 新版纯当日88M; 基线ddb03d4(v0.84.40)上重放; sw v181→v182 --><!-- jl-1094 v0.84.39 T4a第一阶段: 新增 jl_sector_strength.js(v1)可解释板块强度基础层——口径链mc>sec>hybk(B组键序); 四因子=涨幅/上涨率(jl-1080原式: Σpct/n, up/n, n<8不参评, 分组键换T4a口径)+涨停数(ZT池×口径)+事件扩散(T3 IDB当日记录聚合, 定义=成分股并集, 只读零重算); 成交额变化=数据不足·龙头强度=待定义仅候选; 快照独立IDB jinlin_secstr(k=day|30分桶|sector, 90天保留+12000上限); 红线: jlv2/T3/资金/龙池/universe/扫描频率/假期零触碰, 零新增网络请求, 不接龙池; title随批同步v0.84.39(38包title滞留一并补齐) -->
-<script src="jl_sector_strength.js?v=5" defer></script><!-- jl-1114 jl-C: ?v=2→3防旧缓存(body尾卡→.phone玻璃抽屉/灰字亮白加粗/手柄上拉下滑) -->
+<script src="jl_sector_strength.js?v=6" defer></script><!-- jl-1114 jl-C: ?v=2→3防旧缓存(body尾卡→.phone玻璃抽屉/灰字亮白加粗/手柄上拉下滑); jl-1168b外修: ?v=5→6(数据时点显示层取mtemp.at与data.time较新者) -->
 <script src="jl_evidence.js" defer></script>
 <script src="jl_t6_probe.js?v=1" defer></script><!-- jl-1128 v0.84.73: T6信号环境探针(独立文件·零侵入观察者)——主推(jl_pool_picks_v1)落库时刻留档各环境存储当场读数(温度/指数/池聚合计数/龙池src/国家队ETF, 各带自身时间锚点), 存jl_t6_env_v1(120日); 红线: 不代理不覆写钩子/零自有计算/缺源ok:0; 回滚=删本行即完全移除, 详见文件头 -->
 <script src="jl_sector_ff_snap.js?v=2" defer></script><!-- jl-1129 v0.84.74 热修: 回补盘前闸修正——原"9999-99-99"上限恒含当日, 盘中回补会把当日累计值当终值写库并挡住盘后clist主路(2026-10-13晨盘前实测复现); 改为盘前仅允许d<今日, ≥15:05后方纳入当日; 记录结构零改动。其余同jl-1128批: T7-0板块资金日快照层(独立文件·零侵入)——依《T7-0 schema v1冻结书2026-10-12》: 主路=当日盘后(≥15:05)锚点闸+当日无记录, 单请求clist全量86板块(f12/f14/f62/f66/f84原始值)+ZB池tc原值(qdate交叉校验); 回补路=daykline 90.BK(f51自dated日历, 86请求200ms节流); IDB jinlin_secff/daily(250交易日)+meta板块表; 回滚=删本行+jinlin_secff库可整体删除, 无残留 -->
