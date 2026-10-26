@@ -6,7 +6,7 @@
 </script>
 
 <!-- jl-ATRfix 1025晨: 持仓卡ATR带bug修复——带宽ATR原用atr[end-1]较采样口径滞后一日(兆易创新10-23案例: 10-23振幅26.5大震后, 旧代码周一仍用周四ATR15.20而非周五17.46, 带子偏窄15%); 对齐后带子=开盘±参数日ATR×P80系数; 注: 10-23穿带12.25元属P80设计遇P99.2日的预期尾部非算错; 壳v266→v267 --><!-- v0.85 温度量化批 temp-q1 1025晨: 大盘温度卡——温度近20交易日分位P(读jlv2温度史, 排除当日)+Δ30分盘中动量(jinlin_mtemp_series_v1: ≥09:25才记/4分去重/160点, 集合竞价噪声不进)+九档幅度加权净宽; luLimJL修板块前缀优先(创业板/科创板ST=20%非5%, N/C新股无涨跌幅)+采样失败"示数为旧值"标记; 纯显示层, 温度公式/分区阈值/状态机/抓取链零触碰; 壳v265→266成对(sw.js KEEP=266+265+264) --><!-- v0.86 1025 温度审查收尾批q1-r2·并入v269(底=58ef791): ①分位P口径标注——20日基准=各日末次采样(≈收盘温度), 卡面三处标签改"20日收盘"(v1头/v2sum/v2tnow); ②勘误——v266批注"纯显示层"不含luLimJL(涨停/跌停判定口径修正, 影响分档统计, 改法本身正确), 温度公式/分区阈值/状态机/九因子/抓取链仍零触碰; ③v2分位P(tempPctJL)改直读localStorage+显示加"数据属今天"闸(与v1同源同显隐); ④竞价显示行(jlv2)——工作日9:25前"冷点"改显"竞价", 仅显示层, 日史存原状态; ⑤atr5缓存键_v1→_v2——周末用旧算法打开过APP的, 10-23参数日缓存着15.20, 周一会命中旧缓存照显15.20, 升键强制重算; ⑥周五回推预览数字对齐修复后算法(兆易261.0719/282.5749·永鼎25.50/28.49); jlv2.js引用?v=13→15(跳14: Claude本地worktree占用该标识); 壳v268→v269成对 -->
-<script id="jlVerJL" data-ver="0.87" data-sw="jinlin-shell-v283"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<!-- v0.88 1026上午 jl-1166 胜率P₀埋点批(v5.4, 纯读取层零新增请求): 跳空缺口事件(开盘较昨收偏离≥0.1%×档: 规模1/3/5分+日1/3/5, 与jl_gaplog开档同阈值)→行存jinlin_winrate_log_v1(baseline+10:30/13:30/14:30/收盘四档, 同id幂等); 判局=日线回放(jl_dk_碰昨收)+开档ft分钟精度, 宁晚判不错判0; 超到期+10交易日无证据→弃案(meta.abandonedByLevel按level计数, 1169复盘页展示属下批); P₀两层收缩logit(30事件门槛)存jinlin_winrate_meta_v1; 自带60s定时器零耦合站内循环; 回滚=删插入块; 壳v283→v284成对 --><script id="jlVerJL" data-ver="0.88" data-sw="jinlin-shell-v284"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -10726,6 +10726,926 @@ function swingMidHTMLJL(st) {
       toast('已导出 ' + n + ' 条缺口记录');
     } catch (e) { toast('导出失败'); }
   }
+  /* ============ jl-1166 胜率P₀埋点批 v5.4（A6 接线 + A1 主体 + A2 定时器） ============
+   * 纯读取层，零新增网络请求：证据 = jl_dk_ 日线回放（碰昨收口径）+ jl_gaplog_v1 "开"档 ft（分钟精度）。
+   * 事件 = 跳空缺口（开盘较昨收偏离 ≥0.1%，与 collectGapsJL 开档同阈值）× 档（规模 1/3/5 分 + 日1/日3/日5）。
+   * 自带 60s 定时器，与站内循环零耦合；控制台 jlP0DebugJL() / jl1166WiringJL.inspect() 可查；
+   * 回滚 = 删除本注释起到 END 注释为止的整块 + 壳号回退。1169 复盘页展示 abandonedByLevel 属下批。 */
+/* =====================================================================
+ * jl-1166 适配器接线层 v284（A6 + A2 + A3）
+ * 随主体块一起粘贴进 index.html 主 script（gapLogExportJL 之后）。
+ * 作用域引用（typeof 守卫）：GAPLOG_CODES_JL / dailyBarsOf / gapLogLoadJL / realCache。
+ * 纯读取层，零新增网络请求。回滚 = 删除本块。
+ * 对外调试口：window.jl1166WiringJL（1169 复盘页 / 控制台可查）。
+ * ===================================================================== */
+(function () {
+  function isoJL(t) {
+    try {
+      var d = String(t == null ? '' : t).replace(/\D/g, '');
+      return d.length >= 8 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) : null;
+    } catch (e) { return null; }
+  }
+  function todayJL() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+  function tsJL(dateStr, hm) {          /* 'YYYY-MM-DD HH:MM' 或日期+时刻 → 北京时区时间戳 */
+    try {
+      var s = String(dateStr || ''), t = s.length >= 16 ? s.slice(0, 10) + 'T' + s.slice(11, 16) : s.slice(0, 10) + 'T' + (hm || '15:00');
+      var v = Date.parse(t + ':00+08:00');
+      return isFinite(v) ? v : null;
+    } catch (e) { return null; }
+  }
+  function lastWkJL(iso) {                /* 最近工作日（自然日回退跳周末；节假日由 STALE 兜底） */
+    try {
+      var t = Date.parse(String(iso).slice(0, 10) + 'T00:00:00+08:00');
+      for (var i = 1; i <= 7; i++) {
+        var d = new Date(t - i * 864e5);
+        if (d.getUTCDay() !== 0 && d.getUTCDay() !== 6)
+          return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2);
+      }
+      return String(iso).slice(0, 10);
+    } catch (e) { return String(iso).slice(0, 10); }
+  }
+  function expectedBarDayJL() {           /* 日线应覆盖到哪天：收盘后(≥15:05)=今日，否则=上一工作日 */
+    var d = new Date(), hm = d.getHours() * 60 + d.getMinutes(), cur = todayJL();
+    if (d.getDay() === 0 || d.getDay() === 6) return lastWkJL(cur);
+    return hm >= 15 * 60 + 5 ? cur : lastWkJL(cur);
+  }
+  function barsJL(code) {               /* 日线（归一化升序）：dailyBarsOf → jl_dk_ 直读兜底（两路独立守卫） */
+    var rows = [], i, out = [];
+    try {
+      if (typeof dailyBarsOf === 'function') rows = dailyBarsOf(String(code)) || [];
+    } catch (e) { rows = []; }           /* 站内函数抛异常不连坐兜底 */
+    try {
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i], iso = r && isoJL(r.t);
+        if (iso && [r.o, r.c, r.h, r.l].every(function (x) { return typeof x === 'number' && isFinite(x); }))
+          out.push({ d: iso, o: r.o, c: r.c, h: r.h, l: r.l });
+      }
+      if (out.length >= 15) return out;
+      out = [];
+      var raw = JSON.parse((typeof localStorage !== 'undefined' ? localStorage.getItem('jl_dk_' + code) : null) || 'null');
+      if (Object.prototype.toString.call(raw) === '[object Array]') {
+        for (i = 0; i < raw.length; i++) {
+          var b = raw[i], iso2 = b && isoJL(b[0]);
+          if (iso2 && [b[1], b[2], b[3], b[4]].every(function (x) { return x != null && isFinite(+x); }))
+            out.push({ d: iso2, o: +b[1], c: +b[2], h: +b[3], l: +b[4] });
+        }
+      }
+    } catch (e) { return []; }
+    return out.length >= 15 ? out : [];
+  }
+  function openEntryJL(code, gapDate) { /* 注册表"开"档（跳空缺口，ft=碰昨收分钟精度） */
+    try {
+      var log = (typeof gapLogLoadJL === 'function') ? gapLogLoadJL() : {};
+      return log[String(code) + '|开|' + String(gapDate).replace(/\D/g, '')] || null;
+    } catch (e) { return null; }
+  }
+  var W = {
+    /* ---- A6 适配器（主体块头部契约） ---- */
+    adapters: {
+      activeCodes: function () {
+        try { return (typeof GAPLOG_CODES_JL !== 'undefined' && GAPLOG_CODES_JL) || []; } catch (e) { return []; }
+      },
+      gapState: function (code) {       /* 今日跳空缺口（快照/在册兜底） */
+        try {
+          var bars = barsJL(code);
+          if (bars.length < 2) return null;
+          var last = bars[bars.length - 1], prev = bars[bars.length - 2], today = todayJL();
+          if (last.d !== today || !(prev.c > 0) || Math.abs(last.o / prev.c - 1) < 0.001) return null;
+          var up = last.o > prev.c, e = openEntryJL(code, today);
+          var touched = up ? last.l <= prev.c : last.h >= prev.c;   /* 当日已碰昨收 → 已回补 */
+          return {
+            gapDate: today,
+            gapPct: Math.abs(last.o / prev.c - 1) * 100,
+            remainPct: ((e && e.ft) || touched) ? 0 : null,
+            dir: up ? 1 : -1,
+            formedTs: (e && e.ct) ? tsJL(e.ct) : tsJL(today, '09:25'),
+            filledTs: (e && e.ft) ? tsJL(e.ft) : null
+          };
+        } catch (e) { return null; }
+      },
+      minuteHistory: function (code, gapDate) {   /* 证据：日线回放（碰昨收）+ 开档 ft 分钟精度 */
+        try {
+          var bars = barsJL(code);
+          if (bars.length < 2) return null;
+          var today = todayJL(), bl = bars[bars.length - 1].d;
+          if (bl < expectedBarDayJL()) return 'STALE';     /* 新鲜度闸：证据未覆盖应覆盖日 → 宁晚判 */
+          var gd = String(gapDate).slice(0, 10), idx = -1, i;
+          for (i = 0; i < bars.length; i++) if (bars[i].d === gd) { idx = i; break; }
+          if (idx < 1) return null;                       /* 形成日在缓存外/非交易日 → 无证据 */
+          var pc = bars[idx - 1].c;
+          if (!(pc > 0)) return null;
+          var up = bars[idx].o > pc, hitD = null;
+          for (i = idx; i < bars.length; i++)
+            if (up ? bars[i].l <= pc : bars[i].h >= pc) { hitD = bars[i].d; break; }
+          if (!hitD) return { hit: false };                /* 契约字段：hit / fillTs（主体块头部模板） */
+          var e = openEntryJL(code, gd);
+          return { hit: true, fillTs: (e && e.ft) ? tsJL(e.ft) : tsJL(hitD, '15:00') };
+        } catch (e) { return null; }
+      },
+      reconCandidates: function (days) { /* 窗口内跳空缺口（日线回放，阈值同 collectGapsJL 开档 0.1%） */
+        try {
+          var out = [], codes = W.adapters.activeCodes(), i, ci;
+          days = days || [];
+          for (ci = 0; ci < codes.length; ci++) {
+            var code = codes[ci], bars = barsJL(code);
+            for (i = 1; i < bars.length; i++) {
+              if (days.indexOf(bars[i].d) < 0) continue;
+              var pc = bars[i - 1].c, o = bars[i].o;
+              if (!(pc > 0) || Math.abs(o / pc - 1) < 0.001) continue;
+              var pct = Math.abs(o / pc - 1) * 100, dir = o > pc ? 1 : -1,
+                  lv = pct >= 5 ? '5分' : pct >= 3 ? '3分' : '1分';
+              out.push({ code: code, gapDate: bars[i].d, level: lv, dir: dir, gapPct: pct });
+              out.push({ code: code, gapDate: bars[i].d, level: '日1', dir: dir, gapPct: pct });
+              out.push({ code: code, gapDate: bars[i].d, level: '日3', dir: dir, gapPct: pct });
+              out.push({ code: code, gapDate: bars[i].d, level: '日5', dir: dir, gapPct: pct });
+            }
+          }
+          return out;
+        } catch (e) { return []; }
+      }
+      /* factors 各槽位本批不接线（行内因子记 null，1167 前接线）；
+       * __jlTradingCalJL 不注册 → 主体用内联 2026 节假日表 */
+    },
+    /* ---- A3：今日跳空 → baseline（幂等，每 code 每日一次会话内去抖） ---- */
+    baselineSweep: function () {
+      try {
+        var d = W.baselineSweep._d = W.baselineSweep._d || {};
+        var codes = W.adapters.activeCodes(), i;
+        for (i = 0; i < codes.length; i++) {
+          var c = codes[i];
+          if (d[c]) continue;
+          var st = W.adapters.gapState(c);
+          if (!st) continue;
+          try { if (window.JL1166 && JL1166.baseline) JL1166.baseline(c, st, st.formedTs); } catch (e0) {}
+          d[c] = 1;
+        }
+      } catch (e) {}
+    },
+    /* ---- 调试/复盘口（1169 页可读） ---- */
+    inspect: function () {
+      try {
+        var rows = [], codes = W.adapters.activeCodes(), i;
+        for (i = 0; i < codes.length; i++) rows.push({ code: codes[i], gap: W.adapters.gapState(codes[i]) });
+        return { today: todayJL(), codes: codes, gaps: rows };
+      } catch (e) { return null; }
+    }
+  };
+  window.jl1166WiringJL = W;                       /* 调试口 */
+  window.__jlAdaptersJL = W.adapters;              /* A6：主体块读取 */
+  /* ---- A2：自带 60s 定时器（与站内循环零耦合；回滚=删本块） ---- */
+  function beatJL() {
+    try { if (!document.hidden) W.baselineSweep(); } catch (e) {}
+    try { if (!document.hidden && typeof window.jlWinRateTickJL === 'function') window.jlWinRateTickJL(); } catch (e) {}
+  }
+  setTimeout(beatJL, 15000);
+  setInterval(beatJL, 60000);
+})();
+/* =====================================================================
+ * jl-1166 信号埋点批 v5 —— jinlin_winrate_log_v1（内联块，ES5）
+ * 粘贴位置：index.html 紧邻 _ckJL 定义之后。零 UI / 零外部文件 / 零新增定时器。
+ *
+ * 【纯读取层】本块自己不采集任何行情/因子数据——因子、缺口注册、分钟史、
+ *   交易日历全部通过 window.__jlAdaptersJL / window.__jlTradingCalJL
+ *   从站内既有采集（jl_gaplog_v1、板块强度、温度九档、水位球、
+ *   每日 10/15 分钟级分时采集等）现读，不重复采集、不新建采集路径。
+ *
+ * v5.1 实施补注（已并入代码，不改规格口径）：
+ *   · 回填写前现读（双标签丢更新窗口最小化；口径：允许偶发丢行，
+ *     不允许重复行或已判局被覆盖——读取即按 id 去重兜底）；
+ *   · 配额满：先淘汰一批最旧已判局非 recon 行 → 重试一次 → 仍失败记
+ *     meta.lastWriteFailTs（devtools 可查；1169 复盘提示"期间有漏记"）；
+ *   · 每次成功写入后把存储核算（字节/行数/时间）写入 meta，
+ *     上线首日留档，回头对照 3200 行上限。
+ *
+ * v5.2 修订（评审五项）：
+ *   ① lookupFill / reconOutcome 的在册状态兜底加 gapDate 一致校验——
+ *     同票后来形成新缺口时状态对不上，返回 null 不判（防 P₀ 污染）；
+ *   ② tick 先跑 recon、跑成才落 lastBootDate；适配器未就绪当天最多重试
+ *     3 次（PAR.bootMaxTries，计数落 meta 跨刷新/跨标签持久），重试耗尽
+ *     标记放弃；"就绪但无候选"直接落标记，不占重试次数；
+ *   ③ resolveGap 对日级事件查到期：回补晚于到期日不在此翻 1（留 sweep
+ *     判 0）；日历未知也不翻（宁晚判不错判 0）；
+ *   ④ 交易日历未知年份 warn 一次（停判不静默）；2027 官方安排公布后补表；
+ *   ⑤ 档行只在形成日内拍摄（有意设计：日级因子态取形成时点，到期只判局
+ *     不补拍——已写入规格 v5）。
+ *
+ * v5.3 修订（评审两处边界）：
+ *   ⑥ 超期回补证据表 pendingFills（meta，容量 50 条）：resolveGap 因超期/
+ *     日历未知/日内非当日而拒绝翻 1 时，把回补时间留档——sweep 判局时
+ *     直接取用，不依赖分钟史（lookupFill 证据优先级：分钟史回放 >
+ *     pendingFills 直连证据 > 在册状态兜底）；
+ *   ⑦ 弃案机制：事件超"到期日 + N 交易日"（PAR.pendingTimeoutN，初值 10）
+ *     仍无法判局 → 标记 abandoned=1：不计 P₀、warn + meta.abandonedCount
+ *     计数、此后允许被淘汰（trim/配额降级均视同已判局死行）；
+ *     日历不可用时弃案线退化为形成日 + 40 自然日（宽松方向）。
+ *
+ * v5.4 修订（评审三点确认 + 弃案有偏披露）：
+ *   ⑧ 弃案按 level 分开计数（meta.abandonedByLevel，另有总数 abandonedCount），
+ *     1169 复盘页须按 level 展示。弃案有偏：无证据若多见于未回补缺口
+ *     （碰了才有直连记录），丢样本会把 P₀ 推高——Brier/消融样本一律排除
+ *     弃案行（读数口径：resolved != null && !abandoned，1167 起照此实现）；
+ *   ⑨ pendingFills 以 code|gapDate 去重（挂点③每 tick 命中不会刷满 50 条
+ *     容量），时间取最早一次（回补时间最紧上界）；
+ *   ⑩ baseline 与 gapState 同口径：st 入参即写入 jl_gaplog_v1 的同一对象
+ *     （勿手工重拼字段）；st 缺省/不合法时自动从 gapState 适配器现读。
+ *
+ * 判局安全原则：宁晚判，不错判 0（错判 0 直接污染 P₀）。
+ *   日历查不到到期日 → 不判；分钟史过保留期 → 放弃 + warn；日级未到期 → 留扫描窗。
+ *
+ * 适配器接线模板（粘贴本块之前；字段全部可选，缺省安全返回 null）：
+ *   window.__jlAdaptersJL = {
+ *     activeCodes: function () { return [code, ...]; },        // 当前在册缺口代码（← jl_gaplog_v1）
+ *     gapState: function (code) {                              // 缺口状态（← jl_gaplog_v1）
+ *       // ⚠️ 此字段口径 = jlBaselineSnapJL 的 st 入参口径：传你写入 jl_gaplog_v1
+ *       //   的同一对象、勿手工重拼字段；baseline 的 st 省略时会从本适配器现读。
+ *       return { gapDate: 'YYYY-MM-DD', gapPct: 2, remainPct: 1.2, dir: 1,
+ *                levels: null, formedTs: null, filledTs: null };
+ *     },
+ *     reconCandidates: function (daysNearToFar) {              // 窗口内形成的缺口事件（近→远）
+ *       return [{ code: 'SH600xxx', gapDate: 'YYYY-MM-DD',
+ *                 level: '日1', dir: 1, gapPct: 2 }];
+ *     },
+ *     minuteHistory: function (code, gapDate) {                // ← 每日 10/15 分钟级采集
+ *       return { hit: true, fillTs: 1234567890 };              // 自形成日起是否碰前收及首次时间
+ *     },                                                       // 'STALE' = 超过分钟史保留期；null = 不可用
+ *     factors: {                                               // 拍摄时现读（← 各既有计算管线）
+ *       fibPosS: function (code) {}, waterPosS: function (code) {},
+ *       distLowATRS: function (code) {}, atrPctS: function (code) {},
+ *       idxAtrPctI: function () {}, secFlow: function (code) {}, tempW: function () {}
+ *     }
+ *   };
+ *   window.__jlTradingCalJL = function (dstr) { return true | false | undefined; };  // 站内交易日历（优先）
+ * ===================================================================== */
+(function (root) {
+  'use strict';
+
+  /* ---------- 常量与参数（初值，1169 复核；见设计 v5 参数表） ---------- */
+  var LOG_KEY = 'jinlin_winrate_log_v1';
+  var META_KEY = 'jinlin_winrate_meta_v1';
+  var PAR = {
+    kLevel: 10,                 // level 层平滑（按缺口数）
+    kClass: 5,                  // 大类层平滑
+    tardyMs: 10 * 60 * 1000,    // 校准参数：bg 迟到排除/分层线 + 代表行资格线（只进查询）
+    reconWindowN: 5,            // recon 扫描窗（交易日，覆盖日5 最长到期）
+    reconCap: 200,              // recon 单独上限
+    mainCap: 3000,              // 主额度
+    quotaEvictBatch: 200,       // 配额降级时一次淘汰的行数
+    bootMaxTries: 3,            // 每日首开 recon 未就绪/异常时的重试上限（计数落 meta）
+    pendingTimeoutN: 10,        // 弃案线：超到期日 N 个交易日仍无法判局 → abandoned
+    pendingFillCap: 50          // meta 超期回补证据表容量（条）
+  };
+  var LEVELS = ['1分', '3分', '5分', '日1', '日3', '日5'];
+  var DAY_N = { '日1': 1, '日3': 3, '日5': 5 };
+  var SLOT_HM = { 0: [10, 30], 1: [13, 30], 2: [14, 30], 3: [15, 0] };
+  var SLOT_KEYS = ['1030', '1330', '1430', '1500'];
+
+  /* ---------- 交易日历 ----------
+   * 三级降级：① 站内 __jlTradingCalJL → ② 内联节假日表+周末 → ③ 查不到 → null（不判）。
+   * ⚠️ HOLIDAYS 为初值——上线前必须用国务院办公厅当年官方放假安排核对替换。
+   *   多标一天休市 = 晚判（安全方向）；漏标一天 = 可能错判 0（危险方向）。
+   *   每年补一年；2027 官方安排通常 11 月公布——年底前补上，否则 2027 年初
+   *   日级事件整体停判（calOf 会对未知年份 warn 一次，不静默）。 */
+  var HOLIDAYS = {
+    '2026': ['01-01', '01-02', '02-16', '02-17', '02-18', '02-19', '02-20', '02-23',
+             '04-06', '05-01', '05-04', '05-05', '06-19', '09-25',
+             '10-01', '10-02', '10-05', '10-06', '10-07', '10-08']
+  };
+
+  function warn(tag, e) {
+    try { console.warn('[jl-1166/' + tag + ']', e || ''); } catch (x) {}
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function dateStr(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function fnum(v) { return (typeof v === 'number' && isFinite(v)) ? v : null; }
+  function tsAsc(a, b) { return (a.ts || 0) - (b.ts || 0); }
+
+  var CAL_WARNED = {};                           // 未知年份只 warn 一次（停判不静默）
+  function calOf(ds) {
+    if (root.__jlTradingCalJL) {
+      try { var v = root.__jlTradingCalJL(ds); if (v === true || v === false) return v; } catch (e) {}
+    }
+    var y = ds.slice(0, 4), tbl = HOLIDAYS[y];
+    if (!tbl) {
+      if (!CAL_WARNED[y]) {
+        CAL_WARNED[y] = 1;
+        warn('cal', 'trading calendar missing ' + y + ' → 到期停判（宁晚判不错判 0）；请补年度节假日表');
+      }
+      return null;                               // 查不到的年份 → 不判（宁晚判不错判 0）
+    }
+    if (tbl.indexOf(ds.slice(5)) >= 0) return false;
+    var wd = new Date(ds + 'T00:00:00').getDay();
+    return wd !== 0 && wd !== 6;
+  }
+  function addDays(ds, n) { var d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() + n); return dateStr(d); }
+  function nthTradingDayAfter(ds, n) {           // 到期日：形成日之后第 N 个交易日（不含形成日）
+    var cur = ds, cnt = 0, guard = 0;
+    while (cnt < n && guard < 400) {
+      guard++; cur = addDays(cur, 1);
+      var c = calOf(cur);
+      if (c === null) return null;
+      if (c) cnt++;
+    }
+    return cnt === n ? cur : null;
+  }
+  function closeTs(ds) { return new Date(ds + 'T15:00:00').getTime(); }
+  function lastNTradingDays(today, n) {          // 近→远，不含今日；未知日跳过
+    var out = [], cur = today, guard = 0;
+    while (out.length < n && guard < 80) {
+      guard++; cur = addDays(cur, -1);
+      var c = calOf(cur);
+      if (c === null) continue;
+      if (c) out.push(cur);
+    }
+    return out;
+  }
+  function slotBoundaryTs(slot, now) {
+    var d = new Date(now), hm = SLOT_HM[slot];
+    d.setHours(hm[0], hm[1], 0, 0);
+    return d.getTime();
+  }
+  function slotOfTs(ts) {                        // resolvedTs 落档：floor 到最近边界（不前瞻取整）；早于 10:30 归 0
+    var d = new Date(ts), hm = pad2(d.getHours()) + pad2(d.getMinutes()), s = 0;
+    for (var i = 0; i < SLOT_KEYS.length; i++) if (hm >= SLOT_KEYS[i]) s = i;
+    return s;
+  }
+
+  /* ---------- 存储层（读-滤-并-写 + 配额降级 + 核算落 meta） ---------- */
+  function lsGet(k) { try { return root.localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { root.localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+
+  function readLog() {                           // 读取即按 id 去重兜底（双标签/历史脏数据）
+    var raw = lsGet(LOG_KEY), arr = [];
+    if (raw) { try { arr = JSON.parse(raw) || []; } catch (e) { arr = []; } }
+    var seen = {}, out = [], i, r;
+    for (i = 0; i < arr.length; i++) {
+      r = arr[i];
+      if (!r || !r.id || seen[r.id]) continue;
+      seen[r.id] = 1; out.push(r);
+    }
+    return out;
+  }
+  function readMeta() {
+    var m = null;
+    try { m = JSON.parse(lsGet(META_KEY) || 'null'); } catch (e) { m = null; }
+    return m || {};
+  }
+  function writeMeta(m) { lsSet(META_KEY, JSON.stringify(m)); }
+
+  function trimForQuota(rows) {                  // 配额降级：淘汰一批最旧"已判局或已弃案"非 recon 行
+    var dead = [], i;
+    for (i = 0; i < rows.length; i++)
+      if (rows[i].src !== 'recon' && (rows[i].resolved != null || rows[i].abandoned)) dead.push(rows[i]);
+    dead.sort(tsAsc);
+    var evict = Math.min(PAR.quotaEvictBatch, dead.length), drop = {};
+    for (i = 0; i < evict; i++) drop[dead[i].id] = 1;
+    var out = [];
+    for (i = 0; i < rows.length; i++) if (!drop[rows[i].id]) out.push(rows[i]);
+    return out;
+  }
+  function trim(rows) {                          // 常规上限：先裁 recon（留最近），再裁主额度（未判局且未弃案者永不淘汰）
+    var recon = [], main = [], i;
+    for (i = 0; i < rows.length; i++) (rows[i].src === 'recon' ? recon : main).push(rows[i]);
+    recon.sort(tsAsc);
+    if (recon.length > PAR.reconCap) recon = recon.slice(recon.length - PAR.reconCap);
+    var alive = [], dead = [];
+    for (i = 0; i < main.length; i++)
+      (main[i].resolved == null && !main[i].abandoned ? alive : dead).push(main[i]);
+    dead.sort(tsAsc);
+    var deadKeep = Math.max(0, PAR.mainCap - alive.length);
+    if (dead.length > deadKeep) dead = dead.slice(dead.length - deadKeep);
+    return recon.concat(alive, dead);
+  }
+  function persistLog(rows) {                    // 滤-并-写；配额满先淘汰重试一次；核算落 meta
+    var s = JSON.stringify(rows), ok = lsSet(LOG_KEY, s);
+    if (!ok) {
+      var part = trimForQuota(rows);
+      s = JSON.stringify(part);
+      ok = lsSet(LOG_KEY, s);
+      if (ok) {
+        rows = part;
+        warn('quota', 'write failed, evicted oldest resolved rows and retried');
+      } else {
+        var m = readMeta();
+        m.lastWriteFailTs = Date.now();
+        writeMeta(m);
+        warn('quota', 'write failed after evict-retry; logging paused, lastWriteFailTs recorded');
+        return false;
+      }
+    }
+    try {
+      var m2 = readMeta();
+      m2.lastAccountTs = Date.now();
+      m2.lastAccountRows = rows.length;
+      m2.lastAccountBytes = s.length + (lsGet(META_KEY) || '').length;
+      writeMeta(m2);
+    } catch (e) {}
+    return true;
+  }
+  function upsertRow(row) {                      // 快照路径写入：id 查重，已存在跳过
+    var rows = readLog(), i;
+    for (i = 0; i < rows.length; i++) if (rows[i].id === row.id) return false;
+    rows.push(row);
+    return persistLog(trim(rows));
+  }
+
+  /* ---------- 适配层（纯读取；缺省安全返回 null，异常全部吞掉） ---------- */
+  function AD() { return root.__jlAdaptersJL || {}; }
+  function gapState(code) {
+    var f = AD().gapState;
+    if (typeof f !== 'function') return null;
+    try { return f(code) || null; } catch (e) { return null; }
+  }
+  function activeCodes() {
+    var f = AD().activeCodes;
+    if (typeof f !== 'function') return [];
+    try { return f() || []; } catch (e) { return []; }
+  }
+  function minuteHistory(code, gapDate) {
+    var f = AD().minuteHistory;
+    if (typeof f !== 'function') return null;
+    try { var v = f(code, gapDate); return v === undefined ? null : (v || null); } catch (e) { return null; }
+  }
+  function reconCandidates(days) {
+    var f = AD().reconCandidates;
+    if (typeof f !== 'function') return [];
+    try { return f(days) || []; } catch (e) { return []; }
+  }
+  function visSrc() {
+    return (typeof document !== 'undefined' && document.visibilityState === 'visible') ? 'fg' : 'bg';
+  }
+  function collectFactors(code) {                // 每字段独立守卫：坏一个不拖垮整行
+    var f = AD().factors || {}, keys = ['fibPosS', 'waterPosS', 'distLowATRS', 'atrPctS', 'idxAtrPctI', 'secFlow', 'tempW'], out = {}, i;
+    for (i = 0; i < keys.length; i++) {
+      var v = null;
+      if (typeof f[keys[i]] === 'function') { try { v = fnum(f[keys[i]](code)); } catch (e) { v = null; } }
+      out[keys[i]] = v;
+    }
+    return out;
+  }
+  function avgOf(vals) {
+    var s = 0, n = 0, i;
+    for (i = 0; i < vals.length; i++) if (vals[i] != null) { s += vals[i]; n++; }
+    return n ? s / n : null;
+  }
+  function gFeat(vals, dir) {                    // 分组特征（本批只记录；方向随缺口上下镜像 ×dir；语义 1167 定）
+    var a = avgOf(vals);
+    if (a == null) return null;
+    a = a * (dir == null ? 1 : dir);
+    return Math.max(-1, Math.min(1, a));
+  }
+  function levelsOf(st) {                        // 事件档：规模档 + 日1/日3/日5（可由 gapState.levels 覆盖）
+    if (st.levels && st.levels.length) return st.levels;
+    var out = [];
+    if (typeof st.gapPct === 'number' && isFinite(st.gapPct)) {
+      var g = st.gapPct;
+      out.push(g >= 5 ? '5分' : g >= 3 ? '3分' : '1分');
+    }
+    out.push('日1', '日3', '日5');
+    return out;
+  }
+
+  /* ---------- P₀：两层收缩，按缺口事件聚合（含 recon 判局） ---------- */
+  function computeP0() {
+    var rows = readLog(), seen = {}, ev = {}, i, r, k;
+    for (i = 0; i < rows.length; i++) {
+      r = rows[i];
+      if (r.resolved == null) continue;
+      k = r.code + '|' + r.gapDate + '|' + r.level;
+      if (seen[k]) continue;                     // 一个缺口一个 level 只计一次
+      seen[k] = 1;
+      ev[r.level] = ev[r.level] || { h: 0, n: 0 };
+      ev[r.level].h += r.resolved; ev[r.level].n++;
+    }
+    var tot = { h: 0, n: 0 }, cls = { '分': { h: 0, n: 0 }, '日': { h: 0, n: 0 } };
+    for (i = 0; i < LEVELS.length; i++) {
+      var e = ev[LEVELS[i]];
+      if (!e) continue;
+      tot.h += e.h; tot.n += e.n;
+      cls[LEVELS[i].charAt(0) === '日' ? '日' : '分'].h += e.h;
+      cls[LEVELS[i].charAt(0) === '日' ? '日' : '分'].n += e.n;
+    }
+    var priorG = tot.n ? tot.h / tot.n : 0.5;
+    var priorC = {
+      '分': (cls['分'].h + PAR.kClass * priorG) / (cls['分'].n + PAR.kClass),
+      '日': (cls['日'].h + PAR.kClass * priorG) / (cls['日'].n + PAR.kClass)
+    };
+    var out = {};
+    for (i = 0; i < LEVELS.length; i++) {
+      var lv = LEVELS[i], e2 = ev[lv] || { h: 0, n: 0 };
+      out[lv] = (e2.h + PAR.kLevel * priorC[lv.charAt(0) === '日' ? '日' : '分']) / (e2.n + PAR.kLevel);
+    }
+    return out;
+  }
+
+  /* ---------- 快照路径（upsert） ---------- */
+  function buildRow(code, st, level, slot, now, p0) {
+    var f = collectFactors(code), dir = st.dir == null ? 1 : st.dir;
+    return {
+      id: code + '|' + st.gapDate + '|' + level + '|' + slot,
+      code: code, gapDate: st.gapDate, level: level, dir: dir,
+      ts: now, slot: slot,
+      src: visSrc(),
+      tardyMs: slot >= 0 ? Math.max(0, now - slotBoundaryTs(slot, now)) : 0,
+      gapPct: fnum(st.gapPct), remainPct: fnum(st.remainPct),
+      fibPosS: f.fibPosS, waterPosS: f.waterPosS, distLowATRS: f.distLowATRS,
+      atrPctS: f.atrPctS, idxAtrPctI: f.idxAtrPctI, secFlow: f.secFlow, tempW: f.tempW,
+      gTrend: gFeat([f.secFlow, f.tempW], dir),
+      gPos: gFeat([f.fibPosS, f.waterPosS, f.distLowATRS], dir),
+      gVol: gFeat([f.atrPctS], dir),
+      p0: p0[level] != null ? p0[level] : null,
+      p: p0[level] != null ? p0[level] : null,     // 本批 p = p0（1167 起进模型）
+      resolved: null, resolvedTs: null, hitSlot: null
+    };
+  }
+  function snapshotPass(now) {                   // 档行只在形成日内拍（日级因子态=形成时点；到期只判局不补拍，规格 v5）
+    try {
+      var today = dateStr(now);
+      var rows = readLog(), done = {}, have = {}, i;
+      for (i = 0; i < rows.length; i++) {
+        have[rows[i].id] = 1;
+        if (rows[i].resolved != null) done[rows[i].code + '|' + rows[i].gapDate + '|' + rows[i].level] = 1;
+      }
+      var codes = activeCodes(), p0Cache = null;
+      for (var ci = 0; ci < codes.length; ci++) {
+        try {
+          var code = codes[ci], st = gapState(code);
+          if (!st || !st.gapDate || st.gapDate !== today) continue;
+          if (st.remainPct != null && st.remainPct <= 0) continue;   // 已回补：等回填，不拍
+          var lvls = levelsOf(st);
+          if (!p0Cache) p0Cache = computeP0();
+          for (var si = 0; si < 4; si++) {
+            if (now < slotBoundaryTs(si, now)) continue;
+            for (var li = 0; li < lvls.length; li++) {
+              var lvl = lvls[li];
+              if (done[code + '|' + st.gapDate + '|' + lvl]) continue;   // 已判局 level 不拍
+              var id = code + '|' + st.gapDate + '|' + lvl + '|' + si;
+              if (have[id]) continue;
+              if (upsertRow(buildRow(code, st, lvl, si, now, p0Cache))) have[id] = 1;
+            }
+          }
+        } catch (e) { warn('snap:' + codes[ci], e); }
+      }
+    } catch (e) { warn('snapshotPass', e); }
+  }
+  function baseline(code, st, formedTs, now) {   // 缺口形成时刻（仅实时检测到形成时调用）
+    try {
+      now = now || Date.now();
+      if (!st || !st.gapDate) st = gapState(code);   // 口径统一：st 缺省 → 从 gapState 适配器现读（同一对象口径）
+      if (!st || !st.gapDate) return 0;
+      if (dateStr(now) !== st.gapDate) return 0;
+      var p0 = computeP0(), lvls = levelsOf(st), made = 0, i;
+      for (i = 0; i < lvls.length; i++) {
+        var row = buildRow(code, st, lvls[i], -1, now, p0);
+        row.tardyMs = formedTs != null ? Math.max(0, now - formedTs) : 0;
+        if (upsertRow(row)) made++;
+      }
+      return made;
+    } catch (e) { warn('baseline', e); return 0; }
+  }
+
+  /* ---------- 回填路径（独立于 upsert；写前现读；幂等） ---------- */
+  function backfillGap(code, gapDate, level, hit, resolvedTs) {
+    try {
+      var rows = readLog(), touched = 0, i;      // ← 写前现读（不用旧副本）
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r.code !== code || r.gapDate !== gapDate || r.level !== level) continue;
+        if (r.resolved != null) continue;        // 幂等：已判局不改写，hitSlot 不被后来的 tick 覆盖
+        r.resolved = hit ? 1 : 0;
+        r.resolvedTs = resolvedTs;
+        r.hitSlot = slotOfTs(resolvedTs);
+        touched++;
+      }
+      if (touched) persistLog(rows);
+      return touched;
+    } catch (e) { warn('backfill', e); return 0; }
+  }
+  function resolveGap(code, gapDate, ts) {       // 碰前收命中处调用：该缺口全部未判局事件 → 1
+    try {
+      ts = ts || Date.now();
+      var rows = readLog(), touched = 0, declined = 0, i, dstr = dateStr(ts);
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r.code !== code || r.gapDate !== gapDate || r.resolved != null) continue;
+        var N = DAY_N[r.level];
+        if (N == null) {
+          if (dstr !== gapDate) { declined = 1; continue; }   // 日内事件只认当日回补
+        } else {
+          var exp = nthTradingDayAfter(gapDate, N);
+          if (exp == null) { declined = 1; continue; }        // 日历未知 → 不在此翻（宁晚判不错判 0）
+          if (dstr > exp) { declined = 1; continue; }         // 超期 → 留 sweep 判 0
+        }
+        r.resolved = 1; r.resolvedTs = ts; r.hitSlot = slotOfTs(ts);
+        touched++;
+      }
+      if (declined) recordPendingFill(code, gapDate, ts);     // 被拒的回补时间留档，sweep 用（不依赖分钟史）
+      if (touched) persistLog(rows);
+      return touched;
+    } catch (e) { warn('resolveGap', e); return 0; }
+  }
+
+  /* ---------- 到期判局（收盘档顺带；判局安全原则全程生效） ---------- */
+  /* 超期回补证据表（meta.pendingFills）：resolveGap 拒绝翻 1 时把回补时间留档。
+   * 证据优先级（lookupFill）：分钟史回放 > pendingFills 直连证据 > 在册状态兜底。
+   * 判局完成且该缺口无未判局行时清掉对应条目（consumeFill），容量 50 条 FIFO。 */
+  function recordPendingFill(code, gapDate, ts) {
+    try {
+      var m = readMeta(), arr = m.pendingFills || [], k = code + '|' + gapDate, i;
+      for (i = 0; i < arr.length; i++)
+        if (arr[i].k === k) { if (ts < arr[i].ts) arr[i].ts = ts; break; }   // 同 code|gapDate 去重，时间取最早
+      if (i >= arr.length) arr.push({ k: k, ts: ts });
+      while (arr.length > PAR.pendingFillCap) arr.shift();
+      m.pendingFills = arr;
+      writeMeta(m);
+    } catch (e) { warn('pendingFill', e); }
+  }
+  function takePendingFill(code, gapDate) {
+    var arr = readMeta().pendingFills || [], k = code + '|' + gapDate, i;
+    for (i = 0; i < arr.length; i++) if (arr[i].k === k) return arr[i].ts;
+    return null;
+  }
+  function dropPendingFill(code, gapDate) {
+    try {
+      var m = readMeta(), arr = m.pendingFills || [], k = code + '|' + gapDate, i;
+      for (i = 0; i < arr.length; i++) if (arr[i].k === k) break;
+      if (i < arr.length) { arr.splice(i, 1); m.pendingFills = arr; writeMeta(m); }
+    } catch (e) { warn('pendingFill', e); }
+  }
+  function consumeFill(ev) {                     // 该缺口已无未判局行 → 清证据条目
+    try {
+      var rows = readLog(), i;
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r.code === ev.code && r.gapDate === ev.gapDate && r.resolved == null && !r.abandoned) return;
+      }
+      dropPendingFill(ev.code, ev.gapDate);
+    } catch (e) { warn('pendingFill', e); }
+  }
+  function abandonDeadline(ev) {                 // 弃案线 = 到期日 + N 交易日；日历不可用 → 形成日 + 40 自然日
+    var N = DAY_N[ev.level];
+    if (N != null) {
+      var exp = nthTradingDayAfter(ev.gapDate, N);
+      if (exp != null) {
+        var dl = nthTradingDayAfter(exp, PAR.pendingTimeoutN);
+        if (dl != null) return dl;
+      }
+    }
+    return addDays(ev.gapDate, 40);              // 自然日兜底（宽松方向：宁弃晚判，不错判 0）
+  }
+  function abandonGap(ev, now) {                 // 弃案：不计 P₀，可淘汰，warn + meta 计数
+    try {
+      var rows = readLog(), n = 0, i;
+      for (i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r.code !== ev.code || r.gapDate !== ev.gapDate || r.level !== ev.level) continue;
+        if (r.resolved != null || r.abandoned) continue;
+        r.abandoned = 1; r.abandonTs = now;
+        n++;
+      }
+      if (n) {
+        persistLog(rows);
+        var m = readMeta();
+        m.abandonedCount = (m.abandonedCount || 0) + 1;          // 总数
+        m.abandonedByLevel = m.abandonedByLevel || {};           // 按 level（1169 复盘页展示）
+        m.abandonedByLevel[ev.level] = (m.abandonedByLevel[ev.level] || 0) + 1;
+        writeMeta(m);
+        warn('abandon', 'pending timeout: ' + ev.code + '|' + ev.gapDate + '|' + ev.level +
+             ' → 不计 P₀，允许淘汰（无证据卡死兜底；弃案有偏，复盘看 abandonedByLevel）');
+      }
+      return n;
+    } catch (e) { warn('abandon', e); return 0; }
+  }
+  function tryAbandon(ev, today, now) {          // 过弃案线才弃；未过线返回 false（继续留观察）
+    if (today <= abandonDeadline(ev)) return false;
+    abandonGap(ev, now);
+    return true;
+  }
+  function lookupFill(ev) {                      // 证据优先级：分钟史回放 > pendingFills > 在册状态
+    var mh = minuteHistory(ev.code, ev.gapDate);
+    if (mh && mh.hit) return { hit: true, ts: mh.fillTs || null };
+    var pf = takePendingFill(ev.code, ev.gapDate);
+    if (pf != null) return { hit: true, ts: pf };          // 直连回补证据（含分钟史 STALE/漏检时救场）
+    if (mh === 'STALE') return 'STALE';
+    if (mh && !mh.hit) return { hit: false, ts: null };
+    var st = gapState(ev.code);
+    if (!st || st.gapDate !== ev.gapDate) return null;   // 在册的不是这个缺口（同票后开新缺口）→ 不判
+    if (st.remainPct != null && st.remainPct <= 0) return { hit: true, ts: st.filledTs || null };
+    if (st.remainPct != null) return { hit: false, ts: null };
+    return null;
+  }
+  function judgeExpiry(ev, now) {
+    var today = dateStr(now), fill = lookupFill(ev);
+    if (fill === 'STALE') {
+      if (!tryAbandon(ev, today, now))
+        warn('expiry', 'minute history stale, skip ' + ev.code + '|' + ev.gapDate + '|' + ev.level);
+      return;
+    }
+    if (fill === null) { tryAbandon(ev, today, now); return; }   // 无证据：过弃案线则弃，否则留观察
+    var N = DAY_N[ev.level];
+    if (!N) {                                    // 日内级：形成日收盘未碰 → 0（与正常流程同一规则）
+      if (today > ev.gapDate) {
+        if (fill.hit && fill.ts != null && dateStr(fill.ts) === ev.gapDate) {
+          backfillGap(ev.code, ev.gapDate, ev.level, 1, fill.ts); consumeFill(ev);
+        } else if (fill.hit && fill.ts == null) {
+          if (!tryAbandon(ev, today, now))
+            warn('expiry', 'fill time unknown, skip (宁晚判不错判 0) ' + ev.code + '|' + ev.gapDate + '|' + ev.level);
+        } else {
+          backfillGap(ev.code, ev.gapDate, ev.level, 0, closeTs(ev.gapDate)); consumeFill(ev);
+        }
+      }
+      return;
+    }
+    var exp = nthTradingDayAfter(ev.gapDate, N);
+    if (exp == null) { tryAbandon(ev, today, now); return; }     // 日历未知：过弃案线则弃
+    if (today > exp || (today === exp && now >= closeTs(exp))) {
+      if (fill.hit && fill.ts != null) {
+        if (dateStr(fill.ts) <= exp) backfillGap(ev.code, ev.gapDate, ev.level, 1, fill.ts);   // 到期内碰前收
+        else backfillGap(ev.code, ev.gapDate, ev.level, 0, closeTs(exp));                      // 到期后才补 → 0
+        consumeFill(ev);
+      } else if (fill.hit) {
+        if (!tryAbandon(ev, today, now))
+          warn('expiry', 'fill time unknown, skip (宁晚判不错判 0) ' + ev.code + '|' + ev.gapDate + '|' + ev.level);
+      } else {
+        backfillGap(ev.code, ev.gapDate, ev.level, 0, closeTs(exp));                           // 到期未补 → 0
+        consumeFill(ev);
+      }
+    }
+  }
+  function pendingEvents() {                     // 有行且未判局未弃案的事件（无行事件归 recon 管）
+    var rows = readLog(), seen = {}, out = [], i;
+    for (i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (r.resolved != null || r.abandoned) continue;
+      var k = r.code + '|' + r.gapDate + '|' + r.level;
+      if (seen[k]) continue;
+      seen[k] = 1;
+      out.push({ code: r.code, gapDate: r.gapDate, level: r.level });
+    }
+    return out;
+  }
+  function expirySweep(now) {
+    try {
+      now = now || Date.now();
+      var evs = pendingEvents(), i;
+      for (i = 0; i < evs.length; i++) {
+        try { judgeExpiry(evs[i], now); } catch (e) { warn('judge', e); }
+      }
+    } catch (e) { warn('expirySweep', e); }
+  }
+
+  /* ---------- recon 对账（每日首开扫描最近 N 交易日，近→远） ---------- */
+  function reconOutcome(g, today, now) {
+    var mh = minuteHistory(g.code, g.gapDate);
+    if (mh === 'STALE') return 'STALE';
+    var hit = null, ts = null;
+    if (mh) { hit = !!mh.hit; ts = mh.fillTs || null; }
+    else {
+      var st = gapState(g.code);
+      if (!st || st.gapDate !== g.gapDate) return null;  // 在册的不是这个缺口 → 无证据不猜
+      if (st.remainPct != null && st.remainPct <= 0) { hit = true; ts = st.filledTs || null; }
+      else if (st.remainPct != null) hit = false;
+      else return null;
+    }
+    if (hit) {
+      if (ts == null) { warn('recon', 'fill time unknown, skip (宁晚判不错判 0) ' + g.code + '|' + g.gapDate); return null; }
+      return { hit: 1, ts: ts };                 // 已碰前收：真实判局时间回填
+    }
+    var N = DAY_N[g.level];
+    if (!N) return { hit: 0, ts: closeTs(g.gapDate) };    // 日内级：当日收盘未碰 → 0（同一规则）
+    var exp = nthTradingDayAfter(g.gapDate, N);
+    if (exp == null) return null;                          // 日历未知 → 不判
+    if (today > exp || (today === exp && now >= closeTs(exp))) return { hit: 0, ts: closeTs(exp) };
+    return null;                                           // 未到期 → 留给正常流程（窗口内到期后自然补）
+  }
+  function pushReconRow(g, hit, ts) {            // recon 行：因子全 null，计入 P₀，不进因子分析
+    var row = {
+      id: g.code + '|' + g.gapDate + '|' + g.level + '|-2',
+      code: g.code, gapDate: g.gapDate, level: g.level, dir: g.dir == null ? 1 : g.dir,
+      ts: Date.now(), slot: -2, src: 'recon', tardyMs: 0,
+      gapPct: fnum(g.gapPct), remainPct: null,
+      fibPosS: null, waterPosS: null, distLowATRS: null, atrPctS: null,
+      idxAtrPctI: null, secFlow: null, tempW: null,
+      gTrend: null, gPos: null, gVol: null, p0: null, p: null,
+      resolved: hit ? 1 : 0, resolvedTs: ts, hitSlot: slotOfTs(ts)
+    };
+    return upsertRow(row);
+  }
+  function reconScan(now) {                      // 返回 {made,dropped}；null = 未就绪/异常（tick 可重试）
+    try {
+      now = now || Date.now();
+      if (typeof AD().reconCandidates !== 'function')
+        return null;                             // 适配器未就绪 → 未跑成，当天有限重试
+      var today = dateStr(now);
+      var days = lastNTradingDays(today, PAR.reconWindowN);
+      if (!days.length) return { made: 0, dropped: 0 };
+      var rows = readLog(), have = {}, reconN = 0, i;
+      for (i = 0; i < rows.length; i++) {
+        have[rows[i].code + '|' + rows[i].gapDate + '|' + rows[i].level] = 1;
+        if (rows[i].src === 'recon') reconN++;
+      }
+      var cands = reconCandidates(days) || [], dropped = 0, made = 0;
+      for (i = 0; i < cands.length; i++) {       // 候选按 gapDate 近→远：先补最近的，超限丢的是最旧
+        var g = cands[i];
+        if (!g || !g.code || !g.gapDate || !g.level) continue;
+        var k = g.code + '|' + g.gapDate + '|' + g.level;
+        if (have[k]) continue;                   // 有任何行（哪怕档位不全）→ 互斥不补
+        var o = reconOutcome(g, today, now);
+        if (o === null) continue;                // 未到期/无证据 → 留给正常流程
+        if (o === 'STALE') { warn('recon', 'minute history stale, abandon ' + k); continue; }
+        if (reconN >= PAR.reconCap) { dropped++; continue; }
+        if (pushReconRow(g, o.hit, o.ts)) { have[k] = 1; reconN++; made++; }
+      }
+      if (dropped) {
+        var m = readMeta();
+        m.droppedRecon = (m.droppedRecon || 0) + dropped;
+        writeMeta(m);
+        warn('recon', 'overflow: dropped ' + dropped + ' (cap ' + PAR.reconCap + ')');
+      }
+      return { made: made, dropped: dropped };
+    } catch (e) { warn('reconScan', e); return null; }
+  }
+
+  /* ---------- tick 编排：每日首开对账 → 到期判局 → 快照（判局优先于快照） ---------- */
+  function tick(now) {
+    now = now || Date.now();
+    try {
+      var m = readMeta(), today = dateStr(now);
+      if (m.lastBootDate !== today) {
+        var res = reconScan(now);                // 先跑对账；跑成才落"今日已启动"
+        if (res === null) {                      // 未就绪/异常 → 当天有限重试
+          m.bootTries = (m.bootTries || 0) + 1;
+          if (m.bootTries >= PAR.bootMaxTries) { m.lastBootDate = today; m.bootTries = 0; }
+          writeMeta(m);
+        } else {
+          m.lastBootDate = today; m.bootTries = 0;
+          writeMeta(m);
+        }
+      }
+      expirySweep(now);
+      snapshotPass(now);
+    } catch (e) { warn('tick', e); }
+  }
+  function snap(code, slot, now) {               // 手动单拍（验收用）
+    try {
+      now = now || Date.now();
+      var st = gapState(code);
+      if (!st || !st.gapDate) return false;
+      var p0 = computeP0(), lvls = levelsOf(st), made = 0, i;
+      for (i = 0; i < lvls.length; i++) {
+        if (upsertRow(buildRow(code, st, lvls[i], slot, now, p0))) made++;
+      }
+      return made > 0;
+    } catch (e) { warn('snap', e); return false; }
+  }
+  function debug() {                             // 验收 8：控制台验证 P₀ 按缺口计数
+    var rows = readLog(), meta = readMeta(), p0 = computeP0(), ev = {}, i;
+    for (i = 0; i < rows.length; i++) {
+      if (rows[i].resolved == null) continue;
+      var lv = rows[i].level;
+      if (!ev[lv]) ev[lv] = { h: 0, n: 0, _s: {} };
+      var key = rows[i].code + '|' + rows[i].gapDate + '|' + rows[i].level;
+      if (!ev[lv]._s[key]) { ev[lv]._s[key] = 1; ev[lv].h += rows[i].resolved; ev[lv].n++; }
+    }
+    var tbl = {};
+    for (i = 0; i < LEVELS.length; i++) {
+      var e = ev[LEVELS[i]] || { h: 0, n: 0 };
+      tbl[LEVELS[i]] = 'h=' + e.h + ' n=' + e.n + ' P0=' + (p0[LEVELS[i]] != null ? p0[LEVELS[i]].toFixed(4) : 'null');
+    }
+    var out = { rows: rows.length, abandoned: rows.filter(function (r) { return r.abandoned ? 1 : 0; }).length,
+                events: tbl, meta: meta, p0: p0 };
+    try { console.log('[jl-1166 debug] ' + JSON.stringify(out, null, 2)); } catch (e) {}
+    return out;
+  }
+
+  /* ---------- 对外接口 ---------- */
+  var API = {
+    tick: tick, snap: snap, baseline: baseline,
+    resolveGap: resolveGap, backfillGap: backfillGap,
+    expirySweep: expirySweep, reconScan: reconScan,
+    p0: computeP0, debug: debug, PAR: PAR,
+    _t: {
+      readLog: readLog, readMeta: readMeta, persistLog: persistLog, upsertRow: upsertRow,
+      trim: trim, calOf: calOf, nthTradingDayAfter: nthTradingDayAfter, slotOfTs: slotOfTs,
+      lastNTradingDays: lastNTradingDays, reconOutcome: reconOutcome, pendingEvents: pendingEvents,
+      abandonGap: abandonGap, abandonDeadline: abandonDeadline, tryAbandon: tryAbandon,
+      recordPendingFill: recordPendingFill, takePendingFill: takePendingFill, consumeFill: consumeFill
+    }
+  };
+  root.JL1166 = API;
+  root.jlWinRateTickJL = tick;        // A2：_ckJL tick 末尾调用
+  root.jlWinRateSnapJL = snap;        // 验收用单拍
+  root.jlResolveGapJL = resolveGap;   // A4：碰前收命中处调用
+  root.jlBaselineSnapJL = baseline;   // A3：缺口实时形成时调用
+  root.jlP0DebugJL = debug;           // 验收 8：控制台 P₀/事件数检查
+})(typeof window !== 'undefined' ? window : globalThis);
+  /* ============ jl-1166 END ============ */
+
   function renderGapRowJL(code, m1rows, cv, price, pre, B, T) {
     try {
       var host = cv.parentNode, row = host.querySelector('.hldGapRowJL');
