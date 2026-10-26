@@ -13,13 +13,14 @@
  *   无锚点不触发(假日/周末clist返上一交易日终值, 无锚点即无错挂); 隔日锚点过期不触发, 交回补路。
  * 回补路: 日历=单板块daykline f51序列(响应自带); 按板块86请求(每请求覆盖全部缺口日, 200ms节流);
  *   tc按日补拉getTopicZBPool(data.tc原值+qdate交叉校验); 板块表未建前回补不启用。
- * 修复条件: 记录缺失 / ok=0 / (src=dkbf且nRows<80) → 下次启动重试。
+ * 修复条件: 记录缺失 / ok=0 / 旧版clist仅100行 / (src=dkbf且nRows<80) → 下次启动重试。
+ * 2026-10-26 t7s3: 盘后clist按total顺序翻页拉全，任一页失败或去重后不足total均记ok=0；不以部分页冒充全量。
  * 调试钩: window.__JLT7__ = {v, st, get(d), days(), probeFetch()}(probeFetch越闸单次执行, 仅供验证)。
  * 回滚: 删除本文件挂载行即完全移除; jinlin_secff 库可整体删除, 无残留。 */
 (function () {
   "use strict";
   if (window.__JLT7__) return; /* 双重加载保护 */
-  var VER = "t7s2", DB_NAME = "jinlin_secff", DB_VER = 1, KEEP_D = 250, TICK_MS = 30 * 60e3;
+  var VER = "t7s3", DB_NAME = "jinlin_secff", DB_VER = 1, KEEP_D = 250, TICK_MS = 30 * 60e3;
   var P2 = "https://push2.eastmoney.com", P2D = "https://push2delay.eastmoney.com", P2X = "https://push2ex.eastmoney.com";
   var UT = "7eea3edcaed734bea9cbfc24409ed989";
   var CLIST_FIELDS = "f12,f14,f62,f66,f84"; /* 冻结书字段集(f3已裁决移除) */
@@ -102,11 +103,27 @@
   }
 
   /* ---------- 抓取 ---------- */
+  function clistRows(d) {
+    if (!d || !d.data) return [];
+    var a = d.data.diff || [];
+    if (!Array.isArray(a)) a = Object.keys(a).map(function (k) { return a[k]; });
+    return a.filter(function (r) { return r && r.f12; });
+  }
   async function fetchClist() {
-    var hosts = [P2, P2D], q = "/api/qt/clist/get?fid=f62&po=1&pz=100&pn=1&np=1&fltt=2&invt=2&fs=m:90+t:2&fields=" + CLIST_FIELDS + "&ut=" + UT; /* 修正1(2026-10-12深夜): 补ut——主应用全部clist均携带ut, 本模块原遗漏 */
+    var hosts = [P2, P2D];
     for (var i = 0; i < hosts.length; i++) {
-      var d = await jsonp(hosts[i] + q);
-      if (d && d.data && d.data.diff && d.data.diff.length) return d;
+      var all = [], seen = {}, complete = true, expectedTotal = 0;
+      for (var pn = 1; ; pn++) {
+        var q = "/api/qt/clist/get?fid=f62&po=1&pz=100&pn=" + pn + "&np=1&fltt=2&invt=2&fs=m:90+t:2&fields=" + CLIST_FIELDS + "&ut=" + UT;
+        var d = await jsonp(hosts[i] + q), rows = clistRows(d), total = d && d.data && Number(d.data.total) || 0;
+        if (!rows.length || !(total > 0)) { complete = false; break; }
+        expectedTotal = total;
+        rows.forEach(function (r) { if (!seen[r.f12]) { seen[r.f12] = true; all.push(r); } });
+        if (pn >= Math.ceil(total / 100)) break;
+        await sleep(200); /* 顺序翻页，避免盘后并发触发风控 */
+      }
+      /* 每页成功、页数完整、按板块代码去重后仍覆盖 total，才允许作为全量快照。 */
+      if (complete && pn >= Math.ceil(expectedTotal / 100) && all.length >= expectedTotal && expectedTotal > 0) return { data: { total: expectedTotal, diff: all } };
     }
     return null;
   }
@@ -128,7 +145,7 @@
     var gated = force || (hhmmNow() >= 1505);
     var anchor = anchorToday();
     if (!force && (!gated || !anchor)) return;
-    if (!force) { var ex = await getRec(d0); if (ex && ex.ok) return; }
+    if (!force) { var ex = await getRec(d0); if (ex && ex.ok && !(ex.src === "clist" && ex.nRows === 100)) return; } /* 旧版整百行可能只是Top100，放行一次全量重抓 */
     busyClist = true; st.clistTried++;
     try {
       var rec = { d: d0, src: "clist", anchor: anchor, savedAt: iso(), ok: 0, err: null, nRows: 0, tc: null, rows: [] };
@@ -142,12 +159,12 @@
         rec.rows = c.data.diff.map(function (r) { return { f12: r.f12, f14: r.f14, f62: r.f62, f66: r.f66, f84: r.f84 }; });
         rec.nRows = rec.rows.length; rec.ok = 1; st.clistOk++;
         var m = await getMeta();
-        if (!m || !m.boards || !m.boards.length || (m.boardsAt !== d0)) {
-          /* 板块代码表: 仅在当日首次成功时刷新(冻结书§三.4: 来自clist成功响应) */
+        if (!m || !m.boards || !m.boards.length || m.boards.length !== rec.rows.length || (m.boardsAt !== d0)) {
+          /* 全量翻页后同步修正板块表；旧Top100元数据不能继续限制历史回补。 */
           await putMeta({ id: 1, initAt: (m && m.initAt) || iso(), ver: VER, boardsAt: d0, boards: rec.rows.map(function (r) { return { f12: r.f12, f14: r.f14 }; }) });
         }
       } else {
-        rec.err = rec.err ? rec.err + "+clist:null" : "clist:null";
+        rec.err = rec.err ? rec.err + "+clist:incomplete" : "clist:incomplete";
       }
       await put(rec);
       st.lastAt = iso(); st.lastErr = rec.err || "";
@@ -160,6 +177,7 @@
   function needHeal(rec, nBoards) {
     if (!rec) return true;
     if (!rec.ok) return true;
+    if (rec.src === "clist" && rec.nRows === 100) return true; /* 旧版单页固定100行，进入回补；新版全量非100行不被误判 */
     if (rec.src === "dkbf" && rec.nRows < Math.max(40, nBoards - 6)) return true;
     return false;
   }

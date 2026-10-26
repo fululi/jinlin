@@ -19,11 +19,12 @@ const ctx = {
   localStorage: { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)) },
   dailyBarsOf: () => ctx.rows,
   atrSwingHTMLJL: () => '',
-  jlLastTradeDay: () => ctx.observed || ''
+  jlLastTradeDay: () => ctx.observed || '',
+  window: {}
 };
 vm.createContext(ctx);
 vm.runInContext('const ATR5_OPEN_CODES_JL = {"603986":{"highGap":"27/46=58.7%"},"600105":{"highGap":"16/26=61.5%"}};', ctx);
-for (const n of ['jlDayClosedJL','atrLocalDayJL','atrQuoteDayJL','atr5ExpectedParamDateJL','atr5PercentileJL','atr5OpenParamsJL','atr5CacheKeyJL','atr5ReadCacheJL','atr5WriteCacheJL','atr5ParamsForJL','atrOpenModelJL','atrOpenHTMLJL']) vm.runInContext(fnSource(n), ctx);
+for (const n of ['jlDayClosedJL','atrLocalDayJL','atrQuoteDayJL','atr5ExpectedParamDateJL','atr5PercentileJL','atr5OpenParamsJL','atr5CacheKeyJL','atr5ReadCacheJL','atr5WriteCacheJL','atr5ParamsForJL','atrOpenModelJL','atrReviewHTMLJL','atrOpenHTMLJL']) vm.runInContext(fnSource(n), ctx);
 function bars(n = 140) {
   const out = [], d = new Date('2026-03-01T00:00:00');
   while (out.length < n) {

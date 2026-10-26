@@ -203,7 +203,8 @@
     const out = [], all = rows(), codes = Array.from(new Set(all.map((r) => r.code))).sort();
     codes.forEach((code) => {
       const own = all.filter((r) => r.code === code), name = own.length ? own[0].name : code;
-      const atr = own.filter((r) => r.kind === "ATR" && r.finalized);
+      /* 缺少当日高低价的定稿记录不进入分母，避免把“无样本”算成未触及/区外。 */
+      const atr = own.filter((r) => r.kind === "ATR" && r.finalized && Number(r.high) > 0 && Number(r.low) > 0 && r.inside !== null && r.upperHit !== null && r.lowerHit !== null);
       if (atr.length) out.push({ kind: "ATR", code, name, mode: "ATR5开盘参考区", samples: atr.length, finalized: atr.length,
         inside: ratio(count(atr, (r) => r.inside === true), atr.length), upper: ratio(count(atr, (r) => r.upperHit === true), atr.length), lower: ratio(count(atr, (r) => r.lowerHit === true), atr.length) });
       Object.keys(MODE).forEach((mode) => {
