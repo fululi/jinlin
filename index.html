@@ -195,6 +195,20 @@ body.ksEmbed .phone.chartMode #chartPage .chartHeading{padding-left:12px;padding
 .holdLegJL .legDt{font-style:normal;color:#eef9fc;font-size:9px}
 .holdLegJL .lgSt{font-style:normal;color:#ffd21f;font-size:9.5px}
 /* jl-1006: 资金共振+筹码 玻璃小卡内部整平——去内框去自带衬距+纵向留白(透亮, 不要挤一块) */
+.fmxJL{margin:10px 2px 0;padding:10px 11px 8px;border:1px solid rgba(255,255,255,.28);border-radius:12px;background:transparent;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75),0 0 1px rgba(0,0,0,.9)}
+.fmxJL .up{color:#ff6b6b}.fmxJL .dn{color:#1fdc93}.fmxJL .na{color:#fff}
+.fmxHead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.fmxHead>b{font-size:14px;font-weight:800;margin-right:auto}
+.fmxShort{font-size:11.5px;font-weight:800;border:1px solid currentColor;border-radius:9px;padding:0 6px}
+.fmxRisk{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:800;border:1px solid;border-radius:10px;padding:1px 7px}.fmxRisk i{width:6px;height:6px;border-radius:50%}.fmxRisk b{font-family:ui-monospace,Menlo,monospace}
+.fmxRow{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.fmxC{border:1px solid rgba(255,255,255,.2);border-radius:9px;padding:4px 6px}.fmxC small{display:block;font-size:10.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fmxC small u{text-decoration:none;color:#ffd21f}
+.fmxC b{display:block;font:800 13.5px ui-monospace,Menlo,monospace;white-space:nowrap}
+.fmxFib{margin-top:6px;font-size:11.5px}
+.fmxChip{margin-top:20px}.fmxChipBar{position:relative;height:31px}.fmxChipBar svg{width:100%;height:31px;display:block;overflow:visible}
+.fmxLab{position:absolute;transform:translateX(-50%);font:800 10px ui-monospace,Menlo,monospace;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.fmxChipTxt{margin-top:18px;font-size:11.5px;font-weight:700;color:#fff;line-height:1.5}
+.fmxHold{margin-top:5px;font:700 12px ui-monospace,Menlo,monospace;color:#fff}
+.fmxJL .fundJL{margin:9px 0 0!important;border:0!important;border-top:1px dashed rgba(255,255,255,.25)!important;border-radius:0!important;background:none!important;padding:8px 0 0!important}
 .jlResoCardJL{display:flex;flex-direction:column;gap:10px}
 .jlResoCardJL .resoJL{margin:0;border:0;background:transparent;padding:0;gap:7px 9px}
 .jlResoCardJL .cyqLineJL{margin:0;border:0;background:transparent;padding:0}
@@ -908,6 +922,8 @@ var cw=Math.max(2,Math.round(w*sc)),ch=Math.max(2,Math.round(h*sc));
 if(cv.width!==cw||cv.height!==ch){cv.width=cw;cv.height=ch;gl.viewport(0,0,cw,ch);draw(tNow)}
 }
 resize();
+var ON=false;try{ON=localStorage.getItem("jlRibbonOn")==="1"}catch(e){} /* 10-27 用户要求鎏金停下: 默认只画一帧静止; 控制台 localStorage.jlRibbonOn="1" 后刷新=恢复流动, 删掉该键=再停 */
+if(!ON){try{gl.clearColor(0.055,0.11,0.235,1);gl.clear(gl.COLOR_BUFFER_BIT)}catch(e){}return} /* 10-27 撤掉鎏金: 默认只铺纯深蓝底#0e1c3c, 不画金丝带 */
 if(RM){draw(40.0);return}
 var lastDraw=0,lastTs=0;
 function loop(ts){
@@ -1005,6 +1021,7 @@ cv.addEventListener('webglcontextlost',function(e){try{e.preventDefault();cancel
 </script>
 <script src="jl_review_stats.js?v=2"></script>
 <script src="lowopen-rebound.js?v=4"></script>
+<script src="jl_gapiv.js?v=1"></script><script src="jl_card5d.js?v=6"></script><script src="jl_cardfold.js?v=1"></script><script src="jl_holdclean.js?v=2"></script><!-- jl-1170 本地稿 1027: 持仓卡缺口行改用 jl_gapiv.js(竞价框+iv行+今日已补+当天回补率, 验收页 gap-iv.html 定稿); 持仓页小K线那块换成五日图 jl_card5d.js(验收页 5day.html 定稿, 原小K线代码不删只隐藏); 分时图/台账/计算零触碰; 持仓卡右上角透明折叠钮 jl_cardfold.js(折起只留名称+现价涨跌, 每只票记住); 持仓页清理 jl_holdclean.js(隐藏 下跌/上行情景、盘中Fib尺假数、做T挂单、账户概览+灰字); 回滚=删本行四个引用 -->
 <script>if (![].at) {
   Array.prototype.at = function(n) {
     n = Math.trunc(n) || 0;
@@ -4813,6 +4830,14 @@ function posRulerJL(s) {
 }
   /* 持仓卡只接受最近的有效交易日，避免旧的 jl_dk_ 缓存把日期倒退到数周前。
      报价接口有日期时优先用接口日期；接口暂缺时从日K尾部回退到最近一根不晚于今天的有效K。 */
+  /* jl-1171: 日K兜底K线是不是"今天"的——没拿到今日报价时, 卡片/日波段会拿日K最后一根顶上; 那根若是前一个交易日的,
+     不能当今天的开高低用(10-27 实测: 报价未到时卡片显示 10-26 的 开27.20 高27.40, 日波段高点三角画到 S1 上方=「箭头错位到S2」) */
+  function lbIsTodayJL(stock, lb) {
+    if (!lb || !lb.t) return false;
+    let qd = String(stock && (stock.quoteDate || stock.quoteAt) || "").replace(/[^0-9]/g, "").slice(0, 8);
+    qd = /^\d{8}$/.test(qd) ? qd.slice(0, 4) + "-" + qd.slice(4, 6) + "-" + qd.slice(6, 8) : (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE");
+    return String(lb.t).slice(0, 10) === qd;
+  }
   function latestHoldingBarJL(stock, bars) {
     const a = (bars || []).filter((b) => b && Number(b.o) > 0 && Number(b.h) > 0 && Number(b.l) > 0 && Number(b.c) > 0 && b.t);
     if (!a.length) return null;
@@ -4849,7 +4874,8 @@ function posRulerJL(s) {
     const ql = Number(s.low) > 0 ? Number(s.low) : Number(lb.l) || 0;
     const qc = p > 0 ? p : Number(lb.c) || 0;
     const liveQ = s.quoteReady === true && p > 0, chg = pc > 0 && p > 0 ? p - pc : 0;
-    const hero = `<div class="dqHeroJL"><b style="color:${p > 0 ? col(p) : "#eef9fc"}">${p > 0 ? p.toFixed(dc) : "—"}</b>${liveQ ? `<small style="color:${col(p)}">${chg >= 0 ? "+" : ""}${chg.toFixed(dc)}${Number.isFinite(pctV) ? " " + (pctV >= 0 ? "+" : "") + pctV.toFixed(2) + "%" : ""}</small>` : ""}</div>`; /* jl-1021: 参考图层级——大价+涨跌额/率同行, 五列降级其下平铺 */
+    const lbOld = !(Number(s.open) > 0) && lb && lb.t && !lbIsTodayJL(s, lb), lbMD = lbOld ? String(lb.t).slice(5, 10) : ""; /* jl-1171: 显示的是更早一天的日K, 标日期 */
+    const hero = `<div class="dqHeroJL"><b style="color:${p > 0 ? col(p) : "#eef9fc"}">${p > 0 ? p.toFixed(dc) : "—"}</b>${liveQ ? `<small style="color:${col(p)}">${chg >= 0 ? "+" : ""}${chg.toFixed(dc)}${Number.isFinite(pctV) ? " " + (pctV >= 0 ? "+" : "") + pctV.toFixed(2) + "%" : ""}</small>` : lbOld ? `<small style="color:#ffd21f">${lbMD} 收盘 · 等今日报价</small>` : ""}</div>`; /* jl-1021: 参考图层级——大价+涨跌额/率同行, 五列降级其下平铺 */
     const r1 = hero + `<div class="tvQuoteJL tvQuoteMainJL">${it("开", qo)}${it("高", qh)}${it("低", ql)}${it(typeof mktLiveJL === "function" && mktLiveJL() ? "实时" : "收", qc)}${pc > 0 ? `<span class="tqCell"><u>昨收</u><b class="tqPc" style="color:${prevBar2 && Number(prevBar2.c) > 0 && pc > 0 ? (pc > Number(prevBar2.c) + 1e-9 ? "#ff6b6b" : pc < Number(prevBar2.c) - 1e-9 ? "#1fdc93" : "#eef9fc") : "#eef9fc"}">${pc.toFixed(dc)}</b></span>` : `<span class="tqCell"><u>昨收</u><b style="color:#eef9fc">—</b></span>`}${qh > 0 && ql > 0 && pc > 0 ? `<span class="tqCell"><u>振幅</u><b class="tqAmp" style="color:#ffd21f;font-weight:700">${((qh - ql) / pc * 100).toFixed(2)}%</b></span>` : `<span class="tqCell"><u>振幅</u><b class="tqAmp" style="color:#ffd21f">—</b></span>`}</div>`; /* jl-1023+1048: 休市信息由列标签「收」承担; 日期尾巴已随持仓行整块删除(定案: 做T不联动+太挤) */
     /* jl-1048 定案(05:48): 持仓行整块下卡——做T挂单与持仓字段不联动(死数)且卡面还是太挤: 09-30日期尾巴+3,400股/成本/浮盈亏%/中波段L→H·起·回调 全删; 持仓编辑器(facts·股数/成本/盈亏/本金)与做T记账在T区原样; 温度计段低/段高·共振筹码·资金流·水位球不动 */
     return r1;
@@ -4913,7 +4939,8 @@ function posRulerHTMLJL(s) {
   const _bsOk = !!(_tvB && _tvB.buys && _tvB.buys.length && _tvB.sells && _tvB.sells.length);
   /* jl-v102: _dq/_extDir 前移——外推档要参与尺面上下界 */
   const _lbT = latestHoldingBarJL(s, dailyBarsOf(s.code)) || {};
-  const _dqHi = Number(s.high) > 0 ? Number(s.high) : Number(_lbT.h) > 0 ? Number(_lbT.h) : 0, _dqLo = Number(s.low) > 0 ? Number(s.low) : Number(_lbT.l) > 0 ? Number(_lbT.l) : 0;
+  const _lbTok = lbIsTodayJL(s, _lbT); /* jl-1171: 兜底K线不是今天的就不画今日高低三角/日内Fib, 等今日报价 */
+  const _dqHi = Number(s.high) > 0 ? Number(s.high) : _lbTok && Number(_lbT.h) > 0 ? Number(_lbT.h) : 0, _dqLo = Number(s.low) > 0 ? Number(s.low) : _lbTok && Number(_lbT.l) > 0 ? Number(_lbT.l) : 0;
   const _rngD = _dqHi - _dqLo, _extDir = !sw && _dqLo > 0 && _rngD > 0 ? (p > _dqHi - _rngD * 0.382 ? 1 : p < _dqHi - _rngD * 0.786 ? -1 : 0) : 0; /* jl-v101: 涨出0.382档=上方外推, 跌穿0.786档=下方外推 */
   const bLo0 = useLeg ? _fibFormalOk ? _fibLo : _leg15 ? _l15lo : legF.lo : pr.lo, bHi0 = useLeg ? _fibFormalOk ? _dHi : _leg15 ? _l15hi : legF.hi : pr.hi;
   const bLo = Math.min(!sw && _bsOk ? Math.min(bLo0, ..._tvB.buys, ..._tvB.sells) : bLo0, ...(_extDir < 0 ? [_dqHi - _rngD * 1.272, _dqHi - _rngD * 1.618] : [])), bHi = Math.max(!sw && _bsOk ? Math.max(bHi0, ..._tvB.buys, ..._tvB.sells) : bHi0, ...(_extDir > 0 ? [_dqLo + _rngD * 1.272, _dqLo + _rngD * 1.618] : [])), /* jl-v102: 外推档触发时尺面同步外扩 */ rng = bHi - bLo || 1, posF = (v) => Math.max(0, Math.min(100, (v - bLo) / rng * 100)), pos = Math.max(0, Math.min(100, (p - bLo) / rng * 100));
@@ -5156,6 +5183,47 @@ function posRulerHTMLJL(s) {
       jlApplyTradeJL(st, r.side, r.price, r.qty, -1);
       persistStocks();
     } catch (e) {}
+  }
+  /* jl-1172 本地稿 1027: 「资金 · 筹码」合并块——资金共振(个股/板块/市场三线 + 风险泡泡) + 筹码(画成一条价格带: 筹码多少/获利盘/现价/平均成本/我的成本) + 持仓一行,
+     下面直接接「资金流 · 实时走势」。数字全部来自原来的 resoDataJL / rsRiskJL / cyqStoreJL / jlFibTagRowJL, 一个不重算。
+     验收前默认关闭(持仓卡仍是旧「资金共振」块), localStorage.setItem("jl_fundmix_on","1") 刷新才显示。 */
+  function fundMixHTMLJL(s) {
+    try {
+      const r = resoDataJL(s), k = rsRiskJL(r), dc = typeof decTierJL === "function" ? decTierJL(s) : 2;
+      const kc = { g: "#1fdc93", am: "#ffd21f", o: "#ff9d3c", r: "#ff5459", b: "#4da3ff" }[k.cls];
+      const cell = (lb, v, d, stale) => '<div class="fmxC"><small>' + lb + (stale ? ' <u>旧</u>' : "") + '</small><b class="' + (v == null ? "na" : v >= 0 ? "up" : "dn") + '">' + (v == null ? "暂缺" : (v >= 0 ? "▲ +" : "▼ −") + fmtFundJL(Math.abs(v)).replace(/^[-+−]/, "")) + "</b></div>";
+      let h = '<div class="fmxHead"><b>资金 · 筹码</b>' + (r.short && String(r.short).indexOf("暂缺") < 0 ? '<span class="fmxShort ' + r.vc + '">' + r.short + "</span>" : "")
+        + '<span class="fmxRisk" style="border-color:' + kc + ";color:" + kc + '"><i style="background:' + kc + '"></i>' + k.bub + " <b>" + k.sc + "</b></span></div>";
+      h += '<div class="fmxRow">' + cell("个股" + (r.ffD ? " " + r.ffD : ""), r.ownV, r.dO, r.ffStale) + cell(r.sec || "板块", r.secV, r.dS, r.secStale) + cell("市场" + (r.mtLb || ""), r.mtV, r.dM, false) + "</div>";
+      try { const ft = jlFibTagRowJL(s); if (ft) h += '<div class="fmxFib">' + ft + "</div>"; } catch (eF) { }
+      /* 筹码带 */
+      const bare = String(s.code).replace(/^(sh|sz)/, "");
+      let o = cyqStoreJL[bare];
+      if (!o) { try { const c2 = JSON.parse(localStorage.getItem("jl_cyq2_" + bare) || "null"); if (c2 && c2.chips) o = c2; } catch (e) { } }
+      if (!o) setTimeout(() => { try { ensureCyqJL(bare); } catch (e) { } }, 0);
+      const px = Number(s.base) || 0, cost = Number(s.cost) || 0;
+      if (o && o.chips && o.last) {
+        const L0 = o.last, ch = o.chips, n = ch.length;
+        let lo = Math.min(L0.p5, px > 0 ? px : L0.p5, cost > 0 ? cost : L0.p5), hi = Math.max(L0.p95, px || 0, cost || 0);
+        const pad = (hi - lo) * 0.04; lo -= pad; hi += pad;
+        const X = (v) => ((v - lo) / (hi - lo) * 100), NB = 60, acc = new Array(NB).fill(0);
+        for (let i = 0; i < n; i++) { const v = o.pmin + i * o.step; if (v < lo || v > hi) continue; const b = Math.min(NB - 1, Math.floor((v - lo) / (hi - lo) * NB)); acc[b] += ch[i]; }
+        const mx = Math.max(...acc) || 1;
+        let bars = "";
+        acc.forEach((a, b) => { if (!(a > 0)) return; const v = lo + (b + 0.5) / NB * (hi - lo), hh = Math.max(1, a / mx * 26); bars += '<rect x="' + (b / NB * 100).toFixed(2) + '" y="' + (28 - hh).toFixed(1) + '" width="' + (100 / NB * 0.82).toFixed(2) + '" height="' + hh.toFixed(1) + '" fill="' + (v <= px ? "#ff6b6b" : "#4da3ff") + '" opacity=".75"/>'; });
+        const mk = (v, col, dash) => v > 0 ? '<line x1="' + X(v).toFixed(2) + '" x2="' + X(v).toFixed(2) + '" y1="0" y2="30" stroke="' + col + '" stroke-width="' + (dash ? .5 : .7) + '"' + (dash ? ' stroke-dasharray="1.2 1"' : "") + ' vector-effect="non-scaling-stroke"/>' : "";
+        const band = '<rect x="' + X(L0.p15).toFixed(2) + '" y="29" width="' + (X(L0.p85) - X(L0.p15)).toFixed(2) + '" height="2" fill="#fff" opacity=".55"/>';
+        const lab = (v, t, col, top) => { if (!(v > 0)) return ""; const xp = Math.max(0, Math.min(100, X(v))), tf = xp > 80 ? "translateX(-100%)" : xp < 20 ? "translateX(0)" : "translateX(-50%)"; /* 靠边的签往里贴, 不出框 */
+          return '<span class="fmxLab" style="left:' + xp.toFixed(1) + "%;transform:" + tf + ";" + (top ? "top:-15px" : "bottom:-15px") + ";color:" + col + '">' + t + " " + v.toFixed(dc) + "</span>"; };
+        h += '<div class="fmxChip"><div class="fmxChipBar"><svg viewBox="0 0 100 31" preserveAspectRatio="none">' + bars + band + mk(L0.avg, "#ffd21f") + mk(cost, "#ffffff", 1) + mk(px, "#ffffff") + "</svg>"
+          + lab(px, "现价", "#fff", 1) + lab(L0.avg, "均本", "#ffd21f", 0) + (cost > 0 ? lab(cost, "我的成本", "#fff", Math.abs(X(cost) - X(px)) > 24 ? 1 : 0) : "") + "</div>"
+          + '<div class="fmxChipTxt">获利盘 <b class="' + (L0.profit >= 50 ? "up" : "dn") + '">' + L0.profit.toFixed(1) + "%</b> · 70%筹码 " + L0.p15.toFixed(dc) + "–" + L0.p85.toFixed(dc) + " · 集中度 " + L0.conc.toFixed(1) + "% · " + (px >= L0.avg ? "现价在均本上方" : "现价在均本下方") + "</div></div>";
+      } else h += '<div class="fmxChipTxt">筹码计算中…</div>';
+      /* 持仓一行 */
+      const qty = s.qty || 0;
+      if (qty > 0 && cost > 0 && px > 0) { const pnl = (px - cost) * qty, pct = (px / cost - 1) * 100; h += '<div class="fmxHold">' + qty.toLocaleString("en-US") + " 股 · 成本 " + cost.toFixed(dc) + ' · <b class="' + (pnl >= 0 ? "up" : "dn") + '">' + (pnl >= 0 ? "+" : "−") + Math.abs(Math.round(pnl)).toLocaleString("en-US") + " (" + (pct >= 0 ? "+" : "") + pct.toFixed(1) + "%)</b></div>"; }
+      return h;
+    } catch (e) { return '<div class="fmxChipTxt">资金数据计算中…</div>'; }
   }
   function resoLineJL(s) {
     const r = resoDataJL(s), arw = (d) => d > 0 ? "\u25B2" : d < 0 ? "\u25BC" : "\u2014";
@@ -5735,7 +5803,7 @@ function playbookHTMLJL(s, leg, swSt) {
         if (pr.st === "brkL") sig = ["\u25BC\u7834\u4F4D", "g"];
         else if (pr.st === "brkH") sig = ["\u25B2\u5F3A\u52BF", "s"];
       }
-      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}</small></span><strong>${(() => { const _dq = deckQuoteJL(s); if (!(_dq.p > 0)) return "\u2014"; const _qc = _dq.live ? cls(s.pct) : (_dq.pc > 0 ? "up" : _dq.pc < 0 ? "down" : ""); return '<span class="' + _qc + '">' + money(_dq.p) + "</span>" + (_dq.live ? '<small class="' + _qc + '">' + pct(s.pct) + "</small>" : '<small class="dqDtJL">' + _dq.dt + "\u6536</small>"); })()}</strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}><button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><div class="jlStWrapJL"><div class="jlStQJL">${quoteRowsJL(s, leg, pr)}</div>${deckSBJL(t, s)}</div><div class="hldCardTrendJL" data-cardtrend="${s.code}"><canvas aria-label="今日走势分时"></canvas></div>${posRulerHTMLJL(s)}${atrOpenHTMLJL(s)}${typeof lowOpenReboundHTMLJL === "function" ? lowOpenReboundHTMLJL(s) : ""}<details class="jlResoCardJL foldJL resoFoldJL" open><summary aria-label="展开或收起资金共振"><b>资金共振</b></summary><div class="foldBodyJL">${resoLineJL(s)}${cyqLineHTMLJL(s)}${rsHoldHTMLJL(s)}</div></details>${fundBoxHTMLJL(s)}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><details class="facts foldJL factsFoldJL" open><summary aria-label="展开或收起持仓股数与成本"></summary><div class="foldBodyJL"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div></details><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button><button type="button" data-open-news="${s.code}" style="border:1px solid #81e6d955;border-radius:9px;background:#81e6d91f;color:#dffbf7;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">\u65B0\u95FB</button></div></div></article>`;
+      return `<article class="stock ${on ? "active" : ""}${pr && (pr.st === "brkL" || pr.st === "brkH") ? " brk" : ""}" data-stock="${i}"><button class="rail" aria-label="\u67E5\u770B${s.name}" aria-expanded="${on}"><span class="num">${String(di + 1).padStart(2, "0")}</span><span class="name">${s.name}<small>${s.code} \xB7 ${s.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}</small></span><strong>${(() => { const _dq = deckQuoteJL(s); if (!(_dq.p > 0)) return "\u2014"; const _qc = _dq.live ? cls(s.pct) : (_dq.pc > 0 ? "up" : _dq.pc < 0 ? "down" : ""); return '<span class="' + _qc + '">' + money(_dq.p) + "</span>" + (_dq.live ? '<small class="' + _qc + '">' + pct(s.pct) + "</small>" : '<small class="dqDtJL">' + _dq.dt + "\u6536</small>"); })()}</strong>${sig ? `<i class="deckSig ${sig[1]}">${sig[0]}</i>` : ""}${resoMiniJL(s)}</button><div class="stockContent" ${on ? "" : "inert"}><button class="deleteStock" data-delete-stock="${s.code}" aria-label="\u5220\u9664${s.name}">\xD7</button><div class="jlStWrapJL"><div class="jlStQJL">${quoteRowsJL(s, leg, pr)}</div>${deckSBJL(t, s)}</div><div class="hldCardTrendJL" data-cardtrend="${s.code}"><canvas aria-label="今日走势分时"></canvas></div>${posRulerHTMLJL(s)}${atrOpenHTMLJL(s)}${typeof lowOpenReboundHTMLJL === "function" ? lowOpenReboundHTMLJL(s) : ""}${(() => { try { return localStorage.getItem("jl_fundmix_on") !== "1"; } catch (eFm) { return true; } /* 默认旧块; 新块等验收通过再开 */ })() ? `<details class="jlResoCardJL foldJL resoFoldJL" open><summary aria-label="展开或收起资金共振"><b>资金共振</b></summary><div class="foldBodyJL">${resoLineJL(s)}${cyqLineHTMLJL(s)}${rsHoldHTMLJL(s)}</div></details>${fundBoxHTMLJL(s)}` : `<section class="fmxJL">${fundMixHTMLJL(s)}${fundBoxHTMLJL(s)}</section>`}${tradeBlockHTMLJL(s, i)}<div style="display:flex;gap:6px;margin:10px 0 0"><button type="button" data-move="-1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u25C0 \u524D\u79FB</button><button type="button" data-move="1" data-code="${s.code}" style="flex:1;min-height:38px;border:1px solid #8bd7e233;border-radius:8px;background:#84d9d50d;color:#bcefeb;font-size:11px">\u540E\u79FB \u25B6</button></div><details class="facts foldJL factsFoldJL" open><summary aria-label="展开或收起持仓股数与成本"></summary><div class="foldBodyJL"><div><small>\u6301\u4ED3\u80A1\u6570</small><strong>${(s.qty || 0).toLocaleString()}</strong><span class="qtyEdit"><button data-qty="-100" data-code="${s.code}">\u2212100</button><button data-qty="100" data-code="${s.code}">+100</button><input data-field="qty" data-code="${s.code}" type="number" value="${s.qty || 0}" aria-label="\u4FEE\u6539\u6301\u4ED3\u80A1\u6570"></span></div><div><small>\u6301\u4ED3\u6210\u672C</small><strong>${s.cost != null ? money(s.cost) : "\u2014"}</strong><input class="editInput" data-field="cost" data-code="${s.code}" type="number" step="0.001" value="${s.cost != null ? s.cost : ""}" aria-label="\u4FEE\u6539\u6301\u4ED3\u6210\u672C"></div><div><small>\u6301\u4ED3\u76C8\u4E8F</small><strong data-holding-pnl>\u2014</strong></div><div><small>\u6301\u4ED3\u672C\u91D1</small><strong data-holding-capital>${s.cost != null ? money((s.qty || 0) * s.cost) : "\u2014"}</strong></div></div></details><div class="actions"><button data-expand="${s.code}" aria-label="\u653E\u5927${s.name}K\u7EBF">K\u7EBF \u26F6</button><button data-detail="${i}" aria-expanded="false">\u5C55\u5F00\u8BE6\u60C5</button><button type="button" data-open-news="${s.code}" style="border:1px solid #81e6d955;border-radius:9px;background:#81e6d91f;color:#dffbf7;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)">\u65B0\u95FB</button></div></div></article>`;
     }).join("");
     const _dp = _deckList.findIndex((o) => o.i === active);
     $("count").textContent = _deckList.length ? `${String((_dp < 0 ? 0 : _dp) + 1).padStart(2, "0")} / ${String(_deckList.length).padStart(2, "0")}` : "00 / 00";
@@ -11826,7 +11894,7 @@ function swingMidHTMLJL(st) {
       items.sort(function (a, c) { return (!!a.doneT - !!c.doneT) || Math.abs((a.lo + a.hi) / 2 - price) - Math.abs((c.lo + c.hi) / 2 - price); });
       var show = open ? items : items.slice(0, 3);
       var html = (opn && opn.done ? chip(opn) : '') + (show.length ? show.map(chip).join('') : '<span>无未补缺口</span>') + (items.length > show.length ? '<span>+' + (items.length - show.length) + '</span>' : '');
-      row.innerHTML = html;
+      if (window.JLGapIV) JLGapIV.render(row, code); else row.innerHTML = html; /* jl-1170: 有新缺口行就用新的, 上面的计算(含台账collectGapsJL)照跑 */
     } catch (e) { }
   }
   function renderCardTrendJL(code) {
@@ -11875,7 +11943,7 @@ function swingMidHTMLJL(st) {
               if (_cr && _cr.isActive && _cr.isActive()) return;
               var _btn = document.querySelector('#holds .periodBar [data-period="分时"]');
               if (_btn && !_btn.classList.contains('active')) _btn.click();   /* 已是分时态就不重复切(避免无谓重画) */
-              var _big = document.getElementById('holdingChart');
+              var _big = document.getElementById('c5JL') || document.getElementById('holdingChart'); /* jl-1170: 小K线换成五日图后滚到五日图 */
               if (_big) setTimeout(function () { try { _big.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (eS) { } }, 60);
             } catch (eT) { }
           }, true);
@@ -12645,6 +12713,7 @@ function swingMidHTMLJL(st) {
     const _crH = holdingCross && _mpH && _srsH.length ? Math.max(0, Math.min(_srsH.length - 1, Math.round(_mpH.I(holdingCross.x)))) : -1;
     const _histH = _crH >= 0 && _crH < _srsH.length - 1, _rbH = _crH >= 0 ? _srsH[_crH] : null;
     const op = _histH && _rbH && Number(_rbH.o) > 0 ? Number(_rbH.o) : _opT, high = _histH && _rbH && Number(_rbH.h) > 0 ? Number(_rbH.h) : _hiT, low = _histH && _rbH && Number(_rbH.l) > 0 ? Number(_rbH.l) : _loT;
+    try { if (window.JLCard5D) JLCard5D.show(stock.code, stock.name); } catch (e5D) { } /* jl-1170: 五日图跟着当前选中的持仓走 */
     const heading = $("holdingName");
     heading.classList.remove("up", "down");
     heading.innerHTML = `${stock.name} \xB7 ${period} \xB7 ${html}`;

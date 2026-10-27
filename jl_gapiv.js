@@ -1,0 +1,184 @@
+/* jl_gapiv.js v1 (2026-10-27, 本地稿未推送) —— 持仓卡「缺口 / iv」行, 按验收页 ~/jinlin-accept/gap-iv.html 定稿搬入。
+   数据: 只用腾讯(日K fqkline / 分钟K mkline 30·15·5·1 / 当日分时 minute)。每只票 60 秒最多取一次。
+   口径与 App unfilledVIJL 一致: VI = 相邻两根K线, 后一根开盘离前一根收盘 > 0.05%, 分钟级还须影线重叠; 补回 = 之后碰到前一根收盘(远沿)。
+   开盘缺口: 昨收→今开, 补回价 = 昨收; 补完后又回到缺口里待满 5 分钟的每一段写「再次回补」。
+   只负责持仓卡这一行的显示, 不改分时图、台账(collectGapsJL)和任何计算。回滚: index.html 删 jl_gapiv.js 引用即回到原缺口行。 */
+(function () {
+  "use strict";
+  const RT = {"600105":{"1分":[[[66,78],[74,83]],[[59,73],[66,80]],[[53,69],[63,78]],[[53,69],[60,77]]],"5分":[[[79,87],[80,88]],[[68,82],[67,82]],[[62,77],[63,80]],[[61,77],[63,81]]],"15分":[[[86,87],[82,88]],[[67,78],[68,82]],[[63,76],[63,79]],[[63,76],[61,81]]],"日":[[24,41,43],[35,65,73]]},"603986":{"1分":[[[70,77],[78,87]],[[63,71],[70,82]],[[57,67],[66,80]],[[52,65],[62,77]]],"5分":[[[61,69],[72,82]],[[53,65],[68,79]],[[50,64],[64,76]],[[43,59],[59,73]]],"15分":[[[76,81],[69,78]],[[68,78],[71,80]],[[57,70],[64,74]],[[58,70],[54,64]]],"日":[[22,54,59],[29,54,59]]}}; /* 同 index.html jl-1165 回补率表 */
+  const LV = ["日", "30分", "15分", "5分", "1分"], LVN = { "日": "日线", "30分": "30分钟", "15分": "15分钟", "5分": "5分钟", "1分": "1分钟" }, ORD = { "1分": 1, "5分": 5, "15分": 15, "30分": 30, "日": 99 };
+  const pf = (c) => (/^[569]/.test(c) ? "sh" : "sz") + c;
+  const dg = (t) => String(t).replace(/\D/g, "");
+  const hm = (t) => { const d = dg(t); return d.length >= 12 ? d.slice(8, 10) + ":" + d.slice(10, 12) : ""; };
+  const md = (t) => { const d = dg(t); return d.slice(4, 6) + "-" + d.slice(6, 8); };
+  const f2 = (x) => (+x).toFixed(2), sg = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
+  const gC = (b) => (b ? "#00f0ff" : "#ffe600");   /* 青蓝↓ = 要跌下来补, 黄↑ = 要涨上去补 */
+
+  const CSS = ".gvJL{font:600 12.5px/1.45 -apple-system,'PingFang SC',sans-serif;color:#fff;text-shadow:none;margin-top:6px;cursor:default}"
+    + ".gvJL .mono{font-family:ui-monospace,Menlo,monospace}"
+    + ".gvJL .aucL{border:1px solid;border-radius:12px;padding:6px 9px}"
+    + ".gvJL .ln1{font-size:14px;font-weight:800}.gvJL .ln1 .big{font:900 22px ui-monospace,Menlo,monospace}"
+    + ".gvJL .ln2{font:900 16px ui-monospace,Menlo,monospace;margin-top:2px}.gvJL .ln2 .sz{font-size:13px;color:#fff;margin-left:6px}"
+    + ".gvJL .ln3{font:800 14px ui-monospace,Menlo,monospace;margin-top:3px}.gvJL .okc{color:#4dffbf;font-size:17px}"
+    + ".gvJL .ln4{font:700 12.5px ui-monospace,Menlo,monospace;margin-top:2px}"
+    + ".gvJL .g{display:grid;grid-template-columns:20px 1fr auto;gap:2px 6px;align-items:center;padding:6px 8px;border-radius:12px;margin-top:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18)}"
+    + ".gvJL .g.in{border-color:#fff;background:rgba(255,255,255,.13)}"
+    + ".gvJL .ar{font:900 15px/1 -apple-system;text-align:center}.gvJL .z{font:800 14px ui-monospace,Menlo,monospace}"
+    + ".gvJL .r{text-align:right;font-size:11.5px;white-space:nowrap}"
+    + ".gvJL .n,.gvJL .tm{grid-column:2/4;display:flex;flex-wrap:wrap;gap:2px 8px;font-size:11.5px}.gvJL .tm{font:700 11.5px ui-monospace,Menlo,monospace}"
+    + ".gvJL .tag{display:inline-block;border-radius:7px;padding:0 5px;font-size:11px;font-weight:800;margin-left:4px;vertical-align:1px}"
+    + ".gvJL .tN{background:#fff;color:#1a0508}.gvJL .tIn{border:1px solid #fff}"
+    + ".gvJL details summary{list-style:none;cursor:pointer;margin:7px 2px 3px;font-weight:800;font-size:13px}.gvJL details summary::-webkit-details-marker{display:none}"
+    + ".gvJL .done{display:flex;justify-content:space-between;gap:6px;padding:4px 6px;font-size:12px;border-bottom:1px dashed rgba(255,255,255,.25)}"
+    + ".gvJL .rateH{display:flex;justify-content:space-between;margin:8px 2px 3px;font-size:12px}.gvJL .rateH b{font-size:13px}"
+    + ".gvJL .rate{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center;font-size:11px}"
+    + ".gvJL .rate div{border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:3px 0}.gvJL .rate b{display:block;font:800 14px ui-monospace,Menlo,monospace}"
+    + ".gvJL .wait{font-size:12px;padding:4px 2px}";
+  function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS; document.head.appendChild(s); } }
+
+  async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
+  async function mk(c, k, end, n) { const d = await J("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=" + c + ",m" + k + "," + (end || "") + "," + (n || 320)); return (d.data[c]["m" + k] || []).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }
+  /* 1分钟一次只给320根(约1.3天), 按结束时刻往前再补一页800根, 凑满近5个交易日 */
+  async function mk1(c) { const a = await mk(c, 1); if (!a.length) return a; let b = []; try { b = await mk(c, 1, a[0].t, 800); } catch (e) { } const s = a[0].t; return b.filter((x) => x.t < s).concat(a); }
+  async function dk(c) { const d = await J("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + c + ",day,,,80,qfq"); const n = d.data[c]; return (n.qfqday || n.day).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }
+  async function mn(c) { const d = await J("https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=" + c); const x = d.data[c]; let pv = 0; return { date: x.data.date, pts: x.data.data.map((s) => { const a = s.split(" "), cv = +a[2], v = cv - pv; pv = cv; return { t: a[0], p: +a[1], v: v }; }) }; }
+
+  /* 扫一个周期的 VI(含今天已补的) */
+  function scan(b, lv, today) {
+    const out = [], daily = lv === "日", days = [...new Set(b.map((x) => dg(x.t).slice(0, 8)))], keep = daily ? null : days.slice(-5);
+    for (let i = 1; i < b.length; i++) {
+      const p0 = b[i - 1], c0 = b[i], d0 = dg(c0.t).slice(0, 8);
+      if (!daily && (dg(p0.t).slice(0, 8) !== d0 || keep.indexOf(d0) < 0)) continue;   /* 分钟级只看同一天内、近5个交易日 */
+      const vm = p0.c * 0.0005, bull = c0.o - p0.c > vm && (daily || c0.l <= p0.h), bear = p0.c - c0.o > vm && (daily || c0.h >= p0.l);
+      if (!bull && !bear) continue;
+      let ft = "", ext = c0.o;
+      if (daily && d0 === today && (bull ? c0.l <= p0.c : c0.h >= p0.c)) ft = "今日";   /* 今天这根日K已碰昨收 = 今天补了(时刻取开盘缺口的) */
+      else if (daily && d0 === today) ext = bull ? c0.l : c0.h;
+      for (let j = ft ? b.length : i + 1; j < b.length; j++) {
+        ext = bull ? Math.min(ext, b[j].l) : Math.max(ext, b[j].h);
+        if (bull ? b[j].l <= p0.c : b[j].h >= p0.c) { ft = b[j].t; break; }
+      }
+      const lo = bull ? p0.c : c0.o, hi = bull ? c0.o : p0.c;
+      if (ft && ft !== "今日" && dg(ft).slice(0, 8) !== today) continue;   /* 以前就补掉的不要 */
+      const rem = ft ? null : (bull ? [p0.c, Math.min(c0.o, ext)] : [Math.max(c0.o, ext), p0.c]);
+      out.push({ lv, bull, lo, hi, rem, t: c0.t, ft, d: daily ? dg(c0.t).slice(0, 8) : d0 });
+    }
+    return out;
+  }
+
+  function compute(code, D, m30, m15, m5, m1, M) {
+    const today = M.date, bt = D[D.length - 1], bp = D[D.length - 2];
+    const isToday = dg(bt.t).slice(0, 8) === today;
+    const day = isToday ? bt : null, pre = isToday ? bp.c : bt.c, op = day ? day.o : null;
+    const last = M.pts.length ? M.pts[M.pts.length - 1].p : bt.c;
+    let opg = null;
+    if (op && Math.abs(op / pre - 1) >= 0.001) {
+      const up = op > pre, m1t = m1.filter((x) => dg(x.t).slice(0, 8) === today);
+      const hit = m1t.find((x) => (up ? x.l <= pre : x.h >= pre));
+      let ext = op; for (const x of m1t) { if (hit && x === hit) break; ext = up ? Math.min(ext, x.l) : Math.max(ext, x.h); }
+      opg = { up, pct: (op / pre - 1) * 100, size: Math.abs(op - pre), ft: hit ? hm(hit.t) : "", ext, prog: hit ? 1 : Math.abs(op - ext) / Math.abs(op - pre) };
+      const lo0 = Math.min(pre, op), hi0 = Math.max(pre, op), inB = (p) => p > lo0 && p < hi0;
+      opg.st = hit ? "done" : inB(last) ? "in" : "none";
+      if (hit) {
+        const fk = dg(hit.t).slice(8, 12), seg = []; let cur = null;
+        M.pts.forEach((p) => { if (p.t <= fk || p.t > "1500") return; if (inB(p.p)) { if (!cur) { cur = { a: p.t, b: p.t, n: 0 }; seg.push(cur); } cur.b = p.t; cur.n++; } else cur = null; });
+        const tt = (t) => t.slice(0, 2) + ":" + t.slice(2), lastT = M.pts.length ? M.pts[M.pts.length - 1].t : "";
+        opg.back = seg.filter((s) => s.n >= 5).map((s) => tt(s.a) + "–" + (s.b === lastT && inB(last) ? "进行中" : tt(s.b)));
+      }
+    }
+    const BY = { "日": D, "30分": m30, "15分": m15, "5分": m5, "1分": m1 };
+    let all = []; LV.forEach((L) => { if (BY[L] && BY[L].length > 2) all = all.concat(scan(BY[L], L, today)); });
+    all.forEach((g) => { if (g.ft === "今日") g.ft = today + (opg && opg.ft ? opg.ft.replace(":", "") : "1500"); });
+    const ref = op || last;
+    all = all.filter((g) => Math.abs((g.lo + g.hi) / 2 / last - 1) <= 0.08);
+    all = all.filter((g) => !(g.lv === "1分" && (g.hi - g.lo) / ref < 0.002));   /* 1分钟 <0.2% 不显示 */
+    const open = all.filter((g) => !g.ft), done = all.filter((g) => g.ft);
+    const grp = [];
+    open.forEach((g) => {
+      const z = g.rem, m = grp.find((x) => x.bull === g.bull && z[0] <= x.hi * 1.0005 && z[1] >= x.lo * 0.9995);
+      if (!m) grp.push({ bull: g.bull, lo: z[0], hi: z[1], mem: [g] });
+      else { m.mem.push(g); m.lo = Math.min(m.lo, z[0]); m.hi = Math.max(m.hi, z[1]); }
+    });
+    const ck = (() => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), w = d.getDay(); return (w === 0 || w === 6 || m < 570 || m >= 900) ? 3 : m < 630 ? 0 : m < 810 ? 1 : m < 870 ? 2 : 3; })();
+    const rt = RT[code];
+    const m1d = m1.map((x) => ({ t: dg(x.t), h: x.h, l: x.l }));
+    grp.forEach((g) => {
+      g.lvs = [...new Set(g.mem.map((x) => x.lv))].sort((a, b) => ORD[b] - ORD[a]);
+      g.N = g.lvs.length;
+      g.mid = (g.lo + g.hi) / 2; g.dist = (g.mid / last - 1) * 100; g.vsOp = op ? (g.mid / op - 1) * 100 : null;
+      g.inG = last >= g.lo * 0.998 && last <= g.hi * 1.002;
+      g.prog = g.inG ? Math.max(0, Math.min(1, g.bull ? (g.hi - last) / (g.hi - g.lo) : (last - g.lo) / (g.hi - g.lo))) : 0;
+      const L = g.lvs[0], r = rt && rt[L] ? (L === "日" ? rt["日"][g.bull ? 0 : 1] : (rt[L][ck] || [])[g.bull ? 0 : 1]) : null;
+      g.rt = r ? (r.length === 3 ? "1日 " + r[0] + "% · 3日 " + r[1] + "% · 5日 " + r[2] + "%" : "次日 " + r[0] + "% · 3日 " + r[1] + "%") : "";
+      g.born = g.mem.slice().sort((a, b) => dg(a.t) - dg(b.t)).map((m) => ({ lv: m.lv, t: dg(m.t) }));
+      const t0 = g.born[0].t.padEnd(12, "9").slice(0, 12), segs = []; let on = false;
+      m1d.forEach((x) => { if (x.t <= t0) return; const hit = x.l < g.hi - 0.005 && x.h > g.lo + 0.005; if (hit && !on) segs.push(x.t); on = hit; });   /* 真进到缺口里才算碰过 */
+      g.touch = segs;
+    });
+    grp.sort((a, b) => b.N - a.N || (b.inG - a.inG) || Math.abs(a.dist) - Math.abs(b.dist));
+    const dgp = [];
+    done.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).forEach((g) => {
+      const m = dgp.find((x) => x.bull === g.bull && g.lo <= x.hi * 1.0005 && g.hi >= x.lo * 0.9995);
+      if (!m) dgp.push({ bull: g.bull, lo: g.lo, hi: g.hi, mem: [g], ft: g.ft, fp: g.bull ? g.lo : g.hi });
+      else { m.mem.push(g); m.lo = Math.min(m.lo, g.lo); m.hi = Math.max(m.hi, g.hi); if (dg(g.ft) > dg(m.ft)) { m.ft = g.ft; m.fp = g.bull ? g.lo : g.hi; } }
+    });
+    dgp.forEach((g) => { g.lvs = [...new Set(g.mem.map((x) => x.lv))].sort((a, b) => ORD[b] - ORD[a]); g.N = g.lvs.length; g.old = [...new Set(g.mem.filter((x) => x.d !== today).map((x) => md(x.d)))]; });
+    dgp.sort((a, b) => b.N - a.N || dg(b.ft) - dg(a.ft));
+    const tr = {}; LV.forEach((L) => { const t = all.filter((g) => g.lv === L && g.d === today); tr[L] = { n: t.length, k: t.filter((g) => g.ft).length }; });
+    return { today, pre, op, opg, grp, dgp, tr };
+  }
+
+  function html(R, openDone) {
+    let h = "";
+    if (R.op) {
+      const o = R.opg, col = o ? gC(o.up) : "#fff";
+      if (o) {
+        const rem = Math.abs(o.ext - R.pre);
+        h += '<div class="aucL" style="border-color:' + col + '"><div class="ln1">竞 ' + (o.up ? "高开" : "低开") + ' <span class="big" style="color:' + col + '">' + sg(o.pct) + "</span></div>"
+          + '<div class="ln2" style="color:' + col + '">' + (o.up ? "↓" : "↑") + " iv " + f2(R.op) + "–" + f2(R.pre) + ' <span class="sz">' + f2(o.size) + "元</span></div>"
+          + '<div class="ln3">' + (o.st === "done" ? '<span class="okc">✓</span> ' + o.ft : "还差 " + f2(rem) + "元 · 已补 " + Math.round(o.prog * 100) + "%") + "</div>"
+          + (o.back && o.back.length ? o.back.map((b) => '<div class="ln4">再次回补 ' + b + "</div>").join("") : "") + "</div>";
+      } else h += '<div class="aucL" style="border-color:#fff"><div class="ln1">竞 平开 <span class="big">0.00%</span></div></div>';
+    }
+    h += R.grp.map((g) => {
+      const z = (g.hi - g.lo) / g.mid < 0.0015 ? f2(g.mid) : f2(g.lo) + "–" + f2(g.hi);
+      return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>"
+        + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : "") + "</span>"
+        + '<span class="r">' + (g.vsOp != null ? "距开盘 <b>" + sg(g.vsOp) + "</b>" : "") + "<br>距现价 <b>" + sg(g.dist) + "</b></span>"
+        + (g.rt ? '<span class="n"><span>' + g.rt + "</span></span>" : "")
+        + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + b.t.slice(4, 6) + "-" + b.t.slice(6, 8) + (b.t.length >= 12 ? " " + b.t.slice(8, 10) + ":" + b.t.slice(10, 12) : "") + "</span>").join("")
+        + (g.touch.length ? g.touch.slice(-4).map((t) => "<span>" + t.slice(4, 6) + "-" + t.slice(6, 8) + " " + t.slice(8, 10) + ":" + t.slice(10, 12) + " 碰过</span>").join("") + (g.touch.length > 4 ? "<span>共碰 " + g.touch.length + " 次</span>" : "") : "") + "</span></div>";
+    }).join("");
+    if (R.dgp.length) h += "<details" + (openDone ? " open" : "") + "><summary>今日已补 " + R.dgp.length + " ▾</summary>"
+      + R.dgp.map((g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + " " + g.lvs.map((l) => LVN[l]).join("+") + (g.old.length ? " <b>" + g.old.join(" ") + "形成</b>" : "") + '</span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>").join("") + "</details>";
+    h += '<div class="rateH"><b>今天形成的缺口 · 当天已补/出现</b><span>盘中实时变</span></div><div class="rate">'
+      + LV.map((L) => "<div>" + LVN[L] + "<b>" + (R.tr[L].n ? Math.round(R.tr[L].k / R.tr[L].n * 100) + "%" : "—") + "</b>" + R.tr[L].k + "/" + R.tr[L].n + "</div>").join("") + "</div>";
+    return h;
+  }
+
+  const ST = {};   /* code → {at, fly, R, err} */
+  function paint(host, code) {
+    let box = host.querySelector(":scope > .gvJL");
+    if (!box) { host.innerHTML = ""; box = document.createElement("div"); box.className = "gvJL"; host.appendChild(box); }
+    const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
+    if (s) s.openDone = openDone;
+    const h = s && s.R ? html(s.R, openDone) : '<div class="wait">' + (s && s.err ? "缺口数据取不到：" + s.err + "（稍后自动重试）" : "缺口数据加载中…") + "</div>";
+    if (box._h !== h) { box.innerHTML = h; box._h = h; const d2 = box.querySelector("details"); if (d2) d2.addEventListener("toggle", () => { if (ST[code]) ST[code].openDone = d2.open; }); }
+  }
+  function render(host, code) {
+    ensureCss();
+    code = String(code).replace(/\D/g, "");
+    host.onclick = (e) => e.stopPropagation();   /* 点这一块不翻卡、不触发原缺口行的展开 */
+    host.setAttribute("data-gv", code);
+    const s = ST[code] = ST[code] || { at: 0 };
+    paint(host, code);
+    if (s.fly || Date.now() - s.at < 60000) return;
+    s.fly = 1;
+    const c = pf(code);
+    Promise.all([dk(c), mk(c, 30), mk(c, 15), mk(c, 5), mk1(c), mn(c)]).then((r) => {
+      s.R = compute(code, ...r); s.err = ""; s.at = Date.now(); s.fly = 0;
+      document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code));
+    }).catch((e) => { s.err = e && e.message || "网络"; s.at = Date.now() - 45000; s.fly = 0; document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code)); });
+  }
+  window.JLGapIV = { render, compute, _st: ST };
+})();
