@@ -57,7 +57,7 @@
   function ymd() { return today().replace(/-/g, ""); }
   function hhmm(v) { var s = String(v == null ? 0 : v).replace(/[^0-9]/g, ""); if (s.length > 4) s = s.slice(-4); while (s.length < 4) s = "0" + s; return s.slice(0, 2) + ":" + s.slice(2, 4); } /* 入参为HHMM(如1040/941) */
   function nowMin() { var d = new Date(); return d.getHours() * 100 + d.getMinutes(); }
-  function mktLive() { var d = new Date(), w = d.getDay(), m = d.getHours() * 100 + d.getMinutes(); return w >= 1 && w <= 5 && m >= 915 && m <= 1505; }
+  function mktLive() { var d = new Date(), w = d.getDay(), m = d.getHours() * 100 + d.getMinutes(); if (!(w >= 1 && w <= 5 && m >= 915 && m <= 1505)) return false; if (m > 1131 && m < 1259) return false; /* jl-B2-T7: 午休不轮询 */ if (m >= 935 && S.snap && S.snap.td && S.snap.td !== today() && S.snap.ms && new Date(S.snap.ms).getHours() * 100 + new Date(S.snap.ms).getMinutes() >= 935 && new Date(S.snap.ms).toLocaleDateString("sv-SE") === today()) return false; /* jl-B2-T7: 今天9:35后采到的快照仍属旧交易日=休市(节假日), 停轮询; 快照全失败时不下此结论 */ return true; }
   function fmtYi(v) { if (!isFinite(v)) return "—"; var a = v / 1e8; return (a >= 0 ? "+" : "") + a.toFixed(1) + "亿"; }
   function pct(v) { return isFinite(v) ? (v >= 0 ? "+" : "") + v.toFixed(2) + "%" : "—"; }
 
@@ -249,19 +249,20 @@
       if (e || !d || !d.data || !d.data.pool) { cb(e || new Error(kind)); return; }
       var pool = d.data.pool;
       if (CFG.yd.exst) pool = pool.filter(function (r) { return !/ST/.test(String(r.n || "")); }); /* jl-1079: 涨跌停池家族剔ST——温度v2九因子/连板高度/炸板率/溢价/涨跌停结构组判定全口径对齐主模块 */
-      cb(null, pool);
+      cb(null, pool, d.data.qdate != null ? String(d.data.qdate) : ""); /* jl-B2-G2: 透传池子自报交易日(实测01:00查20261029返回qdate=20261028) */
     });
   }
   function fetchPools(cb) {
-    var out = { zt: null, zb: null, dt: null, date: today() }, left = 3, bad = 0;
+    var out = { zt: null, zb: null, dt: null, date: today(), qd: "" }, left = 3, bad = 0; /* jl-B2-G2: qd=涨停池自报交易日(qdate), 板块强度按它核日期; 查询日≠数据日(盘前/夜间返回上一交易日) */
     function fin() { if (--left > 0) return; if (bad >= 3) { cb(new Error("pools")); return; } S.pool = out; lsSet("jlv2_pool_v1", out); cb(null, out); }
-    fetchPoolOne("ZT", ymd(), function (e, p) { if (e) { bad++; } else { var lb = 0, zb = 0, top = null; p.forEach(function (r) { var L = +r.lbc || 0; if (L > lb) { lb = L; top = { c: String(r.c || ""), nm: String(r.n || ""), hy: String(r.hybk || "") }; } zb += +r.zbc || 0; }); out.zt = { n: p.length, lb: lb, zbc: zb, top: top }; } fin(); }); /* jl-1121: 最高连板行落存top(名称/代码/行业, 同板并列取首封最早——ZT池按fbt升序) */
+    fetchPoolOne("ZT", ymd(), function (e, p, qd) { if (e) { bad++; } else { out.qd = qd || ""; var lb = 0, zb = 0, top = null; p.forEach(function (r) { var L = +r.lbc || 0; if (L > lb) { lb = L; top = { c: String(r.c || ""), nm: String(r.n || ""), hy: String(r.hybk || "") }; } zb += +r.zbc || 0; }); out.zt = { n: p.length, lb: lb, zbc: zb, top: top, rows: p.map(function (r) { return { c: String(r.c || ""), n: String(r.n || ""), lbc: +r.lbc || 0, fund: +r.fund || 0, zbc: +r.zbc || 0, fbt: +r.fbt || 0, hy: String(r.hybk || "").replace(/[ⅠⅡⅢ]+$/, "") }; }) }; } /* jl-B2-G2: 落存逐股(已剔ST·200只), 板块强度涨停因子改读这份, 不再借异动卡50只池 */ fin(); }); /* jl-1121: 最高连板行落存top(名称/代码/行业, 同板并列取首封最早——ZT池按fbt升序) */
     fetchPoolOne("ZB", ymd(), function (e, p) { if (e) { bad++; } else { out.zb = { n: p.length }; } fin(); });
     fetchPoolOne("DT", ymd(), function (e, p) { if (e) { bad++; } else { out.dt = { n: p.length, rows: p.map(function (r) { return { c: String(r.c), n: String(r.n), zdp: +r.zdp || 0, days: +r.days || 1, fund: +r.fund || 0 }; }) }; } fin(); }); /* jl-1080: 跌停明细落存(zdp跌幅/days连跌天数/fund封单), 温度卡点数字弹出 */
   }
   function fetchPremium(cb) {
     var pd = prevTradeDay();
     if (!pd) { cb(new Error("no-prevday")); return; }
+    var _h0 = lsGet("jlv2_prevday_v1", null), sess = (S.atr && S.atr.kdate) || (_h0 && _h0.sess) || ""; /* jl-B1-T1: 记下本次溢价属于哪个交易日 */
     fetchPoolOne("ZT", pd, function (e, p) {
       if (e || !p || !p.length) { cb(e || new Error("zt-prev")); return; }
       var ids = p.slice(0, 80).map(function (r) { return (r.m === 1 ? "1." : "0.") + r.c; });
@@ -270,7 +271,7 @@
         var s = 0, n = 0;
         d2.data.diff.forEach(function (r) { var v = +r.f3; if (isFinite(v)) { s += v; n++; } });
         if (!n) { cb(new Error("prem-empty")); return; }
-        S.prem = { date: today(), avg: s / n, n: n };
+        S.prem = { date: today(), avg: s / n, n: n, pool: pd, sess: sess };
         lsSet("jlv2_prem_v1", S.prem);
         cb(null, S.prem);
       });
@@ -287,9 +288,9 @@
       }
       var atr = trs.reduce(function (a, b) { return a + b; }, 0) / trs.length;
       var close = rows[n - 1].c, prevD = rows[n - 2].d, lastD = rows[n - 1].d;
-      S.atr = { date: today(), vol: close ? atr / close * 100 : null, atr: atr, close: close, kdate: lastD };
+      S.atr = { date: today(), vol: close ? atr / close * 100 : null, atr: atr, close: close, kdate: lastD, prevDate: prevD };
       lsSet("jlv2_atr_v1", S.atr);
-      lsSet("jlv2_prevday_v1", { date: today(), prev: lastD === ymd() ? prevD : lastD });
+      lsSet("jlv2_prevday_v1", { date: today(), prev: prevD, sess: lastD }); /* jl-B1-T1: 溢价口径=最新一根日K所属交易日(sess)的"上一交易日涨停池×sess当日涨幅"——原 lastD===今天?prevD:lastD 在开盘前/周末取到"涨停股当天涨幅"冒充次日溢价 */
       cb(null, S.atr);
     });
   }
@@ -312,7 +313,7 @@
           var out = { secid: e0[0], name: e0[1], code: e0[2], today: last.v, asOf: last.d, isToday: last.d === today(), rel: isFinite(avgAbs) && avgAbs > 0 ? last.v / avgAbs : NaN, d5: d5, arr: arr };
           fetchVolRatio(sids, function (vr) { out.vr = vr; cb(null, out); }); /* jl-VR: 成交额量比, 同步性用 */
         };
-        if (arr[arr.length - 1].d === today() || !mktLive() || nowMin() < 930) { fin(); return; }
+        var _wd = new Date().getDay(); if (arr[arr.length - 1].d === today() || _wd === 0 || _wd === 6 || nowMin() < 930) { fin(); return; } /* jl-B2-N2: 原!mktLive()在15:05后停补今日行→收盘后显示"截至昨天"而A卡显示今天; 改为工作日9:30后都补, f124须为今天才认(节假日f124=节前→自然不补) */
         jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62,f124&secids=" + sids.join(",") + "&ut=" + UT, function (e2, d2) {
           try {
             var dl = d2 && d2.data && d2.data.diff ? (Array.isArray(d2.data.diff) ? d2.data.diff : Object.values(d2.data.diff)) : [];
@@ -367,7 +368,7 @@
     var out = [], left = CFG.etfs.length, bad = 0;
     CFG.etfs.forEach(function (e0, i) {
       setTimeout(function () {
-        fetchOneEtf(i, function (e, r) { if (e) { bad++; } else { out[i] = r; } if (--left <= 0) { if (bad >= CFG.etfs.length) { try { window.__jlDg && window.__jlDg.fail("jlv2:etf", function () { return new Promise(function (res) { fetchEtfs(function (e2) { paint(); res(!e2); }); }); }, "东财ETF净额通道受阻(网络/IP或风控)", function () { return !!(S.etf && S.etf.some(Boolean)); }); } catch (eD) {} cb(new Error("etf-all")); return; } S.etf = out; S.etfAt = hhmm(String(nowMin()).padStart(4, "0")); try { window.__jlDg && window.__jlDg.ok("jlv2:etf"); } catch (eO) {} lsSet("jlv2_etf_v1", { date: today(), rows: out, at: S.etfAt }); cb(null, out); } });
+        fetchOneEtf(i, function (e, r) { if (e) { bad++; } else { out[i] = r; } if (--left <= 0) { if (bad >= CFG.etfs.length) { try { window.__jlDg && window.__jlDg.fail("jlv2:etf", function () { return new Promise(function (res) { fetchEtfs(function (e2) { paint(); res(!e2); }); }); }, "东财ETF净额通道受阻(网络/IP或风控)", function () { return !!(S.etf && S.etf.some(Boolean)); }); } catch (eD) {} cb(new Error("etf-all")); return; } S.etf = out; S.etfAt = hhmm(String(nowMin()).padStart(4, "0")); try { window.__jlDg && window.__jlDg.ok("jlv2:etf"); } catch (eO) {} lsSet("jlv2_etf_v1", { date: today(), rows: out, at: S.etfAt }); S.etfMs = Date.now(); try { document.dispatchEvent(new CustomEvent("jl:etf", { detail: out[0] || null })); } catch (eE) {} /* jl-B2-N1: 首页国家队A卡改读本结果, 不再自拉同4只ETF */ cb(null, out); } });
       }, i * 350);
     });
   }
@@ -899,7 +900,7 @@
         : tile("跌停数量", st && st.dt != null ? st.dt : "—", (st && st.dt != null && st.dt >= 40) ? "dn" : "mu", "跌停池 · 本模块自建")) +
       tile("炸板率", zbr != null ? zbr + "%" : "—", zbr != null && zbr >= 40 ? "dn" : "mu", zbn != null && ztn != null ? "炸板" + zbn + "/涨停" + ztn : "盘中暂态 · 收盘定版") +
       tile("最高连板", st && st.lb != null ? st.lb + "板" : "—", (st && st.lb != null && st.lb >= 6) ? "up" : (st && st.lb != null && st.lb <= 2) ? "dn" : "mu", lbNm ? lbNm + (lbTh ? " · " + esc(lbTh) : "") : "涨停池口径") +
-      tile("昨涨停溢价", st && st.prem != null ? pct(st.prem) : "—", (st && st.prem != null && st.prem >= 3) ? "up" : (st && st.prem != null && st.prem <= -1) ? "dn" : "mu", "T-1 · 强势股次日") +
+      tile("昨涨停溢价", st && st.prem != null ? pct(st.prem) : "—", (st && st.prem != null && st.prem >= 3) ? "up" : (st && st.prem != null && st.prem <= -1) ? "dn" : "mu", S.prem && S.prem.pool && S.prem.sess ? S.prem.pool.slice(4, 6) + "-" + S.prem.pool.slice(6) + "涨停→" + S.prem.sess.slice(4, 6) + "-" + S.prem.sess.slice(6) : "T-1 · 强势股次日") +
       tile("成交额变化", amtDiffHtml(), amtDiffCls(), amtDiffSub()) + /* jl-1076 */
       tile("ATR14/价", S.atr && S.atr.vol != null ? S.atr.vol.toFixed(2) + "%" : "—", "mu", "上证") +
       tile("热点板块持续", hotSec ? hotSec.streak + "天" : (S.hot ? S.hot.streak + "天" : "板块映射未覆盖"), hotSec ? (hotSec.avg > 0 ? "up" : "dn") : "mu", hotSec ? esc(hotSec.name) + " · 均" + (hotSec.avg >= 0 ? "+" : "") + hotSec.avg.toFixed(1) + "%" : (S.hot ? esc(S.hot.name) + " · 行业涨幅榜首" : "离线板块映射聚合")); /* jl-1080 · jl-1121: 板块名上副行, 持续天数上值行 */
@@ -1052,6 +1053,7 @@
   window.__JLV2S__ = S;
   window.__JLV2P__ = function () { try { paint(); } catch (e) {} };
   window.__JLV2C__ = CFG;
+  window.__JLV2TD__ = curTd; /* jl-B1-G1: 数据所属交易日(快照f124口径, 周末=上周五)单一真源, 板块强度等只读调用 */
   window.__JLV2T__ = { calcIdxEv: calcIdxEv, calcAmtEv: calcAmtEv, fetchTxMin: fetchTxMin, deriveState: deriveState, deriveStruct: deriveStruct, tempPctJL: tempPctJL, gjdWide: gjdWide, shareFlow: shareFlow }; /* jl-gate: 买入闸只读调用 */ /* jl-1077: 纯函数暴露, 便于回测校准 */
 
   function paint() {
@@ -1097,6 +1099,10 @@
     fetchSnap(function () { paint(); });
     if (n - lastTick > CFG.refrEtf) { lastTick = n; fetchIdx(function () { paint(); }); fetchEtfs(function () { paint(); }); fetchShares(function () { paint(); }); }
     fetchPools(function () { paint(); });
+    if (nowMin() >= 931 && (!S.prem || S.prem.sess !== ymd()) && n - (S.premTryAt || 0) > 5 * 60e3 && (S.premTryD !== ymd() || (S.premTryN || 0) < 6)) { /* jl-B1-T1: 开盘后溢价仍属旧交易日→每5分钟补算一次(先刷日K拿到今天这根), 追上今天即停; 原只在boot算一次, 盘前打开整天停在错值 */
+      S.premTryAt = n; if (S.premTryD !== ymd()) { S.premTryD = ymd(); S.premTryN = 0; } S.premTryN++; /* 节假日工作日sess追不上今天, 每天最多补6次 */
+      fetchAtr(function () { fetchPremium(function () { paint(); }); });
+    }
     fetchTxMin(function () { paint(); }); /* jl-1077: 分钟级自算(60s), 休市时mktLive闸住=冻结 */
     paint();
   }, CFG.refrLive);

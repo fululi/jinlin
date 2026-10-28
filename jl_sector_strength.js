@@ -113,11 +113,11 @@
         var hasRows = !!inp.rows;
         var fAvg = a ? (a.n < minN ? { raw: null, state: "smallN", note: "样本" + a.n + "<" + minN + "(n<8不参评)" }
                                   : { raw: Math.round((a.s / a.n) * 1e4) / 1e4, state: "ok", note: "n=" + a.n })
-                     : { raw: null, state: "miss", note: hasRows ? "板块样本不在mtemp口径覆盖" : "mtemp rows缺失" };
+                     : (inp.rowsStale ? { raw: null, state: "stale", note: "逐股rows非当日(" + inp.rowsStale + ")" } : { raw: null, state: "miss", note: hasRows ? "板块样本不在mtemp口径覆盖" : "mtemp rows缺失" });
         var fUpR = a ? (a.n < minN ? { raw: null, state: "smallN", note: "样本" + a.n + "<" + minN }
                                     : { raw: Math.round((a.up / a.n) * 1e4) / 1e4, state: "ok", note: "up=" + a.up + "/n=" + a.n })
-                     : { raw: null, state: "miss", note: hasRows ? "板块样本不在mtemp口径覆盖" : "mtemp rows缺失" };
-        var fZt = z ? { raw: z.ztN, state: "ok", note: "lb=" + z.lb } : { raw: null, state: "none", note: "当日涨停池无该板块成员" };
+                     : (inp.rowsStale ? { raw: null, state: "stale", note: "逐股rows非当日(" + inp.rowsStale + ")" } : { raw: null, state: "miss", note: hasRows ? "板块样本不在mtemp口径覆盖" : "mtemp rows缺失" });
+        var fZt = z ? { raw: z.ztN, state: "ok", note: "lb=" + z.lb } : (inp.ztStale ? { raw: null, state: "stale", note: "涨停池非当日(" + inp.ztStale + ")" } : { raw: null, state: "none", note: "当日涨停池无该板块成员" }); /* jl-B1-S3: 非当日源=stale, 不冒充"无" */
         var fEv = e ? { raw: (e.mcDistRaw ? { codeN: e.codeN, recN: e.recN, memPeak: e.memPeak, mcDistRaw: e.mcDistRaw } : { codeN: e.codeN, recN: e.recN, memPeak: e.memPeak }), state: "ok", note: e.mcDistRaw ? "sp未归属" + e.recN + "条·mcDist原文保留" : "T3记录" + e.recN + "条·并集" + e.codeN + "股" }
                     : { raw: null, state: "none", note: "当日T3无该板块记录" };
         var cand = z ? z.cand.slice().sort(function (x, y) { return (y.lbc - x.lbc) || (y.fund - x.fund); }).slice(0, 3) : [];
@@ -170,6 +170,8 @@
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function fmtPct(v) { return (v >= 0 ? "+" : "") + (Math.round(v * 100) / 100).toFixed(2) + "%"; }
   function fmtYi(v) { return (v / 1e8).toFixed(2) + "亿"; }
+  function localDay(ms) { return new Date(ms).toLocaleDateString("sv-SE"); } /* jl-B1-S4: 本地(北京)日期, 不用UTC */
+  function normDay(v) { var x = String(v || "").slice(0, 10); return /^\d{8}$/.test(x) ? x.slice(0, 4) + "-" + x.slice(4, 6) + "-" + x.slice(6, 8) : (/^\d{4}-\d{2}-\d{2}$/.test(x) ? x : ""); }
 
   function openDB() {
     try {
@@ -193,7 +195,7 @@
   function prune90() {
     try {
       if (!S.db || !S.keys) return;
-      var cut = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+      var cut = localDay(Date.now() - 90 * 864e5); /* jl-B1-S4 */
       var del = [], cap = 12000;
       S.keys.forEach(function (k) { if (String(k).slice(0, 10) < cut) del.push(k); });
       var overflow = S.keys.size - del.length - cap;
@@ -249,20 +251,30 @@
     try {
       var mt = lsGet("jinlin_mtemp_v1");
       var yd = lsGet("jinlin_yd_v1");
-      var rows = mt && mt.data && mt.data.rows || null;
-      var at = (mt && +mt.at) || 0;
-      /* jl-1168b 外修(2026-10-26): "数据时点"钉死显示层修复——jinlin_mtemp_v1.at 是 v1 温度卡
-         自有深采时刻(15分钟TTL), 盘中 jlv2 每分钟广播样本只更新 data.time 不动 at,
-         抽屉手柄于是永远显示开页那一刻(实测: at=10:11 钉死, data.time 已 10:16)。
-         显示取 at 与 data.time 的较新者; 不改 at 的 TTL 语义(它还门着 v1 的 15 分钟重采)。 */
-      var _dtt = mt && mt.data && mt.data.time;
-      if (_dtt && /^\d{1,2}:\d{2}$/.test(String(_dtt))) {
-        var _hp = String(_dtt).split(":"), _cand = new Date().setHours(+_hp[0], +_hp[1], 0, 0);
-        if (_cand > at) at = _cand;
+      /* jl-B1-S3/S4/S5 (2026-10-29): 按数据所属交易日逐源核日期——原 day=yd.date(异动缓存日, 不开首页异动视图就停旧日)把整屉钉在旧日,
+         且兜底用 toISOString(UTC, 北京08:00前少一天)。现: day=快照交易日(mtemp.data.td, f124口径, 周末=上周五)→jlv2 curTd→本地日期;
+         rows/涨停池/T3 各自核对, 非当日不计入并在抽屉标明; 任一源非当日本轮不写快照(防旧日+今天30分桶污染快照库) */
+      var md = mt && mt.data || null;
+      var _pv0 = lsGet("jlv2_pool_v1"), _pvD0 = normDay(_pv0 && _pv0.qd || ""); /* jl-B2-G2: 快照没采到(风控/夜间)时, 以涨停池自报交易日为次选, 再退墙钟 */
+      var day = (md && /^\d{4}-\d{2}-\d{2}$/.test(String(md.td || "")) && md.td) || _pvD0 || (typeof window.__JLV2TD__ === "function" ? (function () { try { return window.__JLV2TD__(); } catch (e) { return ""; } })() : "") || localDay(Date.now());
+      var dayFromData = !!(md && md.td === day);
+      var rowsTd = md && md.rowsTd || "";
+      var rows = md && md.rows && rowsTd === day ? md.rows : null;
+      var rowsStale = !!(md && md.rows && rowsTd !== day) ? (rowsTd || "未标日") : "";
+      var at = 0;
+      var _dtt = md && md.time;
+      if (md && md.td === day && _dtt && /^\d{1,2}:\d{2}$/.test(String(_dtt))) { var _hp = String(_dtt).split(":"); at = new Date(day + "T00:00:00").setHours(+_hp[0], +_hp[1], 0, 0); } /* 时分拼在数据交易日上, 不再拼到墙钟今天(原跨天错位) */
+      else if (mt && +mt.at && localDay(+mt.at) === day) at = +mt.at;
+      /* jl-B2-G2: 涨停池优先读温度v2自建池(jlv2_pool_v1: 当日查询·200只·已剔ST), 与温度卡"涨停数量"同一份; 没有或非当日再退回异动卡池(50只·含ST) */
+      var pv = lsGet("jlv2_pool_v1"), pvD = normDay(pv && pv.qd || ""), pvRows = pv && pv.zt && pv.zt.rows;
+      var ztSrc = "", ztD = "", ztPool = [], ztStale = "";
+      if (pvRows && pvD === day) { ztSrc = "v2"; ztD = pvD; ztPool = pvRows; }
+      else {
+        var ydD = normDay(yd && yd.zt && yd.zt.date || "");
+        if (yd && yd.zt && yd.zt.pool && ydD === day) { ztSrc = "yd"; ztD = ydD; ztPool = yd.zt.pool; }
+        else if (yd && yd.zt && yd.zt.pool) ztStale = ydD || "未标日";
+        else if (pvRows) ztStale = pvD || "未标日";
       }
-      var day = (yd && yd.date) || (at ? new Date(at).toISOString().slice(0, 10) : null);
-      if (!day) { S.last = null; paint(); return; }
-      var ztPool = (yd && yd.zt && yd.zt.pool) || [];
       var ctx = {
         con: (window.__JL_CONCEPTS__ && window.__JL_CONCEPTS__.map) || {},
         sec: (window.__JL_SECTORS__ && window.__JL_SECTORS__.map) || {}
@@ -272,9 +284,9 @@
         if (!at && t3recs.length) {
           for (var i = 0; i < t3recs.length; i++) at = Math.max(at, Date.parse(t3recs[i].at || "") || 0);
         }
-        var out = CORE.buildSnap({ day: day, at: at, rows: rows, ztPool: ztPool, t3recs: t3recs, ctx: ctx, ydDate: yd && yd.date });
-        S.day = day; S.at = at; S.last = out; S.stat = out.tierStat;
-        persistAsync(out.recs);
+        var out = CORE.buildSnap({ day: day, at: at, rows: rows, ztPool: ztPool, t3recs: t3recs, ctx: ctx, ydDate: yd && yd.date, rowsStale: rowsStale, ztStale: ztStale });
+        S.day = day; S.at = at; S.last = out; S.stat = out.tierStat; S.stale = { rows: rowsStale, zt: ztStale }; S.ztSrc = ztSrc;
+        if (dayFromData && !rowsStale && !ztStale && (rows || ztPool.length || t3recs.length)) persistAsync(out.recs); /* S5: 混日不落库; 交易日来自兜底(无快照td)也不落库——夜间墙钟日≠数据交易日 */
         paint();
       });
     } catch (e) { S.last = null; paint(); }
@@ -334,7 +346,7 @@
       chip("龙头强度", L && L.cand && L.cand.length ? "待定义(候选" + L.cand.length + ")" : "待定义", 0, "pending") +
       candTxt + "</div>";
   }
-  function stateTxt(st) { return st === "smallN" ? "样本<8" : st === "miss" ? "暂无数据" : st === "none" ? "无" : st; }
+  function stateTxt(st) { return st === "smallN" ? "样本<8" : st === "miss" ? "暂无数据" : st === "stale" ? "非当日" : st === "none" ? "无" : st; }
   function paint() {
     if (DRAG.on) return; /* jl-C: 拖拽中不重建DOM(手柄监听会丢), 60s下一轮补刷 */
     var R = ensureRoot();
@@ -344,9 +356,11 @@
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
       var restAll = o.recs.filter(function (r) { return r.factors.avgPct.state !== "ok" && r.sector !== CORE.UNATTR; });
-      var restMiss = restAll.filter(function (r) { return r.factors.avgPct.state === "miss"; }); /* jl-B: 无涨幅数据的板块→合并一行, 不再逐卡铺"数据缺失"小块 */
-      var rest = restAll.filter(function (r) { return r.factors.avgPct.state !== "miss"; }).slice(0, 4);
+      var restMiss = restAll.filter(function (r) { return r.factors.avgPct.state === "miss" || r.factors.avgPct.state === "stale"; }); /* jl-B: 无涨幅数据的板块→合并一行, 不再逐卡铺"数据缺失"小块 */
+      var rest = restAll.filter(function (r) { return r.factors.avgPct.state !== "miss" && r.factors.avgPct.state !== "stale"; }).slice(0, 4);
       var unr = o.recs.filter(function (r) { return r.sector === CORE.UNATTR; })[0] || null;
+      var sl = S.stale || {}, slTxt = [sl.rows ? "逐股涨跌停在 " + String(sl.rows).slice(5) : "", sl.zt ? "涨停池停在 " + String(sl.zt).slice(5) : ""].filter(Boolean);
+      if (slTxt.length) body += '<div style="font-size:10px;color:#ffd84a;font-weight:700;padding:5px 2px 3px">⚠ ' + esc(slTxt.join(" · ")) + "（非 " + esc(S.day.slice(5)) + " 数据, 未计入, 本轮不写快照）</div>"; /* jl-B1-S3 */
       body += rk.length ? rk.map(secRow).join("") : '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无强度排名 · 当日有效样本不足（板块资金不受影响）</div>';
       if (rest.length) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:6px 0 2px">— 样本不足的板块（事件/涨停侧仍跟踪）—</div>' + rest.map(secRow).join("");
       if (restMiss.length) {
@@ -356,7 +370,7 @@
       }
       if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条（成分股" + unr.factors.evN.raw.codeN + " · 不作归属猜测）</div>";
       var st = S.stat || { mc: 0, sec: 0, hy: 0, unattr: 0 };
-      body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径 | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
+      body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径' + (S.ztSrc === "v2" ? "(温度v2自建池·剔ST)" : S.ztSrc === "yd" ? "(异动卡池·前50只)" : "") + ' | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
       body += '<div style="margin-top:6px"><button id="jlSecExp" style="font-size:9.5px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">导出快照JSON</button></div>';
     } else {
       body = '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无强度数据 · 数据到达后自动计算（板块资金不受影响）</div>';
@@ -426,7 +440,7 @@
     } catch (e) {}
   }
 
-  function diag() { return { day: S.day, at: S.at, stat: S.stat, sectors: S.last ? S.last.recs.length : 0, t3: S.lastT3 ? S.lastT3.length : 0, snapKeys: S.keys ? S.keys.size : -1 }; }
+  function diag() { return { day: S.day, at: S.at, ztSrc: S.ztSrc, stat: S.stat, sectors: S.last ? S.last.recs.length : 0, t3: S.lastT3 ? S.lastT3.length : 0, snapKeys: S.keys ? S.keys.size : -1 }; }
 
   openDB();
   setTimeout(compute, 1800);
