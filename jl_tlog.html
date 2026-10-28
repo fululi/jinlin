@@ -31,6 +31,8 @@
 <div class="card" id="tloop"></div>
 <h2>③ 诊断：板块资金为什么暂缺 / 卖出价从哪来</h2>
 <div class="card" id="diag"></div>
+<h2>④ 买入闸日志 jl_gate_log_v1（交易时段每分钟≤1条，滚动≈2交易日，供阈值实盘回放）</h2>
+<div class="card" id="gate"></div>
 <h2>原始 JSON</h2>
 <pre id="raw"></pre>
 <script>
@@ -80,10 +82,30 @@
   dh+='<div>tlog_v2 最近 10 条（卖出价锚点的来源）：</div><pre>'+esc(JSON.stringify(tlog.slice(-10),null,1))+'</pre>';
   document.getElementById("diag").innerHTML=dh;
 
-  document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log},null,1);
+  /* ④ 买入闸日志 */
+  var gate=readJ("jl_gate_log_v1"), gh="";
+  if(!gate||!gate.length){gh='<span class="mut">键不存在或为空——v0.89.0 起交易时段才落档；盘后/周末打开不会新增</span>'}
+  else{
+    var byDay={};
+    gate.forEach(function(x){(byDay[x.d]=byDay[x.d]||[]).push(x)});
+    var days=Object.keys(byDay).sort();
+    gh='<table><tr><th>日期</th><th>条数</th><th>红</th><th>黄</th><th>绿</th><th>nodata</th><th>末条</th></tr>';
+    days.forEach(function(d){
+      var arr=byDay[d],c={red:0,yellow:0,green:0,nodata:0};
+      arr.forEach(function(x){c[x.lvl]=(c[x.lvl]||0)+1});
+      var last=arr[arr.length-1];
+      gh+='<tr><td>'+esc(d)+'</td><td>'+arr.length+'</td><td class="bad">'+c.red+'</td><td>'+c.yellow+'</td><td class="ok">'+c.green+'</td><td class="mut">'+c.nodata+'</td><td class="mut">'+esc(last.hm+" "+last.lvl+" "+last.sum+"分")+'</td></tr>';
+    });
+    gh+='</table><div class="mut">共 '+gate.length+' 条 / '+days.length+' 个交易日。回放标定：点上方「导出全部 JSON」，用 gate回放_replay.js 跑（它同时需要本文件打包的上证日K）。</div>';
+    gh+='<div class="mut">最近 5 条：</div><pre>'+esc(JSON.stringify(gate.slice(-5),null,1))+'</pre>';
+  }
+  document.getElementById("gate").innerHTML=gh;
+
+  var dkSh=readJ("jl_dk_sh000001");
+  document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_log_v1:gate},null,1);
   document.getElementById("exp").onclick=function(){
     try{
-      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log},null,1)],{type:"application/json"});
+      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_log_v1:gate,jl_dk_sh000001:dkSh},null,1)],{type:"application/json"});
       var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jinlin_验收_"+td+".json";a.click();
     }catch(e){alert("导出失败: "+e)}
   };
