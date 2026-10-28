@@ -1,4 +1,4 @@
-/* jl_gapiv.js v1 (2026-10-27, 本地稿未推送) —— 持仓卡「缺口 / iv」行, 按验收页 ~/jinlin-accept/gap-iv.html 定稿搬入。
+/* jl_gapiv.js v2 (2026-10-28, jl-1180 缺口区改版) —— 持仓卡「缺口 / iv」行: 未补/今日新增/今日已补三段分类、限高可见滚动条、竞价与回补率紧凑小格、同价周期合并; 计算与取数同 v1 零改动。
    数据: 只用腾讯(日K fqkline / 分钟K mkline 30·15·5·1 / 当日分时 minute)。每只票 60 秒最多取一次。
    口径与 App unfilledVIJL 一致: VI = 相邻两根K线, 后一根开盘离前一根收盘 > 0.05%, 分钟级还须影线重叠; 补回 = 之后碰到前一根收盘(远沿)。
    开盘缺口: 昨收→今开, 补回价 = 昨收; 补完后又回到缺口里待满 5 分钟的每一段写「再次回补」。
@@ -14,26 +14,31 @@
   const f2 = (x) => (+x).toFixed(2), sg = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
   const gC = (b) => (b ? "#00f0ff" : "#ffe600");   /* 青蓝↓ = 要跌下来补, 黄↑ = 要涨上去补 */
 
-  const CSS = ".gvJL{font:600 12.5px/1.45 -apple-system,'PingFang SC',sans-serif;color:#fff;text-shadow:none;margin-top:6px;cursor:default}"
-    + ".gvJL .mono{font-family:ui-monospace,Menlo,monospace}"
-    + ".gvJL .aucL{border:1px solid;border-radius:12px;padding:6px 9px}"
-    + ".gvJL .ln1{font-size:14px;font-weight:800}.gvJL .ln1 .big{font:900 22px ui-monospace,Menlo,monospace}"
-    + ".gvJL .ln2{font:900 16px ui-monospace,Menlo,monospace;margin-top:2px}.gvJL .ln2 .sz{font-size:13px;color:#fff;margin-left:6px}"
-    + ".gvJL .ln3{font:800 14px ui-monospace,Menlo,monospace;margin-top:3px}.gvJL .okc{color:#4dffbf;font-size:17px}"
-    + ".gvJL .ln4{font:700 12.5px ui-monospace,Menlo,monospace;margin-top:2px}"
-    + ".gvJL .g{display:grid;grid-template-columns:20px 1fr auto;gap:2px 6px;align-items:center;padding:6px 8px;border-radius:12px;margin-top:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18)}"
-    + ".gvJL .g.in{border-color:#fff;background:rgba(255,255,255,.13)}"
-    + ".gvJL .ar{font:900 15px/1 -apple-system;text-align:center}.gvJL .z{font:800 14px ui-monospace,Menlo,monospace}"
-    + ".gvJL .r{text-align:right;font-size:11.5px;white-space:nowrap}"
-    + ".gvJL .n,.gvJL .tm{grid-column:2/4;display:flex;flex-wrap:wrap;gap:2px 8px;font-size:11.5px}.gvJL .tm{font:700 11.5px ui-monospace,Menlo,monospace}"
-    + ".gvJL .tag{display:inline-block;border-radius:7px;padding:0 5px;font-size:11px;font-weight:800;margin-left:4px;vertical-align:1px}"
+  const CSS = ".gvJL{font:600 11.5px/1.35 -apple-system,'PingFang SC',sans-serif;color:#fff;text-shadow:none;margin-top:5px;cursor:default}"
+    + ".gvJL *{box-sizing:border-box}.gvJL .mono{font-family:ui-monospace,Menlo,monospace}"
+    + ".gvJL .aucL{display:grid;grid-template-columns:1fr auto;gap:1px 8px;align-items:center;border:1px solid;border-radius:8px;padding:4px 7px}"
+    + ".gvJL .ln1{font-size:12px;font-weight:800}.gvJL .ln1 .big{font:800 15px ui-monospace,Menlo,monospace}"
+    + ".gvJL .ln2{font:800 12.5px ui-monospace,Menlo,monospace;text-align:right}.gvJL .ln2 .sz{font-size:10.5px;color:#fff;margin-left:4px}"
+    + ".gvJL .ln3{grid-column:1/3;font:700 11px ui-monospace,Menlo,monospace;margin-top:1px}.gvJL .okc{color:#4dffbf;font-size:13px}"
+    + ".gvJL .ln4{grid-column:1/3;font:700 10.5px ui-monospace,Menlo,monospace}"
+    + ".gvJL .gScroll{max-height:252px;overflow-y:scroll;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#ffe600 rgba(255,255,255,.12);scrollbar-gutter:stable;padding-right:3px;margin-top:5px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(0,0,0,.12)}"
+    + ".gvJL .gScroll::-webkit-scrollbar{width:7px}.gvJL .gScroll::-webkit-scrollbar-track{background:rgba(255,255,255,.12);border-radius:7px}"
+    + ".gvJL .gScroll::-webkit-scrollbar-thumb{background:#ffe600;border-radius:7px;min-height:32px}"
+    + ".gvJL .gSec{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(20,35,65,.98);border-bottom:1px solid rgba(255,255,255,.18);font-size:11px}"
+    + ".gvJL .gSec span{font-size:10px;color:rgba(255,255,255,.65)}.gvJL .gSec.new{color:#ffe600}.gvJL .gSec.doneH{color:#4dffbf}"
+    + ".gvJL .g{display:grid;grid-template-columns:16px 1fr auto;gap:2px 5px;align-items:center;padding:4px 6px;border-radius:7px;margin:3px 4px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13)}"
+    + ".gvJL .g.in{border-color:#fff;background:rgba(255,255,255,.11)}"
+    + ".gvJL .ar{font:900 13px/1 -apple-system;text-align:center}.gvJL .z{font:800 12.5px ui-monospace,Menlo,monospace}"
+    + ".gvJL .r{text-align:right;font-size:10.5px;white-space:nowrap}"
+    + ".gvJL .n,.gvJL .tm{grid-column:2/4;display:flex;flex-wrap:wrap;gap:1px 7px;font-size:10.5px}.gvJL .tm{font:700 10.5px ui-monospace,Menlo,monospace}"
+    + ".gvJL .tag{display:inline-block;border-radius:6px;padding:0 4px;font-size:10px;font-weight:800;margin-left:3px;vertical-align:1px}"
     + ".gvJL .tN{background:#fff;color:#1a0508}.gvJL .tIn{border:1px solid #fff}"
-    + ".gvJL details summary{list-style:none;cursor:pointer;margin:7px 2px 3px;font-weight:800;font-size:13px}.gvJL details summary::-webkit-details-marker{display:none}"
-    + ".gvJL .done{display:flex;justify-content:space-between;gap:6px;padding:4px 6px;font-size:12px;border-bottom:1px dashed rgba(255,255,255,.25)}"
-    + ".gvJL .rateH{display:flex;justify-content:space-between;margin:8px 2px 3px;font-size:12px}.gvJL .rateH b{font-size:13px}"
-    + ".gvJL .rate{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center;font-size:11px}"
-    + ".gvJL .rate div{border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:3px 0}.gvJL .rate b{display:block;font:800 14px ui-monospace,Menlo,monospace}"
-    + ".gvJL .wait{font-size:12px;padding:4px 2px}";
+    + ".gvJL .done{display:flex;justify-content:space-between;gap:6px;padding:4px 7px;font-size:11px;border-bottom:1px dashed rgba(255,255,255,.2)}"
+    + ".gvJL .gEmpty{padding:5px 8px;font-size:11px;color:rgba(255,255,255,.55)}"
+    + ".gvJL .rateH{display:flex;justify-content:space-between;margin:5px 2px 2px;font-size:10.5px}.gvJL .rateH b{font-size:11px}"
+    + ".gvJL .rate{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;text-align:center;font-size:9.5px}"
+    + ".gvJL .rate div{border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:2px 0;white-space:nowrap}.gvJL .rate b{display:inline;font:800 11px ui-monospace,Menlo,monospace;margin:0 2px}"
+    + ".gvJL .wait{font-size:11px;padding:4px 2px}";
   function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS; document.head.appendChild(s); } }
 
   async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
@@ -140,7 +145,7 @@
           + (o.back && o.back.length ? o.back.map((b) => '<div class="ln4">再次回补 ' + b + "</div>").join("") : "") + "</div>";
       } else h += '<div class="aucL" style="border-color:#fff"><div class="ln1">竞 平开 <span class="big">0.00%</span></div></div>';
     }
-    h += R.grp.map((g) => {
+    const gapRow = (g) => {
       const z = (g.hi - g.lo) / g.mid < 0.0015 ? f2(g.mid) : f2(g.lo) + "–" + f2(g.hi);
       return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>"
         + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : "") + "</span>"
@@ -148,10 +153,18 @@
         + (g.rt ? '<span class="n"><span>' + g.rt + "</span></span>" : "")
         + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + b.t.slice(4, 6) + "-" + b.t.slice(6, 8) + (b.t.length >= 12 ? " " + b.t.slice(8, 10) + ":" + b.t.slice(10, 12) : "") + "</span>").join("")
         + (g.touch.length ? g.touch.slice(-4).map((t) => "<span>" + t.slice(4, 6) + "-" + t.slice(6, 8) + " " + t.slice(8, 10) + ":" + t.slice(10, 12) + " 碰过</span>").join("") + (g.touch.length > 4 ? "<span>共碰 " + g.touch.length + " 次</span>" : "") : "") + "</span></div>";
-    }).join("");
-    if (R.dgp.length) h += "<details" + (openDone ? " open" : "") + "><summary>今日已补 " + R.dgp.length + " ▾</summary>"
-      + R.dgp.map((g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + " " + g.lvs.map((l) => LVN[l]).join("+") + (g.old.length ? " <b>" + g.old.join(" ") + "形成</b>" : "") + '</span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>").join("") + "</details>";
-    h += '<div class="rateH"><b>今天形成的缺口 · 当天已补/出现</b><span>盘中实时变</span></div><div class="rate">'
+    };
+    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + " " + g.lvs.map((l) => LVN[l]).join("+") + (g.old.length ? " <b>" + g.old.join(" ") + "形成</b>" : "") + '</span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
+    const isNew = (g) => g.born.some((b) => b.t.slice(0, 8) === R.today);
+    const fresh = R.grp.filter(isNew), old = R.grp.filter((g) => !isNew(g));
+    h += '<div class="gScroll" tabindex="0" aria-label="缺口列表，上下滑动查看">'
+      + '<div class="gSec"><b>未补 ' + old.length + '</b><span>同价周期已合并</span></div>'
+      + (old.length ? old.map(gapRow).join("") : '<div class="gEmpty">无</div>')
+      + '<div class="gSec new"><b>今日新增 ' + fresh.length + '</b><span>未补目标</span></div>'
+      + (fresh.length ? fresh.map(gapRow).join("") : '<div class="gEmpty">无</div>')
+      + '<div class="gSec doneH"><b>今日已补 ' + R.dgp.length + '</b><span>补回时间 / 价格</span></div>'
+      + (R.dgp.length ? R.dgp.map(doneRow).join("") : '<div class="gEmpty">无</div>') + '</div>';
+    h += '<div class="rateH"><b>今日回补率</b><span>已补/出现 · 盘中实时</span></div><div class="rate">'
       + LV.map((L) => "<div>" + LVN[L] + "<b>" + (R.tr[L].n ? Math.round(R.tr[L].k / R.tr[L].n * 100) + "%" : "—") + "</b>" + R.tr[L].k + "/" + R.tr[L].n + "</div>").join("") + "</div>";
     return h;
   }
