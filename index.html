@@ -9531,7 +9531,7 @@ function activeLegJL(swSt, liveP, dayHi) {
           var lim = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10), log = JSON.parse(localStorage.getItem("jl_gaplog_v1") || "{}") || {};
           Object.keys(log).forEach(function (k) {
             var g = log[k];
-            if (g && g.c === code && (g.lv === "日" || g.lv === "开") && !g.ft && String(g.ct) >= lim) out.push(g.lo, g.hi);
+            if (g && g.c === code && (g.lv === "日" || g.lv === "开") && !g.ft && String(g.ct) >= lim && g.lo > 0 && (g.hi - g.lo) / g.lo >= 0.01) out.push(g.lo, g.hi);
           });
         } catch (e) { }
         return out;
