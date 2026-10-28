@@ -6,7 +6,7 @@
 </script>
 
 <!-- jl-ATRfix 1025晨: 持仓卡ATR带bug修复——带宽ATR原用atr[end-1]较采样口径滞后一日(兆易创新10-23案例: 10-23振幅26.5大震后, 旧代码周一仍用周四ATR15.20而非周五17.46, 带子偏窄15%); 对齐后带子=开盘±参数日ATR×P80系数; 注: 10-23穿带12.25元属P80设计遇P99.2日的预期尾部非算错; 壳v266→v267 --><!-- v0.85 温度量化批 temp-q1 1025晨: 大盘温度卡——温度近20交易日分位P(读jlv2温度史, 排除当日)+Δ30分盘中动量(jinlin_mtemp_series_v1: ≥09:25才记/4分去重/160点, 集合竞价噪声不进)+九档幅度加权净宽; luLimJL修板块前缀优先(创业板/科创板ST=20%非5%, N/C新股无涨跌幅)+采样失败"示数为旧值"标记; 纯显示层, 温度公式/分区阈值/状态机/抓取链零触碰; 壳v265→266成对(sw.js KEEP=266+265+264) --><!-- v0.86 1025 温度审查收尾批q1-r2·并入v269(底=58ef791): ①分位P口径标注——20日基准=各日末次采样(≈收盘温度), 卡面三处标签改"20日收盘"(v1头/v2sum/v2tnow); ②勘误——v266批注"纯显示层"不含luLimJL(涨停/跌停判定口径修正, 影响分档统计, 改法本身正确), 温度公式/分区阈值/状态机/九因子/抓取链仍零触碰; ③v2分位P(tempPctJL)改直读localStorage+显示加"数据属今天"闸(与v1同源同显隐); ④竞价显示行(jlv2)——工作日9:25前"冷点"改显"竞价", 仅显示层, 日史存原状态; ⑤atr5缓存键_v1→_v2——周末用旧算法打开过APP的, 10-23参数日缓存着15.20, 周一会命中旧缓存照显15.20, 升键强制重算; ⑥周五回推预览数字对齐修复后算法(兆易261.0719/282.5749·永鼎25.50/28.49); jlv2.js引用?v=13→15(跳14: Claude本地worktree占用该标识); 壳v268→v269成对 -->
-<!-- v0.88 1026上午 jl-1166 胜率P₀埋点批(v5.4, 纯读取层零新增请求): 跳空缺口事件(开盘较昨收偏离≥0.1%×档: 规模1/3/5分+日1/3/5, 与jl_gaplog开档同阈值)→行存jinlin_winrate_log_v1(baseline+10:30/13:30/14:30/收盘四档, 同id幂等); 判局=日线回放(jl_dk_碰昨收)+开档ft分钟精度, 宁晚判不错判0; 超到期+10交易日无证据→弃案(meta.abandonedByLevel按level计数, 1169复盘页展示属下批); P₀两层收缩logit(30事件门槛)存jinlin_winrate_meta_v1; 自带60s定时器零耦合站内循环; 回滚=删插入块; 壳v283→v284成对 --><!-- v0.88.2 1026午 jl-1166b 近端要补行批(IV看盘痛点: "昨天要回补的价格"看盘时不可见——分钟档被只留当日过滤+图窗VI带只画当日形成): 台账jl_gaplog_v1为源(未补条目持久), 近14自然日非当日未了结缺口价位常显——行追加"近端·MM-DD 价区"(开/日档按日线回放算剩余带·碰前收口径, 分钟档全区间不臆算, 已补当日仍显示); 分时图(大图+持仓卡)加全宽虚线带o.histVi(与y轴有交集才画); 本批兼修复此前v285误覆盖jl-1168(基线已回并); 纯读取层零新增请求, 回滚=删jl-1166b四处; 壳v285→v286成对 --><!-- v0.88.3 1026午 jl-1166c 近端目标纠偏：所有周期先按ft判结，历史已补不再混入未补目标；当日已补沉底且不进图带；近端保留原周期，RT仅作同口径历史参考；板块抽屉改名板块强度并明确样本不足不影响资金；壳v286→v287 --><!-- v0.88.4 1026下午 jl-ATRcopy 当日开盘卡纠偏：删除写死的周五回推历史预览，当前卡只保留本交易日实际开盘锚定区；参数日仍是T-1，ATR公式与Fib实时计算零改动；壳v287→v288 --><!-- v0.88.5 1026晚 jl-T7refresh 数据链修复：盘后板块资金clist按total全量翻页、缺页记失败并允许旧Top100重修；板块缺键旁路统一5分钟TTL；15分K随报价轮询按已收盘bar后20秒刷新、失败保留旧帧；ATR卡补收盘后真实样本复盘，缺高低价记录不进分母；壳v288→v289 --><!-- v0.88.6 1028 jl-1180 缺口区改版(两轮验收定稿): 持仓卡缺口行 jl_gapiv v2——未补/今日新增/今日已补三段、限高252px可见滚动条、竞价与回补率紧凑小格、同价周期合并(计算/取数/台账零改动); 分时IV叠加层——盘中VI与近端histVi带加淡色小价签(↑黄=要涨上去补/↓青=要跌下来补), 各取距现价最近3组, 轴外不扩轴改顶/底方向价签, 已补不上图; 壳v289→v290成对 --><!-- v0.89.1 1028深夜 jl-1191~1196 持仓页改版+分时竞价段(在v0.89.0基线上重打, 并行会话撞号jl-1181~1184已避让): 持仓页=删汇总块/卡头40px矮条/价格排挪图卡顶条/分时136→340/页级跑马灯贴图下沿/回归通道叠加层; 分时竞价段=东财trends2真实09:15-09:25拼09:30前(黄衬底+界点线)+14:57收盘竞价青衬底, sess加竞价车道(无数据零行为变化), 今开/VI/缺口行全跳auc段; jl-1193卡内藏开盘微灯(大图留); jl-1194 histVi轴外同侧签竖排(修互盖); jl-1196缺口行今开跳竞价取09:30真实开盘; jl_gapiv.js?v=3(竞高开横排+折叠三角, _b5); 壳v294→v295成对 --><script id="jlVerJL" data-ver="0.89.1" data-sw="jinlin-shell-v295"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
+<!-- v0.88 1026上午 jl-1166 胜率P₀埋点批(v5.4, 纯读取层零新增请求): 跳空缺口事件(开盘较昨收偏离≥0.1%×档: 规模1/3/5分+日1/3/5, 与jl_gaplog开档同阈值)→行存jinlin_winrate_log_v1(baseline+10:30/13:30/14:30/收盘四档, 同id幂等); 判局=日线回放(jl_dk_碰昨收)+开档ft分钟精度, 宁晚判不错判0; 超到期+10交易日无证据→弃案(meta.abandonedByLevel按level计数, 1169复盘页展示属下批); P₀两层收缩logit(30事件门槛)存jinlin_winrate_meta_v1; 自带60s定时器零耦合站内循环; 回滚=删插入块; 壳v283→v284成对 --><!-- v0.88.2 1026午 jl-1166b 近端要补行批(IV看盘痛点: "昨天要回补的价格"看盘时不可见——分钟档被只留当日过滤+图窗VI带只画当日形成): 台账jl_gaplog_v1为源(未补条目持久), 近14自然日非当日未了结缺口价位常显——行追加"近端·MM-DD 价区"(开/日档按日线回放算剩余带·碰前收口径, 分钟档全区间不臆算, 已补当日仍显示); 分时图(大图+持仓卡)加全宽虚线带o.histVi(与y轴有交集才画); 本批兼修复此前v285误覆盖jl-1168(基线已回并); 纯读取层零新增请求, 回滚=删jl-1166b四处; 壳v285→v286成对 --><!-- v0.88.3 1026午 jl-1166c 近端目标纠偏：所有周期先按ft判结，历史已补不再混入未补目标；当日已补沉底且不进图带；近端保留原周期，RT仅作同口径历史参考；板块抽屉改名板块强度并明确样本不足不影响资金；壳v286→v287 --><!-- v0.88.4 1026下午 jl-ATRcopy 当日开盘卡纠偏：删除写死的周五回推历史预览，当前卡只保留本交易日实际开盘锚定区；参数日仍是T-1，ATR公式与Fib实时计算零改动；壳v287→v288 --><!-- v0.88.5 1026晚 jl-T7refresh 数据链修复：盘后板块资金clist按total全量翻页、缺页记失败并允许旧Top100重修；板块缺键旁路统一5分钟TTL；15分K随报价轮询按已收盘bar后20秒刷新、失败保留旧帧；ATR卡补收盘后真实样本复盘，缺高低价记录不进分母；壳v288→v289 --><!-- v0.88.6 1028 jl-1180 缺口区改版(两轮验收定稿): 持仓卡缺口行 jl_gapiv v2——未补/今日新增/今日已补三段、限高252px可见滚动条、竞价与回补率紧凑小格、同价周期合并(计算/取数/台账零改动); 分时IV叠加层——盘中VI与近端histVi带加淡色小价签(↑黄=要涨上去补/↓青=要跌下来补), 各取距现价最近3组, 轴外不扩轴改顶/底方向价签, 已补不上图; 壳v289→v290成对 --><!-- v0.89.2 1028深夜 jl-1197 缺口行东财备选: 腾讯6请求任一失败→原地重试一次→仍失败改走东财push2his(日K+1分钟K, 5/15/30分钟与分时由1分钟聚合, 时刻标K线结束同腾讯口径); 每只票各自判断无全局标记; 走东财时块下小字标"数据源：东财备选"; 两路都失败报错写明各自原因; jl-1198 分时开盘缺口改VI式小黄框+"今开缺口 未补/已补"签, 近端要补带14→30天; jl-1199 形成那根自己影线碰前收=当根已补(台账/分时盘中VI/jl_gapiv/ks VI四处)+台账重扫5/15分往前补一页+开/日同缺口合并; jl-1200 台账补=碰远沿(前收)统一口径, 旧记录重扫时按新口径重判(fv:2); jl-1201 缺口区顶部"日线未补"目标行(上/下最近一个+距现价%+中波段斐波共振, 出口window.jlFibLvJL); jl-1202 五日图文字签描黑边(不加实心底, 不挡走势线)+摆位避开白色走势线+轴价签进避让表+跳空带调淡加上下沿+未补签带目标价; jl-1203 五日图加"标注"开关(竞价%/跳空带/未补✓签一键隐藏显示, 记住状态); jl-1204 分时图(卡内+大图)缺口类价签延后统一避让(避高低签/百分比/摆动戳/角标/昨收签, 无位不写字), 今开缺口已补不写字, 盘前休市图上那天的开盘缺口不再当往天重画; jl-1205 卡内高位区线白→粉+低签红→蓝(同大图), 高位区标签淡粉半透明底亮白字, 缺口价签摆位再避开白色走势线; jl-1206 缺口方向写法统一: 往下补=青绿"↓ iv 价格"/"竞开 ↓ 价格", 往上补=黄"↑ iv 价格"/"竞开 ↑ 价格"; jl_gapiv.js?v=5 jl_card5d.js?v=9; 壳v295→v296成对 --><!-- v0.89.1 1028深夜 jl-1191~1196 持仓页改版+分时竞价段(在v0.89.0基线上重打, 并行会话撞号jl-1181~1184已避让): 持仓页=删汇总块/卡头40px矮条/价格排挪图卡顶条/分时136→340/页级跑马灯贴图下沿/回归通道叠加层; 分时竞价段=东财trends2真实09:15-09:25拼09:30前(黄衬底+界点线)+14:57收盘竞价青衬底, sess加竞价车道(无数据零行为变化), 今开/VI/缺口行全跳auc段; jl-1193卡内藏开盘微灯(大图留); jl-1194 histVi轴外同侧签竖排(修互盖); jl-1196缺口行今开跳竞价取09:30真实开盘; jl_gapiv.js?v=3(竞高开横排+折叠三角, _b5); 壳v294→v295成对 --><script id="jlVerJL" data-ver="0.89.2" data-sw="jinlin-shell-v296"></script><script>/* jl-1020 新版自愈: 加载后后台比对壳号, 不一致每会话自动刷新一次; 刷新后仍旧则顶栏挂点按更新条; 并监听 SW 接管消息 */(function(){function rl(){try{if(sessionStorage.getItem("jl_upd_rl"))return false;sessionStorage.setItem("jl_upd_rl","1")}catch(e){}setTimeout(function(){location.reload()},700);return true}function banner(sw){var b=document.createElement("div");b.textContent="新版 "+sw+" 已到 · 点按硬更新";b.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#0d3040f2;color:#eafcff;font:600 12px/1 -apple-system,sans-serif;text-align:center;padding:9px 0;cursor:pointer;box-shadow:0 4px 14px #0007";b.onclick=function(){ /* jl-1049: 横幅升级真·硬更新——注销SW+清空Caches+时间戳重载,治"点按更新"普通reload绕回缓存秒出旧版的死循环 */ if(typeof hardRecover==="function"){try{hardRecover();return}catch(e){}}try{if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)navigator.serviceWorker.getRegistrations().then(function(rs){for(var i=0;i<rs.length;i++){try{rs[i].unregister()}catch(e){}}})}catch(e){}try{if(window.caches&&caches.keys)caches.keys().then(function(ks){for(var i=0;i<ks.length;i++){try{caches.delete(ks[i])}catch(e){}}})}catch(e){}setTimeout(function(){location.replace(location.pathname+"?hr="+Date.now())},500)};(document.body||document.documentElement).appendChild(b)}try{var me=document.getElementById("jlVerJL"),my=me?(me.getAttribute("data-sw")||""):"";if(navigator.serviceWorker&&navigator.serviceWorker.addEventListener){navigator.serviceWorker.addEventListener("message",function(e){var d=e.data;if(d&&d.type==="JL_SW_NEW"&&!rl()){banner(my||"新版")}})}fetch("sw.js?jlvc="+Date.now(),{cache:"no-store"}).then(function(r){return r&&r.ok?r.text():""}).then(function(txt){var m=String(txt).match(/const C = '(jinlin-shell-v\d+)'/);if(m&&my&&m[1]!==my&&!rl()){banner(m[1])}}).catch(function(){})}catch(e){}})();</script><script>(function () {    var e = document.getElementById("jlVerJL");
     if (!e) return;
     var v = e.getAttribute("data-ver"), sw = e.getAttribute("data-sw");
     try { console.log("[jinlin] v" + v + "  sw=" + sw); } catch (_) {}
@@ -36,7 +36,7 @@
 <!-- v0.84.106 1023 fix11L: 斐波自动扩轴整体撤回(fix11g/j/k三路全撤, fibAxisExtJL与调用点全删), fib渲染/分时tsViewJL/K线view逐字节回到扩轴前原版。壳成对升v251, ks戳1151j -->
 <!-- v0.84.105 1023 fix11j: 斐波自动扩轴加天花板(中枢±0.75×行情幅)——兆易实证: 分时fib 0=245.57/1=299.61, 2.618=387把轴顶拉飞, 294日高压成窄带; 超天花板档位照画但不参与扩轴, K线/分时同口径。壳成对升v250, ks戳1151i -->
 <!-- v0.84.104 1023 fix11批(弹窗组, 基于103重打): 分时高低点提醒醒目化——jlPhvlPopJL专属弹窗(亮白大字+红绿辉光+脉冲4s), toast按"到高点/到低点"关键词分流; _j4 important压回全局animation:none!important(弹窗不可见根因); chip闪烁期亮白×2; toast z-index9999。ks侧同批: fib自动扩轴+VI回补分色+降级自诊断(戳1151h)。壳成对升v249 -->
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.89.1</title><style>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><title>金粼 · 联动工作台 v0.89.2</title><style>
 :root{color-scheme:dark;--mint:#81e6d9;--muted:#c9dfe8;--ink:#05090e;--red:#ff5459;--green:#1fdc93}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse 70% 52% at 94% 38%,rgba(255,217,94,.38),transparent 65%),radial-gradient(ellipse 80% 50% at 85% 0%,rgba(255,217,94,.18),transparent 60%),radial-gradient(ellipse 70% 60% at 10% 10%,rgba(120,20,45,.35),transparent 65%),radial-gradient(ellipse 90% 70% at 50% 45%,rgba(70,12,40,.30),transparent 70%),linear-gradient(160deg,#1a0508 0%,#2b0817 45%,#170510 100%);background-attachment:fixed;color:#eff9fc;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif}button{font:inherit;color:inherit;cursor:pointer}html,body{touch-action:manipulation;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none} /* jl-1068 v0.84.15: 定案：撤掉持仓小图Fib画图按钮(只要趋势线), Fib引擎代码保留不删;  持仓小图画线条按钮文字误用JS转义写在HTML区→渲染成\u2571乱码(截图实证), 改回真实UTF-8字符: ╱线/∿Fib/锁/隐/删/5色点; 其余不动 --><!-- jl-1081~1083 v0.84.29(三合一, 全部只提示预警不做自动交易): ①龙池"斐波那契波段"加分项——扫描worker抓完K线原样喂给持仓卡同源 legFibJL(同一函数零改公式, 龙池价位与温度计逐位一致), 命中口径=上涨正式波段+段幅≥15%+回撤0.30~0.45(0.382附近)+近3收站上0.382档企稳+距1.618扩展位≥5%空间, 各层+10分(加分项非硬门槛); 列表∿标+卡片显示波段区间/0.382位/1.618位/当前回撤; realCache临时挂载用完还原不占jl_dk_配额 ②B/S球"档位失守监控"——跌破买档15分钟(可配jinlin_breach_cfg_v1)不收回记失守, Bn±0.5%内震荡=到档停留不算; 黄=日内累计≥2档「已连续跌穿N档,档位买点逻辑警戒,暂停加仓」/橙=60分钟内≥2档「下滑加速,建议考虑先减仓」/红=最深档失守含开盘<最深档×0.97跳空「已跌穿最深买档,档位体系失效,建议减仓观察,待企稳再决策」; 诱多=早盘强势候选/确认后触发黄色→直升橙+标注; 球按级别变色(wy/wo/wr), 每级每票当日只弹一次横幅, 面板显示失守档位列表/现价所在档/距最深档空间; 面板"失守演示"按钮=合成数据黄/橙/红各一例 ③强势度评分+卖飞治理——9:25竞价出证据(个股高开≥3%且上证高开≥0.5%=候选, 评分=高开/量比估/大盘共振/缺口不回补四维), 9:40~10:10不回补缺口+量比≥1.5确认; 确认票S档触及改"待确认"(琥珀), 触线后15分钟不收回或14:45尾盘复核才转正提示; 移动卖出参考(trailing)=日内高点回落2%, 破线一次性提示; 弱势日行为不变。红线遵守: 不碰资金流/离线资金/大盘异动/B-S球原有触档算法, 零新增外部接口, 假期断档冻结(jlMktPhaseJL闸) --><!-- jl-1066 v0.84.13(看图反馈批): ①emoji管理菜单(手/锁/眼/垃圾桶)全撤——换TradingView式底部玻璃色条(白金橙绿红5色点+✕删), 选中画线才出现 ②持仓小图画线入口恢复(jl-1006撤的线/Fib按钮回归, 引擎原样)+单线换色生效(draw1读ln.color) ③小图闪动根治——tsWait自愈改一次性(Set守卫)+renderDeck数据未变不重建innerHTML(deck卡片小图频繁重建=闪动真因) ④⏰补齐: 持仓小图工具栏加⏰按钮(自动对准当前票)+提醒金线标记扩展到小图 ⑤大K线图(KS全屏)=ks.html体系, 其🔔提醒/+提醒健在; KS单线换色下轮 --><!-- jl-1065 v0.84.12(K线组件专项, 只动bigChart交互层): ①十字线抖动根治——新增透明overlay层, 指针移动只重绘overlay(十字线+左右玻璃标签+底部时间), 主图canvas零重绘完全静止; 手势(平移/缩放/画线)起手自动回落原生路径 ②左右涨跌幅/右侧价格/时间标签黑底→玻璃(rgba白.14+.95白字) ③小闹钟恢复——⏰按钮前置工具栏首位+图上金色虚线+⏰常显(夜背景切合) ④趋势线: ↗趋势按钮(首位引导入口)+点线弹玻璃菜单(拖动/锁定/隐藏/删除), 单线lock跳过命中检测/hide跳过渲染, 隐藏线点原位置可唤回 ⑤主图+幅图通用(画线系统本就按pane存储) --><!-- jl-1064 v0.84.11(视觉批·只动颜色字重不动布局字号业务逻辑): ①龙池筛选工具栏+扫描横幅深黑实心→统一玻璃rgba(255,255,255,.075)+blur14 saturate1.7+描边.10+圆角12 ②背景顶层加右深金baseglow rgba(160,110,35,.38) ③文字全面提亮加粗: body基线500, 元信息灰字→亮白.8/500-600, 数值.95/.8+.85/600-700, 提示字统一≥.75/500+终扫残留12处灰字提亮+ladRow已触行.55→.65(禁<.6文字); H清查: 全码唯一H=枢轴kind(小图computeTierJL/ks zzPivotsJL,大写=已确认/小写=未确认),资金卡温度卡渲染无H输出, 标题700, 指数小卡.85/600/13px, --secondary.74→.80 ④资金预警风险分溢出修复: 条与数值间距8px+条flex收缩min44px+数值flex:none ⑤终扫见响应报告; ks.html零改动 --><!-- jl-1063 v0.84.10(152仍雾蒙蒙, 要独立版KeyStation原色): 雾根因=仍有半透明+模糊叠加——①ks嵌入态背景改实心#0a0e0b, backdrop-filter全关(与独立版深色主题逐像素一致) ②外壳叠加层0.22→transparent(只留薄荷描边) ③保留: 全出血/缓存根修/强制深色主题 --><!-- jl-1062 v0.84.9(定案): 玻璃实验终止, ks嵌入面板调回原黑——盾0.30→0.42+blur10(=v0.84.5观感), 外壳叠加0.08→0.22(原值); 保留: 手机全出血/缓存锁定当前壳/嵌入态强制深色主题(亮线可读)/工具条蓝青统一; 独立版与算法零影响 --><!-- jl-1061 v0.84.8(实拍: 玻璃生效但网格/价签/十字线全看不清): 根因=K线Station存档是浅色主题——浅灰结构线压在玻璃上无对比——①嵌入态强制深色主题(独立版主题选择不受影响, 存档不覆盖) ②玻璃0.14→0.30+blur12(深色线条有暗底对比, 仍透极光不回死黑) ③画布/指标算法零改动, 非大修 --><!-- jl-1060 v0.84.7(实拍: 面板仍死黑不match): 根因=SW全局ignoreSearch缓存匹配把KEEP旧壳缓存里的陈年ks.html喂给iframe, v0.84.6玻璃改动根本没送到手机——①sw.js运行时匹配锁定当前壳C(陈旧投喂根除, 离线回退链不变) ②ks嵌入态工具条/文字绿灰→主UI蓝青玻璃家族(仅ksT, 独立版/主题零影响) ③零数据/业务逻辑改动 --><!-- jl-1059 v0.84.6(截图圈注): ①手机chartMode全出血——@media430取消舞台padding24px/设备95vw居中/圆角, K线图铺满手机不再两侧空带 ②ks玻璃减淡——玻璃盾0.42→0.14+blur14, 外壳叠加层0.22→0.10, 极光背景透出与首页卡片玻璃一致, 不再死黑不搭(UI统一) ③零数据/业务逻辑改动 --><!-- jl-1058: 整页嵌死手机宽——任一页超宽不再把整个文档拖成可左右平移 */#ksMiniJL{position:absolute;right:10px;bottom:56px;z-index:41;display:none;text-align:right}body.ksFullJL #ksMiniJL{display:block}#ksMiniHandle{border:1px solid #81e6d966;background:#0b1c24cc;color:#f2fbfd;font-size:11px;padding:4px 12px;border-radius:9px;letter-spacing:1px}#ksMiniBody{margin-top:6px;background:#0b1c24e6;border:1px solid #81e6d944;border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:284px;justify-content:flex-end}#ksMiniBody button{border:1px solid #ffffff22;background:transparent;color:#f2fbfd;font-size:11px;padding:4px 8px;border-radius:7px}#ksMiniBody button.active{border-color:#81e6d9;color:#81e6d9}#ksMiniBody button.mbOn{border-color:#ffd21f;color:#ffd21f}body.ksFullJL #chartPage .chartActions,body.ksFullJL #chartPage .indBar{display:none}
 #ksFullJLBtn{position:absolute;right:10px;bottom:92px;z-index:40;width:44px;height:44px;border-radius:12px;border:1px solid #81e6d966;background:rgba(26,18,10,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#eafffd;font-size:16px;display:none;padding:0}.kimi-brand-container{display:none!important}body.ksEmbed #ksMiniBody button[data-period],body.ksEmbed #ksMiniBody button[data-mb="draw"],body.ksEmbed #ksMiniBody button[data-mb="undo"],body.ksEmbed #ksMiniBody button[data-mb="clear"],body.ksEmbed #ksMiniBody button[data-mb="hide"],body.ksEmbed #ksMiniBody button[data-mb="lock"],body.ksEmbed #ksMiniBody button[data-mb="ind"],body.ksEmbed #ksMiniBody button[data-mb="alert"],body.ksEmbed #ksMiniBody button[data-mb="reset"]{display:none}.phone.chartMode #ksFullJLBtn{display:block}body.ksFullJL .navigation{display:none}body.ksFullJL .header{display:none}body.ksFullJL #chartPage .chartHeading{display:none}body.ksFullJL .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px}body.ksFullJL.ksEmbed #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05)} /* jl-1036: 容器层深色玻璃兜底 */body.ksFullJL.ksEmbed #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #ksFullJLBtn{bottom:14px}body.ksFullJL .phone.chartMode{height:100vh;height:100dvh;max-height:none;min-height:0}body.ksFullJL .phone.chartMode .scroll{position:absolute;inset:46px 0 0 0;height:auto;padding:0 6px 6px;display:block}body.ksFullJL.ksEmbed .phone.chartMode #chartPage{position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.05);display:block} /* jl-1036 */body.ksFullJL.ksEmbed .phone.chartMode #chartPage .plots{position:absolute;inset:0;height:auto}body.ksFullJL #chartPage #crossReadout,body.ksFullJL #chartPage .chartFooter,body.ksFullJL #chartPage .periodBar,body.ksFullJL #chartPage .previewActions{display:none}.poolWhy,.poolStale,.poolFund,.poolCard small,#watchList .watchItem small,#watchList .watchItem .poolLink{color:#EAF0F8}.poolWhy i{color:#ffd98a;font-style:normal}.dgTag{font-weight:600;font-style:normal}.poolRowJL{display:grid;grid-template-columns:minmax(0,1fr) 58px 64px 64px;gap:6px;align-items:center;width:100%;padding:7px 6px;background:transparent;border:0;border-bottom:1px solid #81e6d914;color:#FFFFFF;text-align:left;min-height:40px;cursor:pointer}
 .poolRowJL:active{background:#81e6d910}
@@ -1040,7 +1040,7 @@ cv.addEventListener('webglcontextlost',function(e){try{e.preventDefault();cancel
 </script>
 <script src="jl_review_stats.js?v=2"></script>
 <script src="lowopen-rebound.js?v=4"></script>
-<script src="jl_gapiv.js?v=3"></script><script src="jl_card5d.js?v=6"></script><script src="jl_cardfold.js?v=1"></script><script src="jl_holdclean.js?v=2"></script><!-- jl-1170 本地稿 1027: 持仓卡缺口行改用 jl_gapiv.js(竞价框+iv行+今日已补+当天回补率, 验收页 gap-iv.html 定稿); 持仓页小K线那块换成五日图 jl_card5d.js(验收页 5day.html 定稿, 原小K线代码不删只隐藏); 分时图/台账/计算零触碰; 持仓卡右上角透明折叠钮 jl_cardfold.js(折起只留名称+现价涨跌, 每只票记住); 持仓页清理 jl_holdclean.js(隐藏 下跌/上行情景、盘中Fib尺假数、做T挂单、账户概览+灰字); 回滚=删本行四个引用 -->
+<script src="jl_gapiv.js?v=5"></script><script src="jl_card5d.js?v=9"></script><script src="jl_cardfold.js?v=1"></script><script src="jl_holdclean.js?v=2"></script><!-- jl-1170 本地稿 1027: 持仓卡缺口行改用 jl_gapiv.js(竞价框+iv行+今日已补+当天回补率, 验收页 gap-iv.html 定稿); 持仓页小K线那块换成五日图 jl_card5d.js(验收页 5day.html 定稿, 原小K线代码不删只隐藏); 分时图/台账/计算零触碰; 持仓卡右上角透明折叠钮 jl_cardfold.js(折起只留名称+现价涨跌, 每只票记住); 持仓页清理 jl_holdclean.js(隐藏 下跌/上行情景、盘中Fib尺假数、做T挂单、账户概览+灰字); 回滚=删本行四个引用 -->
 <script>if (![].at) {
   Array.prototype.at = function(n) {
     n = Math.trunc(n) || 0;
@@ -8242,9 +8242,9 @@ function playbookHTMLJL(s, leg, swSt) {
       return { t: a[0], o: Number(a[1]), c: Number(a[2]), h: Number(a[3]), l: Number(a[4]), v: Number(a[5]) };
     }).filter((x) => x.t && [x.o, x.c, x.h, x.l, x.v].every(Number.isFinite));
   }
-  async function loadTencentKline(code, klt) {
+  async function loadTencentKline(code, klt, end, cnt) {
     var _a2;
-    const p = code + ",m" + klt + ",,320";
+    const p = code + ",m" + klt + "," + (end || "") + "," + (cnt || 320);   /* jl-1199: 可选 end/cnt 往前翻页 */
     const r = await fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=" + p + "&_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout(1e4) }); // jl-0920-46: 防运营商透明缓存喂陈旧分时
     if (!r.ok) throw Error("\u817E\u8BAFK\u7EBFHTTP " + r.status);
     const d = await r.json(), n = (_a2 = d == null ? void 0 : d.data) == null ? void 0 : _a2[code], rows = n == null ? void 0 : n["m" + klt];
@@ -9459,6 +9459,15 @@ function activeLegJL(swSt, liveP, dayHi) {
     fibs: BR.map(function (r) { return { r: r, v: hi - rg * r }; })
   };
 }
+  /* jl-1201: 中波段斐波档位对外口(与持仓卡中波段条同源 swingStateJL+activeLegJL), 给缺口区"日线未补目标"做双向验证用; 只读不改任何状态 */
+  window.jlFibLvJL = function (code) {
+    try {
+      var st = (typeof stocks !== "undefined" && stocks.find(function (x) { return x.code === code; })) || {}, p = Number(st.base) || 0, bars = dailyBarsOf(code);
+      var sw = swingStateJL(bars, p, { closed: jlDayClosedJL(bars) }), al = activeLegJL(sw, p, Number(st.high) || 0);
+      if (!al) return null;
+      return { dir: al.dir, lo: al.lo, hi: al.hi, lv: [0, 0.236, 0.382, 0.5, 0.618, 0.786, 0.886, 1].map(function (r) { return { r: r, v: al.dir < 0 ? al.lo + al.rng * r : al.hi - al.rng * r }; }) };
+    } catch (e) { return null; }
+  };
   /* v0.83.0-S1c: 中波段状态块。刻意复用既有 pbJL/pbCap/pbRow/pbLv/fibState 样式类，
      不新增 CSS —— 用户要求「UI 设计一下不要太突兀」，与上下两块（接回档面板、
      短波段判定行）同一套视觉语言是最不突兀的做法。 */
@@ -10128,8 +10137,10 @@ function swingMidHTMLJL(st) {
       // tagAvoid:两条线靠得太近时，高位区标签上移、低位区标签下移，避免叠字
       shift = o.tagAvoid && (yL - yH) < h + 2; ty = yy + (shift ? (j === 0 ? -(h / 2 + 1) : (h / 2 + 1)) : 0);
       if (o.zoneTags !== false) {                 // zoneTags:false => 只画线，不画「高位区/低位区」标签（极小卡用）
-        ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(bx, ty - h / 2, w, h, 2); ctx.fill();
-        ctx.fillStyle = tc; ctx.textAlign = 'center'; ctx.fillText(txt, bx + w / 2, ty + 0.5);
+        if (j === 0) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#ff4fa3'; } else ctx.fillStyle = col; /* jl-1205: 用户只点名高位区——淡粉半透明底(后面的线隐约可见)+亮白字; 低位区保持原样 */
+        ctx.beginPath(); ctx.roundRect(bx, ty - h / 2, w, h, 2); ctx.fill(); ctx.globalAlpha = 1;
+        ctx.fillStyle = j === 0 ? '#ffffff' : tc; ctx.textAlign = 'center'; ctx.fillText(txt, bx + w / 2, ty + 0.5);
+        if (o.occ) o.occ.push([bx - 1, ty - h / 2 - 1, bx + w + 1, ty + h / 2 + 1]); /* jl-1204: 可选——把高/低位区标签占位交给调用方避让 */
       }
     }
     ctx.restore();
@@ -10235,7 +10246,7 @@ function swingMidHTMLJL(st) {
       var oo = {}, kk; o = o || {}; for (kk in o) oo[kk] = o[kk]; o = oo;      // 复制一份，不改调用方传入的对象
       if (o.preset === 'card') {                                              // 持仓卡预设：只对没显式传的选项生效
         var PC = { height: 124, showTime: false, zones: true, extremeLine: false, axis: 'fit', preLineSolid: true,
-          zoneHiLine: '#ffffff', zoneLoLine: '#4c9aff', zoneHiFill: '#ff6b9a', zoneLoFill: '#3b82f6', zoneHiTagText: '#222',
+          zoneHiLine: '#ff4fa3', zoneLoLine: '#4c9aff', zoneHiFill: '#ff6b9a', zoneLoFill: '#3b82f6', zoneHiTagText: '#222', loColor: '#6aa8ff', /* jl-1205: 用户——卡内高位区线白→粉、低签红→蓝, 都同下方大图 */
           upColor: '#ff6b6b', downColor: '#34e39b' };
         for (kk in PC) if (o[kk] === undefined) o[kk] = PC[kk];
       }
@@ -10359,6 +10370,7 @@ function swingMidHTMLJL(st) {
           g.beginPath(); g.moveTo(xp(_aucW + 237) - 0.5, 0); g.lineTo(xp(_aucW + 237) - 0.5, plotBottom); g.stroke(); g.setLineDash([]);
           g.restore();
         }
+        var _dl = []; /* jl-1204: 缺口类价签(今开缺口/盘中VI/近端要补)先登记, 等高低签·角标·昨收签画完再统一避让着画, 防重影 */
         /* 开盘缺口带(昨收→今开): 高开=青蓝(要跌回补) 低开=黄(要涨回补), 延伸到回补那根; 已补=淡色虚线 */
         if (o.gapBand !== false && pre !== null && preIn && pos[0] <= 5) {
           var _gb = rv(o.bars, null), _gb0 = null; /* jl-1195: 今开=第一根非竞价bar的o */
@@ -10369,11 +10381,14 @@ function swingMidHTMLJL(st) {
             for (_k = 0; _k < n; _k++) { var _bk = (_gb && _gb.length === n) ? _gb[_k] : null, _lo = _bk && fin(_bk.l) ? _bk.l : p[_k], _hi = _bk && fin(_bk.h) ? _bk.h : p[_k]; if (_gu ? _lo <= pre : _hi >= pre) { _fi = _k; break; } }
             var _xa = x(0), _xb = x(_fi >= 0 ? _fi : n - 1), _ya = Math.max(yT - 4, y(Math.max(_op, pre))), _yb = Math.min(yB + 4, y(Math.min(_op, pre)));
             if (_xb < _xa + 3) _xb = _xa + 3;
-            var _gc = _gu ? '64,208,224' : '255,210,31', _gf = _fi >= 0;
+            /* jl-1198: 改VI式小黄框+文字签(用户给图定稿), 与低位区蓝色分开; 未补=黄虚线拉到最右(虚线价位=昨收=回补目标), 已补=虚线停在补回那根 */
+            var _gc = _gu ? '0,240,255' : '255,230,0', _gf = _fi >= 0, /* jl-1206: 用户定——往下补=青绿↓, 往上补=黄↑(与缺口区/VI同色) */ _bw = Math.max(8, Math.min(16, _xb - _xa)), _bh = Math.max(2, _yb - _ya), _yp = y(pre);
             g.save();
-            g.fillStyle = 'rgba(' + _gc + ',' + (_gf ? 0.10 : 0.20) + ')'; g.fillRect(_xa, _ya, _xb - _xa, Math.max(1, _yb - _ya));
-            g.strokeStyle = 'rgba(' + _gc + ',' + (_gf ? 0.5 : 0.9) + ')'; g.lineWidth = 1; if (_gf) g.setLineDash([3, 3]);
-            g.beginPath(); g.moveTo(_xa, _ya + 0.5); g.lineTo(_xb, _ya + 0.5); g.moveTo(_xa, _yb - 0.5); g.lineTo(_xb, _yb - 0.5); g.stroke();
+            g.fillStyle = 'rgba(' + _gc + ',0.14)'; g.fillRect(_xa, _ya, _bw, _bh);
+            g.strokeStyle = 'rgba(' + _gc + ',0.95)'; g.lineWidth = 1; g.strokeRect(_xa + 0.5, _ya + 0.5, _bw - 1, _bh - 1);
+            if (_yp >= yT - 4 && _yp <= yB + 4 && _xb > _xa + _bw) { g.setLineDash([4, 3]); g.strokeStyle = 'rgba(' + _gc + ',' + (_gf ? 0.45 : 0.85) + ')'; g.beginPath(); g.moveTo(_xa + _bw, _yp + 0.5); g.lineTo(_xb, _yp + 0.5); g.stroke(); g.setLineDash([]); }
+            var _gft = _gf && typeof times[_fi] === 'string' ? (/^(\d{1,2}:\d{2})/.exec(times[_fi]) || [])[1] : '';
+            if (!_gf) _dl.push({ t: '竞开 ' + (_gu ? '\u2193' : '\u2191') + ' ' + pre.toFixed(2), x: _xa + _bw + 4, y: Math.max(yT + 9, Math.min(yB - 2, _gu ? _ya - 3 : _yb + 10)), al: 'left', bl: 'alphabetic', font: '700 9px -apple-system,"PingFang SC",sans-serif', fh: 10, col: 'rgb(' + _gc + ')', a: 1, pr: 0 }); /* jl-1204: 只给未补写字, 已补只留淡框+虚线(明细在下方缺口区) */
             g.restore();
           }
         }
@@ -10387,6 +10402,7 @@ function swingMidHTMLJL(st) {
               if (!_b0 || !_b1 || _b0.auc || _b1.auc || !fin(_b0.c) || !fin(_b1.o) || !fin(_b1.h) || !fin(_b1.l) || !fin(_b0.h) || !fin(_b0.l)) continue; /* jl-1195: 竞价bar不参与盘中VI */
               var _bull = _b1.o - _b0.c > _vm && _b1.l <= _b0.h, _bear = _b0.c - _b1.o > _vm && _b1.h >= _b0.l;
               if (!_bull && !_bear) continue;
+              if (_bull ? _b1.l <= _b0.c : _b1.h >= _b0.c) continue; /* jl-1199: 形成那根自己影线已碰前收 = 当根已补, 不画 */
               var _ext = _b1.o; /* jl-1164: 补=碰远沿(前收)才消, 剩余带=未被影线吃掉的部分(与大K线同口径) */
               for (_vj = _vi + 1; _vj < n; _vj++) { var _bj = _bs[_vj]; if (!_bj) continue; _ext = _bull ? Math.min(_ext, _bj.l) : Math.max(_ext, _bj.h); }
               if (_bull ? _ext <= _b0.c : _ext >= _b0.c) continue;
@@ -10402,10 +10418,8 @@ function swingMidHTMLJL(st) {
                 g.fillStyle = 'rgba(' + _vc + ',0.14)'; g.fillRect(_x1, _ty, Math.max(3, _x2 - _x1), _hh);
                 g.strokeStyle = 'rgba(' + _vc + ',0.55)'; g.lineWidth = 0.75; g.beginPath(); g.moveTo(_x1, _ty + 0.5); g.lineTo(_x2, _ty + 0.5); g.moveTo(_x1, _ty + _hh - 0.5); g.lineTo(_x2, _ty + _hh - 0.5); g.stroke();
                 g.fillStyle = 'rgb(' + _vc + ')'; g.strokeStyle = 'rgba(0,0,0,.7)'; g.beginPath(); g.rect(_x1 - 1.5, _yc - 2, 3, 4); g.fill();
-                var _tx2 = (_z2.bull ? '\u2193' : '\u2191') + _z2.lo.toFixed(2) + '\u2013' + _z2.hi.toFixed(2);
-                g.font = '8px Menlo,monospace'; g.textAlign = 'left'; g.globalAlpha = .8; g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 2;
-                if (_hh >= 11) { g.textBaseline = 'top'; g.strokeText(_tx2, _x1 + 4, _ty + 1.5); g.fillText(_tx2, _x1 + 4, _ty + 1.5); }
-                else { g.textBaseline = 'bottom'; g.strokeText(_tx2, _x1 + 4, _ty - 1.5); g.fillText(_tx2, _x1 + 4, _ty - 1.5); } }
+                var _tx2 = (_z2.bull ? '\u2193' : '\u2191') + ' iv ' + _z2.lo.toFixed(2) + '\u2013' + _z2.hi.toFixed(2); /* jl-1206: 写法"↓ iv 价格" */
+                _dl.push({ t: _tx2, x: _x1 + 4, y: _hh >= 11 ? _ty + 1.5 : _ty - 1.5, al: 'left', bl: _hh >= 11 ? 'top' : 'bottom', font: '8px Menlo,monospace', fh: 9, col: 'rgb(' + _vc + ')', a: .85, pr: 2 }); } /* jl-1204 */
               g.restore();
             }
           } }
@@ -10415,6 +10429,7 @@ function swingMidHTMLJL(st) {
           if (_hz && _hz.length) {
             /* jl-1180: 最多3组(距现价近的先画); 轴外不扩轴, 顶/底方向价签; 带内淡色小价签 */
             _hz = _hz.filter(function (z) { return z && fin(z.lo) && fin(z.hi); });
+            { var _sn9 = {}; _hz = _hz.filter(function (z) { var k9 = (z.bull ? 'b' : 's') + z.lo.toFixed(2) + '_' + z.hi.toFixed(2); if (_sn9[k9]) return false; _sn9[k9] = 1; return true; }); } /* jl-1204: 同一价位不同周期(如15分+5分)只占一个名额, 不重复画 */
             _hz.sort(function (a, b) { return Math.abs((a.lo + a.hi) / 2 - p[n - 1]) - Math.abs((b.lo + b.hi) / 2 - p[n - 1]); });
             _hz = _hz.slice(0, 3);
             var _edgeT9 = 0, _edgeB9 = 0; /* jl-1194: 轴外方向签同侧竖排计数 */
@@ -10422,14 +10437,12 @@ function swingMidHTMLJL(st) {
               var _z = _hz[_z9];
               var _ya9 = y(_z.hi), _yb9 = y(_z.lo);
               var _hc9 = _z.bull ? '0,240,255' : '255,230,0', _al = _z.done ? 0.5 : 1;
-              var _tx9 = (_z.bull ? '\u2193' : '\u2191') + _z.lo.toFixed(2) + '\u2013' + _z.hi.toFixed(2);
+              var _tx9 = (_z.bull ? '\u2193' : '\u2191') + ' iv ' + _z.lo.toFixed(2) + '\u2013' + _z.hi.toFixed(2); /* jl-1206 */
               g.save();
               g.font = '8px Menlo,monospace';
               if (_ya9 > yB || _yb9 < yT) {
-                var _up9 = _yb9 < yT, _ty9 = _up9 ? (yT + 2 + _edgeT9 * 10) : (yB - 2 - _edgeB9 * 10); if (_up9) _edgeT9++; else _edgeB9++; /* jl-1194 */
-                g.textAlign = 'right'; g.textBaseline = _up9 ? 'top' : 'bottom';
-                g.globalAlpha = .85; g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 2;
-                g.strokeText(_tx9, w - r - 3, _ty9); g.fillStyle = 'rgb(' + _hc9 + ')'; g.fillText(_tx9, w - r - 3, _ty9);
+                var _up9 = _yb9 < yT, _ty9 = _up9 ? (yT + 2) : (yB - 2); /* jl-1194→jl-1204: 同侧多条由统一避让排开, 不再按计数下移 */
+                _dl.push({ t: _tx9, x: w - r - 3, y: _ty9, al: 'right', bl: _up9 ? 'top' : 'bottom', font: '8px Menlo,monospace', fh: 9, col: 'rgb(' + _hc9 + ')', a: .9, pr: 1, edge: _up9 ? 1 : -1 }); /* jl-1204: edge=轴外方向签, 只往图内一侧找位 */
                 g.restore(); continue;
               }
               var _yaX = Math.max(_ya9, yT), _ybX = Math.min(_yb9, yB);
@@ -10437,15 +10450,14 @@ function swingMidHTMLJL(st) {
               g.strokeStyle = 'rgba(' + _hc9 + ',' + (0.4 * _al) + ')'; g.lineWidth = 0.75; g.setLineDash(_z.done ? [1, 5] : [2, 4]);
               g.beginPath(); g.moveTo(l, _yaX + 0.5); g.lineTo(w - r, _yaX + 0.5); g.moveTo(l, _ybX - 0.5); g.lineTo(w - r, _ybX - 0.5); g.stroke();
               g.setLineDash([]);
-              g.textAlign = 'left'; g.globalAlpha = .8; g.strokeStyle = 'rgba(0,0,0,.5)'; g.lineWidth = 2;
-              if (_ybX - _yaX >= 11) { g.textBaseline = 'top'; g.strokeText(_tx9, l + 3, _yaX + 1.5); g.fillStyle = 'rgb(' + _hc9 + ')'; g.fillText(_tx9, l + 3, _yaX + 1.5); }
-              else { g.textBaseline = 'bottom'; g.strokeText(_tx9, l + 3, _yaX - 1.5); g.fillStyle = 'rgb(' + _hc9 + ')'; g.fillText(_tx9, l + 3, _yaX - 1.5); }
+              _dl.push({ t: _tx9, x: l + 3, y: _ybX - _yaX >= 11 ? _yaX + 1.5 : _yaX - 1.5, al: 'left', bl: _ybX - _yaX >= 11 ? 'top' : 'bottom', font: '8px Menlo,monospace', fh: 9, col: 'rgb(' + _hc9 + ')', a: .85, pr: 1 }); /* jl-1204 */
               g.restore();
             }
           } } catch (eZ9) { }
         // 可选：高/低位区（绘图区矮于 70px 的极小卡不画「高/低位区」文字，虚线保留）
+        var _zoc = []; /* jl-1204 */
         if (o.zones && typeof drawZones === 'function') {
-          drawZones(g, p, { x: x, y: y, lo: lo, hi: hi, left: l, right: w - r, fs: 9,
+          drawZones(g, p, { x: x, y: y, lo: lo, hi: hi, left: l, right: w - r, fs: 9, occ: _zoc,
             hiLine: rv(o.zoneHiLine, '#fff'), loLine: rv(o.zoneLoLine, '#3b82f6'),
             hiFill: rv(o.zoneHiFill, '#e5484d'), loFill: rv(o.zoneLoFill, '#3b82f6'), hiTagText: rv(o.zoneHiTagText, '#222'),
             dash: o.zoneDash, tagAvoid: true, zoneTags: plotBottom >= 70 });
@@ -10548,11 +10560,12 @@ function swingMidHTMLJL(st) {
           }
         }
         _tipBoxes.length = 0; /* jl-1160b: 每帧清空点按热区 */
+        var _pbx = []; /* jl-1204: 本帧高/低签与摆动戳占位(原 o.boxes 只写不读且跨帧累积) */
         drawPHVL(g, lastMarks, { mode: 'card', x: x, y: y, left: l, right: w - r, top: 0, bottom: plotBottom,
           stamps: o.swingMarks !== false, /* jl-1142: 补画已确认摆动点小字戳; swingMarks:false 可关 */
           textColor: txt, hiColor: rv(o.hiColor, '#ff4fa3'), loColor: rv(o.loColor, '#e5484d'), /* ks-1012-d9: 高标签亮粉+白字(用户定稿), 低标签红保持 */
           amp: o.swingAmp === true, flashKeys: _fkSet, flashPh: _fkPh, /* jl-1150 */
-          decimals: DEC, boxes: o.boxes, noLine: o.extremeLine === false, percCode: rv(o.swingCode, ''), refPrice: pre, series: p, tips: _tipBoxes }); /* jl-1160b */
+          decimals: DEC, boxes: _pbx, noLine: o.extremeLine === false, percCode: rv(o.swingCode, ''), refPrice: pre, series: p, tips: _tipBoxes }); /* jl-1160b */
         { /* jl-1161: 开盘强弱微灯——图区左上悬浮, 不占行; 点热区出详情 */
           var _oq = o._oqData;
           if (_oq && o.preset !== 'card') { /* jl-1193: 卡内分时藏开盘微灯, 大图保留 */
@@ -10572,7 +10585,7 @@ function swingMidHTMLJL(st) {
   
         // 四角价格 / 涨跌幅标签、昨收标签
         /* 所有尺寸都检查：「高/低」chip 压住的角标让位不画；紧贴轴时昨收线常贴边，被昨收线穿行的角标也让位 */
-        var cBox = [];
+        var cBox = [], _occ = []; /* jl-1204: _occ=角标/昨收签实际占位 */
         for (var cj = 0; cj < lastMarks.length; cj++) {
           var cmk = lastMarks[cj];
           if (!cmk.extreme) continue;
@@ -10588,15 +10601,15 @@ function swingMidHTMLJL(st) {
           return true;
         }
         var lblT = fmt(mid + dev), lblB = fmt(mid - dev);
-        if (cornerOk(l + 2, l + 2 + g.measureText(lblT).width, 8)) { g.fillStyle = up; g.textAlign = 'left'; g.fillText(lblT, l + 2, 8); }
-        if (cornerOk(l + 2, l + 2 + g.measureText(lblB).width, plotBottom - 8)) { g.fillStyle = down; g.fillText(lblB, l + 2, plotBottom - 8); }
+        if (cornerOk(l + 2, l + 2 + g.measureText(lblT).width, 8)) { g.fillStyle = up; g.textAlign = 'left'; g.fillText(lblT, l + 2, 8); _occ.push([l + 2, 0, l + 4 + g.measureText(lblT).width, 15]); }
+        if (cornerOk(l + 2, l + 2 + g.measureText(lblB).width, plotBottom - 8)) { g.fillStyle = down; g.fillText(lblB, l + 2, plotBottom - 8); _occ.push([l + 2, plotBottom - 16, l + 4 + g.measureText(lblB).width, plotBottom]); }
         if (pre !== null) {
           /* 涨跌幅按坐标轴两端的真实价格算（紧贴轴下不再是 ±dev/pre）；每个标签各自右对齐——
              上面那个让位不画时，下面这个不能继承「左对齐」而画到画布外面 */
           var pT = ((mid + dev) / pre - 1) * 100, pB = ((mid - dev) / pre - 1) * 100;
           var sT = (pT >= 0 ? '+' : '-') + Math.abs(pT).toFixed(2) + '%', sB = (pB >= 0 ? '+' : '-') + Math.abs(pB).toFixed(2) + '%';
-          if (cornerOk(w - r - 2 - g.measureText(sT).width, w - r - 2, 8)) { g.textAlign = 'right'; g.fillStyle = pT >= 0 ? up : down; g.fillText(sT, w - r - 2, 8); }
-          if (cornerOk(w - r - 2 - g.measureText(sB).width, w - r - 2, plotBottom - 8)) { g.textAlign = 'right'; g.fillStyle = pB >= 0 ? up : down; g.fillText(sB, w - r - 2, plotBottom - 8); }
+          if (cornerOk(w - r - 2 - g.measureText(sT).width, w - r - 2, 8)) { g.textAlign = 'right'; g.fillStyle = pT >= 0 ? up : down; g.fillText(sT, w - r - 2, 8); _occ.push([w - r - 4 - g.measureText(sT).width, 0, w - r, 15]); }
+          if (cornerOk(w - r - 2 - g.measureText(sB).width, w - r - 2, plotBottom - 8)) { g.textAlign = 'right'; g.fillStyle = pB >= 0 ? up : down; g.fillText(sB, w - r - 2, plotBottom - 8); _occ.push([w - r - 4 - g.measureText(sB).width, plotBottom - 16, w - r, plotBottom]); }
           /* 昨收标签避让：昨收恒在图正中(preY)。左半边被「高/低」标记或角标挤 → 挪到右边；
              右半边也挤（图矮时角标/涨跌幅标签两边同高）→ 干脆不画，绝不叠字（昨收虚线还在） */
           var preY = y(pre) - 7, midX = (l + w - r) / 2, TH = 22 /*「高/低」标记s=12 + 文字fs=10*/;
@@ -10611,7 +10624,43 @@ function swingMidHTMLJL(st) {
             if (cy2 > plotBottom - 6) cy2 = plotBottom - 6;
             if (Math.abs(preY - cy2) < TH) { if (x(mj.idx) < midX) iL = true; else iR = true; }
           }
-          if (preIn && (!iL || !iR)) { g.textAlign = iL ? 'right' : 'left'; g.fillStyle = sub; g.fillText(fmt(pre), iL ? w - r - 2 : l + 2, preY); }
+          if (preIn && (!iL || !iR)) { g.textAlign = iL ? 'right' : 'left'; g.fillStyle = sub; g.fillText(fmt(pre), iL ? w - r - 2 : l + 2, preY); var _pw4 = g.measureText(fmt(pre)).width; _occ.push(iL ? [w - r - 4 - _pw4, preY - 9, w - r, preY + 8] : [l, preY - 9, l + 4 + _pw4, preY + 8]); }
+        }
+        { /* jl-1204: 缺口类价签统一最后画——避开高/低签(含百分比)、摆动戳、角标、昨收签和彼此; 上下各挪三档仍无空位就不写字(色带保留), 绝不叠字 */
+          var _oc4 = _occ.concat(_zoc), _q4, _i4;
+          for (_i4 = 0; _i4 < _pbx.length; _i4++) { _q4 = _pbx[_i4]; if (_q4.kind !== 'line') _oc4.push([_q4.x - 1, _q4.y - 1, _q4.x + _q4.w + 1, _q4.y + _q4.h + 1]); }
+          for (_i4 = 0; _i4 < _tipBoxes.length; _i4++) { _q4 = _tipBoxes[_i4]; _oc4.push([_q4.x, _q4.y, _q4.x + _q4.w, _q4.y + _q4.h]); }
+          _dl.sort(function (a4, b4) { return a4.pr - b4.pr; });
+          g.save(); g.lineJoin = 'round';
+          for (var _d4 = 0; _d4 < _dl.length; _d4++) {
+            var L4 = _dl[_d4]; g.font = L4.font;
+            var tw4 = g.measureText(L4.t).width, x04 = L4.al === 'right' ? L4.x - tw4 : L4.x, put4 = null, cd4 = [], sh4 = Math.min(0, (w - r - 2) - (x04 + tw4)); /* sh4: 右边放不下整体左移, 不截字 */
+            if (L4.edge) { /* 轴外方向签: 先放图框外的上/下留白条(走势线到不了), 再放贴边两行; 横向往左让, 绝不挪到无关价位旁 */
+              var rw4 = L4.edge > 0 ? [2 - L4.y, 0, 10, 20] : [(plotBottom - 2) - L4.y, 0, -10, -20];
+              for (var e4 = 0; e4 < rw4.length; e4++) for (var k4 = 0; k4 * 20 <= w; k4++) cd4.push([-k4 * 20, rw4[e4]]); /* 20px一步往左找缝 */
+            } else { /* 带内签/竞开签: 竖向5px一档, 并可沿同一价位右移让位 */
+              for (var xs4 = 0; xs4 <= 60; xs4 += 30) [0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30].forEach(function (v) { cd4.push([xs4, v]); });
+            }
+            for (var ps4 = 0; ps4 < (L4.edge ? 1 : 2) && !put4; ps4++) /* jl-1205: 第一轮还要避开白色走势线, 第二轮才允许压线(字与字永不重叠); 轴外签只有第一轮——压线宁可不画 */
+            for (var c4 = 0; c4 < cd4.length && !put4; c4++) {
+              var dx4 = cd4[c4][0] + sh4, yy4 = L4.y + cd4[c4][1], tp4 = L4.bl === 'top' ? yy4 : L4.bl === 'bottom' ? yy4 - L4.fh : yy4 - L4.fh * 0.8;
+              var rc4 = [x04 + dx4 - 2, tp4 - 1, x04 + dx4 + tw4 + 2, tp4 + L4.fh + 1];
+              if (rc4[1] < 0 || rc4[3] > plotBottom || rc4[0] < l) continue;
+              var hit4 = false;
+              for (_i4 = 0; _i4 < _oc4.length; _i4++) { _q4 = _oc4[_i4]; if (rc4[0] < _q4[2] && rc4[2] > _q4[0] && rc4[1] < _q4[3] && rc4[3] > _q4[1]) { hit4 = true; break; } }
+              if (!hit4 && ps4 === 0) for (_i4 = 0; _i4 < n - 1 && !hit4; _i4++) { /* 走势线逐段: 线段与字框相交即算压线 */
+                if (!fin(p[_i4]) || !fin(p[_i4 + 1])) continue;
+                var xa5 = x(_i4), xb5 = x(_i4 + 1); if (xb5 < rc4[0] || xa5 > rc4[2]) continue;
+                var ya5 = y(p[_i4]), yb5 = y(p[_i4 + 1]); if (Math.max(ya5, yb5) >= rc4[1] && Math.min(ya5, yb5) <= rc4[3]) hit4 = true;
+              }
+              if (!hit4) put4 = { x: L4.x + dx4, y: yy4, rc: rc4 };
+            }
+            if (!put4) continue;
+            _oc4.push(put4.rc);
+            g.textAlign = L4.al; g.textBaseline = L4.bl; g.globalAlpha = L4.a; g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 2.5;
+            g.strokeText(L4.t, put4.x, put4.y); g.fillStyle = L4.col; g.fillText(L4.t, put4.x, put4.y);
+          }
+          g.restore();
         }
         // 时间轴
         if (timeH) {
@@ -11048,6 +11097,7 @@ function swingMidHTMLJL(st) {
       for (var i = 0; i < GAPLOG_CODES_JL.length; i++) {
         var code = GAPLOG_CODES_JL[i], pf = jlPfxJL(code), g = {};
         for (var k of [1, 5, 15, 30]) { try { g[k] = await loadTencentKline(pf, k); } catch (e) { g[k] = null; } }
+        for (var k2 of [5, 15]) { try { if (g[k2] && g[k2].length) { var s0 = g[k2][0].t, older = await loadTencentKline(pf, k2, s0, 800); g[k2] = older.filter(function (x) { return x.t < s0; }).concat(g[k2]); } } catch (e) { } }   /* jl-1199: 5/15分一页只到~7/~20天, 往前补一页, 近30天分钟缺口都能复查回补 */
         collectGapsJL._t && delete collectGapsJL._t[code];
         collectGapsJL(code, [['日', dailyBarsOf(code)], ['30分', g[30]], ['15分', g[15]], ['5分', g[5]], ['1分', g[1]]]);
       }
@@ -11062,7 +11112,7 @@ function swingMidHTMLJL(st) {
       var st = (typeof stocks !== 'undefined' && stocks.find(function (x) { return x.code === code; })) || {};
       var log = gapLogLoadJL(), chg = 0, dg = function (t) { return String(t || '').replace(/\D/g, ''); };
       var fmt = function (t) { var d = dg(t); return d.length >= 12 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) + ' ' + d.slice(8, 10) + ':' + d.slice(10, 12) : d.length >= 8 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6, 8) : ''; };
-      var put = function (k, r) { var o = log[k]; if (!o) { log[k] = r; chg = 1; } else if (!o.ft && r.ft) { o.ft = r.ft; chg = 1; } };
+      var put = function (k, r) { r.fv = 2; var o = log[k]; if (!o) { log[k] = r; chg = 1; } else if (o.fv !== 2) { o.ft = r.ft; o.fv = 2; chg = 1; } else if (!o.ft && r.ft) { o.ft = r.ft; chg = 1; } };   /* jl-1200: 旧口径记录重扫到时按新口径重判一次(fv:2 标记) */
       lv.forEach(function (L) {
         var b = L[1]; if (!b || b.length < 3) return;
         for (var i = 1; i < b.length; i++) {
@@ -11071,7 +11121,8 @@ function swingMidHTMLJL(st) {
           if (!bull && !bear) continue;
           if (L[0] !== '日' && dg(p0.t).slice(0, 8) !== dg(c0.t).slice(0, 8)) continue;
           var ft = '';
-          for (var j = i + 1; j < b.length; j++) if (bull ? b[j].l <= c0.o : b[j].h >= c0.o) { ft = fmt(b[j].t); break; }
+          if (bull ? c0.l <= p0.c : c0.h >= p0.c) ft = fmt(c0.t);   /* jl-1199: 形成那根开在缺口边、自己影线已碰前收 = 当根已补(原从下一根才看, 漏判挂成未补) */
+          else for (var j = i + 1; j < b.length; j++) if (bull ? b[j].l <= p0.c : b[j].h >= p0.c) { ft = fmt(b[j].t); break; }   /* jl-1200: 补=碰远沿(前收), 与分时图/K线图口径统一; 原碰近沿(本根开)即算补, 偏松 */
           var lo = bull ? p0.c : c0.o, hi = bull ? c0.o : p0.c;
           put(code + '|' + L[0] + '|' + dg(c0.t) + '|' + lo.toFixed(2), { c: code, n: st.name || '', lv: L[0], dr: bull ? 1 : -1, lo: +lo.toFixed(2), hi: +hi.toFixed(2), ct: fmt(c0.t), ft: ft });
         }
@@ -12042,13 +12093,14 @@ function swingMidHTMLJL(st) {
     try {
       var c = String(code).replace(/\D/g, ''), log = gapLogLoadJL(), d = new Date(),
           ty = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2),
-          tyd = ty.replace(/\D/g, ''), cut = d.getTime() - 14 * 864e5, ks = Object.keys(log), i, j;
+          tyd = ty.replace(/\D/g, ''), cut = d.getTime() - 30 * 864e5, /* jl-1198: 14→30天, 兆易10-14未补缺口刚满14天被丢 */ ks = Object.keys(log), i, j;
+      try { var _mc6 = m1CacheJL[c] || m1CacheJL[code], _mr6 = _mc6 && _mc6.rows; if (_mr6 && _mr6.length) { var _sd6 = barTime(_mr6[_mr6.length - 1].t).slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(_sd6) && _sd6 < ty) { ty = _sd6; tyd = ty.replace(/\D/g, ''); } } } catch (e6) { } /* jl-1204: 盘前/休市时图上显示的仍是上一交易日, 那天的开盘缺口归"今开缺口"框, 不再当往天未补重画(原过午夜后同一缺口画两遍) */
       for (i = 0; i < ks.length; i++) {
         var e = log[ks[i]];
         if (!e || String(e.c).replace(/\D/g, '') !== c) continue;
         var fd = String(e.ct || '').slice(0, 10), srcLv = String(e.lv || '');
         if (!fd || fd >= ty) continue;                            /* 当日 → 棒线/开档逻辑已负责 */
-        if (Date.parse(fd + 'T00:00:00+08:00') < cut) continue;   /* 近 14 自然日 */
+        if (Date.parse(fd + 'T00:00:00+08:00') < cut) continue;   /* 近 30 自然日(jl-1198) */
         var lo = Math.min(+e.lo, +e.hi), hi = Math.max(+e.lo, +e.hi);
         if (!(lo > 0) || !(hi > lo)) continue;
         var bull = (e.dr || 1) > 0, done = null, ft = String(e.ft || ''), ftDay = ft.slice(0, 10);
@@ -12077,7 +12129,7 @@ function swingMidHTMLJL(st) {
         }
         var m = null;
         for (j = 0; j < out.length; j++)
-          if (!out[j].done && out[j].srcLv === srcLv && lo <= out[j].hi * 1.0005 && hi >= out[j].lo * 0.9995 && out[j].bull === bull) { m = out[j]; break; }
+          if (!out[j].done && (out[j].srcLv === srcLv || (/^[开日]$/.test(out[j].srcLv) && /^[开日]$/.test(srcLv))) && lo <= out[j].hi * 1.0005 && hi >= out[j].lo * 0.9995 && out[j].bull === bull) { m = out[j]; break; }   /* jl-1199: 开盘缺口台账里"开""日"各记一条=同一个缺口, 合并, 免得一个缺口占两个图上名额 */
         if (m) { m.lo = Math.min(m.lo, lo); m.hi = Math.max(m.hi, hi); if (fd.slice(5) > (m.d || '')) m.d = fd.slice(5); }
         else out.push({ lo: lo, hi: hi, bull: bull, d: fd.slice(5), done: null, srcLv: srcLv });
       }

@@ -44,7 +44,10 @@
     + ".gvJL .gvFoldJL{position:absolute;top:1px;right:3px;background:transparent;border:0;color:#8fb4d8;font-size:11px;line-height:1;padding:3px 6px;cursor:pointer;opacity:.7}"
     + ".gvJL .gvFoldJL:active{opacity:1}"
     + ".gvJL .aucL.gvFolded .ln3,.gvJL .aucL.gvFolded .ln4w{display:none}"
-    + ".gvJL .wait{font-size:11px;padding:4px 2px}";
+    + ".gvJL .wait{font-size:11px;padding:4px 2px}"
+    + ".gvJL .tgL{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding:4px 8px;margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);font:800 12px ui-monospace,Menlo,monospace}"
+    + ".gvJL .tgL .tgH{font:800 11px -apple-system,'PingFang SC',sans-serif;color:#fff}.gvJL .tgL .tgI{white-space:nowrap}.gvJL .tgL .tgI i{font-style:normal;color:#fff;opacity:.75;font-size:10.5px;margin-left:3px}"
+    + ".gvJL .tgL .tgI em{font-style:normal;color:#ffd84a;border:1px solid rgba(255,216,74,.6);border-radius:6px;padding:0 4px;margin-left:4px;font-size:10.5px}";   /* jl-1201 日线未补目标行 */
   function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS; document.head.appendChild(s); } }
 
   async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
@@ -53,6 +56,22 @@
   async function mk1(c) { const a = await mk(c, 1); if (!a.length) return a; let b = []; try { b = await mk(c, 1, a[0].t, 800); } catch (e) { } const s = a[0].t; return b.filter((x) => x.t < s).concat(a); }
   async function dk(c) { const d = await J("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + c + ",day,,,80,qfq"); const n = d.data[c]; return (n.qfqday || n.day).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }
   async function mn(c) { const d = await J("https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=" + c); const x = d.data[c]; let pv = 0; return { date: x.data.date, pts: x.data.data.map((s) => { const a = s.split(" "), cv = +a[2], v = cv - pv; pv = cv; return { t: a[0], p: +a[1], v: v }; }) }; }
+
+  /* ===== jl-1197: 东财备选——腾讯失败先原地重试一次, 仍失败才走东财; 每只票各自判断, 不设全局标记 ===== */
+  const EM = (u) => new Promise((ok, no) => { const cb = "gvEM" + Date.now() + Math.floor(Math.random() * 1e6), sc = document.createElement("script"); const done = () => { try { delete window[cb]; } catch (e) { } sc.remove(); }; const tm = setTimeout(() => { done(); no(Error("东财超时")); }, 10000); window[cb] = (d) => { clearTimeout(tm); done(); ok(d); }; sc.onerror = () => { clearTimeout(tm); done(); no(Error("东财连不上")); }; sc.src = u + "&cb=" + cb + "&_=" + Date.now(); document.head.appendChild(sc); });
+  const emId = (c) => (/^sh/i.test(c) ? "1." : "0.") + String(c).replace(/\D/g, "");
+  async function emK(c, klt, lmt) { const d = await EM("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + emId(c) + "&klt=" + klt + "&fqt=1&lmt=" + lmt + "&end=20500101&fields1=f1,f2,f3&fields2=f51,f52,f53,f54,f55,f56"); const k = d && d.data && d.data.klines; if (!k || !k.length) throw Error("东财无数据"); return k.map((r) => { const a = r.split(","); return { t: klt === 101 ? a[0] : a[0].replace(/\D/g, ""), o: +a[1], c: +a[2], h: +a[3], l: +a[4], v: +a[5] }; }); }
+  /* 1分钟线聚合成 k 分钟线, 时刻标在K线结束(与腾讯 mkline 同口径: 09:30 撮合根并入第一根) */
+  function agg(m1, k) { const out = []; let cur = null; m1.forEach((x) => { const d = x.t.slice(0, 8), mm = +x.t.slice(8, 10) * 60 + +x.t.slice(10, 12); let i = mm <= 690 ? mm - 570 : 120 + mm - 780; if (i < 1) i = 1; const e = Math.ceil(i / k) * k, em = e <= 120 ? 570 + e : 780 + e - 120, key = d + em, t = d + String(Math.floor(em / 60)).padStart(2, "0") + String(em % 60).padStart(2, "0"); if (!cur || cur.key !== key) { cur = { key, t, o: x.o, c: x.c, h: x.h, l: x.l, v: x.v }; out.push(cur); } else { cur.c = x.c; cur.h = Math.max(cur.h, x.h); cur.l = Math.min(cur.l, x.l); cur.v += x.v; } }); return out.map((b) => ({ t: b.t, o: b.o, c: b.c, h: b.h, l: b.l, v: b.v })); }
+  function mnFrom(m1) { const d = m1[m1.length - 1].t.slice(0, 8); return { date: d, pts: m1.filter((x) => x.t.slice(0, 8) === d && x.t.slice(8, 12) >= "0930").map((x) => ({ t: x.t.slice(8, 12), p: x.c, v: x.v })) }; }
+  async function getAll(c) {
+    const tx = () => Promise.all([dk(c), mk(c, 30), mk(c, 15), mk(c, 5), mk1(c), mn(c)]);
+    let e1;
+    try { return { r: await tx(), src: "tx" }; } catch (e) { e1 = e; }
+    try { return { r: await tx(), src: "tx" }; } catch (e) { e1 = e; }
+    try { const r = await Promise.all([emK(c, 101, 80), emK(c, 1, 1200)]), m1 = r[1]; return { r: [r[0], agg(m1, 30), agg(m1, 15), agg(m1, 5), m1, mnFrom(m1)], src: "em" }; }
+    catch (e2) { throw Error("腾讯" + (e1 && e1.message ? "(" + e1.message + ")" : "失败") + "，东财" + (e2 && e2.message ? "(" + e2.message + ")" : "失败")); }
+  }
 
   /* 扫一个周期的 VI(含今天已补的) */
   function scan(b, lv, today) {
@@ -63,8 +82,8 @@
       const vm = p0.c * 0.0005, bull = c0.o - p0.c > vm && (daily || c0.l <= p0.h), bear = p0.c - c0.o > vm && (daily || c0.h >= p0.l);
       if (!bull && !bear) continue;
       let ft = "", ext = c0.o;
-      if (daily && d0 === today && (bull ? c0.l <= p0.c : c0.h >= p0.c)) ft = "今日";   /* 今天这根日K已碰昨收 = 今天补了(时刻取开盘缺口的) */
-      else if (daily && d0 === today) ext = bull ? c0.l : c0.h;
+      if (bull ? c0.l <= p0.c : c0.h >= p0.c) ft = daily && d0 === today ? "今日" : c0.t;   /* 今天这根日K已碰昨收 = 今天补了(时刻取开盘缺口的); jl-1199: 分钟级/往日同理, 形成那根自己影线碰前收 = 当根已补 */
+      else ext = bull ? c0.l : c0.h;   /* jl-1201: 剩余带从形成那根自己的影线算起(与台账日线回放同口径), 原只今日日K才算 */
       for (let j = ft ? b.length : i + 1; j < b.length; j++) {
         ext = bull ? Math.min(ext, b[j].l) : Math.max(ext, b[j].h);
         if (bull ? b[j].l <= p0.c : b[j].h >= p0.c) { ft = b[j].t; break; }
@@ -100,6 +119,16 @@
     const BY = { "日": D, "30分": m30, "15分": m15, "5分": m5, "1分": m1 };
     let all = []; LV.forEach((L) => { if (BY[L] && BY[L].length > 2) all = all.concat(scan(BY[L], L, today)); });
     all.forEach((g) => { if (g.ft === "今日") g.ft = today + (opg && opg.ft ? opg.ft.replace(":", "") : "1500"); });
+    /* jl-1201: 日线级未补目标——不受下面8%距离限制, 上方/下方各取最近一个; 距现价%算到缺口近沿(碰到), 远沿=前收(补满) */
+    const tg = (up) => {
+      const c = all.filter((g) => g.lv === "日" && !g.ft && g.rem && g.bull !== up).map((g) => {
+        const lo = g.rem[0], hi = g.rem[1], inZ = last >= lo && last <= hi, near = up ? lo : hi;
+        return { lo, hi, inZ, near, far: up ? g.hi : g.lo, dist: inZ ? 0 : (near / last - 1) * 100, d: md(g.t) };
+      }).filter((g) => (up ? g.hi >= last : g.lo <= last));
+      c.sort((a, b) => Math.abs(a.dist) - Math.abs(b.dist));
+      return c[0] || null;
+    };
+    const tgt = { up: tg(true), dn: tg(false) };
     const ref = op || last;
     all = all.filter((g) => Math.abs((g.lo + g.hi) / 2 / last - 1) <= 0.08);
     all = all.filter((g) => !(g.lv === "1分" && (g.hi - g.lo) / ref < 0.002));   /* 1分钟 <0.2% 不显示 */
@@ -136,11 +165,23 @@
     dgp.forEach((g) => { g.lvs = [...new Set(g.mem.map((x) => x.lv))].sort((a, b) => ORD[b] - ORD[a]); g.N = g.lvs.length; g.old = [...new Set(g.mem.filter((x) => x.d !== today).map((x) => md(x.d)))]; });
     dgp.sort((a, b) => b.N - a.N || dg(b.ft) - dg(a.ft));
     const tr = {}; LV.forEach((L) => { const t = all.filter((g) => g.lv === L && g.d === today); tr[L] = { n: t.length, k: t.filter((g) => g.ft).length }; });
-    return { today, pre, op, opg, grp, dgp, tr };
+    return { today, pre, op, opg, grp, dgp, tr, tgt, code, last };
   }
 
+  /* jl-1201: 日线未补目标行 + 中波段斐波(同持仓卡中波段条)落在缺口内=双向验证 */
+  function tgtHtml(R) {
+    if (!R.tgt) return "";
+    let F = null; try { F = window.jlFibLvJL ? window.jlFibLvJL(R.code) : null; } catch (e) { }
+    const it = (g, up) => {
+      if (!g) return '<span class="tgI" style="opacity:.6">' + (up ? "↑ 上方无" : "↓ 下方无") + "</span>";
+      const z = Math.abs(g.hi - g.lo) / g.hi < 0.0015 ? f2((g.lo + g.hi) / 2) : f2(g.lo) + "–" + f2(g.hi);
+      let fb = null; if (F && F.lv) F.lv.forEach((l) => { if (l.v >= g.lo * 0.997 && l.v <= g.hi * 1.003 && (!fb || Math.abs(l.v - (g.lo + g.hi) / 2) < Math.abs(fb.v - (g.lo + g.hi) / 2))) fb = l; });
+      return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ " : "↓ ") + z + " <b>" + (g.inZ ? "回补中" : sg(g.dist)) + "</b><i>" + g.d + "</i>" + (fb ? "<em>≈" + (fb.r === 0 || fb.r === 1 ? ((fb.r === 0) === (F.dir < 0) ? "段低" : "段高") : "斐波" + fb.r) + " " + f2(fb.v) + "</em>" : "") + "</span>";
+    };
+    return '<div class="tgL"><span class="tgH">日线未补</span>' + it(R.tgt.up, true) + it(R.tgt.dn, false) + "</div>";
+  }
   function html(R, openDone) {
-    let h = "";
+    let h = tgtHtml(R);
     if (R.op) {
       const o = R.opg, col = o ? gC(o.up) : "#fff";
       if (o) {
@@ -182,7 +223,7 @@
     if (!box) { host.innerHTML = ""; box = document.createElement("div"); box.className = "gvJL"; host.appendChild(box); }
     const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
     if (s) s.openDone = openDone;
-    const h = s && s.R ? html(s.R, openDone) : '<div class="wait">' + (s && s.err ? "缺口数据取不到：" + s.err + "（稍后自动重试）" : "缺口数据加载中…") + "</div>";
+    const h = s && s.R ? html(s.R, openDone) + (s.src === "em" ? '<div class="wait">数据源：东财备选（腾讯暂不可用）</div>' : "") :'<div class="wait">' + (s && s.err ? "缺口数据取不到：" + s.err + "（稍后自动重试）" : "缺口数据加载中…") + "</div>";
     if (box._h !== h) { box.innerHTML = h; box._h = h; const d2 = box.querySelector("details"); if (d2) d2.addEventListener("toggle", () => { if (ST[code]) ST[code].openDone = d2.open; });
       const a2 = box.querySelector(".aucL"), fb = box.querySelector(".gvFoldJL"); /* jl-1183: 折叠态记忆(会话级, ST[code].foldAuc)+点击切换 */
       if (a2 && fb) { if (s && s.foldAuc) { a2.classList.add("gvFolded"); fb.textContent = "▸"; }
@@ -198,8 +239,8 @@
     if (s.fly || Date.now() - s.at < 60000) return;
     s.fly = 1;
     const c = pf(code);
-    Promise.all([dk(c), mk(c, 30), mk(c, 15), mk(c, 5), mk1(c), mn(c)]).then((r) => {
-      s.R = compute(code, ...r); s.err = ""; s.at = Date.now(); s.fly = 0;
+    getAll(c).then((g) => {
+      s.R = compute(code, ...g.r); s.src = g.src; s.err = ""; s.at = Date.now(); s.fly = 0;
       document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code));
     }).catch((e) => { s.err = e && e.message || "网络"; s.at = Date.now() - 45000; s.fly = 0; document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code)); });
   }

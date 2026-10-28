@@ -4211,11 +4211,11 @@ function ictCalc(kl) {
     var _pc = kl[i - 1][4], _no = kl[i][1];
     if (_no - _pc > viMin && kl[i][3] <= kl[i - 1][2]) { // 看涨: 后开>前收 且 后根低≤前根高(影线重叠)
       /* ks-1152: 「补」口径统一——原「碰近沿即消」与开盘缺口「回到昨收才算补」松紧不一; 改为后续影线逐步吃掉缺口, 剩余带=未被吃掉的部分, 碰到远沿(前收)才消 */
-      var lowV = _no;
+      var lowV = Math.min(_no, kl[i][3]); /* jl-1199: 形成那根自己影线也算(碰前收=当根已补), 原从下一根才看会漏判 */
       for (j = i + 1; j < n; j++) if (kl[j][3] < lowV) lowV = kl[j][3];
       if (lowV > _pc) out.vi.push({ i: i, top: Math.min(_no, lowV), bot: _pc, bull: true });
     } else if (_pc - _no > viMin && kl[i][2] >= kl[i - 1][3]) { // 看跌: 后开<前收 且 后根高≥前根低(影线重叠)
-      var highV = _no;
+      var highV = Math.max(_no, kl[i][2]); /* jl-1199: 同上 */
       for (j = i + 1; j < n; j++) if (kl[j][2] > highV) highV = kl[j][2];
       if (highV < _pc) out.vi.push({ i: i, top: _pc, bot: Math.max(_no, highV), bull: false });
     }

@@ -5,14 +5,14 @@
    回滚: index.html 删 jl_card5d.js 引用即恢复原小K线, 其代码一行没删。 */
 (function () {
   "use strict";
-  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:18px}#c5JL .hd .px{font:800 20px ui-monospace,Menlo,monospace;margin-left:auto}#c5JL .hd .pc{font:800 13px ui-monospace,Menlo,monospace}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:0 1px 3px rgba(0,0,0,.6)}#c5JL .info{text-shadow:0 1px 3px rgba(0,0,0,.7)}#c5JL .info{height:18px;margin:6px 3px 2px;font:700 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:5px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 10px;font:700 12px inherit}#c5JL .hd .px{font-size:28px!important}#c5JL .bad{color:#ff7a85}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}';
+  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:18px}#c5JL .hd .px{font:800 20px ui-monospace,Menlo,monospace;margin-left:auto}#c5JL .hd .pc{font:800 13px ui-monospace,Menlo,monospace}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:0 1px 3px rgba(0,0,0,.6)}#c5JL .info{text-shadow:0 1px 3px rgba(0,0,0,.7)}#c5JL .info{height:18px;margin:6px 3px 2px;font:700 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:4px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:700 12px inherit;white-space:nowrap}#c5JL .hd .px{font-size:28px!important}#c5JL .bad{color:#ff7a85}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}';
   let ROOT = null, api = null, timer = 0;
   function mount() {
     if (ROOT) return true;
     const hc = document.getElementById("holdingChart"), sec = hc && hc.closest("section");
     if (!sec) return false;
     if (!document.getElementById("c5CssJL")) { const s = document.createElement("style"); s.id = "c5CssJL"; s.textContent = CSS; document.head.appendChild(s); }
-    ROOT = document.createElement("section"); ROOT.id = "c5JL"; ROOT.className = "card"; ROOT.innerHTML = '<div class="hd"><b data-c5="nm">—</b><span class="mono" data-c5="cd"></span><span class="px" data-c5="px">—</span><span class="pc" data-c5="pc"></span></div><div class="info" data-c5="info"></div><div class="box" data-c5="box"><canvas data-c5="base"></canvas><canvas data-c5="ov"></canvas></div><div class="tools"><span class="tb"><button type="button" data-c5="auto">自动尺</button><button type="button" data-c5="fib">斐波</button><button type="button" data-c5="del">删除</button><button type="button" data-c5="clr">清空</button></span><button type="button" data-c5="rst">看全5天</button></div>';
+    ROOT = document.createElement("section"); ROOT.id = "c5JL"; ROOT.className = "card"; ROOT.innerHTML = '<div class="hd"><b data-c5="nm">—</b><span class="mono" data-c5="cd"></span><span class="px" data-c5="px">—</span><span class="pc" data-c5="pc"></span></div><div class="info" data-c5="info"></div><div class="box" data-c5="box"><canvas data-c5="base"></canvas><canvas data-c5="ov"></canvas></div><div class="tools"><span class="tb"><button type="button" data-c5="auto">自动尺</button><button type="button" data-c5="mk">标注</button><button type="button" data-c5="fib">斐波</button><button type="button" data-c5="del">删除</button><button type="button" data-c5="clr">清空</button></span><button type="button" data-c5="rst">看全5天</button></div>';
     sec.parentNode.insertBefore(ROOT, sec);   /* 10-27 用户要求: 原小K线(分时实时走势+周期按钮)保留显示, 不再隐藏 */
     api = boot(ROOT);
     timer = setInterval(() => {
@@ -108,13 +108,23 @@
     /* 放文字: 撞到已放的就上下挪一行, 挪不开就不画 */
     function put(x, t, X, Y, al, col) {
       const w = x.measureText(t).width, h = 11;
-      for (const d of [0, 12, -12, 24, -24, 36]) {
-        const y = Y + d, L = al === "right" ? X - w : al === "center" ? X - w / 2 : X, r = { L: L - 2, R: L + w + 2, T: y - h, B: y + 2 };
-        if (r.T < G.t || r.B > G.mainB) continue;
-        if (LB.some((q) => r.L < q.R && r.R > q.L && r.T < q.B && r.B > q.T)) continue;
-        LB.push(r); x.fillStyle = col; x.textAlign = "left"; x.fillText(t, L, y); return true;
+      /* jl-1202b: 不加实心底(会挡走势线), 改为文字描黑边; 摆位优先避开白色走势线, 实在避不开才压线 */
+      const hitLine = (r) => { const s = SC; if (!s || !S || !S.P) return false; for (let g = view.a; g < view.b; g++) { const P = S.P[g]; if (!P) continue; const X0 = s.X(g); if (X0 < r.L || X0 > r.R) continue; const Y0 = s.Y(P.p); if (Y0 >= r.T && Y0 <= r.B) return true; } return false; };
+      let pick = null;
+      for (const pass of [0, 1]) {
+        for (const d of [0, 12, -12, 24, -24, 36, -36]) {
+          const y = Y + d, L = al === "right" ? X - w : al === "center" ? X - w / 2 : X, r = { L: L - 2, R: L + w + 2, T: y - h, B: y + 2 };
+          if (r.T < G.t || r.B > G.mainB) continue;
+          if (LB.some((q) => r.L < q.R && r.R > q.L && r.T < q.B && r.B > q.T)) continue;
+          if (pass === 0 && hitLine(r)) continue;
+          pick = { r, L, y }; break;
+        }
+        if (pick) break;
       }
-      return false;
+      if (!pick) return false;
+      LB.push(pick.r);
+      x.save(); x.textAlign = "left"; x.lineJoin = "round"; x.lineWidth = 3; x.strokeStyle = "rgba(6,10,24,.9)"; x.strokeText(t, pick.L, pick.y);
+      x.fillStyle = col; x.fillText(t, pick.L, pick.y); x.restore(); return true;
     }
     function drawBase() {
       const x = $("base").getContext("2d"), s = SC = scale(), { a, b } = view;
@@ -136,10 +146,11 @@
         x.fillText(d.date.slice(4, 6) + "-" + d.date.slice(6) + " 周" + WK[dt.getDay()], xm, G.axB - 4);
       });
       /* 跳空带: 未补=延伸到最右, 已补=停在补回那一分钟 + ✓签 */
-      S.gaps.forEach((gp) => {
+      if (mkOn) S.gaps.forEach((gp) => {
         const e = gp.fi < 0 ? b - 1 : gp.fi; if (e < a || gp.st >= b) return;
         const c = gp.up ? "0,240,255" : "255,230,0", x0 = s.X(Math.max(a, gp.st)), x1 = s.X(Math.min(b - 1, e)), y1 = s.Y(gp.hi), y2 = s.Y(gp.lo);
-        x.fillStyle = "rgba(" + c + "," + (gp.fi < 0 ? 0.20 : 0.10) + ")"; x.fillRect(x0, y1, Math.max(1, x1 - x0), y2 - y1);
+        x.fillStyle = "rgba(" + c + "," + (gp.fi < 0 ? 0.14 : 0.07) + ")"; x.fillRect(x0, y1, Math.max(1, x1 - x0), y2 - y1);
+        x.strokeStyle = "rgba(" + c + "," + (gp.fi < 0 ? 0.75 : 0.35) + ")"; x.lineWidth = 1; if (gp.fi >= 0) x.setLineDash([3, 3]); line(x, x0, y1 + 0.5, x1, y1 + 0.5); line(x, x0, y2 - 0.5, x1, y2 - 0.5); x.setLineDash([]);   /* jl-1202: 带底调淡+上下沿线 */
         gp._lab = { c: "rgb(" + c + ")", x1, y1, y2 };
       });
       /* 量: 真实每分钟量, 跟着价格涨跌着色 */
@@ -157,7 +168,7 @@
           const xx = s.X(p0.g), up = p0.p >= d.prec, col = up ? "#ff5459" : "#1fdc93";
           x.strokeStyle = col; x.lineWidth = 2; line(x, xx, s.Y(d.prec), xx, s.Y(p0.p)); x.lineWidth = 1;
           x.fillStyle = col; x.beginPath(); x.arc(xx, s.Y(p0.p), 3, 0, 7); x.fill(); x.strokeStyle = "#fff"; x.stroke();
-          d._lab = { t: "竞" + sg((p0.p / d.prec - 1) * 100), x: xx + 5, y: s.Y(p0.p) + (up ? -5 : 12), c: col };
+          if (mkOn) d._lab = { t: "竞" + sg((p0.p / d.prec - 1) * 100), x: xx + 5, y: s.Y(p0.p) + (up ? -5 : 12), c: col };
         }
       });
       /* 右价格 / 左%(图内, 半透明底): %颜色跟着正负变 */
@@ -172,7 +183,7 @@
       S.gaps.forEach((gp) => {
         const L = gp._lab; gp._lab = null; if (!L) return;
         if (gp.fi >= 0 && gp.fi >= a && gp.fi < b) { const P = S.P[gp.fi], d = S.days[P.di]; put(x, "✓" + (P.di !== gp.di ? d.date.slice(4, 6) + "-" + d.date.slice(6) + " " : "") + tOf(P.k) + " " + f2(S.days[gp.di].prec), L.x1 + 3, (gp.up ? L.y2 + 11 : L.y1 - 3), "left", L.c); }
-        if (gp.fi < 0) { const d = S.days[gp.di]; put(x, d.date.slice(4, 6) + "-" + d.date.slice(6) + " 未补", G.l + G.pw - 52, L.y1 - 3, "right", L.c); }
+        if (gp.fi < 0) { const d = S.days[gp.di]; put(x, d.date.slice(4, 6) + "-" + d.date.slice(6) + " 未补 " + f2(d.prec), G.l + G.pw - 52, L.y1 - 3, "right", L.c); }
       });
       drawAuto(x, s);
       drawFibs(x, s);
@@ -213,6 +224,7 @@
     const AR = [0.236, 0.382, 0.5, 0.618, 0.786, 0.886], AB = [1.272, 1.618, 2.618, 3.618, 4.618], AD = [1.272, 1.618, 2.618];
     const ACOL = { 0.786: "#ffd84a", 0.618: "#ffb347", 0.382: "#6fb6ff", 0.5: "#d7a8ff" };
     let autoOn = localStorage.getItem("jl5d_auto") !== "0";
+    let mkOn = localStorage.getItem("jl5d_mk") !== "0";   /* jl-1203: 竞价%/跳空带/未补·✓签 一键隐藏显示(用户: 想看再开, 不用来回改) */
     const BC = {};
     function autoCalc(Pr) {
       const N = Pr.length; if (N < 4) return null;
@@ -321,6 +333,7 @@
     function tag(x, t, X, Y, al, col, soft) {
       x.font = (soft ? "700 9.5px" : "800 10px") + " ui-monospace,Menlo"; const w = x.measureText(t).width + (soft ? 6 : 8), h = soft ? 13 : 15;
       const L = al === "left" ? X : al === "right" ? X - w : X - w / 2;
+      if (LB && x.canvas && x.canvas.getAttribute("data-c5") === "base") LB.push({ L: L - 2, R: L + w + 2, T: Y - h / 2 - 1, B: Y + h / 2 + 1 });   /* jl-1202: 轴价签进避让表 */
       x.fillStyle = soft ? "rgba(30,12,24,.45)" : "rgba(20,10,20,.62)"; rr(x, L, Y - h / 2, w, h, 4); x.fill(); if (!soft) { x.strokeStyle = col; x.lineWidth = 1; x.stroke(); }
       x.fillStyle = col; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(t, L + w / 2, Y + 0.5); x.textBaseline = "alphabetic";
     }
@@ -381,6 +394,8 @@
     function setFib(on) { fibMode = on; $("fib").classList.toggle("on", on); }
     $("fib").onclick = () => setFib(!fibMode);
     $("auto").classList.toggle("on", autoOn);
+    $("mk").classList.toggle("on", mkOn);
+    $("mk").onclick = () => { mkOn = !mkOn; try { localStorage.setItem("jl5d_mk", mkOn ? "1" : "0"); } catch (e) { } $("mk").classList.toggle("on", mkOn); reqB(); };
     $("auto").onclick = () => { autoOn = !autoOn; try { localStorage.setItem("jl5d_auto", autoOn ? "1" : "0"); } catch (e) { } $("auto").classList.toggle("on", autoOn); if (S) { if (autoOn) bollGet(S.code); head._k = ""; head(); reqB(); } };
     $("del").onclick = () => { if (!FIB.length) return; FIB.splice(fibSel >= 0 ? fibSel : FIB.length - 1, 1); fibSel = -1; fibSave(); reqB(); };
     $("clr").onclick = () => { if (!FIB.length || !confirm("清空这只股票的全部斐波画线？")) return; FIB = []; fibSel = -1; fibSave(); reqB(); };
