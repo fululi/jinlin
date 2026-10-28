@@ -38,6 +38,12 @@
     + ".gvJL .rateH{display:flex;justify-content:space-between;margin:5px 2px 2px;font-size:10.5px}.gvJL .rateH b{font-size:11px}"
     + ".gvJL .rate{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;text-align:center;font-size:9.5px}"
     + ".gvJL .rate div{border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:2px 0;white-space:nowrap}.gvJL .rate b{display:inline;font:800 11px ui-monospace,Menlo,monospace;margin:0 2px}"
+    + ".gvJL .aucL{position:relative}" /* jl-1183 */
+    + ".gvJL .ln4w{grid-column:1/3;display:flex;flex-wrap:wrap;gap:1px 10px}"
+    + ".gvJL .ln4w .ln4{white-space:nowrap}"
+    + ".gvJL .gvFoldJL{position:absolute;top:1px;right:3px;background:transparent;border:0;color:#8fb4d8;font-size:11px;line-height:1;padding:3px 6px;cursor:pointer;opacity:.7}"
+    + ".gvJL .gvFoldJL:active{opacity:1}"
+    + ".gvJL .aucL.gvFolded .ln3,.gvJL .aucL.gvFolded .ln4w{display:none}"
     + ".gvJL .wait{font-size:11px;padding:4px 2px}";
   function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS; document.head.appendChild(s); } }
 
@@ -142,7 +148,8 @@
         h += '<div class="aucL" style="border-color:' + col + '"><div class="ln1">竞 ' + (o.up ? "高开" : "低开") + ' <span class="big" style="color:' + col + '">' + sg(o.pct) + "</span></div>"
           + '<div class="ln2" style="color:' + col + '">' + (o.up ? "↓" : "↑") + " iv " + f2(R.op) + "–" + f2(R.pre) + ' <span class="sz">' + f2(o.size) + "元</span></div>"
           + '<div class="ln3">' + (o.st === "done" ? '<span class="okc">✓</span> ' + o.ft : "还差 " + f2(rem) + "元 · 已补 " + Math.round(o.prog * 100) + "%") + "</div>"
-          + (o.back && o.back.length ? o.back.map((b) => '<div class="ln4">再次回补 ' + b + "</div>").join("") : "") + "</div>";
+          + (o.back && o.back.length ? '<div class="ln4w">' + o.back.map((b) => '<span class="ln4">再次回补 ' + b + "</span>").join("") + "</div>" : "") /* jl-1183: 回补记录横排 */
+          + '<button class="gvFoldJL" type="button" aria-label="收起或展开回补记录">▾</button>' + "</div>";
       } else h += '<div class="aucL" style="border-color:#fff"><div class="ln1">竞 平开 <span class="big">0.00%</span></div></div>';
     }
     const gapRow = (g) => {
@@ -176,7 +183,10 @@
     const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
     if (s) s.openDone = openDone;
     const h = s && s.R ? html(s.R, openDone) : '<div class="wait">' + (s && s.err ? "缺口数据取不到：" + s.err + "（稍后自动重试）" : "缺口数据加载中…") + "</div>";
-    if (box._h !== h) { box.innerHTML = h; box._h = h; const d2 = box.querySelector("details"); if (d2) d2.addEventListener("toggle", () => { if (ST[code]) ST[code].openDone = d2.open; }); }
+    if (box._h !== h) { box.innerHTML = h; box._h = h; const d2 = box.querySelector("details"); if (d2) d2.addEventListener("toggle", () => { if (ST[code]) ST[code].openDone = d2.open; });
+      const a2 = box.querySelector(".aucL"), fb = box.querySelector(".gvFoldJL"); /* jl-1183: 折叠态记忆(会话级, ST[code].foldAuc)+点击切换 */
+      if (a2 && fb) { if (s && s.foldAuc) { a2.classList.add("gvFolded"); fb.textContent = "▸"; }
+        fb.addEventListener("click", (ev) => { ev.stopPropagation(); const f = a2.classList.toggle("gvFolded"); fb.textContent = f ? "▸" : "▾"; if (ST[code]) ST[code].foldAuc = f; }); } }
   }
   function render(host, code) {
     ensureCss();
