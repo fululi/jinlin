@@ -9171,13 +9171,13 @@ function ffMergeJL(oldRows, newRows) {
     const _db3 = dailyBarsOf(stock.code), dkDay = _db3.length ? String(_db3[_db3.length - 1].t).slice(0, 10) : td3;
     const r = computeTierJL(stock);
     if (r && r.sells && r.sells.length) {
-      const m0 = M[stock.code];
-      const ch = !m0 || (m0.dk || m0.d) !== dkDay || JSON.stringify(m0.r.sells) !== JSON.stringify(r.sells) || JSON.stringify(m0.r.buys) !== JSON.stringify(r.buys);
-      M[stock.code] = { d: td3, dk: dkDay, r };
+      const m0 = M[stock.code], fo3 = typeof freshOpenJL === "function" && freshOpenJL(stock) ? 1 : 0; /* jl-memo1: 记"算的时候有没有今天的开盘价", 开盘前算的梯子开盘后必须重写 */
+      const ch = !m0 || (m0.dk || m0.d) !== dkDay || m0.fo !== fo3 || JSON.stringify(m0.r.sells) !== JSON.stringify(r.sells) || JSON.stringify(m0.r.buys) !== JSON.stringify(r.buys);
+      M[stock.code] = { d: td3, dk: dkDay, r, fo: fo3 };
       if (ch) try {
         let all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}");
         all.d = td3;
-        all[stock.code] = { dk: dkDay, r };
+        all[stock.code] = { dk: dkDay, r, at: Date.now(), fo: fo3, qa: String(stock.quoteAt || "") }; /* jl-memo1: at=计算时刻 fo=已有今日开盘价 qa=所用报价时刻, 供开盘快照核对 */
         (typeof jlSafeSetJL === "function" ? jlSafeSetJL : (k2, v2) => localStorage.setItem(k2, v2))("jinlin_tier_memo_v1", JSON.stringify(all));
       } catch (e) {
       }
@@ -9192,6 +9192,18 @@ function ffMergeJL(oldRows, newRows) {
     }
     return r;
   }
+  setInterval(() => { /* jl-memo1: 梯子记录原先只在界面画梯子时刷新——停在首页时开盘快照读到开盘前算的旧梯子(10-23 九只锚点=10-22开盘价). 开盘后发现记录早于开盘价到位就补算 */
+    try {
+      if (typeof stocks === "undefined" || !Array.isArray(stocks) || typeof freshOpenJL !== "function") return;
+      const all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}"), td = (/* @__PURE__ */ new Date()).toLocaleDateString("sv-SE");
+      stocks.forEach((s) => {
+        if (!s || !s.code || !(Number(s.base) > 0) || !freshOpenJL(s)) return;
+        const e = all[s.code];
+        if (e && all.d === td && e.fo === 1) return;
+        try { tierLevelsJL(s); } catch (e2) {}
+      });
+    } catch (e) {}
+  }, 2e4);
   function computeTierJL(stock) {
     seedPrevJL(stock);
     const p = Number(stock.base), prev = Number(stock.prevClose) || p, a = rmaAtrJL(stock.code);

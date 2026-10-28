@@ -41,11 +41,11 @@
   function readJ(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
   function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
   function esc(s){return String(s==null?"—":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
-  var td=today();
+  var td=today(), _qd=(location.search.match(/[?&]d=(\d{4}-\d{2}-\d{2})/)||[])[1]; if(_qd)td=_qd; /* jl-memo1: ?d=YYYY-MM-DD 看历史某天 */
   document.getElementById("now").textContent=td;
 
   /* ① osnap */
-  var snap=readJ("jl_osnap_v1"), sh="";
+  var snap=readJ("jl_osnap_v1"), sh="", lastWin=null;
   if(!snap||!snap.recs){sh='<span class="bad">键不存在或无 recs——采样器未落盘</span>'}
   else{
     sh='<table><tr><th>窗口</th><th>今日记录</th><th>报价日</th><th>明细</th></tr>';
@@ -53,9 +53,20 @@
       var r=null;
       snap.recs.forEach(function(x){if(x.type==="win"&&x.win===w&&x.d===td)r=x});
       var miss=snap.recs.filter(function(x){return x.win===w&&x.d===td&&x.type!=="win"}).length;
-      sh+='<tr><td>'+w+'</td><td>'+(r?'<span class="ok">✓ 已固定</span>':(miss?'<span class="bad">miss×'+miss+'</span>':'<span class="mut">无记录</span>'))+'</td><td>'+esc(r&&r.d)+'</td><td>'+(r?esc(JSON.stringify(r).slice(0,120)):"")+'</td></tr>';
+      var lad="";
+      if(r&&r.ps){var okN=0,bad=[];r.ps.forEach(function(p){if(!p.m)return;if(p.m.state==="stale")bad.push(p.name||p.code);else okN++});
+        lad=(bad.length?'<span class="bad">梯子⚠ '+bad.length+'只过时：'+esc(bad.join("、"))+'</span>':'<span class="ok">梯子 '+okN+'只正常</span>')+'<br>';}
+      sh+='<tr><td>'+w+'</td><td>'+(r?'<span class="ok">✓ 已固定</span>':(miss?'<span class="bad">miss×'+miss+'</span>':'<span class="mut">无记录</span>'))+'</td><td>'+esc(r&&r.d)+'</td><td>'+lad+(r?'<span class="mut">'+esc(JSON.stringify(r).slice(0,80))+'</span>':"")+'</td></tr>';
+      if(r)lastWin=r;
     });
-    sh+='</table><div class="mut">历史: recs 共 '+snap.recs.length+' 条；今日全部条目 '+snap.recs.filter(function(x){return x.d===td}).length+' 条（含 miss）</div>';
+    sh+='</table>';
+    if(lastWin&&lastWin.ps){ /* jl-memo1: 最近一窗逐票梯子核对 */
+      sh+='<div style="margin-top:8px">最近一窗 '+esc(lastWin.win)+' 逐票梯子（锚点只能=昨收 或 跳空时=今日开盘；开盘前算的梯子标过时，数字照记）：</div><table><tr><th>票</th><th>锚点</th><th>昨收</th><th>今开</th><th>S1</th><th>B1</th><th>梯子</th></tr>';
+      lastWin.ps.forEach(function(p){var m=p.m||{},q=p.q||{};
+        sh+='<tr><td>'+esc(p.name||p.code)+'</td><td>'+esc(m.anchor)+'</td><td>'+esc(q.pv)+'</td><td>'+esc(q.op)+'</td><td>'+esc(m.S1)+'</td><td>'+esc(m.B1)+'</td><td>'+(m.state==="stale"?'<span class="bad">⚠ 过时</span><div class="mut">'+esc(m.why)+'</div>':(p.m?'<span class="ok">✓</span>':'<span class="mut">无</span>'))+'</td></tr>'});
+      sh+='</table>';
+    }
+    sh+='<div class="mut">历史: recs 共 '+snap.recs.length+' 条；今日全部条目 '+snap.recs.filter(function(x){return x.d===td}).length+' 条（含 miss）</div>';
   }
   document.getElementById("snap").innerHTML=sh;
 

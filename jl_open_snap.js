@@ -256,6 +256,7 @@
         planNext: rr.planNext === true ? true : rr.planNext === false ? false : null,
         S1: s1, B1: b1, sells: rr.sells || null, buys: rr.buys || null,
         anchor: rr.anchor === undefined ? null : rr.anchor,
+        at: e.at === undefined ? null : e.at, fo: e.fo === undefined ? null : e.fo, /* jl-memo1: 梯子计算时刻/当时是否已有今日开盘价(旧记录无=null) */
         lastComputed: manualMode ? true : undefined }; /* 手动=上次计算值(标注) */
     });
     return { state: Object.keys(codes).length ? (v.d === ymd() ? "fresh" : "stale") : "missing", src: "jinlin_tier_memo_v1", asOf: v.d || null, codes: codes };
@@ -347,6 +348,22 @@
     return entry ? Object.assign({ src: blk.src, asOf: asOf === undefined ? blk.asOf : asOf }, entry) : null;
   }
   function memoEntry(memo, code) { var e = memo.codes && memo.codes[code]; return e ? Object.assign({ src: memo.src, asOf: e.dk || memo.asOf }, e) : null; }
+  function memoCheck(m, qs, today8) { /* jl-memo1: 固定窗只读核对梯子是否开盘前算的旧梯子(10-23 九只锚点=10-22开盘价). 不改数值, 只标 state:stale+why; 盘中锚点按 computeTierJL 只能是 昨收 或 今日开盘(跳空≥0.5ATR) */
+    if (!m || m.planNext === true) return m;
+    var why = [];
+    if (m.fo === 0) why.push("memo-pre-open");
+    else if (m.at != null && today8) {
+      var t = new Date(m.at), d8 = "" + t.getFullYear() + ("0" + (t.getMonth() + 1)).slice(-2) + ("0" + t.getDate()).slice(-2), hm = t.getHours() * 100 + t.getMinutes();
+      if (d8 !== today8 || hm < 925) why.push("memo-pre-open(" + d8.slice(4) + " " + ("0" + hm).slice(-4) + ")");
+    }
+    var qOk = qs && (qs.state === "ok" || /^cross-window/.test(qs.why || "")), a = Number(m.anchor), pv = qOk ? Number(qs.pv) : NaN, op = qOk ? Number(qs.op) : NaN; /* 跨窗报价仍是今日值, 可用于核对 */
+    if (a > 0 && pv > 0 && op > 0) {
+      var tol = Math.max(pv * 0.001, pv < 5 ? 0.0006 : 0.0051); /* 股票1分档/ETF1厘档 + 0.1%余量 */
+      if (Math.abs(a - pv) > tol && Math.abs(a - op) > tol) why.push("anchor-mismatch(" + a + " vs 昨收" + pv + "/开" + op + ")");
+    }
+    if (!why.length) return m;
+    return Object.assign({}, m, { state: "stale", why: why.join(";") });
+  }
   function strongEntry(strong, code) { return attBlk(strong, strong.codes && strong.codes[code], strong.asOf); }
   function ffEntry(ff, code) { return (ff.codes && ff.codes[code]) || null; }
   function perStockBlocks(list, memo, strong, ff, manualMode) {
@@ -391,7 +408,7 @@
           p: r.p, pv: r.pv, op: r.op, pct: r.pct, hi: r.hi, lo: r.lo };
         if (okS && !inWin) qs.why = "cross-window(" + hms + ")";
       } else qs = { state: "missing", src: "qt.gtimg.cn", asOf: null, why: "no-row" };
-      return { code: h.code, name: h.name, q: qs, m: memoEntry(memo, h.code), g: strongEntry(strong, h.code),
+      return { code: h.code, name: h.name, q: qs, m: memoCheck(memoEntry(memo, h.code), qs, today8), g: strongEntry(strong, h.code),
         f: ffEntry(ff, h.code), k: null };
     });
     var d = idx ? String(idx.qAt).slice(0, 8).replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3") : today8.replace(/^(\d{4})(\d{2})(\d{2})$/, "$1-$2-$3"); /* 13:26: 无指数回退同基准(原ymd()重取_now) */
@@ -710,7 +727,7 @@
 
   global.__JLOSNAP__ = {
     VER: VER, KEY: KEY, KEY_ON: KEY_ON, WINS: WINS, st: st,
-    pure: { winOf: winOf, validQuote: validQuote, hms2min: hms2min, armZone: armZone, fireable: fireable, quoteSym: quoteSym, normCode: normCode, trimStore: trimStore, recorded: recorded, manCount: manCount },
+    pure: { memoCheck: memoCheck, winOf: winOf, validQuote: validQuote, hms2min: hms2min, armZone: armZone, fireable: fireable, quoteSym: quoteSym, normCode: normCode, trimStore: trimStore, recorded: recorded, manCount: manCount },
     tick: tick, manual: manual, toggle: toggle, on: on,
     readStore: readStore, buildWinRec: buildWinRec, buildManualRec: buildManualRec,
     buildExport: buildExport, exportText: exportText, doExport: doExport, copyModal: copyModal,
