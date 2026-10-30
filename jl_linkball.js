@@ -78,6 +78,15 @@
     alert1('rs-' + d.code + d.p, nm + ' 接近共振位 ' + f2(d.p) + ' ×' + d.n + '（' + (d.srcs || []).join('·') + '）', 'rs');
   });
 
+  window.addEventListener('jlabn', function (e) { /* 资金异常(跌中吸筹/尾盘打压) → 今日提醒 */
+    var d = e.detail || {};
+    alert1('abn-' + d.k + '-' + d.code, (d.name || d.code) + ' ' + d.txt + '（' + (d.why || '') + '）', d.k === 'absorb' ? 'hi' : 'lo');
+  });
+  window.addEventListener('jlglance:dip', function (e) { /* 首页一眼卡抄底灯触发 → 进联动球今日提醒 */
+    var d = e.detail || {};
+    alert1('dip-' + d.k + '-' + Math.floor(Date.now() / 18e5), '上证 ' + f2(d.px) + (d.k === 'buy' ? ' 贴近预判低 · 可低吸' : ' 贴近预判低 · 别接（' + (d.why || '') + '）'), d.k === 'buy' ? 'rs' : 'lo');
+  });
+
   /* ---------- 共振位(读台账, 不重算) ---------- */
   function resoOf(code) {
     try {

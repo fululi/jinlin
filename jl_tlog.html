@@ -37,6 +37,10 @@
 <div class="card" id="pred"></div>
 <h2>⑥ 今日共振位 jl_reso_log_v1（定稿=15:10后；对照=同数量随机价位，碰到=日内高低距价位≤0.05×ATR5）</h2>
 <div class="card" id="reso"></div>
+<h2 id="glance">⑦ 今日一眼 jl_glance_log_v1（09:25 判断 + 抄底灯；规则是初值未回测，攒够二三十天再看）</h2>
+<div class="card" id="glanceBox"></div>
+<h2 id="abn">⑧ 资金异常 jl_abn_log_v1（跌中吸筹 / 尾盘大单打压；规则是初值未回测，次日起用日K结算）</h2>
+<div class="card" id="abnBox"></div>
 <h2>原始 JSON</h2>
 <pre id="raw"></pre>
 <script>
@@ -140,11 +144,41 @@
   }
   document.getElementById("reso").innerHTML=rh;
 
+  /* ⑦ 今日一眼 jl-1224a */
+  var gl=readJ("jl_glance_log_v1")||{}, gk=Object.keys(gl).sort().reverse(), gh2="", agg={buy:[],wait:[],waitN:0,skip:[]}, dipB=[], dipA=[], ctl=[];
+  function avg(a){return a.length?(a.reduce(function(x,y){return x+y},0)/a.length):NaN}
+  function pp(v){return isFinite(v)?(v>0?"+":"")+v.toFixed(2)+"%":"—"}
+  function wr(a){return a.length?Math.round(100*a.filter(function(x){return x>0}).length/a.length)+"%":"—"}
+  if(!gk.length)gh2='<span class="mut">暂无记录（交易日 09:25–15:00 打开过首页才会写）</span>';
+  else{
+    gh2='<table><tr><th>日期</th><th>闸(09:25)</th><th>判断 → 结果</th><th>抄底灯 → 收盘</th><th>随机对照</th></tr>';
+    gk.forEach(function(d){var e=gl[d]||{};
+      if(e.final){(e.picks||[]).forEach(function(p){if(p.act==="buy"&&isFinite(p.ret))agg.buy.push(p.ret);if(p.act==="wait"){agg.waitN++;if(isFinite(p.ret))agg.wait.push(p.ret)}if(p.act==="skip"&&isFinite(p.ret))agg.skip.push(p.ret)});
+        (e.dips||[]).forEach(function(x){if(isFinite(x.ret))(x.k==="buy"?dipB:dipA).push(x.ret)});if(isFinite(e.ctrl))ctl.push(e.ctrl)}
+      gh2+='<tr><td>'+d+'</td><td>'+esc(e.gate?e.gate.lvl+" "+e.gate.at:"—")+'</td><td>'+((e.picks||[]).map(function(p){return esc(p.name)+" "+esc(p.txt)+(e.final?(p.act==="wait"?(p.touched?" ✓碰 "+pp(p.ret):" ✗未碰"):isFinite(p.ret)?" "+pp(p.ret):""):"")}).join("<br>")||"—")+'</td><td>'+((e.dips||[]).map(function(x){return x.at+" "+(x.k==="buy"?"可低吸":"别接")+(x.gate?"(闸"+({red:"红",yellow:"黄",green:"绿"}[x.gate]||x.gate)+")":"")+" "+x.px+(isFinite(x.ret)?" → "+pp(x.ret):"")}).join("<br>")||"—")+'</td><td>'+(isFinite(e.ctrl)?pp(e.ctrl):e.final?"—":'<span class="mut">盘中</span>')+'</td></tr>'});
+    gh2+='</table><div class="mut">已定稿：「可买」'+agg.buy.length+'次 平均'+pp(avg(agg.buy))+' 胜率'+wr(agg.buy)+'；「等回踩」'+agg.waitN+'次 碰到'+agg.wait.length+'次 碰后平均'+pp(avg(agg.wait))+'；「不碰」'+agg.skip.length+'次 开盘到收盘平均'+pp(avg(agg.skip))+'（负=避开对了）。<br>抄底「可低吸」'+dipB.length+'次 到收盘平均'+pp(avg(dipB))+' 胜率'+wr(dipB)+'；「别接」'+dipA.length+'次 平均'+pp(avg(dipA))+'；同日随机时刻买到收盘平均'+pp(avg(ctl))+'。可低吸明显好于随机才算有用。</div>';
+  }
+  document.getElementById("glanceBox").innerHTML=gh2;
+
+  /* ⑧ 资金异常 jl-1224b */
+  var ab=readJ("jl_abn_log_v1")||{}, ak=Object.keys(ab).sort().reverse(), ah="", sA={absorb:{o:[],c:[],c3:[]},dump:{o:[],c:[],c3:[]}}, ctl2=[];
+  function hm2(v){v=+v;return String(Math.floor(v/100)).padStart(2,"0")+":"+String(v%100).padStart(2,"0")}
+  if(!ak.length)ah='<span class="mut">暂无记录</span>';
+  else{
+    ah='<table><tr><th>日期</th><th>事件</th><th>次日开盘 / 次日收盘 / 3日后</th><th>对照(全部票次日)</th></tr>';
+    ak.forEach(function(d){var D=ab[d]||{};if(isFinite(D.ctrl))ctl2.push(D.ctrl);
+      (D.ev||[]).forEach(function(e){var g=sA[e.k];if(g){if(isFinite(e.r1o))g.o.push(e.r1o);if(isFinite(e.r1c))g.c.push(e.r1c);if(isFinite(e.r3c))g.c3.push(e.r3c)}});
+      ah+='<tr><td>'+d+'</td><td>'+((D.ev||[]).map(function(e){return hm2(e.at)+" "+esc(e.name)+" <b>"+esc(e.txt)+"</b> "+e.px+'<br><span class="mut">'+esc(e.why)+'</span>'}).join("<br>")||"—")+'</td><td>'+((D.ev||[]).map(function(e){return isFinite(e.r1o)?pp(e.r1o)+" / "+pp(e.r1c)+" / "+(isFinite(e.r3c)?pp(e.r3c):"…"):'<span class="mut">待次日</span>'}).join("<br>")||"—")+'</td><td>'+(isFinite(D.ctrl)?pp(D.ctrl):'<span class="mut">待次日</span>')+'</td></tr>'});
+    function ln(n,g){return n+' '+g.c.length+'次：次日开盘平均'+pp(avg(g.o))+' · 次日收盘平均'+pp(avg(g.c))+' 胜率'+wr(g.c)+' · 3日后平均'+pp(avg(g.c3))}
+    ah+='</table><div class="mut">'+ln("跌中吸筹",sA.absorb)+'<br>'+ln("尾盘打压",sA.dump)+'（打压的说法是次日会被拉回，次日开盘为正才算对）<br>对照：同日全部票收盘到次日收盘平均'+pp(avg(ctl2))+'。明显好于对照才算有用。</div>';
+  }
+  document.getElementById("abnBox").innerHTML=ah;
+
   var dkSh=readJ("jl_dk_sh000001");
   document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate,jinlin_pred_log_v1:pred,jl_reso_log_v1:reso},null,1);
   document.getElementById("exp").onclick=function(){
     try{
-      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate,jl_gate_log_v1:gate1,jl_dk_sh000001:dkSh,jinlin_pred_log_v1:pred,jl_reso_log_v1:reso},null,1)],{type:"application/json"});
+      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate,jl_gate_log_v1:gate1,jl_dk_sh000001:dkSh,jinlin_pred_log_v1:pred,jl_reso_log_v1:reso,jl_glance_log_v1:gl,jl_abn_log_v1:ab},null,1)],{type:"application/json"});
       var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jinlin_验收_"+td+".json";a.click();
     }catch(e){alert("导出失败: "+e)}
   };
