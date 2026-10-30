@@ -5721,9 +5721,9 @@ function createCardIntraday(canvas, o) {
         g.fillStyle = curCol; g.beginPath(); g.arc(x(n - 1), y(p[n - 1]), 2.5, 0, Math.PI * 2); g.fill();
   
         // 高低点（只标日内最高/最低）
-        lastMarks = computePHVL(p, p, { maxCount: o.swingMarks === false ? 2 : num(o.swingCount, 4, 3) }); /* jl-1142: 摆动高/低标记——同一引擎仅放宽名额, 极值score=Infinity仍恒居前二 */
+        lastMarks = computePHVL(p, p, { maxCount: o.swingMarks === false ? 2 : num(o.swingCount, 8, 3), minGap: Math.max(3, Math.round(p.length / 30)) }); /* jl-1142: 摆动高/低标记——同一引擎仅放宽名额, 极值score=Infinity仍恒居前二; jl-1225: 名额4→8+邻域n/14→n/30——修中段盘中高低标注缺失(原名额被两极值占死仅剩2摆动戳, 中段次高/回落低被score挤掉; 贴极值±17分钟邻域整签消失一并收窄到±8分钟); swingCount/minGap传参可覆写 */
         if (o.swingMarks !== false) { /* jl-1142b: 与同类极值相距<minGap的摆动戳=视觉重复, 滤掉(纯显示层) */
-          var _mg = Math.max(3, Math.round(p.length / 14));
+          var _mg = Math.max(3, Math.round(p.length / 30)); /* jl-1225: 与引擎邻域同口径收窄(n/14→n/30)——±8分钟内贴极值同向摆动戳仍算视觉重复滤掉, 之外不再误杀 */
           lastMarks = lastMarks.filter(function (mk, _ix, arr) {
             if (mk.extreme) return true;
             for (var q2 = 0; q2 < arr.length; q2++) if (arr[q2].extreme && arr[q2].type === mk.type && Math.abs(arr[q2].idx - mk.idx) < _mg) return false;
