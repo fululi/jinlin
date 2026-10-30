@@ -1,4 +1,4 @@
-/* jl_holdtabs.js v1 (2026-10-30, 本地稿未推送) —— 持仓切换条
+/* jl_holdtabs.js v2 (2026-10-30, 本地稿未推送) —— 持仓切换条
  * 用户10-30: 左右滑卡不方便, 在分时上画趋势线还会被当成滑卡跳走; 五日图也要切换方便。
  * 做法: 持仓一览上方 + 五日图顶部各一排股票名, 点哪个就切到哪只(直接点 #deck 里对应的 .rail, 走原来的选股流程, 五日图本来就跟着当前持仓走)。
  * 只读 DOM, 零网络, 不写存储。回滚: 删 index.html 里本文件的 script 引用。 */
@@ -9,7 +9,9 @@
     '.htabsJL button{flex:0 0 auto;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;padding:5px 11px;font:700 12.5px -apple-system,"PingFang SC",sans-serif;white-space:nowrap}' +
     '.htabsJL button small{opacity:.75;font-weight:600;margin-left:3px;font-size:10px}' +
     '.htabsJL button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}' +
-    '#c5JL .htabsJL{position:relative;z-index:3;padding:0 3px 6px}';
+    '#c5JL .htabsJL{position:relative;z-index:3;padding:0 3px 6px}' +
+    /* 10-30: 选中靠后的票时前面几根竖条把卡片右半截挤出屏幕 → 选中卡=可视宽度整宽, 竖条移到屏外(换股用切换条或图外左右滑) */
+    '#holds .deck .stock.active{flex:0 0 100%!important;max-width:100%}';
   function rails() { return Array.prototype.slice.call(document.querySelectorAll('#deck .rail')); }
   function items() {
     return rails().map(function (r) {
@@ -36,7 +38,7 @@
         setTimeout(sync, 60);
       };
       bar.appendChild(b);
-      if (x.on) setTimeout(function () { try { b.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { } }, 0);
+      if (x.on) setTimeout(function () { try { bar.scrollLeft = Math.max(0, b.offsetLeft - bar.offsetLeft - (bar.clientWidth - b.offsetWidth) / 2); } catch (e) { } }, 0); /* 只滚切换条自己(scrollIntoView会连带把整页横移) */
     });
   }
   function ensure(id, parent, before) {
@@ -48,6 +50,13 @@
     }
     return bar;
   }
+  function fit() { /* 把选中卡对齐到可视区左缘, 竖条留在屏外 */
+    var d = document.getElementById('deck'), a = d && d.querySelector('.stock.active');
+    if (!a) return;
+    var x = a.offsetLeft - d.offsetLeft;
+    if (a.offsetParent !== d.offsetParent) x = a.getBoundingClientRect().left - d.getBoundingClientRect().left + d.scrollLeft;
+    if (Math.abs(d.scrollLeft - x) > 1) d.scrollLeft = x;
+  }
   function sync() {
     try {
       if (!document.getElementById('htabsCssJL')) { var st = document.createElement('style'); st.id = 'htabsCssJL'; st.textContent = CSS; document.head.appendChild(st); }
@@ -57,6 +66,7 @@
       var c5 = document.getElementById('c5JL');
       var b = c5 && ensure('htabs5dJL', c5, c5.firstChild);
       [a, b].forEach(function (bar) { if (bar) { bar.hidden = L.length < 2; fill(bar, L); } });
+      fit();
     } catch (e) { }
   }
   var t = 0;
@@ -69,5 +79,6 @@
   }
   watch();
   setInterval(sync, 3000);
-  window.JLHoldTabs = { sync: sync };
+  addEventListener('resize', later);
+  window.JLHoldTabs = { sync: sync, fit: fit };
 })();
