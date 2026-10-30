@@ -2762,7 +2762,7 @@ document.addEventListener("visibilitychange", () => {
     }
   });
   function toast(t) {
-    if (typeof t === 'string' && (t.indexOf(' 到高点 ') >= 0 || t.indexOf(' 到低点 ') >= 0)) { jlPhvlPopJL(t, t.indexOf(' 到高点 ') >= 0); return; } /* ks-1151fix11: 分时高低点提醒分流到专属醒目弹窗, 不再与水位类提醒挤底部小条 */
+    /* jl-nopop 1030: 用户要求取消中上方亮白大字闪4秒的到高点/到低点大框, 改回底部普通提醒条(jlPhvlPopJL保留未调用) */ /* ks-1151fix11: 分时高低点提醒分流到专属醒目弹窗, 不再与水位类提醒挤底部小条 */
     $("toast").textContent = t;
     $("toast").classList.add("show");
     clearTimeout(toast.timer);
