@@ -659,7 +659,7 @@
       var w15 = Math.floor(base / 15) * 15, upN = {};
       evs.forEach(function (e) { if (YD_UP[e.t] && Math.floor(e.mn / 15) * 15 === w15) upN[e.c] = 1; });
       var cur = Object.keys(upN).length;
-      if (rows) groups.push({ t: "个股扩散", n: live, html: rows + '<div class="g2">本15分钟上涨类 ' + cur + ' 只 · N=' + p.bkN + ' T=' + p.bkWin + '分 M=' + p.spM + '（CFG.yd 可调）</div>' });
+      if (rows) groups.push({ t: "个股扩散", n: live, html: rows }); /* jl-1207: 撤参数说明行(本15分钟上涨类·N/T/M·CFG.yd), 用户定: 计算口径不上卡面 */
       try { if (window.__JLEVLOG__) window.__JLEVLOG__({ k: "sp", day: today(), base: base, evs: evs, sp: sp.map(function (c) { return { t: c.t, nm: YD_NAME[c.t] || String(c.t), n: c.list.length, at: c.at, per: base - c.at <= 10 ? "live" : (base - c.at <= CFG.persistMin ? "warn" : "dead"), codes: c.list.map(function (e) { return e.c; }) }; }) }); } catch (eL) {} /* jl-1086: 任务B事件日志器被动tap(C组=现有"≥M只升级"事件, 升级类日志唯一来源; per=上方渲染行同式; 失败静默) */
     })();
     // D 风险事件
@@ -1040,15 +1040,23 @@
     } else { try { window.__jlDg && window.__jlDg.ok("jlv2:yd"); } catch (eOy2) {} }
     var ORDER = ["指数异动", "涨跌停结构", "成交额异动", "板块异动", "个股扩散", "风险事件"];
     var map = {}; g.groups.forEach(function (x) { map[x.t] = x; });
-    body += (g.banner || "") + ORDER.map(function (t) { /* jl-1077: 二期占位行已由真实功能替换(指数/成交额自算), 扩散横幅置顶 */
-      var x = map[t];
-      if (!x) return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>0</small></div></div>';
-      return '<div class="grp"><div class="grpH"><span>' + t + '</span><small>' + x.n + '</small></div>' + x.html + '</div>';
-    }).join("");
-    body += '<div class="foot">持续性只跟踪不预测：待确认 → 已持续N分 → 15分钟无跟进自动置已衰竭 · 关联持仓读 jinlin_stocks_v2（●持仓 ○观察）· 事件源东财异动流+本模块补抓 · 剔除ST · 指数/成交额自算（腾讯分钟源 · 休市冻结）</div>';
+    /* jl-1208: 分组卡改一行摘要+跳转——明细以首页"大盘异动·上证分时"面板为准(事件画在分时图上); 分组计算照跑(事件日志tap依赖) */
+    var liveG = ORDER.filter(function (t) { return map[t] && map[t].n > 0; }).map(function (t) { return t + ' <span class="mono">' + map[t].n + '</span>'; });
+    body += (g.banner || "") + (g.groups.length ? '<div class="g2">' + (liveG.length ? liveG.join(' · ') : "各组暂无事件") + '</div>' : "") +
+      '<div style="margin:6px 0 2px"><button type="button" data-jl-ydjump style="font-size:10.5px;font-weight:600;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">看 大盘异动 · 上证分时 ›</button></div>';
+    /* jl-1207: 撤口径说明foot(持续性规则/数据源/剔ST), 用户定: 计算方式文字不上卡面 */
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
 
+  document.addEventListener("click", function (ev) { /* jl-1208: 分组卡跳转——点开首页上证图下的大盘异动面板并滚到它 */
+    var b = ev.target && ev.target.closest && ev.target.closest("[data-jl-ydjump]");
+    if (!b) return;
+    ev.stopPropagation();
+    var hv = document.querySelector('[data-hv="heat"]');
+    if (hv) hv.click();
+    var yd = document.getElementById("yiDongJL");
+    if (yd) setTimeout(function () { try { yd.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (eS) { yd.scrollIntoView(); } }, 60);
+  }, true);
   /* 调试钩子（金粲惯例 window 挂钩）：__JLV2S__=状态 __JLV2P__=手动重绘 __JLV2C__=配置 */
   window.__JLV2S__ = S;
   window.__JLV2P__ = function () { try { paint(); } catch (e) {} };

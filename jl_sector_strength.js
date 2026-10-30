@@ -352,6 +352,10 @@
     var R = ensureRoot();
     var has = !!(S.last && S.day);
     var sub = has ? (S.day + " · 强度样本 · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无强度数据"; /* jl-1166c: 明确这是强度样本，不是板块资金状态 */
+    if (has && S.last.ranked && S.last.ranked.length) { /* jl-1208: 有排名时手柄直接报最强两个板块——抽屉不打开也看得到有没有内容、谁最强 */
+      var _r0 = S.last.ranked[0], _r1 = S.last.ranked[1], _a0 = _r0.factors && _r0.factors.avgPct;
+      sub = "最强 " + _r0.sector + (_a0 && _a0.state === "ok" ? " " + fmtPct(_a0.raw) : "") + (_r1 ? " · " + _r1.sector : "") + (S.at ? " · " + new Date(+S.at).toTimeString().slice(0, 5) : "");
+    }
     var body = "";
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
@@ -370,7 +374,7 @@
       }
       if (unr) body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin:5px 0 0">· 个股扩散未归属 ' + unr.factors.evN.raw.recN + " 条（成分股" + unr.factors.evN.raw.codeN + " · 不作归属猜测）</div>";
       var st = S.stat || { mc: 0, sec: 0, hy: 0, unattr: 0 };
-      body += '<div style="font-size:9px;color:rgba(255,255,255,.95);font-weight:600;margin-top:7px;line-height:1.6">公式: 涨幅=Σpct/n · 上涨率=up/n(jl-1080原式, n&lt;8不参评) | 涨停=ZT池×口径' + (S.ztSrc === "v2" ? "(温度v2自建池·剔ST)" : S.ztSrc === "yd" ? "(异动卡池·前50只)" : "") + ' | 扩散=T3 IDB当日记录(定义=成分股并集, 辅存记录数/峰值) | 成交额=数据不足 · 龙头=待定义<br>口径回退: mc ' + st.mc + " / sec " + st.sec + " / hy " + st.hy + (st.unattr ? " / 无归属" + st.unattr : "") + " | 快照=独立IDB(jinlin_secstr) 30分钟桶·90天保留 | T3只读零改</div>";
+      /* jl-1207: 撤公式/口径回退说明行, 用户定: 计算口径不上卡面 */
       body += '<div style="margin-top:6px"><button id="jlSecExp" style="font-size:9.5px;font-weight:600;padding:3px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#ffd21f;cursor:pointer">导出快照JSON</button></div>';
     } else {
       body = '<div style="font-size:10.5px;color:rgba(255,255,255,.95);font-weight:600;padding:6px 2px">暂无强度数据 · 数据到达后自动计算（板块资金不受影响）</div>';
@@ -380,6 +384,7 @@
     R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
+    R.style.display = has && S.last.ranked && S.last.ranked.length ? "" : "none"; /* jl-1208: 无强度排名(样本不足/无数据)整卡收起不占位, 有排名自动出现 */
     var nb = document.getElementById("jlsectBody");
     if (nb) nb.scrollTop = sc;
     var h = document.getElementById("jlsectHandle");
