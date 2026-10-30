@@ -33,6 +33,10 @@
 <div class="card" id="diag"></div>
 <h2>④ 买入闸日志 jl_gate_log_v2 + 日汇总 jl_gate_day_v1（v0.89.4起：盘中跳午休、结论变化才记+5分钟保底；明细留30交易日，日汇总每天1行长期保留，回放按日聚合用它）</h2>
 <div class="card" id="gate"></div>
+<h2>⑤ 大盘预判 jinlin_pred_log_v1（首页温度计高低点 = 昨收 ± 0.62×ATR14；收盘后用日K补实际高低；index 只留最近60天）</h2>
+<div class="card" id="pred"></div>
+<h2>⑥ 今日共振位 jl_reso_log_v1（定稿=15:10后；对照=同数量随机价位，碰到=日内高低距价位≤0.05×ATR5）</h2>
+<div class="card" id="reso"></div>
 <h2>原始 JSON</h2>
 <pre id="raw"></pre>
 <script>
@@ -111,11 +115,36 @@
   if(gate1&&gate1.length)gh+='<div class="mut">旧版 jl_gate_log_v1 还有 '+gate1.length+' 条（已停写，口径作废，仅随导出存档）</div>';
   document.getElementById("gate").innerHTML=gh;
 
+  /* ⑤ 大盘预判 jl-memo2 */
+  var pred=readJ("jinlin_pred_log_v1")||{}, pk=Object.keys(pred).sort().reverse(), ph="", pn=0, pLo=0, pHi=0, pIn=0;
+  if(!pk.length)ph='<span class="mut">暂无记录（打开过首页才会写）</span>';
+  else{
+    ph='<table><tr><th>日期</th><th>昨收</th><th>ATR14</th><th>预判低—高</th><th>实际低—高</th><th>碰低</th><th>碰高</th><th>收在带内</th></tr>';
+    pk.forEach(function(d){var e=pred[d];if(!e)return;var done=e.actLo!=null&&d<td;
+      if(done){pn++;if(e.hitLo)pLo++;if(e.hitHi)pHi++;if(!e.hitLo&&!e.hitHi)pIn++;}
+      ph+='<tr><td>'+d+'</td><td>'+esc(e.prev)+'</td><td>'+esc(e.atr)+'</td><td>'+esc(e.lo)+' — '+esc(e.hi)+'</td><td>'+(e.actLo!=null?esc(e.actLo)+' — '+esc(e.actHi):'<span class="mut">待收盘</span>')+'</td><td>'+(e.actLo==null?'—':e.hitLo?'<span class="bad">碰</span>':'否')+'</td><td>'+(e.actLo==null?'—':e.hitHi?'<span class="bad">碰</span>':'否')+'</td><td>'+(e.actLo==null?'—':(!e.hitLo&&!e.hitHi)?'<span class="ok">整根在带内</span>':'出带')+'</td></tr>';});
+    ph+='</table><div class="mut">已收盘 '+pn+' 天：整根在带内 '+pIn+'，碰低 '+pLo+'，碰高 '+pHi+'。</div>';
+  }
+  document.getElementById("pred").innerHTML=ph;
+
+  /* ⑥ 共振位 jl-memo2 */
+  var reso=readJ("jl_reso_log_v1")||{}, rk=Object.keys(reso).sort().reverse(), rh="", ra=0, rah=0, rb=0, rbh=0, rs=0, rsh=0, rdays=0;
+  if(!rk.length)rh='<span class="mut">暂无记录</span>';
+  else{
+    rh='<table><tr><th>日期</th><th>票</th><th>共振位（×来源数，✓=碰到）</th><th>随机对照（✓=碰到）</th><th>定稿</th></tr>';
+    rk.forEach(function(d){var day=reso[d]||{},fin=0;Object.keys(day).forEach(function(c){var e=day[c];if(!e||!e.levels)return;
+      if(e.final&&!e.stale){fin=1;e.levels.forEach(function(x){ra++;rah+=x.hit?1:0;if(x.n>=3){rs++;rsh+=x.hit?1:0}});(e.ctrl||[]).forEach(function(x){rb++;rbh+=x.hit?1:0});}
+      rh+='<tr><td>'+d+'</td><td>'+esc(e.name||c)+'</td><td>'+(e.levels.map(function(x){return esc(x.p)+'×'+x.n+(x.hit?'✓':'')}).join('　')||'<span class="mut">无</span>')+'</td><td>'+((e.ctrl||[]).map(function(x){return esc(x.p)+(x.hit?'✓':'')}).join('　')||'—')+'</td><td>'+(e.stale?'<span class="bad">过时：'+esc(e.stale)+'</span>':e.final?'<span class="ok">✓</span>':'<span class="mut">盘中</span>')+'</td></tr>';});if(fin)rdays++;});
+    function pc(h,n){return n?(100*h/n).toFixed(0)+'%（'+h+'/'+n+'）':'—'}
+    rh+='</table><div class="mut">已定稿 '+rdays+' 天：共振位碰到率 '+pc(rah,ra)+'，其中强共振(≥3) '+pc(rsh,rs)+'；随机对照 '+pc(rbh,rb)+'。过时行不计入。攒够二三十天、共振位明显高于对照才算有用。</div>';
+  }
+  document.getElementById("reso").innerHTML=rh;
+
   var dkSh=readJ("jl_dk_sh000001");
-  document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate},null,1);
+  document.getElementById("raw").textContent=JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate,jinlin_pred_log_v1:pred,jl_reso_log_v1:reso},null,1);
   document.getElementById("exp").onclick=function(){
     try{
-      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate,jl_gate_log_v1:gate1,jl_dk_sh000001:dkSh},null,1)],{type:"application/json"});
+      var blob=new Blob([JSON.stringify({jl_osnap_v1:snap,jl_tloop_log_v1:log,jl_gate_day_v1:gday,jl_gate_log_v2:gate,jl_gate_log_v1:gate1,jl_dk_sh000001:dkSh,jinlin_pred_log_v1:pred,jl_reso_log_v1:reso},null,1)],{type:"application/json"});
       var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jinlin_验收_"+td+".json";a.click();
     }catch(e){alert("导出失败: "+e)}
   };

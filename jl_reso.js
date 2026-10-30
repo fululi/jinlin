@@ -4,6 +4,8 @@
  * 台账: localStorage jl_reso_log_v1, 每天每票一条, 含同数量随机对照组; 留60天
  * 依赖: index.html 里提供 window.jlResoInputJL(code) → {bars:[{t,o,h,l,c}], cur, atrBand?:{up,dn}, gaps?:[价格,...]}
  * 回滚: 删 index.html 里引用本文件的一行 + jlResoInputJL 接口
+ * upTo: compute(code, 'YYYY-MM-DD') 只用该日及之前日K(给 jl_trule); 截面早于最新日K时 hist=1, 不用斐波/缺口/ATR带
+ * jl-memo2: 日K末根收盘与今日报价反推昨收不符(>0.3%) → 标 stale 写原因, 每次刷新重算, 对上了才换成正式; stale 不进命中统计
  */
 (function () {
   var KEY = 'jl_reso_log_v1', KEEP = 60, MERGE = 0.2, NEAR = 0.003, TOUCH = 0.05;
@@ -61,15 +63,17 @@
 
   function touched(p, hi, lo, atr) { return lo <= p + TOUCH * atr && hi >= p - TOUCH * atr; }
 
-  function build(code) {
+  function build(code, upTo) { /* upTo='YYYY-MM-DD': 只用该日(含)及之前的日K, 给 jl_trule 盘后生成次日计划用; 不传=原行为(今天之前) */
     var inp = window.jlResoInputJL && window.jlResoInputJL(code);
     if (!inp || !inp.bars) return null;
-    var t = today(), bars = inp.bars.filter(function (b) { return day(b.t) < t; });
+    var t = upTo || today(), bars = inp.bars.filter(function (b) { return upTo ? day(b.t) <= upTo : day(b.t) < t; });
     if (bars.length < 8) return null;
     var last = bars[bars.length - 1], atr = atr5(bars);
     if (!(atr > 0)) return null;
+    var lastAll = day(inp.bars[inp.bars.length - 1].t), hist = !!upTo && lastAll > upTo; /* hist=过去某天的截面: 斐波/缺口/ATR带只有当前值, 不能当历史真值, 一律不用 */
+    var ck = inp.prev > 0 && !hist && day(last.t) < today(); /* 今日报价反推的昨收只能核对"今天之前最后一根" */
     var c = [];
-    var band = inp.atrBand || { up: last.c + atr, dn: last.c - atr };
+    var band = (!hist && inp.atrBand) || { up: last.c + atr, dn: last.c - atr };
     c.push({ p: band.up, src: 'atr' }, { p: band.dn, src: 'atr' });
     c.push({ p: last.h, src: 'prevHL' }, { p: last.l, src: 'prevHL' });
     var w = bars.slice(-5, -1); /* 昨天之前4日: 否则昨天恰是五日高时会自己凑出"两重" */
@@ -77,8 +81,8 @@
       c.push({ p: Math.max.apply(null, w.map(function (b) { return b.h; })), src: 'hl5' });
       c.push({ p: Math.min.apply(null, w.map(function (b) { return b.l; })), src: 'hl5' });
     }
-    (inp.gaps || []).forEach(function (p) { if (p > 0) c.push({ p: p, src: 'gap' }); });
-    try {
+    (hist ? [] : (inp.gaps || [])).forEach(function (p) { if (p > 0) c.push({ p: p, src: 'gap' }); });
+    if (!hist) try {
       var F = window.jlFibLvJL ? window.jlFibLvJL(code) : null;
       if (F && F.lv) F.lv.forEach(function (l) { if (l.v > 0) c.push({ p: l.v, src: 'fib' }); });
     } catch (e) { }
@@ -88,7 +92,9 @@
     var ctrl = levels.map(function () { return { p: +(lo + r() * (hi - lo)).toFixed(2), hit: 0 }; });
     return {
       at: String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0'),
-      pc: last.c, pd: day(last.t), atr: +atr.toFixed(3), levels: levels, ctrl: ctrl, final: 0
+      pc: last.c, pd: day(last.t), atr: +atr.toFixed(3), levels: levels, ctrl: ctrl, final: 0,
+      chk: ck ? 1 : 0, hist: hist,
+      stale: ck && Math.abs(last.c - inp.prev) / inp.prev > 0.003 ? '日K停在' + day(last.t).slice(5) + '(收' + f2(last.c) + ')，今日昨收' + f2(inp.prev) : ''
     };
   }
 
@@ -96,9 +102,11 @@
     var d = new Date().getDay();
     if (d === 0 || d === 6) return null;
     var L = load(), t = today();
-    if (L[t] && L[t][code]) return L[t][code];
+    var old = L[t] && L[t][code];
+    if (old && (old.final || (old.chk && !old.stale))) return old;
     var e = build(code);
-    if (!e) return null;
+    if (!e) return old || null;
+    if (old && !e.chk) return old; /* 还核对不了(报价未到今日), 先留旧的 */
     L[t] = L[t] || {};
     L[t][code] = e;
     save(L);
@@ -124,7 +132,7 @@
     Object.keys(L).forEach(function (d) {
       Object.keys(L[d]).forEach(function (c) {
         var e = L[d][c];
-        if (!e.final) return;
+        if (!e.final || e.stale) return;
         days[d] = 1;
         e.levels.forEach(function (x) { a++; ah += x.hit; });
         e.ctrl.forEach(function (x) { b++; bh += x.hit; });
@@ -174,7 +182,7 @@
     }
     host.innerHTML = '<div class="jlReso"><h4>今日共振位</h4>' + up.map(row).join('') +
       '<div class="cur"><i></i><span></span><b>' + (cur ? f2(cur) : '—') + '</b></div>' + dn.map(row).join('') +
-      '<div class="ft">昨收 ' + f2(e.pc) + ' · ATR5 ' + f2(e.atr) + ' · ' + e.at + ' 算</div></div>';
+      '<div class="ft">昨收 ' + f2(e.pc) + ' · ATR5 ' + f2(e.atr) + ' · ' + e.at + ' 算' + (e.stale ? '<br><span style="color:#ff9f43">⚠ 过时：' + e.stale + '，等日K更新后自动重算，不进台账统计</span>' : '') + '</div></div>';
   }
 
   window.JLReso = { compute: build, ensure: ensure, settle: settle, render: render, stats: stats, _load: load };
