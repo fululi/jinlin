@@ -8,7 +8,7 @@
  *   S4 极值恒占: 新旧参数下日高/日低极值恒在(score=Infinity)
  *   S5 结构: marks按idx升序/字段齐全/数量受maxCount约束
  *   S6 源码守卫: index.html+ks.html两处调用侧(名额8+邻域n/30+同口径滤除);
- *              data-ver=0.90.3; 壳v306→v307成对(KEEP头插/最旧退役); iframe戳p2e→p2f; 验收钩子__cardTrendDbgJL; 1030晚jl-1226批: 版本断言随v0.90.4/v308升号(dkKeeper日K无前缀键补写)
+ *              data-ver=0.90.3; 壳v306→v307成对(KEEP头插/最旧退役); iframe戳p2e→p2f; 验收钩子__cardTrendDbgJL; 1030晚jl-1226批: 版本断言随v0.90.4/v308升号(dkKeeper日K无前缀键补写); 1031凌晨jl-rscap批: 版本断言随v0.90.6/v310升号(资金共振风险分资金族封顶4.5, v0.90.5漏跟的4断言一并补齐)
  *   S7 语法: 两文件含createCardIntraday的script块new Function可编译(只编译不执行)
  * 纯本地, 零网络。回滚本批时删除本文件即可。 */
 "use strict";
@@ -120,13 +120,13 @@ console.log("S6 源码守卫(防回退):");
     ok(!src.includes("Math.round(p.length / 14)"), tag + " 旧n/14口径清零");
     ok(src.includes("jl-1225"), tag + " 批注在位");
   }
-  ok(IDX.includes('data-ver="0.90.4"'), "index data-ver=0.90.4");
-  ok(IDX.includes('data-sw="jinlin-shell-v308"'), "index data-sw=v308(壳号成对)");
+  ok(IDX.includes('data-ver="0.90.6"'), "index data-ver=0.90.6");
+  ok(IDX.includes('data-sw="jinlin-shell-v310"'), "index data-sw=v310(壳号成对)");
   ok(IDX.includes("v=p2f&code="), "index iframe戳p2e→p2f");
   ok(IDX.includes("__cardTrendDbgJL"), "index 验收钩子__cardTrendDbgJL在位");
-  ok(SW.includes("const C = 'jinlin-shell-v308'"), "sw.js 缓存名v308");
+  ok(SW.includes("const C = 'jinlin-shell-v310'"), "sw.js 缓存名v310");
   const keep = /const KEEP = \[([^\]]+)\]/.exec(SW)[1];
-  ok(keep.startsWith("'jinlin-shell-v308','jinlin-shell-v307'"), "sw.js KEEP头插v308");
+  ok(keep.startsWith("'jinlin-shell-v310','jinlin-shell-v309'"), "sw.js KEEP头插v310");
   ok(!keep.includes("jinlin-shell-v266"), "sw.js KEEP最旧v266退役(37项不变)");
 }
 console.log("S7 script块语法可编译:");
