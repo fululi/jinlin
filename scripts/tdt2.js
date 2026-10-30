@@ -85,7 +85,9 @@ function zonesFor(E, upto12, lastOv) {  /* E=执行日: 只用 date < E 的数�
   const E8 = E.replace(/-/g, '');
   const cut = arr => arr.filter(b => { const d = dg(b.t).slice(0, 8); if (d < E8) return true; if (d > E8) return false; return !!upto12 && dg(b.t).slice(0, 12) < upto12; });
   /* 1分K也是"结束时刻"标注(已实测): 当前5分K窗口[T-5,T]内的1分K(标签∈(T-5,T])必须排除, 截到标签≤T-5 */
-  const cutM1 = arr => arr.filter(b => { const g = dg(b.t).slice(0, 12), d = g.slice(0, 8); if (d < E8) return true; if (d > E8) return false; if (!upto12) return false; const hm = Number(g.slice(8, 12)); let h = Math.floor(hm / 100), m = hm % 100 - STEP; if (m < 0) { m += 60; h -= 1; } return g <= d + String(h * 100 + m).padStart(4, '0'); });
+  let m1limit = '';   /* tdt2-1031修: 原cutM1逐根拿"自身时分-STEP"比较恒假→当日1分K全被丢弃(1分IV区只剩昨日); 改按决策时刻upto12一次算截断, 与cut同零偷看口径 */
+  if (upto12) { const hm = Number(upto12.slice(8, 12)); let h = Math.floor(hm / 100), m = hm % 100 - STEP; if (m < 0) { m += 60; h -= 1; } m1limit = upto12.slice(0, 8) + String(h * 100 + m).padStart(4, '0'); }
+  const cutM1 = arr => arr.filter(b => { const g = dg(b.t).slice(0, 12), d = g.slice(0, 8); if (d < E8) return true; if (d > E8 || !m1limit) return false; return g <= m1limit; });
   const dc = D.filter(b => dg(b.t).slice(0, 8) < E8), last = lastOv || (dc.length ? dc[dc.length - 1].c : 0);  /* 日线只用昨日及以前(当日bar含收盘信息, 盘中禁用=零偷看) */
   const src = { '日': dc, '30分': cut(BY['30分']), '15分': cut(BY['15分']), '5分': cut(BY['5分']), '1分': cutM1(BY['1分']) };
   let all = [];
