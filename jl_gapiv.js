@@ -187,8 +187,8 @@
       if (o) {
         const rem = Math.abs(o.ext - R.pre);
         h += '<div class="aucL" style="border-color:' + col + '"><div class="ln1">竞 ' + (o.up ? "高开" : "低开") + ' <span class="big" style="color:' + col + '">' + sg(o.pct) + "</span></div>"
-          + '<div class="ln2" style="color:' + col + '">' + (o.up ? "↓" : "↑") + " iv " + f2(R.op) + "–" + f2(R.pre) + ' <span class="sz">' + f2(o.size) + "元</span></div>"
-          + '<div class="ln3">' + (o.st === "done" ? '<span class="okc">✓</span> ' + o.ft : "还差 " + f2(rem) + "元 · 已补 " + Math.round(o.prog * 100) + "%") + "</div>"
+          + '<div class="ln2" style="color:' + col + '">' + (o.up ? "↓" : "↑") + " iv " + f2(R.op) + "–" + f2(R.pre) + ' <span class="sz">' + f2(o.size) + (/^(sh|sz)/.test(String(R.code)) ? "点" : "元") + "</span></div>"
+          + '<div class="ln3">' + (o.st === "done" ? '<span class="okc">✓</span> ' + o.ft : "还差 " + f2(rem) + (/^(sh|sz)/.test(String(R.code)) ? "点" : "元") + " · 已补 " + Math.round(o.prog * 100) + "%") + "</div>"
           + (o.back && o.back.length ? '<div class="ln4w">' + o.back.map((b) => '<span class="ln4">再次回补 ' + b + "</span>").join("") + "</div>" : "") /* jl-1183: 回补记录横排 */
           + '<button class="gvFoldJL" type="button" aria-label="收起或展开回补记录">▾</button>' + "</div>";
       } else h += '<div class="aucL" style="border-color:#fff"><div class="ln1">竞 平开 <span class="big">0.00%</span></div></div>';
@@ -231,14 +231,15 @@
   }
   function render(host, code) {
     ensureCss();
-    code = String(code).replace(/\D/g, "");
+    const px = /^(sh|sz)\d{6}$/i.test(String(code)) && /^(sh000|sz399|sh880)/i.test(String(code)) ? String(code).toLowerCase() : ""; /* jl-homeintra 1030: 指数带前缀走(sh000001≠平安银行000001), 个股照旧只留数字 */
+    code = px || String(code).replace(/\D/g, "");
     host.onclick = (e) => e.stopPropagation();   /* 点这一块不翻卡、不触发原缺口行的展开 */
     host.setAttribute("data-gv", code);
     const s = ST[code] = ST[code] || { at: 0 };
     paint(host, code);
     if (s.fly || Date.now() - s.at < 60000) return;
     s.fly = 1;
-    const c = pf(code);
+    const c = px || pf(code);
     getAll(c).then((g) => {
       s.R = compute(code, ...g.r); s.src = g.src; s.err = ""; s.at = Date.now(); s.fly = 0;
       document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code));
