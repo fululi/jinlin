@@ -8,7 +8,8 @@
  * 完整日: 15分K须恰好16个时段(09:45…11:30, 13:15…15:00)逐个对上、无重复、OHLC有效; 且这份数据是该日15:00:15之后拉的(东财盘中末根=正在走的K线, 14:45起就标15:00)
  * 结算: 只有"完整日"才用15分K定稿, 今天没收盘绝不定稿; 过去交易日的15分K是旧快照(该日收盘前拉的)或还没拉 → 强制重拉并等待(最多 WAIT 次刷新), 仍不行才用日线;
  *       快照是收盘后拉的但这一天缺根(缓存最早一天被截断) → 直接日线; 日线判不出先后 → "顺序不明", 不计入统计
- * 费用: 单边 costRate(默认0.15%, 保守估算, 未含佣金起收价), 买卖两边各按成交金额算
+ * 费用(10-30改): 佣金万2.5每笔最低5元 + 过户费0.001%两边 + 印花税0.05%只卖出; 计划冻结时存 fee, 旧计划(只有costRate)也按真实费用算
+ * 股数(10-30改): 与 jl_tintra 同口径 —— 自设股数(jl_tintra_qty_v1, 兆易默认100)优先且不超过持仓, 否则持仓×frac, 不足但有一手=一手
  * 对照: 同股票同日同股数同费用同止损规则, 价位在昨收±1.5ATR内随机(种子=信号日+代码), 按报价单位取整且满足同样价差门槛
  * 依赖: jl_reso.js(compute(code, upTo)); index.html: jlResoInputJL / jlResoCodesJL / jlHoldQtyJL / jlTBarsJL(code)=15分K[{t,o,h,l,c}, t为K线结束时刻]
  * 持仓变化: 计划冻结不重算; 跟踪中当前持仓 < 计划卖出股数(减仓到不够卖) → 作废, 不进统计
@@ -19,7 +20,7 @@
   var CFGK = 'jl_trule_cfg_v1', LOGK = 'jl_trule_log_v2', KEEP = 240, WAIT = 10, REFRESH_MS = 120000;
   var SLOTS = ['09:45', '10:00', '10:15', '10:30', '10:45', '11:00', '11:15', '11:30', '13:15', '13:30', '13:45', '14:00', '14:15', '14:30', '14:45', '15:00'];
   var asked = {};
-  var DEF = { frac: 0.25, lot: 100, minSpread: 0.01, stopAtr: 0.5, cost: 0.0015, minSrc: 2, minSamples: 30 };
+  var DEF = { frac: 0.25, lot: 100, minSpread: 0.01, stopAtr: 0.5, comm: 0.00025, commMin: 5, stamp: 0.0005, xfer: 0.00001, minSrc: 2, minSamples: 30 };
   var NAME = { atr: 'ATR', prevHL: '昨高低', hl5: '五日高低', gap: '缺口', fib: '斐波' };
   var LAB = { pending: '待执行', wait: '等待卖出', sold: '已卖出·等买回', done: '已买回', stop: '止损买回', open: '收盘结算(没买回)', idle: '未触发', unclear: '顺序不明', void: '持仓变化·作废', nodata: '数据不足', noplan: '不操作', none: '不操作' };
 
@@ -119,7 +120,7 @@
     if (sp < c.minSpread) return { none: '取整后卖买价差' + (sp * 100).toFixed(2) + '%, 不足' + (c.minSpread * 100) + '%' };
     return {
       sellPrice: S, buyPrice: B, sellQty: sh, stopPrice: rt(S + c.stopAtr * atr, tk), stopDist: +(c.stopAtr * atr).toFixed(4), tick: tk,
-      expectedSpread: +sp.toFixed(4), minSource: c.minSrc, costRate: c.cost, sellSrcs: sS || [], buySrcs: sB || []
+      expectedSpread: +sp.toFixed(4), minSource: c.minSrc, fee: { comm: c.comm, commMin: c.commMin, stamp: c.stamp, xfer: c.xfer }, sellSrcs: sS || [], buySrcs: sB || []
     };
   }
   function genCtrl(code, sig, pc, atr, sh, c) {
@@ -139,7 +140,7 @@
     if (!e || e.pd !== sig) { rec.plan = { none: '数据不足(日线不够或缺信号日收盘)' }; rec.status = 'nodata'; rec.final = 1; return rec; }
     if (e.hist) { rec.plan = { none: '历史截面不完整(斐波/缺口只有当前值), 不生成' }; rec.status = 'nodata'; rec.final = 1; return rec; }
     rec.prevClose = e.pc; rec.atr = e.atr;
-    var sh = Math.floor(qty * c.frac / c.lot) * c.lot;
+    var sh = shOf(code, qty, c);
     var lv = e.levels.filter(function (l) { return l.n >= c.minSrc; });
     var up = lv.filter(function (l) { return l.p > e.pc; }).sort(function (a, b) { return a.p - b.p; })[0];
     var dn = lv.filter(function (l) { return l.p < e.pc; }).sort(function (a, b) { return b.p - a.p; })[0];
@@ -149,6 +150,13 @@
     return rec;
   }
 
+  /* 做T股数(10-30, 与 jl_tintra 同口径): 盘中卡里自设的股数优先(兆易默认100), 不超过持仓; 没设=持仓×frac取整到手, 不足但有一手=一手 */
+  function shOf(code, qty, c) {
+    var q, k = String(code).replace(/\D/g, ''), cap = Math.floor(qty / c.lot) * c.lot;
+    try { q = (JSON.parse(localStorage.getItem('jl_tintra_qty_v1') || 'null') || { '603986': 100 })[k]; } catch (e) { }
+    if (q != null && q !== '') return Math.max(0, Math.min(cap, Math.floor(Number(q) / c.lot) * c.lot));
+    return Math.floor(qty * c.frac / c.lot) * c.lot || (qty >= c.lot ? c.lot : 0);
+  }
   function codeList() {
     var ls = [];
     try { ls = window.jlResoCodesJL ? window.jlResoCodesJL() : []; } catch (e) { }
@@ -172,7 +180,9 @@
     return L;
   }
 
-  function netOf(p, sp, bp) { var sh = p.sellQty; return +(((sp - bp) * sh) - p.costRate * (sp + bp) * sh).toFixed(2); }
+  /* 费用(10-30改): 佣金万2.5每笔最低5元 + 过户费十万分之一(两边) + 印花税万5(只卖出收); 旧计划没存费率 → 也按这套真实费用算 */
+  function fee(amt, sell, f) { return Math.max(f.commMin, amt * f.comm) + amt * f.xfer + (sell ? amt * f.stamp : 0); }
+  function netOf(p, sp, bp) { var sh = p.sellQty, f = p.fee || cfg(); return +(((sp - bp) * sh) - fee(sp * sh, true, f) - fee(bp * sh, false, f)).toFixed(2); }
   /* 实际卖出价对应的止损: 按实际卖价上移, 不低于计划止损 */
   function stopOf(p, sp) {
     var d = p.stopDist != null ? p.stopDist : p.stopPrice - p.sellPrice;
@@ -321,7 +331,7 @@
     host.innerHTML = '<h3 style="margin-top:14px">次日做T计划<small>只记账不下单</small></h3>' + (A || '<div style="opacity:.6;font-size:12px">暂无持仓可算</div>') +
       '<h3 style="margin-top:12px">次日执行状态</h3>' + (Bz || '<div style="opacity:.6;font-size:12px">还没有计划进入执行</div>') +
       '<h3 style="margin-top:12px">历史复盘</h3><div style="font-size:11.5px;opacity:.9">' + C +
-      '<br><span style="opacity:.65">规则: 只先卖后买回 · 动持仓' + Math.round(c.frac * 100) + '% · 每天最多1次 · 费用单边' + (c.cost * 100).toFixed(2) + '%估算(未含佣金起收价与实际税费差异) · 数字=相对一直持有不动的差额</span></div>';
+      '<br><span style="opacity:.65">规则: 只先卖后买回 · 动持仓' + Math.round(c.frac * 100) + '% · 每天最多1次 · 费用=佣金万' + (c.comm * 1e4).toFixed(1) + '(最低' + c.commMin + '元)+过户费+卖出印花税万' + (c.stamp * 1e4) + ' · 数字=相对一直持有不动的差额</span></div>';
   }
 
   function mount() {
@@ -337,6 +347,6 @@
 
   window.JLTRule = {
     cfg: cfg, setCfg: setCfg, ensureAll: ensureAll, updateAll: updateAll, stats: stats, render: render, _load: load,
-    _t: { closeConfirmed: closeConfirmed, fullDay: fullDay, dayClosed: dayClosed, sim15: sim15, simDaily: simDaily, signalDateFor: signalDateFor, genCtrl: genCtrl, mkPlan: mkPlan, update: update, genRecord: genRecord, stopOf: stopOf }
+    _t: { closeConfirmed: closeConfirmed, fullDay: fullDay, dayClosed: dayClosed, sim15: sim15, simDaily: simDaily, signalDateFor: signalDateFor, genCtrl: genCtrl, mkPlan: mkPlan, update: update, genRecord: genRecord, stopOf: stopOf, shOf: shOf, netOf: netOf, cfg: cfg }
   };
 })();

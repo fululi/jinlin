@@ -3,19 +3,24 @@
  *   1分K逐根, 每根走完才判断, 按该根收盘价成交(不偷看)
  *   卖(持仓满时): 09:35 后、14:50 前; 从"上次接回(或开盘)以来最低价"反弹 ≥ 0.4×ATR5, 且现价在当日已走区间的上 30%
  *   接回(已卖时): 从卖出后最高价回落 ≥ 1.5% / 或跌回当日区间下 30% / 或涨过 卖价+0.5×ATR5(止损) / 14:57 起强制接回
- *   每天最多3轮, 每轮 持仓×25% 取整到手, 费用单边0.15%两边计; 对照=同轮数同持有分钟, 卖出时刻随机
+ *   每天最多3轮, 每轮 持仓×25% 取整到手(自设股数优先, 不超过持仓); 费用=佣金万2.5(最低5元)+过户费0.001%两边+印花税0.05%卖出;
+ *   对照=同轮数同持有分钟, 卖出时刻在 09:35~14:50 内随机、接回不晚于 14:57
  *   IV核对只记录不参与决策: 成交价离未回补的1分钟IV(跳空>0.05%且影线重叠, 补=碰前收)或日线/开盘缺口 ≤0.3% → 记"贴IV/贴缺口"
  * 和影子版唯一差别: 盘中数据最后一根不当收盘(影子只在收盘后算整天, 结果相同); 正在走的那根1分K不用。
  * 数据: window.jlM1RowsJL(code)=1分K拷贝 / jlResoInputJL(code).bars=日K / jlHoldQtyJL / localStorage jl_gaplog_v1; 零新增请求(只调原 ensureM1JL, 它自带60秒节流)
  * v2: 卡片只留 卖/接 价·股数·每轮差价·今天合计(小字全删); 右下浮球=最该看的那只(先等接回的, 再离卖点最近的), 离价0.4%内闪, 点了跳到卡片
  * v3(用户10-30): 要实时+看得到依据 → 加小分时图(高低点/段幅/IV带/卖接点/下一步价位线)+依据两行+今天波段+最近未补IV; 报价10秒一看, 到价浮球变红震动(成交仍按该分钟收盘记); 股数每只可设(兆易默认100)
+ * 10-30b: 浮球到价时的实时价记进 hits(每轮卖/接各第一次), 卡上和分钟收盘价记账并排, 另给"按提醒价算"合计
  * 存储: jl_tintra_log_v1 (code|日期 一条, 收盘后定稿不再改)。回滚: 删 index.html 里本文件的 script 引用 + 两行 window.jlM1RowsJL/jlEnsureM1JL。 */
 (function () {
   "use strict";
   var KEY = "jl_tintra_log_v1", KEEP_DAYS = 60;
-  var DEF = { up: 0.4, back: 0.015, zone: 0.3, stopAtr: 0.5, maxRounds: 3, frac: 0.25, lot: 100, cost: 0.0015, near: 0.003 };
+  var DEF = { up: 0.4, back: 0.015, zone: 0.3, stopAtr: 0.5, maxRounds: 3, frac: 0.25, lot: 100, comm: 0.00025, commMin: 5, stamp: 0.0005, xfer: 0.00001, near: 0.003 };
 
   /* ===== 以下与 ~/jl_shadow/multi.js 相同 ===== */
+  /* 费用(10-30改): 佣金万2.5每笔最低5元 + 过户费十万分之一(两边) + 印花税万5(只卖出收) */
+  function fee(amt, sell, c) { return Math.max(c.commMin, amt * c.comm) + amt * c.xfer + (sell ? amt * c.stamp : 0); }
+  function rtFee(sp, bp, sh, c) { return fee(sp * sh, true, c) + fee(bp * sh, false, c); }
   function atr5(d) {
     if (d.length < 6) return 0;
     var tr = [];
@@ -90,10 +95,14 @@
     return rounds;
   }
   function control(b, rounds, seed) {
-    var g = rng(seed), out = [], n = b.length;
+    /* 对照守同样时间规则(10-30改): 卖出只在 09:35~14:50 之前, 接回不晚于 14:57 那根(不进尾盘集合竞价) */
+    var g = rng(seed), out = [], S = [], eMax = -1;
+    b.forEach(function (x, i) { var t = hm(x.t); if (t <= "14:57") eMax = i; if (t >= "09:35" && t < "14:50") S.push(i); });
     rounds.forEach(function (r) {
+      var cand = S.filter(function (s) { return s + r.hold <= eMax; });
+      if (!cand.length) return;
       for (var i = 0; i < 50; i++) {
-        var s = 5 + Math.floor(g() * Math.max(1, n - 6 - r.hold)), e = Math.min(n - 1, s + r.hold);
+        var s = cand[Math.floor(g() * cand.length)], e = s + r.hold;
         if (out.some(function (o) { return !(e < o.sk || s > o.bk); })) continue;
         out.push({ sellT: hm(b[s].t), sp: b[s].c, buyT: hm(b[e].t), bp: b[e].c, sk: s, bk: e });
         break;
@@ -101,7 +110,7 @@
     });
     return out;
   }
-  function net(rs, sh, cost) { return +rs.reduce(function (a, r) { return a + (r.sp - r.bp) * sh - cost * (r.sp + r.bp) * sh; }, 0).toFixed(2); }
+  function net(rs, sh, c) { return +rs.reduce(function (a, r) { return a + (r.sp - r.bp) * sh - rtFee(r.sp, r.bp, sh, c); }, 0).toFixed(2); }
   function idealNet(b, sh, c) {
     var th = 0.015, piv = [], dir = 0, H = b[0], Lo = b[0];
     for (var i = 1; i < b.length; i++) {
@@ -112,7 +121,7 @@
       else if (dir <= 0 && x.h >= Lo.l * (1 + th) && Lo !== x) { piv.push({ k: "L", p: Lo.l }); dir = 1; H = x; }
     }
     var legs = [];
-    for (var j = 0; j + 1 < piv.length; j++) if (piv[j].k === "H" && piv[j + 1].k === "L") legs.push((piv[j].p - piv[j + 1].p) * sh - c.cost * (piv[j].p + piv[j + 1].p) * sh);
+    for (var j = 0; j + 1 < piv.length; j++) if (piv[j].k === "H" && piv[j + 1].k === "L") legs.push((piv[j].p - piv[j + 1].p) * sh - rtFee(piv[j].p, piv[j + 1].p, sh, c));
     legs.sort(function (a, z) { return z - a; });
     return +legs.slice(0, c.maxRounds).reduce(function (a, v) { return a + v; }, 0).toFixed(2);
   }
@@ -152,8 +161,8 @@
   /* 做T股数: 自己设的优先; 没设=持仓25%取整到手(不足一手但有一手以上=一手); 用户10-30口述兆易持有100股 → 默认100 */
   function qtyCfg() { try { return JSON.parse(localStorage.getItem(QK) || "null") || { "603986": 100 }; } catch (e) { return {}; } }
   function shOf(code, qty) {
-    var q = qtyCfg()[code];
-    if (q != null && q !== "") return Math.max(0, Math.floor(Number(q) / DEF.lot) * DEF.lot);
+    var q = qtyCfg()[code], cap = Math.floor(qty / DEF.lot) * DEF.lot; /* 10-30: 自设股数也不超过现有持仓 */
+    if (q != null && q !== "") return Math.max(0, Math.min(cap, Math.floor(Number(q) / DEF.lot) * DEF.lot));
     var sh = Math.floor(qty * DEF.frac / DEF.lot) * DEF.lot;
     return sh || (qty >= DEF.lot ? DEF.lot : 0);
   }
@@ -168,7 +177,7 @@
     var sh = shOf(code, qty), atr = atr5(daily);
     var r = { code: code, name: name, tradeDate: td, sh: sh, qty: qty, atr: +atr.toFixed(4), bars: b.length, lastT: b.length ? hm(b[b.length - 1].t) : "", final: 0 };
     r.cur = inp && Number(inp.prev) > 0 && Number(inp.cur) > 0 ? Number(inp.cur) : 0; /* 实时报价(只认今天的报价), 只用来提示到价, 不进成交 */
-    if (!sh) { r.none = "没设做T股数"; return r; }
+    if (!sh) { r.none = qty < DEF.lot ? "持仓不足一手" : "没设做T股数"; return r; }
     if (!(atr > 0)) { r.none = "日K不够算ATR5"; return r; }
     if (b.length < 10) { r.none = b.length ? "分时才走了" + b.length + "分钟" : "等今天的分时数据"; return r; }
     var gaps = gapsOf(code, td), full = closed && r.lastT >= "15:00";
@@ -179,7 +188,7 @@
     var nm0 = +now.slice(0, 2) * 60 + +now.slice(3), lm0 = +r.lastT.slice(0, 2) * 60 + +r.lastT.slice(3);
     if (!closed && nm0 - lm0 > 3 && !(lm0 >= 690 && nm0 < 781)) r.cur = 0; /* 1分K落后现在3分钟以上(午休除外) → 报价和K线对不上, 不拿报价判到价 */
     r.ctrl = control(b, r.rounds, td + code + "m");
-    r.net = net(r.rounds, sh, c.cost); r.cnet = net(r.ctrl, sh, c.cost); r.ideal = idealNet(b, sh, c);
+    r.net = net(r.rounds, sh, c); r.cnet = net(r.ctrl, sh, c); r.ideal = idealNet(b, sh, c);
     var k = b.length - 1, ivs = openIV(b, k, r.px), lg = liveGaps(gaps, daily, b, k, td);
     r.zones = ivs.map(function (g) { return { tag: "IV" + g.t, lo: g.lo, hi: g.hi }; }).concat(lg.map(function (g) { return { tag: g.lv + "缺口" + g.ct.slice(5), lo: g.lo, hi: g.hi }; }));
     r.final = full ? 1 : 0;
@@ -194,6 +203,10 @@
       try { if (window.jlEnsureM1JL && !(window.jlM1RowsJL(x.code) || []).length) window.jlEnsureM1JL(x.code); } catch (e) { }
       var r = calc(x.code, x.name, td);
       if (r.none && L[k] && !L[k].none) return; /* 数据一时拿不到, 保留上次算出的 */
+      /* 10-30: 浮球到价那一刻的实时价记下来(每轮卖/接各记第一次), 和按分钟收盘价记的账并排显示 */
+      r.hits = (L[k] && L[k].hits) || {};
+      var a = nextAct(r);
+      if (a.hit && !r.final) { var hk = (a.k === "sell" ? "s" : "b") + r.rounds.length; if (!r.hits[hk]) r.hits[hk] = { t: nowHM(), px: a.cur, line: +a.price.toFixed(3) }; }
       L[k] = r;
     });
     save(L);
@@ -224,7 +237,7 @@
       why: (n ? "上次接回后" : "开盘后") + "最低 " + f2(e.lowSince) + " 反弹 0.4×ATR5(" + f2(c.up * r.atr) + ") → " + f2(n1),
       why2: "且站上当日区间上30% → " + f2(n2) };
   }
-  function pnl(r, x) { return (x.sp - x.bp) * r.sh - DEF.cost * (x.sp + x.bp) * r.sh; }
+  function pnl(r, x) { return (x.sp - x.bp) * r.sh - rtFee(x.sp, x.bp, r.sh, DEF); }
   function pct(a, b) { var v = (a / b - 1) * 100; return (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; }
   /* 分时高低点: 和"事后最好"同一把 1.5% 尺子, 反向走够1.5%才确认(不偷看) */
   function swings(b) {
@@ -311,11 +324,16 @@
     }
     if (r && r.rounds && r.rounds.length) {
       h += '<div class="tiSecJL">今天做了 ' + r.rounds.length + " 轮 · 每轮 " + r.sh + "股</div>";
+      var H = r.hits || {}, anyHit = 0, hitNet = 0;
       r.rounds.forEach(function (q, i) {
-        var p = pnl(r, q), iv = (q.sellNear && q.sellNear.length) || (q.buyNear && q.buyNear.length);
-        h += '<div class="tiRdJL"><i>' + (i + 1) + "</i><span>" + f2(q.sp) + "<small>" + q.sellT + "</small> → " + f2(q.bp) + "<small>" + q.buyT + " " + q.why + "</small>" + (iv ? "<u>贴IV</u>" : "") + '</span><span class="' + (p >= 0 ? "up" : "dn") + '">' + money(p) + "</span></div>";
+        var p = pnl(r, q), iv = (q.sellNear && q.sellNear.length) || (q.buyNear && q.buyNear.length), hs = H["s" + i], hb = H["b" + i];
+        var al = hs || hb ? '<br><small style="margin-left:0">提醒价 ' + (hs ? f2(hs.px) + " " + hs.t : "—") + " → " + (hb ? f2(hb.px) + " " + hb.t : "—") + "</small>" : "";
+        if (hs || hb) anyHit = 1;
+        hitNet += pnl(r, { sp: hs ? hs.px : q.sp, bp: hb ? hb.px : q.bp });
+        h += '<div class="tiRdJL"><i>' + (i + 1) + "</i><span>" + f2(q.sp) + "<small>" + q.sellT + "</small> → " + f2(q.bp) + "<small>" + q.buyT + " " + q.why + "</small>" + (iv ? "<u>贴IV</u>" : "") + al + '</span><span class="' + (p >= 0 ? "up" : "dn") + '">' + money(p) + "</span></div>";
       });
-      h += '<div class="tiSumJL"><span>今天差价（已扣费）</span><b class="' + (r.net >= 0 ? "up" : "dn") + '">' + money(r.net) + "</b></div>";
+      h += '<div class="tiSumJL"><span>今天差价（已扣费·按分钟收盘价记）</span><b class="' + (r.net >= 0 ? "up" : "dn") + '">' + money(r.net) + "</b></div>";
+      if (anyHit) h += '<div class="tiSumJL" style="border-top:0;padding-top:2px"><span>按浮球提醒那一刻的价算</span><b class="' + (hitNet >= 0 ? "up" : "dn") + '">' + money(hitNet) + "</b></div>";
     }
     return h;
   }
@@ -392,5 +410,5 @@
   try { var st0 = document.createElement("style"); st0.id = "tintraCssJL"; st0.textContent = CSS; (document.head || document.documentElement).appendChild(st0); } catch (e) { }
   setTimeout(render, 4000); setTimeout(render, 9000); setInterval(render, 10000); /* 10秒看一次报价提示到价; 1分K由原 ensureM1JL 每60秒更新 */
   document.addEventListener("click", function (ev) { try { if (ev.target.closest && ev.target.closest("#deck .rail, #htabsDeckJL button, #htabs5dJL button")) setTimeout(render, 300); } catch (e) { } }, true);
-  window.JLTIntra = { render: render, updateAll: updateAll, calc: calc, _t: { simulate: simulate, openIV: openIV, liveGaps: liveGaps, nearTag: nearTag, control: control, net: net, idealNet: idealNet, atr5: atr5, DEF: DEF } };
+  window.JLTIntra = { render: render, updateAll: updateAll, calc: calc, _t: { simulate: simulate, openIV: openIV, liveGaps: liveGaps, nearTag: nearTag, control: control, net: net, idealNet: idealNet, atr5: atr5, rtFee: rtFee, shOf: shOf, DEF: DEF } };
 })();
