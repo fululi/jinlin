@@ -26,6 +26,7 @@
     return 'M' + x0.toFixed(2) + ' ' + y0.toFixed(2) + 'A' + r + ' ' + r + ' 0 ' + (Math.abs(a1 - a0) > Math.PI ? 1 : 0) + ' ' + (a1 > a0 ? 1 : 0) + ' ' + x1.toFixed(2) + ' ' + y1.toFixed(2);
   }
   function tempLv(t) { return t >= 80 ? ['过热', '#ff5459'] : t >= 65 ? ['微热', '#ff8f6b'] : t >= 35 ? ['平', '#c9d2de'] : t >= 20 ? ['微冷', '#6fc6ff'] : t >= 10 ? ['过冷', '#4f8dff'] : ['冰点', '#3b6bff']; }
+  var GLV = { green: ['可以买', '#ff5459'], yellow: ['只低吸不追高', '#e0a800'], red: ['今天不宜买入', '#16b47a'], nodata: ['数据不足', '#5b6a82'] }; /* jl-lk2: 面板闸灯与首页一眼卡同色同字 */
   var GATE = { green: ['可以买', DN], yellow: ['只低吸', '#ffd21f'], red: ['不宜买', UP], nodata: ['数据不足', '#5b6a82'] };
 
   /* ---------- 提醒 ---------- */
@@ -112,6 +113,12 @@
     '#jlLkSheet .hr{cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:1px 8px;padding:5px 2px;border-bottom:1px dashed #1e2a3d}#jlLkSheet .hr:last-child{border-bottom:0}' +
     '#jlLkSheet .hr .n{font-weight:600}#jlLkSheet .hr .s{font-size:10.5px;color:#aab6c8}#jlLkSheet .hr .tg{grid-column:1/3;font-size:10.5px}' +
     '#jlLkSheet .al{display:flex;gap:6px;font-size:11px;padding:2px 0}#jlLkSheet .al span{color:#9fb0c6;font-variant-numeric:tabular-nums}' +
+    '#jlLkSheet .th{display:flex;align-items:center;gap:12px}#jlLkSheet .tv{display:flex;flex-direction:column;align-items:center;min-width:54px}#jlLkSheet .tv b{font:900 30px/1 ui-monospace,Menlo,monospace}#jlLkSheet .tv span{font-size:11px;color:#cfd8e6;margin-top:2px}' +
+    '#jlLkSheet .tt{flex:1}#jlLkSheet .tk{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,#3b6bff,#4f8dff 15%,#6fc6ff 27%,#c9d2de 50%,#ff8f6b 72%,#ff5459)}#jlLkSheet .tk i{position:absolute;top:0;bottom:0;width:1px;background:rgba(10,17,30,.55)}' +
+    '#jlLkSheet .tk em{position:absolute;top:-4px;width:20px;height:20px;margin-left:-10px;border-radius:50%;border:3px solid #0a111e}#jlLkSheet .tl{display:flex;justify-content:space-between;font-size:9.5px;color:#7f93ab;margin-top:4px}' +
+    '#jlLkSheet .tg2{display:flex;gap:6px;align-items:center;margin-top:8px}#jlLkSheet .lp{font-size:12px;font-weight:900;color:#fff;border-radius:8px;padding:3px 10px}#jlLkSheet .kv{font-size:10px;color:#8fa6bf;background:rgba(255,255,255,.05);border-radius:7px;padding:2px 7px}#jlLkSheet .kv b{margin-left:4px;font:800 12px ui-monospace,Menlo,monospace}' +
+    '#jlLkSheet .tlz{border-left:2px solid #1e2a3d;margin-left:4px;padding-left:8px}#jlLkSheet .al{align-items:center}#jlLkSheet .al i{width:7px;height:7px;border-radius:50%;margin-left:-12.5px;flex:none}' +
+    '#jlLkSheet .wch{display:flex;flex-wrap:wrap;gap:5px}#jlLkSheet .wch span{font-size:10.5px;color:#8fa6bf;border:1px dashed #2a3a55;border-radius:8px;padding:2px 8px}#jlLkSheet .wch span:before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#2a3a55;margin-right:5px;vertical-align:1px}' +
     '#jlLkSheet .ft{margin-top:8px;font-size:10px;color:#7d8aa0}#jlLkSheet .warn{color:#ffb35c;font-size:11px}';
 
   /* ---------- 浮球 ---------- */
@@ -203,22 +210,61 @@
       '<span class="tg"><b style="color:' + (h.vc === 'r' ? '#ff6b70' : h.vc === 'g' ? '#2ee6a0' : '#ffd21f') + '">' + esc(h.short && h.short.indexOf('暂缺') < 0 ? h.short : '') + '</b> <span style="color:' + tagCol(h.tag) + '">' + esc(h.tag && h.tag !== '板块数据未到' ? h.tag : '') + '</span></span></div>';
   }
 
+  /* jl-lk2: 面板改版——①温度计+闸+大盘主力 ②大盘位置条(与首页一眼卡同一件 JLGlance.barHTML) ③持仓按题材(与首页明细同一件 jlHoldThemeHTMLJL, 行下挂大中小单/共振位, 点行跳卡) ④今日提醒; 原有内容全保留(联动链/板块占成交/连进出/提示标签/大中小单/共振位/距预判高低) */
+  function thermoHTML(D) {
+    var T = D.temp, t = T && ok(T.t) ? Math.max(0, Math.min(100, T.t)) : NaN, lv = ok(t) ? tempLv(t) : ['—', MID], gl = GLV[D.gate && D.gate.lvl] || GLV.nodata, M = D.mf;
+    var h = '<div class="th"><div class="tv"><b style="color:' + lv[1] + '">' + (ok(t) ? Math.round(t) : '—') + '</b><span>' + esc(T && T.state ? T.state : lv[0]) + '</span></div><div class="tt"><div class="tk">' +
+      [10, 20, 35, 65, 80].map(function (x) { return '<i style="left:' + x + '%"></i>'; }).join('') + (ok(t) ? '<em style="left:' + t + '%;background:' + lv[1] + ';box-shadow:0 0 10px ' + lv[1] + '"></em>' : '') + '</div><div class="tl"><span>冰点</span><span>平</span><span>过热</span></div></div></div>';
+    h += '<div class="tg2"><span class="lp" style="background:' + gl[1] + '">' + gl[0] + '</span>' +
+      '<span class="kv">上证<b style="color:' + col(D.sh && D.sh.pct) + '">' + pc(D.sh && D.sh.pct) + '</b></span>' +
+      '<span class="kv">两市主力<b style="color:' + col(M && M.ratio) + '">' + (M && ok(M.ratio) ? pc(M.ratio) : '—') + '</b></span></div>';
+    return h;
+  }
+  function extraOf(h) {
+    var o = '', b = h.bkt;
+    if (ok(h.ratio)) o += '<span>板块占成交<b style="color:' + col(h.ratio) + '"> ' + pc(h.ratio) + '</b></span>';
+    else if (ok(h.secV)) o += '<span>板块主力<b style="color:' + col(h.secV) + '"> ' + yi(h.secV) + '</b>' + (h.secVStale ? '旧' : '') + '</span>';
+    if (h.streak) o += '<span>板块连' + (h.streak > 0 ? '进' : '出') + '<b style="color:' + (h.streak > 0 ? UP : DN) + '"> ' + Math.abs(h.streak) + '天</b></span>';
+    if (h.tag && h.tag !== '板块数据未到' && h.tag !== '中性') o += '<span style="color:' + tagCol(h.tag) + '">' + esc(String(h.tag).split('→ ').pop()) + '</span>';
+    if (h.short && h.short.indexOf('暂缺') < 0) o += '<span style="color:' + (h.vc === 'r' ? '#ff6b70' : h.vc === 'g' ? '#2ee6a0' : '#ffd21f') + '">' + esc(h.short) + '</span>';
+    if (b && (ok(b.big) || ok(b.small))) {
+      o += '<span>大<b style="color:' + col(b.big) + '"> ' + yi(b.big) + '</b></span><span>中<b style="color:' + col(b.mid) + '"> ' + yi(b.mid) + '</b></span><span>小<b style="color:' + col(b.small) + '"> ' + yi(b.small) + '</b></span>';
+      if (b.big < 0 && b.small > 0) o += '<span style="background:rgba(224,138,0,.25);color:#ffc46b">大单出·小单接</span>';
+      else if (b.big > 0 && b.small < 0) o += '<span style="background:rgba(90,123,255,.25);color:#b8c8ff">大单进·小单出</span>';
+    }
+    var lv = resoOf(h.code);
+    if (lv.length) {
+      var q = null; try { q = window.jlResoInputJL && window.jlResoInputJL(h.code); } catch (e) { }
+      var px = q && Number(q.cur);
+      if (px > 0) {
+        var up = lv.filter(function (x) { return x.p > px; })[0], dn = lv.filter(function (x) { return x.p <= px; }).pop();
+        if (dn) o += '<span>共振↓<b style="color:#9fd0ff"> ' + f2(dn.p) + '</b></span>';
+        if (up) o += '<span>共振↑<b style="color:#ffb0a8"> ' + f2(up.p) + '</b></span>';
+      }
+    }
+    return o;
+  }
   function sheetHTML(D) {
     if (!D) return '<div class="sh"><b>持仓联动</b><span class="x" data-x>×</span></div><div class="warn">页面数据还没到，稍后自动刷新</div>';
-    var T = D.temp, gl = GATE[D.gate && D.gate.lvl] || GATE.nodata, H = D.holds || [], sh = D.sh;
+    var H = D.holds || [], sh = D.sh;
+    var head = '<div class="sh"><b>持仓联动</b><span class="x" data-x>×</span></div>';
+    var s1 = '<div class="sec" style="border-top:0;margin-top:0;padding-top:2px">' + thermoHTML(D) + '</div>';
+    try { window.JLGlance && window.JLGlance.css && window.JLGlance.css(); } catch (e) { }
+    var bar = window.JLGlance && window.JLGlance.barHTML ? window.JLGlance.barHTML(sh, D.pred) : predSVG(D);
+    var P = D.pred, dH = sh && P && ok(sh.base) && ok(P.hi) ? (P.hi / sh.base - 1) * 100 : NaN, dL = sh && P && ok(sh.base) && ok(P.lo) ? (sh.base / P.lo - 1) * 100 : NaN;
+    var s2 = '<div class="sec"><h4><span>上证在预判带哪里</span><span>' + (ok(dH) ? '距高 <b style="color:#ffb0a8">' + dH.toFixed(2) + '%</b> · 距低 <b style="color:#9fd0ff">' + dL.toFixed(2) + '%</b>' : '') + '</span></h4>' + bar + '</div>';
     if (st.pick >= H.length) st.pick = 0;
-    var head = '<div class="sh"><b>持仓联动</b><span style="font-size:11px">闸 <b style="color:' + gl[1] + '">' + gl[0] + '</b>' +
-      (T && ok(T.t) ? ' · 温度 <b style="color:' + tempLv(T.t)[1] + '">' + Math.round(T.t) + (T.state ? ' ' + esc(T.state) : '') + '</b>' : ' · 温度 —') + '</span><span class="x" data-x>×</span></div>';
-    var s1 = '<div class="sec"><h4><span>① 大盘 · 预判带（首页温度计高低点）</span><span>上证 <b style="color:' + col(sh && sh.pct) + '">' + f2(sh && sh.base) + ' ' + pc(sh && sh.pct) + '</b></span></h4>' + predSVG(D) + '</div>';
-    var s2 = '<div class="sec"><h4><span>② 联动链 · 大盘 → 板块 → 个股</span><span>点名字切换</span></h4>' +
+    var s2b = '<div class="sec"><h4><span>联动链 · 大盘 → 板块 → 个股</span><span>点名字切换</span></h4>' +
       (H.length ? '<div class="chips">' + H.map(function (h, i) { return '<span class="chip' + (i === st.pick ? ' on' : '') + '" data-pick="' + i + '">' + esc(h.name) + '</span>'; }).join('') + '</div>' + chainSVG(D, H[st.pick]) : '<div class="warn">没有持仓（数量&gt;0）</div>') + '</div>';
     var sum = 0, has = false; H.forEach(function (h) { if (ok(h.main)) { sum += h.main; has = true; } });
-    var s3 = '<div class="sec"><h4><span>③ 持仓一览 · 主力合计 <b style="color:' + col(has ? sum : NaN) + '">' + (has ? yi(sum) : '—') + '</b></span><span>' + (D.secStale ? '<span class="warn">板块数据过龄·待刷新</span>' : '点行跳持仓卡') + '</span></h4>' + H.map(holdRow).join('') + '</div>';
+    var th = ''; try { th = window.jlHoldThemeHTMLJL ? window.jlHoldThemeHTMLJL(H, { jump: true, extra: extraOf }) : ''; } catch (e) { th = ''; }
+    var s3 = '<div class="sec"><h4><span>持仓 · 主力合计 <b style="color:' + col(has ? sum : NaN) + '">' + (has ? yi(sum) : '—') + '</b></span><span>' + (D.secStale ? '<span class="warn">板块数据过龄</span>' : '点行跳持仓卡') + '</span></h4>' +
+      (H.length ? th || H.map(holdRow).join('') : '<div class="warn">没有持仓（数量&gt;0）</div>') + '</div>';
     var A = todayA().slice().reverse();
-    var s4 = '<div class="sec"><h4><span>④ 今日提醒</span><span>' + A.length + ' 条</span></h4>' +
-      (A.length ? A.slice(0, 12).map(function (x) { return '<div class="al"><span>' + x.at + '</span><b style="color:' + (x.kind === 'hi' ? '#ffb0a8' : x.kind === 'lo' ? '#9fd0ff' : '#ffd21f') + ';font-weight:500">' + esc(x.txt) + '</b></div>'; }).join('') :
-        '<div class="ft" style="margin:0">盘中触发：上证接近/冲出预判高低（0.3%内）、持仓板块10分钟内拉升或回落1个点、接近共振位、大盘快拉快跳水</div>') + '</div>';
-    return head + s1 + s2 + s3 + s4 + '<div class="ft">' + hm(D.at) + ' 刷新 · 只读页面已有数据，不另发请求 · 提醒阈值是初值，未回测</div>';
+    var s4 = '<div class="sec"><h4><span>今日提醒</span><span>' + A.length + ' 条</span></h4>' +
+      (A.length ? '<div class="tlz">' + A.slice(0, 12).map(function (x) { var c = x.kind === 'hi' ? '#ffb0a8' : x.kind === 'lo' ? '#9fd0ff' : '#ffd21f'; return '<div class="al"><span>' + x.at + '</span><i style="background:' + c + '"></i><b style="color:' + c + ';font-weight:600">' + esc(x.txt) + '</b></div>'; }).join('') + '</div>' :
+        '<div class="wch"><span>预判高低</span><span>板块急变</span><span>共振位</span><span>快拉跳水</span></div>') + '</div>';
+    return head + s1 + s2 + s2b + s3 + s4 + '<div class="ft">' + hm(D.at) + ' 刷新 · 不另发请求</div>';
   }
 
   /* ---------- 挂载 / 刷新 ---------- */

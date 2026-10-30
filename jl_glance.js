@@ -100,11 +100,22 @@
     '#jlGlance .lamp{font-size:20px;font-weight:800;color:#fff;border-radius:12px;padding:6px 14px;letter-spacing:1px;box-shadow:0 0 14px rgba(0,0,0,.35)}' +
     '#jlGlance .gs{font-size:11.5px;color:#dfe9f2;line-height:1.55}#jlGlance .gs b{color:#fff}' +
     '#jlGlance .sec{margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1)}#jlGlance h4{margin:0 0 6px;font-size:11.5px;color:#9fd8e6;font-weight:600;display:flex;justify-content:space-between}' +
-    '#jlGlance .bar{position:relative;height:30px;margin:4px 6px 18px}#jlGlance .bar .ln{position:absolute;left:0;right:0;top:14px;height:2px;background:#2a3850}' +
-    '#jlGlance .bar .bd{position:absolute;top:8px;height:14px;border-radius:5px;background:rgba(159,179,255,.15);border:1px solid rgba(159,179,255,.45)}' +
-    '#jlGlance .bar .dr{position:absolute;top:13px;height:4px;border-radius:2px;background:rgba(255,255,255,.35)}' +
-    '#jlGlance .bar .cur{position:absolute;top:9px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#fff;border:2px solid #0f1828}' +
-    '#jlGlance .bar .tg{position:absolute;top:30px;font-size:10px;white-space:nowrap;transform:translateX(-50%);background:rgba(7,13,24,.62);border-radius:4px;padding:0 4px}' +
+    '#jlGlance .vd{position:relative;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 14px;border-radius:14px;background:linear-gradient(100deg,color-mix(in srgb,var(--c) 26%,transparent),rgba(255,255,255,.02) 70%);overflow:hidden}' +
+    '#jlGlance .vd:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c);box-shadow:0 0 12px var(--c)}' +
+    '#jlGlance .vd .vt{flex:1;min-width:0}#jlGlance .vd .vk{font-size:10.5px;color:#9fb4cc;letter-spacing:1px}#jlGlance .vd .vv{display:block;font-size:24px;font-weight:900;color:#fff;letter-spacing:2px;line-height:1.2;text-shadow:0 0 18px color-mix(in srgb,var(--c) 70%,transparent)}' +
+    '#jlGlance .vd .vy{display:block;font-size:11.5px;color:#dfe9f2;margin-top:2px}#jlGlance .vd .vy b{color:#fff}' +
+    '#jlGlance .vd .vs{flex:none;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,rgba(7,13,24,.85) 58%,transparent 60%),conic-gradient(var(--c) var(--p),rgba(255,255,255,.1) 0);text-align:center}' +
+    '#jlGlance .vd .vs b{display:block;font:800 17px/1 ui-monospace,Menlo,monospace;color:#fff}#jlGlance .vd .vs small{display:block;font-size:9px;color:#9fb4cc;margin-top:2px}' +
+    '#jlGlance .cells{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}#jlGlance .cells span{font-size:10.5px;padding:2px 7px;border-radius:7px;background:rgba(255,255,255,.05);color:#8b98ad;white-space:nowrap}' +
+    '#jlGlance .cells span b{margin-left:3px;font-family:ui-monospace,Menlo,monospace}#jlGlance .cells .p{background:rgba(255,84,89,.16);color:#ffd0d0}#jlGlance .cells .p b{color:#ff7a7e}#jlGlance .cells .n{background:rgba(22,180,122,.16);color:#c9f3e2}#jlGlance .cells .n b{color:#2fe0a0}#jlGlance .cells .z{color:#cfd8e6}' +
+    ':is(#jlGlance,#jlLkSheet) .gz{position:relative;margin:2px 4px 6px;padding-top:30px}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .tk{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(22,180,122,.28),rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,rgba(255,84,89,.28))}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .bd{position:absolute;top:-3px;bottom:-3px;border-radius:7px;background:linear-gradient(90deg,rgba(80,170,255,.32),rgba(170,140,255,.32),rgba(255,120,140,.32));box-shadow:inset 0 0 0 1px rgba(200,210,255,.35)}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .dy{position:absolute;top:4px;height:2px;border-radius:1px;background:rgba(255,255,255,.75)}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .pn{position:absolute;top:-6px;width:2px;height:22px;margin-left:-1px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.8)}:is(#jlGlance,#jlLkSheet) .gz .pn:after{content:"";position:absolute;left:-4px;bottom:-4px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #0f1828}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .bb{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;font-size:11px;color:#fff;background:rgba(7,13,24,.62);border:1px solid rgba(255,255,255,.18);border-radius:7px;padding:1px 7px;line-height:18px}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .bb b{font:800 12px ui-monospace,Menlo,monospace;margin-right:5px}:is(#jlGlance,#jlLkSheet) .gz .bb i{font-style:normal;color:#ffd27a}' +
+    ':is(#jlGlance,#jlLkSheet) .gz .sc{position:relative;height:16px;margin-top:7px}:is(#jlGlance,#jlLkSheet) .gz .sc span{position:absolute;top:0;font-size:10px;white-space:nowrap;background:rgba(7,13,24,.55);border-radius:4px;padding:0 5px;color:#fff}:is(#jlGlance,#jlLkSheet) .gz .sc em{font-style:normal;margin-right:3px}' +
     '#jlGlance .dip{display:flex;align-items:center;gap:8px;font-size:12px}#jlGlance .dip .dl{font-weight:800;border-radius:9px;padding:3px 10px;color:#fff}' +
     '#jlGlance .dip.buy .dl{background:#d9a514;animation:jlGlBlink 1s ease-in-out infinite}#jlGlance .dip.avoid .dl{background:#e0383e}#jlGlance .dip.off .dl,#jlGlance .dip.na .dl{background:#3a4a64}' +
     '@keyframes jlGlBlink{50%{box-shadow:0 0 0 6px rgba(217,165,20,.35)}}' +
@@ -112,16 +123,23 @@
     '#jlGlance .pk .a{font-weight:800;border-radius:8px;padding:1px 8px;font-size:12px;white-space:nowrap}#jlGlance .pk .a.buy{background:#e0383e;color:#fff}#jlGlance .pk .a.wait{background:#e0a800;color:#10202a}#jlGlance .pk .a.skip{background:#16b47a;color:#fff}#jlGlance .pk .a.na{background:#3a4a64;color:#dfe9f2}' +
     '#jlGlance .pk small{grid-column:2/4;color:#aab6c8;font-size:10.5px}#jlGlance .ft{margin-top:8px;font-size:10px;color:#8b98ad;display:flex;justify-content:space-between;gap:8px}#jlGlance .ft a{color:#9fd8e6}';
 
-  function barHTML(sh, pred) {
+  function barHTML(sh, pred) { /* jl-glance2: 仪表式——上方气泡=现价+相对预判带的位置, 轨道=预判带渐变+今日振幅细线+指针, 下方=带两端价位(两排分开, 字不重叠) */
     if (!pred || !ok(pred.lo) || !ok(pred.hi)) return '<div style="font-size:11px;color:#ffb35c">大盘预判带还没算出（首页「大盘预判」加载后出现）</div>';
     var live = sh && sh.qd === today().replace(/-/g, ''), cur = sh && ok(sh.base) ? sh.base : NaN;
     var vals = [pred.lo, pred.hi].concat(ok(cur) ? [cur] : []).concat(live && ok(sh.high) && ok(sh.low) ? [sh.high, sh.low] : []);
-    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
-    var X = function (p) { return ((p - lo) / (hi - lo) * 100).toFixed(2) + '%'; };
-    var h = '<div class="bar"><div class="ln"></div><div class="bd" style="left:' + X(pred.lo) + ';width:calc(' + X(pred.hi) + ' - ' + X(pred.lo) + ')"></div>';
-    if (live && ok(sh.high) && ok(sh.low) && sh.high > sh.low) h += '<div class="dr" style="left:' + X(sh.low) + ';width:calc(' + X(sh.high) + ' - ' + X(sh.low) + ')"></div>';
-    if (ok(cur)) h += '<div class="cur" style="left:' + X(cur) + '"></div>';
-    h += '<span class="tg" style="left:' + X(pred.lo) + ';color:#9fd0ff">低 ' + f2(pred.lo) + '</span><span class="tg" style="left:' + X(pred.hi) + ';color:#ffb0a8">高 ' + f2(pred.hi) + '</span></div>';
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = (hi - lo) * 0.1 || 1; lo -= pad; hi += pad;
+    var P = function (p) { return (p - lo) / (hi - lo) * 100; }, X = function (v) { return v.toFixed(2) + '%'; };
+    var pl = P(pred.lo), ph = P(pred.hi), h = '<div class="gz">';
+    if (ok(cur)) {
+      var rel = cur < pred.lo ? '低于预判低 <i>' + ((cur / pred.lo - 1) * 100).toFixed(2) + '%</i>' : cur > pred.hi ? '高于预判高 <i>+' + ((cur / pred.hi - 1) * 100).toFixed(2) + '%</i>' : '带内 <i>' + Math.round((cur - pred.lo) / (pred.hi - pred.lo) * 100) + '%</i> 处';
+      h += '<span class="bb" style="left:' + X(Math.max(22, Math.min(78, P(cur)))) + '"><b>' + f2(cur) + '</b>' + (live ? '' : '昨收 · ') + rel + '</span>';
+    }
+    h += '<div class="tk"><div class="bd" style="left:' + X(pl) + ';width:' + X(ph - pl) + '"></div>';
+    if (live && ok(sh.high) && ok(sh.low) && sh.high > sh.low) h += '<div class="dy" style="left:' + X(P(sh.low)) + ';width:' + X(P(sh.high) - P(sh.low)) + '" title="今日振幅"></div>';
+    if (ok(cur)) h += '<div class="pn" style="left:' + X(P(cur)) + '"></div>';
+    var wide = ph - pl >= 52; /* 带够宽: 两个价位贴带内两端; 带窄: 贴带外两侧 */
+    h += '</div><div class="sc"><span style="' + (wide ? 'left:' + X(pl) : 'right:' + X(100 - pl)) + '"><em style="color:#9fd0ff">预判低</em>' + f2(pred.lo) + '</span>' +
+      '<span style="' + (wide ? 'right:' + X(100 - ph) : 'left:' + X(ph)) + '"><em style="color:#ffb0a8">预判高</em>' + f2(pred.hi) + '</span></div></div>';
     return h;
   }
 
@@ -140,14 +158,15 @@
     var dg = d.gate && d.gate.lvl ? d.gate : null;
     /* ① 大字灯 */
     var why = (G.gate.why || []).join(' · ');
-    var h = '<div class="gh"><span class="lamp" style="background:' + gl[1] + '">' + gl[0] + '</span><div class="gs">' +
-      (pre ? '<b>开盘前 · 用昨收数据</b>，09:25 竞价后重判<br>' : '') +
-      (G.gate.veto ? '一票否决：<b>' + esc(G.gate.veto) + '</b>' : G.gate.soft ? '降档：<b>' + esc(G.gate.soft) + '</b>' : why ? '主因：<b>' + esc(why) + '</b>' : '多空都不强') +
-      '<br>总分 ' + (G.gate.sum > 0 ? '+' : '') + G.gate.sum + ' · ' + G.gate.okN + '/7 项有数' + (dg ? ' · 09:25 锁定为「' + (LV[dg.lvl] || LV.nodata)[0] + '」' : '') + '</div></div>';
+    var its = G.gate.items || [], pr = Math.max(0, Math.min(100, Math.abs(G.gate.sum) / 7 * 100));
+    var sub = G.gate.veto ? '一票否决：<b>' + esc(G.gate.veto) + '</b>' : G.gate.soft ? '降档：<b>' + esc(G.gate.soft) + '</b>' : its.length ? '' : why ? '主因：<b>' + esc(why) + '</b>' : '多空都不强';
+    if (dg) sub += (sub ? ' · ' : '') + '09:25 锁定「' + (LV[dg.lvl] || LV.nodata)[0] + '」';
+    var h = '<div class="vd" style="--c:' + gl[1] + ';--p:' + pr.toFixed(0) + '%"><div class="vs"><div><b>' + (G.gate.sum > 0 ? '+' : '') + G.gate.sum + '</b><small>' + G.gate.okN + '/7 有数</small></div></div><div class="vt"><span class="vk">今日买入闸' + (pre ? ' · 开盘前用昨收数据，09:25 重判' : '') + '</span><span class="vv">' + gl[0] + '</span>' + (sub ? '<span class="vy">' + sub + '</span>' : '') + '</div></div>';
+    if (its.length) h += '<div class="cells">' + its.map(function (x) { return '<span class="' + (!x.ok ? '' : x.sc > 0 ? 'p' : x.sc < 0 ? 'n' : 'z') + '">' + esc(x.k) + '<b>' + (!x.ok ? '—' : (x.sc > 0 ? '+' : '') + x.sc) + '</b></span>'; }).join('') + '</div>';
     /* ② 大盘位置 + 抄底灯 */
     var sh = K && K.sh, pred = K && K.pred, ds = dipState(sh, pred, K && K.ev, K && K.temp);
     var live = sh && sh.qd === today().replace(/-/g, '');
-    h += '<div class="sec"><h4><span>大盘位置 · 预判低 → 预判高</span><span>上证 ' + f2(sh && sh.base) + ' ' + pc(sh && sh.pct) + '</span></h4>' + barHTML(sh, pred) +
+    h += '<div class="sec"><h4><span>大盘位置 · 上证在预判带哪里</span><span>上证 ' + pc(sh && sh.pct) + '</span></h4>' + barHTML(sh, pred) +
       '<div class="dip ' + (live ? ds.k : 'na') + '"><span class="dl">' + (live ? ds.txt : '未开盘') + '</span><span>' + (live ? esc(ds.why || '盘中贴近预判低时提醒：金=可低吸 · 红=别接') + (ds.k === 'buy' && G.gate.lvl === 'red' ? ' · <b style="color:#ffb35c">闸红：只当观察信号</b>' : '') : '盘中贴近预判低时提醒') + '</span></div></div>';
     /* ③ 09:25 判断 */
     h += '<div class="sec"><h4><span>09:25 买入判断 · 持仓+自选</span><span>' + (d.picks ? d.gate.at + ' 锁定' : '') + '</span></h4>';
@@ -160,7 +179,7 @@
     g.innerHTML = h;
   }
 
-  window.JLGlance = { decide: decide, dipState: dipState, record: record, render: render, _key: KEY };
+  window.JLGlance = { barHTML: barHTML, css: function () { if (!document.getElementById('jlGlanceCss')) { var s = document.createElement('style'); s.id = 'jlGlanceCss'; s.textContent = CSS; document.head.appendChild(s); } }, decide: decide, dipState: dipState, record: record, render: render, _key: KEY };
   if (typeof document === 'undefined' || !document.getElementById) return;
   function boot() { render(); setInterval(function () { if (!document.hidden) render(); }, 20000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 1500); }); else setTimeout(boot, 1500);
