@@ -292,9 +292,9 @@
 <div class="popover glass-strong" id="popSpeed">
   <div class="pop-title">回放倍速</div>
   <div class="pop-row" data-speed="0.5">0.5×<span class="desc">2.8 秒/根</span></div>
-  <div class="pop-row on" data-speed="1">1×<span class="desc">1.4 秒/根</span></div>
+  <div class="pop-row" data-speed="1">1×<span class="desc">1.4 秒/根</span></div>
   <div class="pop-row" data-speed="2">2×<span class="desc">0.7 秒/根</span></div>
-  <div class="pop-row" data-speed="4">4×<span class="desc">0.35 秒/根</span></div>
+  <div class="pop-row on" data-speed="4">4×<span class="desc">0.35 秒/根</span></div>
 </div>
 
 <div class="popover glass-strong" id="popScene">
@@ -336,7 +336,7 @@
 
   var state = {
     scene: "SYNTH_NORMAL", view: "fs", sub: "mainnet",
-    playing: false, speed: 1, cursor: 0, timer: null,
+    playing: false, speed: 4, cursor: 0, timer: null, /* 默认4×: 打开数秒内即见积/突标记 */
     engine: null, done: false, nAcc: 0, nBrk: 0, openPrice: 0
   };
 
