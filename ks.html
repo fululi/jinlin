@@ -1,3 +1,4 @@
+<!-- jl-1227 (2026-10-31): 积突信号层——引擎=jitu_engine.py v0.1.0 的JS移植(与主站新模块 jl_jitu.js 同源, 三场景合成数据回归字段级一致); 仅1分周期出信号(积=低点下蓝点 突=高点上橙▲+突破位虚线, 失效灰✕不删), 其他周期顶行暗提示"切1分"; 数据纯只读零新增请求(S.kl的f57真额+S.rtflowK分钟累计净额微分, 不在时复用既有fetchFFlowMinK通道=与实时主力副图同一请求); 指标行[积突](S.ind.jitu默认关)+★收藏+老档兼容; 回滚=删本块+S.ind三处+INDS行+buildInds块+draw调用行; 验证=scripts/test_jitu_port.js(引擎三场景3/3)+本地server agent-browser点按路径(见验收包) -->
 <!-- ks-1151m (2026-10-24): 分时摆动标记挂历史分位——P1–P99完整表二分查表(与index jl-1160/1162同TB同口径, 首标记参照盘中反向极值不含隔夜缺口); 标签描边字'P97'式样(删'超'字, ≥95亮金#FFD94A其余白); 点按toast两行: 本段A→B ±x%（Pn）｜ 日高/日低 价(HH:MM)以来 ±x%（Pn）; 引擎增tipAt+cv点击桥; index iframe戳1151k→1151m -->
 <!-- ks-1151fix11n (2026-10-24): 日界跳空带两修——①分时屏蔽(S.ts守卫, 兆易实证: 昨收276.75隔夜缺口蓝带错挂分时图, 跳空带是K线日界语义不该进分时) ②回补方向分色与VI同色卡(上方涨回去补=黄/下方跌回来补=青蓝/已回补暗虚线), 原恒蓝77,159,255不分方向 -->
 <!-- ks-1151fix11m (2026-10-24): fib加1.13/3.618两档(1.13=亮青#7ff2e0, 3.618=粉珊瑚#ffb3c7, 默认开, 纯数字标签, 面板开关自动跟随; 老配置无此两键走默认开, 零感知) -->
@@ -853,7 +854,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
+  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false, jitu: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawColor: "#ffd21f", pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式; ks-1012: drawColor=抽屉色板当前色(新画线用)
   favs: ["ind:phvl"], favPick: false, favHide: false, /* ks-1022b: 高低区默认入收藏栏(常驻顶栏一步开关) */ // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
@@ -918,7 +919,7 @@ function restore() {
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = (o.klt === "TS") ? "TS" : normalizeKlt(o.klt); /* ks-1151 K2/D1: TS身份持久化, 刷新后仍停留分时 */
     S.ts.on = (S.klt === "TS");
-    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
+    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.jitu == null) S.ind.jitu = false; /* jl-1227: 积突默认关(研究型信号不强制亮), 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.lineColor) S.lineColor = o.lineColor; /* ks-1151fix10 */
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
@@ -935,7 +936,7 @@ function restore() {
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
     if (window.KS_T) { S.theme = "d"; applyTheme(); } /* jl-1061: 嵌入态强制深色主题——存档是浅色主题, 浅灰网格/价签/十字线压在玻璃上全看不清; 独立版主题不受影响 */
-    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false, phvl: true };
+    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false, jitu: false, phvl: true };
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
@@ -2740,6 +2741,7 @@ function drawReal() {
   renderPHVLMarksJL(ctx, v); /* ks-1022: PHVL高低点标记·顶层 */
   renderFundStamps(ctx, v); // ks-0906-27: 只留低位"吸"单字戳(回测唯一正超额)
   renderSixSigJL(ctx, v); // ks-0929-53: 六信号戳(买侧转/仓/加在K线下方, 卖侧顶/清/离在上方)
+  try { JITU_KS.render(ctx, v); } catch (eJT) { } /* jl-1227: 积突信号层(仅1分周期: 积=低点下蓝点 突=高点上橙▲+突破位虚线, 失效灰✕; 引擎与主站jl_jitu.js同源, 三场景回归PASS; 数据走既有分钟资金流通道零新增请求; 回滚=删本行) */
   renderMonitor(ctx, v);
   renderDrawings(ctx, v);
   renderBSMeasure(ctx, v); // ks-0906-8: B1→S1 测幅箭头(差几元/几点直接标图上)
@@ -8257,8 +8259,193 @@ function renderExtraPanes(ctx, v) {
   zLeg.push({ t: "东财口径·每日", c: "rgba(238,243,240,0.8)" });
   paneLegendJL(ctx, v, y2, "主力净额", zLeg);
 }
+/* ================= 积突信号层（jl-1227 · 金粼 v0.90.7 · 2026-10-31） =================
+   引擎 = jitu_engine.py v0.1.0 的 JS 移植（与主站模块 jl_jitu.js 同源, 三场景合成数据回归测试字段级一致: 类型/时间/价格/信号位/失效标记/失效时间; 配置键同源, 调参改 JITU_CFG）;
+   语义 = 积: 早盘资金持续流入(8根窗净流入占比≥0.60且/额≥0.02、累计净额斜率>0)+价格回撤0.2%~4%承接且未破VWAP容差; 突: 前12根窄区间(振幅≤1.8%)+前8根资金铺垫+当根量/主动买较各自前12根中位数放大(≥1.3/≥1.5)+净流入/额≥0.03+收盘真越上沿且VWAP上乖离≤5%; 触发后6根内跌回位/资金转流出→记失效(灰显✕), 不删原信号; 冷却积8根/突12根;
+   数据 = 纯只读零新增请求: S.kl 1分bar(含f57真成交额, 缺则量×100×价近似) + S.rtflowK 分钟主力净额(当日累计值相邻微分, 与分钟DDX同口径同缓存同触发——不在时复用既有 fetchFFlowMinK 通道加载, 该请求与[实时主力]副图完全同一个);
+   画法 = 仅1分周期出信号(积=低点下方蓝点, 突=高点上方橙▲+突破位短虚线); 周线/日线等周期只在主图顶行给一行暗提示"切1分查看"; TS分时层不出(分时积突由主站持仓卡/大图覆盖层负责);
+   开关 = 指标行[积突](S.ind.jitu, 默认关——研究型信号, 提醒非指令);
+   回滚 = 删本块 + S.ind三处 + INDS一行 + buildInds块 + draw调用行, 整批消失。 */
+var JITU_CFG = { volume_multiplier: 100, accumulation: { window: 8, min_history: 12, before: "10:30", pullback_lookback: 6, min_positive_ratio: 0.60, min_net_amount_ratio: 0.02, min_drawdown_pct: 0.002, max_drawdown_pct: 0.04, vwap_tolerance_pct: 0.015, cooldown_bars: 8 }, breakout: { range_window: 12, setup_window: 8, min_history: 20, max_prior_range_pct: 0.018, min_amount_ratio: 1.30, min_buy_ratio: 1.50, min_current_net_amount_ratio: 0.03, min_setup_positive_ratio: 0.50, min_setup_net_amount_ratio: 0.00, max_vwap_extension_pct: 0.05, cooldown_bars: 12 }, invalidation: { horizon_bars: 6, max_forward_net_amount_ratio: -0.02 } }; /* volume单位=手 → ×100=股(主站kl口径) */
+var JITU_KS = (function () {
+  function fin(v) { return typeof v === "number" && isFinite(v); }
+  function safeDiv(a, b) { return fin(b) && Math.abs(b) > 1e-12 ? a / b : NaN; }
+  function med(a) { if (!a || !a.length) return NaN; var s = a.slice().sort(function (x, y) { return x - y; }); var m = s.length >> 1; return (s.length % 2) ? s[m] : (s[m - 1] + s[m]) / 2; }
+  function hhmm(ts) { var s = String(ts || ""), cut = s.indexOf("T"), sp = s.indexOf(" "); if (cut < 0) cut = sp; if (cut >= 0) s = s.slice(cut + 1); return s.slice(0, 5); }
+  function mergeCfg(c) {
+    var out = { volume_multiplier: (c && fin(c.volume_multiplier)) ? c.volume_multiplier : JITU_CFG.volume_multiplier, accumulation: {}, breakout: {}, invalidation: {} }, k;
+    for (k in JITU_CFG.accumulation) out.accumulation[k] = (c && c.accumulation && c.accumulation[k] !== undefined) ? c.accumulation[k] : JITU_CFG.accumulation[k];
+    for (k in JITU_CFG.breakout) out.breakout[k] = (c && c.breakout && c.breakout[k] !== undefined) ? c.breakout[k] : JITU_CFG.breakout[k];
+    for (k in JITU_CFG.invalidation) out.invalidation[k] = (c && c.invalidation && c.invalidation[k] !== undefined) ? c.invalidation[k] : JITU_CFG.invalidation[k];
+    return out;
+  }
+  /* ---- 状态机(与 jl_jitu.js 引擎逐字同源, 回归 PASS) ---- */
+  function JtEng(cfg) {
+    this.cfg = mergeCfg(cfg); this.bars = []; this.f = []; this.signals = []; this.invalidations = [];
+    this._last = { "积": -9999, "突": -9999 };
+  }
+  JtEng.prototype._feat = function (i, bar) {
+    var f = { main_net: bar.main_buy - bar.main_sell };
+    f._cumA = (i > 0 && fin(this.f[i - 1]._cumA)) ? this.f[i - 1]._cumA : 0;
+    f._cumV = (i > 0 && fin(this.f[i - 1]._cumV)) ? this.f[i - 1]._cumV : 0;
+    f._cumN = (i > 0 && fin(this.f[i - 1]._cumN)) ? this.f[i - 1]._cumN : 0;
+    if (fin(bar.amount)) f._cumA += bar.amount;
+    if (fin(bar.volume)) f._cumV += bar.volume * this.cfg.volume_multiplier;
+    if (fin(f.main_net)) f._cumN += f.main_net;
+    f.vwap = safeDiv(f._cumA, f._cumV);
+    f.close_to_vwap = (fin(f.vwap) && f.vwap > 0 && fin(bar.close)) ? bar.close / f.vwap - 1 : NaN;
+    var w = this.cfg.accumulation.window, i0 = i - w + 1, netSum = 0, amtSum = 0, posN = 0, full = i0 >= 0;
+    if (full) { for (var k = i0; k <= i; k += 1) { var n = (k === i) ? f.main_net : (this.f[k] ? this.f[k].main_net : NaN), av = this.bars[k].amount; if (!fin(n) || !fin(av)) { full = false; break; } netSum += n; amtSum += av; if (n > 0) posN += 1; } }
+    f.positive_ratio = full ? posN / w : NaN;
+    f.net_amount_ratio = full ? safeDiv(netSum, amtSum) : NaN;
+    f.cum_net_slope = (i - w >= 0 && full) ? safeDiv(f._cumN - (this.f[i - w] ? this.f[i - w]._cumN : 0), amtSum) : NaN;
+    var s0 = i - this.cfg.breakout.setup_window, sPos = 0, sNet = 0, sAmt = 0, sFull = s0 >= 0;
+    if (sFull) { for (var k2 = s0; k2 < i; k2 += 1) { var n2 = this.f[k2] ? this.f[k2].main_net : NaN, a2 = this.bars[k2].amount; if (!fin(n2) || !fin(a2)) { sFull = false; break; } sNet += n2; sAmt += a2; if (n2 > 0) sPos += 1; } }
+    f.setup_positive_ratio = sFull ? sPos / this.cfg.breakout.setup_window : NaN;
+    f.setup_net_ratio = sFull ? safeDiv(sNet, sAmt) : NaN;
+    var lb = this.cfg.accumulation.pullback_lookback, hi6 = -Infinity, l0 = i - lb + 1;
+    for (var k3 = l0; k3 <= i; k3 += 1) { var hh = (k3 >= 0 && this.bars[k3]) ? this.bars[k3].high : NaN; if (fin(hh) && hh > hi6) hi6 = hh; }
+    f.drawdown = (fin(hi6) && hi6 > 0 && fin(bar.close)) ? 1 - bar.close / hi6 : NaN;
+    var bw = this.cfg.breakout.range_window, ph = -Infinity, pl = Infinity;
+    for (var k4 = i - bw; k4 < i; k4 += 1) { if (k4 < 0) continue; var bh = this.bars[k4].high, bl = this.bars[k4].low; if (fin(bh) && bh > ph) ph = bh; if (fin(bl) && bl < pl) pl = bl; }
+    f.prior_high = (ph > -Infinity) ? ph : NaN; f.prior_low = (pl < Infinity) ? pl : NaN;
+    var pc = i > 0 ? this.bars[i - 1].close : NaN;
+    f.prior_range_pct = (fin(ph) && fin(pl) && fin(pc)) ? (ph - pl) / pc : NaN;
+    var amts = [], buys = [];
+    for (var k5 = i - bw; k5 < i; k5 += 1) { if (k5 < 0) continue; if (fin(this.bars[k5].amount)) amts.push(this.bars[k5].amount); if (fin(this.bars[k5].main_buy)) buys.push(this.bars[k5].main_buy); }
+    f.amount_ratio = (amts.length >= bw && amts.length >= bw - 1) ? safeDiv(bar.amount, med(amts)) : NaN;
+    f.buy_ratio = (buys.length >= bw) ? safeDiv(bar.main_buy, med(buys)) : NaN;
+    f.current_net_amount_ratio = safeDiv(f.main_net, bar.amount);
+    return f;
+  };
+  JtEng.prototype._detect = function (i, f, bar) {
+    var ac = this.cfg.accumulation, bk = this.cfg.breakout;
+    if (fin(f.positive_ratio) && fin(f.net_amount_ratio) && fin(f.cum_net_slope) && fin(f.drawdown) && fin(f.close_to_vwap) && fin(f.main_net)) {
+      if (i >= ac.min_history && hhmm(bar.ts) <= ac.before && (i - this._last["积"]) >= ac.cooldown_bars &&
+          f.positive_ratio >= ac.min_positive_ratio && f.net_amount_ratio >= ac.min_net_amount_ratio && f.cum_net_slope > 0 && f.main_net > 0 &&
+          f.drawdown >= ac.min_drawdown_pct && f.drawdown <= ac.max_drawdown_pct && f.close_to_vwap >= -ac.vwap_tolerance_pct) {
+        this.signals.push({ type: "积", start: i, time: hhmm(bar.ts), price: bar.close, level: fin(f.prior_low) ? f.prior_low : bar.low, reason: "早盘资金持续流入×价格回撤承接" });
+        this._last["积"] = i;
+      }
+    }
+    var prev = i > 0 ? this.bars[i - 1] : null, prevF = i > 0 ? this.f[i - 1] : null;
+    var crossed = prev && prevF && fin(f.prior_high) && fin(prevF.prior_high) && fin(prev.close) && bar.close > f.prior_high && prev.close <= prevF.prior_high;
+    if (i >= bk.min_history && (i - this._last["突"]) >= bk.cooldown_bars && crossed && fin(f.prior_range_pct) && f.prior_range_pct <= bk.max_prior_range_pct &&
+        fin(f.amount_ratio) && fin(f.buy_ratio) && fin(f.current_net_amount_ratio) && fin(f.setup_positive_ratio) && fin(f.setup_net_ratio) && fin(f.close_to_vwap) &&
+        f.amount_ratio >= bk.min_amount_ratio && f.buy_ratio >= bk.min_buy_ratio && f.current_net_amount_ratio >= bk.min_current_net_amount_ratio &&
+        f.setup_positive_ratio >= bk.min_setup_positive_ratio && f.setup_net_ratio >= bk.min_setup_net_amount_ratio &&
+        f.close_to_vwap > 0 && f.close_to_vwap <= bk.max_vwap_extension_pct) {
+      this.signals.push({ type: "突", start: i, time: hhmm(bar.ts), price: bar.close, level: f.prior_high, reason: "窄区间+资金铺垫+量买同步放大+收盘越上沿" });
+      this._last["突"] = i;
+    }
+  };
+  JtEng.prototype._checkInvalidations = function (i) {
+    var iv = this.cfg.invalidation, out = [];
+    for (var s = 0; s < this.signals.length; s += 1) {
+      var sig = this.signals[s];
+      if (sig.invalidatedAt != null || i <= sig.start || i > sig.start + iv.horizon_bars) continue;
+      var bar = this.bars[i];
+      if (fin(bar.close) && fin(sig.level) && bar.close < sig.level) {
+        sig.invalidatedAt = i; sig.invalidatedWhy = sig.type === "突" ? "跌回突破区间" : "跌破承接区"; out.push(sig);
+      } else if (fin(bar.main_net) && fin(bar.amount)) {
+        var nSum = 0, aSum = 0, ok = true;
+        for (var k = sig.start + 1; k <= i; k += 1) { var bb = this.bars[k]; if (!fin(bb.main_net) || !fin(bb.amount)) { ok = false; break; } nSum += bb.main_net; aSum += bb.amount; }
+        if (ok && aSum > 0 && nSum / aSum <= iv.max_forward_net_amount_ratio) { sig.invalidatedAt = i; sig.invalidatedWhy = "信号后资金转为流出"; out.push(sig); }
+      }
+    }
+    return out;
+  };
+  JtEng.prototype.onBar = function (bar) {
+    var i = this.bars.length;
+    this.bars.push(bar);
+    var f = this._feat(i, bar);
+    this.f.push(f);
+    this._detect(i, f, bar);
+    this._checkInvalidations(i);
+    return f;
+  };
+  /* ---- ks 适配: S.kl(1分) + S.rtflowK(分钟累计净额→微分) → 引擎 → 标记 ---- */
+  function marksKS() {
+    if (!S.kl.length || S.klt !== "1") return null;
+    var key = S.active + "|" + S.kl.length + "|" + (S.rtflowK ? S.rtflowK.length : 0) + "|" + (S.rtflowKCode || "");
+    if (S._jtKey === key) return S._jtMarks;
+    S._jtKey = key; S._jtMarks = null;
+    if (!S.rtflowK || !S.rtflowK.length || S.rtflowKCode !== S.active) return null; /* fflow 未到位: 不出信号(净额缺→门控不过, 不出假信号), 已在 render 里触发既有通道加载 */
+    var bm = {}, rd = S.rtflowK, ri, day;
+    for (ri = 0; ri < rd.length; ri += 1) { day = rd[ri].t.slice(0, 10); bm[rd[ri].t.slice(0, 16)] = (ri > 0 && rd[ri - 1].t.slice(0, 10) === day) ? rd[ri].main - rd[ri - 1].main : rd[ri].main; }
+    var sess = {}, order = [], i, r, dt, d;
+    for (i = 0; i < S.kl.length; i += 1) {
+      r = S.kl[i]; dt = String(r[0]);
+      if (dt.length < 16) continue;
+      d = dt.slice(0, 10);
+      if (!sess[d]) { sess[d] = { start: i, bars: [] }; order.push(d); }
+      var amt = (r.length > 6 && r[6] != null && r[6] > 0) ? r[6] : (fin(r[5]) && fin(r[4]) ? r[5] * 100 * r[4] : NaN); /* f57真额优先, 缺则量×价近似 */
+      var net = bm[dt.slice(0, 16)]; if (!fin(net)) net = 0;
+      sess[d].bars.push({ ts: dt, open: r[1], high: r[2], low: r[3], close: r[4], volume: r[5], amount: amt, main_buy: (amt + net) / 2, main_sell: (amt - net) / 2 });
+    }
+    var marks = [];
+    order.forEach(function (dd) {
+      var eng = new JtEng(JITU_CFG), s0 = sess[dd].start;
+      sess[dd].bars.forEach(function (b) { eng.onBar(b); });
+      eng.signals.forEach(function (sig) { marks.push({ d: dd, i: s0 + sig.start, type: sig.type, price: sig.price, level: sig.level, time: sig.time, invalid: sig.invalidatedAt != null }); });
+    });
+    S._jtMarks = marks;
+    return marks;
+  }
+  function render(ctx, v) {
+    if (!S.ind.jitu) return;
+    if (S.klt !== "1") { /* 分钟级信号: 其他周期只给顶行暗提示, 不臆算 */
+      if (S.klt === "TS") return;
+      ctx.save();
+      ctx.font = "10px ui-monospace, Menlo, monospace";
+      ctx.fillStyle = "rgba(238,243,240,0.35)";
+      ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText("积突·分钟级 → 1分周期出信号", v.padL + 4, v.pTop + 4);
+      ctx.restore();
+      return;
+    }
+    if ((S.rtflowKCode !== S.active || S.rtflowKKlt !== S.klt) && !S.rtflowKErr && !S._rtflowKLoading && !noFund(S.active)) {
+      S._rtflowKLoading = true; fetchFFlowMinK(S.active, "1", function () { S._rtflowKLoading = false; draw(); }); /* 复用既有分钟资金流通道(与[实时主力]副图同一请求), 零新增请求 */
+    }
+    var marks = marksKS(); if (!marks || !marks.length) return;
+    var kl = S.kl, m, mk, x, y;
+    ctx.save();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (m = 0; m < marks.length; m += 1) {
+      mk = marks[m];
+      if (mk.i < v.i0 || mk.i >= v.i1 || !kl[mk.i]) continue;
+      x = v.X(mk.i);
+      if (mk.type === "积") {
+        y = Math.min(v.Y(kl[mk.i][3]) + 14, v.pTop + v.priceH - 6);
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, 6.2832);
+        ctx.fillStyle = mk.invalid ? "rgba(124,136,148,0.75)" : "#81e6d9";
+        ctx.fill();
+      } else {
+        y = Math.max(v.Y(kl[mk.i][2]) - 14, v.pTop + 6);
+        ctx.fillStyle = mk.invalid ? "rgba(124,136,148,0.75)" : "rgba(255,183,77,0.95)";
+        ctx.beginPath(); ctx.moveTo(x, y - 5); ctx.lineTo(x - 5, y + 3); ctx.lineTo(x + 5, y + 3); ctx.closePath(); ctx.fill();
+        if (fin(mk.level)) {
+          var yl = v.Y(mk.level);
+          if (yl > v.pTop && yl < v.pTop + v.priceH) {
+            ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+            ctx.strokeStyle = mk.invalid ? "rgba(124,136,148,0.5)" : "rgba(255,183,77,0.55)";
+            ctx.beginPath(); ctx.moveTo(x + 6, yl); ctx.lineTo(Math.min(x + 34, v.X(Math.min(mk.i + 4, v.i1 - 1)) + 8), yl); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+      }
+      if (mk.invalid) {
+        var yi = (mk.type === "积") ? Math.min(v.Y(kl[mk.i][3]) + 14, v.pTop + v.priceH - 6) : Math.max(v.Y(kl[mk.i][2]) - 14, v.pTop + 6);
+        ctx.strokeStyle = "rgba(229,72,77,0.9)"; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(x - 4, yi - 4); ctx.lineTo(x + 4, yi + 4); ctx.moveTo(x + 4, yi - 4); ctx.lineTo(x - 4, yi + 4); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+  return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
+})();
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
@@ -8343,6 +8530,18 @@ function buildInds() {
         S.ind.sixsig = !S.ind.sixsig;
         store(); buildInds(); draw();
         hint("六信号: 转/仓/加=买侧 顶/清/离=卖侧 · 日线本地算 · 提醒非指令");
+      });
+      el.appendChild(b);
+      return;
+    }
+    if (t[0] === "jitu") { /* jl-1227: 积突信号(分钟级) */
+      b.addEventListener("click", function () {
+        if (S.favPick) { toggleFav("ind:jitu"); return; }
+        S.ind.jitu = !S.ind.jitu;
+        S._jtKey = null; /* 开关切换即重算 */
+        store(); buildInds(); draw();
+        if (S.ind.jitu && S.klt !== "1") hint("积突·分钟级: 切1分周期出信号(数据走既有分钟资金流通道, 零新增请求)");
+        else hint("积突: 积=资金承接(蓝点) 突=区间突破(橙▲+虚线位) 失效灰✕ · 分钟本地算 · 提醒非指令");
       });
       el.appendChild(b);
       return;

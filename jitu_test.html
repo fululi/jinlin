@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>jl-1227 积/突覆盖层 · 验收页</title>
+<style>
+  body { background: #0a0e15; color: #eef6f9; font: 13px/1.6 ui-monospace, Menlo, monospace; margin: 0; padding: 14px; }
+  h1 { font: 600 15px/1.4 inherit; margin: 0 0 4px; }
+  .sub { color: #7c8894; font-size: 11px; margin-bottom: 12px; }
+  nav { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  nav button { background: #141b26; color: #eef6f9; border: 1px solid #263241; border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  nav button.on { background: #1d2a3a; border-color: #81e6d9; color: #81e6d9; }
+  nav button#jituMarkJL.on { background: #173034; border-color: #81e6d9; }
+  .card { position: relative; background: #0d1520; border: 1px solid #1b2735; border-radius: 12px; padding: 10px; max-width: 430px; }
+  .card canvas { display: block; width: 100%; height: 250px; }
+  table { border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+  td, th { border: 1px solid #1b2735; padding: 4px 8px; text-align: left; }
+  th { color: #7c8894; font-weight: 400; }
+  .ok { color: #81e6d9; } .bad { color: #ff8a8e; } .dead { color: #7c8894; }
+  pre { color: #7c8894; font-size: 11px; white-space: pre-wrap; }
+  .legend { display: flex; gap: 14px; margin: 8px 2px 0; font-size: 11px; color: #7c8894; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #81e6d9; margin-right: 4px; vertical-align: -1px; }
+  .tri { display: inline-block; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-bottom: 7px solid #ffc24d; margin-right: 4px; vertical-align: -1px; }
+  .x { color: #7c8894; }
+</style>
+</head>
+<body>
+<h1>jl-1227 积/突信号覆盖层 · 验收页</h1>
+<div class="sub">数据 = 三场景合成行情(与 Python 版逐字段校验同一份) · 路径 = 真实钩子 jlJituHookJL → 引擎重画后补绘 · 零网络请求</div>
+<nav>
+  <button id="sc0" class="on">正常场景(积+突)</button>
+  <button id="sc1">失败场景(突→跌回失效)</button>
+  <button id="jituMarkJL" aria-pressed="true">积·标 开关</button>
+</nav>
+<div class="card" data-cardtrend="SYNTH001"><canvas id="cv"></canvas>
+  <div class="legend"><span><i class="dot"></i>积 = 资金承接(价格线下方)</span><span><i class="tri"></i>突 = 区间突破(线上方,虚线=突破位)</span><span class="x">灰✕ = 信号失效(跌回/资金流出)</span></div>
+</div>
+<table id="cmp"></table>
+<pre id="log"></pre>
+
+<script src="jitu/data.js"></script>
+<script src="jl_jitu.js?v=1"></script>
+<script>
+/* ============ 期望信号(Python 版逐字段生成, 硬编码对照) ============ */
+var EXPECTED = [
+  { sym: "SYNTH_FAILED", type: "突", t: "10:06", price: 10.1, level: 10.004, dead: true, deadAt: "10:07" },
+  { sym: "SYNTH_NORMAL", type: "积", t: "09:49", price: 10.066, level: 10.034, dead: false, deadAt: "" },
+  { sym: "SYNTH_NORMAL", type: "突", t: "10:06", price: 10.12, level: 10.054, dead: false, deadAt: "" }
+];
+
+/* ============ 桩分时引擎(仅验收页用): 模拟 createCardIntraday 的 api 面 = setSeries/geom/on/redraw ============ */
+var cv = document.getElementById("cv");
+var stub = (function () {
+  var P = [], A = [], T = [], subs = [], geo = null;
+  function notify() { for (var q = 0; q < subs.length; q += 1) { try { subs[q]("draw"); } catch (e) { } } }
+  function draw() {
+    var dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = w * dpr; cv.height = h * dpr;
+    var g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    var n = P.length;
+    if (n < 2) { geo = null; notify(); return; }
+    var padL = 6, padR = 46, padT = 8, padB = 18;
+    var lo = Infinity, hi = -Infinity, i;
+    for (i = 0; i < n; i += 1) { if (typeof P[i] === "number" && isFinite(P[i])) { if (P[i] < lo) lo = P[i]; if (P[i] > hi) hi = P[i]; } }
+    var pre = PREC; if (isFinite(pre)) { lo = Math.min(lo, pre); hi = Math.max(hi, pre); }
+    if (!(hi > lo)) { hi = lo + 1; }
+    var pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+    function xOf(i2) { return padL + (i2 / (n - 1)) * (w - padL - padR); }
+    function yOf(p) { return padT + (1 - (p - lo) / (hi - lo)) * (h - padT - padB); }
+    /* 网格+右轴价签 */
+    g.font = "10px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
+    for (i = 0; i <= 4; i += 1) {
+      var p = lo + (hi - lo) * i / 4, y = yOf(p);
+      g.strokeStyle = "rgba(38,50,65,0.55)"; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(padL, y); g.lineTo(w - padR, y); g.stroke();
+      g.fillStyle = "#7c8894"; g.textAlign = "left"; g.fillText(p.toFixed(2), w - padR + 6, y);
+    }
+    /* 昨收虚线 */
+    if (isFinite(PREC)) {
+      g.strokeStyle = "rgba(238,243,240,0.35)"; g.setLineDash([4, 4]); g.lineWidth = 1;
+      g.beginPath(); g.moveTo(padL, yOf(PREC)); g.lineTo(w - padR, yOf(PREC)); g.stroke(); g.setLineDash([]);
+      g.fillStyle = "rgba(238,243,240,0.5)"; g.textAlign = "left"; g.fillText("昨收", padL + 2, yOf(PREC) - 7);
+    }
+    /* 价格线 + 均价线 */
+    g.strokeStyle = "#eef6f9"; g.lineWidth = 1.4; g.beginPath();
+    var started = false;
+    for (i = 0; i < n; i += 1) { if (typeof P[i] === "number" && isFinite(P[i])) { var x = xOf(i), y = yOf(P[i]); if (!started) { g.moveTo(x, y); started = true; } else g.lineTo(x, y); } }
+    g.stroke();
+    g.strokeStyle = "rgba(255,210,31,0.85)"; g.lineWidth = 1; g.setLineDash([2, 3]); g.beginPath();
+    started = false;
+    for (i = 0; i < n; i += 1) { if (typeof A[i] === "number" && isFinite(A[i])) { var x2 = xOf(i), y2 = yOf(A[i]); if (!started) { g.moveTo(x2, y2); started = true; } else g.lineTo(x2, y2); } }
+    g.stroke(); g.setLineDash([]);
+    /* 底部时间刻度 */
+    g.fillStyle = "#7c8894"; g.textAlign = "center";
+    for (i = 0; i < n; i += Math.ceil(n / 5)) { g.fillText(T[i] || "", xOf(i), h - 8); }
+    geo = { n: n, prices: P, xOfIdx: xOf, yOfPrice: yOf, clockAt: function (i2) { return T[i2] == null ? null : String(T[i2]); } };
+    notify(); /* 引擎重画完成 → 通知覆盖层(积突标记在此之后补绘) */
+  }
+  return {
+    setSeries: function (p, a, t) { P = p || []; A = a || []; T = t || []; draw(); },
+    geom: function () { return geo; },
+    on: function (fn) { subs.push(fn); return function () { var i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); }; },
+    redraw: draw,
+    bars: function () { return BARS; }
+  };
+})();
+var PREC = NaN, BARS = [];
+
+/* ============ 场景装载: m1行 + jl_ff_v1 分钟累计净额(经真实取数口) + 桩序列 ============ */
+function loadScenario(sym) {
+  var sess = window.JITU_DATA.sessions[sym];
+  document.title = "jl-1227 验收 · " + sym;
+  var rows = sess.bars.map(function (b) { return { t: String(b[0]).replace("T", " "), o: b[1], h: b[2], l: b[3], c: b[4], v: b[5] / 100, a: b[6] }; }); /* v: 股→手(引擎×100还原) */
+  BARS = rows.map(function (r) { return { o: r.o, h: r.h, l: r.l, c: r.c }; });
+  window.jlM1RowsJL = function (code) { return code === "SYNTH001" ? rows.slice() : []; }; /* 验收注入: 冒充站点取数口(真实站点=东财1分通道缓存) */
+  var cum = 0, ffrows = sess.bars.map(function (b) { cum += (b[7] - b[8]); return { d: String(b[0]).replace("T", " "), main: Math.round(cum * 100) / 100 }; });
+  try { localStorage.setItem("jl_ff_v1", JSON.stringify({ SYNTH001: { rows: ffrows, t: Date.now(), src: "jitu_test" } })); } catch (e) { }
+  PREC = Math.round(rows[0].c * 0.994 * 1000) / 1000;
+  var P = rows.map(function (r) { return r.c; }), A = [], T = rows.map(function (r) { return String(r.t).slice(11, 16); });
+  var ca = 0, cvv = 0;
+  rows.forEach(function (r) { ca += r.a; cvv += r.v * 100; A.push(cvv > 0 ? Math.round(ca / cvv * 10000) / 10000 : null); });
+  stub.setSeries(P, A, T);
+  compare(sym);
+}
+
+/* ============ 在页对照: 模块真算 vs Python 期望 ============ */
+function compare(sym) {
+  var comp = window.jlJituJL.jituCardCompute("SYNTH001");
+  var got = comp ? comp.marks : [];
+  var exp = EXPECTED.filter(function (e) { return e.sym === sym; });
+  var html = "<tr><th>信号</th><th>时间</th><th>价格</th><th>信号位</th><th>失效</th><th>判定</th></tr>", okAll = true;
+  exp.forEach(function (e) {
+    var m = got.filter(function (x) { return x.type === e.type && x.time === e.t; })[0];
+    var ok = m && Math.abs(m.price - e.price) < 1e-6 && Math.abs(m.level - e.level) < 1e-6 && !!m.dead === !!e.dead;
+    if (!ok) okAll = false;
+    html += "<tr><td>" + e.type + "</td><td>" + e.t + "</td><td>" + e.price + "</td><td>" + e.level + "</td><td class='" + (e.dead ? "dead" : "") + "'>" + (e.dead ? "✕ " + e.deadAt : "—") + "</td><td class='" + (ok ? "ok" : "bad") + "'>" + (ok ? "✓ 一致" : "✗ 不一致") + "</td></tr>";
+  });
+  document.getElementById("cmp").innerHTML = html;
+  document.getElementById("log").textContent = "场景 " + sym + " · 引擎算得 " + got.length + " 个标记 / 期望 " + exp.length + " → " + (okAll ? "字段级一致 ✅ (类型/时间/价格/信号位/失效标记)" : "存在不一致 ❌") + "\n数据链: window.jlM1RowsJL(分钟行, v=手, a=元) + localStorage.jl_ff_v1(分钟累计净额→微分) → 引擎(积/突门控) → 钩子补绘";
+}
+
+/* ============ 接真实钩子(与站点 createCardIntraday 尾部钩子行同一函数) ============ */
+window.jlJituHookJL(cv, stub, { bars: function () { return BARS; } });
+window.__stubApi = stub; /* 验收采样用(只读 geom) */
+
+document.getElementById("sc0").addEventListener("click", function () { mark(this, "sc0"); loadScenario("SYNTH_NORMAL"); });
+document.getElementById("sc1").addEventListener("click", function () { mark(this, "sc1"); loadScenario("SYNTH_FAILED"); });
+function mark(btn, id) { ["sc0", "sc1"].forEach(function (x) { document.getElementById(x).classList.toggle("on", x === id); }); }
+
+loadScenario("SYNTH_NORMAL");
+window.addEventListener("resize", function () { stub.redraw(); });
+</script>
+</body>
+</html>
