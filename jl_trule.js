@@ -372,7 +372,7 @@ rec.plan = mkPlan(
       A += card(
         '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
         '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +
-        '<br>' + W + '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) + ' · 卖价=上方共振位(' + srcTxt(p.sellSrcs) + ') · 买回=下方共振位(' + srcTxt(p.buySrcs) + ') · 价差' + (p.expectedSpread * 100).toFixed(1) + '% · 卖出后涨到 ' + f2(p.stopPrice) + ' 就止损买回' + E +
+        '<br>' + W + '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) + ' · 卖价依据：' + (srcTxt(p.sellSrcs) || '结构候选位') + ' · 买回依据：' + (srcTxt(p.buySrcs) || '结构候选位') + ' · 价差 ' + (p.sellPrice - p.buyPrice).toFixed(2) + ' 元 (' + (p.expectedSpread * 100).toFixed(1) + '%)' + ' · 止损价 ' + f2(p.stopPrice) + E +
         (ex ? '<br>' + ex : ''), g.c);
     return A;
   }
