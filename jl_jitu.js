@@ -666,6 +666,7 @@
 
   /* ============ v3: 开关=卡头 16px 小图标(document 捕获委托; body.jituOffJL=关态, 卡组重建不丢态) ============ */
   function syncTogDom() {
+    try { if (!document.getElementById("jituTogCssJL")) { var sx = document.createElement("style"); sx.id = "jituTogCssJL"; sx.textContent = "[data-jitutog]{position:relative!important;z-index:6!important;transform:translateX(-40px)!important}"; document.head.appendChild(sx); } } catch (e) { }
     try {
       var b = document.body; if (!b) return;
       if (marksOn()) b.classList.remove("jituOffJL"); else b.classList.add("jituOffJL");
