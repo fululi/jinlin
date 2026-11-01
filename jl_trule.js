@@ -362,7 +362,7 @@ rec.plan = mkPlan(
       if (!p.sellPrice) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br>' + W + p.none + E, g.c); return A; }
       var q0 = 0; try { q0 = Number(window.jlHoldQtyJL(x.code)) || 0; } catch (e) { }
       var qn = q0 > 0 ? shOf(x.code, q0, cfg()) : 0, qty = qn > 0 ? qn : p.sellQty; /* 每轮股数跟你填的联动, 不用生成当天的旧数 */
-      var r = m.res, ex = '';
+      var r = m.res, ex = '';  /* 次日计划预计收益：使用当前页面实际显示的计划股数 */ var spreadYuan = p.sellPrice - p.buyPrice; var grossEstimate = spreadYuan * qty; var netEstimate = netOf(   { sellQty: qty, fee: p.fee },   p.sellPrice,   p.buyPrice );
       if (r) {
         if (r.st === 'sold') ex = '已卖 <b>' + f2(r.sp) + '</b> · 等回到 ' + f2(p.buyPrice) + ' 买回 · 止损 ' + f2(r.stop);
         if (r.st === 'done' || r.st === 'stop') ex = f2(r.sp) + ' 卖 → ' + f2(r.bp) + ' 买 · <b style="color:' + (r.net >= 0 ? RED : GRN) + '">' + money(r.net) + '</b>';
@@ -371,8 +371,18 @@ rec.plan = mkPlan(
       }
       A += card(
         '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
-        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +
-        '<br>' + W + '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) + ' · 卖价依据：' + (srcTxt(p.sellSrcs) || '结构候选位') + ' · 买回依据：' + (srcTxt(p.buySrcs) || '结构候选位') + ' · 价差 ' + (p.sellPrice - p.buyPrice).toFixed(2) + ' 元 (' + (p.expectedSpread * 100).toFixed(1) + '%)' + ' · 止损价 ' + f2(p.stopPrice) + E +
+        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +'<br>' + W +'每股价差 ' + spreadYuan.toFixed(2) + ' 元' +
+
+'         '<br>' + W +
+        '每轮价差 ' + spreadYuan.toFixed(2) + ' 元/股' +
+        ' · 毛收益 ' + money(grossEstimate) +
+        ' · 扣费后净收益 <b>' + money(netEstimate) + '</b>' + E +
+        '<br>' + W +
+        '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) +
+        ' · 卖价依据：' + (srcTxt(p.sellSrcs) || '结构候选位') +
+        ' · 买回依据：' + (srcTxt(p.buySrcs) || '结构候选位') +
+        ' · 价差 ' + (p.expectedSpread * 100).toFixed(1) + '%' +
+        ' · 止损价 ' + f2(p.stopPrice) + E +
         (ex ? '<br>' + ex : ''), g.c);
     return A;
   }
