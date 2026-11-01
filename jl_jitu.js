@@ -421,35 +421,118 @@
       if (!mks.length) return;
       /* time → 图上下标(容忍竞价前缀与缺行) */
       var tmap = {}, i2, tt;
-      for (i2 = 0; i2 < geo.n; i2 += 1) { tt = geo.clockAt(i2); if (tt && tmap[tt] == null) tmap[tt] = i2; }
+
       var hits = inst._hits;
       var TEAL = "#81e6d9", AMBER = "#ffc24d", DEAD = "#7c8894";
-      for (var q = 0; q < mks.length; q += 1) {
-        var mk = mks[q], ii = tmap[mk.time];
-        if (ii == null) continue;
-        var x = geo.xOfIdx(ii), y, yv = geo.yOfPrice(mk.price);try { if (geo.prices && fin(geo.prices[ii])) yv = geo.yOfPrice(geo.prices[ii]); } catch (eY) { }
 
-        g.textAlign = "center"; g.textBaseline = "middle";
-        hits.push({ x: x, y: (mk.type === "积" ? yv + 7 : yv - 7), mk: mk });
+      // 建立原始行情行索引 -> 当前分时图索引的映射
+      var rowMap = Object.create(null);
+      var timeMap = Object.create(null);
+      var ii, tt;
+
+      for (i2 = 0; i2 < geo.n; i2 += 1) {
+        tt = geo.clockAt(i2);
+        if (tt && timeMap[tt] == null) timeMap[tt] = i2;
+      }
+
+      for (var q = 0; q < mks.length; q += 1) {
+        var mk = mks[q];
+        ii = null;
+
+        // 优先使用原始行情行索引匹配
+        // 注意：只有确认 geo 的索引与原始 rows 对应时才使用
+        if (Number.isInteger(mk.rowIdx) &&
+            mk.rowIdx >= 0 &&
+            typeof geo.rowIdxAt === "function") {
+          for (i2 = 0; i2 < geo.n; i2 += 1) {
+            if (geo.rowIdxAt(i2) === mk.rowIdx) {
+              ii = i2;
+              break;
+            }
+          }
+        }
+
+        // 无原始索引映射接口时，使用时间匹配
+        if (ii == null) {
+          ii = timeMap[mk.time];
+        }
+
+        if (ii == null || ii < 0 || ii >= geo.n) continue;
+
+        var x = geo.xOfIdx(ii);
+        var y;
+        var yv = geo.yOfPrice(mk.price);
+
+        if (!fin(x) || !fin(yv)) continue;
+
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+
+        hits.push({
+          x: x,
+          y: mk.type === "积" ? yv + 7 : yv - 7,
+          mk: mk
+        });
+
         if (mk.type === "积") {
           y = yv + 7;
-          g.beginPath(); g.arc(x, y, 3.4, 0, 6.2832);
-          if (mk.dead) { g.fillStyle = DEAD; g.fill(); }
-          else if (mk.st === "watch") { g.strokeStyle = TEAL; g.lineWidth = 1.4; g.stroke(); }
-          else { g.fillStyle = TEAL; g.fill(); }
+          g.beginPath();
+          g.arc(x, y, 3.4, 0, 6.2832);
+
+          if (mk.dead) {
+            g.fillStyle = DEAD;
+            g.fill();
+          } else if (mk.st === "watch") {
+            g.strokeStyle = TEAL;
+            g.lineWidth = 1.4;
+            g.stroke();
+          } else {
+            g.fillStyle = TEAL;
+            g.fill();
+          }
         } else {
           y = yv - 7;
           g.beginPath();
-          g.moveTo(x, y - 4.2); g.lineTo(x + 4.6, y + 3.4); g.lineTo(x - 4.6, y + 3.4); g.closePath();
-          if (mk.dead) { g.strokeStyle = DEAD; g.lineWidth = 1.2; g.stroke(); }
-          else if (mk.st === "watch") { g.strokeStyle = AMBER; g.lineWidth = 1.2; g.stroke(); }
-          else { g.fillStyle = AMBER; g.fill(); }
-          if (mk.dead) { /* ✕ */
-            g.strokeStyle = DEAD; g.lineWidth = 1.1;
-            g.beginPath(); g.moveTo(x - 2.2, y - 2.2); g.lineTo(x + 2.2, y + 2.2); g.moveTo(x + 2.2, y - 2.2); g.lineTo(x - 2.2, y + 2.2); g.stroke();
-          } else if (fin(mk.level)) { /* 区间上沿短虚线 */
+          g.moveTo(x, y - 4.2);
+          g.lineTo(x + 4.6, y + 3.4);
+          g.lineTo(x - 4.6, y + 3.4);
+          g.closePath();
+
+          if (mk.dead) {
+            g.strokeStyle = DEAD;
+            g.lineWidth = 1.2;
+            g.stroke();
+          } else if (mk.st === "watch") {
+            g.strokeStyle = AMBER;
+            g.lineWidth = 1.2;
+            g.stroke();
+          } else {
+            g.fillStyle = AMBER;
+            g.fill();
+          }
+
+          if (mk.dead) {
+            g.strokeStyle = DEAD;
+            g.lineWidth = 1.1;
+            g.beginPath();
+            g.moveTo(x - 2.2, y - 2.2);
+            g.lineTo(x + 2.2, y + 2.2);
+            g.moveTo(x + 2.2, y - 2.2);
+            g.lineTo(x - 2.2, y + 2.2);
+            g.stroke();
+          } else if (fin(mk.level)) {
             var yL = geo.yOfPrice(mk.level);
-            if (fin(yL)) { g.save(); g.strokeStyle = "rgba(255,194,77,0.55)"; g.setLineDash([3, 3]); g.lineWidth = 1; g.beginPath(); g.moveTo(x - 26, yL); g.lineTo(x + 26, yL); g.stroke(); g.restore(); }
+            if (fin(yL)) {
+              g.save();
+              g.strokeStyle = "rgba(255,194,77,0.55)";
+              g.setLineDash([3, 3]);
+              g.lineWidth = 1;
+              g.beginPath();
+              g.moveTo(x - 26, yL);
+              g.lineTo(x + 26, yL);
+              g.stroke();
+              g.restore();
+            }
           }
         }
       }
