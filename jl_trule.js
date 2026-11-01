@@ -369,20 +369,32 @@ rec.plan = mkPlan(
         if (r.st === 'open') ex = '按收盘 ' + f2(r.bp) + ' 算 <b>' + money(r.net) + '</b>';
         if (r.st === 'unclear' || r.st === 'void') ex = r.why;
       }
-      A += card(
-        '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
-        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +'<br>' + W +'每股价差 ' + spreadYuan.toFixed(2) + ' 元' +
+       A += card(
 
-'         '<br>' + W +
-        '每轮价差 ' + spreadYuan.toFixed(2) + ' 元/股' +
-        ' · 毛收益 ' + money(grossEstimate) +
-        ' · 扣费后净收益 <b>' + money(netEstimate) + '</b>' + E +
+        '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
+
+        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +
+
         '<br>' + W +
+
+        '每股价差 ' + spreadYuan.toFixed(2) + ' 元' +
+
+        ' · 本轮毛收益 ' + money(grossEstimate) +
+
+        ' · 扣费后净收益 <b>' + money(netEstimate) + '</b>' + E +
+
+        '<br>' + W +
+
         '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) +
+
         ' · 卖价依据：' + (srcTxt(p.sellSrcs) || '结构候选位') +
+
         ' · 买回依据：' + (srcTxt(p.buySrcs) || '结构候选位') +
+
         ' · 价差 ' + (p.expectedSpread * 100).toFixed(1) + '%' +
+
         ' · 止损价 ' + f2(p.stopPrice) + E +
+
         (ex ? '<br>' + ex : ''), g.c);
     return A;
   }
