@@ -394,7 +394,7 @@
       inst._hits = [];
       inst._chip = null;
       if (inst._chipEl) inst._chipEl.style.display = "none";
-      if (!window.__jituKeys && geo && geo.n) { window.__jituKeys = 1; try { var kd = document.createElement("div"); kd.textContent = "geom: " + Object.keys(geo).join(","); kd.style.cssText = "position:fixed;left:8px;right:8px;top:90px;z-index:99999;background:#000;color:#0f0;font:12px/1.4 monospace;padding:8px;word-break:break-all"; kd.onclick = function () { kd.remove(); }; document.body.appendChild(kd); } catch (e) { } }
+      
       if (!geo || !geo.n) { return; }
 
       if (!marksOn()) { return; }
@@ -419,7 +419,8 @@
       for (var q = 0; q < mks.length; q += 1) {
         var mk = mks[q], ii = tmap[mk.time];
         if (ii == null) continue;
-        var x = geo.xOfIdx(ii), y, yv = geo.yOfPrice(mk.price);
+        var x = geo.xOfIdx(ii), y, yv = geo.yOfPrice(mk.price);try { if (geo.prices && fin(geo.prices[ii])) yv = geo.yOfPrice(geo.prices[ii]); } catch (eY) { }
+
         g.textAlign = "center"; g.textBaseline = "middle";
         hits.push({ x: x, y: (mk.type === "积" ? yv + 7 : yv - 7), mk: mk });
         if (mk.type === "积") {
