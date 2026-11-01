@@ -424,7 +424,7 @@ function renderLine() {
     if (!pts.length) { $('pline').setAttribute('points', ''); return; }
     $('pline').setAttribute('points', pts.join(' '));
     try { /* jl-hl2: 走势线高低点——高=峰顶红圈, 低=谷底红短横, 旁标价格+相对昨收% */
-      var SW = [], dirH = 0, ext = null, thr = 0.015, pcv = LIVE.pc || 0;
+      var SW = [], dirH = 0, ext = null, thr = 0.008, pcv = LIVE.pc || 0;
       LIVE.pts.forEach(function (q, ix) {
         if (!(q.p > 0)) return;
         if (!ext) { ext = { ix: ix, p: q.p }; return; }
