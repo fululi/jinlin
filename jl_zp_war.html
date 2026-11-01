@@ -627,13 +627,24 @@ try { INJL = !!(window.parent && window.parent !== window && window.parent.jlRes
 function jlStocksJL() {
   var ls = [];
   if (INJL) try {
-    var P = window.parent, cs = P.jlResoCodesJL ? P.jlResoCodesJL() : [];
+    var P = window.parent;
+    var cs = P.jlResoCodesJL ? P.jlResoCodesJL() : [];
     cs.forEach(function (x) {
-      var q = P.jlHoldQtyJL ? +P.jlHoldQtyJL(x.code) : 0;
-      if (q > 0 && String(x.code).indexOf('sh000001') < 0) ls.push({ code: String(x.code).replace(/\D/g, ''), rc: x.code, name: x.name, qty: q });
+      var code = String(x.code || '').replace(/\D/g, '');
+      if (!code || code === '000001') return;
+      var q = P.jlHoldQtyJL ? Number(P.jlHoldQtyJL(x.code)) : 0;
+      if (!Number.isFinite(q) || q < 0) q = 0;
+      ls.push({
+        code: code,
+        rc: x.code,
+        name: x.name,
+        qty: q
+      });
     });
-  } catch (e) { }
-  if (!ls.length) ls.push({ code: '600105', name: '永鼎股份', qty: 1900 });
+  } catch (e) {}
+  if (!ls.length) {
+    ls.push({ code: '600105', name: '永鼎股份', qty: 1900 });
+  }
   return ls;
 }
 function symOf(c) { return (/^(5|6|9)/.test(c) ? 'sh' : 'sz') + c; } /* 5/6/9=沪, 余=深(与jlSecidJL同口径) */
@@ -662,22 +673,50 @@ function liveResetJL() {
   LIVE.eng = null; LIVE.keys = {}; LIVE.pts = []; LIVE.auc = null; LIVE.err = null; LIVE.srcs = { m5: '', m1: '', pts: '' };
   ZCACHE = {};
 }
-function metaJL() { /* 持仓股数=持仓页联动; 每轮=自己填(写 jl_tintra_qty_v1, 与盘中做T卡/次日计划同源) */
-  var m = $('metaLine'); if (!m) return;
+function metaJL() {
+  /* 持仓股数=持仓页联动; 每轮=自己填 */
+  var m = $('metaLine');
+  if (!m) return;
   var q = STK.qty || 0;
-  if (!(LIVE.sh > 0) && q < 100) { m.textContent = '持仓 ' + q + ' 股 · 不足一手(100股), 不做T'; return; }
-  var cur = m.querySelector('input');
+var cur = m.querySelector('input');
   if (cur && m.contains(document.activeElement)) return;
-  m.innerHTML = '<span>持仓</span><input id="qtyHold" type="number" inputmode="numeric" min="0" step="100" value="' + q + '" aria-label="持仓股数"><span>股 · 每轮</span><input id="qtyRnd" type="number" inputmode="numeric" min="100" step="100" value="' + LIVE.sh + '" aria-label="每轮股数"><span>股</span>';
-  m.querySelector('#qtyHold').onchange = function () {
+m.innerHTML =
+    '<span>持仓</span><input id="qtyHold" type="number" inputmode="numeric" min="0" step="100" value="' + q + '" aria-label="持仓股数"><span>股 · 每轮</span><input id="qtyRnd" type="number" inputmode="numeric" min="100" step="100" value="' + LIVE.sh + '" aria-label="每轮股数"><span>股</span>';
+m.querySelector('#qtyHold').onchange = function () {
     var v = Math.max(0, Math.round(+this.value || 0));
-    try { if (window.parent.jlSetHoldQtyJL(STK.code, v)) { STK.qty = v; LIVE.sh = roundQtyJL(STK.code, v); metaJL(); try { if (RPL) rplShowJL(RPL.I); else if (MODE === 'live') { liveCompute(); liveRender(); } else renderAll(); } catch (e2) { } try { resoMountJL(); } catch (e3) { } } } catch (e) { }
+    try {
+      if (window.parent.jlSetHoldQtyJL(STK.code, v)) {
+        STK.qty = v;
+        LIVE.sh = roundQtyJL(STK.code, v);
+        metaJL();
+        try {
+          if (RPL) rplShowJL(RPL.I);
+          else if (MODE === 'live') {
+            liveCompute();
+            liveRender();
+          } else renderAll();
+        } catch (e2) {}
+        try { resoMountJL(); } catch (e3) {}
+      }
+    } catch (e) {}
   };
-  m.querySelector('#qtyRnd').onchange = function () {
+m.querySelector('#qtyRnd').onchange = function () {
     var v = Math.floor((+this.value || 0) / 100) * 100;
-    try { var P = window.parent, o = JSON.parse(P.localStorage.getItem('jl_tintra_qty_v1') || 'null') || {}; o[STK.code] = v; P.localStorage.setItem('jl_tintra_qty_v1', JSON.stringify(o)); } catch (e) { }
-    LIVE.sh = roundQtyJL(STK.code, STK.qty); this.value = LIVE.sh;
-    try { if (RPL) rplShowJL(RPL.I); else if (MODE === 'live') { liveCompute(); liveRender(); } else renderAll(); } catch (e) { }
+    try {
+      var P = window.parent;
+      var o = JSON.parse(P.localStorage.getItem('jl_tintra_qty_v1') || 'null') || {};
+      o[STK.code] = v;
+      P.localStorage.setItem('jl_tintra_qty_v1', JSON.stringify(o));
+    } catch (e) {}
+    LIVE.sh = roundQtyJL(STK.code, STK.qty);
+    this.value = LIVE.sh;
+    try {
+      if (RPL) rplShowJL(RPL.I);
+      else if (MODE === 'live') {
+        liveCompute();
+        liveRender();
+      } else renderAll();
+    } catch (e) {}
   };
 }
 setInterval(function () { /* 持仓页/盘中做T卡改了股数 → 这里同步并重算 */
