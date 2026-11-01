@@ -392,9 +392,11 @@
       var g = cv.getContext("2d");
       var geo = api.geom();
       inst._hits = [];
-      inst._chip = null; /* v7a: 早退路径同步清签——开关关/隐藏/窄卡不留隐形点击热点(评审实测) */
-      if (inst._chipEl) inst._chipEl.style.display = "none"; /* v12: 图外签同口径先藏, 走到画签处再显示 */
-      if (!geo || !geo.n) { return; } /* 数据不足/隐藏: 引擎已清画布, 不补画 */
+      inst._chip = null;
+      if (inst._chipEl) inst._chipEl.style.display = "none";
+      if (!window.__jituKeys && geo && geo.n) { window.__jituKeys = 1; try { var kd = document.createElement("div"); kd.textContent = "geom: " + Object.keys(geo).join(","); kd.style.cssText = "position:fixed;left:8px;right:8px;top:90px;z-index:99999;background:#000;color:#0f0;font:12px/1.4 monospace;padding:8px;word-break:break-all"; kd.onclick = function () { kd.remove(); }; document.body.appendChild(kd); } catch (e) { } }
+      if (!geo || !geo.n) { return; }
+
       if (!marksOn()) { return; }
       var hostSt = cv.closest ? cv.closest(".stock") : null;
       if (hostSt && !hostSt.classList.contains("active")) { return; } /* v6: 折叠窄卡不画标记(开关图标在窄卡隐藏, 显隐规则对齐; 窄卡geom与可视区错位, 画了也是飘点) */
