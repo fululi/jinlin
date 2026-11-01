@@ -419,16 +419,19 @@
         if (ii == null) continue;
         var x = geo.xOfIdx(ii), y, yv = geo.yOfPrice(mk.price);
         g.textAlign = "center"; g.textBaseline = "middle";
-        hits.push({ x: x, y: (mk.type === "积" ? yv + 13 : yv - 13), mk: mk });
+        hits.push({ x: x, y: (mk.type === "积" ? yv + 7 : yv - 7), mk: mk });
         if (mk.type === "积") {
-          y = yv + 13;
+          y = yv + 7;
           g.beginPath(); g.arc(x, y, 3.4, 0, 6.2832);
-          g.fillStyle = mk.dead ? DEAD : TEAL; g.fill();
+          if (mk.dead) { g.fillStyle = DEAD; g.fill(); }
+          else if (mk.st === "watch") { g.strokeStyle = TEAL; g.lineWidth = 1.4; g.stroke(); }
+          else { g.fillStyle = TEAL; g.fill(); }
         } else {
-          y = yv - 13;
+          y = yv - 7;
           g.beginPath();
           g.moveTo(x, y - 4.2); g.lineTo(x + 4.6, y + 3.4); g.lineTo(x - 4.6, y + 3.4); g.closePath();
           if (mk.dead) { g.strokeStyle = DEAD; g.lineWidth = 1.2; g.stroke(); }
+          else if (mk.st === "watch") { g.strokeStyle = AMBER; g.lineWidth = 1.2; g.stroke(); }
           else { g.fillStyle = AMBER; g.fill(); }
           if (mk.dead) { /* ✕ */
             g.strokeStyle = DEAD; g.lineWidth = 1.1;
@@ -439,6 +442,7 @@
           }
         }
       }
+
     } catch (e) { }
   }
 
