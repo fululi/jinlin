@@ -87,7 +87,8 @@
       if (F && F.lv) F.lv.forEach(function (l) { if (l.v > 0) c.push({ p: l.v, src: 'fib' }); });
     } catch (e) { }
     c = c.filter(function (x) { return x.p > 0 && isFinite(x.p); });
-    var allLevels = cluster(c, atr, 1); // 次日计划候选位：允许单来源 var levels = cluster(c, atr, 2);    // 原共振位：保持两来源门槛不变
+    var allLevels = cluster(c, atr, 1); // 次日计划候选位：允许单来源
+var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
     var r = rng(t + code), lo = last.c - 1.5 * atr, hi = last.c + 1.5 * atr;
     var ctrl = levels.map(function () { return { p: +(lo + r() * (hi - lo)).toFixed(2), hit: 0 }; });
     return {
