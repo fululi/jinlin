@@ -436,6 +436,35 @@ function renderLine() {
       /* 只留已确认的转折(反向走出1.5%才算); 还在走的那一段不标, 否则标签会跟着箭头一路变 */
       window.__SWJL = SW.map(function (m) { return { p: m.p, h: m.h, hm: LIVE.pts[m.ix].hm }; });
       var gh = el('g', { id: 'hlmk' }), LB = [];
+      /* jl-hl3: 实时候选极值，独立于正式确认标记 */
+if (ext && LIVE.pts[ext.ix]) {
+  var cq = LIVE.pts[ext.ix];
+  var cx = xOfHmJL(cq.hm);
+
+  if (cx != null && ext.p >= YLO && ext.p <= YHI) {
+    var cy = Y(ext.p);
+
+    if (dirH === 1) {
+      gh.appendChild(el('circle', {
+        cx: cx, cy: cy - 5, r: 5,
+        fill: 'none',
+        stroke: '#ff8585',
+        'stroke-width': 1.4,
+        'stroke-dasharray': '2 2',
+        opacity: 0.7
+      }));
+    } else if (dirH === -1) {
+      gh.appendChild(el('circle', {
+        cx: cx, cy: cy + 4, r: 4,
+        fill: 'none',
+        stroke: '#ff8585',
+        'stroke-width': 1.4,
+        'stroke-dasharray': '2 2',
+        opacity: 0.7
+      }));
+    }
+  }
+}
       SW.forEach(function (m) {
         var q = LIVE.pts[m.ix], x = xOfHmJL(q.hm); if (x == null || m.p < YLO || m.p > YHI) return;
         var y = Y(m.p), pp = pcv > 0 ? ((m.p / pcv - 1) * 100) : null, tt = (m.h ? '卖 ' : '买 ') + m.p.toFixed(2) + (pp == null ? '' : ' ' + (pp >= 0 ? '+' : '') + pp.toFixed(1) + '%');
