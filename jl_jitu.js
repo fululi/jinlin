@@ -61,7 +61,7 @@
         f.positive_ratio >= ac.min_positive_ratio && f.net_amount_ratio >= ac.min_net_amount_ratio &&
         f.cum_net_slope > 0 && f.main_net > 0 &&
         f.drawdown >= ac.min_drawdown_pct && f.drawdown <= ac.max_drawdown_pct &&
-        f.close_to_vwap >= -ac.vwap_tolerance_pct) {
+       f.close_to_vwap >= -ac.vwap_tolerance_pct && f.close_to_vwap <= 0.015)  {
       this.signals.push({ type: "积", start: i, ts: bar.ts, time: hhmm(bar.ts), price: bar.close, level: fin(f.prior_low) ? f.prior_low : bar.low, levelWhy: fin(f.prior_low) ? "跌破前" + bk.range_window + "根低点" : "跌破触发根低点",
         reason: "近" + ac.window + "分钟资金持续净流入+价格自高点回撤" + (f.drawdown * 100).toFixed(1) + "%且未破VWAP容差" });
       this._last["积"] = i;
@@ -86,7 +86,7 @@
       s = this.signals[k];
       if (s.invalidatedAt != null || i <= s.start || i > s.start + h) continue;
       hit = null;
-      if (fin(bar.close) && fin(s.level) && bar.close < s.level) { hit = s.levelWhy || "跌回突破区间"; s.invalidatedKind = "price"; } /* v9(批4): 积/突价格失效分开写 */
+      if (fin(bar.close) && fin(s.level) && bar.close < s.level * 0.997)  { hit = s.levelWhy || "跌回突破区间"; s.invalidatedKind = "price"; } /* v9(批4): 积/突价格失效分开写 */
       else {
         ns = 0; as = 0;
         for (j = s.start + 1; j <= i; j += 1) { ns += (this.f[j] && fin(this.f[j].main_net)) ? this.f[j].main_net : 0; as += (this.bars[j] && fin(this.bars[j].amount)) ? this.bars[j].amount : 0; }
