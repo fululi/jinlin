@@ -87,12 +87,12 @@
       if (F && F.lv) F.lv.forEach(function (l) { if (l.v > 0) c.push({ p: l.v, src: 'fib' }); });
     } catch (e) { }
     c = c.filter(function (x) { return x.p > 0 && isFinite(x.p); });
-    var levels = cluster(c, atr, 2);
+    var allLevels = cluster(c, atr, 1); // 次日计划候选位：允许单来源 var levels = cluster(c, atr, 2);    // 原共振位：保持两来源门槛不变
     var r = rng(t + code), lo = last.c - 1.5 * atr, hi = last.c + 1.5 * atr;
     var ctrl = levels.map(function () { return { p: +(lo + r() * (hi - lo)).toFixed(2), hit: 0 }; });
     return {
       at: String(new Date().getHours()).padStart(2, '0') + ':' + String(new Date().getMinutes()).padStart(2, '0'),
-      pc: last.c, pd: day(last.t), atr: +atr.toFixed(3), levels: levels, ctrl: ctrl, final: 0,
+      pc: last.c, pd: day(last.t), atr: +atr.toFixed(3), levels: levels, allLevels: allLevels, ctrl: ctrl, final: 0,
       chk: ck ? 1 : 0, hist: hist,
       stale: ck && Math.abs(last.c - inp.prev) / inp.prev > 0.003 ? '日K停在' + day(last.t).slice(5) + '(收' + f2(last.c) + ')，今日昨收' + f2(inp.prev) : ''
     };
