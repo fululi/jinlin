@@ -61,7 +61,7 @@
         f.positive_ratio >= ac.min_positive_ratio && f.net_amount_ratio >= ac.min_net_amount_ratio &&
         f.cum_net_slope > 0 && f.main_net > 0 &&
         f.drawdown >= ac.min_drawdown_pct && f.drawdown <= ac.max_drawdown_pct &&
-       f.close_to_vwap >= -ac.vwap_tolerance_pct && f.close_to_vwap <= 0.015)  {
+       f.close_to_vwap >= 0 && f.close_to_vwap <= 0.015) {  && f.close_to_vwap <= 0.015)  {
       this.signals.push({ type: "积", start: i, ts: bar.ts, time: hhmm(bar.ts), price: bar.close, level: fin(f.prior_low) ? f.prior_low : bar.low, levelWhy: fin(f.prior_low) ? "跌破前" + bk.range_window + "根低点" : "跌破触发根低点",
         reason: "近" + ac.window + "分钟资金持续净流入+价格自高点回撤" + (f.drawdown * 100).toFixed(1) + "%且未破VWAP容差" });
       this._last["积"] = i;
