@@ -329,35 +329,37 @@
   function card(inner, c) {
     return '<div style="margin:8px 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);border-left:4px solid ' + c + ';background:rgba(255,255,255,.035);font-size:12.5px;line-height:1.6;color:' + TXT + '">' + inner + '</div>';
   }
-  function render(host) {
-    var L = updateAll(), c = cfg(), s = stats(), A = '';
-    codeList().forEach(function (x) {
+  function cardFor(x, L) { /* jl-nextplan: 单票次日计划卡HTML(从render抽出, 持仓页卡内复用同一引擎) */
+    var A = '';
       var m = latest(x.code, L), g = trigOf(x.code);
-      if (!m) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br><small style="color:' + TXT + '">收盘后(15:15起)或开盘前生成次日计划</small>', g.c); return; }
-      var p = m.plan, td = m.tradeDate || '下一交易日';
-      if (!p.sellPrice) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br><small style="color:' + TXT + '">' + td + ' · ' + p.none + '</small>', g.c); return; }
+      if (!m) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br><small style="color:' + TXT + '">收盘后(15:15起)或开盘前生成次日计划</small>', g.c); return A; }
+      var p = m.plan, W = '<small style="color:#fff;opacity:.92">', E = '</small>';
+      if (!p.sellPrice) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br>' + W + p.none + E, g.c); return A; }
+      var q0 = 0; try { q0 = Number(window.jlHoldQtyJL(x.code)) || 0; } catch (e) { }
+      var qn = q0 > 0 ? shOf(x.code, q0, cfg()) : 0, qty = qn > 0 ? qn : p.sellQty; /* 每轮股数跟你填的联动, 不用生成当天的旧数 */
       var r = m.res, ex = '';
       if (r) {
-        if (r.st === 'sold') ex = '实际卖出 <b>' + f2(r.sp) + '</b> · 止损 ' + f2(r.stop) + ' · 等价格回到 ' + f2(p.buyPrice);
-        if (r.st === 'done' || r.st === 'stop') ex = f2(r.sp) + ' 卖 → ' + f2(r.bp) + ' 买 · <b style="color:' + (r.net >= 0 ? RED : GRN) + '">' + money(r.net) + '</b>(相对持有不动)';
-        if (r.st === 'open') ex = '按收盘 ' + f2(r.bp) + ' 算 <b>' + money(r.net) + '</b>(相对持有不动) · 仍少持仓' + p.sellQty + '股';
+        if (r.st === 'sold') ex = '已卖 <b>' + f2(r.sp) + '</b> · 等回到 ' + f2(p.buyPrice) + ' 买回 · 止损 ' + f2(r.stop);
+        if (r.st === 'done' || r.st === 'stop') ex = f2(r.sp) + ' 卖 → ' + f2(r.bp) + ' 买 · <b style="color:' + (r.net >= 0 ? RED : GRN) + '">' + money(r.net) + '</b>';
+        if (r.st === 'open') ex = '按收盘 ' + f2(r.bp) + ' 算 <b>' + money(r.net) + '</b>';
         if (r.st === 'unclear' || r.st === 'void') ex = r.why;
       }
       A += card(
-        '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) + (m.src ? ' <small style="color:' + TXT + '">[' + m.src + (m.final ? '·定稿' : '·盘中') + ']</small>' : '') +
-        '<br><small style="color:' + TXT + '">' + td + ' · 据' + m.signalDate + '收盘 ' + f2(m.prevClose) + '</small>' +
-        '<br>卖 <b>' + f2(p.sellPrice) + '</b> ×' + p.sellQty + '股 <small style="color:' + TXT + '">(' + srcTxt(p.sellSrcs) + ')</small>' +
-        ' → 买回 <b>' + f2(p.buyPrice) + '</b> <small style="color:' + TXT + '">(' + srcTxt(p.buySrcs) + ')</small>' +
-        '<br><small style="color:' + TXT + '">价差' + (p.expectedSpread * 100).toFixed(1) + '% · 止损 ' + f2(p.stopPrice) + '(高开卖出则=卖价+' + f2(p.stopDist != null ? p.stopDist : p.stopPrice - p.sellPrice) + ')</small>' +
+        '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
+        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +
+        '<br>' + W + '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) + ' · 卖价=上方共振位(' + srcTxt(p.sellSrcs) + ') · 买回=下方共振位(' + srcTxt(p.buySrcs) + ') · 价差' + (p.expectedSpread * 100).toFixed(1) + '% · 卖出后涨到 ' + f2(p.stopPrice) + ' 就止损买回' + E +
         (ex ? '<br>' + ex : ''), g.c);
-    });
+    return A;
+  }
+  function render(host) {
+    var L = updateAll(), c = cfg(), s = stats(), A = '';
+    codeList().forEach(function (x) { A += cardFor(x, L); });
     var C;
     var base = '已记 ' + (s.rec + s.unclear + s.nodata + s.noPlan + s.void) + ' 张(不操作' + s.noPlan + ' · 数据不足' + s.nodata + ' · 顺序不明' + s.unclear + ' · 持仓变化作废' + s.void + ') · 触发 ' + s.trig + ' 次: 买回' + s.done + ' / 止损' + s.stop + ' / 收盘没买回' + s.open;
     if (s.trig < c.minSamples) C = base + '<br><b>样本不足，暂不评价</b>(触发 ' + s.trig + '/' + c.minSamples + ' 笔)';
     else C = base + '<br>买回完成率 ' + Math.round((s.done + s.stop) / s.trig * 100) + '% · 止损率 ' + Math.round(s.stop / s.trig * 100) + '%<br>配对样本 ' + s.paired + ' 张 · 策略 ' + money(s.pnet) + ' vs 随机对照 ' + money(s.pcnet) + '<br>(策略可用样本 ' + s.rec + ' / 对照可用样本 ' + s.ctrig + '+未触发; 只看累计收益不能判断优劣)';
-    host.innerHTML = '<h3 style="margin-top:14px">做T触发状态 · 次日计划<small>只记账不下单</small></h3>' + (A || '<div style="font-size:12px;color:' + TXT + '">暂无持仓可算</div>') +
-      '<h3 style="margin-top:12px">历史复盘</h3><div style="font-size:11.5px;color:' + TXT + '">' + C +
-      '<br>规则: 只先卖后买回 · 动持仓' + Math.round(c.frac * 100) + '% · 每天最多1次 · 费用=佣金万' + (c.comm * 1e4).toFixed(1) + '(最低' + c.commMin + '元)+过户费+卖出印花税万' + (c.stamp * 1e4) + ' · 数字=相对一直持有不动的差额</div>';
+    host.innerHTML = '<h3 style="margin-top:14px">次日作战计划</h3>' + (A || '<div style="font-size:12px;color:' + TXT + '">暂无持仓可算</div>') +
+      '';
   }
 
   function mount() {
@@ -377,7 +379,7 @@
   setTimeout(mount, 5000); setTimeout(mount, 13000); setInterval(mount, 30000);
 
   window.JLTRule = {
-    cfg: cfg, setCfg: setCfg, trigOf: trigOf, ensureAll: ensureAll, updateAll: updateAll, stats: stats, render: render, _load: load,
+    cfg: cfg, setCfg: setCfg, renderOne: function (code) { try { var L = updateAll(), x = codeList().filter(function (q) { return q.code === code; })[0]; return x ? cardFor(x, L) : ''; } catch (e) { return ''; } }, trigOf: trigOf, ensureAll: ensureAll, updateAll: updateAll, stats: stats, render: render, _load: load,
     _t: { closeConfirmed: closeConfirmed, fullDay: fullDay, dayClosed: dayClosed, sim15: sim15, simDaily: simDaily, signalDateFor: signalDateFor, genCtrl: genCtrl, mkPlan: mkPlan, update: update, genRecord: genRecord, stopOf: stopOf, shOf: shOf, netOf: netOf, cfg: cfg }
   };
 })();

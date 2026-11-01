@@ -390,6 +390,7 @@
       ballRender(L, td);
       var dw = document.querySelector("#holds .deckWrap");
       if (!dw) return;
+      { var oc = document.getElementById("tintraJL"); if (oc) oc.parentNode.removeChild(oc); return; } /* jl-hl8: 持仓页盘中做T卡删除(用户点名), 每轮股数改在作战屏填 */
       var card = document.getElementById("tintraJL");
       if (!card) {
         card = document.createElement("section"); card.className = "glass"; card.id = "tintraJL"; dw.parentNode.insertBefore(card, dw.nextSibling);
