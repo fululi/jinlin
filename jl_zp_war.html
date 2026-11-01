@@ -420,7 +420,7 @@ function renderLine() {
     /* 分时线(分钟级, 东财trends2优先/腾讯minute兜底) + 左缘竞价段刻度(9:15-9:25撮合指导价高低) */
     var pts = [];   /* jl-zp4: 原来按"每分钟=1/5格"再乘一次, 整条分时线被压在左边五分之一 → 改为按成交时间铺满 09:30–15:00 */
     LIVE.pts.forEach(function (q) { var x = xOfHmJL(q.hm); if (x != null) pts.push(x.toFixed(1) + ',' + Y(q.p).toFixed(1)); });
-    if (LIVE.open > 0) pts.unshift(X(0).toFixed(1) + ',' + Y(LIVE.open).toFixed(1));   /* 线头=竞价开盘价 */
+    if (LIVE.open > 0) pts.unshift(xOfHmJL('0930').toFixed(1) + ',' + Y(LIVE.open).toFixed(1));   /* 线头=竞价开盘价 */
     if (!pts.length) { $('pline').setAttribute('points', ''); return; }
     $('pline').setAttribute('points', pts.join(' '));
     try { /* jl-hl2: 走势线高低点——高=峰顶红圈, 低=谷底红短横, 旁标价格+相对昨收% */
@@ -478,12 +478,25 @@ if (ext && LIVE.pts[ext.ix]) {
       });
       if (g) g.appendChild(gh);
     } catch (eHL) { }
-    if (g && LIVE.auc) {
-      g.appendChild(el('line', { x1: X(0) + 1, y1: Y(LIVE.auc.hi), x2: X(0) + 5, y2: Y(LIVE.auc.hi), stroke: 'var(--amber)', 'stroke-width': 1.5 }));
-      g.appendChild(el('line', { x1: X(0) + 1, y1: Y(LIVE.auc.lo), x2: X(0) + 5, y2: Y(LIVE.auc.lo), stroke: 'var(--amber)', 'stroke-width': 1.5 }));
-      g.appendChild(el('line', { x1: X(0) + 3, y1: Y(LIVE.auc.hi), x2: X(0) + 3, y2: Y(LIVE.auc.lo), stroke: 'var(--amber)', 'stroke-width': .8, opacity: .7 }));
-      g.appendChild(tx(X(0) + 8, Y(LIVE.auc.hi) - 3, '竞', 'var(--amber)', 9, 'start', 700));
-    }
+if (g && LIVE.auc) {
+  var ax = xOfHmJL('0915');
+  g.appendChild(el('line', {
+    x1: ax + 1, y1: Y(LIVE.auc.hi),
+    x2: ax + 5, y2: Y(LIVE.auc.hi),
+    stroke: 'var(--amber)', 'stroke-width': 1.5
+  }));
+  g.appendChild(el('line', {
+    x1: ax + 1, y1: Y(LIVE.auc.lo),
+    x2: ax + 5, y2: Y(LIVE.auc.lo),
+    stroke: 'var(--amber)', 'stroke-width': 1.5
+  }));
+  g.appendChild(el('line', {
+    x1: ax + 3, y1: Y(LIVE.auc.hi),
+    x2: ax + 3, y2: Y(LIVE.auc.lo),
+    stroke: 'var(--amber)', 'stroke-width': .8, opacity: .7
+  }));
+  g.appendChild(tx(ax + 8, Y(LIVE.auc.hi) - 3, '竞', 'var(--amber)', 9, 'start', 700));
+}
     return;
   }
   if (n < 0) { $('pline').setAttribute('points', ''); return; }
@@ -1040,20 +1053,27 @@ function txMinute(sym) {
     return { date: String(x.date).replace(/\D/g, ''), pts: pts, auc: null, pre: 0 };
   });
 }
-/* jl-zp4: 分钟 → 图上x: 按已成交分钟数铺满(09:30=左边, 11:30/13:00=中线, 15:00=右边), 分时线/买卖标记/现价点同一把尺 */
+/* 分钟时间 → 图上横坐标
+   09:15竞价起点；09:30正式分时；11:30/13:00午休压缩；15:00终点 */
 function xOfHmJL(hm) {
   var m = Math.floor(+hm / 100) * 60 + (+hm) % 100;
-  if (m < 570 || m > 900) return null;
-  var tr = m <= 690 ? m - 570 : m < 780 ? 120 : 120 + (m - 780);
-  return PX0 + tr / 240 * PW;
+  if (m < 555 || m > 900) return null;
+
+  var tr;
+  if (m <= 690) {
+    tr = m - 555;
+  } else if (m < 780) {
+    return PX0 + 135 / 255 * PW;
+  } else {
+    tr = 135 + (m - 780);
+  }
+
+  return PX0 + tr / 255 * PW;
 }
-/* 分钟标签→图上x位置(以X(i)线性内插, i为5分槽下标的小数) */
+
 function xIdxOf(hm) {
-  var mins = Math.floor(hm / 100) * 60 + hm % 100;
-  if (mins >= 570 && mins <= 690) return (mins - 570) / 5;
-  if (mins === 780) return 24;
-  if (mins > 780 && mins <= 900) return 24 + (mins - 781) / 5;
-  return -1;
+  var x = xOfHmJL(hm);
+  return x === null ? -1 : (x - PX0) / (PW / 51);
 }
 function parseQt(a) {
   if (!a) return;
