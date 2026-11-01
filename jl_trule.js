@@ -1,4 +1,6 @@
-/* jl_trule.js v2.1 — 做T闭环: 盘后生成次日计划 → 次日跟踪 → 收盘结算 → 随机对照复盘 (只记账, 不下单)
+/* jl_trule.js v3.2 — 做T闭环: 盘后生成次日计划 → 次日跟踪 → 收盘结算 → 随机对照复盘 (只记账, 不下单)
+ * v3.2 (2026-11-01): 面板改版——每只票一张卡, 顶部大标签直接显示"是否触发"(未触发/已触发·等买回/已买回/止损/收盘没买回), 计划+执行合并; 新增 JLTRule.trigOf(code) 供浮球读取; 计算/挂载逻辑零改动。
+ * v3.1j (jl-zp3, 2026-11-01): 排版提亮——卡片内小字 opacity 提升+亮白 #e8f0f8 (用户口径: 小字都要亮白色), 计算/挂载逻辑零改动。
  * 规则: 只做"先卖后买回", 只用现有持仓, 每只票每天最多1次, 不融资不加仓
  * 计划: 信号日(收盘后或次日开盘前)用共振表冻结 → 卖出价=昨收上方最近共振位, 买回价=昨收下方最近共振位,
  *       止损=实际卖出价+stopAtr×ATR(跳空高开按开盘价卖, 止损跟着上移), 股数=持仓×frac 取整到手; 价差<minSpread 或持仓不足一手 → 写明原因, 不做
@@ -304,49 +306,78 @@
     return best;
   }
 
+  var RED = '#ff5459', GRN = '#1fdc93', AMB = '#ffb84d', GRY = '#8fa8b3', TXT = '#e8f0f8';
+  /* 是否触发: 把记录状态翻成人话+颜色 */
+  function trigOf(code) {
+    var m = latest(code, load());
+    if (!m) return { k: 'none', t: '暂无计划', c: GRY };
+    if (!m.plan || !m.plan.sellPrice) return { k: 'none', t: '不操作', c: GRY };
+    var r = m.res || {}, st = m.status;
+    if (st === 'sold') return { k: 'trig', t: '已触发 · 等买回', c: RED };
+    if (st === 'done') return { k: 'done', t: '已触发 · 已买回', c: GRN };
+    if (st === 'stop') return { k: 'stop', t: '已触发 · 止损买回', c: AMB };
+    if (st === 'open') return { k: 'open', t: '已触发 · 收盘没买回', c: AMB };
+    if (st === 'idle') return { k: 'idle', t: '未触发(价格没到卖价)', c: GRY };
+    if (st === 'unclear') return { k: 'idle', t: '顺序不明', c: AMB };
+    if (st === 'void') return { k: 'idle', t: '持仓变化·作废', c: GRY };
+    if (st === 'nodata') return { k: 'idle', t: '数据不足', c: GRY };
+    return { k: 'wait', t: '未触发 · 等涨到 ' + f2(m.plan.sellPrice), c: GRY };
+  }
+  function chip(t, c) {
+    return '<span style="display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:800;color:' + c + ';border:1px solid ' + c + ';background:rgba(255,255,255,.04)">' + t + '</span>';
+  }
+  function card(inner, c) {
+    return '<div style="margin:8px 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.10);border-left:4px solid ' + c + ';background:rgba(255,255,255,.035);font-size:12.5px;line-height:1.6;color:' + TXT + '">' + inner + '</div>';
+  }
   function render(host) {
-    var L = updateAll(), c = cfg(), s = stats(), A = '', Bz = '';
+    var L = updateAll(), c = cfg(), s = stats(), A = '';
     codeList().forEach(function (x) {
-      var m = latest(x.code, L);
-      if (!m) { A += '<div style="margin:5px 0;font-size:12px"><b>' + x.name + '</b> <span style="opacity:.7">收盘后(15:15起)或开盘前生成次日计划</span></div>'; return; }
+      var m = latest(x.code, L), g = trigOf(x.code);
+      if (!m) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br><small style="color:' + TXT + '">收盘后(15:15起)或开盘前生成次日计划</small>', g.c); return; }
       var p = m.plan, td = m.tradeDate || '下一交易日';
-      if (!p.sellPrice) {
-        A += '<div style="margin:5px 0;font-size:12px"><b>' + x.name + '</b> <span style="opacity:.75">' + td + ' 不操作 · ' + p.none + '</span></div>';
-        return;
-      }
-      A += '<div style="margin:6px 0;font-size:12px"><b>' + x.name + '</b> <small style="opacity:.7">' + td + ' · 据' + m.signalDate + '收盘 ' + f2(m.prevClose) + '</small><br>卖 <b>' + f2(p.sellPrice) + '</b> ×' + p.sellQty + '股 <small style="opacity:.7">(' + srcTxt(p.sellSrcs) + ')</small> → 买回 <b>' + f2(p.buyPrice) + '</b> <small style="opacity:.7">(' + srcTxt(p.buySrcs) + ')</small><br><small style="opacity:.85">价差' + (p.expectedSpread * 100).toFixed(1) + '% · 止损 ' + f2(p.stopPrice) + '(高开卖出则=卖价+' + f2(p.stopDist != null ? p.stopDist : p.stopPrice - p.sellPrice) + ') · 理由: 昨收上下最近的' + p.minSource + '种以上来源共振位</small></div>';
-      var r = m.res, line = LAB[m.status] || m.status;
+      if (!p.sellPrice) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br><small style="color:' + TXT + '">' + td + ' · ' + p.none + '</small>', g.c); return; }
+      var r = m.res, ex = '';
       if (r) {
-        if (r.st === 'sold') line += ' · 卖出价 ' + f2(r.sp) + ' · 止损 ' + f2(r.stop);
-        if (r.st === 'done' || r.st === 'stop') line += ' · ' + f2(r.sp) + '卖→' + f2(r.bp) + '买 · ' + money(r.net) + '(相对持有不动)';
-        if (r.st === 'open') line += ' · 按收盘' + f2(r.bp) + '算 ' + money(r.net) + '(相对持有不动) · 仍少持仓' + p.sellQty + '股';
-        if (r.st === 'unclear' || r.st === 'void') line += ' · ' + r.why;
+        if (r.st === 'sold') ex = '实际卖出 <b>' + f2(r.sp) + '</b> · 止损 ' + f2(r.stop) + ' · 等价格回到 ' + f2(p.buyPrice);
+        if (r.st === 'done' || r.st === 'stop') ex = f2(r.sp) + ' 卖 → ' + f2(r.bp) + ' 买 · <b style="color:' + (r.net >= 0 ? RED : GRN) + '">' + money(r.net) + '</b>(相对持有不动)';
+        if (r.st === 'open') ex = '按收盘 ' + f2(r.bp) + ' 算 <b>' + money(r.net) + '</b>(相对持有不动) · 仍少持仓' + p.sellQty + '股';
+        if (r.st === 'unclear' || r.st === 'void') ex = r.why;
       }
-      Bz += '<div style="margin:4px 0;font-size:12px"><b>' + x.name + '</b> ' + line + (m.src ? ' <small style="opacity:.6">[' + m.src + (m.final ? '·定稿' : '·盘中') + ']</small>' : '') + '</div>';
+      A += card(
+        '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) + (m.src ? ' <small style="color:' + TXT + '">[' + m.src + (m.final ? '·定稿' : '·盘中') + ']</small>' : '') +
+        '<br><small style="color:' + TXT + '">' + td + ' · 据' + m.signalDate + '收盘 ' + f2(m.prevClose) + '</small>' +
+        '<br>卖 <b>' + f2(p.sellPrice) + '</b> ×' + p.sellQty + '股 <small style="color:' + TXT + '">(' + srcTxt(p.sellSrcs) + ')</small>' +
+        ' → 买回 <b>' + f2(p.buyPrice) + '</b> <small style="color:' + TXT + '">(' + srcTxt(p.buySrcs) + ')</small>' +
+        '<br><small style="color:' + TXT + '">价差' + (p.expectedSpread * 100).toFixed(1) + '% · 止损 ' + f2(p.stopPrice) + '(高开卖出则=卖价+' + f2(p.stopDist != null ? p.stopDist : p.stopPrice - p.sellPrice) + ')</small>' +
+        (ex ? '<br>' + ex : ''), g.c);
     });
     var C;
     var base = '已记 ' + (s.rec + s.unclear + s.nodata + s.noPlan + s.void) + ' 张(不操作' + s.noPlan + ' · 数据不足' + s.nodata + ' · 顺序不明' + s.unclear + ' · 持仓变化作废' + s.void + ') · 触发 ' + s.trig + ' 次: 买回' + s.done + ' / 止损' + s.stop + ' / 收盘没买回' + s.open;
     if (s.trig < c.minSamples) C = base + '<br><b>样本不足，暂不评价</b>(触发 ' + s.trig + '/' + c.minSamples + ' 笔)';
     else C = base + '<br>买回完成率 ' + Math.round((s.done + s.stop) / s.trig * 100) + '% · 止损率 ' + Math.round(s.stop / s.trig * 100) + '%<br>配对样本 ' + s.paired + ' 张 · 策略 ' + money(s.pnet) + ' vs 随机对照 ' + money(s.pcnet) + '<br>(策略可用样本 ' + s.rec + ' / 对照可用样本 ' + s.ctrig + '+未触发; 只看累计收益不能判断优劣)';
-    host.innerHTML = '<h3 style="margin-top:14px">次日做T计划<small>只记账不下单</small></h3>' + (A || '<div style="opacity:.6;font-size:12px">暂无持仓可算</div>') +
-      '<h3 style="margin-top:12px">次日执行状态</h3>' + (Bz || '<div style="opacity:.6;font-size:12px">还没有计划进入执行</div>') +
-      '<h3 style="margin-top:12px">历史复盘</h3><div style="font-size:11.5px;opacity:.9">' + C +
-      '<br><span style="opacity:.65">规则: 只先卖后买回 · 动持仓' + Math.round(c.frac * 100) + '% · 每天最多1次 · 费用=佣金万' + (c.comm * 1e4).toFixed(1) + '(最低' + c.commMin + '元)+过户费+卖出印花税万' + (c.stamp * 1e4) + ' · 数字=相对一直持有不动的差额</span></div>';
+    host.innerHTML = '<h3 style="margin-top:14px">做T触发状态 · 次日计划<small>只记账不下单</small></h3>' + (A || '<div style="font-size:12px;color:' + TXT + '">暂无持仓可算</div>') +
+      '<h3 style="margin-top:12px">历史复盘</h3><div style="font-size:11.5px;color:' + TXT + '">' + C +
+      '<br>规则: 只先卖后买回 · 动持仓' + Math.round(c.frac * 100) + '% · 每天最多1次 · 费用=佣金万' + (c.comm * 1e4).toFixed(1) + '(最低' + c.commMin + '元)+过户费+卖出印花税万' + (c.stamp * 1e4) + ' · 数字=相对一直持有不动的差额</div>';
   }
 
   function mount() {
     try {
-      var card = document.getElementById('jlResoCardJL');
+      /* v3: 挂载三态——①做T作战屏Shadow DOM(验收单文件) ②作战屏iframe(部署) ③旧版共振位卡(兜底) */
+      var sr = (document.getElementById('jlZpWarJL') || {}).shadowRoot || null;
+      var doc = document, card = null;
+      if (sr) card = sr.getElementById('jlTRuleMountJL');
+      if (!card) { var fr = document.getElementById('jlZpFrameJL'); if (fr && fr.contentDocument) { doc = fr.contentDocument; card = doc.getElementById('jlTRuleMountJL'); } }
+      if (!card) card = document.getElementById('jlResoCardJL');
       if (!card || !window.JLReso) return;
-      var h = document.getElementById('jlTRuleJL');
-      if (!h) { h = document.createElement('div'); h.id = 'jlTRuleJL'; card.appendChild(h); }
+      var h = (sr || doc).getElementById('jlTRuleJL');
+      if (!h) { h = doc.createElement('div'); h.id = 'jlTRuleJL'; card.appendChild(h); }
       render(h);
     } catch (e) { }
   }
   setTimeout(mount, 5000); setTimeout(mount, 13000); setInterval(mount, 30000);
 
   window.JLTRule = {
-    cfg: cfg, setCfg: setCfg, ensureAll: ensureAll, updateAll: updateAll, stats: stats, render: render, _load: load,
+    cfg: cfg, setCfg: setCfg, trigOf: trigOf, ensureAll: ensureAll, updateAll: updateAll, stats: stats, render: render, _load: load,
     _t: { closeConfirmed: closeConfirmed, fullDay: fullDay, dayClosed: dayClosed, sim15: sim15, simDaily: simDaily, signalDateFor: signalDateFor, genCtrl: genCtrl, mkPlan: mkPlan, update: update, genRecord: genRecord, stopOf: stopOf, shOf: shOf, netOf: netOf, cfg: cfg }
   };
 })();
