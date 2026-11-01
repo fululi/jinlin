@@ -143,10 +143,35 @@
     if (e.hist) { rec.plan = { none: '历史截面不完整(斐波/缺口只有当前值), 不生成' }; rec.status = 'nodata'; rec.final = 1; return rec; }
     rec.prevClose = e.pc; rec.atr = e.atr;
     var sh = shOf(code, qty, c);
-    var lv = e.levels.filter(function (l) { return l.n >= c.minSrc; });
-    var up = lv.filter(function (l) { return l.p > e.pc; }).sort(function (a, b) { return a.p - b.p; })[0];
-    var dn = lv.filter(function (l) { return l.p < e.pc; }).sort(function (a, b) { return b.p - a.p; })[0];
-    rec.plan = mkPlan(up && up.p, dn && dn.p, sh, e.atr, c, up && up.srcs, dn && dn.srcs, code);
+    // 次日计划：不再强制两种来源共振，使用全部有效候选位
+var lv = (e.allLevels || e.levels || []).filter(function (l) {
+  return l && l.p > 0 && isFinite(l.p);
+});
+
+// 昨收上方最近候选位作为计划卖价
+var up = lv.filter(function (l) {
+  return l.p > e.pc;
+}).sort(function (a, b) {
+  return a.p - b.p;
+})[0];
+
+// 昨收下方最近候选位作为计划买回价
+var dn = lv.filter(function (l) {
+  return l.p < e.pc;
+}).sort(function (a, b) {
+  return b.p - a.p;
+})[0];
+
+rec.plan = mkPlan(
+  up && up.p,
+  dn && dn.p,
+  sh,
+  e.atr,
+  c,
+  up && up.srcs,
+  dn && dn.srcs,
+  code
+);
     if (rec.plan.sellPrice) rec.ctrl = genCtrl(code, sig, e.pc, e.atr, sh, c);
     else { rec.status = 'noplan'; rec.final = 1; }
     return rec;
