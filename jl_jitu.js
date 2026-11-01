@@ -281,7 +281,15 @@
     for (k = 0; k < res.signals.length; k += 1) {
       s = res.signals[k];
       left = s.start + hz - last; /* v9(批4)三态: 失效=dead / 已过 horizon 根未失效=done / 其余=watch(还剩 left 根) */
-      mk.push({ type: s.type, time: s.time, price: s.price, level: s.level, rowIdx: idx[s.start], dead: s.invalidatedAt != null,
+      mk.push({
+  type: s.type,
+  time: s.time,
+  price: s.price,
+  level: s.level,
+  rowIdx: idx[s.start],
+  barIdx: s.start,
+  fullTs: jituNormT(rows[idx[s.start]].t),
+  dead: s.invalidatedAt != null,
         st: s.invalidatedAt != null ? "dead" : (left <= 0 ? "done" : "watch"), left: left > 0 ? left : 0,
         why: s.invalidatedWhy ? (s.invalidatedWhy + " · " + s.invalidatedTs) : s.reason, reason: s.reason });
     }
