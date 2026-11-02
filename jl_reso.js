@@ -198,7 +198,7 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
     var card = document.getElementById('jlResoCardJL');
     if (!card) {
       card = document.createElement('section');
-      card.className = 'glass'; card.id = 'jlResoCardJL';
+      card.className = 'glass'; card.id = 'jlResoCardJL'; card.style.display = 'none'; /* jl-qtyfix: 持仓页不显示(用户已删), 共振位/次日计划只在做T作战屏看; 卡留着隐藏 → 台账和次日计划照常在后台算 */
       var sp = holds.querySelector('.smallPrint');
       if (sp) holds.insertBefore(card, sp); else holds.appendChild(card);
     }

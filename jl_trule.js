@@ -216,15 +216,36 @@ rec.plan = mkPlan(
     return Math.max(p.stopPrice, rt(sp + d, p.tick || 0.01));
   }
 
-  /* 15分K逐根模拟(p 是冻结的计划) */
-  function sim15(p, bars, final) {
+  /* jl-fibplan (11-03, 1分线21天回测后用户定): 按票换算法, 计划价位冻结不变, 只换"怎么卖/怎么买回"
+     兆易 fibBuy: 卖价照旧; 买回 = 卖价 − 0.618×(卖价 − 卖出前当天最低), 且至少比卖价低1%
+     永鼎 fibSell: 买回价照旧; 卖 = 分时尺A(冲高后回落再反弹)到 0.618, 且 ≥ 昨收、≥ 买回价/0.99
+     尺A = jl_card5d autoCalc 同规则, 只用卖出这根之前的K线(不偷看) */
+  var FIBM = { '603986': 'fibBuy', '600105': 'fibSell' };
+  function fibModeOf(code) { return FIBM[String(code).replace(/\D/g, '')] || ''; }
+  function minSellOf(p, pc) { var tk = p.tick || 0.01; return Math.max(rt((pc || 0) + tk, tk), rt(Math.ceil(p.buyPrice / 0.99 / tk) * tk, tk)); }
+  function rulerA618(bars, n) { /* bars[0..n-1] 的尺A反弹0.618价; 不是反弹尺/幅度不够 → 0 */
+    if (n < 2) return 0;
+    var op = bars[0].o, iH = 0, k, iLa = -1, iLb = -1;
+    for (k = 1; k < n; k++) if (bars[k].h > bars[iH].h && (iH !== 0 || bars[k].h >= op * 1.004)) iH = k;
+    for (k = iH + 1; k < n; k++) if (iLa < 0 || bars[k].l < bars[iLa].l) iLa = k;
+    for (k = 0; k < iH; k++) if (iLb < 0 || bars[k].l < bars[iLb].l) iLb = k;
+    if (!(iLa >= 0 && (iLb < 0 || bars[iLa].l < bars[iLb].l))) return 0;
+    var H = bars[iH].h, L0 = bars[iLa].l;
+    return H - L0 > H * 0.004 ? L0 + (H - L0) * 0.618 : 0;
+  }
+  function fibBuyOf(p, sp, lowB) { var tk = p.tick || 0.01, B = rt(sp - 0.618 * (sp - lowB), tk), cap = rt(Math.floor(sp * 0.99 / tk) * tk, tk); return Math.min(B, cap); }
+
+  /* 15分K逐根模拟(p 是冻结的计划; fm/pc = jl-fibplan 按票算法/昨收) */
+  function sim15(p, bars, final, fm, pc) {
     if (!p || !p.sellPrice) return { st: 'none' };
-    var S = p.sellPrice, B = p.buyPrice, stop = 0, state = 0, sp = 0, bp = 0, i, b;
+    var S = p.sellPrice, B = p.buyPrice, stop = 0, state = 0, sp = 0, bp = 0, i, b, lowB = Infinity;
     for (i = 0; i < bars.length; i++) {
       b = bars[i];
       if (state === 0) {
-        if (b.h < S) continue;
+        if (fm === 'fibSell') { var a6 = rulerA618(bars, i); S = a6 ? Math.max(rt(a6, p.tick || 0.01), minSellOf(p, pc)) : Infinity; }
+        if (b.h < S) { lowB = Math.min(lowB, b.l); continue; }
         sp = b.o >= S ? b.o : S; state = 1; stop = stopOf(p, sp);
+        if (fm === 'fibBuy') B = fibBuyOf(p, sp, Math.min(lowB, b.o));
         /* 卖出这根: 不许买回; 但最高价已到止损 → 卖出后价格必然再涨到止损(开盘<卖价时须先过卖价, 开盘≥卖价时最高价在开盘之后) */
         if (b.h >= stop) { bp = stop; state = 3; break; }
         continue;
@@ -237,7 +258,7 @@ rec.plan = mkPlan(
     }
     if (state === 0) return { st: final ? 'idle' : 'wait', net: 0 };
     if (state === 1) {
-      if (!final) return { st: 'sold', sp: sp, stop: stop };
+      if (!final) return { st: 'sold', sp: sp, stop: stop, B: B };
       bp = bars[bars.length - 1].c;
       return { st: 'open', sp: sp, bp: bp, stop: stop, net: netOf(p, sp, bp) };
     }
@@ -245,8 +266,9 @@ rec.plan = mkPlan(
   }
 
   /* 只有日线: 卖出后最高价到止损且最低价没到买回价 → 必然止损; 最低价到了买回价 → 低点在卖出前还是后判不出 → 顺序不明 */
-  function simDaily(p, d, final) {
+  function simDaily(p, d, final, fm) {
     if (!p || !p.sellPrice) return { st: 'none' };
+    if (fm) { if (!final) return { st: 'wait', net: 0 }; return { st: 'unclear', why: '只有日线, 斐波卖/买点还原不出' }; } /* jl-fibplan: 动态价位要分时K才算得出 */
     if (d.h < p.sellPrice) return { st: final ? 'idle' : 'wait', net: 0 };
     var sp = d.o >= p.sellPrice ? d.o : p.sellPrice, stop = stopOf(p, sp);
     if (!final) return { st: 'sold', sp: sp, stop: stop };
@@ -258,21 +280,25 @@ rec.plan = mkPlan(
   }
 
   function update(rec) {
-    if (rec.final) return false;
     var p0 = rec.plan, q0 = window.jlHoldQtyJL ? Number(window.jlHoldQtyJL(rec.code)) : NaN;
+    var over = !!rec.tradeDate && rec.tradeDate < today(), back = false; /* jl-qtyfix: 交易日过完才定死作废; 当天把持仓补回来 → 计划恢复 */
+    if (!rec.tradeDate) try { var ib = window.jlResoInputJL && window.jlResoInputJL(rec.code); over = !!(ib && ib.bars && ib.bars.some(function (b) { var x = day(b.t); return x > rec.signalDate && x < today(); })); } catch (e) { }
+    if (rec.status === 'void' && !over && p0 && p0.sellPrice && isFinite(q0) && q0 >= p0.sellQty) { rec.final = 0; rec.status = 'pending'; delete rec.res; delete rec.cres; back = true; }
+    if (rec.final) return false;
     if (p0 && p0.sellPrice && isFinite(q0) && q0 < p0.sellQty) { /* 减仓到不够计划卖出的股数: 这张计划已不可执行 */
-      rec.status = 'void'; rec.final = 1; rec.res = { st: 'void', why: '当前持仓' + q0 + '股 < 计划卖出' + p0.sellQty + '股' }; rec.cres = { st: 'void' };
-      return true;
+      var chg0 = rec.status !== 'void' || rec.final !== (over ? 1 : 0);
+      rec.status = 'void'; rec.final = over ? 1 : 0; rec.res = { st: 'void', why: '当前持仓' + q0 + '股 < 计划卖出' + p0.sellQty + '股' }; rec.cres = { st: 'void' };
+      return chg0;
     }
     var inp = window.jlResoInputJL && window.jlResoInputJL(rec.code);
-    if (!inp || !inp.bars) return false;
+    if (!inp || !inp.bars) return back;
     var t = today(), m = mins(), i, dd;
     if (!rec.tradeDate) {
       for (i = 0; i < inp.bars.length; i++) {
         dd = day(inp.bars[i].t);
         if (dd > rec.signalDate && dd <= t && (dd < t || m >= 570)) { rec.tradeDate = dd; break; } /* 今天的日K开盘(09:30)前不算, 防占位K */
       }
-      if (!rec.tradeDate) return false;
+      if (!rec.tradeDate) return back;
     }
     var td = rec.tradeDate, d = null;
     inp.bars.forEach(function (b) { if (day(b.t) === td) d = b; });
@@ -285,8 +311,8 @@ rec.plan = mkPlan(
     }
     else if (!freshFor(rec.code, td) && (rec.wait || 0) < WAIT) { rec.wait = (rec.wait || 0) + 1; askRefresh(rec.code); return true; } /* 旧快照或没拉到: 重拉并等待, 先别用日线定稿 */
     else { use15 = false; fin = true; } /* 收盘后拉过仍缺根(缓存截断), 或等满次数: 用日线 */
-    function run(p) { return use15 ? sim15(p, b15, fin) : simDaily(p, d, fin); }
-    rec.res = run(rec.plan);
+    function run(p, fm) { return use15 ? sim15(p, b15, fin, fm, rec.prevClose) : simDaily(p, d, fin, fm); }
+    rec.res = run(rec.plan, fibModeOf(rec.code)); /* jl-fibplan: 对照组仍按原规则 */
     rec.cres = rec.ctrl && rec.ctrl.sellPrice ? run(rec.ctrl) : { st: 'none' };
     rec.src = use15 ? '15分' : '日线';
     rec.status = rec.res.st;
@@ -346,6 +372,7 @@ rec.plan = mkPlan(
     if (st === 'unclear') return { k: 'idle', t: '顺序不明', c: AMB };
     if (st === 'void') return { k: 'idle', t: '持仓变化·作废', c: GRY };
     if (st === 'nodata') return { k: 'idle', t: '数据不足', c: GRY };
+    if (fibModeOf(code) === 'fibSell') return { k: 'wait', t: '未触发 · 等反弹到尺A 0.618', c: GRY }; /* jl-fibplan */
     return { k: 'wait', t: '未触发 · 等涨到 ' + f2(m.plan.sellPrice), c: GRY };
   }
   function chip(t, c) {
@@ -362,40 +389,19 @@ rec.plan = mkPlan(
       if (!p.sellPrice) { A += card('<b>' + x.name + '</b> ' + chip(g.t, g.c) + '<br>' + W + p.none + E, g.c); return A; }
       var q0 = 0; try { q0 = Number(window.jlHoldQtyJL(x.code)) || 0; } catch (e) { }
       var qn = q0 > 0 ? shOf(x.code, q0, cfg()) : 0, qty = qn > 0 ? qn : p.sellQty; /* 每轮股数跟你填的联动, 不用生成当天的旧数 */
-      var r = m.res, ex = '';  /* 次日计划预计收益：使用当前页面实际显示的计划股数 */ var spreadYuan = p.sellPrice - p.buyPrice; var grossEstimate = spreadYuan * qty; var netEstimate = netOf(   { sellQty: qty, fee: p.fee },   p.sellPrice,   p.buyPrice );
+      var r = m.res, ex = '', fm = fibModeOf(x.code), tk = p.tick || 0.01; /* jl-fibplan: 卡片简写(用户11-03: 不要写那么长) */
+      var sTxt = fm === 'fibSell' ? '尺A反弹0.618(≥' + f2(minSellOf(p, m.prevClose)) + ')' : f2(p.sellPrice);
+      var bTxt = fm === 'fibBuy' ? '斐波0.618(≤' + f2(rt(Math.floor(p.sellPrice * 0.99 / tk) * tk, tk)) + ')' : f2(p.buyPrice);
+      var stTxt = fm === 'fibSell' ? '卖价+' + f2(p.stopDist != null ? p.stopDist : p.stopPrice - p.sellPrice) : f2(p.stopPrice);
       if (r) {
-        if (r.st === 'sold') ex = '已卖 <b>' + f2(r.sp) + '</b> · 等回到 ' + f2(p.buyPrice) + ' 买回 · 止损 ' + f2(r.stop);
+        if (r.st === 'sold') ex = '已卖 <b>' + f2(r.sp) + '</b> → 等 ' + f2(r.B != null ? r.B : p.buyPrice) + ' 买回 · 止损 ' + f2(r.stop);
         if (r.st === 'done' || r.st === 'stop') ex = f2(r.sp) + ' 卖 → ' + f2(r.bp) + ' 买 · <b style="color:' + (r.net >= 0 ? RED : GRN) + '">' + money(r.net) + '</b>';
         if (r.st === 'open') ex = '按收盘 ' + f2(r.bp) + ' 算 <b>' + money(r.net) + '</b>';
         if (r.st === 'unclear' || r.st === 'void') ex = r.why;
       }
-       A += card(
-
-        '<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
-
-        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + f2(p.sellPrice) + '</b> × ' + qty + '股 → <b style="color:' + GRN + '">买回 ' + f2(p.buyPrice) + '</b> × ' + qty + '股</span>' +
-
-        '<br>' + W +
-
-        '每股价差 ' + spreadYuan.toFixed(2) + ' 元' +
-
-        ' · 本轮毛收益 ' + money(grossEstimate) +
-
-        ' · 扣费后净收益 <b>' + money(netEstimate) + '</b>' + E +
-
-        '<br>' + W +
-
-        '依据' + m.signalDate.slice(5) + '收盘 ' + f2(m.prevClose) +
-
-        ' · 卖价依据：' + (srcTxt(p.sellSrcs) || '结构候选位') +
-
-        ' · 买回依据：' + (srcTxt(p.buySrcs) || '结构候选位') +
-
-        ' · 价差 ' + (p.expectedSpread * 100).toFixed(1) + '%' +
-
-        ' · 止损价 ' + f2(p.stopPrice) + E +
-
-        (ex ? '<br>' + ex : ''), g.c);
+      A += card('<b style="font-size:14px">' + x.name + '</b> ' + chip(g.t, g.c) +
+        '<br><span style="font-size:14px"><b style="color:' + RED + '">卖 ' + sTxt + '</b> → <b style="color:' + GRN + '">买回 ' + bTxt + '</b> · ' + qty + '股</span>' +
+        '<br>' + W + '止损 ' + stTxt + E + (ex ? '<br>' + ex : ''), g.c);
     return A;
   }
   function render(host) {
