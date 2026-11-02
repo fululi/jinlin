@@ -1836,7 +1836,75 @@ function render(){
 render();
 setInterval(render,3000);
 })();
+</script><script>
+/* jl-xh2: 十字线改版——轻点/长按出现, 抬手不消失, 点图外或10秒后消失 */
+(function(){
+var svgEl=document.getElementById('ch');if(!svgEl)return;
+var active=false,pend=false,timer=null,hideT=null,sx=0,sy=0;
+svgEl.style.touchAction='pan-y';
+function inSvg(t){return t===svgEl||(t&&svgEl.contains(t))}
+function hide(){
+  var g=document.getElementById('xh');if(g&&g.parentNode)g.parentNode.removeChild(g);
+  active=false;pend=false;clearTimeout(timer);clearTimeout(hideT);svgEl.style.touchAction='pan-y';
+}
+function draw(cx){
+  try{
+    if(!LIVE.pts||!LIVE.pts.length)return;
+    var r=svgEl.getBoundingClientRect(),vx=(cx-r.left)/r.width*360,best=null,bd=1e9;
+    LIVE.pts.forEach(function(q){var x=xOfHmJL(q.hm);if(x!=null&&Math.abs(x-vx)<bd){bd=Math.abs(x-vx);best={x:x,q:q}}});
+    if(!best)return;
+    var old=document.getElementById('xh');if(old&&old.parentNode)old.parentNode.removeChild(old);
+    var g=el('g',{id:'xh'}),y=Y(best.q.p),hm=String(best.q.hm).padStart(4,'0');
+    var pp=LIVE.pc>0?(best.q.p/LIVE.pc-1)*100:null;
+    var df=LIVE.last>0?best.q.p-LIVE.last:null;
+    g.appendChild(el('line',{x1:best.x,y1:PY0,x2:best.x,y2:PY0+PH,stroke:'#fff','stroke-width':.9,'stroke-dasharray':'3 3',opacity:.9}));
+    g.appendChild(el('line',{x1:PX0,y1:y,x2:LX-6,y2:y,stroke:'#fff','stroke-width':.9,'stroke-dasharray':'3 3',opacity:.9}));
+    g.appendChild(el('circle',{cx:best.x,cy:y,r:3.6,fill:'#fff'}));
+    var s=hm.slice(0,2)+':'+hm.slice(2)+'  '+best.q.p.toFixed(2)
+      +(pp==null?'':'  '+(pp>=0?'+':'')+pp.toFixed(2)+'%')
+      +(df==null?'':'  距现价'+(df>=0?'+':'')+df.toFixed(2));
+    var w=s.length*5.6+10,left=best.x>180,x0=left?PX0+2:LX-8-w;
+    g.appendChild(el('rect',{x:x0,y:PY0-2,width:w,height:15,rx:4,fill:'rgba(10,14,19,.85)',stroke:'rgba(255,255,255,.35)','stroke-width':.6}));
+    var t=el('text',{x:x0+5,y:PY0+9,fill:'#fff','font-size':9.5,'font-weight':600});t.textContent=s;g.appendChild(t);
+    svgEl.appendChild(g);
+    clearTimeout(hideT);hideT=setTimeout(hide,10000);
+  }catch(e){}
+}
+function on(){active=true;pend=false;svgEl.style.touchAction='none'}
+/* 挡掉旧版十字线(它抬手1.5秒就删) */
+['pointerleave','pointercancel'].forEach(function(n){
+  window.addEventListener(n,function(e){
+    if(!inSvg(e.target))return;
+    e.stopPropagation();
+    if(e.pointerType==='mouse'&&n==='pointerleave')hide();
+  },true);
+});
+window.addEventListener('pointerdown',function(e){
+  if(!inSvg(e.target)){if(active)hide();return}
+  e.stopPropagation();
+  if(e.pointerType==='mouse'){active=true;draw(e.clientX);return}
+  sx=e.clientX;sy=e.clientY;clearTimeout(timer);
+  if(active){draw(e.clientX);return}
+  pend=true;
+  timer=setTimeout(function(){if(!pend)return;on();draw(sx);try{navigator.vibrate&&navigator.vibrate(8)}catch(_){}},220);
+},true);
+window.addEventListener('pointermove',function(e){
+  var o=inSvg(e.target);
+  if(e.pointerType==='mouse'){if(o){e.stopPropagation();draw(e.clientX)}return}
+  if(!o&&!active)return;
+  if(o)e.stopPropagation();
+  if(!active){if(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8){pend=false;clearTimeout(timer)}return}
+  draw(e.clientX);
+},true);
+window.addEventListener('pointerup',function(e){
+  if(!inSvg(e.target))return;
+  e.stopPropagation();
+  if(e.pointerType!=='mouse'&&pend&&!active){pend=false;clearTimeout(timer);on();draw(e.clientX)}
+},true);
+svgEl.addEventListener('touchmove',function(e){if(active&&e.cancelable)e.preventDefault()},{passive:false});
+})();
 </script>
+
 
 
 </html>
