@@ -464,9 +464,9 @@ if (ext && LIVE.pts[ext.ix]) {
     var lpJL = LIVE.pts[LIVE.pts.length - 1].p;
 
     var rtJL = dirH === 1 ? Math.max(0, (ext.p - lpJL) / ext.p) : Math.max(0, (lpJL - ext.p) / ext.p), prJL = thr > 0 ? rtJL / thr : 0;
-    /* 虚线圈按"离确认多近"换样子: <40% 淡(贴着极值,不写字) / 40~80% 黄+数字 / >=80% 橙红加粗+数字 */
-    var stJL = prJL >= 0.8 ? { c: '#ff7a2e', w: 2.2, o: 1 } : prJL >= 0.4 ? { c: '#ffd66e', w: 1.7, o: 0.95 } : { c: '#ff8585', w: 1.2, o: 0.4 };
-    var txtJL = prJL >= 0.4 ? (rtJL * 100).toFixed(1) + '/' + (thr * 100).toFixed(1) : '';
+    /* 虚线圈按"离确认多近"换色: <40% 淡粉 / 40~80% 黄 / >=80% 橙红加粗; 三档都写 回落|反弹 x/阈值 */
+    var stJL = prJL >= 0.8 ? { c: '#ff7a2e', w: 2.2, o: 1 } : prJL >= 0.4 ? { c: '#ffd66e', w: 1.7, o: 0.95 } : { c: '#ffb0b0', w: 1.5, o: 0.9 };
+    var txtJL = (dirH === 1 ? '回落 ' : '反弹 ') + (rtJL * 100).toFixed(1) + '/' + (thr * 100).toFixed(1);
     if (dirH === 1) {
       gh.appendChild(el('circle', {
         cx: cx, cy: cy - 5, r: 5,
