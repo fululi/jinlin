@@ -298,6 +298,8 @@
     var netLast = "", nkey, lag = 0;
     for (nkey in net) if (fin(net[nkey]) && nkey > netLast) netLast = nkey;
     for (k = last; k >= 0 && bars[k].ts > netLast; k -= 1) lag += 1;
+    try { jituLog(code, mk, rows, iEnd); } catch (eLg) { }
+
     return { marks: mk, day: day, n: rows.length, upTo: lag ? (lag > last ? "" : bars[last - lag].ts) : bars[last].ts, lag: lag };
   }
 
@@ -384,6 +386,8 @@
   }
   function onChip(inst, ev) {
     var comp = _cache[inst.code], ch = inst._chip || {};
+    if (ch.kind === "none") { showStat(ev.clientX, ev.clientY); return; }
+
     if (comp && comp.marks && comp.marks.length) { showList(comp.marks, ev.clientX, ev.clientY, upToTxt(comp).replace(/^ · /, "")); return; }
     if (ch.kind === "retry") {
       var nc = _netCache[inst.code];
@@ -541,6 +545,84 @@
     } catch (e) { }
   }
 
+  /* ===== jl-log: 信号复盘记录(积/突触发后10、30分钟走势, 只存本机) ===== */
+var LOGK = "jl_jitu_log_v1";
+function logLoad() { try { return JSON.parse(global.localStorage.getItem(LOGK) || "{}") || {}; } catch (e) { return {}; } }
+function logSave(o) {
+  try {
+    var ks = Object.keys(o);
+    if (ks.length > 1500) { ks.sort(function (a, b) { return o[a].t < o[b].t ? -1 : 1; }); for (var q = 0; q < ks.length - 1500; q += 1) delete o[ks[q]]; }
+    global.localStorage.setItem(LOGK, JSON.stringify(o));
+  } catch (e) { }
+}
+function lsg(x) { return (x >= 0 ? "+" : "") + x.toFixed(2) + "%"; }
+function jituLog(code, mk, rows, iEnd) {
+  if (!mk || !mk.length || !rows || !rows.length) return;
+  var L = logLoad(), ch = false, k, m, key, e, j, day, p, hi, lo, cnt, tN;
+  for (k = 0; k < mk.length; k += 1) {
+    m = mk[k];
+    if (!m.fullTs || !fin(m.price) || !(m.rowIdx >= 0)) continue;
+    key = code + "|" + m.fullTs + "|" + m.type;
+    e = L[key];
+    if (!e) { e = L[key] = { c: code, y: m.type, t: m.fullTs, p: m.price }; ch = true; }
+    if (e.dn) continue;
+    day = m.fullTs.slice(0, 10); p = m.price; hi = -Infinity; lo = Infinity; cnt = 0;
+    for (j = m.rowIdx + 1; j < iEnd && cnt < 30; j += 1) {
+      tN = jituNormT(rows[j].t);
+      if (tN.slice(0, 10) !== day) break;
+      cnt += 1;
+      hi = Math.max(hi, Number(rows[j].h) || Number(rows[j].c));
+      lo = Math.min(lo, Number(rows[j].l) || Number(rows[j].c));
+      if (cnt === 10) { e.r10 = +((Number(rows[j].c) / p - 1) * 100).toFixed(2); ch = true; }
+      if (cnt === 30) { e.r30 = +((Number(rows[j].c) / p - 1) * 100).toFixed(2); e.up = +((hi / p - 1) * 100).toFixed(2); e.dd = +((lo / p - 1) * 100).toFixed(2); e.dn = 1; ch = true; }
+    }
+    if (!e.dn && cnt > 0 && iEnd > 0 && jituNormT(rows[iEnd - 1].t).slice(0, 10) === day && jituNormT(rows[iEnd - 1].t).slice(11, 16) >= "15:00") {
+      e.up = +((hi / p - 1) * 100).toFixed(2); e.dd = +((lo / p - 1) * 100).toFixed(2); e.dn = 1; ch = true;
+    }
+  }
+  if (ch) logSave(L);
+}
+function logStat() {
+  var L = logLoad(), g = {}, k, e, id, s;
+  for (k in L) {
+    e = L[k]; id = e.c + " " + e.y;
+    s = g[id] = g[id] || { n: 0, a: 0, a10: 0, w10: 0, b: 0, a30: 0, w30: 0, u: 0, d: 0, nu: 0 };
+    s.n += 1;
+    if (fin(e.r10)) { s.a += 1; s.a10 += e.r10; if (e.r10 > 0) s.w10 += 1; }
+    if (fin(e.r30)) { s.b += 1; s.a30 += e.r30; if (e.r30 > 0) s.w30 += 1; }
+    if (fin(e.up) && fin(e.dd)) { s.nu += 1; s.u += e.up; s.d += e.dd; }
+  }
+  return g;
+}
+function statHtml() {
+  var g = logStat(), ids = Object.keys(g).sort(), h = '<b style="display:block;margin-top:8px;color:#dffbf7">信号复盘 · 触发后走势</b>', k, s, id;
+  if (!ids.length) return h + "<i>还没有记录。以后每个积/突信号出现后，会自动记下10、30分钟后的涨跌，需要盘中开着页面。</i>";
+  for (k = 0; k < ids.length; k += 1) {
+    id = ids[k]; s = g[id];
+    h += '<span style="margin-top:5px;color:' + (id.slice(-1) === "积" ? "#81e6d9" : "#ffc24d") + '">' + id + " · " + s.n + "次</span>"
+      + "<i>" + (s.a ? "10分钟后 均" + lsg(s.a10 / s.a) + " 涨占" + Math.round(s.w10 / s.a * 100) + "%" : "10分钟后 暂无")
+      + (s.b ? " · 30分钟后 均" + lsg(s.a30 / s.b) + " 涨占" + Math.round(s.w30 / s.b * 100) + "%" : " · 30分钟后 暂无")
+      + (s.nu ? " · 30分钟内最大上冲" + lsg(s.u / s.nu) + " 最大下探" + lsg(s.d / s.nu) : "")
+      + (s.n < 20 ? " · 样本不足20次，别当结论" : "") + "</i>";
+  }
+  return h;
+}
+function showStat(cx, cy) {
+  try {
+    hideTip(); tipCss();
+    var d = document.createElement("div");
+    d.className = "jituTipJL";
+    d.innerHTML = '<b style="color:#dffbf7">今日暂无信号</b><i>积只在10:30前出现，突需窄幅蓄势后放量越上沿。</i>' + statHtml();
+    d.style.cssText = "position:fixed;z-index:99998;max-width:260px;max-height:52vh;overflow:auto;background:rgba(8,20,28,.97);border:1px solid #81e6d966;border-radius:9px;padding:8px 10px;box-shadow:0 6px 18px #000a";
+    (document.body || document.documentElement).appendChild(d);
+    var tw = d.offsetWidth, th = d.offsetHeight;
+    d.style.left = Math.max(6, Math.min(cx - tw / 2, (global.innerWidth || 360) - tw - 6)) + "px";
+    var y = cy - th - 14; if (y < 6) y = Math.min(cy + 16, (global.innerHeight || 640) - th - 6);
+    d.style.top = Math.max(6, y) + "px";
+    _tipEl = d; _tipTm = setTimeout(hideTip, 12000);
+  } catch (e) { }
+}
+
   global.jlJituHookJL = function (canvas, api, o) {
     try {
       if (!canvas || !api || !api.geom || !api.on) return;
@@ -654,7 +736,7 @@
         h += '<span style="color:' + col + ';margin-top:5px">' + (m.type === "积" ? "\u25CF " : "\u25B2 ") + m.type + " " + (m.time || "") + " · 触发 " + (fin(m.price) ? m.price.toFixed(2) : "—") + stTxt(m) + "</span><i>" + esc(m.why) + "</i>";
       }
       var d = document.createElement("div");
-      d.className = "jituTipJL"; d.innerHTML = h;
+      d.className = "jituTipJL"; d.innerHTML = h + statHtml(); 
       d.style.cssText = "position:fixed;z-index:99998;max-width:260px;max-height:52vh;overflow:auto;background:rgba(8,20,28,.97);border:1px solid #81e6d966;border-radius:9px;padding:8px 10px;box-shadow:0 6px 18px #000a";
       (document.body || document.documentElement).appendChild(d);
       var tw = d.offsetWidth, th = d.offsetHeight;
