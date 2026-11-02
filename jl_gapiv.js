@@ -199,7 +199,7 @@
     const gapRow = (g) => {
       const z = (g.hi - g.lo) / g.mid < 0.0015 ? f2(g.mid) : f2(g.lo) + "–" + f2(g.hi);
       return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>"
-        + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : "") + "</span>"
+        + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : (() => { const oh = Math.max(...g.mem.map((m) => m.hi)), ol = Math.min(...g.mem.map((m) => m.lo)), u = oh > ol ? (g.bull ? (oh - g.hi) : (g.lo - ol)) / (oh - ol) : 0; return u >= 0.05 ? '<span class="tag tIn">最深已回' + Math.round(u * 100) + "%</span>" : ""; })()) + "</span>"
         + '<span class="r">' + (g.vsOp != null ? "距开盘 <b>" + sg(g.vsOp) + "</b>" : "") + "<br>距现价 <b>" + sg(g.dist) + "</b></span>"
         + (g.rt ? '<span class="n"><span>' + g.rt + "</span></span>" : "")
         + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + b.t.slice(4, 6) + "-" + b.t.slice(6, 8) + (b.t.length >= 12 ? " " + b.t.slice(8, 10) + ":" + b.t.slice(10, 12) : "") + "</span>").join("")
