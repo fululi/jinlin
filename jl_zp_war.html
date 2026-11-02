@@ -1700,5 +1700,88 @@ $('szR').oninput = calcSize; calcSize();
   setMode(wd >= 1 && wd <= 5 && hm >= 900 && hm <= 1510 ? 'live' : 'plan');
 })();
 </script>
-</body>
+</body><style>
+#myT summary{padding:8px 12px;cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between}
+#myT summary::-webkit-details-marker{display:none}
+#myT .mt-b{padding:0 10px 10px}
+#myT .mt-r{display:flex;align-items:center;gap:4px;margin-top:8px;flex-wrap:wrap}
+#myT input{width:60px;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--txt);font:inherit;text-align:center}
+#myT input.q{width:54px}
+#myT .mt-c{font-size:11.5px;color:var(--dim);margin:2px 0 0 4px;line-height:1.5}
+#myT button{border:1px solid var(--line);background:none;border-radius:6px;color:var(--dim);padding:2px 8px}
+#myT .up{color:var(--red)}#myT .dn{color:var(--green)}
+</style>
+<script>
+/* jl-myT: 我的实际做T对照(独立模块, 只读引擎数据, 不改现有逻辑) */
+(function(){
+var host=document.getElementById('lad');
+if(!host||!host.parentNode)return;
+var box=document.createElement('details');
+box.id='myT';
+box.style.cssText='order:6;margin:0 10px 8px;border:1px solid var(--line);border-radius:12px;background:var(--sub);font-size:12.5px';
+host.parentNode.insertBefore(box,host.nextSibling);
+function sg(v){return (v>=0?'+':'')+v.toFixed(2)}
+function code(){try{return (STK&&STK.code)||'600105'}catch(e){return '600105'}}
+function key(){var d=new Date();return 'jl_myT_v1_'+code()+'_'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
+function load(){try{return JSON.parse(localStorage.getItem(key())||'[]')}catch(e){return []}}
+function save(L){try{localStorage.setItem(key(),JSON.stringify(L))}catch(e){}}
+function G(){try{return LIVE}catch(e){return {}}}
+function engR(i){
+  var L=G(),E=L.eng;if(!E)return null;
+  if(E.rounds&&E.rounds[i])return {sp:E.rounds[i].sp,bp:E.rounds[i].bp};
+  if(i===(E.rounds?E.rounds.length:0)&&E.sp!==null&&E.sp!==undefined)return {sp:E.sp,bp:null};
+  return null;
+}
+function feeOf(s,b,q){try{return fee(s*q,true)+fee(b*q,false)}catch(e){return 0}}
+function render(force){
+  var a=document.activeElement;
+  if(!force&&box.contains(a)&&a.tagName==='INPUT')return;
+  var L=load(),g=G(),sh=g.sh>0?g.sh:100,
+      DH=g.dhi>0?g.dhi:(g.hi||0),
+      DL=(g.dlo>0&&g.dlo<1e8)?g.dlo:(g.lo||0),
+      last=g.last||0,tot=0,h='';
+  L.forEach(function(t,i){
+    var s=+t.s||0,b=+t.b||0,q=+t.q||sh,eg=engR(i),c=[],net=null,fl=false;
+    if(s>0){
+      if(eg&&eg.sp)c.push('卖比引擎'+sg(s-eg.sp));
+      if(DH>0)c.push('距日高'+sg(s-DH));
+    }
+    if(b>0){
+      if(eg&&eg.bp)c.push('买比引擎'+sg(b-eg.bp));
+      if(DL>0)c.push('距日低'+sg(b-DL));
+    }
+    if(s>0&&b>0){net=(s-b)*q-feeOf(s,b,q)}
+    else if(s>0&&last>0){net=(s-last)*q-feeOf(s,last,q);fl=true}
+    if(net!==null){
+      if(!fl)tot+=net;
+      c.push((fl?'浮 ':'净 ')+'<b class="'+(net>=0?'up':'dn')+'">'+sg(net)+'</b>');
+    }
+    h+='<div class="mt-r"><b>T'+(i+1)+'</b>卖<input type="number" inputmode="decimal" step="0.01" data-i="'+i+'" data-f="s" value="'+(t.s===undefined?'':t.s)+'">买<input type="number" inputmode="decimal" step="0.01" data-i="'+i+'" data-f="b" value="'+(t.b===undefined?'':t.b)+'">股<input class="q" type="number" inputmode="numeric" step="100" data-i="'+i+'" data-f="q" value="'+(t.q||sh)+'"><button data-del="'+i+'">✕</button></div>'+(c.length?'<div class="mt-c">'+c.join(' · ')+'</div>':'');
+  });
+  box.innerHTML='<summary><span>我的T（实盘对照）</span><span>'+(L.length?L.length+'笔 · 已平净 <b class="'+(tot>=0?'up':'dn')+'">'+sg(tot)+'</b>':'点开填写 ▾')+'</span></summary><div class="mt-b">'+h+'<div style="margin-top:8px"><button data-add="1">＋ 加一笔</button></div></div>';
+}
+box.addEventListener('change',function(e){
+  var t=e.target;if(!t.getAttribute||t.getAttribute('data-i')===null)return;
+  var L=load(),i=+t.getAttribute('data-i'),f=t.getAttribute('data-f');
+  if(!L[i])return;
+  L[i][f]=t.value===''?'':+t.value;
+  save(L);render(true);
+});
+box.addEventListener('click',function(e){
+  var t=e.target;if(!t.getAttribute)return;
+  if(t.getAttribute('data-add')){
+    var L=load(),g=G();
+    L.push({s:'',b:'',q:g.sh>0?g.sh:100});
+    save(L);box.open=true;render(true);
+  }else if(t.getAttribute('data-del')!==null){
+    var L2=load();
+    L2.splice(+t.getAttribute('data-del'),1);
+    save(L2);render(true);
+  }
+});
+render(true);
+setInterval(render,3000);
+})();
+</script>
+
 </html>
