@@ -1774,7 +1774,7 @@ $('szR').oninput = calcSize; calcSize();
     try { document.body.classList.add('injlin'); } catch (e) { } /* 须在setMode后: 其className整写会抹掉先加的类 */
     return;
   }
-  setMode(wd >= 1 && wd <= 5 && hm >= 900 && hm <= 1510 ? 'live' : 'plan');
+  setMode('live'); /* 直接打开网址也进实盘页(不再按时段切盘前计划) */
 })();
 </script>
 </body><style>
