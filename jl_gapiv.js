@@ -11,6 +11,10 @@
   const dg = (t) => String(t).replace(/\D/g, "");
   const hm = (t) => { const d = dg(t); return d.length >= 12 ? d.slice(8, 10) + ":" + d.slice(10, 12) : ""; };
   const md = (t) => { const d = dg(t); return d.slice(4, 6) + "-" + d.slice(6, 8); };
+  const PMN = { "5分": 5, "15分": 15, "30分": 30 };
+const bst = (m) => { const d = dg(m.t); if (!PMN[m.lv] || d.length < 12) return m.t; const x = +d.slice(8, 10) * 60 + +d.slice(10, 12) - PMN[m.lv]; return d.slice(0, 8) + String(Math.floor(x / 60)).padStart(2, "0") + String(x % 60).padStart(2, "0"); };
+const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : ""); };
+
   const f2 = (x) => (+x).toFixed(2), sg = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
   const gC = (b) => (b ? "#00f0ff" : "#ffe600");   /* 青蓝↓ = 要跌下来补, 黄↑ = 要涨上去补 */
 
@@ -210,10 +214,10 @@ dgp.forEach((g) => {
         + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : (() => { const oh = Math.max(...g.mem.map((m) => m.hi)), ol = Math.min(...g.mem.map((m) => m.lo)), u = oh > ol ? (g.bull ? (oh - g.hi) : (g.lo - ol)) / (oh - ol) : 0; return u >= 0.05 ? '<span class="tag tIn">最深已回' + Math.round(u * 100) + "%</span>" : ""; })()) + "</span>"
         + '<span class="r">' + (g.vsOp != null ? "距开盘 <b>" + sg(g.vsOp) + "</b>" : "") + "<br>距现价 <b>" + sg(g.dist) + "</b></span>"
         + (g.rt ? '<span class="n"><span>' + g.rt + "</span></span>" : "")
-        + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + b.t.slice(4, 6) + "-" + b.t.slice(6, 8) + (b.t.length >= 12 ? " " + b.t.slice(8, 10) + ":" + b.t.slice(10, 12) : "") + "</span>").join("")
+        + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + fmt(b) + "</span>").join("")
         + (g.touch.length ? g.touch.slice(-4).map((t) => "<span>" + t.slice(4, 6) + "-" + t.slice(6, 8) + " " + t.slice(8, 10) + ":" + t.slice(10, 12) + " 碰过</span>").join("") + (g.touch.length > 4 ? "<span>共碰 " + g.touch.length + " 次</span>" : "") : "") + "</span></div>";
     };
-    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + '<br><span style="font-size:10.5px;opacity:.85">' + g.mem.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).map((m) => LVN[m.lv] + " " + md(m.t) + (hm(m.t) ? " " + hm(m.t) : "")).join(" · ") + ' 形成</span></span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
+    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + '<br><span style="font-size:10.5px;opacity:.85">' + g.mem.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).map((m) => LVN[m.lv] + " " + fmt(m)).join(" · ") + ' 形成</span></span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
 
     const isNew = (g) => g.born.some((b) => b.t.slice(0, 8) === R.today);
     const fresh = R.grp.filter(isNew), old = R.grp.filter((g) => !isNew(g));
