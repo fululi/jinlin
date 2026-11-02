@@ -424,12 +424,14 @@ function renderLine() {
     if (!pts.length) { $('pline').setAttribute('points', ''); return; }
     $('pline').setAttribute('points', pts.join(' '));
     try { /* jl-hl2: 走势线高低点——高=峰顶红圈, 低=谷底红短横, 旁标价格+相对昨收% */
-      var SW = [], dirH = 0, ext = null, thr = 0.015, pcv = LIVE.pc || 0;
+      var SW = [], FL = [], dirH = 0, ext = null, thr = 0.015, pcv = LIVE.pc || 0;
+
       LIVE.pts.forEach(function (q, ix) {
         if (!(q.p > 0)) return;
         if (!ext) { ext = { ix: ix, p: q.p }; return; }
-        if (dirH >= 0 && q.p > ext.p) { ext = { ix: ix, p: q.p }; dirH = 1; }
-        else if (dirH <= 0 && q.p < ext.p) { ext = { ix: ix, p: q.p }; dirH = -1; }
+       if (dirH >= 0 && q.p > ext.p) { if (dirH === 1 && ix - ext.ix >= 3) FL.push({ ix: ext.ix, p: ext.p, h: 1 }); ext = { ix: ix, p: q.p }; dirH = 1; }
+else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.push({ ix: ext.ix, p: ext.p, h: 0 }); ext = { ix: ix, p: q.p }; dirH = -1; }
+
         else if (dirH === 1 && q.p < ext.p * (1 - thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 1 }); ext = { ix: ix, p: q.p }; dirH = -1; }
         else if (dirH === -1 && q.p > ext.p * (1 + thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 0 }); ext = { ix: ix, p: q.p }; dirH = 1; }
       });
@@ -437,6 +439,16 @@ function renderLine() {
       window.__SWJL = SW.map(function (m) { return { p: m.p, h: m.h, hm: LIVE.pts[m.ix].hm }; });
       var gh = el('g', { id: 'hlmk' }), LB = [];
       /* jl-hl3: 实时候选极值，独立于正式确认标记 */
+FL.forEach(function (f) {
+  var fq = LIVE.pts[f.ix], fx = fq ? xOfHmJL(fq.hm) : null;
+  if (fx == null || f.p < YLO || f.p > YHI) return;
+  var fy = Y(f.p) + (f.h ? -5 : 4);
+  gh.appendChild(el('circle', { cx: fx, cy: fy, r: f.h ? 5 : 4, fill: 'none', stroke: '#ff8585', 'stroke-width': 1, 'stroke-dasharray': '2 2', opacity: 0.25 }));
+  var xt = tx(fx, fy + 3, '×', '#ff8585', 9, 'middle', 700);
+  xt.setAttribute('opacity', 0.5);
+  gh.appendChild(xt);
+});
+
 if (ext && LIVE.pts[ext.ix]) {
   var cq = LIVE.pts[ext.ix];
   var cx = xOfHmJL(cq.hm);
