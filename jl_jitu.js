@@ -21,7 +21,7 @@
     volume_multiplier: 100, /* jinlin 站内 v 为手; 合成数据为股(测试时传 1) */
     accumulation: { window: 8, min_history: 12, before: "10:30", pullback_lookback: 6, min_positive_ratio: 0.6, min_net_amount_ratio: 0.02, min_drawdown_pct: 0.002, max_drawdown_pct: 0.04, vwap_tolerance_pct: 0.015, cooldown_bars: 8 },
     breakout: { range_window: 12, setup_window: 8, min_history: 20, max_prior_range_pct: 0.018, min_amount_ratio: 1.3, min_buy_ratio: 1.5, min_current_net_amount_ratio: 0.03, min_setup_positive_ratio: 0.5, min_setup_net_amount_ratio: 0.0, max_vwap_extension_pct: 0.05, cooldown_bars: 12 },
-    invalidation: { horizon_bars: 6, max_forward_net_amount_ratio: -0.02 }
+    invalidation: { horizon_bars: 20, max_forward_net_amount_ratio: -0.02 }
   };
 
   function fin(v) { return typeof v === "number" && isFinite(v); }
