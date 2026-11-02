@@ -1782,6 +1782,61 @@ box.addEventListener('click',function(e){
 render(true);
 setInterval(render,3000);
 })();
+</script><script>
+/* jl-myT2: 我的T历史汇总 + 引擎对照 */
+(function(){
+var anchor=document.getElementById('myT');
+if(!anchor||!anchor.parentNode)return;
+var box=document.createElement('details');
+box.id='myT2';
+box.style.cssText='order:7;margin:0 10px 8px;border:1px solid var(--line);border-radius:12px;background:var(--sub);font-size:12.5px';
+anchor.parentNode.insertBefore(box,anchor.nextSibling);
+function code(){try{return (STK&&STK.code)||'600105'}catch(e){return '600105'}}
+function sg(v){return (v>=0?'+':'')+v.toFixed(2)}
+function cl(v){return v>=0?'up':'dn'}
+function ds(){var d=new Date();return d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
+function myNet(L){
+  var n=0,c=0;
+  L.forEach(function(t){
+    var s=+t.s||0,b=+t.b||0,q=+t.q||100;
+    if(s>0&&b>0){n+=(s-b)*q-fee(s*q,true)-fee(b*q,false);c++}
+  });
+  return c?n:null;
+}
+/* 记录当天引擎净收益(每3秒刷一次, 只记今天的) */
+function snap(){
+  try{
+    var E=LIVE.eng;
+    if(!E||!E.rounds||!E.rounds.length||LIVE.sessDate!==ds())return;
+    var n=0;E.rounds.forEach(function(r){n+=r.net});
+    localStorage.setItem('jl_engT_v1_'+code()+'_'+ds(),JSON.stringify({n:n,r:E.rounds.length}));
+  }catch(e){}
+}
+function render(){
+  snap();
+  var c=code(),pm='jl_myT_v1_'+c+'_',pe='jl_engT_v1_'+c+'_',days={},i,k;
+  try{
+    for(i=0;i<localStorage.length;i++){
+      k=localStorage.key(i);
+      if(k.indexOf(pm)===0){var d=k.slice(pm.length);days[d]=days[d]||{};days[d].my=myNet(JSON.parse(localStorage.getItem(k)||'[]'))}
+      else if(k.indexOf(pe)===0){var d2=k.slice(pe.length);days[d2]=days[d2]||{};try{days[d2].eg=JSON.parse(localStorage.getItem(k)).n}catch(e){}}
+    }
+  }catch(e){}
+  var ks=Object.keys(days).sort().reverse().slice(0,30),totMy=0,bMy=0,bEg=0,bn=0,h='';
+  ks.forEach(function(d){
+    var x=days[d],my=x.my,eg=x.eg;
+    if(my!=null)totMy+=my;
+    if(my!=null&&eg!=null){bMy+=my;bEg+=eg;bn++}
+    h+='<div style="display:flex;gap:8px;padding:4px 0;border-top:1px solid var(--line)"><span style="width:44px;color:var(--dim)">'+d.slice(4,6)+'-'+d.slice(6)+'</span><span style="flex:1">我 '+(my==null?'—':'<b class="'+cl(my)+'">'+sg(my)+'</b>')+'</span><span style="flex:1">引擎 '+(eg==null?'—':'<b class="'+cl(eg)+'">'+sg(eg)+'</b>')+'</span><span style="width:64px;text-align:right">'+(my!=null&&eg!=null?'差 <b class="'+cl(my-eg)+'">'+sg(my-eg)+'</b>':'')+'</span></div>';
+  });
+  var sum=ks.length?'累计 <b class="'+cl(totMy)+'">'+sg(totMy)+'</b>':'暂无记录';
+  var cmp=bn?'<div style="margin:6px 0;color:var(--dim)">两边都有记录的 '+bn+' 天：我 <b class="'+cl(bMy)+'">'+sg(bMy)+'</b> · 引擎 <b class="'+cl(bEg)+'">'+sg(bEg)+'</b> · 差 <b class="'+cl(bMy-bEg)+'">'+sg(bMy-bEg)+'</b></div>':'<div style="margin:6px 0;color:var(--dim)">引擎收益从今天起自动记录，明天开始就能对照</div>';
+  box.innerHTML='<summary style="padding:8px 12px;cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between"><span>我的T · 历史对照</span><span>'+sum+' ▾</span></summary><div style="padding:0 12px 10px">'+cmp+h+'</div>';
+}
+render();
+setInterval(render,3000);
+})();
 </script>
+
 
 </html>
