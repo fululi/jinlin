@@ -167,6 +167,25 @@
       else if (!top && (d.early || 0) >= T.EARLY_N) k = 1;
       return { k: k, name: CORE.STAGES[k], streak: streak, cum5: Math.round(cum5 * 100) / 100, rank: d.rank, avg: d.avg, zt: d.zt || 0, early: d.early || 0 };
     },
+    /* ===== RRG式相对轮动: x=近5日均涨幅-全板块中位, y=今日强度-前几日均(无历史则用上涨率估) ===== */
+    avgWin: function (days, i, sec, n) {
+      var sm = 0, c = 0;
+      for (var j = i; j >= 0 && c < n; j--) { var e = days[j].m && days[j].m[sec]; if (!e || e.avg == null) break; sm += e.avg; c++; }
+      return c ? sm / c : null;
+    },
+    medianAt: function (days, i) {
+      var a = [];
+      Object.keys(days[i].m || {}).forEach(function (k) { var v = CORE.avgWin(days, i, k, 5); if (v != null) a.push(v); });
+      a.sort(function (x, y) { return x - y; });
+      return a.length ? a[Math.floor(a.length / 2)] : 0;
+    },
+    rrgPt: function (days, i, sec, med) {
+      var e = days[i] && days[i].m && days[i].m[sec];
+      if (!e || e.avg == null) return null;
+      var rs = CORE.avgWin(days, i, sec, 5), prev = i > 0 ? CORE.avgWin(days, i - 1, sec, 4) : null;
+      var y = prev == null ? ((e.up == null ? 0.5 : e.up) - 0.5) * 10 : e.avg - prev;
+      return { x: rs - med, y: y, est: prev == null };
+    },
     bucket: function (at) { return Math.floor((+at || 0) / CORE.BUCKET_MS) * CORE.BUCKET_MS; },
     snapKey: function (r) { return r.day + "|" + r.kb + "|" + r.sector; },
 
@@ -188,7 +207,7 @@
   /* ============ 浏览器层(独立IDB/只读T3/透明卡) ============ */
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
-  var S = { db: null, keys: null, day: null, at: null, last: null, stat: null, open: false, lastT3: null, tl: null, tlDay: "", live: false, hc: {}, flow: {}, flowP: {}, bk: null, bkP: null, flowT: 0, ana: null, lead: null, leadN: 0 };
+  var S = { db: null, keys: null, day: null, at: null, last: null, stat: null, open: false, lastT3: null, tl: null, tlDay: "", live: false, hc: {}, flow: {}, flowP: {}, mem: {}, memP: {}, bk: null, bkP: null, flowT: 0, ana: null, lead: null, leadN: 0 };
   function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function fmtPct(v) { return (v >= 0 ? "+" : "") + (Math.round(v * 100) / 100).toFixed(2) + "%"; }
@@ -419,36 +438,34 @@
     return ' <span style="font-size:9.5px;font-weight:700;padding:0 6px;margin-left:5px;border-radius:7px;color:' + (c.k === 3 ? "#ffd21f" : "#fff") + ';border:1px solid ' + (c.k === 3 ? "#ffd21f" : "rgba(255,255,255,.45)") + '">' + CORE.STAGES[c.k] + (c.streak >= 2 ? " " + c.streak + "天" : "") + "</span>";
   }
   function rotHtml() {
-    var A = S.ana; if (!A) return "";
-    var cx = 150, cy = 94, R = 70, placed = [], byK = {};
-    Object.keys(A).forEach(function (sec) { var k = A[sec].cur.k; if (k) (byK[k] = byK[k] || []).push(sec); });
-    var ld = S.lead && A[S.lead] ? S.lead : null, ldc = ld ? A[ld].cur : null, svg = "";
-    for (var k = 1; k <= 5; k++) {
-      var d0 = -90 + (k - 1) * 72 + 2, d1 = -90 + k * 72 - 2, mid = -90 + (k - 0.5) * 72, act = ldc && ldc.k === k;
-      svg += '<path d="' + arcPath(cx, cy, R, d0, d1) + '" fill="none" stroke="#fff" stroke-opacity="' + (act ? ".6" : ".14") + '" stroke-width="' + (act ? 6 : 3) + '" stroke-linecap="round"/>';
-      var lp = polar(cx, cy, 47, mid);
-      svg += '<text x="' + lp[0].toFixed(1) + '" y="' + (lp[1] + 3).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="' + (act ? 800 : 600) + '" fill="#fff" fill-opacity="' + (act ? 1 : .55) + '">' + CORE.STAGES[k] + "</text>";
-      var arr = (byK[k] || []).sort(function (x, y) { var a = A[x].cur, b = A[y].cur, ra = a.rank == null ? 99 : a.rank, rb = b.rank == null ? 99 : b.rank; return (ra - rb) || (b.zt - a.zt); }).slice(0, 3);
-      var offs = arr.length === 1 ? [0] : arr.length === 2 ? [-18, 18] : [-24, 0, 24];
-      arr.forEach(function (sec, j) { placed.push({ sec: sec, k: k, ang: mid + offs[j] }); });
-    }
-    placed.forEach(function (o, i) {
-      var c = A[o.sec].cur, p = polar(cx, cy, R, o.ang), rr = 6 + Math.min(c.zt, 8) * 0.5;
-      var pk = A[o.sec].prev && A[o.sec].prev.k;
-      if (pk && pk !== o.k) { var pm = polar(cx, cy, R, -90 + (pk - 0.5) * 72 + (o.ang - (-90 + (o.k - 0.5) * 72))); svg += '<circle cx="' + pm[0].toFixed(1) + '" cy="' + pm[1].toFixed(1) + '" r="3" fill="none" stroke="#fff" stroke-opacity=".55" stroke-dasharray="2 2"/>'; }
-      var fill = c.avg == null ? "#8b93a3" : c.avg >= 0 ? "#ff5459" : "#2fd18b";
-      svg += '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="' + rr.toFixed(1) + '" fill="' + fill + '" stroke="#fff" stroke-width="1.3"/><text x="' + p[0].toFixed(1) + '" y="' + (p[1] + 3.2).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="800" fill="#fff">' + (i + 1) + "</text>";
+    var A = S.ana, D = S.days; if (!A || !D || !D.length) return "";
+    var last = D.length - 1, ord = { 3: 0, 2: 1, 1: 2, 4: 3, 5: 4 }, ld = S.lead && A[S.lead] ? S.lead : null;
+    var list = Object.keys(A).filter(function (k) { return A[k].cur.k; }).sort(function (x, y) { var a = A[x].cur, b = A[y].cur; return (ord[a.k] - ord[b.k]) || ((a.rank == null ? 99 : a.rank) - (b.rank == null ? 99 : b.rank)); }).slice(0, 8);
+    curPicks().forEach(function (k) { if (list.indexOf(k) < 0 && A[k]) list.push(k); });
+    var meds = {}, medOf = function (i) { return meds[i] != null ? meds[i] : (meds[i] = CORE.medianAt(D, i)); };
+    var pts = list.map(function (sec) {
+      var tail = [], t0 = Math.max(0, last - 4);
+      for (var i = t0; i <= last; i++) { var q = CORE.rrgPt(D, i, sec, medOf(i)); if (q) tail.push(q); }
+      return { sec: sec, tail: tail, cur: tail[tail.length - 1] };
+    }).filter(function (o) { return o.cur; });
+    if (!pts.length) return "";
+    var mx = 2, my = 1.5;
+    pts.forEach(function (o) { o.tail.forEach(function (q) { mx = Math.max(mx, Math.abs(q.x)); my = Math.max(my, Math.abs(q.y)); }); });
+    var X = function (x) { return 150 + x / mx * 126; }, Y = function (y) { return 95 - y / my * 76; }, svg = "";
+    svg += '<line x1="14" x2="286" y1="95" y2="95" stroke="#fff" stroke-opacity=".18"/><line x1="150" x2="150" y1="12" y2="178" stroke="#fff" stroke-opacity=".18"/>';
+    svg += '<g font-size="9" font-weight="700" fill="#fff" fill-opacity=".38"><text x="284" y="22" text-anchor="end">领先</text><text x="284" y="176" text-anchor="end">转弱</text><text x="16" y="176">落后</text><text x="16" y="22">改善</text></g>';
+    pts.forEach(function (o) { if (o.tail.length > 1) svg += '<polyline points="' + o.tail.map(function (q) { return X(q.x).toFixed(1) + "," + Y(q.y).toFixed(1); }).join(" ") + '" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" stroke-linejoin="round"/>'; });
+    pts.forEach(function (o, i) {
+      var c = A[o.sec].cur, px = X(o.cur.x), py = Y(o.cur.y), rr = 6.5 + Math.min(c.zt, 8) * 0.45, fill = c.avg == null ? "#8b93a3" : c.avg >= 0 ? "#ff5459" : "#2fd18b", isL = o.sec === ld;
+      svg += '<g data-jlpick="' + esc(o.sec) + '"><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + rr.toFixed(1) + '" fill="' + fill + '" stroke="' + (isL ? "#ffd21f" : "#fff") + '" stroke-width="' + (isL ? 2.4 : 1.2) + '"/><text x="' + px.toFixed(1) + '" y="' + (py + 3.2).toFixed(1) + '" text-anchor="middle" font-size="9" font-weight="800" fill="#fff" pointer-events="none">' + (i + 1) + "</text></g>";
     });
-    var nm = ld ? (ld.length > 5 ? ld.slice(0, 5) + "…" : ld) : "";
-    svg += ld ? '<text x="150" y="93" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffd21f">' + esc(nm) + '</text><text x="150" y="107" text-anchor="middle" font-size="9" font-weight="600" fill="#fff" fill-opacity=".7">主攻' + (ldc.streak >= 2 ? " · " + ldc.streak + "天" : "") + "</text>"
-      : '<text x="150" y="98" text-anchor="middle" font-size="10" font-weight="600" fill="#fff" fill-opacity=".7">暂无主攻</text>';
-    var rows = placed.map(function (o, i) {
+    var rows = pts.map(function (o, i) {
       var c = A[o.sec].cur, fill = c.avg == null ? "#8b93a3" : c.avg >= 0 ? "#ff5459" : "#2fd18b";
-      return '<div style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.9"><span style="flex:0 0 15px;height:15px;border-radius:50%;background:' + fill + ';border:1px solid #fff;text-align:center;font-size:9px;line-height:14px;font-weight:800">' + (i + 1) + '</span><b style="color:#ffd21f">' + esc(o.sec) + "</b>" + stTag(o.sec) + '<span style="margin-left:auto;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</span></div>";
+      return '<div data-jlpick="' + esc(o.sec) + '" style="display:flex;align-items:center;gap:7px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.9"><span style="flex:0 0 15px;height:15px;border-radius:50%;background:' + fill + ';border:1px solid #fff;text-align:center;font-size:9px;line-height:14px;font-weight:800">' + (i + 1) + '</span><b style="color:#ffd21f">' + esc(o.sec) + "</b>" + stTag(o.sec) + '<span style="margin-left:auto;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</span></div>";
     }).join("");
-    return '<div style="padding:7px 9px 6px;margin:2px 0 6px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14)"><div style="font-size:11px;color:#fff;font-weight:700">板块轮动' + (S.review ? '<span style="font-weight:600;opacity:.7;font-size:9.5px"> · 复盘 ' + esc(S.dispDay) + "</span>" : "") + "</div>" +
-      '<svg viewBox="0 0 300 188" width="100%" style="max-width:300px;display:block;margin:0 auto">' + svg + "</svg>" + rows +
-      (S.nHist < 3 ? '<div style="font-size:9.5px;color:rgba(255,255,255,.7);font-weight:600;margin-top:2px">历史 ' + S.nHist + " 天，天数会逐日累积</div>" : "") + "</div>";
+    return '<div style="padding:7px 9px 6px;margin:2px 0 6px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14)"><div style="display:flex;align-items:baseline;font-size:11px;color:#fff;font-weight:700">板块轮动' + (S.review ? '<span style="font-weight:600;opacity:.7;font-size:9.5px"> · 复盘 ' + esc(S.dispDay) + "</span>" : "") + (ld ? '<span style="margin-left:auto;font-size:10px;color:#ffd21f">主攻 ' + esc(ld) + "</span>" : "") + "</div>" +
+      '<svg viewBox="0 0 300 190" width="100%" style="display:block;margin:2px auto 0">' + svg + "</svg>" + rows +
+      '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600;margin-top:2px">右=比大盘强　上=势头在加　尾巴=近几天走向' + (S.nHist < 2 ? "　历史 " + S.nHist + " 天，势头先按涨跌家数估" : "") + "</div></div>";
   }
   /* ---- 板块5日资金(东财概念板块fflow, 只拉"我盯的"几个; 走jlReq限速熔断; 无匹配/失败=不显示) ---- */
   var UT_ = "7eea3edcaed734bea9cbfc24409ed989";
@@ -488,10 +505,37 @@
     }).catch(function () { return (S.flow[sec] = { t: Date.now() - 540000, none: true, err: 1 }); }).then(function (r) { delete S.flowP[sec]; return r; });
     return (S.flowP[sec] = p);
   }
+  function membersOf(sec) {
+    var mt = lsGet("jinlin_mtemp_v1"), rows = mt && mt.data && mt.data.rows, out = [];
+    if (!rows) return out;
+    var ctx = { con: (window.__JL_CONCEPTS__ && window.__JL_CONCEPTS__.map) || {}, sec: (window.__JL_SECTORS__ && window.__JL_SECTORS__.map) || {} };
+    for (var i = 0; i < rows.length; i++) { var r = rows[i], o = CORE.sectorOf(r[0], ctx); if (o.name === sec) out.push([String(r[0]), +r[1] || 0]); }
+    return out.sort(function (a, b) { return b[1] - a[1]; });
+  }
+  function memOf(sec) { /* 成分股: 按我们自己的归属取涨幅前10只, 再向东财取名称/涨幅/主力净额 */
+    var m = S.mem[sec]; if (m && Date.now() - m.t < 120000) return Promise.resolve(m);
+    if (S.memP[sec]) return S.memP[sec];
+    var ms = membersOf(sec).slice(0, 10);
+    if (!ms.length) return Promise.resolve((S.mem[sec] = { t: Date.now(), list: [], none: true }));
+    var ids = ms.map(function (x) { return (/^[69]/.test(x[0]) ? "1." : "0.") + x[0]; }).join(",");
+    var p = emGet("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f12,f14,f62&secids=" + ids + "&ut=bd1d9ddb04089700cf9c27f6f7426281", 60000).then(function (d) {
+      var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [];
+      var list = arr.map(function (r) { return { c: String(r.f12), n: String(r.f14 || r.f12), p: +r.f3, f: +r.f62 }; }).filter(function (x) { return isFinite(x.p); }).sort(function (a, b) { return b.p - a.p; }).slice(0, 6);
+      return (S.mem[sec] = { t: Date.now(), list: list, none: !list.length });
+    }).catch(function () { return (S.mem[sec] = { t: Date.now() - 100000, list: [], none: true, err: 1 }); }).then(function (r) { delete S.memP[sec]; return r; });
+    return (S.memP[sec] = p);
+  }
+  function memHtml(sec) {
+    var m = S.mem[sec]; if (!m || m.none || !m.list.length) return "";
+    return '<div style="margin-top:6px;border-top:1px solid rgba(255,255,255,.12);padding-top:4px">' + m.list.map(function (x) {
+      var col = x.p >= 0 ? "#ff5459" : "#2fd18b", fd = isFinite(x.f) ? (Math.abs(x.f) >= 1e8 ? (x.f / 1e8).toFixed(1) + "亿" : (x.f / 1e4).toFixed(0) + "万") : "";
+      return '<div style="display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:#fff;line-height:1.85"><span>' + esc(x.n) + "</span>" + (x.p >= 9.8 ? '<span style="font-size:9px;font-weight:800;color:#10131a;background:#ffd21f;border-radius:5px;padding:0 4px">板</span>' : "") + '<b style="margin-left:auto;color:' + col + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(2) + '%</b><span style="flex:0 0 52px;text-align:right;color:' + (x.f >= 0 ? "#ff5459" : "#2fd18b") + ';opacity:.9">' + (isFinite(x.f) ? (x.f >= 0 ? "+" : "") + fd : "") + "</span></div>";
+    }).join("") + "</div>";
+  }
   function ensureFlows() {
     try {
       var want = curPicks().slice(); if (S.lead && want.indexOf(S.lead) < 0) want.push(S.lead);
-      want.forEach(function (sec) { flowOf(sec).then(function () { if (S.flowT) return; S.flowT = setTimeout(function () { S.flowT = 0; paint(); }, 400); }); });
+      want.forEach(function (sec) { memOf(sec).then(function () { if (!S.flowT) S.flowT = setTimeout(function () { S.flowT = 0; paint(); }, 400); }); flowOf(sec).then(function () { if (S.flowT) return; S.flowT = setTimeout(function () { S.flowT = 0; paint(); }, 400); }); });
     } catch (e) {}
   }
   function flowVerdict(f) {
@@ -538,7 +582,7 @@
     var gone = (c.k >= 4 && (!fv || fv.out || fv.weak)) || (fv && fv.out && c.streak >= 2), still = !gone && c.k >= 1 && c.k <= 3 && !(fv && fv.out);
     var bd = gone ? '<span style="font-size:10px;font-weight:800;padding:0 7px;border-radius:7px;color:#10131a;background:rgba(255,255,255,.7)">已过</span>' : still ? '<span style="font-size:10px;font-weight:800;padding:0 7px;border-radius:7px;color:#10131a;background:#ffd21f">还在</span>' : "";
     return '<div class="jlpgC" style="flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:6px 8px 4px"><div style="display:flex;align-items:center;gap:2px"><b style="font-size:13px;color:#ffd21f">' + esc(sec) + "</b>" + stTag(sec) + '<span style="margin-left:6px">' + bd + '</span><b style="margin-left:auto;font-size:12px;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</b></div>" +
-      trackSvg(sec) + fundRow(f, fv) + "</div>";
+      trackSvg(sec) + fundRow(f, fv) + memHtml(sec) + "</div>";
   }
   function revRank() { /* 夜间/休市: 原"现在最强的板块"用最近交易日快照补上 */
     var d = S.days && S.days[S.days.length - 1]; if (!d) return "";
