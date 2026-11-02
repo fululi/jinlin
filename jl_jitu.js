@@ -1,4 +1,4 @@
-/* jl_jitu.js v12 — jl-1227 (2026-11-01): 积/突信号覆盖层, 独立模块 (v12: 持仓卡状态签挪出画布——改为分时图下方、「日线未补」行上方单独一行 HTML(.jituChipJL), 不压走势线/轴价/K·B·控振按钮排(预览实测画布内左下角签被按钮排压住右半截+盖住左下轴价); 非持仓卡实例(盘中做T卡等)仍画布内; v11: 卡组重建后已脱离页面的旧画布实例清出 _insts——预览实测7个实例4个是死画布, 每次 redrawAll 仍白算一遍; v10: 状态签加「已确认至HH:MM」, 资金落后行情时加「资金滞后N分钟」(N=已收盘却没资金的根数, 午休不计); 签太宽时先省观察/失效计数(列表里有); v9: ①未收盘末根不参与计算(后面有更晚一根才算收盘, 末根≥15:00或=11:30视为已收, 不看手机时钟) ②缺资金分钟记NaN不记0(窗口含缺失→特征NaN→不触发; 资金滞后行情的分钟同样不出信号) ③突crossed追加close>prevF.prior_high ④失效原因分型: 积=跌破前12根低点/突=跌回区间上沿/资金转流出另列 ⑤三态: 观察中/6根内已失效/6根满未失效; v8: 分钟净额命中缓存也按60s后台刷新——v4起 getMinuteNet 有缓存即返回, 首次取数后当日再不拉, 之后分钟净额全记0, 首拉后不再出新信号; 收盘(含15:00行)后停刷; v7: 展开卡左下角常驻状态签「积N 突N / 今日无信号 / 取资金中 / 取数失败·点此重试」, 点签弹全部信号列表——不再静默无标, 不跳页; v5: mn限幅/命中去dpr换算/缓存键含末根t, 外部评审落修; v6: 折叠窄卡不画标记——开关图标在窄卡本就隐藏, 且窄卡geom坐标系与可视区错位, 画了也是飘点; 开关toast区分无信号/资金未取到)
+/* jl_jitu.js v13 — jl-1227 (2026-11-01): 积/突信号覆盖层, 独立模块 (v13 jl-ths1103 本地未推: 突改同花顺公开口径=盘整≥15分钟未创日内新高+成交额≥前15根中位数2倍+收盘破日内高点+盘整期主力净流入, 失效位=原日内高点; 积不动; v12: 持仓卡状态签挪出画布——改为分时图下方、「日线未补」行上方单独一行 HTML(.jituChipJL), 不压走势线/轴价/K·B·控振按钮排(预览实测画布内左下角签被按钮排压住右半截+盖住左下轴价); 非持仓卡实例(盘中做T卡等)仍画布内; v11: 卡组重建后已脱离页面的旧画布实例清出 _insts——预览实测7个实例4个是死画布, 每次 redrawAll 仍白算一遍; v10: 状态签加「已确认至HH:MM」, 资金落后行情时加「资金滞后N分钟」(N=已收盘却没资金的根数, 午休不计); 签太宽时先省观察/失效计数(列表里有); v9: ①未收盘末根不参与计算(后面有更晚一根才算收盘, 末根≥15:00或=11:30视为已收, 不看手机时钟) ②缺资金分钟记NaN不记0(窗口含缺失→特征NaN→不触发; 资金滞后行情的分钟同样不出信号) ③突crossed追加close>prevF.prior_high ④失效原因分型: 积=跌破前12根低点/突=跌回区间上沿/资金转流出另列 ⑤三态: 观察中/6根内已失效/6根满未失效; v8: 分钟净额命中缓存也按60s后台刷新——v4起 getMinuteNet 有缓存即返回, 首次取数后当日再不拉, 之后分钟净额全记0, 首拉后不再出新信号; 收盘(含15:00行)后停刷; v7: 展开卡左下角常驻状态签「积N 突N / 今日无信号 / 取资金中 / 取数失败·点此重试」, 点签弹全部信号列表——不再静默无标, 不跳页; v5: mn限幅/命中去dpr换算/缓存键含末根t, 外部评审落修; v6: 折叠窄卡不画标记——开关图标在窄卡本就隐藏, 且窄卡geom坐标系与可视区错位, 画了也是飘点; 开关toast区分无信号/资金未取到)
  * 引擎 = jitu_engine.py v0.1.0 的 JS 移植(与「积突实时分时」交付版 engine.js 同源, 已经 Python 逐字段校验+三场景回放验证;
  *        配置键名与该版 data.js 完全一致, 回归测试直接复用三场景期望信号);
  * 数据 = 分钟行 window.jlM1RowsJL(东财1分通道, 含 f57 真成交额) + 分钟主力净额(v4 起自取: 东财 fflow kline klt=1
@@ -20,8 +20,11 @@
   var DEFAULT_CONFIG = {
     volume_multiplier: 100, /* jinlin 站内 v 为手; 合成数据为股(测试时传 1) */
     accumulation: { window: 8, min_history: 12, before: "10:30", pullback_lookback: 6, min_positive_ratio: 0.6, min_net_amount_ratio: 0.02, min_drawdown_pct: 0.002, max_drawdown_pct: 0.04, vwap_tolerance_pct: 0.015, cooldown_bars: 8 },
-    breakout: { range_window: 12, setup_window: 8, min_history: 20, max_prior_range_pct: 0.018, min_amount_ratio: 1.3, min_buy_ratio: 1.5, min_current_net_amount_ratio: 0.03, min_setup_positive_ratio: 0.5, min_setup_net_amount_ratio: 0.0, max_vwap_extension_pct: 0.05, cooldown_bars: 12 },
-    invalidation: { horizon_bars: 20, max_forward_net_amount_ratio: -0.02 }
+    /* jl-ths1103: 突改同花顺公开口径 = 盘中盘整≥consol_bars分钟(期间没创日内新高) + 成交额异动(≥前vol_window根中位数×min_amount_ratio) + 收盘突破日内高点 + 盘整期大单资金持续流入;
+     * 原口径(破前12根区间上沿)天生画在局部高点, 已撤; range_window 仅留给 积 的失效位(prior_low) */
+    breakout: { range_window: 12, consol_bars: 15, vol_window: 15, min_history: 15, min_amount_ratio: 2.0, min_current_net_amount_ratio: 0.0, min_setup_positive_ratio: 0.5, min_setup_net_amount_ratio: 0.0, max_vwap_extension_pct: 0.05 },
+    /* jl-ths1103b: 价格失效放宽 = 收盘跌破失效位超 price_tol_pct, 或连续 price_confirm_bars 根收盘在失效位下方; 只蹭破一根且不到容差不算(永鼎11-02 11:13 回踩-0.18%一根后续涨到23.08被误判) */
+    invalidation: { horizon_bars: 6, max_forward_net_amount_ratio: -0.02, price_tol_pct: 0.003, price_confirm_bars: 2 }
   };
 
   function fin(v) { return typeof v === "number" && isFinite(v); }
@@ -68,17 +71,15 @@
       this._last["积"] = i;
     }
     /* ---- 突 ---- */
-    var prev = i > 0 ? this.bars[i - 1] : null, prevF = i > 0 ? this.f[i - 1] : null;
-    var crossed = prev && prevF && fin(f.prior_high) && fin(prevF.prior_high) && fin(prev.close) &&
-      bar.close > f.prior_high && bar.close > prevF.prior_high && prev.close <= prevF.prior_high; /* v9(批3): 追加越过上一根口径的上沿——旧区间高点刚滑出窗口时 f.prior_high 下移, 收盘没过原上沿也会判突破 */
-    if (i >= bk.min_history && (i - this._last["突"]) >= bk.cooldown_bars && crossed &&
-        fin(f.prior_range_pct) && f.prior_range_pct <= bk.max_prior_range_pct &&
-        fin(f.amount_ratio) && fin(f.buy_ratio) && fin(f.current_net_amount_ratio) && fin(f.setup_positive_ratio) && fin(f.setup_net_ratio) && fin(f.close_to_vwap) &&
-        f.amount_ratio >= bk.min_amount_ratio && f.buy_ratio >= bk.min_buy_ratio && f.current_net_amount_ratio >= bk.min_current_net_amount_ratio &&
+    /* jl-ths1103: 盘整≥15分(quiet_prev=到上一根为止连续多少根没创日内新高) 且本根收盘越过日内高点; 盘整要求本身即冷却 */
+    var crossed = fin(f.day_high_prev) && fin(bar.close) && bar.close > f.day_high_prev && f.quiet_prev >= bk.consol_bars;
+    if (i >= bk.min_history && crossed &&
+        fin(f.amount_ratio) && fin(f.current_net_amount_ratio) && fin(f.setup_positive_ratio) && fin(f.setup_net_ratio) && fin(f.close_to_vwap) &&
+        f.amount_ratio >= bk.min_amount_ratio && f.current_net_amount_ratio > bk.min_current_net_amount_ratio &&
         f.setup_positive_ratio >= bk.min_setup_positive_ratio && f.setup_net_ratio >= bk.min_setup_net_amount_ratio &&
         f.close_to_vwap > 0 && f.close_to_vwap <= bk.max_vwap_extension_pct) {
-      this.signals.push({ type: "突", start: i, ts: bar.ts, time: hhmm(bar.ts), price: bar.close, level: f.prior_high, levelWhy: "跌回区间上沿",
-        reason: "前" + bk.range_window + "柱振幅" + (f.prior_range_pct * 100).toFixed(2) + "%；成交额放大" + f.amount_ratio.toFixed(2) + "倍、主动大买放大" + f.buy_ratio.toFixed(2) + "倍；收盘越过区间上沿" + f.prior_high });
+      this.signals.push({ type: "突", start: i, ts: bar.ts, time: hhmm(bar.ts), price: bar.close, level: f.day_high_prev, levelWhy: "跌回原日内高点下方",
+        reason: "盘整" + f.quiet_prev + "分钟未创新高；成交额放大" + f.amount_ratio.toFixed(1) + "倍；盘整期主力净流入占比" + (f.setup_net_ratio * 100).toFixed(1) + "%；收盘突破日内高点" + f.day_high_prev });
       this._last["突"] = i;
     }
     /* ---- 失效(增量: 本 bar 判结 horizon 内的既有信号; 与事后扫描等价) ---- */
@@ -87,7 +88,9 @@
       s = this.signals[k];
       if (s.invalidatedAt != null || i <= s.start || i > s.start + h) continue;
       hit = null;
-      if (fin(bar.close) && fin(s.level) && bar.close < s.level * 0.997)  { hit = s.levelWhy || "跌回突破区间"; s.invalidatedKind = "price"; } /* v9(批4): 积/突价格失效分开写 */
+      var below = fin(bar.close) && fin(s.level) && bar.close < s.level, iv = this.cfg.invalidation;
+      s._below = below ? (s._below || 0) + 1 : 0;
+      if (below && (bar.close < s.level * (1 - iv.price_tol_pct) || s._below >= iv.price_confirm_bars)) { hit = s.levelWhy || "跌回突破区间"; s.invalidatedKind = "price"; } /* v9(批4): 积/突价格失效分开写; jl-ths1103b: 加容差/连续确认 */
       else {
         ns = 0; as = 0;
         for (j = s.start + 1; j <= i; j += 1) { ns += (this.f[j] && fin(this.f[j].main_net)) ? this.f[j].main_net : 0; as += (this.bars[j] && fin(this.bars[j].amount)) ? this.bars[j].amount : 0; }
@@ -100,7 +103,7 @@
   };
 
   JituEngine.prototype._feat = function (i, bar) {
-    var b = this.bars, w = this.cfg.accumulation.window, bw = this.cfg.breakout.range_window, sw = this.cfg.breakout.setup_window;
+    var b = this.bars, w = this.cfg.accumulation.window, bw = this.cfg.breakout.range_window, sw = this.cfg.breakout.consol_bars;
     var am = bar.amount, mb = bar.main_buy, ms = bar.main_sell;
     var mn = (fin(mb) && fin(ms)) ? (mb - ms) : NaN;
     var f = { main_net: mn };
@@ -146,11 +149,17 @@
     f.prior_high = ph; f.prior_low = pl;
     var pclose = i > 0 ? this.bars[i - 1].close : NaN;
     f.prior_range_pct = (fin(ph) && fin(pl) && fin(pclose) && pclose > 0) ? (ph - pl) / pclose : NaN;
-    /* 中位数量比(shift(1) 后 12 根; 量额中位数窗口=12, 与引擎同口径) */
-    var mw = 12, aArr = [], bArr = [];
-    if (i - mw >= 0) { for (k = i - mw; k <= i - 1; k += 1) { aArr.push(this.bars[k].amount); bArr.push(this.bars[k].main_buy); } }
+    /* jl-ths1103: 日内高点(到上一根为止) + 盘整根数(上一根往前连续多少根没创日内新高; 本根创新高则清零) */
+    var pf = i > 0 ? this.f[i - 1] : null;
+    f.day_high_prev = pf ? pf.day_high : NaN;
+    f.quiet_prev = pf ? pf.quiet : 0;
+    var newHi = !fin(f.day_high_prev) || (fin(bar.high) && bar.high > f.day_high_prev);
+    f.day_high = newHi ? (fin(bar.high) ? bar.high : bar.close) : f.day_high_prev;
+    f.quiet = newHi ? 0 : f.quiet_prev + 1;
+    /* 中位数量比(shift(1) 后 vol_window 根, 不含当前根) */
+    var mw = this.cfg.breakout.vol_window || 15, aArr = [];
+    if (i - mw >= 0) { for (k = i - mw; k <= i - 1; k += 1) aArr.push(this.bars[k].amount); }
     f.amount_ratio = (aArr.length === mw) ? safeDiv(am, medianOf(aArr)) : NaN;
-    f.buy_ratio = (bArr.length === mw) ? safeDiv(mb, medianOf(bArr)) : NaN;
     f.current_net_amount_ratio = safeDiv(mn, am);
     return f;
   };
@@ -399,6 +408,19 @@
     else jituToast("分钟资金取数中, 到数自动补画");
   }
 
+  /* jl-ths1103b: 标记落点避让——按候选偏移依次试, 6px 半径方框不碰任何占位且在图区内就用; 全碰则退回首选; 用过的位置也记占位, 标记之间不叠 */
+  function placeMark(x, yv, offs, occ, geo) {
+    var R = 6, top = 2, bot = fin(geo.plotBottom) ? geo.plotBottom - 2 : 1e9, k, y, j, o, clash;
+    for (k = 0; k < offs.length; k += 1) {
+      y = yv + offs[k];
+      if (y - R < top || y + R > bot) continue;
+      clash = false;
+      for (j = 0; j < occ.length; j += 1) { o = occ[j]; if (x + R > o[0] && x - R < o[2] && y + R > o[1] && y - R < o[3]) { clash = true; break; } }
+      if (!clash) { occ.push([x - R, y - R, x + R, y + R]); return y; }
+    }
+    y = yv + offs[0]; occ.push([x - R, y - R, x + R, y + R]); return y;
+  }
+
   function drawOverlay(inst) {
     try {
       var cv = inst.cv, api = inst.api;
@@ -430,73 +452,36 @@
       var hits = inst._hits;
       var TEAL = "#81e6d9", AMBER = "#ffc24d", DEAD = "#7c8894";
 
-      // 建立原始行情行索引 -> 当前分时图索引的映射
       var rowMap = Object.create(null);
       var timeMap = Object.create(null);
       var ii, tt;
-
       for (i2 = 0; i2 < geo.n; i2 += 1) {
         tt = geo.clockAt(i2);
         if (tt && timeMap[tt] == null) timeMap[tt] = i2;
       }
-
+      var occ = [], ob, oq; /* jl-ths1103b: 引擎本帧高/低签+摆动戳占位 */
+      if (geo.occ && geo.occ.length) for (oq = 0; oq < geo.occ.length; oq += 1) { ob = geo.occ[oq]; if (ob && ob.kind !== "line" && fin(ob.x) && fin(ob.y)) occ.push([ob.x, ob.y, ob.x + ob.w, ob.y + ob.h]); }
       for (var q = 0; q < mks.length; q += 1) {
         var mk = mks[q];
         ii = null;
-
-        // 优先使用原始行情行索引匹配
-        // 注意：只有确认 geo 的索引与原始 rows 对应时才使用
-        if (Number.isInteger(mk.rowIdx) &&
-            mk.rowIdx >= 0 &&
-            typeof geo.rowIdxAt === "function") {
+        if (Number.isInteger(mk.rowIdx) && mk.rowIdx >= 0 && typeof geo.rowIdxAt === "function") {
           for (i2 = 0; i2 < geo.n; i2 += 1) {
-            if (geo.rowIdxAt(i2) === mk.rowIdx) {
-              ii = i2;
-              break;
-            }
+            if (geo.rowIdxAt(i2) === mk.rowIdx) { ii = i2; break; }
           }
         }
-
-        // 无原始索引映射接口时，使用时间匹配
-        if (ii == null) {
-          ii = timeMap[mk.time];
-        }
-
+        if (ii == null) ii = timeMap[mk.time];
         if (ii == null || ii < 0 || ii >= geo.n) continue;
-
-        var x = geo.xOfIdx(ii);
-        var y;
-        var yv = geo.yOfPrice(mk.price);
-
+        var x = geo.xOfIdx(ii), y, yv = geo.yOfPrice(mk.price);
         if (!fin(x) || !fin(yv)) continue;
-
-        g.textAlign = "center";
-        g.textBaseline = "middle";
-
-        hits.push({
-          x: x,
-          y: mk.type === "积" ? yv + 7 : yv - 7,
-          mk: mk
-        });
-
+        g.textAlign = "center"; g.textBaseline = "middle";
+        y = placeMark(x, yv, mk.type === "积" ? [13, 24, -13, -24] : [-13, 13, -24, 24, -36], occ, geo);
+        hits.push({ x: x, y: y, mk: mk });
         if (mk.type === "积") {
-          y = yv + 7;
-          g.beginPath();
-          g.arc(x, y, 3.4, 0, 6.2832);
-
-          if (mk.dead) {
-            g.fillStyle = DEAD;
-            g.fill();
-          } else if (mk.st === "watch") {
-            g.strokeStyle = TEAL;
-            g.lineWidth = 1.4;
-            g.stroke();
-          } else {
-            g.fillStyle = TEAL;
-            g.fill();
-          }
+          g.beginPath(); g.arc(x, y, 3.4, 0, 6.2832);
+          if (mk.dead) { g.fillStyle = DEAD; g.fill(); }
+          else if (mk.st === "watch") { g.strokeStyle = TEAL; g.lineWidth = 1.4; g.stroke(); }
+          else { g.fillStyle = TEAL; g.fill(); }
         } else {
-          y = yv - 7;
           g.beginPath();
           g.moveTo(x, y - 4.2);
           g.lineTo(x + 4.6, y + 3.4);
