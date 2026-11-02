@@ -502,6 +502,16 @@
       '<div style="font-size:10.5px;color:#fff;font-weight:600;margin:3px 0 1px">' + bits.join(" · ") + "</div>" + trackSvg(sec) +
       '<div style="font-size:10px;color:' + STC[c.k || 5] + ';font-weight:700;margin-top:1px">' + tip + "</div></div>";
   }
+  function revRank() { /* 夜间/休市: 原"现在最强的板块"用最近交易日快照补上 */
+    var d = S.days && S.days[S.days.length - 1]; if (!d) return "";
+    var ks = Object.keys(d.m).filter(function (k) { return d.m[k].rank != null; }).sort(function (a, b) { return d.m[a].rank - d.m[b].rank; }).slice(0, 8);
+    if (!ks.length) return "";
+    return '<div style="font-size:11px;color:#fff;font-weight:700;margin:2px 0 0">' + esc(d.day) + " 最强的板块（复盘）</div>" + ks.map(function (k, i) {
+      var e = d.m[k], col = e.avg > 0 ? "#ff5459" : e.avg < 0 ? "#5ae8ab" : "#fff", bits = [];
+      if (e.up != null) bits.push("上涨率 " + Math.round(e.up * 100) + "%"); if (e.zt) bits.push("涨停 " + e.zt + "只");
+      return '<div style="padding:7px 9px;margin:4px 0;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)"><div style="display:flex;justify-content:space-between;align-items:baseline"><span><b style="font-size:12.5px;color:#ffd21f">' + (i + 1) + ". " + esc(k) + "</b>" + stTag(k) + '</span><b style="font-size:12px;color:' + col + '">平均' + (e.avg >= 0 ? "涨 " : "跌 ") + Math.abs(e.avg).toFixed(2) + "%</b></div>" + (bits.length ? '<div style="font-size:10.5px;color:#fff;font-weight:600;margin-top:3px">' + bits.join(" · ") + "</div>" : "") + "</div>";
+    }).join("");
+  }
   function pickerHtml() {
     var A = S.ana; if (!A) return "";
     var picks = curPicks(), ord = { 3: 0, 2: 1, 1: 2, 4: 3, 5: 4 };
@@ -569,15 +579,20 @@
   function tlUpdate(cb) {
     var day = S.day, done = function () { try { if (S.live && S.last && S.at) { var t = topOf(S.last.recs); if (t) S.tl[String(CORE.bucket(S.at))] = tlRow(t); } } catch (e) {} cb(); };
     if (S.tlDay === day && S.tl) return done();
-    S.tl = {}; S.tlDay = day;
+    S.tl = {}; S.tlDay = day; S.tlShow = "";
     if (!S.db || !day) return done();
     try {
       var g = S.db.transaction("snap", "readonly").objectStore("snap").getAll(IDBKeyRange.bound(day + "|", day + "|￿"));
       g.onsuccess = function () {
-        var by = {};
+        var by = {}, d2 = day;
         (g.result || []).forEach(function (r) { if (r && r.day === day) (by[r.kb] = by[r.kb] || []).push(r); });
-        Object.keys(by).forEach(function (kb) { var t = topOf(by[kb]); if (t) S.tl[String(kb)] = tlRow(t); });
-        done();
+        var fillTl = function () { Object.keys(by).forEach(function (kb) { var t = topOf(by[kb]); if (t) S.tl[String(kb)] = tlRow(t); }); done(); };
+        if (Object.keys(by).length || !S.keys) return fillTl();
+        var prevD = ""; S.keys.forEach(function (k) { var x = String(k).slice(0, 10); if (x < day && x > prevD) prevD = x; });
+        if (!prevD) return fillTl();
+        var g2 = S.db.transaction("snap", "readonly").objectStore("snap").getAll(IDBKeyRange.bound(prevD + "|", prevD + "|￿")); /* 当日无快照(夜间/休市)→时间线显示最近有快照的交易日 */
+        g2.onsuccess = function () { (g2.result || []).forEach(function (r) { if (r && r.day === prevD) (by[r.kb] = by[r.kb] || []).push(r); }); S.tlShow = prevD; fillTl(); };
+        g2.onerror = function () { done(); };
       };
       g.onerror = function () { done(); };
     } catch (e) { done(); }
@@ -590,7 +605,7 @@
   function tlHtml() {
     var sg = tlSegs();
     if (!sg.length) return "";
-    return '<div style="padding:7px 9px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,210,31,.07);border:1px solid rgba(255,210,31,.22)"><div style="font-size:11px;color:#ffd21f;font-weight:700;margin-bottom:3px">今天谁在领涨（按时间段）</div>' +
+    return '<div style="padding:7px 9px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,210,31,.07);border:1px solid rgba(255,210,31,.22)"><div style="font-size:11px;color:#ffd21f;font-weight:700;margin-bottom:3px">' + (S.tlShow && S.tlShow !== S.day ? esc(S.tlShow) + ' 谁在领涨（按时间段·复盘）' : '今天谁在领涨（按时间段）') + '</div>' +
       sg.map(function (g) { var t0 = new Date(g.k0).toTimeString().slice(0, 5), t1 = new Date(g.k1 + CORE.BUCKET_MS).toTimeString().slice(0, 5); return '<div style="display:flex;gap:8px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.75"><span style="flex:0 0 76px;opacity:.95">' + t0 + "–" + t1 + '</span><b style="color:#ffd21f">' + esc(g.s) + '</b><span style="margin-left:auto;color:' + (g.v.a >= 0 ? "#ff5459" : "#5ae8ab") + '">' + fmtPct(g.v.a) + "</span></div>"; }).join("") + "</div>";
   }
   var POP = null, POP_T = 0;
@@ -646,14 +661,13 @@
       var unr = o.recs.filter(function (r) { return r.sector === CORE.UNATTR; })[0] || null;
       var sl = S.stale || {}, slTxt = [sl.rows ? "个股涨跌" : "", sl.zt ? "涨停名单" : ""].filter(Boolean);
       if (slTxt.length) body += '<div style="font-size:10px;color:#ffd84a;font-weight:700;padding:5px 2px 3px">⚠ ' + esc(slTxt.join("、")) + "还是旧日子的数据，没算进来</div>"; /* jl-secpop: 白话 */
-      body += rotHtml();
-      body += pickerHtml();
       body += tlHtml();
-      body += rk.length ? '<div style="font-size:11px;color:#fff;font-weight:700;margin:2px 0 0">现在最强的板块</div>' + rk.map(function (r, i) { return secRow(r, i); }).join("") : '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">现在股票太少，还排不出强弱（等数据多一些会自动出来）</div>';
+      body += rk.length ? '<div style="font-size:11px;color:#fff;font-weight:700;margin:2px 0 0">现在最强的板块</div>' + rk.map(function (r, i) { return secRow(r, i); }).join("") : (hasAna && S.review ? revRank() : '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">现在股票太少，还排不出强弱（等数据多一些会自动出来）</div>');
       if (rest.length) body += '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:6px 0 2px;line-height:1.6">股票太少暂不排名：' + rest.map(function (r) { return esc(r.sector); }).join(" · ") + "</div>";
+      body += rotHtml() + pickerHtml(); /* 新增: 放在原有"领涨时间线/现在最强"之后, 原内容不动 */
       /* jl-1207/secpop: 公式、口径、未归属条数、导出按钮都不上卡面(导出仍可 __JLSEC__.exportJSON()) */
     } else if (hasAna) {
-      body = rotHtml() + pickerHtml();
+      body = tlHtml() + (S.review ? revRank() : "") + rotHtml() + pickerHtml();
     } else {
       body = '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">还没有数据，开盘后会自动算出来</div>';
     }
