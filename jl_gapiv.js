@@ -166,6 +166,14 @@
       else { m.mem.push(g); m.lo = Math.min(m.lo, g.lo); m.hi = Math.max(m.hi, g.hi); if (dg(g.ft) > dg(m.ft)) { m.ft = g.ft; m.fp = g.bull ? g.lo : g.hi; } }
     });
     dgp.forEach((g) => { g.lvs = [...new Set(g.mem.map((x) => x.lv))].sort((a, b) => ORD[b] - ORD[a]); g.N = g.lvs.length; g.old = [...new Set(g.mem.filter((x) => x.d !== today).map((x) => md(x.d)))]; });
+    const PM = { "1分": 1, "5分": 5, "15分": 15, "30分": 30 }, subm = (t, k) => { const d = dg(t), m = +d.slice(8, 10) * 60 + +d.slice(10, 12) - k; return d.slice(0, 8) + String(Math.floor(m / 60)).padStart(2, "0") + String(m % 60).padStart(2, "0"); };
+dgp.forEach((g) => {
+  const st = g.mem.map((x) => (PM[x.lv] && dg(x.t).length >= 12 ? subm(x.t, PM[x.lv]) : today + "0929")).sort()[0];
+  const fp = g.bull ? g.lo : g.hi;
+  const hit = m1.find((x) => dg(x.t) > st && dg(x.t).slice(0, 8) === today && (g.bull ? x.l <= fp : x.h >= fp));
+  if (hit) g.ft = dg(hit.t);
+});
+
     dgp.sort((a, b) => b.N - a.N || dg(b.ft) - dg(a.ft));
     const tr = {}; LV.forEach((L) => { const t = all.filter((g) => g.lv === L && g.d === today); tr[L] = { n: t.length, k: t.filter((g) => g.ft).length }; });
     return { today, pre, op, opg, grp, dgp, tr, tgt, code, last };
