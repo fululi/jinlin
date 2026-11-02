@@ -205,7 +205,8 @@
         + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + b.t.slice(4, 6) + "-" + b.t.slice(6, 8) + (b.t.length >= 12 ? " " + b.t.slice(8, 10) + ":" + b.t.slice(10, 12) : "") + "</span>").join("")
         + (g.touch.length ? g.touch.slice(-4).map((t) => "<span>" + t.slice(4, 6) + "-" + t.slice(6, 8) + " " + t.slice(8, 10) + ":" + t.slice(10, 12) + " 碰过</span>").join("") + (g.touch.length > 4 ? "<span>共碰 " + g.touch.length + " 次</span>" : "") : "") + "</span></div>";
     };
-    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + " " + g.lvs.map((l) => LVN[l]).join("+") + (g.old.length ? " <b>" + g.old.join(" ") + "形成</b>" : "") + '</span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
+    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + '<br><span style="font-size:10.5px;opacity:.85">' + g.mem.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).map((m) => LVN[m.lv] + " " + md(m.t) + (hm(m.t) ? " " + hm(m.t) : "")).join(" · ") + ' 形成</span></span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
+
     const isNew = (g) => g.born.some((b) => b.t.slice(0, 8) === R.today);
     const fresh = R.grp.filter(isNew), old = R.grp.filter((g) => !isNew(g));
     h += '<div class="gScroll" tabindex="0" aria-label="缺口列表，上下滑动查看">'
