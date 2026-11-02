@@ -424,15 +424,13 @@ function renderLine() {
     if (!pts.length) { $('pline').setAttribute('points', ''); return; }
     $('pline').setAttribute('points', pts.join(' '));
     try { /* jl-hl2: 走势线高低点——高=峰顶红圈, 低=谷底红短横, 旁标价格+相对昨收% */
-      var SW = [], FL = [], dirH = 0, ext = null, thr = 0.018, pcv = LIVE.pc || 0;
+      var SW = [], FL = [], dirH = 0, ext = null, thr = 0.015, pcv = LIVE.pc || 0;
 
       LIVE.pts.forEach(function (q, ix) {
         if (!(q.p > 0)) return;
         if (!ext) { ext = { ix: ix, p: q.p }; return; }
-       if (dirH >= 0 && q.p > ext.p) { if (dirH === 1 && ix - ext.ix >= 3)
-  FL.push({ ix: ext.ix, p: ext.p, h: 1 });
-else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3)
-  FL.push({ ix: ext.ix, p: ext.p, h: 0 });ext = { ix: ix, p: q.p }; dirH = -1; }
+       if (dirH >= 0 && q.p > ext.p) { if (dirH === 1 && ix - ext.ix >= 3) FL.push({ ix: ext.ix, p: ext.p, h: 1 }); ext = { ix: ix, p: q.p }; dirH = 1; }
+else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.push({ ix: ext.ix, p: ext.p, h: 0 }); ext = { ix: ix, p: q.p }; dirH = -1; }
 
         else if (dirH === 1 && q.p < ext.p * (1 - thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 1 }); ext = { ix: ix, p: q.p }; dirH = -1; }
         else if (dirH === -1 && q.p > ext.p * (1 + thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 0 }); ext = { ix: ix, p: q.p }; dirH = 1; }
