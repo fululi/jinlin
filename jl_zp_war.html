@@ -799,7 +799,68 @@ function applyStockJL(st) {
   try { document.title = '做T作战屏 · ' + st.name; } catch (e) { }
   try { var rh = $('jlResoMountJL'); if (rh) rh.innerHTML = ''; setTimeout(resoMountJL, 0); } catch (e) { }
 }
-function initStocksJL() {
+function initStocksJL() {/* 搜股票看盘（不加持仓） */
+(function () {
+  var rq0 = roundQtyJL;
+  roundQtyJL = function (c, q) { return STK && STK.tmp ? 100 : rq0(c, q); };
+  var box = document.createElement('div');
+  box.style.cssText = 'margin-top:8px';
+  var inp = document.createElement('input');
+  inp.type = 'search'; inp.placeholder = '搜股票：代码或名称'; inp.autocomplete = 'off';
+  inp.style.cssText = 'width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--sub);color:var(--txt);font:inherit;font-size:13px';
+  var out = document.createElement('div');
+  out.style.cssText = 'display:none;margin-top:4px;border:1px solid var(--line);border-radius:10px;background:var(--card);max-height:220px;overflow:auto';
+  box.appendChild(inp); box.appendChild(out);
+  var ml = $('metaLine'); ml.parentNode.insertBefore(box, ml);
+  var tm = null, seq = 0;
+  function hint(q) {
+    return new Promise(function (ok) {
+      var sc = document.createElement('script');
+      sc.onload = function () { var v = window.v_hint; sc.remove(); ok(typeof v === 'string' ? v : ''); };
+      sc.onerror = function () { sc.remove(); ok(''); };
+      window.v_hint = '';
+      sc.src = 'https://smartbox.gtimg.cn/s3/?v=2&t=all&q=' + encodeURIComponent(q) + '&_=' + Date.now();
+      document.head.appendChild(sc);
+    });
+  }
+  function parse(s) {
+    return s.split('^').map(function (r) { var a = r.split('~'); return { mk: a[0], code: a[1], name: a[2], tp: a[4] || '' }; })
+      .filter(function (x) { return (x.mk === 'sh' || x.mk === 'sz') && /^\d{6}$/.test(x.code) && /^(GP|ETF|LOF)/.test(x.tp); }).slice(0, 8);
+  }
+  function pick(x) {
+    out.style.display = 'none'; inp.value = '';
+    applyStockJL({ code: x.code, name: x.name, qty: 0, tmp: true });
+    var sg = $('stkSeg');
+    if (sg) sg.querySelectorAll('.stk').forEach(function (b) { b.className = 'stk'; });
+    if (MODE === 'live') LIVE.start(); else setMode('live');
+  }
+  function show(list) {
+    out.innerHTML = '';
+    if (!list.length) { out.style.display = 'none'; return; }
+    list.forEach(function (x) {
+      var d = document.createElement('div');
+      d.style.cssText = 'padding:9px 12px;border-top:1px solid var(--line);font-size:13px;cursor:pointer';
+      d.textContent = x.name + '  ' + x.code;
+      d.onclick = function () { pick(x); };
+      out.appendChild(d);
+    });
+    out.style.display = 'block';
+  }
+  inp.oninput = function () {
+    clearTimeout(tm);
+    var q = inp.value.trim(), n = ++seq;
+    if (!q) { out.style.display = 'none'; return; }
+    tm = setTimeout(function () {
+      hint(q).then(function (s) {
+        if (n !== seq) return;
+        var list = parse(s);
+        if (!list.length && /^\d{6}$/.test(q)) list = [{ code: q, name: q }];
+        show(list);
+      });
+    }, 300);
+  };
+})();
+
   var ls = jlStocksJL(), pick = ls[0];
   try { var sv = localStorage.getItem('jl_zp_stock_v1'); for (var i = 0; i < ls.length; i++) if (ls[i].code === sv) pick = ls[i]; } catch (e) { }
   applyStockJL(pick);
