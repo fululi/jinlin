@@ -173,8 +173,9 @@ body.live{overflow:visible;border:0;border-radius:0;margin:0 auto;background:var
 .ns.gold .ns-v{background:var(--gold)}.ns.warn{border-color:var(--amber)}.ns.warn .ns-v{background:var(--amber)}
 .ns-m{flex:1;min-width:0}.ns-t{font-size:14px;font-weight:800}
 .ns-p{display:flex;align-items:baseline;gap:8px;margin-top:2px}.ns-p b{font-size:26px;font-weight:900;letter-spacing:-.5px}.ns.sell .ns-p b{color:var(--red)}.ns.buy .ns-p b{color:var(--green)}
-.ns-p span{font-size:13px;font-weight:700;white-space:nowrap}.ns-p em{margin-left:auto;font-style:normal;font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ns-p span{font-size:13px;font-weight:700;white-space:nowrap}.ns-p em{margin-left:6px;font-style:normal;font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
 .ns-s{font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+#thrSel{background:var(--sub);color:inherit;border:1px solid var(--line);border-radius:8px;padding:2px 4px;font-size:13px;margin-left:4px}.thrw{margin-left:8px}
 .ns-pg{margin:8px 2px 0}.ns-tk{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.ns-tk i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--gold))}
 .ns-pl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:3px}
 .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.kp>div{background:var(--sub);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
@@ -412,6 +413,11 @@ function renderMarkers() {
     labColJL(g, labs);   /* jl-zp6: 缺口/IV区/昨收/日高低 + 卖目标/卖出/反弹线 合成右侧一列, 自动错开 */
   }
 }
+/* 回落阈值: 每只股票单独存(localStorage zp_thr_v1), 没设过=1.5% */
+function thrOfJL() {
+  try { var o = JSON.parse(localStorage.getItem('zp_thr_v1') || '{}'), v = +o[(STK && STK.code) || '_']; if (v >= 0.005 && v <= 0.05) return v; } catch (e) { }
+  return 0.015;
+}
 function renderLine() {
   var g = $('auc');
   if (g) { while (g.firstChild) g.removeChild(g.firstChild); }
@@ -424,7 +430,7 @@ function renderLine() {
     if (!pts.length) { $('pline').setAttribute('points', ''); return; }
     $('pline').setAttribute('points', pts.join(' '));
     try { /* jl-hl2: 走势线高低点——高=峰顶红圈, 低=谷底红短横, 旁标价格+相对昨收% */
-      var SW = [], FL = [], dirH = 0, ext = null, thr = 0.015, pcv = LIVE.pc || 0;
+      var SW = [], FL = [], dirH = 0, ext = null, thr = thrOfJL(), pcv = LIVE.pc || 0;
 
       LIVE.pts.forEach(function (q, ix) {
         if (!(q.p > 0)) return;
@@ -739,7 +745,11 @@ function metaJL() {
 var cur = m.querySelector('input');
   if (cur && m.contains(document.activeElement)) return;
 m.innerHTML =
-    '<span>持仓</span><input id="qtyHold" type="number" inputmode="numeric" min="0" step="100" value="' + q + '" aria-label="持仓股数"><span>股 · 每轮</span><input id="qtyRnd" type="number" inputmode="numeric" min="100" step="100" value="' + LIVE.sh + '" aria-label="每轮股数"><span>股</span>';
+    '<span>持仓</span><input id="qtyHold" type="number" inputmode="numeric" min="0" step="100" value="' + q + '" aria-label="持仓股数"><span>股 · 每轮</span><input id="qtyRnd" type="number" inputmode="numeric" min="100" step="100" value="' + LIVE.sh + '" aria-label="每轮股数"><span>股</span><span class="thrw">回落</span><select id="thrSel" aria-label="回落阈值">' + [1.0, 1.2, 1.5, 1.8, 2.0, 2.5, 3.0].map(function (v) { return '<option value="' + v + '"' + (Math.abs(thrOfJL() * 100 - v) < 0.01 ? ' selected' : '') + '>' + v.toFixed(1) + '%</option>'; }).join('') + '</select>';
+m.querySelector('#thrSel').onchange = function () {
+    try { var o = JSON.parse(localStorage.getItem('zp_thr_v1') || '{}'); o[(STK && STK.code) || '_'] = (+this.value) / 100; localStorage.setItem('zp_thr_v1', JSON.stringify(o)); } catch (e) { }
+    try { if (RPL) rplShowJL(RPL.I); else if (MODE === 'live') { liveCompute(); liveRender(); } else renderAll(); } catch (e) { }
+  };
 m.querySelector('#qtyHold').onchange = function () {
     var v = Math.max(0, Math.round(+this.value || 0));
     try {
