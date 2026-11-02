@@ -130,6 +130,8 @@
     };
     const tgt = { up: tg(true), dn: tg(false) };
     const ref = op || last;
+    window._gvAll = all.map(g => g.lv + " " + g.lo + "-" + g.hi + (g.ft ? " 已补" : " 未补"));
+
     all = all.filter((g) => Math.abs((g.lo + g.hi) / 2 / last - 1) <= 0.08);
     all = all.filter((g) => !(g.lv === "1分" && g.ft && (g.hi - g.lo) / ref < 0.002));   /* 1分钟 <0.2% 的已补缺口不显示, 未补的照常显示 */
 
