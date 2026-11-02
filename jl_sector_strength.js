@@ -368,7 +368,11 @@
     var fin = function (pastDays) {
       try {
         var days = pastDays.map(function (d) { return { day: d, m: S.hc[d] || {} }; }).filter(function (d) { return Object.keys(d.m).length; });
-        days.push({ day: S.day, m: dayMapOf(S.last && S.last.recs) });
+        var tm = dayMapOf(S.last && S.last.recs), hasRank = Object.keys(tm).some(function (k) { return tm[k].rank != null; });
+        S.review = !hasRank && days.length > 0; /* 当日无强度排名(休市/夜间/数据旧): 不隐藏, 退到最近一个有快照的交易日复盘 */
+        if (!S.review) days.push({ day: S.day, m: tm });
+        if (!days.length) { S.ana = null; S.days = []; return cb(); }
+        S.days = days; S.dispDay = days[days.length - 1].day;
         S.nHist = days.length - 1;
         var i = days.length - 1, ana = {};
         Object.keys(days[i].m).forEach(function (sec) {
@@ -460,6 +464,61 @@
       '<div style="font-size:9.5px;color:rgba(255,255,255,.8);font-weight:600;margin-top:3px">' + (S.nHist < 3 ? "历史只记录了 " + S.nHist + " 天，连强天数/5日累计从今天起逐日累积；" : "") + "圈大小=涨停数，红涨绿跌，虚线圈=上一个交易日位置</div></div>";
   }
 
+
+  /* ---- 关注板块: 点选(最多2个)+左右滑看每个板块的"阶段轨迹/涨幅柱"; 夜间复盘也可用 ---- */
+  function pickGet() { var a = lsGet("jl_secpick_v1"); return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string"; }).slice(0, 2) : []; }
+  function pickSet(a) { try { localStorage.setItem("jl_secpick_v1", JSON.stringify(a.slice(0, 2))); } catch (e) {} }
+  function curPicks() {
+    var A = S.ana || {}, p = pickGet().filter(function (x) { return A[x]; });
+    if (!p.length) { if (S.lead && A[S.lead]) p.push(S.lead); var alt = (S.pool || []).filter(function (x) { return x !== S.lead; })[0]; if (alt) p.push(alt); }
+    return p.slice(0, 2);
+  }
+  function trackSvg(sec) {
+    var days = (S.days || []).slice(-10), off = (S.days || []).length - days.length, n = days.length;
+    if (!n) return "";
+    var x0 = 34, x1 = 290, dx = n > 1 ? (x1 - x0) / (n - 1) : 0, pts = [], bars = "", labs = "", rails = "";
+    for (var k = 1; k <= 5; k++) rails += '<line x1="' + x0 + '" x2="' + x1 + '" y1="' + (14 + (k - 1) * 15) + '" y2="' + (14 + (k - 1) * 15) + '" stroke="' + STC[k] + '" stroke-opacity=".18"/><text x="2" y="' + (17 + (k - 1) * 15) + '" font-size="8.5" font-weight="700" fill="' + STC[k] + '">' + CORE.STAGES[k] + "</text>";
+    days.forEach(function (d, j) {
+      var x = n > 1 ? x0 + dx * j : (x0 + x1) / 2, st = CORE.stageAt(S.days, off + j, sec), e = d.m && d.m[sec];
+      if (st && st.k) pts.push({ x: x, y: 14 + (st.k - 1) * 15, k: st.k, last: j === n - 1 });
+      else pts.push(null);
+      if (e && e.avg != null) { var h = Math.min(22, Math.abs(e.avg) * 2.2 + 1.5); bars += '<rect x="' + (x - 5).toFixed(1) + '" y="' + (e.avg >= 0 ? 118 - h : 118).toFixed(1) + '" width="10" height="' + h.toFixed(1) + '" rx="2" fill="' + (e.avg >= 0 ? "#ff5459" : "#2fd18b") + '" fill-opacity=".85"/><text x="' + x.toFixed(1) + '" y="' + (e.avg >= 0 ? 116 - h : 128 + h).toFixed(1) + '" text-anchor="middle" font-size="7.5" font-weight="700" fill="#fff">' + (e.avg >= 0 ? "+" : "") + e.avg.toFixed(1) + "</text>"; }
+      if (n <= 6 || j % 2 === (n - 1) % 2) labs += '<text x="' + x.toFixed(1) + '" y="158" text-anchor="middle" font-size="8" font-weight="600" fill="rgba(255,255,255,.85)">' + String(d.day).slice(5) + "</text>";
+    });
+    var line = "", prev = null;
+    pts.forEach(function (p) { if (p && prev) line += '<line x1="' + prev.x.toFixed(1) + '" y1="' + prev.y + '" x2="' + p.x.toFixed(1) + '" y2="' + p.y + '" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/>'; prev = p || null; });
+    var dots = pts.map(function (p) { return p ? '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y + '" r="' + (p.last ? 5 : 3.4) + '" fill="' + STC[p.k] + '" stroke="#fff" stroke-width="' + (p.last ? 1.6 : 0.8) + '"/>' : ""; }).join("");
+    return '<svg viewBox="0 0 300 164" width="100%" style="display:block">' + rails + line + dots + '<line x1="' + x0 + '" x2="' + x1 + '" y1="118" y2="118" stroke="rgba(255,255,255,.25)"/>' + bars + labs + "</svg>";
+  }
+  function cardOf(sec) {
+    var c = S.ana[sec].cur, fill = c.avg == null ? "#8b93a3" : c.avg >= 0 ? "#ff5459" : "#2fd18b";
+    var bits = [];
+    if (c.streak >= 2) bits.push("强第" + c.streak + "天");
+    if (S.nHist >= 1) bits.push("5日" + (c.cum5 >= 0 ? "+" : "") + c.cum5.toFixed(1) + "%");
+    if (c.zt) bits.push("涨停" + c.zt);
+    if (c.early) bits.push("早盘封" + c.early);
+    var tip = c.k === 5 ? "退潮：别再耗在这里，看下一个" : c.k === 4 ? "高位分歧：已涨一段，别追" : c.k === 3 ? "加速中：趋势在，但别满仓追高" : c.k === 2 ? "刚启动：可以盯，等回踩/确认" : c.k === 1 ? "刚冒头：只观察，等排名冲进前5" : "目前不在轮动圈内";
+    return '<div class="jlpgC" style="flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:6px 8px 4px"><div style="display:flex;align-items:baseline;gap:6px"><b style="font-size:13px;color:#ffd21f">' + esc(sec) + '</b><span style="font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:7px;color:#10131a;background:' + STC[c.k || 5] + '">' + (c.k ? CORE.STAGES[c.k] : "未入圈") + '</span><b style="margin-left:auto;font-size:12px;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</b></div>" +
+      '<div style="font-size:10.5px;color:#fff;font-weight:600;margin:3px 0 1px">' + bits.join(" · ") + "</div>" + trackSvg(sec) +
+      '<div style="font-size:10px;color:' + STC[c.k || 5] + ';font-weight:700;margin-top:1px">' + tip + "</div></div>";
+  }
+  function pickerHtml() {
+    var A = S.ana; if (!A) return "";
+    var picks = curPicks(), ord = { 3: 0, 2: 1, 1: 2, 4: 3, 5: 4 };
+    var names = Object.keys(A).filter(function (k) { return A[k].cur.k || picks.indexOf(k) >= 0; }).sort(function (x, y) { var a = A[x].cur, b = A[y].cur; return ((ord[a.k] == null ? 9 : ord[a.k]) - (ord[b.k] == null ? 9 : ord[b.k])) || ((a.rank == null ? 99 : a.rank) - (b.rank == null ? 99 : b.rank)); }).slice(0, 16);
+    var chips = names.map(function (k) { var on = picks.indexOf(k) >= 0, c = A[k].cur; return '<span data-jlpick="' + esc(k) + '" style="flex:0 0 auto;padding:3px 9px;border-radius:12px;font-size:10.5px;font-weight:700;white-space:nowrap;border:1px solid ' + STC[c.k || 5] + ';' + (on ? "background:" + STC[c.k || 5] + ";color:#10131a" : "background:rgba(255,255,255,.05);color:#fff") + '">' + esc(k) + "</span>"; }).join("");
+    if (!picks.length) return "";
+    var cards = picks.map(cardOf).join("");
+    var dots = picks.length > 1 ? '<div id="jlpgDots" style="text-align:center;font-size:10px;margin-top:1px">' + picks.map(function (_, i) { return '<span style="display:inline-block;width:' + (i ? 6 : 14) + 'px;height:5px;margin:0 2px;border-radius:3px;background:' + (i ? "rgba(255,255,255,.35)" : "#fff") + '"></span>'; }).join("") + "</div>" : "";
+    return '<div style="padding:6px 6px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,210,31,.06);border:1px solid rgba(255,210,31,.22)"><div style="font-size:11px;color:#ffd21f;font-weight:700;padding:0 3px">' + (S.review ? "复盘 " + esc(S.dispDay) + " · " : "") + '我盯的板块<span style="font-weight:600;opacity:.85;font-size:9.5px"> · 点下面选(最多2个)，左右滑切换</span></div>' +
+      '<div id="jlpgChips" style="display:flex;gap:6px;overflow-x:auto;padding:5px 3px;-webkit-overflow-scrolling:touch;scrollbar-width:none">' + chips + "</div>" +
+      '<div id="jlpgPager" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:8px;background:rgba(0,0,0,.18)">' + cards + "</div>" + dots + "</div>";
+  }
+  function bindPicker() {
+    var pg = document.getElementById("jlpgPager"), dots = document.getElementById("jlpgDots");
+    if (pg && dots) pg.addEventListener("scroll", function () { var i = Math.round(pg.scrollLeft / Math.max(1, pg.clientWidth)); Array.prototype.forEach.call(dots.children, function (d, j) { d.style.width = j === i ? "14px" : "6px"; d.style.background = j === i ? "#fff" : "rgba(255,255,255,.35)"; }); }, { passive: true });
+  }
+
   function ensureRoot() {
     if (ROOT) return ROOT;
     ROOT = document.createElement("div");
@@ -470,6 +529,13 @@
     document.head.appendChild(st);
     var host = document.querySelector(".phone") || document.body; /* jl-C: 挂.phone(原body尾=甩到页面最底根修); 兜底body时改fixed定位 */
     if (!document.querySelector(".phone")) ROOT.style.position = "fixed";
+    ROOT.addEventListener("click", function (ev) {
+      var t = ev.target && ev.target.closest ? ev.target.closest("[data-jlpick]") : null;
+      if (!t) return;
+      var k = t.getAttribute("data-jlpick"), p = curPicks(), i = p.indexOf(k);
+      if (i >= 0) { if (p.length > 1) p.splice(i, 1); } else { p.push(k); if (p.length > 2) p.shift(); }
+      pickSet(p); S.pickTouched = 1; paint();
+    });
     host.appendChild(ROOT);
     return ROOT;
   }
@@ -569,6 +635,8 @@
       var _r0 = S.last.ranked[0], _r1 = S.last.ranked[1], _a0 = _r0.factors && _r0.factors.avgPct;
       sub = "最强 " + _r0.sector + (_a0 && _a0.state === "ok" ? " " + fmtPct(_a0.raw) : "") + (_r1 ? " · " + _r1.sector : "") + (S.at ? " · " + new Date(+S.at).toTimeString().slice(0, 5) : "");
     }
+    var hasAna = !!(S.ana && Object.keys(S.ana).length);
+    if (hasAna && S.review) sub = "复盘 " + S.dispDay + (S.lead ? " · 主攻 " + S.lead : "");
     var body = "";
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
@@ -579,21 +647,28 @@
       var sl = S.stale || {}, slTxt = [sl.rows ? "个股涨跌" : "", sl.zt ? "涨停名单" : ""].filter(Boolean);
       if (slTxt.length) body += '<div style="font-size:10px;color:#ffd84a;font-weight:700;padding:5px 2px 3px">⚠ ' + esc(slTxt.join("、")) + "还是旧日子的数据，没算进来</div>"; /* jl-secpop: 白话 */
       body += rotHtml();
+      body += pickerHtml();
       body += tlHtml();
       body += rk.length ? '<div style="font-size:11px;color:#fff;font-weight:700;margin:2px 0 0">现在最强的板块</div>' + rk.map(function (r, i) { return secRow(r, i); }).join("") : '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">现在股票太少，还排不出强弱（等数据多一些会自动出来）</div>';
       if (rest.length) body += '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:6px 0 2px;line-height:1.6">股票太少暂不排名：' + rest.map(function (r) { return esc(r.sector); }).join(" · ") + "</div>";
       /* jl-1207/secpop: 公式、口径、未归属条数、导出按钮都不上卡面(导出仍可 __JLSEC__.exportJSON()) */
+    } else if (hasAna) {
+      body = rotHtml() + pickerHtml();
     } else {
       body = '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">还没有数据，开盘后会自动算出来</div>';
     }
     /* jl-C: 白玻璃抽屉结构——手柄(拖条+标题+时点+箭头) + 内容区; 开合由ROOT.open类驱动max-height动画 */
+    var _pg0 = document.getElementById("jlpgPager"), _ch0 = document.getElementById("jlpgChips"), pgL = _pg0 ? _pg0.scrollLeft : 0, chL = _ch0 ? _ch0.scrollLeft : 0;
     var prevB = document.getElementById("jlsectBody"), sc = prevB ? prevB.scrollTop : 0; /* 刷新保留滚动位置 */
     R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
-    R.style.display = has && S.last.ranked && S.last.ranked.length ? "" : "none"; /* jl-1208: 无强度排名(样本不足/无数据)整卡收起不占位, 有排名自动出现 */
+    R.style.display = (has && S.last.ranked && S.last.ranked.length) || hasAna ? "" : "none"; /* jl-1208: 无强度排名(样本不足/无数据)整卡收起不占位, 有排名自动出现 */
     var nb = document.getElementById("jlsectBody");
     if (nb) nb.scrollTop = sc;
+    var _pg1 = document.getElementById("jlpgPager"), _ch1 = document.getElementById("jlpgChips");
+    if (_pg1) _pg1.scrollLeft = pgL; if (_ch1) _ch1.scrollLeft = chL;
+    bindPicker();
     var h = document.getElementById("jlsectHandle");
     if (h) bindHandleJL(h);
   }
@@ -656,5 +731,5 @@
   setTimeout(compute, 1800);
   setInterval(function () { if (!document.hidden) compute(); }, 60e3);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) setTimeout(compute, 500); });
-  window.__JLSEC__ = { CORE: CORE, S: S, rotHtml: rotHtml, pickLead: pickLead, compute: compute, exportJSON: exportJSON, diag: diag };
+  window.__JLSEC__ = { CORE: CORE, S: S, rotHtml: rotHtml, pickerHtml: pickerHtml, pickLead: pickLead, compute: compute, exportJSON: exportJSON, diag: diag };
 })(typeof window !== "undefined" ? window : globalThis);
