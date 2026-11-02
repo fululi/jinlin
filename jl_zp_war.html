@@ -1929,7 +1929,15 @@ window.addEventListener('pointerup',function(e){
 },true);
 svgEl.addEventListener('touchmove',function(e){if(active&&e.cancelable)e.preventDefault()},{passive:false});
 })();
-</script>
+</script><style>
+/* jl-fix1: 十字线字体变细 + 右上角不再被挤出 */
+#xh text{stroke:none!important;stroke-width:0!important;font-weight:600!important;letter-spacing:0}
+body.injlin .quote{align-items:flex-start;gap:8px}
+body.injlin .quote>div:first-child{flex:1;min-width:0}
+body.injlin .stat{flex:none;gap:10px}
+#hSub{white-space:normal!important;line-height:1.4}
+</style>
+
 
 
 
