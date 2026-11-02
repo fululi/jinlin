@@ -443,6 +443,7 @@ if (ext && LIVE.pts[ext.ix]) {
 
   if (cx != null && ext.p >= YLO && ext.p <= YHI) {
     var cy = Y(ext.p);
+    var lpJL = LIVE.pts[LIVE.pts.length - 1].p;
 
     if (dirH === 1) {
       gh.appendChild(el('circle', {
@@ -453,6 +454,7 @@ if (ext && LIVE.pts[ext.ix]) {
         'stroke-dasharray': '2 2',
         opacity: 0.7
       }));
+      gh.appendChild(tx(Math.max(PX0 + 40, Math.min(cx, LX - 76)), cy - 16, '回落 ' + (Math.max(0, (ext.p - lpJL) / ext.p) * 100).toFixed(1) + '% / ' + (thr * 100).toFixed(1) + '% 确认', '#ffd66e', 9, 'middle', 700));
     } else if (dirH === -1) {
       gh.appendChild(el('circle', {
         cx: cx, cy: cy + 4, r: 4,
@@ -462,9 +464,11 @@ if (ext && LIVE.pts[ext.ix]) {
         'stroke-dasharray': '2 2',
         opacity: 0.7
       }));
+      gh.appendChild(tx(Math.max(PX0 + 40, Math.min(cx, LX - 76)), cy + 19, '反弹 ' + (Math.max(0, (lpJL - ext.p) / ext.p) * 100).toFixed(1) + '% / ' + (thr * 100).toFixed(1) + '% 确认', '#ffd66e', 9, 'middle', 700));
     }
   }
 }
+
       SW.forEach(function (m) {
         var q = LIVE.pts[m.ix], x = xOfHmJL(q.hm); if (x == null || m.p < YLO || m.p > YHI) return;
         var y = Y(m.p), pp = pcv > 0 ? ((m.p / pcv - 1) * 100) : null, tt = (m.h ? '卖 ' : '买 ') + m.p.toFixed(2) + (pp == null ? '' : ' ' + (pp >= 0 ? '+' : '') + pp.toFixed(1) + '%');
