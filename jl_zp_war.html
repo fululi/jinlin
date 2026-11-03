@@ -1775,7 +1775,231 @@ function calcSize() {
   var C = [['净利', sg(net, 0), net >= 0 ? '' : 'dn'], ['毛利 / 费用', sg(gross, 0) + ' / ' + fees.toFixed(0), ''], ['占持仓市值', sg(net / (21.75 * 1900) * 100, 2) + '%', ''], ['最大浮亏', '-' + mae.toFixed(0), 'dn'], ['周五不动', sg(hold, 0), 'dn'], ['做T后', sg(hold + net, 0), hold + net >= 0 ? '' : 'dn']];
   $('szG').innerHTML = C.map(function (c) { return '<div class="' + c[2] + '"><small>' + c[0] + '</small><b>' + c[1] + '</b></div>'; }).join('');
 }
-$('szR').oninput = calcSize; calcSize();
+$('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═══ */
+(function () {
+  try {
+    var SAVE = null, STOPPED = false;
+    var KEYS = ['pc', 'sessDate', 'open', 'last', 'hi', 'lo', 'dhi', 'dlo', 'pts', 'bars', 'ebars', 'auc'];
+    function days() {
+      var cnt = {};
+      (LIVE.hist.m5 || []).forEach(function (b) { var d = dg(b.t).slice(0, 8); if (d.length === 8) cnt[d] = (cnt[d] || 0) + 1; });
+      return Object.keys(cnt).sort().reverse().filter(function (d) { return cnt[d] >= 5; }).slice(0, 10);
+    }
+    function dayData(d8) {
+      var m5 = (LIVE.hist.m5 || []).filter(function (b) { return dg(b.t).slice(0, 8) === d8; });
+      var dc = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < d8; });
+      if (m5.length < 5 || !dc.length) return null;
+      var m1 = (LIVE.hist.m1 || []).filter(function (b) { return dg(b.t).slice(0, 8) === d8; });
+      var pts = [];
+      (m1.length ? m1 : m5).forEach(function (b) {
+        var hm = hmOf(b.t);
+        if (hm >= 930) pts.push({ hm: String(hm).padStart(4, '0'), p: b.c, h: b.h, l: b.l });
+      });
+      return { d8: d8, pc: dc[dc.length - 1].c, bars: m5, pts: pts };
+    }
+    function apply(d) {
+      if (!SAVE) { SAVE = {}; KEYS.forEach(function (k) { SAVE[k] = LIVE[k]; }); }
+      var hi = -1e9, lo = 1e9;
+      d.bars.forEach(function (b) { hi = Math.max(hi, b.h); lo = Math.min(lo, b.l); });
+      LIVE.pc = d.pc; LIVE.sessDate = d.d8; LIVE.open = d.bars[0].o;
+      LIVE.last = d.bars[d.bars.length - 1].c;
+      LIVE.hi = hi; LIVE.lo = lo; LIVE.dhi = hi; LIVE.dlo = lo;
+      LIVE.pts = d.pts; LIVE.bars = d.bars; LIVE.ebars = []; LIVE.auc = null;
+      ZCACHE = {};
+    }
+    function restore() {
+      if (!SAVE) return;
+      KEYS.forEach(function (k) { LIVE[k] = SAVE[k]; });
+      SAVE = null; ZCACHE = {};
+    }
+    function pick(d8) {
+      var live0 = SAVE ? SAVE.sessDate : LIVE.sessDate, msg = '';
+      if (RPL) { try { rplStopJL(); } catch (e) { } RPL = null; document.body.classList.remove('rpl'); }
+      if (d8 === live0) restore();
+      else {
+        var d = dayData(d8);
+        if (!d) { restore(); msg = d8.slice(4, 6) + '-' + d8.slice(6, 8) + ' 历史数据不足 · 无法回放'; }
+        else { try { LIVE.stop(); } catch (e) { } STOPPED = true; apply(d); }
+      }
+      rplEnterJL();
+      if (msg) $('bMain').textContent = msg;
+    }
+    function fill() {
+      var s = $('rplDate');
+      if (!s) {
+        s = document.createElement('select'); s.id = 'rplDate'; s.setAttribute('aria-label', '回放日期');
+        s.style.cssText = 'flex:none;width:64px;height:32px;border:1px solid var(--line);border-radius:10px;background:var(--sub);color:#fff;font:inherit;font-size:12px;text-align:center;text-align-last:center;padding:0 2px';
+        $('tlab').parentNode.insertBefore(s, $('btnRst'));
+        s.onchange = function () { pick(this.value); };
+      }
+      var ds = days();
+      if (LIVE.sessDate && ds.indexOf(LIVE.sessDate) < 0) ds.unshift(LIVE.sessDate);
+      s.innerHTML = ds.map(function (d) { return '<option value="' + d + '">' + d.slice(4, 6) + '-' + d.slice(6, 8) + '</option>'; }).join('');
+      s.value = LIVE.sessDate;
+    }
+    var enter0 = rplEnterJL, exit0 = rplExitJL;
+    rplEnterJL = function () { enter0(); try { fill(); } catch (e) { } };
+    rplExitJL = function () {
+      if (!RPL) return;
+      restore();
+      exit0();
+      if (STOPPED) { STOPPED = false; try { if (MODE === 'live') LIVE.start(); } catch (e) { } }
+    };
+  } catch (e) { }
+})();
+/* ═══ jl-week1: 周视图(5日连排 + 做T统计 + 回放) ═══ */
+(function () {
+  try {
+    var WK = { on: false, runs: [], flat: [], k: 0, t: null, busy: false };
+    var CFG = { bounce: 0.15, rounds: 3, win: 0 }, WD = ['日', '一', '二', '三', '四', '五', '六'];
+    try { var sv = JSON.parse(localStorage.getItem('jl_zp_wk_v1') || 'null'); if (sv) { CFG.bounce = +sv.bounce || 0.15; CFG.rounds = +sv.rounds || 3; CFG.win = +sv.win || 0; } } catch (e) { }
+    var md = function (d) { return d.slice(4, 6) + '-' + d.slice(6, 8); };
+    function fr(hm) { var m = Math.floor(hm / 100) * 60 + hm % 100; if (m <= 570) return 0; if (m >= 900) return 1; if (m >= 690 && m < 780) return 0.5; return (m < 690 ? m - 570 : m - 660) / 240; }
+    function weekDays() {
+      var cnt = {};
+      (LIVE.hist.m5 || []).forEach(function (b) { var d = dg(b.t).slice(0, 8); if (d.length === 8) cnt[d] = (cnt[d] || 0) + 1; });
+      return Object.keys(cnt).sort().filter(function (d) { return cnt[d] >= 5; }).slice(-5);
+    }
+    function dayData(d8) {
+      var same = function (b) { return dg(b.t).slice(0, 8) === d8; };
+      var m5 = (LIVE.hist.m5 || []).filter(same);
+      var dc = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < d8; });
+      if (m5.length < 5 || !dc.length) return null;
+      var m1 = (LIVE.hist.m1 || []).filter(same), pts = [];
+      (m1.length ? m1 : m5).forEach(function (b) { var hm = hmOf(b.t); if (hm >= 930) pts.push({ hm: String(hm).padStart(4, '0'), p: b.c, h: b.h, l: b.l }); });
+      return { d8: d8, pc: dc[dc.length - 1].c, bars: m5, pts: pts, open: m5[0].o };
+    }
+    var KEYS = ['pc', 'sessDate', 'open', 'last', 'hi', 'lo', 'dhi', 'dlo', 'pts', 'bars', 'ebars', 'auc', 'bounce', 'roundsMax'];
+    function withDay(d, fn) {
+      var sv0 = {}; KEYS.forEach(function (k) { sv0[k] = LIVE[k]; });
+      try {
+        if (LIVE.sessDate !== d.d8) {
+          var hi = -1e9, lo = 1e9; d.bars.forEach(function (b) { hi = Math.max(hi, b.h); lo = Math.min(lo, b.l); });
+          LIVE.pc = d.pc; LIVE.sessDate = d.d8; LIVE.open = d.open; LIVE.last = d.bars[d.bars.length - 1].c;
+          LIVE.hi = hi; LIVE.dhi = hi; LIVE.lo = lo; LIVE.dlo = lo; LIVE.pts = d.pts; LIVE.bars = d.bars; LIVE.ebars = []; LIVE.auc = null;
+        }
+        LIVE.bounce = CFG.bounce; LIVE.roundsMax = CFG.rounds;
+        return fn();
+      } catch (e) { return null; }
+      finally { KEYS.forEach(function (k) { LIVE[k] = sv0[k]; }); }
+    }
+    function runDay(d8) {
+      var d = dayData(d8); if (!d) return null;
+      var e = withDay(d, function () { return runEngine(engBarsJL(), {}); });
+      return { d: d, e: e };
+    }
+    function setSum(t) { var s = $('wkSum'); if (s) s.textContent = t; }
+    function draw() {
+      var s = $('wkSvg'); if (!s) return;
+      while (s.firstChild) s.removeChild(s.firstChild);
+      var R = WK.runs, N = R.length;
+      if (!N) { s.appendChild(tx(180, 95, WK.busy ? '计算中…' : '历史数据还没拉到 · 稍后再试', '#fff', 12, 'middle', 600)); return; }
+      var cur = WK.flat[Math.min(WK.k, WK.flat.length - 1)], lo = 1e9, hi = -1e9;
+      R.forEach(function (r) { r.d.bars.forEach(function (b) { if (b.l < lo) lo = b.l; if (b.h > hi) hi = b.h; }); });
+      var pad = (hi - lo) * 0.08 || 0.1; lo -= pad; hi += pad;
+      var X0 = 6, W = 330, Y0 = 20, H = 148, DW = W / N;
+      var Yp = function (p) { return Y0 + (hi - p) / (hi - lo) * H; };
+      var Xp = function (di, hm) { return X0 + di * DW + fr(+hm) * DW; };
+      R.forEach(function (r, di) {
+        var xL = X0 + di * DW, dd = r.d.d8;
+        if (di > 0) s.appendChild(el('line', { x1: xL, y1: Y0 - 6, x2: xL, y2: Y0 + H, stroke: 'rgba(255,255,255,.35)', 'stroke-width': .8, 'stroke-dasharray': '3 3' }));
+        s.appendChild(el('line', { x1: Xp(di, 930), y1: Yp(r.d.pc), x2: Xp(di, 1500), y2: Yp(r.d.pc), stroke: 'rgba(255,255,255,.55)', 'stroke-width': .8, 'stroke-dasharray': '2 3' }));
+        var wd = new Date(+dd.slice(0, 4), +dd.slice(4, 6) - 1, +dd.slice(6, 8)).getDay();
+        s.appendChild(tx(xL + DW / 2, Y0 + H + 14, md(dd) + ' 周' + WD[wd], '#fff', 9, 'middle', 600));
+        var pc = (r.d.bars[r.d.bars.length - 1].c / r.d.pc - 1) * 100;
+        s.appendChild(tx(xL + DW / 2, 11, (pc >= 0 ? '+' : '') + pc.toFixed(1) + '%', pc >= 0 ? 'var(--red)' : 'var(--green)', 10, 'middle', 700));
+        var P = [];
+        r.d.pts.forEach(function (q) { if (di * 10000 + +q.hm <= cur) P.push(Xp(di, q.hm).toFixed(1) + ',' + Yp(q.p).toFixed(1)); });
+        if (P.length > 1) s.appendChild(el('polyline', { points: P.join(' '), fill: 'none', stroke: '#fff', 'stroke-width': 1, 'stroke-linejoin': 'round' }));
+        ((r.e && r.e.rounds) || []).forEach(function (x) {
+          if (di * 10000 + +x.tS <= cur) s.appendChild(el('circle', { cx: Xp(di, x.tS), cy: Yp(x.sp) - 5, r: 4.5, fill: 'none', stroke: '#ff3b3b', 'stroke-width': 1.6 }));
+          if (di * 10000 + +x.tB <= cur) { var bx = Xp(di, x.tB), by = Yp(x.bp) + 4; s.appendChild(el('line', { x1: bx - 6, y1: by, x2: bx + 6, y2: by, stroke: '#ff3b3b', 'stroke-width': 2, 'stroke-linecap': 'round' })); }
+        });
+      });
+      var dc = Math.floor(cur / 10000), hc = cur % 10000, rr = R[dc], q0 = null;
+      if (rr) { rr.d.pts.forEach(function (p) { if (+p.hm <= hc) q0 = p; }); if (q0) s.appendChild(el('circle', { cx: Xp(dc, q0.hm), cy: Yp(q0.p), r: 3, fill: '#fff' })); }
+    }
+    function stats() {
+      var cur = WK.flat.length ? WK.flat[Math.min(WK.k, WK.flat.length - 1)] : 0, rows = '', tot = 0, nr = 0, ok = 0, win = CFG.win;
+      if (!(LIVE.sh > 0)) { setSum('持仓不足一手 · 无法统计'); $('wkTbl').innerHTML = ''; return; }
+      WK.runs.forEach(function (r, di) {
+        var rs = ((r.e && r.e.rounds) || []).filter(function (x) { return di * 10000 + +x.tB <= cur; }), net = 0, k = 0;
+        rs.forEach(function (x) { net += x.net; if (win > 0 ? x.net >= win : x.net > 0) k++; });
+        tot += net; nr += rs.length; ok += k;
+        rows += '<div style="display:flex;gap:8px;padding:5px 12px;border-top:1px solid var(--line);font-size:12.5px;color:#fff"><span style="width:50px">' + md(r.d.d8) + '</span><span style="flex:1">' + rs.length + '/' + CFG.rounds + ' 轮 · 达标 ' + k + '</span><b style="color:' + (net >= 0 ? 'var(--red)' : 'var(--green)') + '">' + (net >= 0 ? '+' : '') + net.toFixed(0) + '</b></div>';
+      });
+      setSum(WK.runs.length + ' 日 · 共 ' + nr + ' 轮 · 达标 ' + ok + (nr ? '（' + Math.round(ok / nr * 100) + '%）' : '') + ' · 净 ' + (tot >= 0 ? '+' : '') + tot.toFixed(0));
+      $('wkTbl').innerHTML = rows;
+    }
+    function refresh() {
+      var sc = $('wkScr'); if (sc) sc.value = WK.k;
+      var cur = WK.flat.length ? WK.flat[Math.min(WK.k, WK.flat.length - 1)] : 0, r = WK.runs[Math.floor(cur / 10000)], h = String(cur % 10000).padStart(4, '0');
+      $('wkTl').textContent = r ? md(r.d.d8) + ' ' + h.slice(0, 2) + ':' + h.slice(2) : '';
+      draw(); stats();
+    }
+    function build() {
+      WK.busy = true; WK.runs = []; WK.flat = []; draw(); setSum('计算中…'); $('wkTbl').innerHTML = '';
+      setTimeout(function () {
+        try {
+          weekDays().forEach(function (d8) {
+            var r = runDay(d8); if (!r) return;
+            var di = WK.runs.length; WK.runs.push(r);
+            r.d.bars.forEach(function (b) { WK.flat.push(di * 10000 + hmOf(b.t)); });
+          });
+        } catch (e) { }
+        WK.busy = false; WK.k = Math.max(0, WK.flat.length - 1);
+        $('wkScr').max = Math.max(0, WK.flat.length - 1);
+        refresh();
+      }, 30);
+    }
+    function stop() { if (WK.t) { clearInterval(WK.t); WK.t = null; } var b = $('wkPlay'); if (b) b.textContent = '▶ 播放'; }
+    function play() {
+      if (WK.t) { stop(); return; }
+      if (!WK.flat.length) return;
+      if (WK.k >= WK.flat.length - 1) WK.k = 0;
+      WK.t = setInterval(function () { if (WK.k >= WK.flat.length - 1) { stop(); return; } WK.k++; refresh(); }, 100);
+      $('wkPlay').textContent = '⏸ 暂停';
+    }
+    function mount() {
+      if ($('wkBox')) return;
+      var SS = 'background:var(--sub);color:#fff;border:1px solid var(--line);border-radius:8px;height:28px;font:inherit;font-size:12px;margin:0 6px 0 3px';
+      var box = document.createElement('div'); box.id = 'wkBox'; box.style.cssText = 'display:none;order:1';
+      box.innerHTML = '<svg id="wkSvg" viewBox="0 0 360 190" style="width:100%;height:auto;display:block;padding:0 6px"></svg>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin:6px 10px 0"><button class="pbtn" id="wkPlay" style="height:32px;width:76px">▶ 播放</button><input type="range" id="wkScr" min="0" max="0" value="0" step="1" style="flex:1"><span id="wkTl" style="font-size:12px;color:#fff;width:64px;text-align:right"></span></div>' +
+        '<div style="display:flex;align-items:center;margin:8px 10px 0;font-size:12px;color:#fff">反弹<select id="wkB" style="' + SS + '"><option value="0.1">0.10元</option><option value="0.15">0.15元</option><option value="0.2">0.20元</option><option value="0.3">0.30元</option></select>轮次<select id="wkR" style="' + SS + '"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>达标<select id="wkW" style="' + SS + '"><option value="0">盈利</option><option value="50">≥50</option><option value="100">≥100</option><option value="200">≥200</option></select></div>' +
+        '<div id="wkSum" style="margin:8px 12px 4px;font-size:13px;font-weight:700;color:#fff"></div><div id="wkTbl"></div>';
+      var ch = $('ch'); ch.parentNode.insertBefore(box, ch.nextSibling);
+      $('wkB').value = String(CFG.bounce); $('wkR').value = String(CFG.rounds); $('wkW').value = String(CFG.win);
+      var chg = function () {
+        CFG.bounce = +$('wkB').value; CFG.rounds = +$('wkR').value; CFG.win = +$('wkW').value;
+        try { localStorage.setItem('jl_zp_wk_v1', JSON.stringify(CFG)); } catch (e) { }
+        stop(); build();
+      };
+      $('wkB').onchange = chg; $('wkR').onchange = chg; $('wkW').onchange = chg;
+      $('wkPlay').onclick = play;
+      $('wkScr').oninput = function () { stop(); WK.k = +this.value; refresh(); };
+    }
+    function setView(w) {
+      if (w === WK.on) return;
+      WK.on = w; mount(); stop();
+      if (w) { try { if (RPL) rplExitJL(); } catch (e) { } }
+      $('ch').style.display = w ? 'none' : ''; $('wkBox').style.display = w ? '' : 'none';
+      [$('live'), $('lad'), document.querySelector('.chartbox .ctl')].forEach(function (e) { if (e) e.style.display = w ? 'none' : ''; });
+      var bs = document.querySelectorAll('#wkSeg .tab');
+      for (var i = 0; i < bs.length; i++) { var on = (bs[i].getAttribute('data-w') === '1') === w; bs[i].className = 'tab' + (on ? ' on' : ''); bs[i].style.color = on ? '' : '#fff'; }
+      if (w) build();
+    }
+    var h = document.querySelector('.chartbox > .sech');
+    if (h) {
+      h.id = 'wkSeg';
+      h.innerHTML = '<div class="seg" style="display:inline-flex"><button class="tab on" data-w="0">日</button><button class="tab" data-w="1" style="color:#fff">周</button></div>';
+      h.onclick = function (ev) { var b = ev.target.closest ? ev.target.closest('.tab') : null; if (b) setView(b.getAttribute('data-w') === '1'); };
+    }
+    ['tabRep', 'tabLive'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { if (WK.on) setView(false); }, true); });
+    mount();
+  } catch (e) { }
+})();
+
 
 /* 开机：交易日 9:00-15:10 自动进实盘页，其余进盘前计划 */
 /* jl-zp3: 嵌入jinlin=恒实盘(休市自检/盘前倒计时由实盘态自带; 盘前计划/周五回放=永鼎演示件, 嵌入态隐藏) */
