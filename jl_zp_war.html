@@ -390,6 +390,8 @@ function setRange(lo, hi) {
 function renderMarkers() {
   var g = $('mk'); while (g.firstChild) g.removeChild(g.firstChild);
   MK.forEach(function (m) {
+        if (INJL && localStorage.getItem('jl_zp_arrow_v1') !== '1') return;
+
     if (MODE === 'replay' && m.i > I) return;
     var x = MODE === 'live' && m.hm && xOfHmJL(m.hm === '0925' ? '0930' : m.hm) != null ? xOfHmJL(m.hm === '0925' ? '0930' : m.hm) : X(m.i), y = Y(m.px);
     if (m.t === 'dot') { g.appendChild(el('circle', { cx: x, cy: y, r: 2.8, fill: 'var(--amber)' })); g.appendChild(tx(x - 4, y - 6, m.lb, 'var(--amber)', 10, 'end', 600)); return; }
