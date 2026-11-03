@@ -447,7 +447,8 @@ else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.pus
       window.__SWJL = SW.map(function (m) { return { p: m.p, h: m.h, hm: LIVE.pts[m.ix].hm }; });
       var gh = el('g', { id: 'hlmk' }), LB = [];
       /* jl-hl3: 实时候选极值，独立于正式确认标记 */
-FL.forEach(function (f) {
+FL.forEach(function (f) {  if (localStorage.getItem('jl_zp_x_v1') !== '1') return;
+
   var fq = LIVE.pts[f.ix], fx = fq ? xOfHmJL(fq.hm) : null;
   if (fx == null || f.p < YLO || f.p > YHI) return;
   var fy = Y(f.p) + (f.h ? -5 : 4);
