@@ -343,9 +343,9 @@ function buildStatics() {
     svg.appendChild(el('line', { x1: PX0, y1: Y(l[0]), x2: LX - 6, y2: Y(l[0]), stroke: l[1], 'stroke-width': l[2], 'stroke-dasharray': '5 3', opacity: l[2] < 1 ? .6 : 1 }));
   });
   }
-  svg.appendChild(el('line', { x1: X(23.5), y1: PY0, x2: X(23.5), y2: PY0 + PH, stroke: 'var(--line)' }));
+  svg.appendChild(el('line', { x1: xOfHmJL('1130'), y1: PY0, x2: xOfHmJL('1130'), y2: PY0 + PH, stroke: 'var(--line)' }));
   svg.appendChild(tx(PX0, PY0 + PH + 16, '09:30'));
-  svg.appendChild(tx(X(23.5), PY0 + PH + 16, '11:30/13:00', 'var(--dim)', 10, 'middle'));
+  svg.appendChild(tx(xOfHmJL('1130'), PY0 + PH + 16, '11:30/13:00', 'var(--dim)', 10, 'middle'));
   svg.appendChild(tx(PX0 + PW, PY0 + PH + 16, '15:00', 'var(--dim)', 10, 'end'));
   svg.appendChild(el('polyline', { id: 'pline', fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1, 'stroke-linejoin': 'round' }));
   svg.appendChild(el('g', { id: 'mk' }));
