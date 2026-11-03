@@ -1996,7 +1996,65 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
       h.innerHTML = '<div class="seg" style="display:inline-flex"><button class="tab on" data-w="0">日</button><button class="tab" data-w="1" style="color:#fff">周</button></div>';
       h.onclick = function (ev) { var b = ev.target.closest ? ev.target.closest('.tab') : null; if (b) setView(b.getAttribute('data-w') === '1'); };
     }
+     /* ═ 周视图十字线: 拖动跟随, 左=价格 右=涨跌幅(相对当日昨收) ═ */
+    mount();
+    (function () {
+      var s = $('wkSvg'), G = null, P = {}, raf = 0, cx0 = 0, hideT = null;
+      if (!s) return;
+      s.setAttribute('viewBox', '0 0 360 204');
+      s.style.touchAction = 'pan-y'; s.style.userSelect = 'none';
+      var set = function (n, o) { for (var k in o) n.setAttribute(k, o[k]); };
+      function geo() {
+        var R = WK.runs, N = R.length, lo = 1e9, hi = -1e9;
+        if (!N) return null;
+        R.forEach(function (r) { r.d.bars.forEach(function (b) { if (b.l < lo) lo = b.l; if (b.h > hi) hi = b.h; }); });
+        var pad = (hi - lo) * 0.08 || 0.1; lo -= pad; hi += pad;
+        return { R: R, lo: lo, hi: hi, X0: 6, W: 330, Y0: 20, H: 148, DW: 330 / N };
+      }
+      function ensure() {
+        if (G && G.parentNode === s) return;
+        G = el('g', { 'pointer-events': 'none' });
+        P.v = el('line', { stroke: '#fff', 'stroke-width': .7, 'stroke-dasharray': '3 3', opacity: .9 });
+        P.h = el('line', { stroke: '#fff', 'stroke-width': .7, 'stroke-dasharray': '3 3', opacity: .9 });
+        P.c = el('circle', { r: 3.2, fill: '#fff' });
+        P.t = tx(0, 0, '', '#fff', 9.5, 'middle', 700);
+        P.a = tx(0, 0, '', '#fff', 10.5, 'start', 700);
+        P.b = tx(0, 0, '', '#fff', 10.5, 'end', 700);
+        [P.v, P.h, P.c, P.t, P.a, P.b].forEach(function (n) { G.appendChild(n); });
+        s.appendChild(G);
+      }
+      function update() {
+        var g = geo(); if (!g) return;
+        var r = s.getBoundingClientRect(), vx = (cx0 - r.left) / r.width * 360, best = null, bd = 1e9;
+        g.R.forEach(function (run, di) {
+          run.d.pts.forEach(function (q) {
+            var x = g.X0 + di * g.DW + fr(+q.hm) * g.DW, d = Math.abs(x - vx);
+            if (d < bd) { bd = d; best = { x: x, q: q, run: run }; }
+          });
+        });
+        if (!best) return;
+        ensure();
+        var q = best.q, y = g.Y0 + (g.hi - q.p) / (g.hi - g.lo) * g.H, pc = (q.p / best.run.d.pc - 1) * 100, hm = String(q.hm).padStart(4, '0');
+        set(P.v, { x1: best.x, x2: best.x, y1: g.Y0 - 6, y2: g.Y0 + g.H });
+        set(P.h, { x1: g.X0, x2: g.X0 + g.W, y1: y, y2: y });
+        set(P.c, { cx: best.x, cy: y });
+        P.t.textContent = md(best.run.d.d8) + ' ' + hm.slice(0, 2) + ':' + hm.slice(2);
+        set(P.t, { x: Math.max(g.X0 + 28, Math.min(best.x, g.X0 + g.W - 28)), y: 200 });
+        P.a.textContent = q.p.toFixed(2); set(P.a, { x: g.X0 + 2, y: Math.max(y - 4, 12) });
+        P.b.textContent = (pc >= 0 ? '+' : '') + pc.toFixed(2) + '%';
+        set(P.b, { x: g.X0 + g.W - 2, y: Math.max(y - 4, 12), fill: pc >= 0 ? '#ff5459' : '#2fe39b' });
+      }
+      function go(ev) {
+        clearTimeout(hideT); cx0 = ev.clientX;
+        if (!raf) raf = requestAnimationFrame(function () { raf = 0; try { update(); } catch (e) { } });
+      }
+      function later() { clearTimeout(hideT); hideT = setTimeout(function () { if (G && G.parentNode) G.parentNode.removeChild(G); G = null; }, 3000); }
+      s.addEventListener('pointerdown', function (ev) { stop(); go(ev); });
+      s.addEventListener('pointermove', go);
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (n) { s.addEventListener(n, later); });
+    })();
     ['tabRep', 'tabLive'].forEach(function (id) { var b = $(id); if (b) b.addEventListener('click', function () { if (WK.on) setView(false); }, true); });
+
     mount();
   } catch (e) { }
 })();
