@@ -3428,7 +3428,7 @@ body.injlin .chartbox>#zpSub{order:1}
   function paintLiq(svg, K, xOf) {
     var Q = tvLiq(K), g = E('g', { id: 'zpLiq', 'pointer-events': 'none' }), R = LX - 6, slot = K.length > 1 ? Math.abs(xOf(1) - xOf(0)) : 1;
     var xi = function (i) { return i < K.length ? xOf(i) : xOf(K.length - 1) + (i - K.length + 1) * slot; };
-    [['B', '#ff4d5e', 'Buyside liquidity'], ['S', '#1fd08c', 'Sellside liquidity']].forEach(function (S) {
+    [['B', '#ff6b7a', 'Buyside liquidity'], ['S', '#3dffb0', 'Sellside liquidity']].forEach(function (S) {
       Q[S[0]].forEach(function (x) {
         var xa = Math.max(PX0, xi(x.l)), xb = Math.min(R, xi(x.r)); if (!(xb > xa + 1)) return;
         var yT = Y(x.top), yB = Y(x.bot); if (yB < PY0 || yT > PY0 + PH) return;
