@@ -761,6 +761,8 @@ function showStat(cx, cy) {
       d.className = "jituTipJL"; d.innerHTML = h + statHtml(); 
       d.style.cssText = "position:fixed;z-index:99998;max-width:260px;max-height:52vh;overflow:auto;background:rgba(8,20,28,.97);border:1px solid #81e6d966;border-radius:9px;padding:8px 10px;box-shadow:0 6px 18px #000a";
       (document.body || document.documentElement).appendChild(d);
+      var xb2 = d.querySelector(".jituExpJL");
+      if (xb2) xb2.onclick = function () { hideTip(); showExport(); };
       var tw = d.offsetWidth, th = d.offsetHeight;
       d.style.left = Math.max(6, Math.min(cx - tw / 2, (global.innerWidth || 360) - tw - 6)) + "px";
       var y = cy - th - 14; if (y < 6) y = Math.min(cy + 16, (global.innerHeight || 640) - th - 6);
