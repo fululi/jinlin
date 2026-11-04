@@ -448,29 +448,7 @@ function buildStatics() {
   svg.appendChild(el('g', { id: 'auc' }));   /* 竞价段(9:15-9:25撮合指导价)·左缘刻度 */
 }
 buildStatics();
-(function () { /* jl-hl8: 十字线+时间跟随(手指横拖/鼠标移动) */
-  var svgEl = document.getElementById('ch'); if (!svgEl) return;
-  svgEl.style.touchAction = 'pan-y';
-  var hide = function () { var g = document.getElementById('xh'); if (g) g.parentNode.removeChild(g); };
-  var move = function (ev) {
-    try {
-      if (!LIVE.pts || !LIVE.pts.length) return;
-      var r = svgEl.getBoundingClientRect(), vx = (ev.clientX - r.left) / r.width * 360, best = null, bd = 1e9;
-      LIVE.pts.forEach(function (q) { var x = xOfHmJL(q.hm); if (x != null && Math.abs(x - vx) < bd) { bd = Math.abs(x - vx); best = { x: x, q: q }; } });
-      if (!best) return;
-      hide(); var g = el('g', { id: 'xh' }), y = Y(best.q.p), hm = String(best.q.hm).padStart(4, '0'), pp = LIVE.pc > 0 ? (best.q.p / LIVE.pc - 1) * 100 : null;
-      g.appendChild(el('line', { x1: best.x, y1: PY0, x2: best.x, y2: PY0 + PH, stroke: '#fff', 'stroke-width': .6, 'stroke-dasharray': '3 3', opacity: .8 }));
-      g.appendChild(el('line', { x1: PX0, y1: y, x2: LX - 6, y2: y, stroke: '#fff', 'stroke-width': .6, 'stroke-dasharray': '3 3', opacity: .8 }));
-      g.appendChild(el('circle', { cx: best.x, cy: y, r: 2.6, fill: '#fff' }));
-      var t1 = tx(Math.max(PX0 + 16, Math.min(best.x, LX - 22)), PY0 + PH + 28, hm.slice(0, 2) + ':' + hm.slice(2), '#fff', 9, 'middle', 600); g.appendChild(t1);
-      var t2 = tx(best.x > 180 ? PX0 + 2 : LX - 8, y - 4, best.q.p.toFixed(2) + (pp == null ? '' : ' ' + (pp >= 0 ? '+' : '') + pp.toFixed(2) + '%'), '#fff', 9, best.x > 180 ? 'start' : 'end', 600); g.appendChild(t2);
-      svgEl.appendChild(g);
-    } catch (e) { }
-  };
-  svgEl.addEventListener('pointermove', move); svgEl.addEventListener('pointerdown', move);
-  svgEl.addEventListener('pointerleave', function () { setTimeout(hide, 1500); });
-  svgEl.addEventListener('pointerup', function () { setTimeout(hide, 1500); });
-})();
+
 function setRange(lo, hi) {
   if (Math.abs(lo - YLO) < 1e-9 && Math.abs(hi - YHI) < 1e-9) return;
   YLO = lo; YHI = hi; buildStatics();
@@ -3346,11 +3324,38 @@ body.injlin .chartbox>#zpSub{order:1}
     return k.vis ? k.cx : (k.cx < PX0 ? -999 : 9999);
   };
   /* K线模式纵轴 = 视窗内蜡烛的高低 */
-  var SR0 = setRange;
-  setRange = function (lo, hi) {
-    try { if (kOn()) { var A = window.zpPerAll(); if (A) { var a = 1e18, b = -1e18; A.forEach(function (k) { if (k.vis) { a = Math.min(a, k.l); b = Math.max(b, k.h); } }); if (b > a) { var pd = (b - a) * 0.07 || b * 0.003; lo = a - pd; hi = b + pd; } } var ys = window.zpYS || 0, sp = hi - lo; lo += ys * sp; hi += ys * sp; } } catch (e) { }   /* zpYS: 上下拖动的偏移(按纵轴高度的比例), 双击/切周期归零 */
-    return SR0(lo, hi);
-  };
+var SR0 = setRange;
+setRange = function (lo, hi) {
+  try {
+    if (kOn()) {
+      var A = window.zpPerAll();
+      if (A) {
+        var a = 1e18, b = -1e18;
+        A.forEach(function (k) {
+          if (k.vis) {
+            a = Math.min(a, k.l);
+            b = Math.max(b, k.h);
+          }
+        });
+        if (b > a) {
+          var pd = (b - a) * 0.07 || b * 0.003;
+          lo = a - pd;
+          hi = b + pd;
+        }
+      }
+
+      // 限制纵轴偏移幅度，防止拖太狠导致视觉浮动
+      var ys = Math.max(-0.35, Math.min(0.35, window.zpYS || 0));
+      window.zpYS = ys;
+
+      var sp = hi - lo;
+      lo += ys * sp;
+      hi += ys * sp;
+    }
+  } catch (e) {}
+
+  return SR0(lo, hi);
+};
 
   /* ── IV(VI) 实体缺口: K线表 ictCalc 同式。看涨=后开>前收且后低≤前高; 后续影线逐步吃掉, 碰到前收才消; 看跌对称; <现价0.05%不算 ── */
   function viOf(K) {
