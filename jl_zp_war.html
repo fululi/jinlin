@@ -3567,26 +3567,63 @@ window.addEventListener('blur', function () {
     var s = zsvg(e.target); if (!s) return; if (window.zpDrawHit && window.zpDrawHit(e)) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
     PZ.p[e.pointerId] = { x: e.clientX, y: e.clientY, s: s };
     var ids = Object.keys(PZ.p), A = all(per), F = frame(A);
-    if (ids.length === 2) { var a = PZ.p[ids[0]], b = PZ.p[ids[1]]; PZ.mode = 'pinch'; PZ.st = { d: Math.abs(a.x - b.x) || 1, n: F.n, mid: (a.x + b.x) / 2, s: s, F: F }; window.zpPanning = true; try { window.zpMainXH.hide(); } catch (er) { } return; }
+    if (ids.length === 2) {
+  // 第二根手指落下，取消主图十字线待激活状态
+  try {
+    window.zpMainXH && window.zpMainXH.hide();
+  } catch (er) {}
+
+  var a = PZ.p[ids[0]], b = PZ.p[ids[1]];
+  PZ.mode = 'pinch';
+  PZ.st = {
+    d: Math.abs(a.x - b.x) || 1,
+    n: F.n,
+    mid: (a.x + b.x) / 2,
+    s: s,
+    F: F
+  };
+  window.zpPanning = true;
+  return;
+}
     PZ.mode = 'pend'; PZ.st = { x: e.clientX, y: e.clientY, F: F, s: s, mouse: e.pointerType === 'mouse', ys: window.zpYS || 0 };
   }, true);
   window.addEventListener('pointermove', function (e) {
     var q = PZ.p[e.pointerId]; if (!q || !PZ.mode) return; q.x = e.clientX; q.y = e.clientY;
     var st = PZ.st, ids = Object.keys(PZ.p);
-    if (PZ.mode === 'pinch' && ids.length === 2) {
-      var a = PZ.p[ids[0]], b = PZ.p[ids[1]], d = Math.abs(a.x - b.x) || 1, u = unit(st.s), fr = Math.max(0, Math.min(1, ((st.mid - u.r.left) * u.k - PX0) / PW));
-      var nn = st.n * st.d / d, idx = st.F.i0 + fr * st.F.n; setView(nn, idx - fr * nn + nn); e.preventDefault(); return;
-    }
-    var dx = e.clientX - st.x, dy = e.clientY - st.y;
- if (PZ.mode === 'pend') {
+    if (PZ.mode === 'pend') {
+  // 十字线已经显示，PZ 不再抢夺单指操作
+  if (document.getElementById('xh')) return;
+
   if (st.mouse
-    ? zpSpacePan && (e.buttons & 1) && Math.max(Math.abs(dx), Math.abs(dy)) > 4
-    : (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2)) {
+    ? zpSpacePan && (e.buttons & 1) &&
+      Math.max(Math.abs(dx), Math.abs(dy)) > 4
+    : (Math.abs(dx) > 28 &&
+       Math.abs(dx) > Math.abs(dy) * 2.0)) {
+
     PZ.mode = 'pan';
     window.zpPanning = true;
-    try { window.zpMainXH.hide(); } catch (er) { }
+    try { window.zpMainXH.hide(); } catch (er) {}
+  } else {
+    return;
   }
-  else return;
+}
+    var dx = e.clientX - st.x, dy = e.clientY - st.y;
+if (PZ.mode === 'pend') {
+  // 十字线已经显示，PZ 不再抢夺单指操作
+  if (document.getElementById('xh')) return;
+
+  if (st.mouse
+    ? zpSpacePan && (e.buttons & 1) &&
+      Math.max(Math.abs(dx), Math.abs(dy)) > 4
+    : (Math.abs(dx) > 28 &&
+       Math.abs(dx) > Math.abs(dy) * 2.0)) {
+
+    PZ.mode = 'pan';
+    window.zpPanning = true;
+    try { window.zpMainXH.hide(); } catch (er) {}
+  } else {
+    return;
+  }
 }
 if (PZ.mode === 'pan') {
   var u2 = unit(st.s), bars = dx * u2.k / st.F.slot;
@@ -3594,6 +3631,7 @@ if (PZ.mode === 'pan') {
   setView(st.F.n, st.F.end - bars);
   e.preventDefault();
   e.stopPropagation();
+}
 }
 }, true);
   function upPZ(e) { delete PZ.p[e.pointerId]; if (!Object.keys(PZ.p).length) { var was = PZ.mode; PZ.mode = null; if (was === 'pan' || was === 'pinch') setTimeout(function () { window.zpPanning = false; }, 0); else window.zpPanning = false; } else if (PZ.mode === 'pinch') { PZ.mode = null; } }
