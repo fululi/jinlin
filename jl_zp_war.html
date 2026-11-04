@@ -2617,7 +2617,8 @@ function kDraw(K,x,y){
   clearTimeout(hideT);hideT=setTimeout(hide,10000);
 }
 function sched(cx,cy){lx=cx;ly=cy;if(raf)return;raf=requestAnimationFrame(function(){raf=0;draw(lx,ly)})}
-window.zpMainXH={draw:function(cx,cy){active=true;sched(cx,cy)},hide:function(){hide()}};   /* 副图拖动时反过来驱动主图十字线(走同一帧调度, 后到的坐标生效) */
+ window.zpMainXH={draw:function(cx,cy){active=true;sched(cx,cy)},hide:function(){hide()},isOn:function(){return !!active}};
+/* 副图拖动时反过来驱动主图十字线(走同一帧调度, 后到的坐标生效) */
 function on(){active=true;pend=false;svgEl.style.touchAction='none'}
 ['pointerleave','pointercancel'].forEach(function(n){
   window.addEventListener(n,function(e){
@@ -3585,56 +3586,55 @@ window.addEventListener('blur', function () {
   window.zpPanning = true;
   return;
 }
-    PZ.mode = 'pend'; PZ.st = { x: e.clientX, y: e.clientY, F: F, s: s, mouse: e.pointerType === 'mouse', ys: window.zpYS || 0 };
-  }, true);
-  window.addEventListener('pointermove', function (e) {
-    var q = PZ.p[e.pointerId]; if (!q || !PZ.mode) return; q.x = e.clientX; q.y = e.clientY;
-    var st = PZ.st, ids = Object.keys(PZ.p);
-    if (PZ.mode === 'pend') {
-  // 十字线已经显示，PZ 不再抢夺单指操作
-  if (document.getElementById('xh')) return;
+  PZ.mode = 'pend'; PZ.st = { x: e.clientX, y: e.clientY, F: F, s: s, mouse: e.pointerType === 'mouse', ys: window.zpYS || 0, xh0: !!(window.zpMainXH && window.zpMainXH.isOn && window.zpMainXH.isOn()) };
 
-  if (st.mouse
-    ? zpSpacePan && (e.buttons & 1) &&
-      Math.max(Math.abs(dx), Math.abs(dy)) > 4
-    : (Math.abs(dx) > 28 &&
-       Math.abs(dx) > Math.abs(dy) * 2.0)) {
-
-    PZ.mode = 'pan';
-    window.zpPanning = true;
-    try { window.zpMainXH.hide(); } catch (er) {}
-  } else {
-    return;
-  }
-}
-    var dx = e.clientX - st.x, dy = e.clientY - st.y;
-if (PZ.mode === 'pend') {
-  // 十字线已经显示，PZ 不再抢夺单指操作
-  if (document.getElementById('xh')) return;
-
-  if (st.mouse
-    ? zpSpacePan && (e.buttons & 1) &&
-      Math.max(Math.abs(dx), Math.abs(dy)) > 4
-    : (Math.abs(dx) > 28 &&
-       Math.abs(dx) > Math.abs(dy) * 2.0)) {
-
-    PZ.mode = 'pan';
-    window.zpPanning = true;
-    try { window.zpMainXH.hide(); } catch (er) {}
-  } else {
-    return;
-  }
-}
-if (PZ.mode === 'pan') {
-  var u2 = unit(st.s), bars = dx * u2.k / st.F.slot;
-  if (st.s.id === 'ch' && st.mouse) window.zpYS = st.ys + dy * u2.k / PH;
-  setView(st.F.n, st.F.end - bars);
-  e.preventDefault();
-  e.stopPropagation();
-}
-}
 }, true);
-  function upPZ(e) { delete PZ.p[e.pointerId]; if (!Object.keys(PZ.p).length) { var was = PZ.mode; PZ.mode = null; if (was === 'pan' || was === 'pinch') setTimeout(function () { window.zpPanning = false; }, 0); else window.zpPanning = false; } else if (PZ.mode === 'pinch') { PZ.mode = null; } }
+  
+  window.addEventListener('pointermove', function (e) {
+  var q = PZ.p[e.pointerId]; if (!q || !PZ.mode) return;
+  q.x = e.clientX; q.y = e.clientY;
+  var st = PZ.st, ids = Object.keys(PZ.p);
+  var dx = e.clientX - st.x, dy = e.clientY - st.y;
+
+  if (PZ.mode === 'pinch') {
+    if (ids.length < 2) return;
+    var a = PZ.p[ids[0]], b = PZ.p[ids[1]];
+    var dist = Math.abs(a.x - b.x) || 1;
+    var newN = Math.max(12, Math.round(st.n * st.d / dist));
+    var u = unit(st.s);
+    var frac = Math.max(0, Math.min(1, ((st.mid - u.r.left) * u.k - PX0) / PW));
+    var idx = st.F.i0 + frac * st.F.n;
+    setView(newN, idx - frac * newN + newN);
+    e.preventDefault();
+    e.stopPropagation();
+    return;
+  }
+
+  if (PZ.mode === 'pend') {
+  if (!st.xh0 && window.zpMainXH && window.zpMainXH.isOn && window.zpMainXH.isOn()) return;
+
+    if (st.mouse
+      ? zpSpacePan && (e.buttons & 1) && Math.max(Math.abs(dx), Math.abs(dy)) > 4
+      : (Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 2.0)) {
+      PZ.mode = 'pan';
+      window.zpPanning = true;
+      try { window.zpMainXH.hide(); } catch (er) {}
+    } else {
+      return;
+    }
+  }
+
+    if (PZ.mode === 'pan') {
+    var u2 = unit(st.s), bars = dx * u2.k / st.F.slot;
+    if (st.s.id === 'ch' && st.mouse) window.zpYS = st.ys + dy * u2.k / PH;
+    setView(st.F.n, st.F.end - bars);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}, true);
+
+
+function upPZ(e) { delete PZ.p[e.pointerId]; if (!Object.keys(PZ.p).length) { var was = PZ.mode; PZ.mode = null; if (was === 'pan' || was === 'pinch') setTimeout(function () { window.zpPanning = false; }, 0); else window.zpPanning = false; } else if (PZ.mode === 'pinch') { PZ.mode = null; } }
   window.addEventListener('dblclick', function (e) { var s = zsvg(e.target); if (!s || !window.zpYS) return; window.zpYS = 0; redrawSoon(); }, true);   /* 双击 = 纵轴回到自动 */
   window.addEventListener('pointerup', upPZ, true); window.addEventListener('pointercancel', upPZ, true);
   document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || PZ.mode === 'pinch') && e.cancelable) e.preventDefault(); }, { passive: false });
