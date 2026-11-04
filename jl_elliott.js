@@ -77,13 +77,13 @@
       var x1 = Math.min(o.xEnd || 1e4, pt[L].x + (pt[L].x - pt[0].x) * 0.2);
       var pr = function (x, ref) { return ref.p + m * (x - ref.x); };
       [[a1, x0], [b, Math.min(b.x, x0)]].forEach(function (d) {
-        inner.appendChild(E('line', { x1: d[1], y1: o.Y(pr(d[1], d[0])), x2: x1, y2: o.Y(pr(x1, d[0])), stroke: BLU, 'stroke-width': 1.1, opacity: 0.85 }));
+        inner.appendChild(E('line', { x1: d[1], y1: o.Y(pr(d[1], d[0])), x2: x1, y2: o.Y(pr(x1, d[0])), stroke: BLU, 'stroke-width': .7, opacity: 0.7 }));
       });
     }
     // 橙色波浪折线
     inner.appendChild(E('polyline', {
       points: pt.map(function (q) { return q.x.toFixed(1) + ',' + o.Y(q.p).toFixed(1); }).join(' '),
-      fill: 'none', stroke: ORG, 'stroke-width': 1.7, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.92
+      fill: 'none', stroke: ORG, 'stroke-width': .9, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.92
     }));
     gp.appendChild(inner);
 
@@ -91,8 +91,8 @@
     pt.forEach(function (q, k) {
       if (!names[k]) return;
       var t = E('text', {
-        x: q.x, y: o.Y(q.p) + (q.h ? -6 : 13), fill: ORG, 'font-size': 11, 'font-weight': 700, 'text-anchor': 'middle',
-        stroke: 'rgba(5,10,16,.9)', 'stroke-width': 2.5, 'paint-order': 'stroke', 'stroke-linejoin': 'round'
+        x: q.x, y: o.Y(q.p) + (q.h ? -4 : 10), fill: ORG, 'font-size': 7.5, 'font-weight': 600, 'text-anchor': 'middle',
+        stroke: 'rgba(5,10,16,.9)', 'stroke-width': 2, 'paint-order': 'stroke', 'stroke-linejoin': 'round'
       });
       t.textContent = names[k]; gp.appendChild(t);
     });

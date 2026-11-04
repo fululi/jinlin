@@ -74,7 +74,10 @@
       if (!L.bars || !L.bars.length) return { b: '未触发', t: today ? '待开盘' : '拉数据', p: p, k: 'idle' };
       if (e) {
         if (e.sp !== null) return { b: '已触发', t: pre + '等买回', p: p, k: 'trig' };            /* 已卖出, 等回落买回 */
-        if (e.rounds && e.rounds.length >= RM) return { b: '收工', t: pre + '今日完成', p: p, k: 'done' };
+        /* 收工跟作战屏引擎同一口径: 做满轮次 / 14:55 尾盘兜底买回后 / 15:00 收盘后 */
+        var done = false;
+        try { if (st.win && typeof st.win.engDoneJL === 'function') done = !!st.win.engDoneJL(e); else { var lr = e.rounds && e.rounds[e.rounds.length - 1], lb = L.bars[L.bars.length - 1], hm = lb ? +String(lb.t).slice(-4) : 0; done = (e.rounds && e.rounds.length >= RM) || (lr && lr.bWhy === '尾盘兜底') || hm >= 1500; } } catch (eD) { }
+        if (done) return { b: '收工', t: pre + '今日收工', p: p, k: 'done' };
         if (e.rounds && e.rounds.length) return { b: '已买回', t: pre + '等再冲高', p: p, k: 'done' };
         if (today && e.lowOpen) return { b: '已触发', t: '低开卖', p: p, k: 'trig' };
         return { b: '未触发', t: pre + '盯盘中', p: p, k: 'idle' };
