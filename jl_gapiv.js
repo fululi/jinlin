@@ -13,6 +13,10 @@
   /* jl-gapfix 1104b: 开盘缺口按缺口大小分档(逐票400根前复权日K, 截至11-03; 开盘价=当天第一笔, 日K低/高碰昨收即当天补, 精确)。
      每档 [下限%,上限%,样本,当天补%,次日收盘前补%,3日内补%,开盘卖(低开=买)·碰昨收买回(卖出)·没碰收盘买回 平均%(已扣0.1%费), 没补那些天平均%] */
   const OGT = {"600105":{"u":[[0.1,1,55,75,80,85,-0.58,-3.29],[1,2,52,69,79,85,-0.54,-4.81],[2,4,41,39,49,54,-0.88,-2.89],[4,99,9,33,33,56,1.42,-0.57]],"d":[[0.1,1,74,84,89,91,-0.2,-2.99],[1,2,55,76,84,91,0.21,-3.64],[2,4,47,77,85,91,1.53,-2.23],[4,99,14,43,50,64,1.26,-2.01]]},"603986":{"u":[[0.1,1,62,84,89,92,-0.27,-3.6],[1,2,48,62,73,85,-0.22,-2.8],[2,4,54,46,59,74,0.15,-1.93],[4,99,15,13,27,47,-0.64,-1.32]],"d":[[0.1,1,79,81,86,90,-0.23,-2.75],[1,2,42,67,76,81,-0.15,-3.21],[2,4,34,38,56,74,0.04,-1.47],[4,99,22,14,32,41,-0.61,-1.46]]},"600176":{"u":[[0.1,1,76,70,78,83,-0.56,-2.57],[1,2,41,68,76,76,0.36,-1.85],[2,4,26,35,42,58,-0.38,-1.86],[4,99,9,22,33,33,0.54,-0.41]],"d":[[0.1,1,115,90,94,95,-0.01,-2.99],[1,2,34,65,71,79,-0.58,-3.76],[2,4,25,84,92,100,1.59,-3.3],[4,99,8,0,25,25,-0.92,-0.82]]},"600489":{"u":[[0.1,1,70,77,81,86,-0.23,-2.29],[1,2,51,53,61,76,-0.09,-1.64],[2,4,40,40,52,60,-0.09,-1.67],[4,99,16,6,19,31,-0.78,-1.07]],"d":[[0.1,1,83,83,88,90,-0.09,-2.32],[1,2,53,57,72,89,0.23,-1.06],[2,4,42,38,57,67,0.64,-0.6],[4,99,17,12,18,35,1.29,0.54]]}};
+  /* jl-gapfix 1104c: 分钟缺口回补率改用本地真实K线重算(原 RT 表来源脚本已不在, 本地数据复算对不上: 永鼎30分13:30上缺口 原78% 实测57%)。
+     数据: 1分=本地1分CSV+腾讯近12日(永鼎/兆易约23天, 另两只12天); 5分约24天; 15分70天; 30分140天。口径同 scan: 同日形成、到检查点(10:30/13:30/14:30/收盘)仍未补。
+     MT[code][周期][检查点][0上缺口/1下缺口] = [样本, 当天补%, 次日收盘前补%, 3日内补%]; 样本<5 不显示百分比。 {"600105":{"1分":"20260928~20261104 23天","5分":"20260924~20261104 24天","15分":"20260722~20261104 70天","30分":"20260409~20261104 140天"},"603986":{"1分":"20260928~20261104 23天","5分":"20260924~20261104 24天","15分":"20260722~20261104 70天","30分":"20260409~20261104 140天"},"600176":{"1分":"20261020~20261104 12天","5分":"20260924~20261104 24天","15分":"20260722~20261104 70天","30分":"20260409~20261104 140天"},"600489":{"1分":"20261020~20261104 12天","5分":"20260924~20261104 24天","15分":"20260722~20261104 70天","30分":"20260409~20261104 140天"}} */
+  const MT = {"600105":{"1\u5206":[[[10,60,80,90],[28,46,46,46]],[[14,43,86,93],[26,23,27,27]],[[15,33,87,93],[24,4,17,17]],[[16,0,81,94],[28,0,21,21]]],"5\u5206":[[[1,100,100,100],[6,67,67,67]],[[4,50,75,100],[4,25,50,50]],[[4,25,50,100],[5,20,40,40]],[[5,0,60,100],[5,0,20,20]]],"15\u5206":[[[2,50,50,50],[8,38,50,62]],[[8,50,62,75],[11,27,36,64]],[[7,14,43,71],[13,0,31,62]],[[7,0,43,71],[16,0,38,62]]],"30\u5206":[[[0,null,null,null],[4,25,50,50]],[[14,36,57,71],[6,33,50,67]],[[12,17,50,67],[6,0,33,67]],[[13,0,54,69],[7,0,43,71]]]},"603986":{"1\u5206":[[[8,88,88,100],[11,55,64,73]],[[11,36,82,100],[13,23,54,62]],[[9,0,67,100],[17,6,53,65]],[[13,0,69,100],[17,0,53,65]]],"5\u5206":[[[3,67,67,100],[1,0,0,0]],[[3,33,67,100],[3,0,67,67]],[[2,0,50,100],[9,11,67,67]],[[4,0,75,100],[10,0,50,50]]],"15\u5206":[[[3,67,100,100],[4,75,75,75]],[[7,43,100,100],[8,38,88,88]],[[5,0,100,100],[11,36,91,91]],[[6,0,83,100],[8,0,75,75]]],"30\u5206":[[[1,0,100,100],[5,60,80,80]],[[13,38,69,85],[14,36,86,86]],[[8,0,50,75],[10,10,80,80]],[[9,0,56,78],[9,0,78,78]]]},"600176":{"1\u5206":[[[3,67,100,100],[10,70,70,70]],[[4,75,100,100],[6,33,33,33]],[[7,43,71,100],[5,0,20,20]],[[4,0,50,100],[7,0,29,29]]],"5\u5206":[[[1,100,100,100],[5,80,80,80]],[[2,0,50,100],[3,33,33,33]],[[3,0,67,100],[3,0,0,0]],[[3,0,67,100],[4,0,25,25]]],"15\u5206":[[[5,60,80,80],[4,50,75,75]],[[8,25,62,75],[7,57,86,86]],[[11,18,64,82],[7,14,86,86]],[[9,0,56,78],[6,0,83,83]]],"30\u5206":[[[1,100,100,100],[2,100,100,100]],[[11,55,73,91],[7,43,71,86]],[[8,25,62,88],[8,0,50,75]],[[9,0,33,56],[8,0,50,75]]]},"600489":{"1\u5206":[[[5,40,100,100],[4,50,50,50]],[[7,43,100,100],[5,20,20,20]],[[6,0,67,100],[8,12,12,25]],[[6,0,67,100],[9,0,11,33]]],"5\u5206":[[[3,67,100,100],[4,50,75,75]],[[5,60,100,100],[6,0,33,33]],[[2,0,100,100],[8,0,25,25]],[[3,0,67,67],[8,0,25,25]]],"15\u5206":[[[2,0,50,50],[2,0,0,50]],[[8,25,62,75],[9,11,44,56]],[[6,0,50,67],[9,0,33,44]],[[6,0,50,67],[10,0,40,50]]],"30\u5206":[[[1,0,0,0],[3,67,67,67]],[[10,30,60,60],[13,31,62,62]],[[8,0,38,38],[9,0,44,44]],[[9,0,33,33],[9,0,44,44]]]}};
   const LV = ["日", "30分", "15分", "5分", "1分"], LVN = { "日": "日线", "30分": "30分钟", "15分": "15分钟", "5分": "5分钟", "1分": "1分钟" }, ORD = { "1分": 1, "5分": 5, "15分": 15, "30分": 30, "日": 99 };
   const pf = (c) => (/^[569]/.test(c) ? "sh" : "sz") + c;
   const dg = (t) => String(t).replace(/\D/g, "");
@@ -36,7 +40,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     + ".gvJL .gScroll::-webkit-scrollbar{width:7px}.gvJL .gScroll::-webkit-scrollbar-track{background:rgba(255,255,255,.12);border-radius:7px}"
     + ".gvJL .gScroll::-webkit-scrollbar-thumb{background:#ffe600;border-radius:7px;min-height:32px}"
     + ".gvJL .gSec{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(20,35,65,.98);border-bottom:1px solid rgba(255,255,255,.18);font-size:11px}"
-    + ".gvJL .gSec span{font-size:10px;color:rgba(255,255,255,.65)}.gvJL .gSec.new{color:#ffe600}.gvJL .gSec.doneH{color:#4dffbf}"
+    + ".gvJL .gSec span{font-size:10px;color:#fff}.gvJL .gSec.new{color:#ffe600}.gvJL .gSec.doneH{color:#4dffbf}"
     + ".gvJL .g{display:grid;grid-template-columns:16px 1fr auto;gap:2px 5px;align-items:center;padding:4px 6px;border-radius:7px;margin:3px 4px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13)}"
     + ".gvJL .g.in{border-color:#fff;background:rgba(255,255,255,.11)}"
     + ".gvJL .ar{font:900 13px/1 -apple-system;text-align:center}.gvJL .z{font:800 12.5px ui-monospace,Menlo,monospace}"
@@ -45,19 +49,20 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     + ".gvJL .tag{display:inline-block;border-radius:6px;padding:0 4px;font-size:10px;font-weight:800;margin-left:3px;vertical-align:1px}"
     + ".gvJL .tN{background:#fff;color:#1a0508}.gvJL .tIn{border:1px solid #fff}"
     + ".gvJL .done{display:flex;justify-content:space-between;gap:6px;padding:4px 7px;font-size:11px;border-bottom:1px dashed rgba(255,255,255,.2)}"
-    + ".gvJL .gEmpty{padding:5px 8px;font-size:11px;color:rgba(255,255,255,.55)}"
+    + ".gvJL .gEmpty{padding:5px 8px;font-size:11px;color:#fff}"
     + ".gvJL .rateH{display:flex;justify-content:space-between;margin:5px 2px 2px;font-size:10.5px}.gvJL .rateH b{font-size:11px}"
     + ".gvJL .rate{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;text-align:center;font-size:9.5px}"
     + ".gvJL .rate div{border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:2px 0;white-space:nowrap}.gvJL .rate b{display:inline;font:800 11px ui-monospace,Menlo,monospace;margin:0 2px}"
     + ".gvJL .aucL{position:relative}" /* jl-1183 */
     + ".gvJL .ln4w{grid-column:1/3;display:flex;flex-wrap:wrap;gap:1px 10px}"
     + ".gvJL .ln4w .ln4{white-space:nowrap}"
-    + ".gvJL .gvFoldJL{position:absolute;top:1px;right:3px;background:transparent;border:0;color:#8fb4d8;font-size:11px;line-height:1;padding:3px 6px;cursor:pointer;opacity:.7}"
+    + ".gvJL .gvFoldJL{position:absolute;top:1px;right:3px;background:transparent;border:0;color:#fff;font-size:11px;line-height:1;padding:3px 6px;cursor:pointer}"
     + ".gvJL .gvFoldJL:active{opacity:1}"
     + ".gvJL .aucL.gvFolded .ln3,.gvJL .aucL.gvFolded .ln4w{display:none}"
     + ".gvJL .wait{font-size:11px;padding:4px 2px}"
     + ".gvJL .tgL{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding:4px 8px;margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);font:800 12px ui-monospace,Menlo,monospace}"
-    + ".gvJL .tgL .tgH{font:800 11px -apple-system,'PingFang SC',sans-serif;color:#fff}.gvJL .tgL .tgI{white-space:nowrap}.gvJL .tgL .tgI i{font-style:normal;color:#fff;opacity:.75;font-size:10.5px;margin-left:3px}"
+    + ".gvJL .tgL .tgH{font:800 11px -apple-system,'PingFang SC',sans-serif;color:#fff}.gvJL .tgL .tgI{white-space:nowrap}.gvJL .tgL .tgI i{font-style:normal;color:#fff;font-size:10.5px;margin-left:3px}"
+    + ".gvJL .t5{flex:none;font-size:10px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:5px;padding:0 4px;white-space:nowrap}"   /* jl-gapfix: 近5日趋势小标, 跟在回补率后面同一行流式排, 放不下自动换行, 不叠字 */
     + ".gvJL .tgL .tgI em{font-style:normal;color:#ffd84a;border:1px solid rgba(255,216,74,.6);border-radius:6px;padding:0 4px;margin-left:4px;font-size:10.5px}";   /* jl-1201 日线未补目标行 */
   function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS; document.head.appendChild(s); } }
 
@@ -169,9 +174,9 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
         const lastDone = isToday && nowM < 900 ? D.length - 2 : D.length - 1, age = fi >= 0 ? lastDone - fi : -1;
         if (td && age >= 0) { const r = td[g.bull ? "u" : "d"][1 + Math.min(age, 5)]; g.rt = md(bd) + "起·已挂" + (age + 1) + "天 · 下一交易日补 " + r[1] + "% · 3日内补 " + r[2] + "%（样本" + r[0] + "）"; }
         else if (td && age < 0) { const r = td[g.bull ? "u" : "d"][0]; g.rt = "今日形成 · 当天补 " + r[1] + "% · 次日前补 " + r[2] + "% · 3日内补 " + r[3] + "%"; }
-      } else if (bd === today) {   /* 今天形成的分钟缺口: 原分时段回补率表(该时点仍未补) */
-        const r = rt && rt[L] ? (rt[L][ck] || [])[g.bull ? 0 : 1] : null;
-        g.rt = r ? "次日收盘前补 " + r[0] + "% · 3日内补 " + r[1] + "%" : "";
+      } else if (bd === today) {   /* 今天形成的分钟缺口: 本地重算表(该时点仍未补) */
+        const r = MT[code] && MT[code][L] ? (MT[code][L][ck] || [])[g.bull ? 0 : 1] : null;
+        g.rt = !r ? "" : r[0] < 5 ? "样本不足（" + r[0] + "个）" : (ck < 3 ? "当天补 " + r[1] + "% · " : "") + "次日前 " + r[2] + "% · 3日内 " + r[3] + "%（" + r[0] + "个）";
       } else g.rt = md(bd) + "起的分钟缺口 · 隔日无统计";   /* jl-gapfix: 原拿"今天形成"的概率套到往天缺口上, 偏高, 不再显示 */
       g.born = g.mem.slice().sort((a, b) => dg(a.t) - dg(b.t)).map((m) => ({ lv: m.lv, t: dg(m.t) }));
       const t0 = g.born[0].t.padEnd(12, "9").slice(0, 12), segs = []; let on = false;
@@ -196,7 +201,8 @@ dgp.forEach((g) => {
 
     dgp.sort((a, b) => b.N - a.N || dg(b.ft) - dg(a.ft));
     const tr = {}; LV.forEach((L) => { const t = all.filter((g) => g.lv === L && g.d === today); tr[L] = { n: t.length, k: t.filter((g) => g.ft).length }; });
-    return { today, pre, op, opg, grp, dgp, tr, tgt, code, last };
+    const b5 = D[D.length - (isToday ? 6 : 5)], t5 = b5 && b5.c > 0 ? (last / b5.c - 1) * 100 : null;   /* jl-gapfix: 近5个交易日涨跌, 提示回补率在单边行情里会偏 */
+    return { today, pre, op, opg, grp, dgp, tr, tgt, code, last, t5 };
   }
 
   /* jl-1201: 日线未补目标行 + 中波段斐波(同持仓卡中波段条)落在缺口内=双向验证 */
@@ -204,7 +210,7 @@ dgp.forEach((g) => {
     if (!R.tgt) return "";
     let F = null; try { F = window.jlFibLvJL ? window.jlFibLvJL(R.code) : null; } catch (e) { }
     const it = (g, up) => {
-      if (!g) return '<span class="tgI" style="opacity:.6">' + (up ? "↑ 上方无" : "↓ 下方无") + "</span>";
+      if (!g) return '<span class="tgI">' + (up ? "↑ 上方无" : "↓ 下方无") + "</span>";
       const z = Math.abs(g.hi - g.lo) / g.hi < 0.0015 ? f2((g.lo + g.hi) / 2) : f2(g.lo) + "–" + f2(g.hi);
       let fb = null; if (F && F.lv) F.lv.forEach((l) => { if (l.v >= g.lo * 0.997 && l.v <= g.hi * 1.003 && (!fb || Math.abs(l.v - (g.lo + g.hi) / 2) < Math.abs(fb.v - (g.lo + g.hi) / 2))) fb = l; });
       return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ " : "↓ ") + z + " <b>" + (g.inZ ? "回补中" : sg(g.dist)) + "</b><i>" + g.d + "</i>" + (fb ? "<em>≈" + (fb.r === 0 || fb.r === 1 ? ((fb.r === 0) === (F.dir < 0) ? "段低" : "段高") : "斐波" + fb.r) + " " + f2(fb.v) + "</em>" : "") + "</span>";
@@ -232,11 +238,11 @@ dgp.forEach((g) => {
       return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>"
         + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : (() => { const oh = Math.max(...g.mem.map((m) => m.hi)), ol = Math.min(...g.mem.map((m) => m.lo)), u = oh > ol ? (g.bull ? (oh - g.hi) : (g.lo - ol)) / (oh - ol) : 0; return u >= 0.05 ? '<span class="tag tIn">最深已回' + Math.round(u * 100) + "%</span>" : ""; })()) + "</span>"
         + '<span class="r">' + (g.vsOp != null ? "距开盘 <b>" + sg(g.vsOp) + "</b>" : "") + "<br>距现价 <b>" + sg(g.dist) + "</b></span>"
-        + (g.rt ? '<span class="n"><span>' + g.rt + "</span></span>" : "")
+        + (g.rt ? '<span class="n"><span>' + g.rt + "</span>" + (R.t5 != null ? '<span class="t5">近5日' + (R.t5 >= 0 ? "涨" : "跌") + Math.abs(R.t5).toFixed(1) + "%</span>" : "") + "</span>" : "")
         + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + fmt(b) + "</span>").join("")
         + (g.touch.length ? g.touch.slice(-4).map((t) => "<span>" + t.slice(4, 6) + "-" + t.slice(6, 8) + " " + t.slice(8, 10) + ":" + t.slice(10, 12) + " 碰过</span>").join("") + (g.touch.length > 4 ? "<span>共碰 " + g.touch.length + " 次</span>" : "") : "") + "</span></div>";
     };
-    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + '<br><span style="font-size:10.5px;opacity:.85">' + g.mem.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).map((m) => LVN[m.lv] + " " + fmt(m)).join(" · ") + ' 形成</span></span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
+    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + '<br><span style="font-size:10.5px">' + g.mem.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).map((m) => LVN[m.lv] + " " + fmt(m)).join(" · ") + ' 形成</span></span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
 
     const isNew = (g) => g.born.some((b) => b.t.slice(0, 8) === R.today);
     const fresh = R.grp.filter(isNew), old = R.grp.filter((g) => !isNew(g));
