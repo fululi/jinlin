@@ -16,7 +16,7 @@
   function drawSVG(svg, S, o) {
     var old = svg.querySelector('#pfk'); if (old) old.parentNode.removeChild(old);
     if (!S || S.length < 3) return null;
-    var P = S.slice(-3).map(function (m) { return { x: o.X(m.hm), p: m.p }; });
+    var P = S.slice(-3).map(function (m) { return { x: m.x != null ? m.x : o.X(m.hm), p: m.p }; });
     for (var i = 0; i < 3; i++) if (P[i].x == null || !isFinite(P[i].x)) return null;
     var A = P[0], B = P[1], C = P[2];
     var mx = (B.x + C.x) / 2, my = (B.p + C.p) / 2;
@@ -57,3 +57,4 @@
 
   g.Pitchfork = { drawSVG: drawSVG };
 })(window);
+
