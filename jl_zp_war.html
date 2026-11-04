@@ -3645,5 +3645,362 @@ document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || 
   seg(); if (kOn()) redraw(); else paint();
 })();
 </script>
+<script>
+/* jl-zppat: 三角形态(ABCD) + XABCD 形态。独立模块, 跟画线条同一套手势:
+   点图依次放点(按下放点, 不松手可微调), 放满自动退出工具; 点线/点拖点=选中改点, 拖线身=整体平移; Delete/Esc 可用。
+   K线模式按"蜡烛+偏移"存, 跟着蜡烛走; 按股票存 zp_pat_v1; 尊重画线条的 锁定/隐藏。 */
+(function () {
+  var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_pat_v1', GOLD = '#ffd66e';
+  var C_TRI = { ln: '#b2b5be', fill: 'rgba(242,54,69,.14)' }, C_XAB = { ln: '#089981', fill: 'rgba(8,153,129,.2)' };
+  var NEED = { tri: 4, xab: 5 }, LAB = { tri: ['A', 'B', 'C', 'D'], xab: ['X', 'A', 'B', 'C', 'D'] };
+  var myTool = '', cur = -1, sel = -1, drag = null, hover = null, cache = null, cacheKey = '', bar = null, lastSig = '';
+  var IC = {
+    tri: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 3L6 13L11 4L9 10"/><path d="M2 3L14 8M6 13L14 8" opacity=".6" stroke-dasharray="1.5 1.5"/></svg>',
+    xab: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 12L5 3L8 10L11 5L14 12"/><path d="M2 12L8 10M5 3L11 5" opacity=".6" stroke-dasharray="1.5 1.5"/></svg>',
+    del: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9"/></svg>'
+  };
+  var st = document.createElement('style');
+  st.textContent = '.zq-bar{position:absolute;z-index:6;display:flex;flex-direction:column;gap:3px;padding:3px;border-radius:9px;background:rgba(18,26,36,.38);border:1px solid rgba(255,255,255,.10);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}' +
+    '.zq-bar button{width:22px;height:22px;padding:0;border:0;border-radius:6px;background:transparent;color:#fff;opacity:.72;display:flex;align-items:center;justify-content:center;cursor:pointer}' +
+    '.zq-bar button svg{width:14px!important;height:14px!important;display:block;padding:0!important;margin:0;box-sizing:content-box}' +
+    '.zq-bar button.on{opacity:1;background:rgba(255,214,110,.22);color:#ffd66e}';
+  document.head.appendChild(st);
+
+  function E(n, a, t) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; }
+  function per() { return window.zpPerOf ? zpPerOf() : 0; }
+  function code() { return (window.STK && STK.code) || ''; }
+  function day() { return (window.LIVE && LIVE.sessDate) || ''; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function pOfY(y) { return YHI - (y - PY0) / PH * (YHI - YLO); }
+  function toS(svg, cx, cy) { var m = svg.getScreenCTM(); if (!m) return null; var p = svg.createSVGPoint(); p.x = cx; p.y = cy; p = p.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
+  function dSeg(px, py, ax, ay, bx, by) { var dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0; return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)); }
+  function lockOn() { return !!document.querySelector('.zd-bar .zd-lk.on'); }
+  function hidAll() { return !!document.querySelector('.zd-bar .zd-eye.off'); }
+
+  /* ── 存取 ── */
+  function getL() {
+    var c = code(); if (cache && cacheKey === c) return cache;
+    try { var m = JSON.parse(localStorage.getItem(KEY) || '{}'); cache = Array.isArray(m[c]) ? m[c] : []; } catch (e) { cache = []; }
+    cacheKey = c; sel = -1; cur = -1; drag = null; return cache;
+  }
+  function saveL() { try { var m = JSON.parse(localStorage.getItem(KEY) || '{}'); if (cache.length) m[cacheKey] = cache.slice(-20); else delete m[cacheKey]; localStorage.setItem(KEY, JSON.stringify(m)); } catch (e) { } }
+  function vis(p) { var pm = p.pm || 0; return pm === per() && (pm > 0 || p.d === day()); }
+
+  /* ── 点的存法: K线模式=蜡烛key+偏移(跟着蜡烛走), 分时=横坐标 ── */
+  function kInfo() {
+    var p = per(); if (!p || !window.zpPerAll) return { p: 0 };
+    var A = zpPerAll(); if (!A || !A.length) return { p: p, A: null };
+    var m = {}; A.forEach(function (k) { m[k.key] = k; });
+    return { p: p, A: A, m: m, s: A.length > 1 ? A[1].cx - A[0].cx : 1 };
+  }
+  function encPt(K, x, y) {
+    var o = { p: +pOfY(y).toFixed(3) };
+    if (K.p) { if (!K.A) return null; var b = null, d = 1e9; K.A.forEach(function (k) { var e = Math.abs(k.cx - x); if (e < d) { d = e; b = k; } }); o.k = b.key; o.o = +((x - b.cx) / K.s).toFixed(3); }
+    else o.x = +x.toFixed(1);
+    return o;
+  }
+  function decPt(K, pt) {
+    var x; if (pt.k) { if (!K.m || !K.m[pt.k]) return null; x = K.m[pt.k].cx + pt.o * K.s; } else x = pt.x;
+    if (x == null) return null; return { x: x, y: Y(pt.p), p: pt.p };
+  }
+  function decAll(p, K) { var out = []; for (var i = 0; i < p.pts.length; i++) { var q = decPt(K, p.pts[i]); if (!q) return null; out.push(q); } return out.length ? out : null; }
+
+  /* ── 形态识别(只认 Gartley / Bat / Butterfly / Crab / Deep Crab) ── */
+  function rat(P) {
+    var X = P[0].p, A = P[1].p, B = P[2].p, C = P[3] && P[3].p, D = P[4] && P[4].p;
+    var xa = Math.abs(A - X) || 1e-9, ab = Math.abs(B - A) || 1e-9, bc = C != null ? (Math.abs(C - B) || 1e-9) : 0;
+    return { ab: ab / xa, bc: C != null ? bc / ab : null, cd: D != null ? Math.abs(D - C) / bc : null, ad: D != null ? Math.abs(D - A) / xa : null };
+  }
+  function nameOf(r) {
+    var T = 0.035; function nr(v, t, o) { return Math.abs(v - t) <= (o || T); } function ir(v, a, b) { return v >= a - T && v <= b + T; }
+    if (!ir(r.bc, 0.382, 0.886)) return '';
+    if (nr(r.ab, 0.618) && ir(r.cd, 1.13, 1.618) && nr(r.ad, 0.786)) return 'Gartley';
+    if (ir(r.ab, 0.382, 0.5) && ir(r.cd, 1.618, 2.618) && nr(r.ad, 0.886)) return 'Bat';
+    if (nr(r.ab, 0.786) && ir(r.cd, 1.618, 2.24) && ir(r.ad, 1.27, 1.618)) return 'Butterfly';
+    if (nr(r.ab, 0.886) && ir(r.cd, 2.0, 3.618) && nr(r.ad, 1.618, 0.05)) return 'Deep Crab';
+    if (ir(r.ab, 0.382, 0.618) && ir(r.cd, 2.24, 3.618) && nr(r.ad, 1.618, 0.05)) return 'Crab';
+    return '';
+  }
+
+  /* ── 画 ── */
+  function ln(g, a, b, c, w, dash, op) { var at = { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: c, 'stroke-width': w, 'stroke-linecap': 'round' }; if (dash) at['stroke-dasharray'] = dash; if (op) at.opacity = op; g.appendChild(E('line', at)); }
+  function poly(g, pts, fill) { g.appendChild(E('polygon', { points: pts.map(function (q) { return q.x.toFixed(1) + ',' + q.y.toFixed(1); }).join(' '), fill: fill, stroke: 'none' })); }
+  function tag(g, t, cx, cy, bg, fg, stroke, fs) {
+    fs = fs || 8; var w = Math.max(12, t.length * fs * 0.62 + 6), h = fs + 4; cy = clamp(cy, PY0 + h / 2, PY0 + PH - h / 2);
+    g.appendChild(E('rect', { x: (cx - w / 2).toFixed(1), y: (cy - h / 2).toFixed(1), width: w, height: h, rx: 2.5, fill: bg, stroke: stroke || 'none', 'stroke-width': .6 }));
+    g.appendChild(E('text', { x: cx.toFixed(1), y: (cy + fs * 0.35).toFixed(1), fill: fg, 'font-size': fs, 'font-weight': 700, 'text-anchor': 'middle' }, t));
+  }
+  function isHigh(P, i) { var a = i > 0 ? P[i - 1].y : null, b = i < P.length - 1 ? P[i + 1].y : null; if (a != null && b != null) return P[i].y <= Math.min(a, b); if (a != null) return P[i].y < a; if (b != null) return P[i].y < b; return true; }
+  function mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+
+  function drawTri(g, P, col, c) {
+    if (P.length < 4) return;
+    var A = P[0], B = P[1], C = P[2], D = P[3], ux = C.x - A.x, uy = C.y - A.y, vx = D.x - B.x, vy = D.y - B.y, det = ux * vy - uy * vx;
+    var xm = Math.max(A.x, B.x, C.x, D.x), ap = null, e1, e2, Lp = null;
+    if (Math.abs(det) > 1e-6) { var t = ((B.x - A.x) * vy - (B.y - A.y) * vx) / det; ap = { x: A.x + t * ux, y: A.y + t * uy }; }
+    if (ap && ap.x > xm + 1) { e1 = e2 = ap; }
+    else { e1 = Math.abs(ux) > 1e-6 ? { x: xm, y: A.y + uy / ux * (xm - A.x) } : null; e2 = Math.abs(vx) > 1e-6 ? { x: xm, y: B.y + vy / vx * (xm - B.x) } : null; }
+    if (Math.abs(vx) > 1e-6) Lp = { x: A.x, y: B.y + vy / vx * (A.x - B.x) };
+    if (e1 && e2 && Lp) {
+      poly(g, e1 === e2 ? [A, e1, Lp] : [A, e1, e2, Lp], col.fill);
+      ln(g, A, e1, c, 1.4, '1 3.2', .9); ln(g, Lp, e2, c, 1.4, '1 3.2', .9); ln(g, A, Lp, c, 1.4, '1 3.2', .9);
+    }
+  }
+  function drawXab(g, P, col, c) {
+    var n = P.length, X = P[0], A = P[1], B = P[2], C = P[3], D = P[4], r = n >= 3 ? rat(P) : null, rb = 'rgba(10,14,19,.8)';
+    if (n >= 3) { poly(g, [X, A, B], col.fill); ln(g, X, B, c, 1, '2 3', .9); }
+    if (n >= 4) ln(g, A, C, c, 1, '2 3', .9);
+    if (n >= 5) { poly(g, [B, C, D], col.fill); ln(g, B, D, c, 1, '2 3', .9); ln(g, X, D, c, 1, '2 3', .9); }
+    function rb2(a, b, v) { if (v == null || !isFinite(v)) return; var m = mid(a, b); tag(g, v.toFixed(3), m.x, m.y, rb, '#fff', c, 7.5); }
+    if (n >= 3) rb2(X, B, r.ab);
+    if (n >= 4) rb2(A, C, r.bc);
+    if (n >= 5) { rb2(B, D, r.cd); rb2(X, D, r.ad); var nm = nameOf(r); if (nm) { var top = Math.min.apply(null, P.map(function (q) { return q.y; })); tag(g, nm, (X.x + D.x) / 2, top - 22, c, '#fff', 'none', 9); } }
+  }
+  function drawPat(g, p, P, on, i) {
+    var T = p.t, col = T === 'tri' ? C_TRI : C_XAB, c = on ? GOLD : col.ln, n = P.length;
+    if (T === 'tri') drawTri(g, P, col, c); else drawXab(g, P, col, c);
+    for (var j = 0; j < n - 1; j++) ln(g, P[j], P[j + 1], c, on ? 1.8 : 1.5);
+    if (i === cur && hover && n < NEED[T]) ln(g, P[n - 1], hover, c, 1, '3 3');
+    P.forEach(function (q, j) { var up = isHigh(P, j); tag(g, LAB[T][j], q.x, q.y + (up ? -12 : 12), 'rgba(120,123,134,.92)', '#fff', 'none', 8); });
+    if (on) P.forEach(function (q) { g.appendChild(E('circle', { cx: q.x, cy: q.y, r: 3.6, fill: '#0a0e13', stroke: c, 'stroke-width': 1.3 })); });
+  }
+  function paint() {
+    var ch = $('ch'); if (!ch) return;
+    var old = ch.querySelector('.zq-lay'); if (old) old.remove();
+    syncBar();
+    if (ch.style.display === 'none' || hidAll()) return;
+    var L = getL(), K = kInfo(), g = E('g', { 'class': 'zq-lay', 'pointer-events': 'none' });
+    var cp = E('clipPath', { id: 'zqclip' }); cp.appendChild(E('rect', { x: PX0, y: PY0, width: LX - 6 - PX0, height: PH })); g.appendChild(cp);
+    var gg = E('g', { 'clip-path': 'url(#zqclip)' }); g.appendChild(gg);
+    L.forEach(function (p, i) { if (!vis(p)) return; var P = decAll(p, K); if (!P) return; drawPat(gg, p, P, i === sel, i); });
+    ch.appendChild(g);
+  }
+
+  /* ── 命中测试 / 手势 ── */
+  function svgOf(e) { var s = e.target && e.target.closest ? e.target.closest('svg') : null; return s && (s.id === 'ch' || s.id === 'zpVol' || s.id === 'zpPane') ? s : null; }
+  function hitTest(e) {
+    if (lockOn() || hidAll()) return null;
+    var svg = svgOf(e); if (!svg || svg.id !== 'ch') return null;
+    var q = toS(svg, e.clientX, e.clientY); if (!q) return null;
+    var s = 360 / (svg.getBoundingClientRect().width || 360), R = 14 * s, RB = 8 * s, L = getL(), K = kInfo(), order = [], i, j;
+    for (i = L.length - 1; i >= 0; i--) if (vis(L[i])) order.push(i);
+    var k = order.indexOf(sel); if (k > 0) { order.splice(k, 1); order.unshift(sel); }
+    var Ps = {};
+    for (k = 0; k < order.length; k++) { i = order[k]; var P = decAll(L[i], K); if (!P) continue; Ps[i] = P; for (j = 0; j < P.length; j++) if (Math.hypot(q.x - P[j].x, q.y - P[j].y) <= R) return { i: i, j: j, q: q, svg: svg, P: P }; }
+    for (k = 0; k < order.length; k++) { i = order[k]; var P2 = Ps[i]; if (!P2) continue; for (j = 0; j < P2.length - 1; j++) if (dSeg(q.x, q.y, P2[j].x, P2[j].y, P2[j + 1].x, P2[j + 1].y) <= RB) return { i: i, j: -1, q: q, svg: svg, P: P2 }; }
+    return null;
+  }
+  var zh0 = window.zpDrawHit;
+  window.zpDrawHit = function (e) { try { if (hitTest(e)) return true; } catch (_) { } return zh0 ? zh0(e) : false; };
+
+  function busy() {
+    var on = !!(myTool || drag); window.zpDrawBusy = on;
+    ['ch', 'zpVol', 'zpPane'].forEach(function (id) { var s = $(id); if (s) { s.style.touchAction = on ? 'none' : 'pan-y'; if (myTool) s.style.cursor = 'crosshair'; else if (s.style.cursor === 'crosshair' && !window.zpDrawOn) s.style.cursor = ''; } });
+  }
+  function placePoint(svg, q) {
+    var L = getL(), K = kInfo(), pt = encPt(K, clamp(q.x, PX0, LX - 6), clamp(q.y, PY0, PY0 + PH)); if (!pt) return;
+    if (cur < 0 || !L[cur]) { L.push({ t: myTool, pm: per(), d: day(), pts: [] }); if (L.length > 20) L.shift(); cur = L.length - 1; }
+    var p = L[cur]; p.pts.push(pt); sel = cur; drag = { k: 'pt', i: cur, j: p.pts.length - 1, svg: svg };
+    if (p.pts.length >= NEED[p.t]) { myTool = ''; cur = -1; }
+    saveL(); busy(); syncBar(); paint();
+  }
+  window.addEventListener('pointerdown', function (e) {
+    var svg = svgOf(e); if (!svg) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (myTool) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (svg.id !== 'ch') return;
+      var q = toS(svg, e.clientX, e.clientY); if (q) placePoint(svg, q);
+      return;
+    }
+    if (lockOn() || hidAll()) return;
+    var h = hitTest(e);
+    if (h) {
+      e.preventDefault(); e.stopImmediatePropagation(); sel = h.i;
+      drag = h.j >= 0 ? { k: 'pt', i: h.i, j: h.j, svg: h.svg } : { k: 'body', i: h.i, svg: h.svg, sx: h.q.x, sy: h.q.y, P0: h.P.map(function (o) { return { x: o.x, y: o.y }; }) };
+      busy(); try { window.zpMainXH && window.zpMainXH.hide(); } catch (_) { } paint(); return;
+    }
+    if (sel >= 0) { sel = -1; paint(); }
+  }, true);
+  window.addEventListener('pointermove', function (e) {
+    if (drag) {
+      var q = toS(drag.svg, e.clientX, e.clientY); if (!q) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      var L = getL(), p = L[drag.i]; if (!p) return; var K = kInfo();
+      if (drag.k === 'pt') { var pt = encPt(K, clamp(q.x, PX0, LX - 6), clamp(q.y, PY0, PY0 + PH)); if (pt) p.pts[drag.j] = pt; }
+      else {
+        var dx = q.x - drag.sx, dy = q.y - drag.sy;
+        var np = drag.P0.map(function (o) { return encPt(K, clamp(o.x + dx, PX0, LX - 6), clamp(o.y + dy, PY0, PY0 + PH)); });
+        if (np.every(Boolean)) p.pts = np;
+      }
+      paint(); return;
+    }
+    if (myTool && cur >= 0 && e.pointerType === 'mouse') { var s = svgOf(e); if (s && s.id === 'ch') { var q2 = toS(s, e.clientX, e.clientY); if (q2) { hover = { x: q2.x, y: q2.y }; paint(); } } }
+  }, true);
+  function onUp() { if (!drag) return; drag = null; saveL(); busy(); paint(); }
+  window.addEventListener('pointerup', onUp, true); window.addEventListener('pointercancel', onUp, true);
+  document.addEventListener('touchstart', function (e) { if (!(myTool || drag)) return; var t = e.target; if (t && t.closest && t.closest('#ch,#zpVol,#zpPane') && e.cancelable) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', function (e) { if (drag && e.cancelable) e.preventDefault(); }, { passive: false });
+
+  /* ── 工具条: 图标直接放进画线条里 ── */
+function cancelCur() { if (cur >= 0) { var L = getL(), p = L[cur]; if (p && p.pts.length < NEED[p.t]) L.splice(cur, 1); cur = -1; sel = -1; saveL(); } }
+function setTool(t) {
+  if (t === myTool) return;
+  cancelCur(); myTool = ''; sel = -1; hover = null;
+  if (t) {
+    var lk = document.querySelector('.zd-bar .zd-lk.on'); if (lk) lk.click();
+    var on = document.querySelector('.zd-bar button.on[data-t]'); if (on) on.click();
+    try { window.zpMainXH && window.zpMainXH.hide(); } catch (_) { }
+    myTool = t;
+  }
+  busy(); syncBar(); paint();
+}
+function delSel() {
+  var L = getL();
+  if (sel >= 0 && L[sel]) { L.splice(sel, 1); sel = -1; }
+  else if (myTool) { cancelCur(); }
+  saveL(); busy(); paint();
+}
+function mountBar() {
+  var tb = document.querySelector('.zd-bar'); if (!tb || tb.querySelector('[data-q]')) return;
+  function mk(q, title) {
+    var b = document.createElement('button'); b.type = 'button';
+    b.setAttribute('data-q', q); b.title = title; b.setAttribute('aria-label', title); b.innerHTML = IC[q];
+    b.addEventListener('click', function (ev) { ev.stopPropagation(); setTool(myTool === q ? '' : q); });
+    return b;
+  }
+  var b1 = mk('tri', '三角形态'), b2 = mk('xab', 'XABCD形态'), anchor = tb.querySelector('[data-t="meas"]');
+  if (anchor && anchor.parentNode) { anchor.parentNode.insertBefore(b1, anchor.nextSibling); anchor.parentNode.insertBefore(b2, b1.nextSibling); }
+  else { tb.appendChild(b1); tb.appendChild(b2); }
+}
+function syncBar() {
+  document.querySelectorAll('.zd-bar button[data-q]').forEach(function (b) { b.className = b.getAttribute('data-q') === myTool ? 'on' : ''; });
+  var dl = document.querySelector('.zd-bar .zd-del'); if (dl && getL().some(vis)) dl.style.display = 'flex';
+}
+window.addEventListener('click', function (e) {
+  var t = e.target; if (!t || !t.closest || !t.closest('.zd-bar')) return;
+  if (t.closest('[data-q]')) return;
+  if (t.closest('.zd-del') && sel >= 0) { e.stopPropagation(); e.preventDefault(); delSel(); return; }
+  if (myTool) setTool('');
+}, true);
+
+  window.addEventListener('keydown', function (e) {
+    var t = e.target; if (t && (t.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(t.tagName))) return;
+    if (e.key === 'Escape') { if (myTool) setTool(''); else if (sel >= 0) { sel = -1; paint(); } }
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && sel >= 0) delSel();
+  });
+
+  /* ── 跟着主图重画 ── */
+  var dp0 = window.zpDrawPaint;
+  window.zpDrawPaint = function () { var r; try { r = dp0 && dp0.apply(this, arguments); } catch (e) { } try { paint(); } catch (e) { } return r; };
+  function sig() { var A = per() && window.zpPerAll ? zpPerAll() : null; return per() + '|' + YHI.toFixed(3) + '|' + YLO.toFixed(3) + '|' + (A && A.length ? A[0].cx.toFixed(1) + '|' + A.length : '') + '|' + day(); }
+  setInterval(function () {
+    try {
+      mountBar(); if (myTool || drag) busy(); syncBar();
+      var ch = $('ch'), s = sig();
+      if (ch && (!ch.querySelector('.zq-lay') || s !== lastSig)) { lastSig = s; paint(); }
+    } catch (e) { }
+  }, 300);
+  mountBar(); paint();
+})();
+</script>
+<script>
+/* jl-zprso: Regression Slope Oscillator [BigBeluga] 移植版(只在 1/5/15 分 K线模式)
+   算法: ln(close) 多个长度线性回归斜率(×-1)取平均 → 震荡线; SMA 为信号线; 交叉标圆点; 颜色 橙→青 按近 COLOR_RANGE 根高低渐变 */
+(function () {
+  var MIN_LEN = 10, STEP = 5, SAMPLES = 6, SIG_LEN = 7, COLOR_RANGE = 100, H = 92, KEY = 'zp_rso_v1';
+  var NS = 'http://www.w3.org/2000/svg', on = true, wrap = null, svg = null, lastSig = '', memo = { A: null, key: '', R: null };
+  try { on = localStorage.getItem(KEY) !== '0'; } catch (e) { }
+  var MAXLEN = MIN_LEN + STEP * (SAMPLES - 1);
+  function E(n, a, t) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; }
+  function mix(c1, c2, t) { t = Math.max(0, Math.min(1, t)); var r = [0, 1, 2].map(function (i) { return Math.round(c1[i] + (c2[i] - c1[i]) * t); }); return 'rgb(' + r.join(',') + ')'; }
+  var ORG = [255, 152, 0], AQA = [0, 200, 220];
+
+  function slopeAvg(ln, i) {
+    var tot = 0, cnt = 0;
+    for (var s = 0; s < SAMPLES; s++) {
+      var L = MIN_LEN + STEP * s; if (i - L + 1 < 0) continue;
+      var sx = 0, sy = 0, sxx = 0, sxy = 0;
+      for (var j = 0; j < L; j++) { var v = ln[i - j], p = j + 1; sx += p; sy += v; sxx += p * p; sxy += v * p; }
+      var d = L * sxx - sx * sx; if (!d) continue;
+      tot += -((L * sxy - sx * sy) / d); cnt++;
+    }
+    return cnt === SAMPLES ? tot / cnt : null;
+  }
+  function calc(A) {
+    var last = A[A.length - 1], key = A.length + '|' + last.c + '|' + last.key;
+    if (memo.A === A && memo.key === key) return memo.R;
+    var ln = A.map(function (k) { return Math.log(k.c > 0 ? k.c : 1e-9); }), osc = [], sig = [], up = [], dn = [], i;
+    for (i = 0; i < A.length; i++) osc[i] = slopeAvg(ln, i);
+    for (i = 0; i < A.length; i++) {
+      var s = 0, n = 0;
+      if (osc[i] != null) for (var j = 0; j < SIG_LEN; j++) { if (i - j < 0 || osc[i - j] == null) { n = 0; break; } s += osc[i - j]; n++; }
+      sig[i] = n === SIG_LEN ? s / SIG_LEN : null;
+    }
+    for (i = 1; i < A.length; i++) {
+      if (sig[i] == null || sig[i - 1] == null) continue;
+      if (osc[i] > sig[i] && osc[i - 1] <= sig[i - 1]) up[i] = 1;
+      if (osc[i] < sig[i] && osc[i - 1] >= sig[i - 1]) dn[i] = 1;
+    }
+    memo = { A: A, key: key, R: { osc: osc, sig: sig, up: up, dn: dn } }; return memo.R;
+  }
+
+  function mount() {
+    if (wrap && wrap.isConnected) return;
+    var ref = document.getElementById('zpPane') || document.getElementById('zpVol') || document.getElementById('ch'); if (!ref) return;
+    var host = (ref.closest && ref.closest('#zpSub')) || ref;
+    wrap = document.createElement('div'); wrap.id = 'zpRso'; wrap.style.cssText = 'margin-top:2px';
+    svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 360 ' + H); svg.setAttribute('preserveAspectRatio', 'none');
+    svg.style.cssText = 'width:100%;display:block;touch-action:pan-y';
+    svg.setAttribute('height', ''); wrap.appendChild(svg);
+    host.parentNode.insertBefore(wrap, host.nextSibling);
+  }
+  function btn() {
+    var box = document.querySelector('.zp-per'); if (!box || box.querySelector('.zp-rso')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'zp-rso' + (on ? ' on' : ''); b.textContent = 'RSO'; b.title = 'Regression Slope Oscillator';
+    b.style.cssText = 'margin-left:2px'; box.appendChild(b);
+    b.addEventListener('click', function (ev) { ev.stopPropagation(); on = !on; try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) { } b.className = 'zp-rso' + (on ? ' on' : ''); lastSig = ''; draw(); }, true);
+  }
+  function draw() {
+    mount(); btn(); if (!wrap) return;
+    var ch = document.getElementById('ch'), A = window.zpPerAll ? zpPerAll() : null;
+    if (!on || !A || A.length < MAXLEN + SIG_LEN || (ch && ch.style.display === 'none')) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+    var R = calc(A), top = 14, bot = H - 6, i, lo = 1e9, hi = -1e9;
+    for (i = 0; i < A.length; i++) if (A[i].vis) [R.osc[i], R.sig[i]].forEach(function (v) { if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    if (!(hi > lo)) return;
+    lo = Math.min(lo, 0); hi = Math.max(hi, 0); var pd = (hi - lo) * 0.08; lo -= pd; hi += pd;
+    function Yv(v) { return top + (hi - v) / (hi - lo) * (bot - top); }
+    /* 颜色范围: 往前 COLOR_RANGE 根的高低 */
+    function col(i) { var a = 1e9, b = -1e9; for (var j = Math.max(0, i - COLOR_RANGE + 1); j <= i; j++) { var v = R.osc[j]; if (v == null) continue; a = Math.min(a, v); b = Math.max(b, v); } return b > a ? mix(ORG, AQA, (R.osc[i] - a) / (b - a)) : mix(ORG, AQA, .5); }
+    var cp = E('clipPath', { id: 'zrclip' }); cp.appendChild(E('rect', { x: PX0, y: 0, width: LX - 6 - PX0, height: H })); svg.appendChild(cp);
+    var g = E('g', { 'clip-path': 'url(#zrclip)' }); svg.appendChild(g);
+    var y0 = Yv(0); g.appendChild(E('line', { x1: PX0, x2: LX - 6, y1: y0, y2: y0, stroke: '#888', 'stroke-width': .7, 'stroke-dasharray': '4 3' }));
+    for (i = 1; i < A.length; i++) {
+      if (R.osc[i] == null || R.osc[i - 1] == null || (A[i].cx < PX0 - 30 && A[i - 1].cx < PX0 - 30) || A[i - 1].cx > LX) continue;
+      var c = col(i), x1 = A[i - 1].cx, x2 = A[i].cx, ya = Yv(R.osc[i - 1]), yb = Yv(R.osc[i]);
+      g.appendChild(E('polygon', { points: [x1, y0, x1, ya, x2, yb, x2, y0].map(function (q) { return (+q).toFixed(1); }).join(' ').replace(/(\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)/, '$1,$2 $3,$4 $5,$6 $7,$8'), fill: c, opacity: .22 }));
+      g.appendChild(E('line', { x1: x1, y1: ya, x2: x2, y2: yb, stroke: c, 'stroke-width': 1.6, 'stroke-linecap': 'round' }));
+    }
+    var pts = []; for (i = 0; i < A.length; i++) if (R.sig[i] != null) pts.push(A[i].cx.toFixed(1) + ',' + Yv(R.sig[i]).toFixed(1));
+    if (pts.length > 1) g.appendChild(E('polyline', { points: pts.join(' '), fill: 'none', stroke: '#fff', 'stroke-width': 1, opacity: .85 }));
+    for (i = 1; i < A.length; i++) if ((R.up[i] || R.dn[i]) && A[i].vis) g.appendChild(E('circle', { cx: A[i].cx, cy: Yv(R.osc[i]), r: 2.6, fill: '#e8e8e8', stroke: '#0a0e13', 'stroke-width': .6 }));
+    svg.appendChild(E('text', { x: PX0 + 2, y: 10, fill: '#cfd6df', 'font-size': 8.5, 'font-weight': 600 }, 'Regression Slope Oscillator [BigBeluga]'));
+    var lv = null; for (i = A.length - 1; i >= 0; i--) if (R.osc[i] != null) { lv = R.osc[i]; break; }
+    if (lv != null) svg.appendChild(E('text', { x: LX - 8, y: 10, fill: '#cfd6df', 'font-size': 8.5, 'text-anchor': 'end' }, lv.toFixed(4)));
+  }
+  var dp0 = window.zpDrawPaint;
+  window.zpDrawPaint = function () { var r; try { r = dp0 && dp0.apply(this, arguments); } catch (e) { } try { draw(); } catch (e) { } return r; };
+  setInterval(function () {
+    try {
+      var A = window.zpPerAll ? zpPerAll() : null;
+      var s = (A && A.length ? A.length + '|' + A[0].cx.toFixed(1) + '|' + A[A.length - 1].c : 'x') + '|' + on + '|' + (window.zpPerOf ? zpPerOf() : 0);
+      if (s !== lastSig || !wrap || !wrap.isConnected) { lastSig = s; draw(); }
+    } catch (e) { }
+  }, 300);
+  draw();
+})();
+</script>
 
 </html>
