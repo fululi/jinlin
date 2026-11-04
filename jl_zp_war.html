@@ -3927,8 +3927,34 @@ window.addEventListener('click', function (e) {
     }
     return cnt === SAMPLES ? tot / cnt : null;
   }
+  function dataSignature(A, geometry) {
+  var h = 2166136261;
+
+  function add(v) {
+    var s = String(v == null ? '' : v);
+    for (var j = 0; j < s.length; j++) {
+      h ^= s.charCodeAt(j);
+      h = Math.imul(h, 16777619);
+    }
+  }
+
+  add(A.length);
+
+  for (var i = 0; i < A.length; i++) {
+    var k = A[i];
+    add(k.c);
+    add(k.key);
+
+    if (geometry) {
+      add(k.cx);
+      add(k.vis);
+    }
+  }
+
+  return (h >>> 0).toString(36);
+}
   function calc(A) {
-    var last = A[A.length - 1], key = A.length + '|' + last.c + '|' + last.key;
+    var key = dataSignature(A, false);
     if (memo.A === A && memo.key === key) return memo.R;
     var ln = A.map(function (k) { return Math.log(k.c > 0 ? k.c : 1e-9); }), osc = [], sig = [], up = [], dn = [], i;
     for (i = 0; i < A.length; i++) osc[i] = slopeAvg(ln, i);
@@ -3995,7 +4021,9 @@ window.addEventListener('click', function (e) {
   setInterval(function () {
     try {
       var A = window.zpPerAll ? zpPerAll() : null;
-      var s = (A && A.length ? A.length + '|' + A[0].cx.toFixed(1) + '|' + A[A.length - 1].c : 'x') + '|' + on + '|' + (window.zpPerOf ? zpPerOf() : 0);
+      var s = (A ? dataSignature(A, true) : 'x')
+  + '|' + on
+  + '|' + (window.zpPerOf ? zpPerOf() : 'x');
       if (s !== lastSig || !wrap || !wrap.isConnected) { lastSig = s; draw(); }
     } catch (e) { }
   }, 300);
