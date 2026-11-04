@@ -73,7 +73,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
   function agg(m1, k) { const out = []; let cur = null; m1.forEach((x) => { const d = x.t.slice(0, 8), mm = +x.t.slice(8, 10) * 60 + +x.t.slice(10, 12); let i = mm <= 690 ? mm - 570 : 120 + mm - 780; if (i < 1) i = 1; const e = Math.ceil(i / k) * k, em = e <= 120 ? 570 + e : 780 + e - 120, key = d + em, t = d + String(Math.floor(em / 60)).padStart(2, "0") + String(em % 60).padStart(2, "0"); if (!cur || cur.key !== key) { cur = { key, t, o: x.o, c: x.c, h: x.h, l: x.l, v: x.v }; out.push(cur); } else { cur.c = x.c; cur.h = Math.max(cur.h, x.h); cur.l = Math.min(cur.l, x.l); cur.v += x.v; } }); return out.map((b) => ({ t: b.t, o: b.o, c: b.c, h: b.h, l: b.l, v: b.v })); }
   function mnFrom(m1) { const d = m1[m1.length - 1].t.slice(0, 8); return { date: d, pts: m1.filter((x) => x.t.slice(0, 8) === d && x.t.slice(8, 12) >= "0930").map((x) => ({ t: x.t.slice(8, 12), p: x.c, v: x.v })) }; }
   async function getAll(c) {
-    const tx = () => Promise.all([dk(c), mk(c, 30), mk(c, 15), mk(c, 5), mk1(c), mn(c)]);
+    const tx = () => Promise.all([dk(c), mk(c, 30), mk(c, 15), mk(c, 5), mk1(c), mn(c).catch(() => null)]).then((r) => { if (!r[5] || !r[5].pts || !r[5].pts.length) r[5] = mnFrom(r[4]); return r; });   /* jl-gapfix: 分时接口(web.ifzq)单独被风控501时用1分K拼当日分时, 不再整块"取不到" */
     let e1;
     try { return { r: await tx(), src: "tx" }; } catch (e) { e1 = e; }
     try { return { r: await tx(), src: "tx" }; } catch (e) { e1 = e; }
