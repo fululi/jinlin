@@ -418,7 +418,7 @@ function labColJL(g, labs) {
   labs.forEach(function (L, k) {
     var y = ys[k];
     var w = wOf(L.t) + 8, x2 = LX - 8;
-    g.appendChild(el('rect', { x: x2 - w, y: y - 11, width: w, height: 14, rx: 4, fill: 'rgba(10,14,19,.72)' }));
+    g.appendChild(el('rect', { x: x2 - w, y: y - 11, width: w, height: 14, rx: 4, fill: 'none' }));   /* 11-04 用户: 线上价格字底透明不带色, 别挡蜡烛 */
     var t = el('text', { x: x2 - 4, y: y, fill: L.c, 'font-size': 9, 'text-anchor': 'end', 'font-weight': L.b ? 700 : 600 }); t.textContent = L.t; g.appendChild(t);
   });
 }
@@ -478,16 +478,17 @@ function setRange(lo, hi) {
 function renderMarkers() {
   var g = $('mk'); while (g.firstChild) g.removeChild(g.firstChild);
   MK.forEach(function (m) {
-        if (INJL && localStorage.getItem('jl_zp_arrow_v1') !== '1') return;
+        if (INJL && localStorage.getItem('jl_zp_arrow_v1') === '0') return;   /* 11-04 用户: 引擎真实 B/S 三角默认显示(设 '0' 才关) */
 
     if (MODE === 'replay' && m.i > I) return;
     var x = MODE === 'live' && m.hm && xOfHmJL(m.hm === '0925' ? '0930' : m.hm) != null ? xOfHmJL(m.hm === '0925' ? '0930' : m.hm) : X(m.i), y = Y(m.px);
     if (m.t === 'dot') { g.appendChild(el('circle', { cx: x, cy: y, r: 2.8, fill: 'var(--amber)' })); g.appendChild(tx(x - 4, y - 6, m.lb, 'var(--amber)', 10, 'end', 600)); return; }
-    var sell = m.t === 'sell', early = m.i < 8, tX = early ? x + 8 : x - 8, an = early ? 'start' : 'end';
-    if (sell) g.appendChild(el('path', { d: 'M' + (x - 5) + ' ' + (y - 12) + ' l10 0 l-5 7 z', fill: 'var(--red)' }));
-    else { var bx = m.i >= 40 ? x - 9 : x; g.appendChild(el('path', { d: 'M' + (bx - 5) + ' ' + (y + 12) + ' l10 0 l-5 -7 z', fill: 'var(--green)' })); if (m.i >= 40) tX = bx - 8; }
-    g.appendChild(tx(tX, sell ? y - 16 : y + 24, m.lb, sell ? 'var(--red)' : 'var(--green)', 11, an, 700));
-    if (m.tm) g.appendChild(tx(tX, sell ? y - 28 : y + 36, m.tm, 'var(--ink)', 10, an, 600));
+    /* 11-04 用户: 引擎真实成交标记太大、绿三角和绿蜡烛分不清、别压线、不要数字、底透明 → 小金色三角(卖▼在价上 买▲在价下) + 旁边一个小"卖/买"字, 无底色 */
+    var sell = m.t === 'sell', early = m.i < 8, GD = '#ffc93c';
+    var ty = sell ? y - 4 : y + 4;
+    g.appendChild(el('path', { d: sell ? 'M' + (x - 3) + ' ' + (ty - 4) + ' l6 0 l-3 4 z' : 'M' + (x - 3) + ' ' + (ty + 4) + ' l6 0 l-3 -4 z', fill: GD, stroke: 'rgba(5,10,16,.9)', 'stroke-width': .6 }));
+    var lx0 = early ? x + 4 : x - 4, ly0 = Math.max(PY0 + 7, Math.min(PY0 + PH - 1, sell ? ty - 5 : ty + 10));
+    g.appendChild(tx(lx0, ly0, sell ? '卖' : '买', GD, 7.5, early ? 'start' : 'end', 600));
   });
   /* jl-zp4: 引擎当前要盯的价画在图上——已卖: 卖出价+反弹线(跟着卖出后低点下移); 没卖: 卖目标 */
   if (MODE === 'live' && LIVE.eng) {
@@ -543,10 +544,10 @@ function renderLine() {
           }
           if (dirH === 1) {
             if (k.h > ext.p) ext = { ix: ix, p: k.h };
-            if (k.c < ext.p * (1 - thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 1 }); ext = { ix: ix, p: k.l }; dirH = -1; }
+            if (k.c < ext.p * (1 - thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 1, cix: ix, cp: k.c }); ext = { ix: ix, p: k.l }; dirH = -1; }   /* cix/cp: 确认那根K线(收盘跌破阈值) → 图上标 S */
           } else {
             if (k.l < ext.p) ext = { ix: ix, p: k.l };
-            if (k.c > ext.p * (1 + thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 0 }); ext = { ix: ix, p: k.h }; dirH = 1; }
+            if (k.c > ext.p * (1 + thr)) { SW.push({ ix: ext.ix, p: ext.p, h: 0, cix: ix, cp: k.c }); ext = { ix: ix, p: k.h }; dirH = 1; }
           }
         });
         if (dirH === 0) ext = null;
@@ -621,7 +622,19 @@ if (ext && SP[ext.ix]) {
   }
 }
 
-      SW.forEach(function (m) {
+      /* 11-04 用户: 1/5/15分页 高=红圈 低=青蓝圈, 不写字/价/时间; 确认那根K线只画小菱形图标(亮粉=到卖点 青蓝=到买点), 与引擎真实成交三角区分。分时页走下面原逻辑不动 */
+      if (KJL) SW.forEach(function (m) {
+        var q = SP[m.ix], x = xOfHmJL(q.hm);
+        if (x != null && m.p >= YLO && m.p <= YHI) {
+          var y = Y(m.p);
+          gh.appendChild(el('circle', { cx: x, cy: m.h ? y - 5 : y + 5, r: 5, fill: 'none', stroke: m.h ? '#ff3b3b' : '#3ad6ff', 'stroke-width': 1.8 }));
+        }
+        var cq = m.cix != null ? SP[m.cix] : null, cx2 = cq ? xOfHmJL(cq.hm) : null;
+        if (cx2 == null || m.cp < YLO || m.cp > YHI) return;
+        var cy2 = Math.max(PY0 + 5, Math.min(PY0 + PH - 5, m.h ? Y(cq.h) - 7 : Y(cq.l) + 7));
+        gh.appendChild(el('path', { d: 'M' + cx2 + ' ' + (cy2 - 4) + ' l3.5 4 l-3.5 4 l-3.5 -4 z', fill: m.h ? '#ff4fd8' : '#3ad6ff', stroke: 'rgba(5,10,16,.9)', 'stroke-width': .8 }));
+      });
+      else SW.forEach(function (m) {
         var q = SP[m.ix], x = xOfHmJL(q.hm); if (x == null || m.p < YLO || m.p > YHI) return;
         var y = Y(m.p), pp = pcv > 0 ? ((m.p / pcv - 1) * 100) : null, tt = (m.h ? '卖 ' : '买 ') + m.p.toFixed(2) + (pp == null ? '' : ' ' + (pp >= 0 ? '+' : '') + pp.toFixed(1) + '%');
         if (m.h) gh.appendChild(el('circle', { cx: x, cy: y - 5, r: 5.5, fill: 'none', stroke: '#ff3b3b', 'stroke-width': 1.8 }));
@@ -1624,6 +1637,13 @@ function nextStepJL() {
   if (engDoneJL(e)) { var net = engNetJL(e); return { v: '停', c: 'gold', t: '今日收工 · ' + n + ' 轮' + (n >= LIVE.roundsMax ? '全平' : '') + (n ? ' · 净 ' + (net >= 0 ? '+' : '') + net.toFixed(0) : ''), p: null, sub: (n ? '净 ' + (net >= 0 ? '+' : '') + net.toFixed(0) + ' 元' : '今天没触发') + ' · ' + (n >= LIVE.roundsMax ? '不再开新卖' : '尾盘/收盘后不再开新卖') }; }
   return { v: '卖', c: 'sell', t: (n ? '已买回 · ' : '') + '等冲高卖 R' + (n + 1), p: e.lastTp || null, sub: '参考价 ' + e.ref.toFixed(2) + (n ? '(上轮买回价)' : '(开盘价)') + ' → 卖目标 = 上方最近IV区远沿, 没有就保本+1分', from: e.ref, fromL: n ? '上轮买回' : '开盘', to: e.lastTp, toL: '卖目标' };
 }
+function ivChipJL(cur) {   /* 11-04 用户: 顶部缺口签 = "iv 下沿–上沿"(同持仓页), 不写 区上/区下 字样; 取离现价最近的引擎IV区, 没有就台账缺口 */
+  if (!(cur > 0)) return '—';
+  var pick = function (G) { var b = null, bd = 1e18; (G || []).forEach(function (g) { var d = cur >= g.lo && cur <= g.hi ? 0 : Math.min(Math.abs(g.lo - cur), Math.abs(g.hi - cur)); if (d < bd) { bd = d; b = g; } }); return b; };
+  var Z = null; try { Z = zonesForLive(null, null); } catch (e) { }
+  var g = pick(Z && Z.grp); if (!g) { try { g = pick(ledgerGapsJL(cur)); } catch (e) { } }
+  return g ? g.lo.toFixed(2) + '–' + g.hi.toFixed(2) : '—';
+}
 function gapPosJL(cur) {   /* 引擎IV区优先; 没有就看台账缺口 */
   var t = ivZoneTxtJL(cur); if (t !== '—' || !(cur > 0)) return t;
   var G = ledgerGapsJL(cur), up = null, dn = null, inn = null;
@@ -1644,7 +1664,7 @@ function engCardJL() {
   }
   var ot = openType();
   var opx = ot ? ('开 ' + LIVE.open.toFixed(2) + ' ' + sgp(ot.pct)) : '待竞价';
-  try { var hs = $('hSub'); if (hs) { var esc = function (s) { return String(s).replace(/[<>&]/g, ''); }; hs.innerHTML = '<span class="hk"><i>开</i>' + esc(ot ? LIVE.open.toFixed(2) + ' ' + sgp(ot.pct) : '待竞价') + '</span>' + (LIVE.auc ? '<span class="hk"><i>竞价</i>' + LIVE.auc.lo.toFixed(2) + '–' + LIVE.auc.hi.toFixed(2) + '</span>' : '') + '<span class="hk"><i>缺口</i>' + esc(gapPosJL(cur)) + '</span>'; } } catch (eH) { }
+  try { var hs = $('hSub'); if (hs) { var esc = function (s) { return String(s).replace(/[<>&]/g, ''); }; hs.innerHTML = '<span class="hk"><i>开</i>' + esc(ot ? LIVE.open.toFixed(2) + ' ' + sgp(ot.pct) : '待竞价') + '</span>' + (LIVE.auc ? '<span class="hk"><i>竞价</i>' + LIVE.auc.lo.toFixed(2) + '–' + LIVE.auc.hi.toFixed(2) + '</span>' : '') + '<span class="hk"><i>iv</i>' + esc(ivChipJL(cur)) + '</span>'; } } catch (eH) { }
   if (LIVE.auc) opx += ' · 竞价 ' + LIVE.auc.lo.toFixed(2) + '–' + LIVE.auc.hi.toFixed(2);
   /* 方案A: 现价已越过目标价(冲高卖/反弹买回都是向上触发) → 原价灰掉划线, 改提示按现价 */
   var past = !!(S.p && cur > 0 && (S.c === 'sell' || S.c === 'buy') && cur >= S.p);
@@ -2706,6 +2726,7 @@ body.injlin #metaLine select{height:26px}
 #zpSub{margin-top:2px;user-select:none;-webkit-user-select:none}
 body.injlin .chartbox>#zpSub{order:1}
 #zpSub svg{display:block;width:100%;touch-action:pan-y}
+#ch,#zpVol{touch-action:pan-y}   /* 11-04: 捏合/横滑交给图自己处理(否则手机浏览器抢走手势→pointercancel 缩放卡住), 竖滑照旧滚页面 */
 #zpSub .zb-seg{display:flex;gap:4px;margin:6px 6px 2px}
 #zpSub .zb-seg button{height:24px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--sub);color:#fff;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
 #zpSub .zb-seg button.on{background:rgba(122,184,255,.18);border-color:var(--blue);color:var(--blue)}
@@ -3412,10 +3433,15 @@ body.injlin .chartbox>#zpSub{order:1}
         var xa = Math.max(PX0, xi(x.l)), xb = Math.min(R, xi(x.r)); if (!(xb > xa + 1)) return;
         var yT = Y(x.top), yB = Y(x.bot); if (yB < PY0 || yT > PY0 + PH) return;
         yT = Math.max(PY0, yT); yB = Math.min(PY0 + PH, yB);
-        g.appendChild(E('rect', { x: xa, y: yT, width: xb - xa, height: Math.max(1, yB - yT), fill: x.fill ? S[1] : 'none', 'fill-opacity': .1 }));
-        if (x.ln) { var ly = Y(x.lp), la = Math.max(PX0, xi(x.l)), lb = Math.min(R, xi(x.lx2)); if (ly >= PY0 && ly <= PY0 + PH && lb > la) g.appendChild(E('line', { x1: la, x2: lb, y1: ly, y2: ly, stroke: S[1], 'stroke-width': 1.1 })); }
-        var t = E('text', { class: 'zpLiqT', x: xa + 2, y: Math.min(PY0 + PH - 2, yB - 2), fill: S[1], 'fill-opacity': .85, 'font-size': 8, 'font-weight': 600 }, S[2]);
-        t.setAttribute('stroke', 'rgba(8,12,17,.8)'); t.setAttribute('stroke-width', 2); t.setAttribute('paint-order', 'stroke');
+        /* 11-04 用户: 字别粗别挡线 → 细字(400)、不加描边黑边、放框外(Buyside 在框上沿上方 / Sellside 在框下沿下方)靠框右端; 字后带流动性价位。
+           被扫过(br)的就停在原处(框截在被扫那根)整组变淡, 不写价 */
+        var swept = !!x.br, op = swept ? .35 : 1;
+        g.appendChild(E('rect', { x: xa, y: yT, width: xb - xa, height: Math.max(1, yB - yT), fill: x.fill ? S[1] : 'none', 'fill-opacity': .1 * op, stroke: S[1], 'stroke-width': .4, 'stroke-opacity': .35 * op }));
+        var ly = Y(x.lp), la = Math.max(PX0, xi(x.l)), lb = Math.min(R, xi(x.ln ? x.lx2 : x.r));
+        if (ly >= PY0 && ly <= PY0 + PH && lb > la) g.appendChild(E('line', { x1: la, x2: lb, y1: ly, y2: ly, stroke: S[1], 'stroke-width': .7, opacity: (x.ln ? .9 : .5) * op }));
+        var isB = S[0] === 'B', tyL = isB ? yT - 2 : yB + 7.5;
+        if (tyL < PY0 + 6 || tyL > PY0 + PH - 1) tyL = isB ? yB + 7.5 : yT - 2;
+        var t = E('text', { class: 'zpLiqT', x: xb - 2, y: tyL, 'text-anchor': 'end', fill: S[1], 'fill-opacity': .8 * op, 'font-size': 7, 'font-weight': 400 }, S[2] + (swept ? '' : ' ' + x.lp.toFixed(2)));
         g.appendChild(t);
       });
     });
@@ -3468,9 +3494,9 @@ body.injlin .chartbox>#zpSub{order:1}
       var F = frame(A), g = E('g', { id: 'zpCdl', 'shape-rendering': 'crispEdges' });
       A.forEach(function (k) {
         if (!k.vis) return;
-        var up = k.c >= k.o, col = up ? '#ff4757' : '#1ee3a0', yo = Y(k.o), yc = Y(k.c), thin = k.w < 2;
+        var up = k.c >= k.o, col = up ? '#ff4757' : '#22c55e', yo = Y(k.o), yc = Y(k.c), thin = k.w < 2;   /* 11-04 用户: 蜡烛回正常色 = 红涨实心 / 绿跌实心 */
         g.appendChild(E('line', { x1: k.cx, x2: k.cx, y1: Y(k.h), y2: Y(k.l), stroke: col, 'stroke-width': thin ? .6 : .9 }));
-        g.appendChild(E('rect', { x: (k.cx - k.w / 2).toFixed(2), y: Math.min(yo, yc).toFixed(2), width: k.w.toFixed(2), height: Math.max(.8, Math.abs(yc - yo)).toFixed(2), fill: up ? 'rgba(255,71,87,.22)' : col, stroke: col, 'stroke-width': thin ? .6 : .9 }));
+        g.appendChild(E('rect', { x: (k.cx - k.w / 2).toFixed(2), y: Math.min(yo, yc).toFixed(2), width: k.w.toFixed(2), height: Math.max(.8, Math.abs(yc - yo)).toFixed(2), fill: col, stroke: col, 'stroke-width': thin ? .6 : .9 }));
       });
       svg.insertBefore(g, pl);
       paintVI(svg, A, g);
@@ -3534,7 +3560,7 @@ body.injlin .chartbox>#zpSub{order:1}
       if (st.mouse ? (e.buttons & 1) && Math.max(Math.abs(dx), Math.abs(dy)) > 4 : (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2)) {   /* 鼠标上下左右都能拖; 手指横着拖就平移(十字线开着也行), 竖着拖照旧滚页面 */ PZ.mode = 'pan'; window.zpPanning = true; try { window.zpMainXH.hide(); } catch (er) { } }
       else return;
     }
-    if (PZ.mode === 'pan') { var u2 = unit(st.s), bars = dx * u2.k / st.F.slot; if (st.s.id === 'ch') window.zpYS = st.ys + dy * u2.k / PH; setView(st.F.n, st.F.end - bars); e.preventDefault(); e.stopPropagation(); }
+    if (PZ.mode === 'pan') { var u2 = unit(st.s), bars = dx * u2.k / st.F.slot; if (st.s.id === 'ch' && st.mouse) window.zpYS = st.ys + dy * u2.k / PH;   /* 11-04 用户: 手指横滑带一点竖向位移会累积把蜡烛压到底 → 手指只平移不动纵轴(同K线页纵轴自动贴合), 鼠标照旧 */ setView(st.F.n, st.F.end - bars); e.preventDefault(); e.stopPropagation(); }
   }, true);
   function upPZ(e) { delete PZ.p[e.pointerId]; if (!Object.keys(PZ.p).length) { var was = PZ.mode; PZ.mode = null; if (was === 'pan' || was === 'pinch') setTimeout(function () { window.zpPanning = false; }, 0); else window.zpPanning = false; } else if (PZ.mode === 'pinch') { PZ.mode = null; } }
   window.addEventListener('dblclick', function (e) { var s = zsvg(e.target); if (!s || !window.zpYS) return; window.zpYS = 0; redrawSoon(); }, true);   /* 双击 = 纵轴回到自动 */
