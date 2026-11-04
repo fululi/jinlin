@@ -590,7 +590,42 @@ function statHtml() {
       + (s.nu ? " · 30分钟内最大上冲" + lsg(s.u / s.nu) + " 最大下探" + lsg(s.d / s.nu) : "")
       + (s.n < 20 ? " · 样本不足20次，别当结论" : "") + "</i>";
   }
-  return h;
+  return h + '<span class="jituExpJL" style="margin-top:8px;display:inline-block;padding:3px 10px;border:1px solid #81e6d9;border-radius:12px;color:#81e6d9;cursor:pointer">导出明细</span>';
+}
+function logCsv() {
+  var L = logLoad(), ks = Object.keys(L), rows = ["code,type,time,price,r10,r30,up30,dd30"], k, e;
+  ks.sort(function (a, b) { return L[a].t < L[b].t ? -1 : 1; });
+  for (k = 0; k < ks.length; k += 1) {
+    e = L[ks[k]];
+    rows.push([e.c, e.y, e.t, e.p, fin(e.r10) ? e.r10 : "", fin(e.r30) ? e.r30 : "", fin(e.up) ? e.up : "", fin(e.dd) ? e.dd : ""].join(","));
+  }
+  return rows.join("\n");
+}
+function showExport() {
+  try {
+    var csv = logCsv(), w = document.createElement("div"), ta, bt;
+    w.style.cssText = "position:fixed;left:0;right:0;top:0;bottom:0;z-index:99999;background:rgba(0,0,0,.8);display:flex;flex-direction:column;padding:14px;gap:8px";
+    w.innerHTML = '<div style="color:#dffbf7;font-size:14px">积突记录 ' + (csv.split("\n").length - 1) + ' 条 · 全选复制发给我</div>'
+      + '<textarea readonly style="flex:1;font-size:12px;background:#0b1820;color:#dffbf7;border:1px solid #81e6d9;border-radius:8px;padding:8px"></textarea>'
+      + '<div style="display:flex;gap:10px"><span class="jx1" style="flex:1;text-align:center;padding:10px;border:1px solid #81e6d9;border-radius:8px;color:#81e6d9">复制</span>'
+      + '<span class="jx2" style="flex:1;text-align:center;padding:10px;border:1px solid #81e6d9;border-radius:8px;color:#81e6d9">下载文件</span>'
+      + '<span class="jx3" style="flex:1;text-align:center;padding:10px;border:1px solid #888;border-radius:8px;color:#ccc">关闭</span></div>';
+    ta = w.querySelector("textarea"); ta.value = csv;
+    w.querySelector(".jx1").onclick = function () {
+      try { ta.focus(); ta.select(); ta.setSelectionRange(0, csv.length); document.execCommand("copy"); } catch (e) { }
+      try { if (navigator.clipboard) navigator.clipboard.writeText(csv); } catch (e2) { }
+    };
+    w.querySelector(".jx2").onclick = function () {
+      try {
+        var a = document.createElement("a"), d = new Date();
+        a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" }));
+        a.download = "jinlin_jitu_log_" + d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2) + ".csv";
+        document.body.appendChild(a); a.click(); a.parentNode.removeChild(a);
+      } catch (e) { }
+    };
+    w.querySelector(".jx3").onclick = function () { try { w.parentNode.removeChild(w); } catch (e) { } };
+    (document.body || document.documentElement).appendChild(w);
+  } catch (e) { }
 }
 function showStat(cx, cy) {
   try {
@@ -600,6 +635,8 @@ function showStat(cx, cy) {
     d.innerHTML = '<b style="color:#dffbf7">今日暂无信号</b><i>积只在10:30前出现，突需窄幅蓄势后放量越上沿。</i>' + statHtml();
     d.style.cssText = "position:fixed;z-index:99998;max-width:260px;max-height:52vh;overflow:auto;background:rgba(8,20,28,.97);border:1px solid #81e6d966;border-radius:9px;padding:8px 10px;box-shadow:0 6px 18px #000a";
     (document.body || document.documentElement).appendChild(d);
+    var xb = d.querySelector(".jituExpJL");
+    if (xb) xb.onclick = function () { hideTip(); showExport(); };
     var tw = d.offsetWidth, th = d.offsetHeight;
     d.style.left = Math.max(6, Math.min(cx - tw / 2, (global.innerWidth || 360) - tw - 6)) + "px";
     var y = cy - th - 14; if (y < 6) y = Math.min(cy + 16, (global.innerHeight || 640) - th - 6);
