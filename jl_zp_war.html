@@ -512,10 +512,9 @@ if (ext && LIVE.pts[ext.ix]) {
       try { if (window.Pitchfork && window.__SWJL) window.__PF = Pitchfork.drawSVG(svg, window.__SWJL, {
   X: function (hm) { return xOfHmJL(hm); }, Y: Y, xEnd: LX - 6,
   clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline') }); } catch (e) {}
-  if (g) g.appendChild(gh);
-try { if (window.Pitchfork && window.__SWJL) window.__PF = Pitchfork.drawSVG(... }); } catch (e) {}
-try { if (window.Elliott && LIVE.pts && LIVE.pts.length) window.__EW = Elliott.drawSVG(... }); } catch (e) {}
-
+  try { if (window.Elliott && LIVE.pts && LIVE.pts.length) window.__EW = Elliott.drawSVG(svg, Elliott.swingsFrom(LIVE.pts, 0.008), {
+  X: function (hm) { return xOfHmJL(hm); }, Y: Y, xEnd: LX - 6,
+  clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline') }); } catch (e) {}
 
     } catch (eHL) { }
 if (g && LIVE.auc) {
