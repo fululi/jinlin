@@ -3494,9 +3494,9 @@ body.injlin .chartbox>#zpSub{order:1}
       var F = frame(A), g = E('g', { id: 'zpCdl', 'shape-rendering': 'crispEdges' });
       A.forEach(function (k) {
         if (!k.vis) return;
-        var up = k.c >= k.o, col = up ? '#ff4757' : '#22c55e', yo = Y(k.o), yc = Y(k.c), thin = k.w < 2;   /* 11-04 用户: 蜡烛回正常色 = 红涨实心 / 绿跌实心 */
+        var up = k.c >= k.o, col = up ? '#ff4757' : '#1ee3a0', yo = Y(k.o), yc = Y(k.c), thin = k.w < 2;
         g.appendChild(E('line', { x1: k.cx, x2: k.cx, y1: Y(k.h), y2: Y(k.l), stroke: col, 'stroke-width': thin ? .6 : .9 }));
-        g.appendChild(E('rect', { x: (k.cx - k.w / 2).toFixed(2), y: Math.min(yo, yc).toFixed(2), width: k.w.toFixed(2), height: Math.max(.8, Math.abs(yc - yo)).toFixed(2), fill: col, stroke: col, 'stroke-width': thin ? .6 : .9 }));
+        g.appendChild(E('rect', { x: (k.cx - k.w / 2).toFixed(2), y: Math.min(yo, yc).toFixed(2), width: k.w.toFixed(2), height: Math.max(.8, Math.abs(yc - yo)).toFixed(2), fill: up ? 'rgba(255,71,87,.22)' : col, stroke: col, 'stroke-width': thin ? .6 : .9 }));
       });
       svg.insertBefore(g, pl);
       paintVI(svg, A, g);
