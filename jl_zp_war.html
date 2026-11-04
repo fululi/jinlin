@@ -3632,12 +3632,10 @@ window.addEventListener('blur', function () {
     e.stopPropagation();
   }
 }, true);
-
-
 function upPZ(e) { delete PZ.p[e.pointerId]; if (!Object.keys(PZ.p).length) { var was = PZ.mode; PZ.mode = null; if (was === 'pan' || was === 'pinch') setTimeout(function () { window.zpPanning = false; }, 0); else window.zpPanning = false; } else if (PZ.mode === 'pinch') { PZ.mode = null; } }
-  window.addEventListener('dblclick', function (e) { var s = zsvg(e.target); if (!s || !window.zpYS) return; window.zpYS = 0; redrawSoon(); }, true);   /* 双击 = 纵轴回到自动 */
-  window.addEventListener('pointerup', upPZ, true); window.addEventListener('pointercancel', upPZ, true);
-  document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || PZ.mode === 'pinch') && e.cancelable) e.preventDefault(); }, { passive: false });
+window.addEventListener('dblclick', function (e) { var s = zsvg(e.target); if (!s || !window.zpYS) return; window.zpYS = 0; redrawSoon(); }, true);
+window.addEventListener('pointerup', upPZ, true); window.addEventListener('pointercancel', upPZ, true);
+document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || PZ.mode === 'pinch') && e.cancelable) e.preventDefault(); }, { passive: false });
 
   /* 主图每次重画 → 副图模块 render 之后再贴蜡烛(挂在 zpSubRender 后面) */
   var r0 = window.zpSubRender;
