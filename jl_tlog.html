@@ -41,6 +41,7 @@
 <div class="card" id="glanceBox"></div>
 <h2 id="abn">⑧ 资金异常 jl_abn_log_v1（跌中吸筹 / 尾盘大单打压；规则是初值未回测，次日起用日K结算）</h2>
 <div class="card" id="abnBox"></div>
+<details class="card" id="fsnap"><summary style="color:#7fd8ff;font-weight:600">⑨ 板块资金快照 jinlin_secfund（App 开着时每 3 分钟存一份，留 40 个交易日；回测用，平时不用看）</summary><div id="fsnapBox" class="mut">读取中…</div></details>
 <h2>原始 JSON</h2>
 <pre id="raw"></pre>
 <script>
@@ -182,6 +183,31 @@
       var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="jinlin_验收_"+td+".json";a.click();
     }catch(e){alert("导出失败: "+e)}
   };
+})();
+/* jl-fsnap(1104) ⑨ 板块资金快照: 只读 IDB jinlin_secfund, 列每天份数, 导出 JSON(全部/单日) */
+(function(){
+  var box=document.getElementById("fsnapBox"); if(!box)return;
+  function dl(name,obj){var blob=new Blob([JSON.stringify(obj)],{type:"application/json"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();}
+  try{
+    var rq=indexedDB.open("jinlin_secfund",1);
+    rq.onupgradeneeded=function(){try{rq.result.createObjectStore("s",{keyPath:"k"})}catch(e){}};
+    rq.onerror=function(){box.textContent="打不开快照库"};
+    rq.onsuccess=function(){
+      var db=rq.result,g=db.transaction("s","readonly").objectStore("s").getAll();
+      g.onsuccess=function(){
+        var all=g.result||[],by={};
+        all.forEach(function(r){(by[r.day]=by[r.day]||[]).push(r)});
+        var ds=Object.keys(by).sort().reverse();
+        if(!ds.length){box.innerHTML='还没有快照。盘中（9:15–15:05）打开 App 就会开始存。';return}
+        var h='<a class="btn" href="javascript:void(0)" id="fsAll">导出全部（'+ds.length+'天 · '+all.length+'份）</a><table><tr><th>日期</th><th>份数</th><th>时间段</th><th></th></tr>';
+        ds.forEach(function(d){var L=by[d].sort(function(a,b){return a.t-b.t});h+='<tr><td>'+d+'</td><td>'+L.length+'</td><td>'+L[0].k.slice(11)+'–'+L[L.length-1].k.slice(11)+'</td><td><a href="javascript:void(0)" data-fd="'+d+'" style="color:#7fd8ff">导出这天</a></td></tr>'});
+        box.innerHTML=h+'</table><div class="mut">字段：b=东财板块 [涨幅%, 主力净额(万元), 净占比%]；o=App 自己的板块 [平均涨幅%, 上涨率, 只数]。只在 App 打开时记，中间关掉的时段会缺。</div>';
+        document.getElementById("fsAll").onclick=function(){dl("jinlin_板块资金快照_全部_"+ds[ds.length-1]+"_"+ds[0]+".json",all)};
+        Array.prototype.forEach.call(box.querySelectorAll("[data-fd]"),function(el){el.onclick=function(){var d=el.getAttribute("data-fd");dl("jinlin_板块资金快照_"+d+".json",by[d])}});
+        db.close();
+      };
+    };
+  }catch(e){box.textContent="读取失败: "+e}
 })();
 </script>
 </body>
