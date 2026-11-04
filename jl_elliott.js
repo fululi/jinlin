@@ -3,7 +3,7 @@
  *  推动浪：2浪回撤≤1浪100%；3浪超过1浪终点；3浪不是1/3/5中最短；4浪不进入1浪区域
  *  锯齿浪：b浪短于a浪；c浪超过a浪终点
  *
- * Elliott.swingsFrom(pts, thr)  pts=[{hm,p}] 分时点；thr=反向幅度(0.008=0.8%) → 高低交替的转折点
+ * Elliott.swingsFrom(pts, thr)  pts=[{hm,p}] 分时点（周视图可直接传 {x,p}，x=已算好的横坐标，此时 opt.X 可不传）；thr=反向幅度(0.008=0.8%) → 高低交替的转折点
  * Elliott.detect(swings)        → {type:'impulse'|'zigzag', s:+1/-1, P:[转折点...]} 或 null
  * Elliott.drawSVG(svg, swings, opt)  opt:{X:hm->x, Y:price->y, clip:[x1,y1,x2,y2], xEnd, before}
  */
@@ -19,8 +19,8 @@
       if (!ext) { ext = { ix: ix, p: q.p }; return; }
       if (dir >= 0 && q.p > ext.p) { ext = { ix: ix, p: q.p }; dir = 1; }
       else if (dir <= 0 && q.p < ext.p) { ext = { ix: ix, p: q.p }; dir = -1; }
-      else if (dir === 1 && q.p < ext.p * (1 - thr)) { SW.push({ p: ext.p, h: 1, hm: pts[ext.ix].hm }); ext = { ix: ix, p: q.p }; dir = -1; }
-      else if (dir === -1 && q.p > ext.p * (1 + thr)) { SW.push({ p: ext.p, h: 0, hm: pts[ext.ix].hm }); ext = { ix: ix, p: q.p }; dir = 1; }
+      else if (dir === 1 && q.p < ext.p * (1 - thr)) { SW.push({ p: ext.p, h: 1, hm: pts[ext.ix].hm, x: pts[ext.ix].x }); ext = { ix: ix, p: q.p }; dir = -1; }
+      else if (dir === -1 && q.p > ext.p * (1 + thr)) { SW.push({ p: ext.p, h: 0, hm: pts[ext.ix].hm, x: pts[ext.ix].x }); ext = { ix: ix, p: q.p }; dir = 1; }
     });
     return SW;
   }
@@ -60,7 +60,7 @@
   function drawSVG(svg, S, o) {
     var old = svg.querySelector('#ell'); if (old) old.parentNode.removeChild(old);
     var R = detect(S || []); if (!R) return null;
-    var pt = R.P.map(function (q) { return { x: o.X(q.hm), p: q.p, h: q.h }; });
+    var pt = R.P.map(function (q) { return { x: q.x != null ? q.x : o.X(q.hm), p: q.p, h: q.h }; });
     for (var i = 0; i < pt.length; i++) if (pt[i].x == null || !isFinite(pt[i].x)) return null;
     var ORG = '#ff7a00', BLU = '#4d7cff', c = o.clip || [0, 0, 1e4, 1e4];
     var gp = E('g', { id: 'ell', 'pointer-events': 'none' });
