@@ -6,6 +6,10 @@
 (function () {
   "use strict";
   const RT = {"600105":{"1分":[[[66,78],[74,83]],[[59,73],[66,80]],[[53,69],[63,78]],[[53,69],[60,77]]],"5分":[[[79,87],[80,88]],[[68,82],[67,82]],[[62,77],[63,80]],[[61,77],[63,81]]],"15分":[[[86,87],[82,88]],[[67,78],[68,82]],[[63,76],[63,79]],[[63,76],[61,81]]],"30分":[[[92,95],[88,93]],[[78,84],[65,80]],[[67,75],[70,83]],[[66,76],[70,85]]],"日":[[20,36,38],[30,53,63]]},"603986":{"1分":[[[70,77],[78,87]],[[63,71],[70,82]],[[57,67],[66,80]],[[52,65],[62,77]]],"5分":[[[61,69],[72,82]],[[53,65],[68,79]],[[50,64],[64,76]],[[43,59],[59,73]]],"15分":[[[76,81],[69,78]],[[68,78],[71,80]],[[57,70],[64,74]],[[58,70],[54,64]]],"30分":[[[83,83],[95,95]],[[81,85],[85,87]],[[70,77],[75,78]],[[62,74],[68,73]]],"日":[[24,50,59],[26,44,53]]}}; /* 同 index.html jl-1165 回补率表; jl-zp7(11-01): +30分(同243日1分钟数据同口径重跑, 每格样本29~92) · 日线换成400根日K同口径重跑(原243日内样本偏少, 下缺口偏高5~12点) */
+  /* jl-gapfix 1104: 日线缺口按"已经挂了几天没补"分档的回补率(逐票400根前复权日K, 截至11-03; 补=碰前收)。
+     u=上缺口/高开(要跌下来补) d=下缺口/低开。第0行=开盘时[样本,当天补%,次日前补%,3日内补%]; 第1+a行=形成后已挂a个交易日仍未补(a=0即形成当天收盘没补, 第6行=挂≥5天)[样本,下一交易日补%,之后3个交易日内补%]。
+     原表只有"当天没补"这一档, 挂了几天的老缺口照样显示新缺口的概率, 偏高(永鼎10-30下缺口挂3天: 原显示1日30%/3日53%, 实测10%/19%)。 */
+  const RTD = {"600105":{"u":[[161,62,70,76],[61,20,36],[49,12,20],[43,9,12],[39,0,15],[39,3,18],[38,13,24]],"d":[[193,77,83,89],[45,29,51],[31,19,39],[25,16,32],[21,10,19],[18,11,17],[16,0,12]]},"603986":{"u":[[184,61,71,81],[71,24,51],[54,28,43],[39,10,26],[35,11,23],[31,6,16],[29,7,10]],"d":[[182,62,72,79],[69,26,45],[50,20,30],[40,8,22],[37,5,19],[35,11,17],[31,3,6]]},"600176":{"u":[[169,64,72,76],[60,20,33],[48,12,21],[42,5,14],[40,5,10],[38,5,11],[36,0,6]],"d":[[194,81,87,90],[36,31,47],[24,17,33],[20,10,25],[18,11,28],[15,7,27],[14,14,21]]},"600489":{"u":[[180,56,64,73],[79,18,38],[65,18,34],[53,8,21],[49,12,27],[43,2,21],[42,14,19]],"d":[[201,61,72,81],[78,27,50],[57,21,40],[45,13,31],[39,13,28],[34,9,21],[31,10,19]]}};
   const LV = ["日", "30分", "15分", "5分", "1分"], LVN = { "日": "日线", "30分": "30分钟", "15分": "15分钟", "5分": "5分钟", "1分": "1分钟" }, ORD = { "1分": 1, "5分": 5, "15分": 15, "30分": 30, "日": 99 };
   const pf = (c) => (/^[569]/.test(c) ? "sh" : "sz") + c;
   const dg = (t) => String(t).replace(/\D/g, "");
@@ -125,7 +129,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     all.forEach((g) => { if (g.ft === "今日") g.ft = today + (opg && opg.ft ? opg.ft.replace(":", "") : "1500"); });
     /* jl-1201: 日线级未补目标——不受下面8%距离限制, 上方/下方各取最近一个; 距现价%算到缺口近沿(碰到), 远沿=前收(补满) */
     const tg = (up) => {
-      const c = all.filter((g) => g.lv === "日" && !g.ft && g.rem && g.bull !== up).map((g) => {
+      const c = all.filter((g) => g.lv === "日" && !g.ft && g.rem && g.bull !== up && g.d !== today).map((g) => {
         const lo = g.rem[0], hi = g.rem[1], inZ = last >= lo && last <= hi, near = up ? lo : hi;
         return { lo, hi, inZ, near, far: up ? g.hi : g.lo, dist: inZ ? 0 : (near / last - 1) * 100, d: md(g.t) };
       }).filter((g) => (up ? g.hi >= last : g.lo <= last));
@@ -155,8 +159,17 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
       g.mid = (g.lo + g.hi) / 2; g.dist = (g.mid / last - 1) * 100; g.vsOp = op ? (g.mid / op - 1) * 100 : null;
       g.inG = last >= g.lo * 0.998 && last <= g.hi * 1.002;
       g.prog = g.inG ? Math.max(0, Math.min(1, g.bull ? (g.hi - last) / (g.hi - g.lo) : (last - g.lo) / (g.hi - g.lo))) : 0;
-      const L = g.lvs[0], r = rt && rt[L] ? (L === "日" ? rt["日"][g.bull ? 0 : 1] : (rt[L][ck] || [])[g.bull ? 0 : 1]) : null;
-      g.rt = r ? (r.length === 3 ? "1日 " + r[0] + "% · 3日 " + r[1] + "% · 5日 " + r[2] + "%" : "次日 " + r[0] + "% · 3日 " + r[1] + "%") : "";
+      const L = g.lvs[0], bd = g.mem.map((m) => m.d).sort()[0];
+      g.rt = "";
+      if (L === "日") {   /* jl-gapfix: 日线缺口用"已挂几天"那一档 */
+        const td = RTD[code], fi = D.findIndex((x) => dg(x.t).slice(0, 8) === bd), nowM = new Date().getHours() * 60 + new Date().getMinutes();
+        const lastDone = isToday && nowM < 900 ? D.length - 2 : D.length - 1, age = fi >= 0 ? lastDone - fi : -1;
+        if (td && age >= 0) { const r = td[g.bull ? "u" : "d"][1 + Math.min(age, 5)]; g.rt = md(bd) + "起·已挂" + (age + 1) + "天 · 下一交易日补 " + r[1] + "% · 3日内补 " + r[2] + "%（样本" + r[0] + "）"; }
+        else if (td && age < 0) { const r = td[g.bull ? "u" : "d"][0]; g.rt = "今日形成 · 当天补 " + r[1] + "% · 次日前补 " + r[2] + "% · 3日内补 " + r[3] + "%"; }
+      } else if (bd === today) {   /* 今天形成的分钟缺口: 原分时段回补率表(该时点仍未补) */
+        const r = rt && rt[L] ? (rt[L][ck] || [])[g.bull ? 0 : 1] : null;
+        g.rt = r ? "次日收盘前补 " + r[0] + "% · 3日内补 " + r[1] + "%" : "";
+      } else g.rt = md(bd) + "起的分钟缺口 · 隔日无统计";   /* jl-gapfix: 原拿"今天形成"的概率套到往天缺口上, 偏高, 不再显示 */
       g.born = g.mem.slice().sort((a, b) => dg(a.t) - dg(b.t)).map((m) => ({ lv: m.lv, t: dg(m.t) }));
       const t0 = g.born[0].t.padEnd(12, "9").slice(0, 12), segs = []; let on = false;
       m1d.forEach((x) => { if (x.t <= t0) return; const hit = x.l < g.hi - 0.005 && x.h > g.lo + 0.005; if (hit && !on) segs.push(x.t); on = hit; });   /* 真进到缺口里才算碰过 */
@@ -204,6 +217,7 @@ dgp.forEach((g) => {
         h += '<div class="aucL" style="border-color:' + col + '"><div class="ln1">竞 ' + (o.up ? "高开" : "低开") + ' <span class="big" style="color:' + col + '">' + sg(o.pct) + "</span></div>"
           + '<div class="ln2" style="color:' + col + '">' + (o.up ? "↓" : "↑") + " iv " + f2(R.op) + "–" + f2(R.pre) + ' <span class="sz">' + f2(o.size) + (/^(sh|sz)/.test(String(R.code)) ? "点" : "元") + "</span></div>"
           + '<div class="ln3">' + (o.st === "done" ? '<span class="okc">✓</span> ' + o.ft : "还差 " + f2(rem) + (/^(sh|sz)/.test(String(R.code)) ? "点" : "元") + " · 已补 " + Math.round(o.prog * 100) + "%") + "</div>"
+          + (o.st !== "done" && RTD[R.code] ? (() => { const r = RTD[R.code][o.up ? "u" : "d"][0]; return '<div class="ln4">历史' + (o.up ? "高开" : "低开") + r[0] + "次：当天补 " + r[1] + "% · 次日前 " + r[2] + "% · 3日内 " + r[3] + "%</div>"; })() : "") /* jl-gapfix */
           + (o.back && o.back.length ? '<div class="ln4w">' + o.back.map((b) => '<span class="ln4">再次回补 ' + b + "</span>").join("") + "</div>" : "") /* jl-1183: 回补记录横排 */
           + '<button class="gvFoldJL" type="button" aria-label="收起或展开回补记录">▾</button>' + "</div>";
       } else h += '<div class="aucL" style="border-color:#fff"><div class="ln1">竞 平开 <span class="big">0.00%</span></div></div>';
@@ -257,7 +271,8 @@ dgp.forEach((g) => {
     s.fly = 1;
     const c = px || pf(code);
     getAll(c).then((g) => {
-      s.R = compute(code, ...g.r); s.src = g.src; s.err = ""; s.at = Date.now(); s.fly = 0;
+      s.R = compute(code, ...g.r); s.src = g.src;
+      if (!px && g.src === "tx" && window.jlCollectGapsJL) { try { window.jlCollectGapsJL(code, [["日", g.r[0]], ["30分", g.r[1]], ["15分", g.r[2]], ["5分", g.r[3]], ["1分", g.r[4]]]); } catch (eL) { } }   /* jl-gapfix: 台账与卡片同源同口径 */ s.err = ""; s.at = Date.now(); s.fly = 0;
       document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code));
     }).catch((e) => { s.err = e && e.message || "网络"; s.at = Date.now() - 45000; s.fly = 0; document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code)); });
   }
