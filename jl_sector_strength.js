@@ -1205,6 +1205,28 @@
   }
   /* 11-05 用户: 加进持仓/自选的票也要简洁看到"启动信号"。一次请求取全部(东财 f10量比/f15高/f16低/f109五日/f160十日), 缓存2分钟
      依据 启动股特征分析: 收在高位(>=0.85)、前10日涨幅别>15%、量比别>=3 相对更好; 高开确认只能次日开盘后看 */
+  /* 11-05 用户: 手机上"我的票"没出来——东财被限流时整块为空。兜底改腾讯(script标签加载, 不走jlReq): 实时 qt.gtimg.cn(价/涨幅/高/低/量比) + 日K ifzq(算5/10日涨幅) */
+  function tcLoad(url, name) {
+    return new Promise(function (ok, no) {
+      var sc = document.createElement("script"); if (/qt\.gtimg/.test(url)) sc.charset = "gbk"; sc.src = url; var done = false;
+      var end = function (f) { if (done) return; done = true; try { sc.remove(); } catch (e) {} f(window[name]); };
+      sc.onload = function () { end(ok); }; sc.onerror = function () { end(no); }; setTimeout(function () { end(no); }, 9000); document.head.appendChild(sc);
+    });
+  }
+  function tcMy(L) {
+    var pre = function (c) { return (/^[569]/.test(c) ? "sh" : "sz") + c; }, m = {}, tag = "q" + Date.now();
+    var qn = "v_" + L.map(function (x) { return pre(x.code); })[0];
+    return tcLoad("https://qt.gtimg.cn/q=" + L.map(function (x) { return pre(x.code); }).join(",") + "&_=" + Date.now(), qn).then(function () {
+      L.forEach(function (x) { var f = String(window["v_" + pre(x.code)] || "").split("~"); if (f.length < 50) return; m[x.code] = { f2: +f[3], f3: +f[32], f15: +f[33], f16: +f[34], f10: +f[49], f12: x.code, f350: 0 }; });
+      return Promise.all(L.map(function (x, i) {
+        if (!m[x.code]) return null; var nm = "kl_" + tag + "_" + i;
+        return tcLoad("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?_var=" + nm + "&param=" + pre(x.code) + ",day,,,15,qfq&_=" + Date.now(), nm).then(function (d) {
+          var k = d && d.data && d.data[pre(x.code)], a = k && (k.qfqday || k.day); try { delete window[nm]; } catch (e) { window[nm] = null; }
+          if (a && a.length > 11) { var c = a.map(function (r) { return +r[2]; }), n = c.length; m[x.code].f109 = (c[n - 1] / c[n - 6] - 1) * 100; m[x.code].f160 = (c[n - 1] / c[n - 11] - 1) * 100; }
+        }).catch(function () {});
+      })).then(function () { return Object.keys(m).length ? m : null; });
+    }).catch(function () { return null; });
+  }
   function myStkHtml() {
     var st = lsGet("jinlin_stocks_v2"); if (!Array.isArray(st)) return "";
     var L = st.filter(function (x) { return x && /^\d{6}$/.test(String(x.code)) && (x.qty > 0 || x.watch); }).slice(0, 30);
@@ -1216,11 +1238,14 @@
       emGet("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f10,f12,f14,f15,f16,f109,f160,f350&secids=" + ids + "&ut=bd1d9ddb04089700cf9c27f6f7426281", 60000).then(function (d) {
         var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [], m = {};
         arr.forEach(function (r) { m[String(r.f12)] = r; }); if (arr.length) { S.myq = { t: Date.now(), m: m }; paint(); }
-      }).catch(function () {});
+      }).catch(function () { return null; }).then(function () {
+        if (S.myq && Date.now() - S.myq.t < 5000) return;
+        tcMy(L).then(function (m) { if (m) { S.myq = { t: Date.now(), m: m, src: "tc" }; paint(); } });
+      });
     }
-    if (!C) return "";
     var rows = L.map(function (x) {
-      var r = C.m[x.code]; if (!r) return "";
+      var r = C && C.m[x.code];
+      if (!r) return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:6px"><span style="font-size:14px;font-weight:800;color:#fff">' + esc(x.name || x.code) + '</span><span style="font-size:9.5px;font-weight:800;color:#ffd21f;border:1px solid #ffd21f;border-radius:6px;padding:0 4px">' + (x.qty > 0 ? "持仓" : "自选") + '</span><span style="margin-left:auto;font-size:11px;font-weight:600;color:#fff">行情取数中…</span></div>';
       var p = +r.f3, pr = +r.f2, hi = +r.f15, lo = +r.f16, vr = +r.f10, p10 = +r.f160, p5 = +r.f109, up = +r.f350, zt = up > 0 && pr >= up - 0.001;
       var pos = hi > lo ? (pr - lo) / (hi - lo) : 1, tags = [], good = 0, bad = 0;
       /* 11-05 用户: 别写得像PDF, 亮白白话、少而精; 不写概率: 300只池化的统计对单票没意义(用户11-05指出), 永鼎自己样本<50天 */
