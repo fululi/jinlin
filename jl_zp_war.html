@@ -3909,7 +3909,7 @@ window.addEventListener('click', function (e) {
 })();
 </script>
 <script>
-/* jl-zprso v2: Regression Slope Oscillator — 可调参数/分时/画线/提醒/高低标注/位置切换 */
+/* jl-zprso v2.1: Regression Slope Oscillator — 可调参数/分时/画线/提醒/高低标注/位置切换 */
 (function () {
   var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_rso_v2', ORG = [255, 152, 0], AQA = [0, 200, 220];
   var DEF = { on: true, min: 10, step: 5, n: 6, sig: 7, ma: 'sma', cr: 100, h: 100, pos: 'down', ax: false };
@@ -3924,9 +3924,8 @@ window.addEventListener('click', function (e) {
   function lines() { var c = code(); return LN[c] || (LN[c] = []); }
   function dSeg(px, py, ax, ay, bx, by) { var dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0; return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)); }
 
-  var wrap = null, svg = null, panel = null, tool = '', sel = -1, drag = null, view = null, memo = { key: '', R: null }, rq = 0, primed = '', fired = {}, bellB = null;
+  var wrap = null, svg = null, panel = null, tool = '', sel = -1, drag = null, view = null, memo = { key: '', R: null }, rq = 0, primed = '', fired = {};
 
-  /* ── 数据: K线模式用蜡烛收盘, 分时用每分钟价 ── */
   function bars() {
     var p = per();
     if (p > 0 && window.zpPerAll) {
@@ -3967,7 +3966,6 @@ window.addEventListener('click', function (e) {
     memo = { key: key, R: { osc: osc, sig: sig, up: up, dn: dn } }; return memo.R;
   }
 
-  /* ── 界面 ── */
   var st = document.createElement('style');
   st.textContent = '#zpRsoW{position:relative;margin-top:2px}.zr-h{display:flex;align-items:center;gap:4px;padding:2px 4px}.zr-h .zr-t{font-size:11px;font-weight:700;color:#cfd6df;margin-right:auto}' +
     '.zr-h button{height:22px;min-width:26px;padding:0 6px;border:1px solid rgba(255,255,255,.14);border-radius:6px;background:rgba(255,255,255,.05);color:#fff;font:600 11px inherit;cursor:pointer}' +
@@ -3988,7 +3986,6 @@ window.addEventListener('click', function (e) {
       svg = document.createElementNS(NS, 'svg'); svg.id = 'zpRso'; svg.setAttribute('viewBox', '0 0 360 ' + S.h);
       svg.style.cssText = 'width:100%;display:block;touch-action:pan-y'; wrap.appendChild(svg);
       buildPanel(); wrap.appendChild(panel);
-      wrap.addEventListener('pointerdown', function (e) { if (!(svg && svg.contains(e.target))) e.stopPropagation(); });
       wrap.querySelector('.zr-h').addEventListener('click', function (e) {
         e.stopPropagation(); var b = e.target.closest && e.target.closest('button'); if (!b) return; var a = b.getAttribute('data-a'), L = lines();
         if (a === 'h' || a === 'l') { tool = tool === a ? '' : a; sel = -1; }
@@ -4005,6 +4002,8 @@ window.addEventListener('click', function (e) {
         }
         busy(); draw();
       });
+      wrap.querySelector('.zr-h').addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      panel.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
       svg.addEventListener('pointerdown', onDown); svg.addEventListener('pointermove', onMove);
       svg.addEventListener('pointerup', onUp); svg.addEventListener('pointercancel', onUp);
       svg.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (!t) return; if (tool || hitAt({ clientX: t.clientX, clientY: t.clientY })) { if (e.cancelable) e.preventDefault(); } }, { passive: false });
@@ -4045,7 +4044,6 @@ window.addEventListener('click', function (e) {
     var on = !!(tool || drag); window.zpDrawBusy = on; if (svg) { svg.style.touchAction = on ? 'none' : 'pan-y'; svg.style.cursor = tool ? 'crosshair' : ''; }
   }
 
-  /* ── 提醒 ── */
   function toast(t) {
     var d = document.createElement('div'); d.className = 'zr-toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 4500);
     try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (_) { }
@@ -4064,7 +4062,6 @@ window.addEventListener('click', function (e) {
     msgs.forEach(function (m) { var id = bk + '|' + m[0]; if (fired[id]) return; fired[id] = 1; if (!silent) toast(code() + ' ' + m[1]); });
   }
 
-  /* ── 画 ── */
   function Yv(v) { return view.top + (view.hi - v) / (view.hi - view.lo) * (view.bot - view.top); }
   function vOf(y) { return view.hi - (y - view.top) / (view.bot - view.top) * (view.hi - view.lo); }
   function draw() {
@@ -4100,12 +4097,13 @@ window.addEventListener('click', function (e) {
     var mx = -1, mn = -1;
     for (i = 0; i < B.length; i++) {
       if (!B[i].vis || R.osc[i] == null) continue;
-      if ((R.up[i] || R.dn[i])) g.appendChild(E('circle', { cx: B[i].x, cy: Yv(R.osc[i]), r: 2.6, fill: '#e8e8e8', stroke: '#0a0e13', 'stroke-width': .6 }));
-      if (mx < 0 || R.osc[i] > R.osc[mx]) mx = i; if (mn < 0 || R.osc[i] < R.osc[mn]) mn = i;
+      if (R.up[i] || R.dn[i]) g.appendChild(E('circle', { cx: B[i].x, cy: Yv(R.osc[i]), r: 2.6, fill: '#e8e8e8', stroke: '#0a0e13', 'stroke-width': .6 }));
+      if (mx < 0 || R.osc[i] > R.osc[mx]) mx = i;
+      if (mn < 0 || R.osc[i] < R.osc[mn]) mn = i;
     }
     function tag(i, up, lab) { var x = Math.max(PX0 + 24, Math.min(LX - 30, B[i].x)), y = Yv(R.osc[i]) + (up ? -4 : 10); g.appendChild(E('text', { x: x, y: y, fill: up ? '#4dd0e1' : '#ffb74d', 'font-size': 8, 'font-weight': 700, 'text-anchor': 'middle' }, lab + ' ' + R.osc[i].toFixed(4))); }
-    if (mx >= 0) tag(mx, true, '高'); if (mn >= 0 && mn !== mx) tag(mn, false, '低');
-    /* 画线 */
+    if (mx >= 0) tag(mx, true, '高');
+    if (mn >= 0 && mn !== mx) tag(mn, false, '低');
     lines().forEach(function (l, i) {
       var on = i === sel, c = on ? '#ffd66e' : '#7ab8ff';
       if (l.t === 'h') {
@@ -4124,7 +4122,6 @@ window.addEventListener('click', function (e) {
     check(R, B);
   }
 
-  /* ── 手势: 画线/选中/拖 ── */
   function toS(e) { var m = svg.getScreenCTM(); if (!m) return null; var p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; p = p.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
   function nearBar(x) { var b = null, d = 1e9; if (!view) return null; view.B.forEach(function (k) { var e = Math.abs(k.x - x); if (e < d) { d = e; b = k; } }); return b; }
   function hitAt(e) {
@@ -4144,12 +4141,8 @@ window.addEventListener('click', function (e) {
   }
   var zh0 = window.zpDrawHit;
   window.zpDrawHit = function (e) { try { if (svg && e.target && svg.contains(e.target) && (tool || hitAt(e))) return true; } catch (_) { } return zh0 ? zh0(e) : false; };
+
   function onDown(e) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return; if (!view) return;
-    var q = toS(e); if (!q) return, L = lines();
-  }
-  /* 上面一行写错会让脚本报错, 下面是正确版本(覆盖同名函数) */
-  onDown = function (e) {
     if (e.pointerType === 'mouse' && e.button !== 0) return; if (!view) return;
     var q = toS(e); if (!q) return; var L = lines();
     if (tool) {
@@ -4165,8 +4158,7 @@ window.addEventListener('click', function (e) {
       busy(); try { svg.setPointerCapture(e.pointerId); } catch (_) { } try { window.zpMainXH && window.zpMainXH.hide(); } catch (_) { } draw(); return;
     }
     if (sel >= 0) { sel = -1; draw(); }
-  };
-  svg && 0;
+  }
   function onMove(e) {
     if (!drag || !view) return; var q = toS(e); if (!q) return; e.preventDefault(); e.stopPropagation();
     var l = lines()[drag.i]; if (!l) return; var v = vOf(Math.max(view.top, Math.min(view.bot, q.y)));
@@ -4182,7 +4174,6 @@ window.addEventListener('click', function (e) {
   }
   document.addEventListener('touchmove', function (e) { if (drag && e.cancelable) e.preventDefault(); }, { passive: false });
 
-  /* ── 跟着主图重画 ── */
   function sched() { if (!rq) rq = requestAnimationFrame(draw); }
   var r0 = window.zpSubRender; if (typeof r0 === 'function') window.zpSubRender = function () { var r = r0.apply(this, arguments); try { sched(); } catch (e) { } return r; };
   var dp0 = window.zpDrawPaint; window.zpDrawPaint = function () { var r; try { r = dp0 && dp0.apply(this, arguments); } catch (e) { } try { sched(); } catch (e) { } return r; };
@@ -4196,44 +4187,7 @@ window.addEventListener('click', function (e) {
   draw();
 })();
 </script>
-<script>
-/* jl-zpyaxis: 在主图右侧价格轴上按住上下拖 = 纵向缩放; 双击价格轴 = 复原 */
-(function () {
-  var on = false, id = null, y0 = 0, z0 = 1, SENS = 0.006, rq = 0;
-  function inAxis(e) {
-    if (!window.zpPerOf || !zpPerOf() || window.zpDrawOn || window.zpDrawBusy) return null;
-    var s = e.target && e.target.closest ? e.target.closest('svg') : null; if (!s || s.id !== 'ch') return null;
-    var m = s.getScreenCTM(); if (!m) return null;
-    var p = s.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; p = p.matrixTransform(m.inverse());
-    return p.x >= LX - 6 && p.x <= 360 ? s : null;
-  }
-  function redraw() {
-    if (rq) return;
-    rq = requestAnimationFrame(function () {
-      rq = 0;
-      try { if (typeof liveRender === 'function' && window.INJL && !window.RPL) liveRender(); else { if (typeof buildStatics === 'function') buildStatics(); window.zpSubRender && zpSubRender(); } } catch (e) { }
-    });
-  }
-  var h0 = window.zpDrawHit;
-  window.zpDrawHit = function (e) { try { if (inAxis(e)) return true; } catch (_) { } return h0 ? h0(e) : false; };   /* 让主图平移让路 */
-  window.addEventListener('pointerdown', function (e) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (!inAxis(e)) return;
-    on = true; id = e.pointerId; y0 = e.clientY; z0 = window.zpYZ || 1; window.zpPanning = true;
-    try { window.zpMainXH && window.zpMainXH.hide(); } catch (_) { }
-    e.preventDefault(); e.stopPropagation();
-  }, true);
-  window.addEventListener('pointermove', function (e) {
-    if (!on || e.pointerId !== id) return;
-    window.zpYZ = Math.max(0.3, Math.min(4, z0 * Math.exp((e.clientY - y0) * SENS)));   /* 往下拖=缩小(看到更多价格), 往上拖=放大; 想反过来把 SENS 改成负数 */
-    e.preventDefault(); e.stopPropagation(); redraw();
-  }, true);
-  function up(e) { if (!on || (e && e.pointerId !== id)) return; on = false; id = null; setTimeout(function () { window.zpPanning = false; }, 0); }
-  window.addEventListener('pointerup', up, true); window.addEventListener('pointercancel', up, true);
-  document.addEventListener('touchmove', function (e) { if (on && e.cancelable) e.preventDefault(); }, { passive: false });
-  window.addEventListener('dblclick', function (e) { if (!inAxis(e)) return; window.zpYZ = 1; window.zpYS = 0; redraw(); }, true);
-})();
-</script>
+
 
 
 </html>
