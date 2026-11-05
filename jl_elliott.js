@@ -64,10 +64,10 @@
     for (var i = 0; i < pt.length; i++) if (pt[i].x == null || !isFinite(pt[i].x)) return null;
     var ORG = '#ff7a00', BLU = '#4d7cff', c = o.clip || [0, 0, 1e4, 1e4];
     var gp = E('g', { id: 'ell', 'pointer-events': 'none' });
-    var cp = E('clipPath', { id: 'ellclip' });
+    var ecid = 'ellclip' + (svg.id || ''), cp = E('clipPath', { id: ecid });
     cp.appendChild(E('rect', { x: c[0], y: c[1], width: c[2] - c[0], height: c[3] - c[1] }));
     gp.appendChild(cp);
-    var inner = E('g', { 'clip-path': 'url(#ellclip)' });
+    var inner = E('g', { 'clip-path': 'url(#' + ecid + ')' });
 
     // 蓝色通道：推动浪 = 过2、4浪低点连线 + 过3浪的平行线；锯齿浪 = 过起点与b浪连线 + 过a浪的平行线
     var L = pt.length - 1, a1, a2, b;

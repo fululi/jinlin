@@ -29,7 +29,7 @@
     var x0 = A.x, x1 = o.xEnd, c = o.clip || [0, 0, 1e4, 1e4];
     var VIO = '#b695ff';                                    // 紫色：避开页面里 红=卖 / 绿=买 的语义
     var gp = E('g', { id: 'pfk', 'pointer-events': 'none' });
-    var cid = 'pfclip';
+    var cid = 'pfclip' + (svg.id || '');
     var cp = E('clipPath', { id: cid });
     cp.appendChild(E('rect', { x: c[0], y: c[1], width: c[2] - c[0], height: c[3] - c[1] }));
     gp.appendChild(cp);
