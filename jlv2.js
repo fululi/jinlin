@@ -90,6 +90,7 @@
     "#jlv2root{margin-top:14px}" +
     ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#FFFFFF;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
     "body.day .jlv2{background:rgba(0,0,0,0.03);border-color:#0a7d6b3d;color:#12262b}" +
+    "#home .tempJL,#gjdJL{display:none!important}" + /* 11-06: 旧温度v1卡/国家队A卡并进「市场情绪」总卡, 只隐藏不删(回滚删这一行) */
     ".jlv2 h3{font-size:12px;font-weight:600;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}" +
     ".jlv2 h3 small{font-size:12px;color:#FFFFFF;font-weight:600;text-align:right}" +
     ".jlv2 .jsum{font-size:12px;color:#FFFFFF;font-weight:600;margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}" +
@@ -171,7 +172,8 @@
     grp: null,    // {groups:[],count,latest,banner}
     tx: null,     // jl-1077 腾讯分钟源: {ok,date,today,pts:{code:[[mn,价]]},slots:{"HHMM":全市场分钟额}} 断档保留旧值=冻结
     txOk: 0,      // jl-1077 通道存活(返回过有效数据)与数据有无分离
-    open: lsGet("jlv2_open_v1", { t: 0, g: 0, y: 0 })
+    open: lsGet("jlv2_open_v1", { t: 0, g: 0, y: 0 }),
+    mtab: lsGet("jlv2_mtab_v1", "t"), wxk: "zt"
   };
   // 载入今日已有缓存
   (function loadCache() {
@@ -1064,12 +1066,44 @@
   window.__JLV2TD__ = curTd; /* jl-B1-G1: 数据所属交易日(快照f124口径, 周末=上周五)单一真源, 板块强度等只读调用 */
   window.__JLV2T__ = { calcIdxEv: calcIdxEv, calcAmtEv: calcAmtEv, fetchTxMin: fetchTxMin, deriveState: deriveState, deriveStruct: deriveStruct, tempPctJL: tempPctJL, gjdWide: gjdWide, shareFlow: shareFlow }; /* jl-gate: 买入闸只读调用 */ /* jl-1077: 纯函数暴露, 便于回测校准 */
 
+  function smallOf(h) { var m0 = /<small>([\s\S]*)<\/small>/.exec(h || ""); return m0 ? m0[1] : ""; }
+  function innerSum(x) { return String(x || "").replace("点标题展开", "").replace(/^<span class="jsum">/, "").replace(/<\/span>$/, ""); }
+  function renderMood(t, g) {
+    var GL = { green: ["可以买", "#ff5459"], yellow: ["只低吸", "#e0a800"], red: ["不宜买入", "#16b47a"] }, gl = null;
+    try { var LI = window.jlLinkInputJL && window.jlLinkInputJL(); gl = LI && LI.gate && GL[LI.gate.lvl]; } catch (e) { gl = null; }
+    var W = null; try { W = window.jlZtWeatherJL && window.jlZtWeatherJL.stage(); } catch (e) { W = null; }
+    var lab = function (x) { return '<span style="flex:0 0 auto;min-width:40px;font-size:11px;font-weight:600;opacity:.7">' + x + "</span>"; };
+    var line = function (l, inner) { return '<span class="jsum" style="margin-top:6px">' + lab(l) + inner + "</span>"; };
+    var wxIn = W ? '<span class="zpill" style="font-size:12px;padding:1px 7px;color:' + W.col + ";border-color:" + W.col + '">' + esc(W.st) + '</span><span class="mono">涨停' + W.n + "</span>·<span class=\"mono\">最高" + W.mx + "板</span>·<span class=\"mono\">晋级" + (W.adv == null ? "—" : W.adv + "%") + '</span><span style="opacity:.75">' + esc(W.tip) + "</span>" : '<span style="opacity:.7">涨停池未到</span>';
+    var sum = line("温度", (gl ? '<span style="font-size:11px;font-weight:800;color:#10131a;background:' + gl[1] + ';border-radius:8px;padding:1px 7px">' + gl[0] + "</span>" : "") + innerSum(t.sum)) + line("情绪", wxIn) + line("国家队", innerSum(g.sum));
+    var tab = S.mtab || "t", tabs = [["t", "温度因子"], ["z", "涨停梯队"], ["g", "国家队"]];
+    var bar = '<div style="display:flex;gap:6px;margin-bottom:9px">' + tabs.map(function (x) { var on = x[0] === tab; return '<span data-jlmt="' + x[0] + '" style="flex:1;text-align:center;font-size:12px;font-weight:' + (on ? 800 : 600) + ";padding:5px 0;border-radius:10px;cursor:pointer;" + (on ? "background:rgba(255,210,31,.18);color:#ffd21f;box-shadow:inset 0 0 0 1px rgba(255,210,31,.55)" : "background:rgba(255,255,255,.06);color:#fff") + '">' + x[1] + "</span>"; }).join("") + "</div>";
+    var bd = "";
+    if (tab === "t") bd = '<div style="font-size:10.5px;opacity:.75;margin-bottom:6px">' + smallOf(t.head) + "</div>" + (t.body || '<div style="opacity:.7">采样中…</div>');
+    else if (tab === "g") bd = '<div style="font-size:10.5px;opacity:.75;margin-bottom:6px">' + smallOf(g.head) + "</div>" + (g.body || "");
+    else { var zh = ""; try { zh = window.jlZtWeatherJL ? window.jlZtWeatherJL.html(S.wxk || "zt") : ""; } catch (e) { zh = ""; } bd = zh || '<div style="opacity:.7">涨停池存档未到（首页涨停池拉到后自动出）</div>'; }
+    return { head: "<b>市场情绪</b><small>温度 · 涨停梯队 · 国家队</small>", sum: sum, body: bar + bd };
+  }
+  var moodBound = false;
+  function bindMood(root) {
+    if (moodBound) return; moodBound = true;
+    root.addEventListener("click", function (ev) {
+      var el = ev.target && ev.target.closest ? ev.target.closest("[data-jlmt],[data-jlwx],[data-jlstk]") : null;
+      if (!el || !root.contains(el)) return;
+      ev.stopPropagation();
+      if (el.hasAttribute("data-jlmt")) { S.mtab = el.getAttribute("data-jlmt"); lsSet("jlv2_mtab_v1", S.mtab); paint(); return; }
+      if (el.hasAttribute("data-jlwx")) { var k = el.getAttribute("data-jlwx"); S.wxk = S.wxk === k ? "zt" : k; paint(); return; }
+      if (el.getAttribute("data-jlstk") === "open" && typeof window.ydOpenStockJL === "function") window.ydOpenStockJL(el.getAttribute("data-c"), el.getAttribute("data-n"), +el.getAttribute("data-pc") || 0);
+    });
+  }
   function paint() {
     var root = ensureRoot();
+    bindMood(root);
     var t = renderTemp(), g = renderGjd(), y = renderYd();
+    /* 11-06 用户: 温度/国家队/情绪(涨停梯队)在首页多处重复→合成一张「市场情绪」总卡: 头三行摘要(闸灯+温度 / 情绪阶段 / 国家队), 展开分页签; 原温度v2/国家队B卡内容原样放进页签, 旧温度v1卡+国家队A卡隐藏(CSS, 代码不动) */
+    var m = renderMood(t, g);
     var defs = [
-      { k: "t", h: t.head, s: t.sum, b: t.body, tip: "点标题展开/收起" },
-      { k: "g", h: g.head, s: g.sum, b: g.body, tip: "点标题展开/收起" },
+      { k: "m", h: m.head, s: m.sum, b: m.body, tip: "点标题展开/收起" },
       { k: "y", h: y.head, s: y.sum, b: y.body, tip: "点标题展开/收起" }
     ];
     root.innerHTML = defs.map(function (d0) {

@@ -222,6 +222,9 @@
   }
   function extraOf(h) {
     var o = '', b = h.bkt;
+    /* 11-06 用户: 板块抽屉「我的票」删了, 前10天/位置/放量短语并到这里(数据=jl_sector_strength 同一份缓存, 2分钟一取) */
+    var mt = null; try { mt = window.jlMyStkTagJL ? window.jlMyStkTagJL(h.code) : null; } catch (e) { }
+    if (mt && (mt.tags.length || mt.verdict)) o += '<span style="color:#c9d2de">' + (mt.verdict ? '<b style="color:' + (mt.verdict === '偏追高' ? '#ff9a9d' : mt.verdict === '符合启动' ? '#7dffb0' : UP) + '">' + esc(mt.verdict) + '</b> ' : '') + esc(mt.tags.join(' · ')) + '</span>';
     if (ok(h.ratio)) o += '<span>板块占成交<b style="color:' + col(h.ratio) + '"> ' + pc(h.ratio) + '</b></span>';
     else if (ok(h.secV)) o += '<span>板块主力<b style="color:' + col(h.secV) + '"> ' + yi(h.secV) + '</b>' + (h.secVStale ? '旧' : '') + '</span>';
     if (h.streak) o += '<span>板块连' + (h.streak > 0 ? '进' : '出') + '<b style="color:' + (h.streak > 0 ? UP : DN) + '"> ' + Math.abs(h.streak) + '天</b></span>';

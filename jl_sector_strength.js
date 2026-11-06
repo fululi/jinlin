@@ -837,6 +837,8 @@
     if (!document.querySelector(".phone")) ROOT.style.position = "fixed";
     ROOT.addEventListener("click", function (ev) {
       if (stkAct(ev)) return;
+      var wx = ev.target && ev.target.closest ? ev.target.closest("[data-jlwx]") : null;
+      if (wx) { var k0 = wx.getAttribute("data-jlwx"); S.wx = S.wx === k0 ? "" : k0; paint(); return; }
       var sg = ev.target && ev.target.closest ? ev.target.closest("[data-jlsg]") : null;
       if (sg) { var s0 = sg.getAttribute("data-jlsg"); S.sgOpen = S.sgOpen === s0 ? "-" : s0; if (S.sgOpen !== "-") memOf(s0).then(function () { paint(); }); paint(); return; }
       var sv = ev.target && ev.target.closest ? ev.target.closest("[data-jlsec]") : null;
@@ -1168,12 +1170,13 @@
       (conflict.length || brokeL.length ? '<div style="font-size:10.5px;font-weight:700;color:#ff9a9d;margin-top:3px">' + (brokeL.length ? "龙头断板、不推：" + brokeL.map(esc).join("、") + "　" : "") + (conflict.length ? "主力出逃过、不推：" + conflict.map(esc).join("、") : "") + "</div>" : "");
   }
   /* 11-05 打法总纲①: 抽屉顶部"天气"——涨停数/最高板/晋级率/炸板回封, 判情绪阶段。数据=jl_zt_hist_v1(首页涨停池每日存档), 零新增请求; 阶段阈值是二手初值, 未回测 */
-  function weatherHtml() {
+  function weatherHtml(kOv) {
     var h = lsGet("jl_zt_hist_v1"); if (!h || typeof h !== "object") return "";
     var ks = Object.keys(h).sort(); if (!ks.length) return "";
     var T = h[ks[ks.length - 1]], Y = ks.length > 1 ? h[ks[ks.length - 2]] : null; if (!T || !T.r) return "";
     var n = T.n || T.r.length, mx = 0, lb = 0, zb = 0; T.r.forEach(function (r) { var l = +r[2] || 0; if (l > mx) mx = l; if (l >= 2) lb++; if ((+r[4] || 0) > 0) zb++; });
     var yn = Y ? (Y.n || (Y.r || []).length) : 0, ymx = 0; if (Y && Y.r) Y.r.forEach(function (r) { var l = +r[2] || 0; if (l > ymx) ymx = l; });
+    if (Y && Y.r) { var ym0 = {}; Y.r.forEach(function (r) { ym0[r[0]] = 1; }); lb = T.r.filter(function (r) { return (+r[2] || 0) >= 2 && ym0[r[0]]; }).length; } /* 11-06: 晋级=昨天在涨停池且今天继续涨停, 与名单同口径 */
     var adv = yn ? Math.round(lb / yn * 100) : null, st, col;
     if (n < 25 || mx <= 2) { st = "冰点"; col = "#2fd18b"; }
     else if (Y && mx < ymx && (adv != null && adv < 20)) { st = "退潮"; col = "#2fd18b"; }
@@ -1182,11 +1185,49 @@
     else if (n >= 45) { st = "发酵"; col = "#ff5459"; }
     else { st = "启动"; col = "#ffd21f"; }
     var tip = { "冰点": "没赚钱效应，以观察为主", "退潮": "高位在亏钱，空仓/少动", "高潮": "最热，别追一致加速", "分歧": "高低切，买承接强的", "发酵": "赚钱效应在，可跟主线", "启动": "试错小仓" }[st];
-    var tile = function (v, l) { return '<div style="flex:1;text-align:center"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
+    /* 11-06 用户: 光给数字不知道是哪些板块哪些票——四格可点, 点开下方出名单(再点收起); 数据同一份 jl_zt_hist_v1, 零新增请求 */
+    WXST = { st: st, col: col, tip: tip, n: n, mx: mx, adv: adv, zb: zb, day: ks[ks.length - 1] };
+    var wk = kOv != null ? kOv : (S.wx || ""), tile = function (v, l, k) { var on = wk === k; return '<div data-jlwx="' + k + '" style="flex:1;text-align:center;cursor:pointer;border-radius:9px;padding:2px 0;' + (on ? "background:rgba(255,210,31,.16);box-shadow:inset 0 0 0 1px rgba(255,210,31,.55)" : "") + '"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + (on ? " ▴" : " ▾") + "</div></div>"; };
     return '<div style="display:flex;align-items:center;gap:6px;padding:8px 6px;margin:2px 0 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18)">' +
       '<div style="flex:0 0 auto;text-align:center;padding-right:6px"><div style="font-size:19px;font-weight:900;color:' + col + '">' + st + '</div><div style="font-size:9.5px;font-weight:600;opacity:.75">' + esc((function (k) { return /^\d{8}$/.test(k) ? k.slice(4, 6) + "-" + k.slice(6) : k.slice(5); })(ks[ks.length - 1])) + "</div></div>" +
-      tile(n, "涨停") + tile(mx + "板", "最高板" + (Y ? (mx > ymx ? "↑" : mx < ymx ? "↓" : "") : "")) + tile(adv == null ? "-" : adv + "%", "连板晋级") + tile(zb, "炸板回封") +
-      '</div><div style="font-size:10.5px;font-weight:700;color:' + col + ';margin:-2px 2px 6px">' + tip + ' <span style="opacity:.6;font-weight:600;color:#fff">· 阶段规则未回测</span></div>';
+      tile(n, "涨停", "zt") + tile(mx + "板", "最高板" + (Y ? (mx > ymx ? "↑" : mx < ymx ? "↓" : "") : ""), "lb") + tile(adv == null ? "-" : adv + "%", "连板晋级", "adv") + tile(zb, "回封", "hf") +
+      '</div><div style="font-size:10.5px;font-weight:700;color:' + col + ';margin:-2px 2px 6px">' + tip + ' <span style="opacity:.6;font-weight:600;color:#fff">· 阶段规则未回测 · 点数字看名单</span></div>' + wxList(wk, T, Y);
+  }
+  var WXST = null;
+  /* 11-06: 首页「市场情绪」总卡(jlv2)复用同一份天气条+名单, 不另算 */
+  window.jlZtWeatherJL = { html: function (k) { try { return weatherHtml(k || ""); } catch (e) { return ""; } }, stage: function () { try { weatherHtml(""); } catch (e) { } return WXST; } };
+  /* 天气条名单: r=[code,name,lbc,fund,zbc,fbt,hs,amount,ltsz,hy,days,ct,price,pct] */
+  function wxList(k, T, Y) {
+    if (!k || !T || !T.r) return "";
+    var chip = function (r, ext) { return '<span data-jlstk="open" data-c="' + esc(r[0]) + '" data-n="' + esc(r[1]) + '" data-p="' + (+r[12] || "") + '" data-pc="' + (+r[13] || "") + '" style="display:inline-block;margin:2px 6px 2px 0;font-size:12px;font-weight:700;color:#fff;white-space:nowrap">' + esc(r[1]) + (ext ? '<small style="font-weight:600;color:#ffd21f;margin-left:2px">' + ext + "</small>" : "") + "</span>"; };
+    var lbTxt = function (r) { return (+r[2] || 0) >= 2 ? (+r[2]) + "板" : ""; };
+    var line = function (head, body, hc) { return '<div style="display:flex;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.1)"><b style="flex:0 0 auto;min-width:64px;font-size:12px;font-weight:800;color:' + (hc || "#ffd21f") + '">' + head + '</b><div style="flex:1;min-width:0;line-height:1.5">' + body + "</div></div>"; };
+    var byLb = function (a, b) { return (+b[2] || 0) - (+a[2] || 0) || String(a[5] || "").localeCompare(String(b[5] || "")); };
+    var R = T.r.slice(), h = "", cut = function (L, m, f) { return L.slice(0, m).map(f).join("") + (L.length > m ? '<span style="font-size:11px;opacity:.7">等' + L.length + "只</span>" : ""); };
+    if (k === "zt") {
+      var G = {}; R.forEach(function (r) { var g = String(r[9] || "").trim() || "其他"; (G[g] = G[g] || []).push(r); });
+      var gs = Object.keys(G).sort(function (a, b) { return G[b].length - G[a].length || Math.max.apply(null, G[b].map(function (r) { return +r[2] || 0; })) - Math.max.apply(null, G[a].map(function (r) { return +r[2] || 0; })); });
+      h = gs.slice(0, 12).map(function (g) { var L = G[g].sort(byLb); return line(esc(g) + ' <span style="color:#fff">' + L.length + "</span>", cut(L, 8, function (r) { return chip(r, lbTxt(r)); })); }).join("") +
+        (gs.length > 12 ? '<div style="font-size:10.5px;opacity:.7;padding-top:3px">另有 ' + (gs.length - 12) + " 个行业各1~2只</div>" : "");
+      h = '<div style="font-size:10.5px;font-weight:700;opacity:.8;padding-bottom:2px">按行业分 · 家数多的在前（东财行业口径）</div>' + h;
+    } else if (k === "lb") {
+      var M = {}; R.forEach(function (r) { var l = +r[2] || 1; (M[l] = M[l] || []).push(r); });
+      h = Object.keys(M).map(Number).sort(function (a, b) { return b - a; }).map(function (l) { var L = M[l].sort(byLb); return line(l >= 2 ? l + "板 · " + L.length : "首板 · " + L.length, cut(L, l >= 2 ? 20 : 10, function (r) { return chip(r, String(r[9] || "")); }), l >= 4 ? "#ff5459" : l >= 2 ? "#ffd21f" : "#c9d2de"); }).join("");
+      h = '<div style="font-size:10.5px;font-weight:700;opacity:.8;padding-bottom:2px">连板梯队 · 名字后小字=行业</div>' + h;
+    } else if (k === "adv") {
+      if (!Y || !Y.r) return '<div style="font-size:11px;opacity:.75;padding:4px 2px 8px">没有上一交易日的涨停存档，晋级算不了</div>';
+      var tm = {}; R.forEach(function (r) { tm[r[0]] = r; });
+      var ym = {}; Y.r.forEach(function (r) { ym[r[0]] = 1; });
+      var up = R.filter(function (r) { return (+r[2] || 0) >= 2 && ym[r[0]]; }).sort(byLb), drop = Y.r.filter(function (r) { return !tm[r[0]]; }).sort(byLb);
+      h = line("晋级 " + up.length, up.length ? cut(up, 20, function (r) { return chip(r, lbTxt(r)); }) : '<span style="opacity:.7">没有</span>', "#ff5459") +
+        line("掉队 " + drop.length, drop.length ? cut(drop, 16, function (r) { return chip(r, (+r[2] || 1) >= 2 ? "昨" + (+r[2]) + "板" : ""); }) : '<span style="opacity:.7">没有</span>', "#2fd18b");
+      h = '<div style="font-size:10.5px;font-weight:700;opacity:.8;padding-bottom:2px">昨天涨停 ' + (Y.n || Y.r.length) + " 只 → 今天继续涨停的=晋级，没在今天涨停池的=掉队</div>" + h;
+    } else if (k === "hf") {
+      var L = R.filter(function (r) { return (+r[4] || 0) > 0; }).sort(function (a, b) { return (+b[4] || 0) - (+a[4] || 0) || byLb(a, b); });
+      h = L.length ? line("回封 " + L.length, cut(L, 30, function (r) { return chip(r, "开" + (+r[4]) + "次" + (lbTxt(r) ? "·" + lbTxt(r) : "")); })) : '<div style="font-size:11px;opacity:.75;padding:4px 0">今天涨停的票都没开过板</div>';
+      h = '<div style="font-size:10.5px;font-weight:700;opacity:.8;padding-bottom:2px">开过板又封回去的（现在仍封板）；炸了没封回的不在涨停池里，这里不列</div>' + h;
+    }
+    return '<div style="padding:6px 10px 6px;margin:-2px 0 8px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,210,31,.35)">' + h + "</div>";
   }
   /* 11-05 清单⑤: 我的持仓所属细分(东财二级行业/概念口径同板块抽屉)的资金流向——出逃的排前并标红绿醒目; 数据=板块资金(bkq)+持仓(jinlin_stocks_v2), 零新增请求 */
   function holdFundHtml() {
@@ -1232,7 +1273,14 @@
     var L = st.filter(function (x) { return x && /^\d{6}$/.test(String(x.code)) && (x.qty > 0 || x.watch); }).slice(0, 30);
     if (!L.length) return "";
     var C = S.myq;
-    if ((!C || Date.now() - C.t > 120000) && Date.now() - (S.myAsk || 0) > 30000 && S.open) {
+    myqLoad(L, S.open);
+    var rows = myRows(L, C);
+    if (!rows) return "";
+    return '<div style="padding:8px 10px;margin:2px 0 6px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16)"><div style="font-size:12px;font-weight:800;color:#fff">我的票 <span style="font-size:10px;font-weight:600;opacity:.75">历史统计参考，不是买卖点</span></div>' + rows + "</div>";
+  }
+  function myqLoad(L, go) {
+    var C = S.myq;
+    if ((!C || Date.now() - C.t > 120000) && Date.now() - (S.myAsk || 0) > 30000 && go) {
       S.myAsk = Date.now();
       var ids = L.map(function (x) { return (/^[69]/.test(x.code) ? "1." : "0.") + x.code; }).join(",");
       emGet("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f10,f12,f14,f15,f16,f109,f160,f350&secids=" + ids + "&ut=bd1d9ddb04089700cf9c27f6f7426281", 60000).then(function (d) {
@@ -1243,7 +1291,28 @@
         tcMy(L).then(function (m) { if (m) { S.myq = { t: Date.now(), m: m, src: "tc" }; paint(); } });
       });
     }
-    var rows = L.map(function (x) {
+  }
+  /* 11-06: 「我的票」短语给联动球用——tags(收在高位/冲高回落/前10天±x%/放量)+结论(符合启动/偏追高/涨停), 无数据返回"" */
+  function myTag(x, r) {
+    var p = +r.f3, pr = +r.f2, hi = +r.f15, lo = +r.f16, vr = +r.f10, p10 = +r.f160, up = +r.f350, zt = up > 0 && pr >= up - 0.001;
+    var pos = hi > lo ? (pr - lo) / (hi - lo) : 1, tags = [], good = 0, bad = 0;
+    if (pos >= 0.85) { tags.push("收在高位"); good++; } else if (pos < 0.6) { tags.push("冲高回落"); bad++; }
+    if (isFinite(p10)) { if (p10 > 15) { tags.push("前10天+" + p10.toFixed(0) + "% 已涨多"); bad++; } else if (p10 >= 8) { tags.push("前10天+" + p10.toFixed(0) + "%"); good++; } else if (p10 <= -10) tags.push("前10天" + p10.toFixed(0) + "% 低位"); else tags.push("前10天" + (p10 > 0 ? "+" : "") + p10.toFixed(0) + "%"); }
+    if (isFinite(vr)) { if (vr >= 3) { tags.push("放量大"); bad++; } else if (vr >= 1.5) { tags.push("放量"); good++; } }
+    var verdict = zt ? "涨停" : (p >= 5 && good >= 2 && bad === 0) ? "符合启动" : (bad >= 2 || (isFinite(p10) && p10 > 15 && p > 3)) ? "偏追高" : "";
+    return { tags: tags, verdict: verdict };
+  }
+  window.jlMyStkTagJL = function (code) {
+    try {
+      var st = lsGet("jinlin_stocks_v2"); if (!Array.isArray(st)) return null;
+      var L = st.filter(function (x) { return x && /^\d{6}$/.test(String(x.code)) && (x.qty > 0 || x.watch); }).slice(0, 30);
+      if (!L.length) return null;
+      myqLoad(L, true);
+      var r = S.myq && S.myq.m[String(code)]; return r ? myTag({ code: code }, r) : null;
+    } catch (e) { return null; }
+  };
+  function myRows(L, C) {
+    return L.map(function (x) {
       var r = C && C.m[x.code];
       if (!r) return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:6px"><span style="font-size:14px;font-weight:800;color:#fff">' + esc(x.name || x.code) + '</span><span style="font-size:9.5px;font-weight:800;color:#ffd21f;border:1px solid #ffd21f;border-radius:6px;padding:0 4px">' + (x.qty > 0 ? "持仓" : "自选") + '</span><span style="margin-left:auto;font-size:11px;font-weight:600;color:#fff">行情取数中…</span></div>';
       var p = +r.f3, pr = +r.f2, hi = +r.f15, lo = +r.f16, vr = +r.f10, p10 = +r.f160, p5 = +r.f109, up = +r.f350, zt = up > 0 && pr >= up - 0.001;
@@ -1258,8 +1327,6 @@
       return '<div style="padding:6px 0;border-top:1px solid rgba(255,255,255,.1)"><div style="display:flex;align-items:center;gap:6px"><span data-jlstk="open"' + dat + ' style="font-size:14px;font-weight:800;color:#fff">' + esc(x.name || x.code) + "</span>" + (x.qty > 0 ? '<span style="font-size:9.5px;font-weight:800;color:#ffd21f;border:1px solid #ffd21f;border-radius:6px;padding:0 4px">持仓</span>' : '<span style="font-size:9.5px;font-weight:700;opacity:.7;border:1px solid rgba(255,255,255,.5);border-radius:6px;padding:0 4px">自选</span>') + (verdict ? '<span style="font-size:11px;font-weight:800;color:' + vc + '">' + verdict + "</span>" : "") + '<b style="margin-left:auto;font-size:14px;color:' + (p >= 0 ? "#ff5459" : "#2fd18b") + '">' + (p >= 0 ? "+" : "") + (isFinite(p) ? p.toFixed(1) : "-") + "%</b></div>" +
         '<div style="margin-top:3px;font-size:11.5px;font-weight:600;color:#fff;line-height:1.5">' + tags.map(esc).join(" · ") + "</div></div>";
     }).join("");
-    if (!rows) return "";
-    return '<div style="padding:8px 10px;margin:2px 0 6px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16)"><div style="font-size:12px;font-weight:800;color:#fff">我的票 <span style="font-size:10px;font-weight:600;opacity:.75">历史统计参考，不是买卖点</span></div>' + rows + "</div>";
   }
   function surgeHtml() {
     var L = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); });
@@ -1339,7 +1406,7 @@
     var sgL = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); }), sg0 = sgL[0];
     var sgHot = !!(sg0 && S.live && Date.now() - (sg0.t2 || sg0.t) < 40 * 60e3);
     if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : "") + " · " + sub;
-    var body = weatherHtml() + myStkHtml() + surgeHtml() + fundBoardHtml(); /* 11-05 用户: 持仓细分资金联动球里已有, 不重复(holdFundHtml 留着未挂载) */
+    var body = weatherHtml() + surgeHtml() + fundBoardHtml(); /* 11-06 用户: 「我的票」占地且与联动球持仓一览重复→抽屉里删, 前10天/位置短语并进联动球(jlMyStkTagJL) */ /* 11-05 用户: 持仓细分资金联动球里已有, 不重复(holdFundHtml 留着未挂载) */
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
       var restAll = o.recs.filter(function (r) { return r.factors.avgPct.state !== "ok" && r.sector !== CORE.UNATTR; });
