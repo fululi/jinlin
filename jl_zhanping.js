@@ -57,7 +57,11 @@
   /* ---------- 浮球 ---------- */
   function place() {
     var b = st.ball; if (!b) return;
-    if (st.pos && st.pos.l != null) { b.style.left = Math.max(0, st.pos.l) + 'px'; b.style.top = Math.max(0, st.pos.t) + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto'; }
+    /* 11-07 用户: 球找不到了(拖出屏/换屏宽后卡在可视区外) → 位置钳进当前屏幕, 至少露出整个球 */
+    var vw = window.innerWidth || 375, vh = window.innerHeight || 667, bw = b.offsetWidth || 60, bh = b.offsetHeight || 60;
+    if (st.pos && st.pos.l != null) { st.pos.l = Math.min(Math.max(0, +st.pos.l || 0), vw - bw); st.pos.t = Math.min(Math.max(0, +st.pos.t || 0), vh - bh); }
+    else if (st.pos) { st.pos.b = Math.min(Math.max(0, Number(st.pos.b) || 150), vh - bh); }
+    if (st.pos && st.pos.l != null) { b.style.left = st.pos.l + 'px'; b.style.top = st.pos.t + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto'; }
     else { b.style.left = 'auto'; b.style.top = 'auto'; b.style.right = '8px'; b.style.bottom = ((st.pos && Number(st.pos.b)) || 150) + 'px'; }
   }
   function ballState() {
@@ -190,6 +194,7 @@
         if (!document.body.contains(b)) { document.body.appendChild(b); place(); ballPaint(); }
       } catch (e) { }
     }, 3000);
+    try { window.addEventListener('resize', function () { try { place(); } catch (e) { } }); setInterval(function () { try { var r = b.getBoundingClientRect(); if (r.right < 20 || r.bottom < 20 || r.left > (window.innerWidth || 375) - 20 || r.top > (window.innerHeight || 667) - 20) place(); } catch (e) { } }, 3000); } catch (e) { }
     try { console.log('[JLZp v4] 浮球已挂载'); } catch (e) { }
     /* ②交互绑定 */
     try {
