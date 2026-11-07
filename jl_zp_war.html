@@ -4140,7 +4140,7 @@ setRange = function (lo, hi) {
             b = Math.max(b, k.h);
           }
         });
-        if (window.zpPanning && zpYF) { lo = zpYF.lo; hi = zpYF.hi; }   /* 手势中: 基础纵轴(未叠加上下拖/缩放偏移)冻结在手势开始那一帧 */
+        if (window.zpPanning && zpYF && !window.zpPinching) { lo = zpYF.lo; hi = zpYF.hi; }   /* 11-07: 捏合时纵轴跟着视窗内蜡烛实时算(同K线表), 只有平移才冻结 */   /* 手势中: 基础纵轴(未叠加上下拖/缩放偏移)冻结在手势开始那一帧 */
         else if (b > a) {
           var pd = (b - a) * 0.07 || b * 0.003;
           lo = a - pd;
@@ -4322,7 +4322,7 @@ setRange = function (lo, hi) {
       var T = agg(src(), 1).map(function (k) { k.cx = (X0F(k.s) + X0F(k.hm)) / 2; return k; }).filter(function (k) { return isFinite(k.cx); });
       if (T.length) paintLiq(svg, T, function (i) { return T[i].cx; });
     }
-    try { declutter(svg); } catch (e) { }
+    if (!window.zpPanning) try { declutter(svg); } catch (e) { }   /* 11-07: 手势中每帧对全图文字 getBBox 防叠, 手机上很卡 → 手势中跳过, 松手整套重画时再排 */
   }
   function redraw() {
     try { if (typeof liveRender === 'function' && window.INJL && !window.RPL) liveRender(); else { if (typeof buildStatics === 'function') buildStatics(); window.zpSubRender && zpSubRender(); } } catch (e) { paint(); }
@@ -4389,6 +4389,8 @@ window.addEventListener('blur', function () {
 });
   window.addEventListener('pointerdown', function (e) {
     var s = zsvg(e.target); if (!s) return; if (window.zpDrawHit && window.zpDrawHit(e)) return; if (e.pointerType === 'mouse' && e.button !== 0) return;
+    /* 11-07: 新手势的第一根手指(isPrimary)落下时, 上次没收到抬起的"幽灵手指"清掉, 否则单指也被当成双指捏合, 越缩越乱 */
+    if (e.isPrimary && Object.keys(PZ.p).length) { PZ.p = {}; PZ.mode = null; PZ.dirty = false; window.zpPinching = false; window.zpPanning = false; }
     PZ.p[e.pointerId] = { x: e.clientX, y: e.clientY, s: s };
     var ids = Object.keys(PZ.p), A = all(per), F = frame(A);
     if (ids.length === 2) {
@@ -4407,7 +4409,7 @@ window.addEventListener('blur', function () {
     s: s,
     F: F
   };
-  window.zpPanning = true;
+  window.zpPanning = true; window.zpPinching = true;
   return;
 }
   PZ.mode = 'pend'; PZ.st = { x: e.clientX, y: e.clientY, F: F, s: s, mouse: e.pointerType === 'mouse', ys: window.zpYS || 0, xh0: !!(window.zpMainXH && window.zpMainXH.isOn && window.zpMainXH.isOn()) };
@@ -4455,10 +4457,18 @@ window.addEventListener('blur', function () {
     e.stopPropagation();
   }
 }, true);
-function upPZ(e) { delete PZ.p[e.pointerId]; if (!Object.keys(PZ.p).length) { var was = PZ.mode; PZ.mode = null; if (was === 'pan' || was === 'pinch') setTimeout(function () { window.zpPanning = false; redraw(); }, 0); else window.zpPanning = false; } else if (PZ.mode === 'pinch') { PZ.mode = null; } }
+/* 11-07 修"放大就卡住": 双指松手几乎从不同时 → 原来先抬的那根把 mode 清成 null, 后抬那根就当成"没在手势里",
+   既不整套重画、纵轴还停在手势冻结那一帧(蜡烛压扁/标签不回来), 休市没行情刷新就一直卡着。改: 先抬一根进 hold, 全抬完再整套重画 */
+function upPZ(e) {
+  delete PZ.p[e.pointerId];
+  if (PZ.mode === 'pan' || PZ.mode === 'pinch' || PZ.mode === 'hold') PZ.dirty = true;
+  if (Object.keys(PZ.p).length) { if (PZ.mode === 'pinch') PZ.mode = 'hold'; return; }
+  var was = PZ.dirty; PZ.mode = null; PZ.dirty = false; window.zpPinching = false;
+  if (was) setTimeout(function () { window.zpPanning = false; redraw(); }, 0); else window.zpPanning = false;
+}
 window.addEventListener('dblclick', function (e) { var s = zsvg(e.target); if (!s || !(window.zpYS || window.zpYZ)) return; window.zpYS = 0; window.zpYZ = 1; redrawSoon(); }, true);
 window.addEventListener('pointerup', upPZ, true); window.addEventListener('pointercancel', upPZ, true);
-document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || PZ.mode === 'pinch') && e.cancelable) e.preventDefault(); }, { passive: false });
+document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || PZ.mode === 'pinch' || PZ.mode === 'hold') && e.cancelable) e.preventDefault(); }, { passive: false });
 
   /* 主图每次重画 → 副图模块 render 之后再贴蜡烛(挂在 zpSubRender 后面) */
   var r0 = window.zpSubRender;
