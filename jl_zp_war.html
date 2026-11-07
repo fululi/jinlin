@@ -4468,7 +4468,19 @@ function upPZ(e) {
 }
 window.addEventListener('dblclick', function (e) { var s = zsvg(e.target); if (!s || !(window.zpYS || window.zpYZ)) return; window.zpYS = 0; window.zpYZ = 1; redrawSoon(); }, true);
 window.addEventListener('pointerup', upPZ, true); window.addEventListener('pointercancel', upPZ, true);
-document.addEventListener('touchmove', function (e) { if ((PZ.mode === 'pan' || PZ.mode === 'pinch' || PZ.mode === 'hold') && e.cancelable) e.preventDefault(); }, { passive: false });
+/* 11-07b: 以浏览器真实手指数为准(同K线表 e.touches) — 手指全离开屏幕就把手势状态清零; 防止丢一次 pointerup 后状态卡住、连右边滑动带都被拦 */
+function touchSyncPZ(e) {
+  if (e.touches && e.touches.length) return;
+  if (!Object.keys(PZ.p).length && !PZ.mode) return;
+  var was = PZ.dirty || PZ.mode === 'pan' || PZ.mode === 'pinch' || PZ.mode === 'hold';
+  PZ.p = {}; PZ.mode = null; PZ.dirty = false; window.zpPinching = false;
+  if (was) setTimeout(function () { window.zpPanning = false; redraw(); }, 0); else window.zpPanning = false;
+}
+document.addEventListener('touchend', touchSyncPZ, true); document.addEventListener('touchcancel', touchSyncPZ, true);
+document.addEventListener('touchmove', function (e) {
+  if (e.target && e.target.closest && e.target.closest('#zpScr')) return;   /* 右边滑动带永远放行 */
+  if ((PZ.mode === 'pan' || PZ.mode === 'pinch' || PZ.mode === 'hold') && e.cancelable) e.preventDefault();
+}, { passive: false });
 
   /* 主图每次重画 → 副图模块 render 之后再贴蜡烛(挂在 zpSubRender 后面) */
   var r0 = window.zpSubRender;
