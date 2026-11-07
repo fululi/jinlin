@@ -227,3 +227,64 @@
   window.JLZp = { _st: st, toggle: toggleSheet, _t: { ballState: ballState, pollStatus: pollStatus, kindOf: kindOf } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else setTimeout(boot, 0);
 })();
+
+/* 11-07 用户: 复盘页最底下加标签「尺子A/B」「我的T·历史对照」(从作战屏挪过来)。
+   只读: 尺子A/B = iframe jl_ruler_ab.html(静态回测, 自动撑高); 我的T = 读 localStorage jl_myT_v1_<代码>_<日期>(作战屏里填的) + jl_engT_v1_(作战屏每3秒记的引擎收益)。
+   复盘页被重绘移除就补回; 回滚=删本段。 */
+(function () {
+  var TAB = 'jl_revtab_v1';
+  function fee(a, s) { return Math.max(5, a * 0.00025) + a * 0.00001 + (s ? a * 0.0005 : 0); }
+  function sg(v) { return (v >= 0 ? '+' : '') + v.toFixed(2); }
+  function col(v) { return v >= 0 ? '#ff5459' : '#1fdc93'; }
+  function myT() {
+    var by = {}, i, k, m;
+    try {
+      for (i = 0; i < localStorage.length; i++) {
+        k = localStorage.key(i);
+        if ((m = /^jl_myT_v1_(\w+)_(\d{8})$/.exec(k))) {
+          var n = 0, c = 0; JSON.parse(localStorage.getItem(k) || '[]').forEach(function (t) { var s = +t.s || 0, b = +t.b || 0, q = +t.q || 100; if (s > 0 && b > 0) { n += (s - b) * q - fee(s * q, 1) - fee(b * q, 0); c++; } });
+          (by[m[1]] = by[m[1]] || {})[m[2]] = Object.assign((by[m[1]] || {})[m[2]] || {}, { my: c ? n : null });
+        } else if ((m = /^jl_engT_v1_(\w+)_(\d{8})$/.exec(k))) {
+          try { (by[m[1]] = by[m[1]] || {})[m[2]] = Object.assign(by[m[1]][m[2]] || {}, { eg: JSON.parse(localStorage.getItem(k)).n }); } catch (e) { }
+        }
+      }
+    } catch (e) { }
+    var codes = Object.keys(by); if (!codes.length) return '<div style="padding:10px;color:#9aa8b8;font-size:12px">还没有记录。在做T作战屏「我的T（实盘对照）」里填了成交，这里就会按天汇总。</div>';
+    var nm = function (c) { try { var L = JSON.parse(localStorage.getItem('jinlin_stocks_v2') || '[]'); for (var j = 0; j < L.length; j++) if (String(L[j].code).slice(-6) === c) return L[j].name || c; } catch (e) { } return c === '600105' ? '永鼎股份' : c; };
+    return codes.map(function (c) {
+      var D = by[c], ds = Object.keys(D).sort().reverse().slice(0, 60), tot = 0, bm = 0, be = 0, bn = 0, h = '';
+      ds.forEach(function (d) {
+        var x = D[d], my = x.my, eg = x.eg; if (my != null) tot += my; if (my != null && eg != null) { bm += my; be += eg; bn++; }
+        h += '<div style="display:flex;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.08)"><span style="width:44px;color:#9aa8b8">' + d.slice(4, 6) + '-' + d.slice(6) + '</span><span style="flex:1">我 ' + (my == null ? '—' : '<b style="color:' + col(my) + '">' + sg(my) + '</b>') + '</span><span style="flex:1">引擎 ' + (eg == null ? '—' : '<b style="color:' + col(eg) + '">' + sg(eg) + '</b>') + '</span><span style="width:70px;text-align:right">' + (my != null && eg != null ? '差 <b style="color:' + col(my - eg) + '">' + sg(my - eg) + '</b>' : '') + '</span></div>';
+      });
+      return '<div style="margin:4px 0 10px"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:3px"><span>' + nm(c) + '</span><span>累计 <b style="color:' + col(tot) + '">' + sg(tot) + '</b></span></div>' +
+        (bn ? '<div style="color:#9aa8b8;margin-bottom:3px">两边都有记录的 ' + bn + ' 天：我 <b style="color:' + col(bm) + '">' + sg(bm) + '</b> · 引擎 <b style="color:' + col(be) + '">' + sg(be) + '</b></div>' : '') + h + '</div>';
+    }).join('');
+  }
+  function paint(box) {
+    var t = 'ab'; try { t = localStorage.getItem(TAB) || 'ab'; } catch (e) { }
+    box.querySelectorAll('.rvTabJL button').forEach(function (b) { b.className = b.getAttribute('data-t') === t ? 'on' : ''; });
+    var ab = box.querySelector('.rvAbJL'), mt = box.querySelector('.rvMtJL');
+    ab.hidden = t !== 'ab'; mt.hidden = t !== 'mt';
+    if (t === 'ab') { var f = ab.querySelector('iframe'); if (!f.getAttribute('src')) f.setAttribute('src', 'jl_ruler_ab.html'); }
+    if (t === 'mt') mt.innerHTML = myT();
+  }
+  function ensure() {
+    try {
+      var pg = document.getElementById('reviewPage'); if (!pg) return;
+      var box = document.getElementById('jlRevTabsJL');
+      if (box && box.parentNode === pg && !box.nextElementSibling) { if (!box.querySelector('.rvMtJL').hidden) box.querySelector('.rvMtJL').innerHTML = myT(); return; }
+      if (!box) {
+        box = document.createElement('article'); box.id = 'jlRevTabsJL'; box.className = 'glass reviewCard';
+        box.style.cssText = 'margin-top:12px;font-size:12px;line-height:1.5';
+        box.innerHTML = '<style>#jlRevTabsJL .rvTabJL{display:flex;gap:6px;margin:0 0 8px}#jlRevTabsJL .rvTabJL button{flex:1;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:6px 8px;font:600 12px/1.2 -apple-system,"PingFang SC",sans-serif}#jlRevTabsJL .rvTabJL button.on{background:#ffe14d;color:#111;border-color:#ffe14d}#jlRevTabsJL iframe{display:block;width:100%;min-height:600px;border:0;background:transparent;border-radius:10px}</style>' +
+          '<div class="rvTabJL"><button type="button" data-t="ab">尺子A/B 回测</button><button type="button" data-t="mt">我的T · 历史对照</button></div>' +
+          '<div class="rvAbJL"><iframe title="尺子A/B回测" data-fit="1"></iframe></div><div class="rvMtJL" hidden></div>';
+        box.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rvTabJL button'); if (!b) return; try { localStorage.setItem(TAB, b.getAttribute('data-t')); } catch (er) { } paint(box); });
+      }
+      pg.appendChild(box); paint(box);
+    } catch (e) { }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensure); else setTimeout(ensure, 0);
+  setInterval(ensure, 3000);
+})();
