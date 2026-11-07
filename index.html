@@ -3225,7 +3225,14 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
     if (mtempJL._deepLoading) return;
     mtempJL._deepLoading = true;
     const PZ = 100, acc = { up: 0, down: 0, flat: 0, amt: 0, rows: [], bu: [0, 0, 0, 0], bd: [0, 0, 0, 0] };
-    let total = 0, sentPages = 0, donePages = 0, maxPn = 56;
+    let total = 0, sentPages = 0, donePages = 0, maxPn = 56, okPages = 0; /* jl-secfix 1108: okPages=拿到数据的页数, 开头6页全空=东财此刻封着, 不再硬磨剩下50页 */
+    const deepRetryJL = () => { /* jl-secfix 1108: 失败/残缺不再干等15分钟——盘中3分钟后补采一次, 连败3次就等下一轮常规采样 */
+      try {
+        const _m = new Date().getHours() * 60 + new Date().getMinutes();
+        mtempJL._deepFail = (mtempJL._deepFail || 0) + 1;
+        if (mtempJL._deepFail <= 3 && _m >= 565 && _m <= 905) { clearTimeout(mtempJL._deepRetryT); mtempJL._deepRetryT = setTimeout(loadMTempDeepJL, 18e4); }
+      } catch (eR) {}
+    };
     const luLimJL = (c, n2) => /^[NC]/i.test(n2 || "") ? 999 : /^(8|4|92)/.test(String(c || "").replace(/^(sh|sz)/, "")) ? 29.8 : /^(30|68)/.test(String(c || "").replace(/^(sh|sz)/, "")) ? 19.8 : /ST/i.test(n2 || "") ? 4.8 : 9.8; /* 温度量化 temp-q1: 板块前缀优先于ST(创业板/科创板ST是20%非5%), N/C开头新股上市初期无涨跌幅(999=永不触发) */
     const eat = (p, amtW, q) => {
       acc.amt += amtW || 0;
@@ -3245,7 +3252,12 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
     const fin = () => {
       mtempJL._deepLoading = false;
       const sampled = acc.up + acc.down + acc.flat;
+      { /* jl-secfix 1108: 残缺采样(覆盖<85%)不许冲掉当天已有的完整逐股数据——原来半数页被限流也照写, 板块强度各板块凑不够8只→"股票太少排不出" */
+        const _d = mtempJL.data, _oldN = _d && Array.isArray(_d.rows) && _d.rowsTd && _d.rowsTd === _d.td ? _d.rows.length : 0;
+        if (sampled && total && sampled < total * 0.85 && _oldN > sampled) { deepRetryJL(); return; }
+      }
       if (!sampled) {
+        deepRetryJL();
         /* 静默尽端: 钻取等待者给明示并清pend, 不再死循环 */
         if (window.__mtdPendJL) {
           window.__mtdPendJL = null;
@@ -3263,6 +3275,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       d0.verdict = verdict;
       d0.cov = total ? Math.round(sampled / total * 100) : null;
       mtempJL.rows = acc.rows;
+      if (!total || sampled >= total * 0.85) { mtempJL._deepFail = 0; clearTimeout(mtempJL._deepRetryT); } else deepRetryJL(); /* jl-secfix 1108 */
       try { d0.rows = acc.rows.map((r) => [r.c, r.p]); d0.rowsTd = d0.td || null; } catch (eR) {} /* jl-1080: 逐股涨跌顺手持久化(~80KB二员组[码,涨幅%])——jlv2离线板块映射聚合"热点板块持续"用; 旧缓存无此键自然降级"板块映射未覆盖" · jl-B1-S1: rowsTd=rows所属交易日(取快照td), 读方据此核日 */
       try {
         localStorage.setItem("jinlin_mtemp_v1", JSON.stringify({ at: mtempJL.at, data: d0 }));
@@ -3309,6 +3322,8 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       };
       document.head.appendChild(sc);
     }).then((dd) => {
+      if (!(dd && dd.data) && !retry) return fetchPg(off, true); /* jl-secfix 1108: 原备用主机重试写在.catch里, 但失败/超时都是resolve(null)不会reject→备用主机从没用上 */
+      if (dd && dd.data && dd.data.diff && dd.data.diff.length) okPages++;
       if (dd && dd.data && dd.data.total) total = dd.data.total;
       (dd && dd.data && dd.data.diff || []).forEach((q) => {
         const p = Number(q.f3);
@@ -3318,6 +3333,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       if (!retry) return fetchPg(off, true);
     });
     const pump = () => {
+      if (donePages >= 6 && okPages === 0 && sentPages < target()) maxPn = sentPages; /* jl-secfix 1108: 头6页两台主机都空=被封, 收手等重试 */
       while (sentPages < target() && sentPages - donePages < 3) {
         sentPages++;
         const off = (sentPages - 1) * PZ;
