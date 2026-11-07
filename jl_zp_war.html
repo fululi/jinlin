@@ -3240,6 +3240,69 @@ setInterval(render,3000);
 })();
 </script>
 <script>
+/* jl-btx (11-07 用户: 手机里的回测没法一键导出): 「⤓ 导出回测」——
+   把手头已有的历史5分K(腾讯约10天)每天用同一套 runEngine 重跑(和日期回放同口径: 换 LIVE 当天字段→跑→还原),
+   每行一轮: 卖/买时间价格原因+净; 另附当天分时高低点(按分时页回落阈值切)、日高低振幅、不动当日盈亏、我的T记录.
+   只读: 不改引擎/不发请求/不写存储. 出口: 支持分享就弹系统分享(隔空投送/微信), 否则下载CSV, 再不行弹出文本框可复制. */
+(function(){
+var anchor=document.getElementById('myT2')||document.getElementById('myT');
+if(!anchor||!anchor.parentNode)return;
+var wrap=document.createElement('div');
+wrap.style.cssText='order:8;margin:0 10px 8px;display:flex;gap:8px;align-items:center;font-size:12px';
+wrap.innerHTML='<button type="button" id="btxBtn" style="border:1px solid var(--line);border-radius:10px;background:var(--sub);color:inherit;padding:7px 12px;font:inherit;font-weight:700">⤓ 导出回测</button><span id="btxMsg" style="color:var(--dim)">引擎逐日重跑 + 分时高低点 + 我的T, 存成CSV</span>';
+anchor.parentNode.insertBefore(wrap,anchor.nextSibling);
+var KEYS=['pc','sessDate','open','last','hi','lo','dhi','dlo','pts','bars','ebars','auc','m1sess','ts','eng'];
+function f2(v){return v==null||v===''||!isFinite(v)?'':(+v).toFixed(2)}
+function hm4(v){v=String(v==null?'':v);return v.length>=3?v.padStart(4,'0').replace(/(\d\d)(\d\d)$/,'$1:$2'):v}
+function swings(pts,thr){var out=[],dir=0,hp=-1e9,lp=1e9,hi=null,lo=null;
+  pts.forEach(function(q){var p=+q.p,h=+q.h||p,l=+q.l||p;
+    if(h>hp){hp=h;hi=q.hm} if(l<lp){lp=l;lo=q.hm}
+    if(dir>=0&&p<=hp*(1-thr)&&hi!==q.hm){out.push('高'+f2(hp)+'@'+hm4(hi));dir=-1;lp=l;lo=q.hm}
+    else if(dir<=0&&p>=lp*(1+thr)&&lo!==q.hm){out.push('低'+f2(lp)+'@'+hm4(lo));dir=1;hp=h;hi=q.hm}
+  });return out.join(' → ')}
+function build(){
+  var H=LIVE.hist||{},cnt={};(H.m5||[]).forEach(function(b){var d=dg(b.t).slice(0,8);if(d.length===8)cnt[d]=(cnt[d]||0)+1});
+  var ds=Object.keys(cnt).filter(function(d){return cnt[d]>=5}).sort(),code=(STK&&STK.code)||'';
+  var thr=0.015;try{thr=thrOfJL(0)}catch(e){}
+  var save={};KEYS.forEach(function(k){save[k]=LIVE[k]});var sh0=LIVE.sh;if(!(LIVE.sh>0))LIVE.sh=1000;var QH=(STK&&+STK.qty>0)?+STK.qty:2000;
+  var rows=[['日期','昨收','开盘','收盘','日高','日低','振幅%','不动当日盈亏(持仓'+QH+'股)','轮次','卖时间','卖价','卖原因','买时间','买价','买原因','股数','本轮净','分时高低点(回落'+(thr*100).toFixed(1)+'%)','我的T(卖/买/股)']],tot=0,hold=0,n=0;
+  try{
+    ds.forEach(function(d8){
+      var m5=H.m5.filter(function(b){return dg(b.t).slice(0,8)===d8}),dc=(H.day||[]).filter(function(b){return dg(b.t).slice(0,8)<d8});
+      if(m5.length<5||!dc.length)return;
+      var m1=(H.m1||[]).filter(function(b){return dg(b.t).slice(0,8)===d8}),pts=[];
+      (m1.length?m1:m5).forEach(function(b){var h=hmOf(b.t);if(h>=930)pts.push({hm:String(h).padStart(4,'0'),p:b.c,h:b.h,l:b.l,v:b.v||0})});
+      var hi=-1e9,lo=1e9;m5.forEach(function(b){hi=Math.max(hi,b.h);lo=Math.min(lo,b.l)});
+      var pc=dc[dc.length-1].c,cl=m5[m5.length-1].c;
+      LIVE.pc=pc;LIVE.sessDate=d8;LIVE.open=m5[0].o;LIVE.last=cl;LIVE.hi=hi;LIVE.lo=lo;LIVE.dhi=hi;LIVE.dlo=lo;
+      LIVE.pts=pts;LIVE.bars=m5;LIVE.ebars=[];LIVE.auc=null;LIVE.m1sess=m1;LIVE.ts='';ZCACHE={};
+      var e=null;try{e=runEngine(engBarsJL(),{})}catch(er){}
+      var my='';try{my=JSON.parse(localStorage.getItem('jl_myT_v1_'+code+'_'+d8)||'[]').map(function(t){return (t.s||'')+'/'+(t.b||'')+'/'+(t.q||'')}).join(' ; ')}catch(er){}
+      var hd=(cl-pc)*QH;hold+=hd;n++;
+      var base=[d8.slice(0,4)+'-'+d8.slice(4,6)+'-'+d8.slice(6),f2(pc),f2(m5[0].o),f2(cl),f2(hi),f2(lo),((hi-lo)/pc*100).toFixed(2),hd.toFixed(0)];
+      var sw=swings(pts,thr),rs=e&&e.rounds?e.rounds:[],first=true;
+      rs.forEach(function(r){tot+=r.net;rows.push(base.concat([r.r,hm4(r.tS),f2(r.sp),r.sWhy,hm4(r.tB),f2(r.bp),r.bWhy,r.q,f2(r.net),first?sw:'',first?my:'']));first=false});
+      if(e&&e.sp!=null){rows.push(base.concat([rs.length+1,hm4(e.tS),f2(e.sp),e.sWhy,'','','收盘未接回',LIVE.sh,'',first?sw:'',first?my:'']));first=false}
+      if(first)rows.push(base.concat(['','','','','','','引擎当天没动手','','',sw,my]));
+    });
+  }finally{KEYS.forEach(function(k){LIVE[k]=save[k]});LIVE.sh=sh0;ZCACHE={}}
+  rows.push([]);rows.push(['合计',n+'天','','','','','','不动 '+hold.toFixed(0),'','','','','','','','','引擎净 '+tot.toFixed(2)]);
+  return {csv:'﻿'+rows.map(function(r){return r.map(function(c){c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')}).join('\n'),n:n,tot:tot,hold:hold,code:code,d0:ds[0],d1:ds[ds.length-1]};
+}
+function showText(t){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;inset:10% 5%;z-index:99999;width:90%;height:70%;font-size:11px;background:#0b141c;color:#fff;border:1px solid #888;border-radius:10px;padding:8px';ta.onblur=function(){ta.remove()};document.body.appendChild(ta);ta.focus();ta.select()}
+document.getElementById('btxBtn').onclick=function(){
+  var msg=document.getElementById('btxMsg'),R;
+  try{R=build()}catch(e){msg.textContent='导出失败: '+(e&&e.message||e);return}
+  if(!R.n){msg.textContent='还没拿到历史5分K, 等行情加载完再点';return}
+  msg.textContent=R.n+'天 · 引擎净 '+R.tot.toFixed(0)+' · 不动 '+R.hold.toFixed(0);
+  var name='回测_'+R.code+'_'+R.d0+'-'+R.d1+'.csv',blob=new Blob([R.csv],{type:'text/csv;charset=utf-8'});
+  try{var file=new File([blob],name,{type:'text/csv'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:name}).catch(function(){});return}}catch(e){}
+  try{var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500)}catch(e){showText(R.csv)}
+};
+})();
+</script>
+<script>
 /* jl-xh3: 十字线自由跟手 + 高低点轻吸附 */
 (function(){
 var svgEl=document.getElementById('ch');if(!svgEl)return;
