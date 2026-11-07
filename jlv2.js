@@ -90,7 +90,7 @@
     "#jlv2root{margin-top:14px}" +
     ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#FFFFFF;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
     "body.day .jlv2{background:rgba(0,0,0,0.03);border-color:#0a7d6b3d;color:#12262b}" +
-    "#home .tempJL,#gjdJL{display:none!important}" + /* 11-06: 旧温度v1卡/国家队A卡并进「市场情绪」总卡, 只隐藏不删(回滚删这一行) */
+    "" + /* 11-06: 旧温度v1卡/国家队A卡并进「市场情绪」总卡, 只隐藏不删(回滚删这一行) */
     ".jlv2 h3{font-size:12px;font-weight:600;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}" +
     ".jlv2 h3 small{font-size:12px;color:#FFFFFF;font-weight:600;text-align:right}" +
     ".jlv2 .jsum{font-size:12px;color:#FFFFFF;font-weight:600;margin-top:8px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}" +
@@ -1075,14 +1075,14 @@
     var lab = function (x) { return '<span style="flex:0 0 auto;min-width:40px;font-size:11px;font-weight:600;opacity:.7">' + x + "</span>"; };
     var line = function (l, inner) { return '<span class="jsum" style="margin-top:6px">' + lab(l) + inner + "</span>"; };
     var wxIn = W ? '<span class="zpill" style="font-size:12px;padding:1px 7px;color:' + W.col + ";border-color:" + W.col + '">' + esc(W.st) + '</span><span class="mono">涨停' + W.n + "</span>·<span class=\"mono\">最高" + W.mx + "板</span>·<span class=\"mono\">晋级" + (W.adv == null ? "—" : W.adv + "%") + '</span><span style="opacity:.75">' + esc(W.tip) + "</span>" : '<span style="opacity:.7">涨停池未到</span>';
-    var sum = line("温度", (gl ? '<span style="font-size:11px;font-weight:800;color:#10131a;background:' + gl[1] + ';border-radius:8px;padding:1px 7px">' + gl[0] + "</span>" : "") + innerSum(t.sum)) + line("情绪", wxIn) + line("国家队", innerSum(g.sum));
-    var tab = S.mtab || "t", tabs = [["t", "温度因子"], ["z", "涨停梯队"], ["g", "国家队"]];
+    var sum = line("温度", innerSum(t.sum)) /* jl-home1108: 闸灯去掉, 盘前决策卡已有 */ + line("情绪", wxIn) + line("国家队", innerSum(g.sum));
+    var tab = S.mtab || "t", tabs = [["t", "温度因子"], ["g", "国家队"]]; if (tab === "z") tab = "t"; /* jl-home1108: 涨停梯队页签删, 底部板块抽屉天气条为准 */
     var bar = '<div style="display:flex;gap:6px;margin-bottom:9px">' + tabs.map(function (x) { var on = x[0] === tab; return '<span data-jlmt="' + x[0] + '" style="flex:1;text-align:center;font-size:12px;font-weight:' + (on ? 800 : 600) + ";padding:5px 0;border-radius:10px;cursor:pointer;" + (on ? "background:rgba(255,210,31,.18);color:#ffd21f;box-shadow:inset 0 0 0 1px rgba(255,210,31,.55)" : "background:rgba(255,255,255,.06);color:#fff") + '">' + x[1] + "</span>"; }).join("") + "</div>";
     var bd = "";
     if (tab === "t") bd = '<div style="font-size:10.5px;opacity:.75;margin-bottom:6px">' + smallOf(t.head) + "</div>" + (t.body || '<div style="opacity:.7">采样中…</div>');
     else if (tab === "g") bd = '<div style="font-size:10.5px;opacity:.75;margin-bottom:6px">' + smallOf(g.head) + "</div>" + (g.body || "");
-    else { var zh = ""; try { zh = window.jlZtWeatherJL ? window.jlZtWeatherJL.html(S.wxk || "zt") : ""; } catch (e) { zh = ""; } bd = zh || '<div style="opacity:.7">涨停池存档未到（首页涨停池拉到后自动出）</div>'; }
-    return { head: "<b>市场情绪</b><small>温度 · 涨停梯队 · 国家队</small>", sum: sum, body: bar + bd };
+    
+    return { head: "<b>市场情绪</b><small>温度 · 情绪 · 国家队</small>", sum: sum, body: bar + bd };
   }
   var moodBound = false;
   function bindMood(root) {
@@ -1103,9 +1103,8 @@
     /* 11-06 用户: 温度/国家队/情绪(涨停梯队)在首页多处重复→合成一张「市场情绪」总卡: 头三行摘要(闸灯+温度 / 情绪阶段 / 国家队), 展开分页签; 原温度v2/国家队B卡内容原样放进页签, 旧温度v1卡+国家队A卡隐藏(CSS, 代码不动) */
     var m = renderMood(t, g);
     var defs = [
-      { k: "m", h: m.head, s: m.sum, b: m.body, tip: "点标题展开/收起" },
-      { k: "y", h: y.head, s: y.sum, b: y.body, tip: "点标题展开/收起" }
-    ];
+      { k: "m", h: m.head, s: m.sum, b: m.body, tip: "点标题展开/收起" }
+    ]; /* jl-home1108: 「大盘异动·分组」卡删(只一行计数+跳转, 与上证图上方「大盘异动」页重复); renderYd()照跑——分组计算事件日志依赖 */
     root.innerHTML = defs.map(function (d0) {
       var on = S.open[d0.k] ? " open" : "";
       return '<section class="jlv2' + on + '" data-k="' + d0.k + '"><h3>' + d0.h + '<span class="jchev">▸</span></h3>' + d0.s + '<div class="jbody">' + d0.b + '</div></section>';
