@@ -1153,8 +1153,8 @@
       var m = S.mem[o.k];
       if (!m) { if (!S.recAsk) S.recAsk = {}; if (!S.recAsk[o.k]) { S.recAsk[o.k] = 1; memOf(o.k).then(function () { paint(); }); } return; }
       var early = hmNow() >= 915 && hmNow() < 930; /* 竞价段个股主力净额多为0, 放宽成>=0, 再按涨幅 */
-      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = []; /* 11-08 用户: 涨停不进推荐 */
-      if (!buy.length) return; n++;
+      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = all.filter(function (x) { return x.zt; }).slice(0, 2); /* 11-08 用户先选不推涨停, 随后改口"推涨停"→保留, 标排队难买 */
+      if (!buy.length && !zts.length) return; n++;
       var lead = all.slice().sort(function (x, y) { return ((lb[y.c] || 0) - (lb[x.c] || 0)) || (y.p - x.p); })[0]; /* 11-05 用户: 老龙不一定要连板, 开启轮动的领涨股也算: 先看连板最高, 没有连板就看今天涨幅最大 */
       var c = o.c || { name: "资金进", streak: 0, cum5: null, avg: o.q ? o.q.p : null, zt: 0 }, tile = function (v, l, col) { return '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:800;color:' + (col || "#fff") + ';line-height:1.15">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
       var runN = c.streak || 0, up = c.cum5 >= 0, risk = runN >= 3 ? "已强势" + runN + "天，后面偏回落" : c.cum5 >= 10 ? "近5天已涨多，别追高" : o.ld ? o.ld.n + o.ld.l + "板龙头在" : c.zt >= 2 ? "板块内涨停" + c.zt + "只" : o.q && o.q.f > 0 ? "资金在进" : "资金还没明显进";
@@ -1176,7 +1176,7 @@
         buy.map(function (x) { return row(x, false); }).join("") + zts.map(function (x) { return row(x, true); }).join("") + "</div>";
     });
     if (!cards) return "";
-    return '<div style="font-size:12px;color:#fff;font-weight:800;margin:8px 0 4px">埋伏候选 <span style="font-size:10px;font-weight:600;opacity:.75">' + (fundOn ? "按今天主力流入排 · 已剔ST/涨停/资金流出" : "盘前=昨天收盘阶段") + ' · 左右滑 · 未回测</span></div><div id="jlrecPg" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">' + cards + "</div>" +
+    return '<div style="font-size:12px;color:#fff;font-weight:800;margin:8px 0 4px">埋伏候选 <span style="font-size:10px;font-weight:600;opacity:.75">' + (fundOn ? "按今天主力流入排 · 已剔ST/资金流出" : "盘前=昨天收盘阶段") + ' · 左右滑 · 未回测</span></div><div id="jlrecPg" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">' + cards + "</div>" +
       (conflict.length || brokeL.length ? '<div style="font-size:10.5px;font-weight:700;color:#ff9a9d;margin-top:3px">' + (brokeL.length ? "龙头断板、不推：" + brokeL.map(esc).join("、") + "　" : "") + (conflict.length ? "主力出逃过、不推：" + conflict.map(esc).join("、") : "") + "</div>" : "");
   }
   /* 11-05 打法总纲①: 抽屉顶部"天气"——涨停数/最高板/晋级率/炸板回封, 判情绪阶段。数据=jl_zt_hist_v1(首页涨停池每日存档), 零新增请求; 阶段阈值是二手初值, 未回测 */
