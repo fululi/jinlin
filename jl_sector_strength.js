@@ -1380,18 +1380,21 @@
   /* jl-fund: 资金看板——9:15竞价起就有; 埋伏候选=资金在进但还没怎么涨, 假拉=涨了但主力在出 */
   function fundBoardHtml() {
     var q = S.bkq && S.bkq.m; if (!q) return "";
-    var names = Object.keys(S.ana || {}).length ? Object.keys(S.ana) : [];
-    var rows = names.map(function (sec) { var b = bkqOf(sec); return b && isFinite(b.f) ? { sec: sec, b: b } : null; }).filter(Boolean);
+    /* 11-08 用户: 11-04 贵金属9:20就有资金信号、当天下午爆——资金榜要实时(3分钟, 同监控那份数据, 不多发请求), 而且不能只看我们15分钟排名里有的板块 → 改成东财全部题材板块(剔融资融券/股通等) */
+    var FJ = /融资融券|股通|昨日|MSCI|富时|标普|证金|重仓|QFII|次新|高送转|创业板综|央视|红利|小盘|大盘|中盘|低价|高价|破净|摘帽|壳资源|预增|预亏|预盈|扭亏|减亏|亏损|热股|ST股|AB股|含H股|含GDR|转债|百元股|微盘|基金|社保|养老金|上证|深证|中证|沪深|HS300|指数|AH股|B股|权重|茅指数|宁组合|同花顺|东方财富|参股|新股|注册制|北交所|深成|科创|机构/;
+    var rows = Object.keys(q).filter(function (k) { return !FJ.test(k) && q[k] && isFinite(q[k].f); }).map(function (k) { return { sec: k, b: q[k] }; });
     if (!rows.length) return "";
     var hm = hmNow(), early = hm >= 915 && hm < 930;
+    var top = rows.filter(function (o) { return o.b.f >= 1e8; }).sort(function (x, y) { return (y.b.fr || 0) - (x.b.fr || 0); }).slice(0, 8); /* 回测: 按占成交比排比按净额排好; 净额<1亿的小板块不进 */
     var inn = rows.filter(function (o) { return o.b.f > 0 && o.b.p <= CORE.FUND.IN_PMAX + 1.5; }).sort(function (x, y) { return y.b.fr - x.b.fr; }).slice(0, 5);
     var out = rows.filter(function (o) { var sg = CORE.fundSig(o.b, ourAvg(o.sec)); return sg && sg.k === "out"; }).sort(function (x, y) { return x.b.f - y.b.f; }).slice(0, 4);
     var line = function (o, warn) {
       var sg = CORE.fundSig(o.b, ourAvg(o.sec));
-      return '<div data-jlsec="' + esc(o.sec) + '" style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.95"><b style="color:' + (warn ? "#5ae8ab" : "#ffd21f") + '">' + esc(o.sec) + "</b>" + (sg && sg.k === "in" ? '<span style="font-size:9px;font-weight:800;padding:0 4px;border-radius:5px;color:#10131a;background:#ffd21f">资金先进</span>' : "") +
+      return '<div data-jlsec="' + esc(o.sec) + '" style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.95">' + secRingOf(o.sec) + '<b style="color:' + (warn ? "#5ae8ab" : "#ffd21f") + '">' + esc(o.sec) + "</b>" + (sg && sg.k === "in" ? '<span style="font-size:9px;font-weight:800;padding:0 4px;border-radius:5px;color:#10131a;background:#ffd21f">资金先进</span>' : "") +
         '<span style="margin-left:auto;color:' + (o.b.p >= 0 ? "#ff5459" : "#2fd18b") + '">' + fmtPct(o.b.p) + '</span><span style="flex:0 0 58px;text-align:right;color:' + (o.b.f >= 0 ? "#ff5459" : "#2fd18b") + '">' + fmtFund(o.b.f) + '</span><span style="flex:0 0 38px;text-align:right;opacity:.85">' + (isFinite(o.b.fr) ? o.b.fr.toFixed(1) + "%" : "") + "</span></div>";
     };
     return '<div style="padding:7px 9px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,210,31,.06);border:1px solid rgba(255,210,31,.3)"><div style="display:flex;align-items:baseline;font-size:11px;color:#ffd21f;font-weight:800">💰 板块资金' + (early ? " · 竞价中" : "") + '<span style="margin-left:auto;font-size:9.5px;color:rgba(255,255,255,.65);font-weight:600">涨幅 · 主力净额 · 占成交 · ' + hhmm(S.bkq.t) + "</span></div>" +
+      (top.length ? '<div style="font-size:10px;color:#fff;font-weight:800;margin-top:3px">资金流入最强（按主力占成交 · 3分钟一更）</div>' + top.map(function (o) { return line(o); }).join("") : "") +
       (inn.length ? '<div style="font-size:10px;color:rgba(255,255,255,.75);font-weight:700;margin-top:3px">资金在进、还没怎么涨（埋伏候选）</div>' + inn.map(function (o) { return line(o); }).join("") : "") +
       (out.length ? '<div style="font-size:10px;color:#5ae8ab;font-weight:700;margin-top:4px">⚠ 涨了但主力在出（小心假拉）</div>' + out.map(function (o) { return line(o, 1); }).join("") : "") +
       (early ? '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600">竞价段主力数据还很少，9:30后会越来越准</div>' : "") + "</div>";
@@ -1443,7 +1446,7 @@
     var sgL = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); }), sg0 = sgL[0];
     var sgHot = !!(sg0 && S.live && Date.now() - (sg0.t2 || sg0.t) < 40 * 60e3);
     if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : "") + " · " + sub;
-    var body = weatherHtml() + surgeHtml() + fundBoardHtml(); /* 11-06 用户: 「我的票」占地且与联动球持仓一览重复→抽屉里删, 前10天/位置短语并进联动球(jlMyStkTagJL) */ /* 11-05 用户: 持仓细分资金联动球里已有, 不重复(holdFundHtml 留着未挂载) */
+    var body = fundBoardHtml() + weatherHtml() + surgeHtml(); /* 11-08 用户: 实时资金榜放最上面 */ /* 11-06 用户: 「我的票」占地且与联动球持仓一览重复→抽屉里删, 前10天/位置短语并进联动球(jlMyStkTagJL) */ /* 11-05 用户: 持仓细分资金联动球里已有, 不重复(holdFundHtml 留着未挂载) */
     if (has) {
       var o = S.last, rk = o.ranked.slice(0, 8);
       var restAll = o.recs.filter(function (r) { return r.factors.avgPct.state !== "ok" && r.sector !== CORE.UNATTR; });
