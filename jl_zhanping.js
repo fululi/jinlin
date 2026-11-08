@@ -49,7 +49,7 @@
     '#jlZpBallJL.attn{animation:jlZpAttn 1.6s ease-in-out 4}@keyframes jlZpAttn{50%{transform:scale(1.22);box-shadow:0 0 0 8px rgba(232,195,122,.30),0 5px 20px rgba(0,0,0,.5)}}' +
     '#jlZpBallJL.ring{animation:jlZpRing 1s ease-in-out 3}@keyframes jlZpRing{50%{box-shadow:0 0 0 6px rgba(232,195,122,.35),0 4px 18px rgba(0,0,0,.45)}}' +
     /* 11-08 用户: 浮动球页面卡面别死黑 → 半透明轻磨砂(同持仓卡), 战屏页面本身透明(jl_zp_war.html body.injlin) */
-     '#jlZpSheetJL'#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,#1b2a45,#14213a);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(255,255,255,.18);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 12px 40px rgba(0,0,0,.45);overflow:hidden}' +
+    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,#1b2a45,#14213a);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(255,255,255,.18);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 12px 40px rgba(0,0,0,.45);overflow:hidden}' +
 
 
     '#jlZpSheetJL iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:dark}' +
