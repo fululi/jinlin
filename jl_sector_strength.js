@@ -718,17 +718,17 @@
   function memPack(sec, arr) {
       var all = arr.map(function (r) { var pr = +r.f2, up = +r.f350; return { c: String(r.f12), n: String(r.f14 || r.f12), p: +r.f3, f: +r.f62, vr: +r.f10, pr: pr, zt: up > 0 && pr > 0 ? pr >= up - 0.001 : +r.f3 >= 9.8 }; }).filter(function (x) { return isFinite(x.p) && !/ST|退/i.test(x.n); }).sort(function (a, b) { return b.p - a.p; }); /* 11-08 用户: 成分股里剔 ST/*ST/退市 */
       /* 用户11-04: 没封板、买得进的排前面(最多5只), 涨停的放后面(最多3只); 涨停按东财f350涨停价判, 20%板也对 */
-      var list = all.filter(function (x) { return !x.zt; }).slice(0, 5).concat(all.filter(function (x) { return x.zt; }).slice(0, 3));
+      var list = all.filter(function (x) { return !x.zt; }).slice(0, 5).concat(all.filter(function (x) { return x.zt; }).slice(0, 6)) /* 11-08 用户: 涨停太少→最多6只 */;
       return (S.mem[sec] = { t: Date.now(), list: list, none: !list.length });
   }
   function memOf(sec) { /* 成分股: 按我们自己的归属取涨幅前10只, 再向东财取名称/涨幅/主力净额 */
     var m = S.mem[sec]; if (m && Date.now() - m.t < 120000) return Promise.resolve(m);
     if (S.memP[sec]) return S.memP[sec];
-    var ms = membersOf(sec).slice(0, 16); /* jl-surge: 多取几只, 前10全涨停时也能列出买得进的 */
+    var ms = membersOf(sec).slice(0, 20); /* jl-surge: 多取几只, 前10全涨停时也能列出买得进的 */
     if (!ms.length) { /* 我们归属表里没有(如东财的贵金属/行业板块): 直接取东财该板块成分股, 按涨幅前16 */
       var bq = bkqOf(sec) || (S.bk && S.bk[CORE.unalias(sec)] ? { c: S.bk[CORE.unalias(sec)] } : null);
       if (!bq || !bq.c) return Promise.resolve((S.mem[sec] = { t: Date.now(), list: [], none: true }));
-      var p0 = emGet("https://push2.eastmoney.com/api/qt/clist/get?fid=f3&po=1&pz=16&pn=1&np=1&fltt=2&invt=2&fs=b:" + bq.c + "&fields=f2,f3,f10,f12,f14,f62,f350&ut=" + UT_, 60000).then(function (d) {
+      var p0 = emGet("https://push2.eastmoney.com/api/qt/clist/get?fid=f3&po=1&pz=20&pn=1&np=1&fltt=2&invt=2&fs=b:" + bq.c + "&fields=f2,f3,f10,f12,f14,f62,f350&ut=" + UT_, 60000).then(function (d) {
         var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [];
         return memPack(sec, arr);
       }).catch(function () { return (S.mem[sec] = { t: Date.now() - 100000, list: [], none: true, err: 1 }); }).then(function (r) { delete S.memP[sec]; return r; });
@@ -1153,7 +1153,7 @@
       var m = S.mem[o.k];
       if (!m) { if (!S.recAsk) S.recAsk = {}; if (!S.recAsk[o.k]) { S.recAsk[o.k] = 1; memOf(o.k).then(function () { paint(); }); } return; }
       var early = hmNow() >= 915 && hmNow() < 930; /* 竞价段个股主力净额多为0, 放宽成>=0, 再按涨幅 */
-      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = o.c && o.c.k >= 2 && o.c.k <= 3 ? all.filter(function (x) { return x.zt; }).slice(0, 2) : []; /* 11-08 用户: 真启动的好板块(阶段启动/加速+今天资金在进)才带涨停股, 标排队难买, 看一下也行 */
+      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = o.c && o.c.k >= 2 && o.c.k <= 3 ? all.filter(function (x) { return x.zt; }).slice(0, 5) : []; /* 11-08 用户: 真启动的好板块(阶段启动/加速+今天资金在进)才带涨停股, 标排队难买, 看一下也行 */
       if (!buy.length && !zts.length) return; n++;
       var lead = all.slice().sort(function (x, y) { return ((lb[y.c] || 0) - (lb[x.c] || 0)) || (y.p - x.p); })[0]; /* 11-05 用户: 老龙不一定要连板, 开启轮动的领涨股也算: 先看连板最高, 没有连板就看今天涨幅最大 */
       var c = o.c || { name: "资金进", streak: 0, cum5: null, avg: o.q ? o.q.p : null, zt: 0 }, tile = function (v, l, col) { return '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:800;color:' + (col || "#fff") + ';line-height:1.15">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
