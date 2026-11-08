@@ -3394,7 +3394,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
     const b = e.target.closest("[data-mtd-open]");
     if (!b) return;
     const code = String(b.dataset.mtdOpen), name = b.dataset.n || code;
-    if (!byCode(code)) { researchedStocksJL.push({ code, name, base: 0, pct: 0, qty: 0, cost: null, pnl: 0 }); saveResearchJL(); }
+    if (!byCode(code)) { researchedStocksJL.push({ code, name, base: 0, pct: 0, qty: 0, cost: null, pnl: 0, peek: 1 }); saveResearchJL(); } /* jl-wl1: 只看不进自选 */
     openChart(code, "home");
   });
   $("mtUpdatedJL")?.addEventListener("click", () => loadMTempJL(true));
@@ -3449,7 +3449,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
     renderYidongJL();
   }
   function ydOpenStockJL(c6, name, pct2) {
-    if (!byCode(c6)) { researchedStocksJL.push({ code: c6, name: name || c6, base: 0, pct: Number(pct2) || 0 }); saveResearchJL(); }
+    if (!byCode(c6)) { researchedStocksJL.push({ code: c6, name: name || c6, base: 0, pct: Number(pct2) || 0, peek: 1 }); saveResearchJL(); } /* jl-wl1 11-08 用户: 板块里点进去只是看, 不自动进自选(peek), 要加点"+自选" */
     openChart(c6, "home");
   }
   function ydBubbleTapJL(hy) {
@@ -8300,9 +8300,17 @@ function playbookHTMLJL(s, leg, swSt) {
       const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u89c4\u5219\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? ((pl.x.obsGate && pl.x.obsGate.status) || "资金待确认") : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
       return `<article class="watchItem" style="position:relative">${s2.qty > 0 && !s2.watch ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" type="button" style="position:absolute;right:6px;top:6px;z-index:20;width:28px;height:28px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s2)}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
     };
-    const obs = rows.filter((s2) => !(s2.qty > 0) || s2.watch);
-    $("watchList").innerHTML = obs.length ? '<div class="dragonGroup"><b>\u89C2\u5BDF ' + obs.length + "</b></div>" + obs.map(card).join("") : "";
-    periodBars($("watchList"));
+    const obs = rows.filter((s2) => (!(s2.qty > 0) || s2.watch) && !(s2.peek && !stocks.some((x) => x.code === s2.code)));
+    /* jl-wl1 11-08 用户"自选页卡、选好的票老跳": 原来每次刷新整列表 innerHTML 重建, 点开的K线被收回、页面跳 → 记住展开的票, 重建后还原; 内容一样就不重建 */
+    const wl = $("watchList"), html = obs.length ? '<div class="dragonGroup"><b>\u89C2\u5BDF ' + obs.length + "</b></div>" + obs.map(card).join("") : "";
+    if (wl.__h === html && wl.firstChild && wl.firstChild === wl.__f0) return;   /* 龙池页也写这个容器, 用首节点判断还是不是上次那份 */
+    const openSet = new Set([...wl.querySelectorAll(".watchDetail:not([hidden])")].map((d) => d.dataset.detailCode));
+    const sy = window.scrollY, sc = wl.closest(".view"), st0 = sc ? sc.scrollTop : 0;
+    wl.innerHTML = html; wl.__h = html; wl.__f0 = wl.firstChild;
+    openSet.forEach((c) => { const d = wl.querySelector('.watchDetail[data-detail-code="' + c + '"]'); if (d) { d.hidden = false; const b = d.parentElement.querySelector("[data-watch-detail]"); if (b) b.setAttribute("aria-expanded", "true"); } });
+    try { if (sc && sc.scrollTop !== st0) sc.scrollTop = st0; if (window.scrollY !== sy) window.scrollTo(0, sy); } catch (eS) {}
+    periodBars(wl);
+    if (openSet.size) try { paint(); } catch (eP2) {}
   }
   qa("[data-watch]").forEach((b) => b.onclick = () => {
     watchMode = b.dataset.watch;
