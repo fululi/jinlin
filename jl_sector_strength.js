@@ -627,9 +627,9 @@
     var m = {}, codes = {};
     /* 11-04: 1027个板块全量要11页/3分钟, 东财会限流——只取主力流入前100(po=1)+流出前100(po=0)两页; 能触发提醒的板块都在这两页里 */
     var page = function (po) {
-      return emGet("https://push2.eastmoney.com/api/qt/clist/get?fid=f62&po=" + po + "&pz=100&pn=1&np=1&fltt=2&invt=2&fs=m:90+t:2,m:90+t:3&fields=f12,f14,f3,f62,f184,f6&ut=" + UT_, 120000).then(function (d) {
+      return emGet("https://push2.eastmoney.com/api/qt/clist/get?fid=f62&po=" + po + "&pz=100&pn=1&np=1&fltt=2&invt=2&fs=m:90+t:2,m:90+t:3&fields=f12,f14,f3,f62,f184,f6,f15,f16,f18&ut=" + UT_, 120000).then(function (d) {
         var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [];
-        arr.forEach(function (r) { if (!r || !r.f14) return; codes[String(r.f14)] = String(r.f12); m[String(r.f14)] = { p: +r.f3, f: +r.f62, fr: +r.f184, a: +r.f6, c: String(r.f12) }; });
+        arr.forEach(function (r) { if (!r || !r.f14) return; codes[String(r.f14)] = String(r.f12); m[String(r.f14)] = { p: +r.f3, f: +r.f62, fr: +r.f184, a: +r.f6, c: String(r.f12), hi: +r.f15, lo: +r.f16, pc0: +r.f18 }; });
       });
     };
     S.bkqP = page(1).then(function () { return page(0); }).then(function () {
@@ -716,7 +716,7 @@
     return out.sort(function (a, b) { return b[1] - a[1]; });
   }
   function memPack(sec, arr) {
-      var all = arr.map(function (r) { var pr = +r.f2, up = +r.f350; return { c: String(r.f12), n: String(r.f14 || r.f12), p: +r.f3, f: +r.f62, vr: +r.f10, pr: pr, zt: up > 0 && pr > 0 ? pr >= up - 0.001 : +r.f3 >= 9.8 }; }).filter(function (x) { return isFinite(x.p) && !/ST|退/i.test(x.n); }).sort(function (a, b) { return b.p - a.p; }); /* 11-08 用户: 成分股里剔 ST/*ST/退市 */
+      var all = arr.map(function (r) { var pr = +r.f2, up = +r.f350; return { c: String(r.f12), n: String(r.f14 || r.f12), p: +r.f3, f: +r.f62, vr: +r.f10, pr: pr, hi: +r.f15, lo: +r.f16, pc0: +r.f18, zt: up > 0 && pr > 0 ? pr >= up - 0.001 : +r.f3 >= 9.8 }; }).filter(function (x) { return isFinite(x.p) && !/ST|退/i.test(x.n); }).sort(function (a, b) { return b.p - a.p; }); /* 11-08 用户: 成分股里剔 ST/*ST/退市 */
       /* 用户11-04: 没封板、买得进的排前面(最多5只), 涨停的放后面(最多3只); 涨停按东财f350涨停价判, 20%板也对 */
       var list = all.filter(function (x) { return !x.zt; }).slice(0, 5).concat(all.filter(function (x) { return x.zt; }).slice(0, 6)) /* 11-08 用户: 涨停太少→最多6只 */;
       return (S.mem[sec] = { t: Date.now(), list: list, none: !list.length });
@@ -728,14 +728,14 @@
     if (!ms.length) { /* 我们归属表里没有(如东财的贵金属/行业板块): 直接取东财该板块成分股, 按涨幅前16 */
       var bq = bkqOf(sec) || (S.bk && S.bk[CORE.unalias(sec)] ? { c: S.bk[CORE.unalias(sec)] } : null);
       if (!bq || !bq.c) return Promise.resolve((S.mem[sec] = { t: Date.now(), list: [], none: true }));
-      var p0 = emGet("https://push2.eastmoney.com/api/qt/clist/get?fid=f3&po=1&pz=20&pn=1&np=1&fltt=2&invt=2&fs=b:" + bq.c + "&fields=f2,f3,f10,f12,f14,f62,f350&ut=" + UT_, 60000).then(function (d) {
+      var p0 = emGet("https://push2.eastmoney.com/api/qt/clist/get?fid=f3&po=1&pz=20&pn=1&np=1&fltt=2&invt=2&fs=b:" + bq.c + "&fields=f2,f3,f10,f12,f14,f62,f350,f15,f16,f18&ut=" + UT_, 60000).then(function (d) {
         var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [];
         return memPack(sec, arr);
       }).catch(function () { return (S.mem[sec] = { t: Date.now() - 100000, list: [], none: true, err: 1 }); }).then(function (r) { delete S.memP[sec]; return r; });
       return (S.memP[sec] = p0);
     }
     var ids = ms.map(function (x) { return (/^[69]/.test(x[0]) ? "1." : "0.") + x[0]; }).join(",");
-    var p = emGet("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f10,f12,f14,f62,f350&secids=" + ids + "&ut=bd1d9ddb04089700cf9c27f6f7426281", 60000).then(function (d) {
+    var p = emGet("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&invt=2&fields=f2,f3,f10,f12,f14,f62,f350,f15,f16,f18&secids=" + ids + "&ut=bd1d9ddb04089700cf9c27f6f7426281", 60000).then(function (d) {
       var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [];
       return memPack(sec, arr);
     }).catch(function () { return (S.mem[sec] = { t: Date.now() - 100000, list: [], none: true, err: 1 }); }).then(function (r) { delete S.memP[sec]; return r; });
@@ -795,7 +795,7 @@
     var c = S.ana[sec].cur, fill = c.avg == null ? "#8b93a3" : c.avg >= 0 ? "#ff5459" : "#2fd18b", f = S.flow[sec], fv = flowVerdict(f);
     var gone = (c.k >= 4 && (!fv || fv.out || fv.weak)) || (fv && fv.out && c.streak >= 2), still = !gone && c.k >= 1 && c.k <= 3 && !(fv && fv.out);
     var bd = gone ? '<span style="font-size:10px;font-weight:800;padding:0 7px;border-radius:7px;color:#10131a;background:rgba(255,255,255,.7)">已过</span>' : still ? '<span style="font-size:10px;font-weight:800;padding:0 7px;border-radius:7px;color:#10131a;background:#ffd21f">还在</span>' : "";
-    return '<div class="jlpgC" style="flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:6px 8px 4px"><div style="display:flex;align-items:center;gap:2px"><b data-jlsec="' + esc(sec) + '" style="font-size:13px;color:#ffd21f;text-decoration:underline;text-underline-offset:3px">' + esc(sec) + " ›</b>" + stTag(sec) + '<span style="margin-left:6px">' + bd + '</span><b style="margin-left:auto;font-size:12px;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</b></div>" +
+    return '<div class="jlpgC" style="flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:6px 8px 4px"><div style="display:flex;align-items:center;gap:2px">' + secRingOf(sec) + '<b data-jlsec="' + esc(sec) + '" style="font-size:13px;color:#ffd21f;text-decoration:underline;text-underline-offset:3px">' + esc(sec) + " ›</b>" + stTag(sec) + '<span style="margin-left:6px">' + bd + '</span><b style="margin-left:auto;font-size:12px;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</b></div>" +
       trackSvg(sec) + fundRow(f, fv) + memHtml(sec) + "</div>";
   }
   function revRank() { /* 夜间/休市: 原"现在最强的板块"用最近交易日快照补上 */
@@ -870,7 +870,7 @@
     if (e.state === "ok" && e.raw && e.raw.codeN) bits.push("盘中异动 " + e.raw.codeN + "只");
     var lead = L && L.cand && L.cand.length ? L.cand.slice(0, 2).map(function (c) { return esc(c.n) + (c.lbc > 1 ? "(" + c.lbc + "连板)" : "(涨停)"); }).join("、") : "";
     return '<div data-jlsec="' + esc(rec.sector) + '" style="padding:7px 9px;margin:4px 0;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)">' +
-      '<div style="display:flex;justify-content:space-between;align-items:baseline"><span><b style="font-size:12.5px;color:#ffd21f">' + (i != null ? (i + 1) + ". " : "") + esc(rec.sector) + '</b>' + stTag(rec.sector) + '</span>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:5px">' + secRingOf(rec.sector) + '<b style="font-size:12.5px;color:#ffd21f">' + (i != null ? (i + 1) + ". " : "") + esc(rec.sector) + '</b>' + stTag(rec.sector) + '</span>' +
       (a.state === "ok" ? '<b style="font-size:12px;color:' + col + '">平均' + (a.raw >= 0 ? "涨 " : "跌 ") + Math.abs(Math.round(a.raw * 100) / 100).toFixed(2) + "%</b>" : "") + "</div>" +
       (bits.length ? '<div style="font-size:10.5px;color:#fff;font-weight:600;margin-top:3px">' + bits.join(" · ") + "</div>" : "") +
       (lead ? '<div style="font-size:10px;color:rgba(255,255,255,.95);font-weight:600;margin-top:2px">带头的：' + lead + "</div>" : "") + "</div>";
@@ -968,10 +968,36 @@
     } catch (e) {}
   }
   function fmtFund(f) { return isFinite(f) ? (f >= 0 ? "+" : "") + (Math.abs(f) >= 1e8 ? (f / 1e8).toFixed(1) + "亿" : (f / 1e4).toFixed(0) + "万") : ""; }
+  /* 11-08 用户: 板块里每只股票和板块名前加振幅小圈(同作战屏/自选页: 今振幅÷前20日日均振幅; 淡蓝=没到均/黄=到均/橙红>=1.4倍), 圈里写数字=到日均的百分之几(72=七成二)
+     日均振幅=东财日K前20根(不含今天)的(高-低)/昨收, 每只每天只取一次, 存 jl_ampavg_v1; 今天高低用现成报价(f15/f16/f18), 不另请求 */
+  var AMPQ = {}, AMPT = 0;
+  function ampAvgOf(secid) {
+    var C = S.ampC || (S.ampC = lsGet("jl_ampavg_v1") || {}), day = localDay(Date.now()), e = C[secid];
+    if (e && e.d === day) return e.v;
+    if (AMPQ[secid] || Object.keys(AMPQ).length > 6) return null;
+    AMPQ[secid] = 1;
+    emGet("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + secid + "&klt=101&fqt=1&lmt=22&end=20500101&fields1=f1&fields2=f51,f53,f54,f55&ut=" + UT_, 6 * 3600e3).then(function (d) {
+      var ks = (d && d.data && d.data.klines || []).map(function (x) { var a = String(x).split(","); return { d: a[0], c: +a[1], h: +a[2], l: +a[3] }; });
+      var td = String(S.day || ""); if (ks.length && (ks[ks.length - 1].d === td || ks[ks.length - 1].d === day)) ks.pop();
+      var v = []; for (var k = Math.max(1, ks.length - 20); k < ks.length; k++) { var pc = ks[k - 1].c; if (pc > 0 && ks[k].h >= ks[k].l) v.push((ks[k].h - ks[k].l) / pc * 100); }
+      C[secid] = { d: day, v: v.length >= 5 ? v.reduce(function (a, b) { return a + b; }, 0) / v.length : 0 };
+      var ks2 = Object.keys(C); if (ks2.length > 600) ks2.forEach(function (k) { if (C[k].d !== day) delete C[k]; });
+      try { localStorage.setItem("jl_ampavg_v1", JSON.stringify(C)); } catch (er) {}
+    }).catch(function () {}).then(function () { delete AMPQ[secid]; if (!AMPT) AMPT = setTimeout(function () { AMPT = 0; paint(); }, 600); });
+    return null;
+  }
+  function ampRing(secid, hi, lo, pc0) {
+    var av = ampAvgOf(secid), am = pc0 > 0 && hi > 0 && lo > 0 && hi >= lo ? (hi - lo) / pc0 * 100 : 0;
+    var r = 8.6, L = 2 * Math.PI * r, f = av > 0 ? Math.min(1, am / av) : 0, rc = !(av > 0) ? "rgba(255,255,255,.25)" : am >= av * 1.4 ? "#ff7a2e" : am >= av ? "#ffe14d" : "#cfe0ff";
+    var num = av > 0 ? String(Math.round(am / av * 100)) : "", fs = num.length >= 3 ? 6.6 : 7.8;
+    return '<svg viewBox="0 0 22 22" width="22" height="22" style="flex:0 0 22px;display:inline-block;vertical-align:middle" aria-label="振幅' + am.toFixed(1) + "/均" + (av || 0).toFixed(1) + '"><circle cx="11" cy="11" r="' + r + '" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.2"/>' + (f > 0 ? '<circle cx="11" cy="11" r="' + r + '" fill="none" stroke="' + rc + '" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="' + (L * f).toFixed(1) + " " + L.toFixed(1) + '" transform="rotate(-90 11 11)"/>' : "") + (num ? '<text x="11" y="11" dy=".36em" text-anchor="middle" font-size="' + fs + '" font-weight="800" fill="' + rc + '">' + num + "</text>" : "") + "</svg>";
+  }
+  function stkRingOf(x) { return x && x.c ? ampRing((/^[69]/.test(x.c) ? "1." : "0.") + x.c, x.hi, x.lo, x.pc0) : ""; }
+  function secRingOf(sec) { var q = bkqOf(sec); return q && q.c && q.hi > 0 ? ampRing("90." + q.c, q.hi, q.lo, q.pc0) : ""; }
   function stkRow(x) {
     var col = x.p >= 0 ? "#ff5459" : "#2fd18b", zt = x.zt != null ? x.zt : x.p >= 9.8, b = "flex:0 0 auto;font-size:10px;font-weight:800;padding:1px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.55);color:#fff;background:rgba(255,255,255,.06)";
     var dat = ' data-c="' + esc(x.c) + '" data-n="' + esc(x.n) + '" data-p="' + (isFinite(x.pr) ? x.pr : "") + '" data-pc="' + (isFinite(x.p) ? x.p : "") + '"';
-    return '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#fff;line-height:2">' +
+    return '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#fff;line-height:2">' + stkRingOf(x) +
       '<span data-jlstk="open"' + dat + ' style="text-decoration:underline;text-decoration-color:rgba(255,255,255,.35);text-underline-offset:3px">' + esc(x.n) + "</span>" +
       (zt ? '<span style="font-size:9px;font-weight:800;color:#10131a;background:#ffd21f;border-radius:5px;padding:0 4px">板</span>' : "") +
       '<b style="margin-left:auto;color:' + col + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(2) + "%</b>" +
@@ -1040,7 +1066,7 @@
     if (bits.length && x.kind !== "view") body += "<br>" + bits.join(" · ");
     if ((x.kind === "surge" || x.kind === "fund" || !x.kind) && outToday(x.sec) && outToday(x.sec) !== x) body += "<br><b style=\"color:#ff9a9d\">⚠ 冲突：" + hhmm(outToday(x.sec).t2 || outToday(x.sec).t) + " 这个板块主力出逃过，别当成干净的买点</b>";
     var stk = review ? (x.stk ? '<div style="font-size:9.5px;opacity:.7;font-weight:700">提醒那会儿的价（' + hhmm(x.stkT || tt) + "）</div>" + stkRows(x.stk) : '<div style="font-size:10px;opacity:.6;font-weight:600">当时没存成分股</div>') : stkList(x.sec);
-    return '<div class="jlsgP" data-sec="' + esc(x.sec) + '" data-kind="' + (x.kind || "surge") + '"><div class="jlsgK">' + kindTitle(x) + (x.kind !== "view" ? " · " + hhmm(tt) : "") + (x.t2 ? " · 二次加速" : "") + (x.why ? " · " + esc(x.why) : "") + '</div><div class="jlsgH">' + esc(x.sec) + '</div><div class="jlsgB">' + body + '</div><div class="jlsgL">' + stk + "</div></div>";
+    return '<div class="jlsgP" data-sec="' + esc(x.sec) + '" data-kind="' + (x.kind || "surge") + '"><div class="jlsgK">' + kindTitle(x) + (x.kind !== "view" ? " · " + hhmm(tt) : "") + (x.t2 ? " · 二次加速" : "") + (x.why ? " · " + esc(x.why) : "") + '</div><div class="jlsgH" style="display:flex;align-items:center;gap:6px">' + secRingOf(x.sec) + "<span>" + esc(x.sec) + "</span>" + '</div><div class="jlsgB">' + body + '</div><div class="jlsgL">' + stk + "</div></div>";
   }
   var SH = { day: "", items: [], i: 0 };
   function sheetDays() { var h = histAll(), ds = Object.keys(h).filter(function (d) { return h[d] && h[d].length; }); if (S.day && ds.indexOf(S.day) < 0 && (S.surges || []).length) ds.push(S.day); return ds.sort(); }
@@ -1166,12 +1192,12 @@
         var start = !isZt && x.p >= 5 && x.vr >= 1.5 && x.f > 0;
         var rec = recTrack(x, o.k), role0 = start ? "启动" : "";
         var role = role0 || lead && x.c === lead.c ? (lb[x.c] > 1 ? "老龙" : "领涨") : (lead && lead.p - x.p >= 2 ? "补涨" : "");
-        return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)"><span data-jlstk="open"' + dat + ' style="font-size:14px;font-weight:800;color:#fff">' + esc(x.n) + '</span>' +
+        return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)">' + stkRingOf(x) + '<span data-jlstk="open"' + dat + ' style="font-size:14px;font-weight:800;color:#fff">' + esc(x.n) + '</span>' +
           (isZt ? '<span style="font-size:10px;font-weight:800;color:#10131a;background:#ffd21f;border-radius:6px;padding:1px 6px">' + (l || "涨停") + ' · 排队难买</span>' : (l ? '<span style="font-size:10px;font-weight:800;color:#ffd21f">' + l + "</span>" : "")) +
           (rec ? '<span style="margin-left:auto;font-size:10px;font-weight:700;color:' + (rec.g >= 0 ? "#ff9a9d" : "#7ee0b8") + '">推荐后' + (rec.g >= 0 ? "+" : "") + rec.g.toFixed(1) + '%·第' + rec.d + '天</span>' : '') + '<b style="' + (rec ? "" : "margin-left:auto;") + 'font-size:14px;color:' + (x.p >= 0 ? "#ff5459" : "#2fd18b") + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(1) + '%</b><span data-jlstk="watch"' + dat + ' style="' + b + '">+自选</span></div>';
       };
       cards += '<div style="flex:0 0 84%;scroll-snap-align:start;box-sizing:border-box;padding:10px 12px;margin-right:8px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.25)">' +
-        '<div style="display:flex;align-items:baseline;gap:8px"><span data-jlsec="' + esc(o.k) + '" style="font-size:16px;font-weight:800;color:#fff">' + esc(o.k) + '</span><span style="font-size:11px;font-weight:800;color:#ffd21f">' + esc(c.name) + '</span><span style="margin-left:auto;font-size:10.5px;font-weight:700;opacity:.8">' + esc(risk) + '</span></div>' +
+        '<div style="display:flex;align-items:center;gap:6px">' + secRingOf(o.k) + '<span data-jlsec="' + esc(o.k) + '" style="font-size:16px;font-weight:800;color:#fff">' + esc(o.k) + '</span><span style="font-size:11px;font-weight:800;color:#ffd21f">' + esc(c.name) + '</span><span style="margin-left:auto;font-size:10.5px;font-weight:700;opacity:.8">' + esc(risk) + '</span></div>' +
         '<div style="display:flex;margin:8px 0 4px">' + tile(runN ? "第" + runN + "天" : "新", "强势轮动", "#ffd21f") + tile(c.cum5 == null ? "—" : (up ? "+" : "") + c.cum5.toFixed(1) + "%", "近5天累计", up ? "#ff5459" : "#2fd18b") + tile((c.avg >= 0 ? "+" : "") + (c.avg || 0).toFixed(1) + "%", "最近一天", c.avg >= 0 ? "#ff5459" : "#2fd18b") + "</div>" +
         buy.map(function (x) { return row(x, false); }).join("") + zts.map(function (x) { return row(x, true); }).join("") + "</div>";
     });
