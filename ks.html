@@ -854,7 +854,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false, jitu: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
+  ind: { amp: true, ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false, jitu: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawColor: "#ffd21f", pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式; ks-1012: drawColor=抽屉色板当前色(新画线用)
   favs: ["ind:phvl"], favPick: false, favHide: false, /* ks-1022b: 高低区默认入收藏栏(常驻顶栏一步开关) */ // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
@@ -919,7 +919,7 @@ function restore() {
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = (o.klt === "TS") ? "TS" : normalizeKlt(o.klt); /* ks-1151 K2/D1: TS身份持久化, 刷新后仍停留分时 */
     S.ts.on = (S.klt === "TS");
-    if (o.ind) { S.ind = o.ind; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.jitu == null) S.ind.jitu = false; /* jl-1227: 积突默认关(研究型信号不强制亮), 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
+    if (o.ind) { S.ind = o.ind; if (S.ind.amp == null) S.ind.amp = true; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.jitu == null) S.ind.jitu = false; /* jl-1227: 积突默认关(研究型信号不强制亮), 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.lineColor) S.lineColor = o.lineColor; /* ks-1151fix10 */
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
@@ -2733,6 +2733,7 @@ function drawReal() {
   ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
   renderPHVLJL(ctx, v); /* ks-1022: PHVL高低区带·底层 */
   renderICT(ctx, v);
+  try { renderAmpJL(ctx, v); } catch (eA) { if (window.console) console.warn("[amp]", eA); }
   try { renderGapsJL(ctx, v); } catch (eG9) { if (window.console) console.warn("[gaps]", eG9); }
   renderAutoTri(ctx, v);
   renderDailyLevels(ctx, v);
@@ -4785,6 +4786,122 @@ function renderGapsJL(ctx, v) { /* ks-1151fix11n: 日界跳空带从renderICT抽
     }
   }
 }
+/* ===== 11-08 流动性: 作战屏 tvLiq 照搬(逻辑零改动) + 画法(框/线/细字, 颜色调亮) ===== */
+function tvLiqJL(K) {
+  var n = K.length, L = 5, out = { B: [], S: [] }; if (n < L + 3) return out;
+  var atr = new Array(n).fill(NaN), s = 0;
+  for (var i = 0; i < n; i++) {
+    var tr = i ? Math.max(K[i].h - K[i].l, Math.abs(K[i].h - K[i - 1].c), Math.abs(K[i].l - K[i - 1].c)) : K[i].h - K[i].l;
+    if (i < 10) { s += tr; if (i === 9) atr[i] = s / 10; } else atr[i] = (atr[i - 1] * 9 + tr) / 10;
+  }
+  var zd = [], zx = [], zy = []; for (var z = 0; z < 50; z++) { zd.push(0); zx.push(0); zy.push(NaN); }
+  function ins(d, x, y) { zd.unshift(d); zx.unshift(x); zy.unshift(y); zd.pop(); zx.pop(); zy.pop(); }
+  function piv(t, hi) {
+    var p = t - 1; if (p - L < 0) return null; var v = hi ? K[p].h : K[p].l;
+    for (var q = p - L; q <= p + 1; q++) { if (q === p) continue; var w = hi ? K[q].h : K[q].l; if (hi ? w >= v : w <= v) return null; }
+    return v;
+  }
+  function grp(t, pv, dir, arr) {
+    var m = atr[t] / 2.5; if (!(m > 0)) return;
+    var count = 0, stP = 0, stB = 0, minP = 0, maxP = 10e6;
+    for (var i = 0; i < 50; i++) {
+      if (zd[i] !== dir) continue;
+      if (dir === 1 ? zy[i] > pv + m : zy[i] < pv - m) break;
+      if (zy[i] > pv - m && zy[i] < pv + m) { count++; stB = zx[i]; stP = zy[i]; if (zy[i] > minP) minP = zy[i]; if (zy[i] < maxP) maxP = zy[i]; }
+    }
+    if (count > 2) {
+      var mid = (minP + maxP) / 2, g = arr[0];
+      if (g && g.l === stB) { g.top = mid + m; g.bot = mid - m; g.r = t + 10; }
+      else { arr.unshift({ l: stB, top: mid + m, bot: mid - m, r: t + 10, lp: stP, lx2: t - 1, ln: true, bT: false, bB: false, br: false }); if (arr.length > 2) arr.pop(); }
+    }
+  }
+  for (var t = L + 1; t < n; t++) {
+    var ph = piv(t, true), pl = piv(t, false);
+    if (ph != null) { var d1 = zd[0], y1 = zy[0]; if (d1 < 1) ins(1, t - 1, ph); else if (d1 === 1 && ph > y1) { zx[0] = t - 1; zy[0] = ph; } grp(t, ph, 1, out.B); }
+    if (pl != null) { var d2 = zd[0], y2 = zy[0]; if (d2 > -1) ins(-1, t - 1, pl); else if (d2 === -1 && pl < y2) { zx[0] = t - 1; zy[0] = pl; } grp(t, pl, -1, out.S); }
+    var c = K[t].c;
+    out.B.forEach(function (x) { if (x.br) return; x.r = t + 3; x.lx2 = t + 3; if (!x.bT && c > x.top) x.bT = true; if (!x.bB && c > x.bot) x.bB = true; if (x.bB) { x.fill = true; x.ln = false; if (x.bT) { x.br = true; x.r = t; } } });
+    out.S.forEach(function (x) { if (x.br) return; x.r = t + 3; x.lx2 = t + 3; if (!x.bT && c < x.top) x.bT = true; if (!x.bB && c < x.bot) x.bB = true; if (x.bT) { x.fill = true; x.ln = false; if (x.bB) { x.br = true; x.r = t; } } });
+  }
+  return out;
+}
+var _LQC_JL = { k: "", q: null };
+function paintLiqJL(ctx, v, kl, right, lbFree, lbR) {
+  var n = kl.length, key = S.active + "|" + S.klt + "|" + n + "|" + kl[0][0] + "|" + kl[n - 1][0] + "|" + kl[n - 1][2] + "|" + kl[n - 1][3] + "|" + kl[n - 1][4];
+  if (_LQC_JL.k !== key) { _LQC_JL = { k: key, q: tvLiqJL(kl.map(function (r) { return { h: r[2], l: r[3], c: r[4] }; })) }; }
+  var Q = _LQC_JL.q, R = right - 6, slot = n > 1 ? Math.abs(v.X(1) - v.X(0)) : 1, d2 = dec();
+  var xi = function (i) { return i < n ? v.X(i) : v.X(n - 1) + (i - n + 1) * slot; };
+  var pt = v.pTop, pb = v.pTop + v.priceH;
+  [["B", "#ff98a3", "Buyside liquidity"], ["S", "#6dffcf", "Sellside liquidity"]].forEach(function (S2) {   /* 比作战屏 #ff7b88/#3dffb9 再亮一档 */
+    Q[S2[0]].forEach(function (x) {
+      var xa = Math.max(v.padL, xi(x.l)), xb = Math.min(R, xi(x.r)); if (!(xb > xa + 1)) return;
+      var yT = v.Y(x.top), yB = v.Y(x.bot); if (yB < pt || yT > pb) return;
+      yT = Math.max(pt, yT); yB = Math.min(pb, yB);
+      var swept = !!x.br, op = swept ? 0.3 : 1;
+      ctx.save();
+      if (x.fill) { ctx.globalAlpha = 0.28 * op; ctx.fillStyle = S2[1]; ctx.fillRect(xa, yT, xb - xa, Math.max(1, yB - yT)); }
+      ctx.globalAlpha = op; ctx.strokeStyle = S2[1]; ctx.lineWidth = 0.9; ctx.setLineDash([]);
+      ctx.strokeRect(xa + 0.5, yT + 0.5, xb - xa, Math.max(1, yB - yT));
+      var ly = v.Y(x.lp), la = Math.max(v.padL, xi(x.l)), lb = Math.min(R, xi(x.ln ? x.lx2 : x.r));
+      if (ly >= pt && ly <= pb && lb > la) { ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(la, ly); ctx.lineTo(lb, ly); ctx.stroke(); }
+      var isB = S2[0] === "B", tyL = isB ? yT - 2 : yB + 8;
+      if (tyL < pt + 6 || tyL > pb - 1) tyL = isB ? yB + 8 : yT - 2;
+      ctx.font = "300 8px -apple-system, 'Helvetica Neue', sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = S2[1];
+      var txt = S2[2] + (swept ? "" : " " + x.lp.toFixed(d2)), tw = ctx.measureText(txt).width, px = xb - 2 - tw;
+      if (px < v.padL + 1) px = v.padL + 1;
+      var dys = [0, -10, 10, -20, 20], ok = false;
+      for (var q = 0; q < dys.length; q++) { var yy = tyL + dys[q]; if (yy - 8 < pt || yy > pb) continue; if (lbFree(px, yy - 8, tw, 9)) { lbR.push({ x: px, y: yy - 8, w: tw, h: 9 }); ctx.fillText(txt, px, yy); ok = true; break; } }
+      ctx.restore();
+    });
+  });
+}
+/* ===== 11-08 振幅: 作战屏振幅卡逻辑搬进K线大图(日均振幅=前20个交易日(高-低)/昨收均值; 卖=今天最低+0.9×日均振幅, 接=今天最高回落2.7%; 参数共用 localStorage jlamp_p2) ===== */
+var AMPD_JL = {};
+function ampParJL() { var sv = null; try { sv = JSON.parse(localStorage.getItem("jlamp_p2") || "null"); } catch (e) { } return { xa: sv && +sv[0] > 0 ? +sv[0] : 0.9, rb: sv && +sv[1] > 0 ? +sv[1] : 0.027 }; }
+function ampDailyJL(code, kl0) {   /* 返回日K行(含今天); 日线周期直接用当前数据, 其余周期拉一次日K缓存(每票每天) */
+  if (S.klt === "101") return kl0;
+  var o = AMPD_JL[code], td = kl0[kl0.length - 1][0].slice(0, 10);
+  if (o && o.kl && o.td === td) return o.kl;
+  if (!o || (!o.busy && o.td !== td)) {
+    AMPD_JL[code] = { busy: true, td: td, kl: o && o.kl };
+    fetchKline(code, "101", function (err, dk) {
+      var oo = AMPD_JL[code] || {};
+      if (!err && dk && dk.length > 5) { AMPD_JL[code] = { busy: false, td: td, kl: dk }; if (S.active === code) { try { draw(); } catch (e) { } } }
+      else AMPD_JL[code] = { busy: false, td: td, kl: oo.kl, fail: Date.now() };
+    });
+  }
+  return (o && o.kl) || null;
+}
+function ampOfJL(kl0) {
+  var n = kl0.length, td = kl0[n - 1][0].slice(0, 10), hi = -1e18, lo = 1e18, first = n - 1;
+  for (var i = n - 1; i >= 0 && kl0[i][0].slice(0, 10) === td; i--) { first = i; if (kl0[i][2] > hi) hi = kl0[i][2]; if (kl0[i][3] < lo) lo = kl0[i][3]; }
+  var D = ampDailyJL(S.active, kl0); if (!D) return null;
+  var v = [], pc = 0;
+  for (var j = 1; j < D.length; j++) { var d = D[j][0].slice(0, 10); if (d >= td) { if (d === td) pc = D[j - 1][4]; break; } var p0 = D[j - 1][4]; if (p0 > 0 && D[j][2] >= D[j][3]) v.push((D[j][2] - D[j][3]) / p0 * 100); pc = D[j][4]; }
+  if (S.klt === "101" && !pc) return null;
+  v = v.slice(-20); if (v.length < 5 || !(pc > 0)) return null;
+  var avg = v.reduce(function (a, b) { return a + b; }, 0) / v.length, amp = (hi - lo) / pc * 100;
+  return { hi: hi, lo: lo, pc: pc, avg: avg, amp: amp, first: first, last: kl0[n - 1][4] };
+}
+function renderAmpJL(ctx, v) {
+  if (S.ind.amp === false) return;
+  var kl0 = S.kl; if (!kl0 || kl0.length < 3 || isMultiDayJL(S.klt)) return;
+  var A = ampOfJL(kl0); if (!A || !(A.avg > 0)) return;
+  var P = ampParJL(), up = Math.ceil((A.lo + P.xa * A.avg / 100 * A.pc) * 100) / 100, dn = Math.floor(A.hi * (1 - P.rb) * 100) / 100, left = A.avg - A.amp, d2 = dec();
+  var right = v.padL + v.plotW, pt = v.pTop, pb = v.pTop + v.priceH, n = kl0.length;
+  var x0 = S.klt === "101" ? Math.max(v.padL, v.X(n - 1) - 30) : Math.max(v.padL, v.X(A.first));
+  ctx.save(); ctx.lineWidth = 1; ctx.setLineDash([5, 3]); ctx.font = "400 9px -apple-system, 'Helvetica Neue', sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic";
+  [[up, "#ffc15e", "卖", A.hi >= up], [dn, "#62dcff", "接", A.last <= dn]].forEach(function (L) {
+    var y = v.Y(L[0]); if (y < pt || y > pb) return;
+    ctx.strokeStyle = L[1]; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.moveTo(x0, y + 0.5); ctx.lineTo(right - 4, y + 0.5); ctx.stroke();
+    ctx.fillStyle = L[1]; ctx.globalAlpha = 1; ctx.fillText(L[2] + " " + L[0].toFixed(d2) + (L[3] ? " ✓" : ""), right - 6, y - 2);
+  });
+  ctx.setLineDash([]);
+  var rc = A.amp >= A.avg * 1.4 ? "#ff8a3d" : A.amp >= A.avg ? "#ffe14d" : "#d8e6ff";
+  ctx.fillStyle = rc; ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.font = "400 9.5px -apple-system, 'Helvetica Neue', sans-serif";
+  ctx.fillText("振 " + A.amp.toFixed(1) + " / 均 " + A.avg.toFixed(1) + (left > 0.05 ? " · 剩 " + left.toFixed(1) + "%" : " · 超均别追"), v.padL + 6, pt + 24);
+  ctx.restore();
+}
 function renderICT(ctx, v) {
   if (!S.ind.fvg && !S.ind.liq && !S.ind.ms && !S.ind.ob && !S.ind.vi) return;
   var kl = S.kl, n = kl.length;
@@ -4859,37 +4976,8 @@ function renderICT(ctx, v) {
     });
   }
   if (S.ind.liq) {
-    ic.liq.forEach(function (L) {
-      if (L.i < v.i0 - 5) return;
-      var isB = L.side === "B";
-      // ks-1022g: 一眼可读——B=红(UP色,买,下方支撑)/S=绿(DN色,卖,上方压力), 与全站红涨绿跌一致;
-      // 1.5px虚线(参考位感,区别于均线实线) + 左端色块圆角标签白字"买B/卖S+价位"(旧8.5px英文小字手机看不清)
-      var col = isB ? UP : DN;
-      var y = v.Y(L.p), x0 = Math.max(v.padL, v.X(L.i0 != null ? L.i0 : L.i)), _sw = L.sw >= 0;
-      var xE = _sw ? Math.min(right, Math.max(x0, v.X(L.sw))) : right;
-      ctx.save(); ctx.globalAlpha = _sw ? 0.4 : 1;
-      ctx.strokeStyle = col; ctx.lineWidth = _sw ? 1 : 1.5; ctx.setLineDash(_sw ? [2, 3] : [6, 4]);
-      ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(xE, y); ctx.stroke();
-      ctx.setLineDash([]); ctx.restore();
-      if (_sw) return;
-      x0 = Math.max(v.padL, v.X(L.i));
-      var txt = (isB ? "B " : "S ") + L.p.toFixed(d2);
-      ctx.font = "bold 9.5px -apple-system, sans-serif";
-      var tw = ctx.measureText(txt).width + 10;
-      var ly = y - 17; if (ly < v.padT + 2) ly = y + 4;
-      var _bx = Math.min(x0, right - 4 - tw), _ok = false, _dd = [0, -15, 15, -30, 30];
-      for (var _k = 0; _k < _dd.length; _k++) { if (_lbFree(_bx, ly + _dd[_k], tw, 14)) { ly += _dd[_k]; _ok = true; break; } }
-      if (!_ok) return;
-      _lbR.push({ x: _bx, y: ly, w: tw, h: 14 });
-      ctx.save();
-      ctx.fillStyle = "rgba(255,255,255,0.10)"; ctx.strokeStyle = "rgba(255,255,255,0.55)"; ctx.lineWidth = 1;
-      ctx.shadowColor = "rgba(255,255,255,0.55)"; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.roundRect(_bx, ly, tw, 14, 7); ctx.fill(); ctx.stroke();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "#ffffff"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-      ctx.fillText(txt, _bx + 5, ly + 7.5);
-      ctx.restore();
-    });
+    /* 11-08 用户: 照搬作战屏的 Buyside/Sellside liquidity(TradingView ICT Concepts [LuxAlgo] 逐行移植 tvLiq: 框+线+细字), 逻辑不动, 只把颜色调亮。旧 B/S 胶囊标签撤掉(ictCalc 里的 liq 仍给别处用) */
+    try { paintLiqJL(ctx, v, kl, right, _lbFree, _lbR); } catch (eLq) { if (window.console) console.warn("[liq]", eLq); }
   }
   if (S.ind.ms) {
     ic.struct.forEach(function (st) {
@@ -6049,6 +6137,7 @@ function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引�
   var v = tsViewJL(g, lay); v.vMax = vMax7;
   ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, g.plotBottom + 1); ctx.clip();
   try { renderICT(ctx, v); } catch (e1) { if (window.console) console.warn("[ts.ict]", e1); }
+  try { renderAmpJL(ctx, v); } catch (eA) { if (window.console) console.warn("[amp]", eA); }
   try { renderGapsJL(ctx, v); } catch (eG9) { if (window.console) console.warn("[ts.gaps]", eG9); }
   try { renderBollTSJL(ctx, v); } catch (eB9) { if (window.console) console.warn("[ts.boll]", eB9); } /* ks-1151fix8: BOLL三线(自吞异常不拖垮主图) */
   try { renderCostLine(ctx, v); } catch (e3) { if (window.console) console.warn("[ts.cost]", e3); } /* ks-1151fix10d: 撤renderDailyLevels调用——昨高/昨低/今开/今高/今低/最新六线与引擎昨收线+高低标记+跟随价签全重复(用户图: 兆易高开低走, 今开浅灰虚线贴顶横穿像杂线); 成本线保留(坐标走引擎轴正确, 持仓成本分时要看) */
@@ -8445,7 +8534,7 @@ var JITU_KS = (function () {
   return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
 })();
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
