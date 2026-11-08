@@ -1153,7 +1153,7 @@
       var m = S.mem[o.k];
       if (!m) { if (!S.recAsk) S.recAsk = {}; if (!S.recAsk[o.k]) { S.recAsk[o.k] = 1; memOf(o.k).then(function () { paint(); }); } return; }
       var early = hmNow() >= 915 && hmNow() < 930; /* 竞价段个股主力净额多为0, 放宽成>=0, 再按涨幅 */
-      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = all.filter(function (x) { return x.zt; }).slice(0, 2); /* 11-08 用户先选不推涨停, 随后改口"推涨停"→保留, 标排队难买 */
+      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = o.c && o.c.k >= 2 && o.c.k <= 3 ? all.filter(function (x) { return x.zt; }).slice(0, 2) : []; /* 11-08 用户: 真启动的好板块(阶段启动/加速+今天资金在进)才带涨停股, 标排队难买, 看一下也行 */
       if (!buy.length && !zts.length) return; n++;
       var lead = all.slice().sort(function (x, y) { return ((lb[y.c] || 0) - (lb[x.c] || 0)) || (y.p - x.p); })[0]; /* 11-05 用户: 老龙不一定要连板, 开启轮动的领涨股也算: 先看连板最高, 没有连板就看今天涨幅最大 */
       var c = o.c || { name: "资金进", streak: 0, cum5: null, avg: o.q ? o.q.p : null, zt: 0 }, tile = function (v, l, col) { return '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:800;color:' + (col || "#fff") + ';line-height:1.15">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
