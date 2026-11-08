@@ -8318,6 +8318,8 @@ function playbookHTMLJL(s, leg, swSt) {
     WLH.code = code;
     det.classList.add("hldInJL"); det.prepend(sec);
     if (active !== i) { try { selectHolding(i); } catch (e) { active = i; } }
+    /* 用户: 点开要直接看到分时高低 → 不在分时就切到分时(同点周期条「分时」) */
+    if (period !== "\u5206\u65F6") { try { const pb = sec.querySelector('[data-period="\u5206\u65F6"]') || document.querySelector('[data-period="\u5206\u65F6"]'); if (pb) pb.click(); } catch (eP) {} }
     return true;
   }
   window.wlHldBackJL = wlHldBackJL;
