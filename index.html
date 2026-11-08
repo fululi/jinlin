@@ -930,6 +930,18 @@ body:not(.day){--green:#3bf0ac} /* jl-1126: 夜间绿提亮(暗绿→亮绿), �
 .flRiskJL i{width:6px;height:6px;border-radius:50%}
 .flLampJL .fmxJL{margin:0 8px 8px;border-color:rgba(255,255,255,.14)}
 .flLampJL .fmxHead{display:none} /* 结论短词+风险泡泡已在灯上, 展开体不再重复 */
+/* jl-wl2 11-08 自选页 TradingView 式: 收起只一行(小圈+名字+价+涨跌), 点开=持仓页那张全功能小图; 持仓页不再显示那张图 */
+#holds section.hldSecJL{display:none}
+#watchList .watchDetail.hldInJL section.hldSecJL{display:block;margin:4px 0 6px}
+#watchList .watchDetail.hldInJL>.previewChart,#watchList .watchDetail.hldInJL>.subWrapJL,#watchList .watchDetail.hldInJL>[data-period-bar],#watchList .watchDetail.hldInJL>.previewActions,#watchList .watchDetail.hldInJL>p{display:none!important}
+#watchList .watchItem:has(.watchDetail[hidden])>:not(.watchRow):not(.watchDel):not(.watchDetail){display:none!important}
+#watchList .watchItem:has(.watchDetail[hidden]){padding-top:2px;padding-bottom:2px;margin-bottom:4px}
+#watchList .watchRow{display:flex;align-items:center;gap:8px;padding:7px 36px 7px 8px;font-size:12px}
+#watchList .watchRow>span{flex:1;min-width:0}#watchList .watchRow>span b{font-size:13px;font-weight:500}#watchList .watchRow>span small{font-size:9.5px}
+#watchList .watchRow strong{font-size:12.5px;font-weight:500;white-space:nowrap}#watchList .watchRow strong small{font-size:11px;margin-left:5px}
+#watchList .watchRow svg.wlRingJL{flex:0 0 18px;width:18px;height:18px}
+#watchList .watchDel{width:22px!important;height:22px!important;top:50%!important;transform:translateY(-50%);font-size:12px!important}
+#watchList .watchItem:has(.watchDetail:not([hidden])) .watchDel{top:16px!important}
 /* jl-dedup2 11-08 资金灯展开底部: 预判/量比/近5日主力 一行; 持仓详情顶上格子只留 波段位置 */
 .fxExtraJL{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin:6px 10px 8px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.14);font-size:10.5px;color:#fff}
 .fxExtraJL b{font-weight:600}.fxExtraJL .fxL{margin-left:auto}
@@ -4384,6 +4396,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
   }
   function show(id) {
     closePicker();
+    try { if (id !== "watchPage" && WLH.code) { const d0 = document.querySelector('#watchList .watchDetail[data-detail-code="' + WLH.code + '"]'); if (d0) { d0.hidden = true; d0.classList.remove("hldInJL"); } wlHldBackJL(); } } catch (eWl) {} /* jl-wl2: 离开自选页把图搬回去, 持仓选中复原 */
     page = id;
     try { if (id === "watchPage" || id === "reviewPage" || id === "home") sessionStorage.setItem("jl_view_v1", id); } catch (eV0) {} /* jl-1088: 换版自动reload(controllerchange熔断/自愈链)不再丢所在页——无hash的reload必落默认holds页="扫描暂停后跳回初始页"根因; chartPage需选中上下文不存; hash显式导航最优先 */
     if (id === "reviewPage") {
@@ -8286,6 +8299,43 @@ function playbookHTMLJL(s, leg, swSt) {
       b.textContent = t + (typeof JLPOOL_PCT !== "undefined" && JLPOOL_PCT > 0 && JLPOOL_PCT < 100 ? " \xB7 " + Math.round(JLPOOL_PCT) + "%" : "");
     } catch (e) {}
   }
+  /* jl-wl2 11-08 用户: 自选页像 TradingView —— 不点开=一行(振幅小圈+名字+价格+涨跌%); 点开=持仓页那张小图(分时高低/画线/提醒/MACD 全功能)整块挪进来显示这只;
+     持仓页不再放这张图。做法: 那张图只有一份(#holdingChart 一大堆专用逻辑跟着 stocks[active]), 点开时把整块搬进该行、active 临时切到这只; 收起/离开自选页 → 搬回持仓页(隐藏)、active 复原。
+     不在持仓/自选数组里的旧"看过"票(研究池)没法切 active, 仍用原来那张小K线 */
+  const WLH = { code: "", prev: -1 };
+  function wlHldSecJL() { const c = document.getElementById("holdingChart"); return c ? c.closest("section.glass") : null; }
+  function wlHldHomeJL() { let m = document.getElementById("hldHomeJL"); if (!m) { const sec = wlHldSecJL(); if (!sec) return null; m = document.createElement("i"); m.id = "hldHomeJL"; m.hidden = true; sec.before(m); sec.classList.add("hldSecJL"); } return m; }
+  function wlHldBackJL(keepCode) {   /* 图搬回持仓页; keepCode=只是临时摘下(列表重建), 不复原 active */
+    const sec = wlHldSecJL(), home = wlHldHomeJL();
+    if (sec && home && sec.previousElementSibling !== home) home.after(sec);
+    if (!keepCode && WLH.code) { const pv = WLH.prev; WLH.code = ""; WLH.prev = -1; if (pv >= 0 && stocks[pv]) { try { selectHolding(pv); } catch (e) { active = pv; } } }
+  }
+  function wlHldIntoJL(code) {
+    const i = stocks.findIndex((x) => x.code === code), det = document.querySelector('#watchList .watchDetail[data-detail-code="' + code + '"]'), sec = wlHldSecJL();
+    if (i < 0 || !det || !sec) return false;
+    wlHldHomeJL();
+    if (!WLH.code) WLH.prev = active;
+    WLH.code = code;
+    det.classList.add("hldInJL"); det.prepend(sec);
+    if (active !== i) { try { selectHolding(i); } catch (e) { active = i; } }
+    return true;
+  }
+  window.wlHldBackJL = wlHldBackJL;
+  /* 振幅小圈: 今振幅/前20日日均(同作战屏振幅卡圆环颜色: 没到均淡蓝 / 到均黄 / 1.4倍橙红) */
+  function wlRingJL(s) {
+    let am = 0, av = 0;
+    try {
+      const d = dailyBarsOf(s.code) || [], lb = d[d.length - 1], td = typeof jlLastTradeDay === "function" ? jlLastTradeDay() : "";
+      const isT = lb && String(lb.t || lb.d || "").replace(/\D/g, "").slice(0, 8) === String(td).replace(/\D/g, "").slice(0, 8);
+      const past = isT ? d.slice(0, -1) : d, v = [];
+      for (let k = Math.max(1, past.length - 20); k < past.length; k++) { const pc = +past[k - 1].c, h = +past[k].h, l = +past[k].l; if (pc > 0 && h >= l) v.push((h - l) / pc * 100); }
+      if (v.length >= 5) av = v.reduce((a, b) => a + b, 0) / v.length;
+      const pc0 = Number(s.prevClose) || (past.length ? +past[past.length - 1].c : 0), hi = Number(s.high) || (isT ? +lb.h : 0), lo = Number(s.low) || (isT ? +lb.l : 0);
+      if (pc0 > 0 && hi > 0 && lo > 0 && hi >= lo) am = (hi - lo) / pc0 * 100;
+    } catch (e) {}
+    const r = 7, L = 2 * Math.PI * r, f = av > 0 ? Math.min(1, am / av) : 0, rc = !(av > 0) ? "rgba(255,255,255,.25)" : am >= av * 1.4 ? "#ff7a2e" : am >= av ? "#ffe14d" : "#cfe0ff";
+    return '<svg class="wlRingJL" viewBox="0 0 18 18" aria-label="振幅' + am.toFixed(1) + "/均" + av.toFixed(1) + '"><circle cx="9" cy="9" r="' + r + '" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.4"/>' + (f > 0 ? '<circle cx="9" cy="9" r="' + r + '" fill="none" stroke="' + rc + '" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="' + (L * f).toFixed(1) + " " + L.toFixed(1) + '" transform="rotate(-90 9 9)"/>' : "") + "</svg>";
+  }
   function renderWatch() {
     try { poolProgBarJL(); } catch (eP) {} // jl-0929-12: 进度条跟随每次重渲
     if (watchMode === "leaders") {
@@ -8298,7 +8348,7 @@ function playbookHTMLJL(s, leg, swSt) {
       const wf = typeof watchFundHTMLJL === "function" ? watchFundHTMLJL(s2) : "";
       const plMeta = pl && JLPOOL_LAYERS.find((l) => l[0] === pl.layer);
       const plHtml = pl && plMeta ? '<div class="poolLink">\u9F99\u6C60 \xB7 ' + plMeta[1] + (pl.x.score != null ? " " + pl.x.score + "\u89c4\u5219\u5206" : "") + (pl.x.fundSourceValid ? " \xB7 \u4E3B\u529B" + fmtFundJL(pl.x.d0) : "") + " \xB7 " + (pl.bucket === "L" ? "\u5408\u683C\u6C60" : pl.bucket === "OBS" ? ((pl.x.obsGate && pl.x.obsGate.status) || "资金待确认") : "\u6D3E\u53D1\u98CE\u9669") + poolStreakTagJL(pl.x.code, JLPOOL && JLPOOL.d0) + '<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9</button></div>' : JLPOOL ? '<div class="poolLink poolLinkOff">\u9F99\u6C60' + (JLPOOL.d0 ? " \xB7 " + String(JLPOOL.d0).slice(5) + "\u6863" : "") + ' \xB7 \u672A\u5728\u699C<button type="button" class="trajBtnJL" data-traj="' + s2.code + '" data-tn="' + s2.name + '">\u8F68\u8FF9\u67E5\u539F\u56E0</button></div>' : "";
-      return `<article class="watchItem" style="position:relative">${s2.qty > 0 && !s2.watch ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" type="button" style="position:absolute;right:6px;top:6px;z-index:20;width:28px;height:28px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false"><span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s2)}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
+      return `<article class="watchItem" style="position:relative">${s2.qty > 0 && !s2.watch ? "" : '<button class="watchDel" data-watch-del="' + s2.code + '" type="button" style="position:absolute;right:6px;top:6px;z-index:20;width:28px;height:28px;border:1px solid #ff545955;border-radius:8px;background:#ff545914;color:#f7a4a5;font-size:14px">\u2715</button>'}<button class="watchRow" data-watch-detail="${s2.code}" aria-expanded="false">${wlRingJL(s2)}<span><b>${s2.name}</b><small>${s2.code} \xB7 ${s2.qty > 0 ? "\u6301\u4ED3" : "\u89C2\u5BDF"}${addedTagJL(s2)}</small></span><strong>${money(s2.base)}<small class="${cls(s2.pct)}">${pct(s2.pct)}</small></strong></button>${tierStripHTMLJL(s2, "w:" + s2.code)}${wf}<div class="watchDetail" data-detail-code="${s2.code}" hidden><canvas class="previewChart" data-chart-code="${s2.code}" aria-label="${s2.name}\u771F\u5B9EK\u7EBF"></canvas><div class="subWrapJL"><canvas class="pvSubJL" data-sub-code="${s2.code}" aria-label="${s2.name}\u5171\u632F\u8FFD\u6DA8\u9644\u56FE"></canvas></div><div data-period-bar></div><div class="previewActions"><button data-watch-style aria-label="\u5207\u6362\u8721\u70DB\u4E0E\u8D70\u52BF\u7EBF">\u25A5</button><button data-watch-expand="${s2.code}" aria-label="\u653E\u5927${s2.name}K\u7EBF">\u26F6</button></div><p>${s2.name} \xB7 \u4EF7\u683C ${money(s2.base)} \xB7 \u6DA8\u8DCC ${pct(s2.pct)}<br>\u5F00\u76D8\u3001\u6700\u9AD8\u3001\u6700\u4F4E\u3001\u6536\u76D8\uFF1A\u968F\u5F53\u524D K \u7EBF\u540C\u6B65\u3002\u5341\u5B57\u7EBF\u79FB\u52A8\u53EF\u67E5\u770B\u65F6\u95F4\u3001\u5F00\u9AD8\u4F4E\u6536\u53CA\u5F53\u65E5\u6DA8\u8DCC\u5E45\u3002</p>${cyqLineHTMLJL(s2)}${fibLineJL(s2)}</div>${plHtml}<div class="trajBoxJL" data-traj-box="${s2.code}" hidden></div></article>`;
     };
     const obs = rows.filter((s2) => (!(s2.qty > 0) || s2.watch) && !(s2.peek && !stocks.some((x) => x.code === s2.code)));
     /* jl-wl1 11-08 用户"自选页卡、选好的票老跳": 原来每次刷新整列表 innerHTML 重建, 点开的K线被收回、页面跳 → 记住展开的票, 重建后还原; 内容一样就不重建 */
@@ -8306,8 +8356,10 @@ function playbookHTMLJL(s, leg, swSt) {
     if (wl.__h === html && wl.firstChild && wl.firstChild === wl.__f0) return;   /* 龙池页也写这个容器, 用首节点判断还是不是上次那份 */
     const openSet = new Set([...wl.querySelectorAll(".watchDetail:not([hidden])")].map((d) => d.dataset.detailCode));
     const sy = window.scrollY, sc = wl.closest(".view"), st0 = sc ? sc.scrollTop : 0;
+    if (WLH.code) wlHldBackJL(true);
     wl.innerHTML = html; wl.__h = html; wl.__f0 = wl.firstChild;
     openSet.forEach((c) => { const d = wl.querySelector('.watchDetail[data-detail-code="' + c + '"]'); if (d) { d.hidden = false; const b = d.parentElement.querySelector("[data-watch-detail]"); if (b) b.setAttribute("aria-expanded", "true"); } });
+    if (WLH.code && !(openSet.has(WLH.code) && wlHldIntoJL(WLH.code))) wlHldBackJL();
     try { if (sc && sc.scrollTop !== st0) sc.scrollTop = st0; if (window.scrollY !== sy) window.scrollTo(0, sy); } catch (eS) {}
     periodBars(wl);
     if (openSet.size) try { paint(); } catch (eP2) {}
@@ -8377,7 +8429,13 @@ function playbookHTMLJL(s, leg, swSt) {
       e.stopPropagation();
       const detail = b.parentElement.querySelector(".watchDetail");
       if (!detail) return;
-      detail.hidden = !detail.hidden;
+      const willOpen = detail.hidden, cd = b.getAttribute("data-watch-detail");
+      if (willOpen) {   /* jl-wl2: 一次只开一只(那张全功能图只有一份) */
+        qa("#watchList .watchDetail:not([hidden])").forEach((d) => { d.hidden = true; d.classList.remove("hldInJL"); const bb = d.parentElement.querySelector("[data-watch-detail]"); if (bb) bb.setAttribute("aria-expanded", "false"); });
+        if (WLH.code && WLH.code !== cd) wlHldBackJL(true);
+        detail.hidden = false;
+        if (!wlHldIntoJL(cd)) { detail.classList.remove("hldInJL"); if (WLH.code) wlHldBackJL(); }
+      } else { detail.hidden = true; detail.classList.remove("hldInJL"); if (WLH.code === cd) wlHldBackJL(); }
       b.setAttribute("aria-expanded", String(!detail.hidden));
       paint();
     }
