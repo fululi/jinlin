@@ -626,17 +626,16 @@
     if (!bkqDue()) return;
     var m = {}, codes = {};
     /* 11-04: 1027个板块全量要11页/3分钟, 东财会限流——只取主力流入前100(po=1)+流出前100(po=0)两页; 能触发提醒的板块都在这两页里 */
-    /* 11-08 jl-bkshare: 走首页共用一路(window.jlBkShareJL, 同地址去重+170秒共用); 多拉一页"涨幅前100"给排名用——用户定: 排名改用东财板块涨幅, 3分钟一更 */
+    /* 11-08 jl-bkshare: 走首页共用一路(window.jlBkShareJL, 同地址去重+170秒共用); 排名仍用自己算的(用户不要东财口径) */
     var share = window.jlBkShareJL || function () { return Promise.reject(new Error("noshare")); };
     var eat = function (d, up) {
       var df = d && d.data && d.data.diff, arr = Array.isArray(df) ? df : df ? Object.keys(df).map(function (k) { return df[k]; }) : [];
       arr.forEach(function (r) { if (!r || !r.f14) return; codes[String(r.f14)] = String(r.f12); m[String(r.f14)] = { p: +r.f3, f: +r.f62, fr: +r.f184, a: +r.f6, c: String(r.f12), hi: +r.f15, lo: +r.f16, pc0: +r.f18, nu: +r.f104 || 0, nd: +r.f105 || 0, nf: +r.f106 || 0, ld: r.f128 && r.f128 !== "-" ? String(r.f128) : "" }; });
       return arr;
     };
-    var upArr = null;
-    S.bkqP = share("allIn").then(function (d) { eat(d); return share("allOut"); }).then(function (d) { eat(d); return share("allUp").then(function (d2) { upArr = eat(d2); }, function () {}); }).then(function () {
+    S.bkqP = share("allIn").then(function (d) { eat(d); return share("allOut"); }).then(function (d) { eat(d); }).then(function () {
       S.bkqP = null;
-      if (Object.keys(m).length > 50) { S.bkq = { t: Date.now(), m: m }; if (upArr && upArr.length) S.emUp = { t: Date.now(), list: upArr.map(function (r) { return String(r.f14); }) }; fundSnapSave(); fundCheck(); paint(); }
+      if (Object.keys(m).length > 50) { S.bkq = { t: Date.now(), m: m }; fundSnapSave(); fundCheck(); paint(); }
     }, function () { S.bkqP = null; });
   }
   /* jl-fsnap(1104): 用户: 别让电脑每天跑数据——App开着时把每3分钟的板块资金顺手存手机里(零新增请求), 复盘台账⑨里一键导出, 以后拿来回测
@@ -862,18 +861,6 @@
     return '<span style="display:inline-block;margin:2px 4px 2px 0;padding:2px 7px;border-radius:8px;background:' + bg + ';border:1px solid rgba(255,255,255,.10);font-size:10.5px;font-weight:600;color:' + col + ';white-space:nowrap"><b style="color:rgba(255,255,255,.95);font-weight:700">' + label + '</b> ' + esc(val) + arrow + '</span>';
   }
   /* jl-secpop(1030): 卡面改白话——用户: "对小白不友善, 读起来费劲, 公式放后台"。只改显示层, 四因子/快照/口径零改动; 级别/样本数/待定义/数据不足/事件扩散术语不上卡面 */
-  /* 11-08 用户定: "现在最强的板块"排名改用东财板块涨幅(行业+概念, 3分钟一更, 和资金同一路); 剔融资融券/股通等非题材; 拿不到或超过8分钟没更新就退回原来自己算的(15分钟一更) */
-  var EM_JUNK = /融资融券|股通|昨日|MSCI|富时|标普|证金|重仓|QFII|次新|高送转|创业板综|央视|红利|小盘|大盘|中盘|低价|高价|破净|摘帽|壳资源|预增|预亏|预盈|扭亏|减亏|亏损|热股|ST股|AB股|含H股|含GDR|转债|百元股|微盘|基金|社保|养老金|上证|深证|中证|沪深|HS300|指数|AH股|B股|权重|茅指数|宁组合|同花顺|东方财富|参股|新股|注册制|北交所|深成|科创|标准普尔|机构|基金重仓/;
-  function emRanked() {
-    var E = S.emUp; if (!E || !E.list || Date.now() - E.t > 8 * 60e3 || S.review || !S.bkq) return null;
-    var out = [];
-    E.list.forEach(function (nm) {
-      if (out.length >= 8 || EM_JUNK.test(nm)) return; var q = S.bkq.m[nm]; if (!q) return;
-      var n = q.nu + q.nd + q.nf;
-      out.push({ sector: nm, em: 1, leaderCand: null, emLd: q.ld, factors: { avgPct: { state: "ok", raw: q.p, note: "n=" + n }, upR: { state: n ? "ok" : "na", raw: n ? q.nu / n : 0 }, ztN: { state: "na" }, evN: { state: "na" } } });
-    });
-    return out.length >= 3 ? out : null;
-  }
   function secRow(rec, i) {
     var f = rec.factors, a = f.avgPct, u = f.upR, z = f.ztN, e = f.evN, L = rec.leaderCand;
     var n = a.state === "ok" && a.note.indexOf("n=") === 0 ? +a.note.slice(2) : 0;
@@ -882,7 +869,7 @@
     if (u.state === "ok" && n) bits.push(n + "只里 " + Math.round(u.raw * n) + "只在涨");
     if (z.state === "ok" && z.raw > 0) bits.push("涨停 " + z.raw + "只");
     if (e.state === "ok" && e.raw && e.raw.codeN) bits.push("盘中异动 " + e.raw.codeN + "只");
-    var lead = rec.emLd ? esc(rec.emLd) + "（东财领涨）" : L && L.cand && L.cand.length ? L.cand.slice(0, 2).map(function (c) { return esc(c.n) + (c.lbc > 1 ? "(" + c.lbc + "连板)" : "(涨停)"); }).join("、") : "";
+    var lead = L && L.cand && L.cand.length ? L.cand.slice(0, 2).map(function (c) { return esc(c.n) + (c.lbc > 1 ? "(" + c.lbc + "连板)" : "(涨停)"); }).join("、") : "";
     return '<div data-jlsec="' + esc(rec.sector) + '" style="padding:7px 9px;margin:4px 0;border-radius:9px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)">' +
       '<div style="display:flex;justify-content:space-between;align-items:center"><span style="display:flex;align-items:center;gap:5px">' + secRingOf(rec.sector) + '<b style="font-size:12.5px;color:#ffd21f">' + (i != null ? (i + 1) + ". " : "") + esc(rec.sector) + '</b>' + stTag(rec.sector) + '</span>' +
       (a.state === "ok" ? '<b style="font-size:12px;color:' + col + '">平均' + (a.raw >= 0 ? "涨 " : "跌 ") + Math.abs(Math.round(a.raw * 100) / 100).toFixed(2) + "%</b>" : "") + "</div>" +
@@ -1448,7 +1435,7 @@
     var has = !!(S.last && S.day);
     var sub = has ? (S.day + " · 强度样本 · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无强度数据"; /* jl-1166c: 明确这是强度样本，不是板块资金状态 */
     if (has && S.last.ranked && S.last.ranked.length) { /* jl-1208: 有排名时手柄直接报最强两个板块——抽屉不打开也看得到有没有内容、谁最强 */
-      var _em = emRanked(), _rr = _em || S.last.ranked, _r0 = _rr[0], _r1 = _rr[1], _a0 = _r0.factors && _r0.factors.avgPct, _tt = _em ? S.bkq.t : S.at;
+      var _rr = S.last.ranked, _r0 = _rr[0], _r1 = _rr[1], _a0 = _r0.factors && _r0.factors.avgPct, _tt = S.at;
       sub = "最强 " + _r0.sector + (_a0 && _a0.state === "ok" ? " " + fmtPct(_a0.raw) : "") + (_r1 ? " · " + _r1.sector : "") + (_tt ? " · " + new Date(+_tt).toTimeString().slice(0, 5) : "");
     }
     var hasAna = !!(S.ana && Object.keys(S.ana).length);
@@ -1458,7 +1445,7 @@
     if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : "") + " · " + sub;
     var body = weatherHtml() + surgeHtml() + fundBoardHtml(); /* 11-06 用户: 「我的票」占地且与联动球持仓一览重复→抽屉里删, 前10天/位置短语并进联动球(jlMyStkTagJL) */ /* 11-05 用户: 持仓细分资金联动球里已有, 不重复(holdFundHtml 留着未挂载) */
     if (has) {
-      var o = S.last, rk = emRanked() || o.ranked.slice(0, 8);
+      var o = S.last, rk = o.ranked.slice(0, 8);
       var restAll = o.recs.filter(function (r) { return r.factors.avgPct.state !== "ok" && r.sector !== CORE.UNATTR; });
       var restMiss = restAll.filter(function (r) { return r.factors.avgPct.state === "miss" || r.factors.avgPct.state === "stale"; }); /* jl-B: 无涨幅数据的板块→合并一行, 不再逐卡铺"数据缺失"小块 */
       var rest = restAll.filter(function (r) { return r.factors.avgPct.state !== "miss" && r.factors.avgPct.state !== "stale"; }).slice(0, 4);
