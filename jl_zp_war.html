@@ -135,6 +135,8 @@ body.injlin{--dim:#dce7f2}
 body.injlin small,body.injlin .b2,body.injlin .meta{color:#e8f0f8;opacity:.95}
 /* jl-zp4: 嵌入面板排版收紧——价格不再 40px 大字, 盘中引擎(状态带+状态格+价位梯)挤进首屏 */
 body.injlin{padding:8px 8px 20px;font-size:13px}
+/* 11-08 用户: 浮动球页面别死黑 → 嵌在浮动面板里时页面本身透明, 底色交给外层磨砂面板(jl_zhanping.js) */
+html:has(body.injlin),body.injlin{background:transparent!important}
 body.injlin .card{border-radius:12px;margin-bottom:8px}
 body.injlin .head{padding:9px 12px 8px}
 body.injlin .name{font-size:14px}body.injlin .name small{font-size:11px}
@@ -1270,6 +1272,7 @@ setInterval(function () { /* 持仓页/盘中做T卡改了股数 → 这里同�
 function applyStockJL(st) {
   if (RPL) rplExitJL();   /* 切票先退出回放, 回放数据属于旧票 */
   STK = st; window.STK = st;
+  if (LIVE.sym !== symOf(st.code)) { window.zpYZ = 1; window.zpYS = 0; }   /* jl-zpyax: 换票纵轴复位(同 ks.html) */
   LIVE.sym = symOf(st.code); LIVE.sh = roundQtyJL(st.code, st.qty); /* 不足一手=0, 不再假装可做100股 */
   liveResetJL();
   var n = $('stkNm'), c = $('stkCd'), m = $('metaLine');
@@ -2016,7 +2019,7 @@ function ampWidgetJL(D, G) {
   var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pd = (mx - mn) * .06 || .01; mn -= pd; mx += pd;
   var X = function (p) { return X0 + (p - mn) / (mx - mn) * (X1 - X0); }, y = 40;
   E('line', { x1: X(D.dnTo), x2: X(D.upTo), y1: y, y2: y, stroke: 'rgba(255,255,255,.35)', 'stroke-width': 1, 'stroke-dasharray': '2 3' });
-  [[D.dnTo, D.lo <= D.dnTo, CD, '下'], [D.upTo, D.hi >= D.upTo, C, '上']].forEach(function (q) {
+  [[D.dnTo, D.cur <= D.dnTo, CD, '接'], [D.upTo, D.hi >= D.upTo, C, '卖']].forEach(function (q) {
     var x = X(q[0]); E('line', { x1: x, x2: x, y1: y - 6, y2: y + 6, stroke: q[2], 'stroke-width': q[1] ? 2 : 1, opacity: q[1] ? 1 : .6 });
     E('text', { x: x, y: y + 16, 'font-size': 7, fill: q[2], opacity: 1, 'text-anchor': 'middle' }, q[3] + q[0].toFixed(2));
   });
@@ -2025,6 +2028,8 @@ function ampWidgetJL(D, G) {
   E('text', { x: X1, y: 9, 'font-size': 8, 'text-anchor': 'end', fill: over ? rc : '#ffe14d' }, over ? '超均别追' : '剩' + (D.avg - D.amp).toFixed(1) + '%');
   return s;
 }
+/* 11-08 用户: 价格尺的卖/接改成和振幅复盘页同一套: 卖 = 今天最低 + 倍数×日均振幅(默认0.9); 接 = 今天最高回落 x%(默认2.7%). 原来 上=最低+1倍日均 / 下=最高−1倍日均, 下看太深接不到 */
+function ampParJL() { var sv = null; try { sv = JSON.parse(localStorage.getItem('jlamp_p2') || 'null'); } catch (e) { } return { xa: sv && +sv[0] > 0 ? +sv[0] : 0.9, rb: sv && +sv[1] > 0 ? +sv[1] : 0.027 }; }
 function ampCardJL() {
   var lad = $('lad'); if (!lad) return;
   var c = $('ampCardJL');
@@ -2035,14 +2040,15 @@ function ampCardJL() {
   if (!A || A.code !== STK.code || !(A.amp > 0 && A.avg > 0)) { c.innerHTML = r0 ? '<div class="ac-r">' + r0 + '</div>' : ''; if (G0) c.insertBefore(ampWidgetJL(null, G0), c.firstChild); acBind(c); rulerSwJL(c); return; }
   var r2 = '';
   if (A.amp > 0 && A.avg > 0 && A.pc > 0) {
-    var left = A.avg - A.amp, upTo = A.lo + A.avg / 100 * A.pc, dnTo = A.hi - A.avg / 100 * A.pc;
+    var AP = ampParJL(), left = A.avg - A.amp, upTo = Math.ceil((A.lo + AP.xa * A.avg / 100 * A.pc) * 100) / 100, dnTo = Math.floor(A.hi * (1 - AP.rb) * 100) / 100;
     r2 = '<span class="k">振' + A.amp.toFixed(1) + '/' + A.avg.toFixed(1) + '</span>' + (left > 0.05
-      ? '<span>剩<b class="w">' + left.toFixed(1) + '</b></span><span>上<b class="s">' + upTo.toFixed(2) + '</b></span><span>下<b class="b">' + dnTo.toFixed(2) + '</b></span>'
-      : '<b class="ov">超均别追</b><span class="dim">上' + upTo.toFixed(2) + (A.hi >= upTo ? '✓' : '') + ' 下' + dnTo.toFixed(2) + (A.lo <= dnTo ? '✓' : '') + '</span>');   /* 11-06 用户A: 超了也留淡淡的上看/下看价, 到过的打✓ */
+      ? '<span>剩<b class="w">' + left.toFixed(1) + '</b></span><span>卖<b class="s">' + upTo.toFixed(2) + '</b></span><span>回落接<b class="b">' + dnTo.toFixed(2) + '</b></span>'
+      : '<b class="ov">超均别追</b><span class="dim">卖' + upTo.toFixed(2) + (A.hi >= upTo ? '✓' : '') + ' 回落接' + dnTo.toFixed(2) + ((LIVE.last || 0) > 0 && LIVE.last <= dnTo ? '✓' : '') + '</span>');   /* 11-06 用户A: 超了也留淡淡的上看/下看价, 到过的打✓ */
   }
   c.innerHTML = (r0 ? '<div class="ac-r">' + r0 + '</div>' : '') + (r2 ? '<div class="ac-r">' + r2 + '</div>' : '');
   try {
-    var D = A.amp > 0 && A.avg > 0 ? { lo: A.lo, hi: A.hi, cur: LIVE.last || A.hi, amp: A.amp, avg: A.avg, upTo: A.lo + A.avg / 100 * A.pc, dnTo: A.hi - A.avg / 100 * A.pc, fl: A.afl } : null;
+    var AP2 = ampParJL(), upTo2 = Math.ceil((A.lo + AP2.xa * A.avg / 100 * A.pc) * 100) / 100, dnTo2 = Math.floor(A.hi * (1 - AP2.rb) * 100) / 100;
+    var D = A.amp > 0 && A.avg > 0 ? { lo: A.lo, hi: A.hi, cur: LIVE.last || A.hi, amp: A.amp, avg: A.avg, upTo: upTo2, dnTo: dnTo2, fl: A.afl } : null;
     c.insertBefore(ampWidgetJL(D, G0), c.firstChild);
   } catch (eW) { }
   acBind(c); rulerSwJL(c);
@@ -2087,8 +2093,10 @@ function rulerRunJL(P, U, W, k, j, op) {   /* 和回测同一套: 逐分钟滚�
       if (h >= t) { ent = Math.min(Math.max(t, o), h); pos = 1; sh = h; out.push({ s: ent, hm: P[i].hm }); o = c; continue; }
       if (c <= hi * (1 - CUT) && hi > lo * (1 + CUT)) { lo = c; hi = c; }
     } else {
-      sh = Math.max(sh, h); var tb = Math.min(sh * (1 - j * W), ent - 0.01);
-      if (l <= tb) { tb = Math.max(Math.min(tb, o), l); out[out.length - 1].b = tb; out[out.length - 1].bhm = P[i].hm; net += (ent - tb) * 1000; n++; pos = 0; lo = hi = tb; }
+      sh = Math.max(sh, h);
+      if (h >= ent * (1 + k * U)) { ent = h; out[out.length - 1].s = ent; }   /* 卖后继续创新高(比已卖价再高一个k×涨段均): 卖价跟着上移到新高, 不停在早上的低位 */
+      var tb = Math.min(sh * (1 - j * W), ent - 0.01);
+      if (l <= tb) { tb = Math.max(Math.min(tb, o), l); out[out.length - 1].b = tb; out[out.length - 1].bhm = P[i].hm; net += (ent - tb) * (LIVE.sh > 0 ? LIVE.sh : 1000); n++; pos = 0; lo = hi = tb; }
     }
     o = c;
   }
@@ -2109,37 +2117,55 @@ function rulerRowJL() {
     var one = function (nm, k, j, note) {
       var r = rulerRunJL(P, S.up, S.dn, k, j, LIVE.open), t = '<span class="k">' + nm + '</span><span class="dim">k' + k + '/j' + j + note + '</span>';
       r.tr.forEach(function (q) { if (q.b) t += '<span class="dim">' + q.s.toFixed(2) + '→' + q.b.toFixed(2) + '</span>'; });   /* 只列做完的轮次 */
-      if (r.st === 'buy') t += '<span>已卖' + r.ent.toFixed(2) + ' 接≤<b class="b">' + (Math.floor(r.buy * 100) / 100).toFixed(2) + '</b></span>';
+      if (r.st === 'buy') { var bp2 = Math.floor(r.buy * 100) / 100, sh9 = LIVE.sh > 0 ? LIVE.sh : 1000, df = (Math.round(r.ent * 100) / 100 - bp2) * sh9; t += '<span>已卖' + r.ent.toFixed(2) + ' 接≤<b class="b">' + bp2.toFixed(2) + '</b> <span class="dim">/' + sh9 + '股 ' + (df >= 0 ? '+' : '') + Math.round(df) + '</span></span>'; }
       else if (r.st === 'sell' && P.length) t += '<span>卖≥<b class="s">' + (Math.ceil(r.sell * 100) / 100).toFixed(2) + '</b></span>';
       else if (r.st === 'sell') t += LIVE.open > 0 ? '<span>开盘后约 卖≥<b class="s">' + (Math.ceil(LIVE.open * (1 + k * S.up) * 100) / 100).toFixed(2) + '</b></span>' : '<span class="dim">等开盘(卖价=开盘后段低×' + (1 + k * S.up).toFixed(3) + ')</span>';   /* 11-07 验收: 开盘前没分时, 原来显示0.00 */
       else t += '<span>2轮做完</span>';
       if (r.n) t += '<span class="dim">已做' + (r.net >= 0 ? '+' : '') + Math.round(r.net) + '</span>';
-      if (r.st === 'buy' && P.length) { var fl = (r.ent - P[P.length - 1].p) * 1000; t += '<span class="' + (fl < 0 ? 'wk' : 'dim') + '">没接回 浮' + (fl >= 0 ? '+' : '') + Math.round(fl) + '</span>'; }   /* 11-07 验收: 卖后涨上去要看得见 */
       return '<div class="ac-r or rl">' + t + '</div>';
     };
     var B = RULER_B_JL[bm];
     return '<div class="ac-r or rl">' + hd + '<span>昨收在10日线下 · 先卖后买 · 参考</span></div>' + one('A', 0.6, 1.3, '') + one('B', B[0], B[1], bm === mk ? '' : ' 待更新');
   } catch (e) { return ''; }
 }
-/* 11-07 用户: 尺子行单独一块(不跟振幅卡收起), 左右滑: 第1页=尺子A/B今日价, 第2页=A/B回测详细版(jl_ruler_ab.html, 滑到才加载) */
+/* 11-07 用户: 尺子行单独一块(不跟振幅卡收起), 左右滑.
+   11-08 用户: A/B回测不准(同根K线先低后高), 删掉, 换成振幅做T复盘页 jl_amp_review.html —— 所有股票都有, 滑到才加载, 换股回第1页、下次滑到按新股重载;
+   第1页=复盘页同一套参数的今日振幅价(到上看卖 / 今天最高回落x%接), 只显示不提醒 */
+function ampRuleRowJL() {
+  try {
+    var A = window.__AMPJL; if (!A || A.code !== STK.code || !(A.avg > 0) || !(A.lo > 0) || !(A.pc > 0)) return '<div class="ac-r"><span class="k">振幅法</span><span>行情加载中</span></div>';
+    var P = ampParJL(), up = Math.ceil((A.lo + P.xa * A.avg / 100 * A.pc) * 100) / 100, dn = Math.floor(A.hi * (1 - P.rb) * 100) / 100;
+    return '<div class="ac-r"><span class="k">振幅法</span><span>' + P.xa + '倍日均 卖<b class="s">' + up.toFixed(2) + '</b>' + (A.hi >= up ? '✓' : '') + '</span><span>回落' + (P.rb * 100).toFixed(1) + '%接<b class="b">' + dn.toFixed(2) + '</b></span></div>';
+  } catch (e) { return ''; }
+}
 function rulerSwJL(c) {
   try {
-    var h = rulerRowJL(), w = $('rulerSwJL');
+    var h = ampRuleRowJL(), w = $('rulerSwJL');
     if (!w) {
       w = document.createElement('div'); w.id = 'rulerSwJL';
-      w.innerHTML = '<div class="rsw"><div class="rs1" id="rulerRowsJL"></div><div class="rs2"><iframe id="rulerAbFrJL" title="尺子A/B回测"></iframe></div></div><div class="rdt"><i class="on"></i><i></i><span>右滑看A/B回测</span></div>';
+      w.innerHTML = '<div class="rsw"><div class="rs1" id="rulerRowsJL"></div><div class="rs2"><iframe id="rulerAbFrJL" title="振幅做T复盘"></iframe></div></div><div class="rdt"><i class="on"></i><i></i><span>左滑看振幅复盘</span></div>';
       var sw = w.querySelector('.rsw');
+      /* 11-08 用户: 第1页排版别动、分时引擎图要紧跟在尺子下面 —— 原来两页并排, 整块被第2页(340高)撑大, 第1页底下空一大块黑、图被挤到最下面。
+         改: 高度跟着当前页走(第1页=尺子几行的实际高度, 第2页=回测页, 页内上下滚); 点下面小圆点也能翻页(回测页里横滑不一定传得出来) */
+      var pgOf = function () { return sw.scrollLeft > sw.clientWidth / 2 ? 1 : 0; };
+      w.__fit = function () { var r1 = $('rulerRowsJL'), pg = pgOf(); sw.style.height = (pg ? Math.round(Math.min(520, Math.max(360, innerHeight * 0.62))) : (r1 ? r1.offsetHeight : 0)) + 'px'; };
+      window.zpRulerPg = function (p) { try { sw.scrollTo({ left: p ? sw.clientWidth : 0, behavior: 'smooth' }); } catch (e) { sw.scrollLeft = p ? sw.clientWidth : 0; } };
       sw.addEventListener('scroll', function () {
-        var pg = sw.scrollLeft > sw.clientWidth / 2 ? 1 : 0, f = $('rulerAbFrJL');
-        if (sw.scrollLeft > 10 && f && !f.getAttribute('src')) f.setAttribute('src', 'jl_ruler_ab.html?embed=1');
+        var pg = pgOf(), f = $('rulerAbFrJL');
+        if (sw.scrollLeft > 10 && f && f.__code !== STK.code) { f.__code = STK.code; f.setAttribute('src', 'jl_amp_review.html?embed=1&code=' + STK.code + '&t=' + Date.now()); }
         w.querySelectorAll('.rdt i').forEach(function (d, i) { d.className = i === pg ? 'on' : ''; });
-        var t = w.querySelector('.rdt span'); if (t) t.textContent = pg ? '左滑回今日价' : '右滑看A/B回测';
+        var t = w.querySelector('.rdt span'); if (t) t.textContent = pg ? '右滑或点这里 回今日价' : '左滑看振幅复盘';
+        if (pg !== w.__pg) { w.__pg = pg; w.__fit(); }
       }, { passive: true });
+      w.querySelector('.rdt').addEventListener('click', function () { window.zpRulerPg(pgOf() ? 0 : 1); });
+      window.addEventListener('resize', function () { w.__fit(); });
     }
     if (w.parentNode !== c.parentNode || w.previousSibling !== c) c.parentNode.insertBefore(w, c.nextSibling);
     try { w.style.order = getComputedStyle(c).order; } catch (e0) { }
     w.style.display = h ? '' : 'none';
+    var f2 = $('rulerAbFrJL'); if (f2 && f2.__code && f2.__code !== STK.code) { f2.__code = ''; f2.removeAttribute('src'); if (window.zpRulerPg) window.zpRulerPg(0); }   /* 换股: 回第1页 */
     var r1 = $('rulerRowsJL'); if (r1 && r1.__h !== h) { r1.innerHTML = h; r1.__h = h; }
+    if (h && w.__fit) w.__fit();
   } catch (e) { }
 }
 function acBind(c) {   /* 点小部件: 展开/收起下面那几排字(默认收起), 记 zp_acopen_v1 */
@@ -3097,9 +3123,10 @@ body:not(.acOpen) #ampCardJL .ac-r.or{display:flex}
 #ampCardJL .ac-r.or .k{opacity:1;font-weight:600}#ampCardJL .or-hi .k{color:#ff5459}#ampCardJL .or-lo .k{color:#2fe39b}#ampCardJL .or-flat .k{color:#cfd6df}
 #rulerSwJL{margin:0 10px 6px;border-radius:10px;background:rgba(17,24,33,.30);border:1px solid rgba(255,255,255,.09);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:10.5px;line-height:1.5;font-variant-numeric:tabular-nums;overflow:hidden}
 #rulerSwJL .rsw{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}#rulerSwJL .rsw::-webkit-scrollbar{display:none}
-#rulerSwJL .rs1,#rulerSwJL .rs2{flex:0 0 100%;scroll-snap-align:start;min-width:0}#rulerSwJL .rs1{padding:4px 8px 2px}#rulerSwJL .rs2 iframe{display:block;width:100%;height:340px;border:0;background:transparent}
-#rulerSwJL .ac-r{display:flex;gap:2px 7px;flex-wrap:wrap;align-items:baseline}#rulerSwJL .k{color:#ffe14d;font-weight:600}#rulerSwJL b{font-weight:600}#rulerSwJL .s{color:#ff9a3c}#rulerSwJL .b{color:#4ff0ff}#rulerSwJL .dim{opacity:.6}#rulerSwJL .wk{color:#ffb84d}
-#rulerSwJL .rdt{display:flex;gap:4px;align-items:center;justify-content:center;padding:0 0 3px;font-size:9px;opacity:.6}#rulerSwJL .rdt i{width:5px;height:5px;border-radius:3px;background:rgba(255,255,255,.35)}#rulerSwJL .rdt i.on{background:#ffe14d}
+#rulerSwJL .rs1,#rulerSwJL .rs2{flex:0 0 100%;scroll-snap-align:start;min-width:0}#rulerSwJL .rs1{padding:4px 8px 2px}#rulerSwJL .rs2{align-self:stretch}#rulerSwJL .rs2 iframe{display:block;width:100%;height:100%;border:0;background:transparent}
+/* 11-08 用户: 高度跟当前页(见 rulerSwJL __fit), 第1页不再被第2页撑高 */#rulerSwJL .rsw{align-items:flex-start;transition:height .22s ease}
+#rulerSwJL .ac-r{display:flex;gap:2px 7px;flex-wrap:wrap;align-items:baseline}#rulerSwJL .k{color:#ffe14d;font-weight:600}#rulerSwJL b{font-weight:600}#rulerSwJL .s{color:#ff9a3c}#rulerSwJL .b{color:#4ff0ff}#rulerSwJL .dim{color:#e8eef5;opacity:1}#rulerSwJL .wk{color:#ffb84d}
+#rulerSwJL .rdt{display:flex;gap:4px;align-items:center;justify-content:center;padding:2px 0 4px;font-size:9px;color:#eef3f8;cursor:pointer}#rulerSwJL .rdt i{width:5px;height:5px;border-radius:3px;background:rgba(255,255,255,.35)}#rulerSwJL .rdt i.on{background:#ffe14d}
 /* 11-07 用户: 次日作战计划整块不显示(jl_trule.js 照常记台账, 删这行可恢复) */#truleCard{display:none!important}
 #ampCardJL .ac-r.or .s{color:#ff9a3c}#ampCardJL .ac-r.or .b{color:#4ff0ff}#ampCardJL .dim{opacity:.55}
 /* 11-06k 价位尺默认收成一行, 点标题展开 */
@@ -3110,6 +3137,9 @@ body:not(.ladOpen) #lad .pr3{display:none}body:not(.ladOpen) #lad .pr3.sum.cmp{d
 #ampCardJL .acHalo{animation:acHaloJL 1.1s ease-in-out 6}@keyframes acHaloJL{50%{opacity:.15}}@media (prefers-reduced-motion:reduce){#ampCardJL .acHalo{animation:none}}
 #ampCardJL b.s{color:#ff9a3c}#ampCardJL b.b{color:#4ff0ff}#ampCardJL b.w{color:#ffe14d}#ampCardJL b.ov{color:#ff8a3d}
 #ampCardJL em{margin-left:-3px}
+/* 11-08 用户: 卡面透明轻磨砂(不要死黑): 浮动面板已是半透明磨砂, 里面的卡改成淡白玻璃+细亮边, 模糊调轻 */
+body.injlin .card,body.injlin #ampCardJL,#rulerSwJL,body.injlin .ns,body.injlin #myT,body.injlin #myT2,body.injlin .band,body.injlin .lad,body.injlin #resoCard,body.injlin .sizecard{background:linear-gradient(150deg,rgba(255,255,255,.065),rgba(255,255,255,.02))!important;border-color:rgba(255,255,255,.13)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);-webkit-backdrop-filter:blur(4px)!important;backdrop-filter:blur(4px)!important}
+body.injlin #zpRsoW,body.injlin #zpSub{background:rgba(255,255,255,.03)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 /* 11-07 用户: 字太灰看不清 → 卡内文字全部提亮 */
 #ampCardJL,#ampCardJL .ac-r span,#ampCardJL .k{color:#f2f6fb;opacity:1!important}#ampCardJL .dim{color:#dfe6ee;opacity:1!important}
 /* 下一步卡(分时·已回落x%): 缩小, 点一下收起成一行 */
@@ -3617,7 +3647,7 @@ body.injlin .chartbox>#zpSub{order:1}
   var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_sub_v1', VH = 62, PH2 = 104;
   var UP = '#ff4757', DN = '#1ee3a0', TXT = '#ffffff';
   var mode = 'macd';
-  try { var m0 = localStorage.getItem(KEY); if (/^(macd|ctrl|flow)$/.test(m0)) mode = m0; } catch (e) { }
+  try { var m0 = localStorage.getItem(KEY); if (/^(macd|ctrl|flow|mix)$/.test(m0)) mode = m0; } catch (e) { }
   var box = null, vSvg = null, pSvg = null, D = { pts: [], vol: null, pane: null }, curHm = null, ptr = null, drv = false;
   var FF = { sym: '', d: '', rows: null, t: 0, busy: false, err: '' };
   function E(n, a, t) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; }
@@ -3630,7 +3660,7 @@ body.injlin .chartbox>#zpSub{order:1}
     var ch = $('ch'); if (!ch || !ch.parentNode) return false;
     box = document.createElement('div'); box.id = 'zpSub';
     box.innerHTML = '<svg id="zpVol" viewBox="0 0 360 ' + VH + '" aria-label="成交量"></svg>' +
-      '<div class="zb-seg" role="tablist"><button data-m="macd">MACD</button><button data-m="ctrl">控盘</button><button data-m="flow">主力资金</button></div>' +
+      '<div class="zb-seg" role="tablist"><button data-m="macd">MACD</button><button data-m="ctrl">控盘</button><button data-m="flow">主力资金</button><button data-m="mix">控盘+资金</button></div>' +
       '<svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg>';
     ch.parentNode.insertBefore(box, ch.nextSibling);
     vSvg = box.querySelector('#zpVol'); pSvg = box.querySelector('#zpPane');
@@ -3748,7 +3778,7 @@ body.injlin .chartbox>#zpSub{order:1}
       .catch(function () { return emJ('https://push2his.eastmoney.com/api/qt/stock/fflow/kline/get?' + q).then(parse); })
       .then(function (r) { if (FF.sym !== sym) return; FF.rows = r.rows; FF.d = r.d; FF.t = Date.now(); FF.err = ''; },
         function (e) { if (FF.sym !== sym) return; FF.err = '主力资金接口没连上'; FF.t = Date.now(); })
-      .then(function () { FF.busy = false; if (mode === 'flow') render(); });
+      .then(function () { FF.busy = false; if (mode === 'flow' || mode === 'mix') render(); });
   }
   function drawFlow(P) {
     var s = pSvg; s.innerHTML = ''; loadFF();
@@ -3777,6 +3807,69 @@ body.injlin .chartbox>#zpSub{order:1}
     D.pane = { vy: function (y) { return (mid - y) / half * mc; }, fmt: fM, snaps: function (k) { return [['累计', R[k].cum, YC(R[k].cum)], ['本分钟', R[k].d, YD(R[k].d)]]; }, P: R, lg: lg, base: lg(R.length - 1) };
   }
 
+  /* ── jl-zpmix (11-08): 控盘+主力资金 叠在一张图: 控盘红黄柱(半透明, 自下往上) + 主力净额累计黄线(居中零轴);
+     背离圈(盘中当时就能算出, 只用到这一分钟为止的数据): 价格比上一个低点更低、资金线却比那时高 = 蓝「积」(跌着有人接);
+     价格比上一个高点更高、资金线却比那时低 = 粉「撤」(涨着资金在走)。上一个低/高点 = 反弹/回落≥0.8%后确认的点。
+     只是观察标记, 没回测过(资金没有历史), 攒够留档数据再验证。
+     口径冻结 v1(11-08): ~/金粼量化工具/资金归档/评估_蓝粉圈.py 是这段的逐行移植(随机数据8组逐条一致), 改这里=另起v2, 别悄悄改。 ── */
+  function mixDiv(rows) {   /* rows=[{hm,p,cum}] 按分钟; 返回 [{hm,k:'积'|'撤',p,cum,ref}] */
+    var out = [], RB = 0.008, NEW = 0.002, mc = 1, lo = null, hi = null, pl = null, ph = null, i, r;
+    for (i = 0; i < rows.length; i++) {
+      r = rows[i]; mc = Math.max(mc, Math.abs(r.cum)); var thr = mc * 0.1;
+      if (!lo || r.p < lo.p) lo = { p: r.p, cum: r.cum, hm: r.hm, used: false };
+      if (!hi || r.p > hi.p) hi = { p: r.p, cum: r.cum, hm: r.hm, used: false };
+      if (pl && !pl.used && r.p < pl.p * (1 - NEW) && r.cum > pl.cum + thr) { out.push({ hm: r.hm, k: '积', p: r.p, cum: r.cum, ref: pl }); pl.used = true; }
+      if (ph && !ph.used && r.p > ph.p * (1 + NEW) && r.cum < ph.cum - thr) { out.push({ hm: r.hm, k: '撤', p: r.p, cum: r.cum, ref: ph }); ph.used = true; }
+      if (lo && r.p >= lo.p * (1 + RB)) { pl = lo; lo = null; hi = { p: r.p, cum: r.cum, hm: r.hm }; }   /* 反弹够了 → 刚才的低点确认 */
+      if (hi && r.p <= hi.p * (1 - RB)) { ph = hi; hi = null; lo = { p: r.p, cum: r.cum, hm: r.hm }; }
+    }
+    return out;
+  }
+  function drawMix(P) {
+    var s = pSvg; s.innerHTML = ''; loadFF();
+    var top = 16, bot = PH2 - 3, mid = (top + bot) / 2, half = (bot - top) / 2 - 1;
+    /* 控盘柱 */
+    var C = ctrlOf(P), cmx = 120, i; C.forEach(function (v, k) { if (v != null && v > cmx && P[k].vis !== false) cmx = v; });
+    var YK = function (v) { return bot - v / cmx * (bot - top); }, col = function (v) { return v >= 100 ? '#ff4d4f' : v >= 50 ? '#ff9a3c' : '#ffd23f'; };
+    var bw = Math.max(0.5, barW(P) * 0.9), g = E('g', { 'shape-rendering': 'crispEdges', opacity: .42 });
+    for (i = 0; i < P.length; i++) { var v = C[i]; if (!(v > 0) || P[i].vis === false) continue; var y = YK(v); g.appendChild(E('rect', { x: (P[i].x - bw / 2).toFixed(2), y: y.toFixed(2), width: bw.toFixed(2), height: Math.max(.5, bot - y).toFixed(2), fill: col(v) })); }
+    s.appendChild(g);
+    var CK = {}; P.forEach(function (q, k) { CK[q.hm] = C[k]; });
+    var ctrlAt = function (hm) { var b = null; for (var k = 0; k < P.length; k++) { if (P[k].hm <= hm) b = C[k]; else break; } return b; };
+    var lvl = function (v) { return v == null ? '控盘未出数' : (v >= 100 ? '高控盘 ' : v >= 50 ? '中控盘 ' : v > 0 ? '低控盘 ' : '无控盘 ') + Math.round(v); };
+    var nofund = function (why) { legend(s, [['控盘+资金', TXT], [why, TXT]]); var last = null; for (i = C.length - 1; i >= 0; i--) if (C[i] != null) { last = i; break; }
+      D.pane = last == null ? null : { vy: function (y) { return (bot - y) / (bot - top) * cmx; }, fmt: function (v) { return String(Math.round(v)); }, snaps: function (k) { return C[k] > 0 ? [['控盘', C[k], YK(C[k])]] : []; }, P: P, lg: function (k) { return [['控盘+资金', TXT], [lvl(C[k]), C[k] > 0 ? col(C[k]) : TXT], [why, TXT]]; }, base: [['控盘+资金', TXT], [lvl(C[last]), C[last] > 0 ? col(C[last]) : TXT], [why, TXT]] }; };
+    if (LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate) return nofund('资金只有当天 · 这里只画控盘');
+    if (!FF.rows) return nofund(FF.err || '资金拉取中…');
+    /* 资金线(同 drawFlow 口径, K线模式同一根蜡烛合成) */
+    var R = [], prev = 0, KK = window.zpKeyOfHm && window.zpPerAll && zpPerAll();
+    FF.rows.forEach(function (r) {
+      var x = xOfHmJL(r.hm); if (x == null) { prev = r.main; return; }
+      var it = { hm: KK ? (zpKeyOfHm(r.hm) || hm4(r.hm)) : hm4(r.hm), m: hm4(r.hm), x: x, cum: r.main }; prev = r.main;
+      var L0 = R[R.length - 1]; if (KK && L0 && L0.hm === it.hm) { L0.cum = it.cum; L0.m = it.m; } else R.push(it);
+    });
+    R = R.filter(function (r) { return r.x > -900 && r.x < 9000; });
+    if (!R.length) return nofund('资金还没有数据');
+    var mc = 1; R.forEach(function (r) { mc = Math.max(mc, Math.abs(r.cum)); });
+    var YC = function (v) { return mid - v / mc * half; };
+    s.appendChild(E('line', { x1: X0(), x2: X1(), y1: mid, y2: mid, stroke: 'rgba(255,255,255,.3)', 'stroke-width': .6, 'stroke-dasharray': '3 3' }));
+    s.appendChild(E('polyline', { points: R.map(function (r) { return r.x.toFixed(1) + ',' + YC(r.cum).toFixed(1); }).join(' '), fill: 'none', stroke: '#ffd66e', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }));
+    /* 背离圈: 按分钟价(LIVE.pts)和资金累计对齐 */
+    var PM = {}; (LIVE.pts || []).forEach(function (q) { if (q.p > 0) PM[hm4(q.hm)] = q.p; });
+    var rows = []; FF.rows.forEach(function (r) { var h = hm4(r.hm); if (PM[h] != null) rows.push({ hm: h, p: PM[h], cum: r.main }); });
+    var DV = []; window.zpMixDivs = DV;   /* 11-08 用户: 积/撤 背离圈删掉(实测误导), 只留控盘柱+资金线 */
+    DV.forEach(function (d) {
+      var x = xOfHmJL(d.hm); if (x == null) return; var y = YC(d.cum), c = d.k === '积' ? '#5ab0ff' : '#ff6fae';
+      s.appendChild(E('circle', { cx: x, cy: y, r: 5, fill: 'none', stroke: c, 'stroke-width': 1.6 }));
+      s.appendChild(E('text', { x: x, y: d.k === '积' ? y + 15 : y - 8, fill: c, 'font-size': 9.5, 'font-weight': 700, 'text-anchor': 'middle' }, d.k));
+      var x0 = xOfHmJL(d.ref.hm); if (x0 != null) s.appendChild(E('line', { x1: x0, y1: YC(d.ref.cum), x2: x, y2: y, stroke: c, 'stroke-width': .9, 'stroke-dasharray': '2 2', opacity: .8 }));
+    });
+    var lastDv = DV[DV.length - 1];
+    var lg = function (k) { var r = R[k]; return [['控盘+资金', TXT], [lvl(ctrlAt(r.hm)), TXT], ['主力累计 ' + fM(r.cum), r.cum >= 0 ? UP : DN]]; };
+    var base = lg(R.length - 1); if (lastDv) base.push([(lastDv.k === '积' ? '● 积 ' : '● 撤 ') + lastDv.hm.slice(0, 2) + ':' + lastDv.hm.slice(2), lastDv.k === '积' ? '#5ab0ff' : '#ff6fae']);
+    D.pane = { vy: function (y) { return (mid - y) / half * mc; }, fmt: fM, snaps: function (k) { return [['累计', R[k].cum, YC(R[k].cum)]]; }, P: R, lg: lg, base: base };
+  }
+
   function legends() {
     if (D.vol) { var k = curHm == null ? null : atHm(D.vol.P, curHm); legend(vSvg, k == null ? D.vol.base : D.vol.lg(k)); }
     if (D.pane) { var k2 = curHm == null ? null : atHm(D.pane.P, curHm); legend(pSvg, k2 == null ? D.pane.base : D.pane.lg(k2)); }
@@ -3799,7 +3892,7 @@ body.injlin .chartbox>#zpSub{order:1}
       segPaint();
       var P = ptsNow(); D.vol = null; D.pane = null;
       drawVol(P);
-      if (mode === 'ctrl') drawCtrl(P); else if (mode === 'flow') drawFlow(P); else drawMacd(P);
+      if (mode === 'ctrl') drawCtrl(P); else if (mode === 'flow') drawFlow(P); else if (mode === 'mix') drawMix(P); else drawMacd(P);
       legends();
       try { window.zpDrawPaint && window.zpDrawPaint(); } catch (e2) { }
     } catch (e) { }
@@ -3881,7 +3974,7 @@ body.injlin .chartbox>#zpSub{order:1}
    存储: 主图按 横坐标(固定时间轴)+价格, 副图按图内坐标; 按 股票+交易日 存 localStorage zp_draw_v1, 只留当天。 */
 (function () {
   var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_draw_v1', UK = 'zp_draw_ui_v1';
-  var tool = '', sel = -1, drag = null, meas = null, bar = null, hid = false, mini = false, lock = false, selH = -1;
+  var tool = '', sel = -1, drag = null, meas = null, bar = null, hid = false, mini = false, lock = false, selH = -1, pendF = -1;   /* 11-08 pendF: 斐波点了起点、等点终点 */
   /* jl-zphl (11-04): 水平线标记——按股票存(不分日, 第二天还在) zp_hline_v1 {代码:[{p:价, lk:锁}]}; 点线左侧价签 = 单条锁/解锁, 锁住的线拖不动、也不挡十字线 */
   var HK = 'zp_hline_v1', HLX = PX0 + 34;
   function loadH() { try { var m = JSON.parse(localStorage.getItem(HK) || '{}'), c = (window.STK && STK.code) || ''; return Array.isArray(m[c]) ? m[c] : []; } catch (e) { return []; } }
@@ -3923,6 +4016,19 @@ body.injlin .chartbox>#zpSub{order:1}
   function yOfPwk(p) { var g = wkG(); return g.Y0 + (g.hi - p) / (g.hi - g.lo) * g.H; }
   function enc(pn, y) { return pn === 'ch' ? +pOfY(y).toFixed(3) : pn === 'wk' ? +pOfYwk(y).toFixed(3) : +y.toFixed(1); }
   function dec(pn, v) { return pn === 'ch' ? Y(v) : pn === 'wk' ? yOfPwk(v) : v; }
+  /* 11-08 用户: 斐波不好画上去 → ①端点吸附附近蜡烛的高/低(分时=附近那几分钟的价), 手指挡着也能对准高低点; 离得远(竖向>28px)就不吸, 照手指位置
+     ②手机上可以「点起点 → 再点终点」两下画好(原来只能按住拖, 只点一下会被当误触删掉); 按住拖照旧 */
+  function fibSnap(svg, x, y) {
+    try {
+      var sc = 360 / (svg.getBoundingClientRect().width || 360), RX = 16 * sc, RY = 28 * sc, K = kA(), C = [], best = null, bd = 1e9;
+      if (K.p) K.A.forEach(function (k) { if (k.cx == null || Math.abs(k.cx - x) > RX) return; if (k.h > 0) C.push([k.cx, k.h]); if (k.l > 0) C.push([k.cx, k.l]); });
+      else (LIVE.pts || []).forEach(function (q) { if (!(q.p > 0) || +q.hm < 930) return; var qx = xOfHmJL(q.hm); if (qx == null || Math.abs(qx - x) > RX) return; C.push([qx, q.p]); });
+      C.forEach(function (c) { var d = Math.abs(Y(c[1]) - y) + Math.abs(c[0] - x) * .3; if (d < bd) { bd = d; best = c; } });
+      if (best && Math.abs(Y(best[1]) - y) <= RY && best[0] >= PX0 && best[0] <= LX - 6) return { x: +best[0].toFixed(1), p: +best[1].toFixed(3) };
+    } catch (e) { }
+    return null;
+  }
+  function dropPend() { if (pendF < 0) return; var L = load(), l = L[pendF]; if (l && l.k === 'fib' && l.ax === l.bx && l.ay === l.by) { L.splice(pendF, 1); save(L); } pendF = -1; }
   function ptsNear(x) { var P = LIVE.pts || [], best = -1, bd = 1e9; for (var i = 0; i < P.length; i++) { var qx = xOfHmJL(P[i].hm); if (qx == null) continue; var d = Math.abs(qx - x); if (d < bd) { bd = d; best = i; } } return best; }
   function dSeg(px, py, ax, ay, bx, by) { var dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0; return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)); }
   function fV(v) { return v >= 1e4 ? (v / 1e4).toFixed(v >= 1e5 ? 0 : 1) + '万手' : Math.round(v) + '手'; }
@@ -3931,6 +4037,13 @@ body.injlin .chartbox>#zpSub{order:1}
   function fibLv() { var c = null; try { c = JSON.parse(localStorage.getItem('jinlin_fib_cfg_v1') || 'null'); } catch (e) { } var vis = c && c.vis || {}, col = c && c.col || {}; return FIB_DEF.filter(function (z) { return vis[z[1]] !== false; }).map(function (z) { return { r: z[0], lb: z[1], c: col[z[1]] || z[2] }; }); }
 
   function paintFib(g, ln, on) {
+    if (ln.ax === ln.bx && ln.ay === ln.by) {   /* 11-08: 只点了起点 → 画个起点圈 + 提示, 等第二下 */
+      var y0 = Y(ln.ay), tx0 = ln.ax + 8 > LX - 70 ? ln.ax - 70 : ln.ax + 8;
+      g.appendChild(E('circle', { cx: ln.ax, cy: y0, r: 6, fill: 'none', stroke: '#ffd66e', 'stroke-width': 1, 'stroke-dasharray': '2 2' }));
+      g.appendChild(E('rect', { x: tx0 - 2, y: y0 - 16, width: 64, height: 11, rx: 3, fill: 'rgba(10,14,19,.6)' }));
+      g.appendChild(E('text', { x: tx0 + 2, y: y0 - 7.5, fill: '#ffd66e', 'font-size': 8, 'font-weight': 500 }, '再点一下终点'));
+      return;
+    }
     var p1 = ln.ay, p2 = ln.by, xa = Math.min(ln.ax, ln.bx), xb = Math.max(ln.ax, ln.bx); if (xb - xa < 2) xb = xa + 2;
     var LV = fibLv(), ys = LV.map(function (z) { return Y(p1 + (p2 - p1) * z.r); });
     var cg = E('g', {}); cg.appendChild(E('clipPath', { id: 'zdclip' }).appendChild(E('rect', { x: PX0, y: PY0, width: LX - 6 - PX0, height: PH })).parentNode);
@@ -4085,7 +4198,7 @@ body.injlin .chartbox>#zpSub{order:1}
         paint(); return;
       }
       if (lock) { lock = false; saveUI(); }   /* 点画线类工具 = 自动解锁 */
-      var t = b.getAttribute('data-t'); tool = tool === t ? '' : t; sel = -1; selH = -1; if (tool !== 'meas') meas = null;
+      dropPend(); var t = b.getAttribute('data-t'); tool = tool === t ? '' : t; sel = -1; selH = -1; if (tool !== 'meas') meas = null;
       if (tool) { hid = false; saveUI(); }
       try { window.zpMainXH && window.zpMainXH.hide(); } catch (e) { }
       paint();
@@ -4137,9 +4250,16 @@ body.injlin .chartbox>#zpSub{order:1}
     selH = -1;
     if (!hit && tool === 'meas') { var p0 = pOfY(q.y); meas = { ax: q.x, ap: p0, bx: q.x, bp: p0 }; drag = { k: 'meas', svg: svg }; paint(); return; }
     var L = load();
+    if (tool === 'fib' && pn === 'ch' && pendF >= 0 && L[pendF]) {   /* 11-08: 第二下 = 终点(吸附高低点), 按住不放还能接着拖 */
+      var sp1 = fibSnap(svg, q.x, q.y), l1 = L[pendF];
+      l1.bx = sp1 ? sp1.x : +Math.max(PX0, Math.min(LX - 6, q.x)).toFixed(1); l1.by = sp1 ? sp1.p : enc(pn, q.y);
+      if (l1.bx === l1.ax && l1.by === l1.ay) l1.by = +(l1.by * 1.0001).toFixed(4);
+      save(L); sel = pendF; drag = { k: 'b', i: pendF, pn: pn, svg: svg, sx: q.x, sy: q.y, moved: true }; pendF = -1; window.zpDrawBusy = true; paint(); return;
+    }
     if (hit) { sel = hit.i; drag = { k: hit.k, i: hit.i, pn: pn, svg: svg, sx: q.x, sy: q.y, o: hit, moved: false }; window.zpDrawBusy = true; paint(); return; }
-    sel = -1;
-    var it = { pn: pn, ax: +q.x.toFixed(1), ay: enc(pn, q.y), bx: +q.x.toFixed(1), by: enc(pn, q.y) }; if (tool === 'fib') it.k = 'fib';
+    sel = -1; dropPend(); L = load();
+    var sp0 = tool === 'fib' && pn === 'ch' ? fibSnap(svg, q.x, q.y) : null;   /* 11-08: 斐波起点吸附高低点 */
+    var it = { pn: pn, ax: sp0 ? sp0.x : +q.x.toFixed(1), ay: sp0 ? sp0.p : enc(pn, q.y), bx: sp0 ? sp0.x : +q.x.toFixed(1), by: sp0 ? sp0.p : enc(pn, q.y) }; if (tool === 'fib') it.k = 'fib';
     L.push(it); save(L); drag = { k: 'new', i: L.length - 1, pn: pn, svg: svg, sx: q.x, sy: q.y, moved: false }; paint();
   }
   function move(e) {
@@ -4150,16 +4270,18 @@ body.injlin .chartbox>#zpSub{order:1}
     var pn = drag.pn, cx = Math.max(PX0, Math.min(LX - 6, q.x));
     if (drag.k === 'meas') { meas.bx = cx; meas.bp = pOfY(Math.max(PY0, Math.min(PY0 + PH, q.y))); paint(); return; }
     var L = load(), ln = L[drag.i]; if (!ln) return;
-    if (Math.hypot(q.x - drag.sx, q.y - drag.sy) > 2) drag.moved = true;
-    if (drag.k === 'new' || drag.k === 'b') { ln.bx = +cx.toFixed(1); ln.by = enc(pn, q.y); }
-    else if (drag.k === 'a') { ln.ax = +cx.toFixed(1); ln.ay = enc(pn, q.y); }
+    if (Math.hypot(q.x - drag.sx, q.y - drag.sy) > (drag.k === 'new' && ln.k === 'fib' ? 9 : 2)) drag.moved = true;   /* 11-08: 斐波手指抖几像素不算拖, 当成点起点 */
+    if (drag.k === 'new' && ln.k === 'fib' && !drag.moved) return;
+    var spm = ln.k === 'fib' && pn === 'ch' && drag.k !== 'body' ? fibSnap(drag.svg, q.x, q.y) : null;   /* 11-08: 斐波端点拖动时吸附高低点 */
+    if (drag.k === 'new' || drag.k === 'b') { ln.bx = spm ? spm.x : +cx.toFixed(1); ln.by = spm ? spm.p : enc(pn, q.y); }
+    else if (drag.k === 'a') { ln.ax = spm ? spm.x : +cx.toFixed(1); ln.ay = spm ? spm.p : enc(pn, q.y); }
     else { var dx = q.x - drag.sx, dy = q.y - drag.sy, o = drag.o; ln.ax = +(o.ax + dx).toFixed(1); ln.bx = +(o.bx + dx).toFixed(1); ln.ay = enc(pn, o.ay + dy); ln.by = enc(pn, o.by + dy); }
     save(L); paint();
   }
   function up() {
     if (!drag) return;
     if (drag.k === 'h' && tool === 'hl') tool = '';   /* 放好一条就退出水平线工具, 回到十字线 */
-    if (drag.k === 'new' && !drag.moved) { var L = load(); L.splice(drag.i, 1); save(L); }   /* 只点一下没拖 → 不留 */
+    if (drag.k === 'new' && !drag.moved) { var L = load(); if (L[drag.i] && L[drag.i].k === 'fib') { L[drag.i].bx = L[drag.i].ax; L[drag.i].by = L[drag.i].ay; save(L); pendF = drag.i; sel = -1; } else { L.splice(drag.i, 1); save(L); } }   /* 只点一下没拖 → 不留; 11-08 斐波例外: 当起点, 等第二下 */
     drag = null; window.zpDrawBusy = false; paint();
   }
   document.addEventListener('pointerdown', down, true);
@@ -4171,7 +4293,7 @@ body.injlin .chartbox>#zpSub{order:1}
   window.addEventListener('resize', place);
 
   var lastKey = '';
-  setInterval(function () { try { mount(); place(); var k = key(); if (k !== lastKey) { lastKey = k; sel = -1; selH = -1; meas = null; paint(); } } catch (e) { } }, 800);
+  setInterval(function () { try { mount(); place(); var k = key(); if (k !== lastKey) { lastKey = k; pendF = -1; sel = -1; selH = -1; meas = null; paint(); } } catch (e) { } }, 800);
   mount(); paint();
 })();
 </script>
@@ -4265,7 +4387,7 @@ body.injlin .chartbox>#zpSub{order:1}
     return k.vis ? k.cx : (k.cx < PX0 ? -999 : 9999);
   };
   /* K线模式纵轴 = 视窗内蜡烛的高低 */
-var SR0 = setRange, zpYF = null;
+var SR0 = setRange, zpYF = null, zpTB = null;
 setRange = function (lo, hi) {
   try {
     if (!window.zpPanning) zpYF = null;
@@ -4298,6 +4420,18 @@ setRange = function (lo, hi) {
             var zz = Math.max(0.3, Math.min(4, window.zpYZ || 1)), cc = (lo + hi) / 2, hh = (hi - lo) / 2 * zz;
       lo = cc - hh; hi = cc + hh;
 
+    } else {
+      /* jl-zpyax (11-08): 分时模式也能纵向缩放(价格轴上下拖, 同 ks.html)。以全天范围中点为中心缩放, 现价始终留在图内;
+         redrawLight 之类把已缩放的 YLO/YHI 再传回来时, 用上次的基础范围, 不叠加缩放 */
+      var z1 = Math.max(0.3, Math.min(4, window.zpYZ || 1));
+      if (zpTB && Math.abs(lo - zpTB.olo) < 1e-9 && Math.abs(hi - zpTB.ohi) < 1e-9) { lo = zpTB.lo; hi = zpTB.hi; }
+      var blo = lo, bhi = hi;
+      if (z1 !== 1 && hi > lo) {
+        var c1 = (lo + hi) / 2, h1 = (hi - lo) / 2 * z1; lo = c1 - h1; hi = c1 + h1;
+        var cur = LIVE && LIVE.last > 0 ? LIVE.last : null, pad = (hi - lo) * 0.06;
+        if (cur != null) { if (cur > hi - pad) { var d1 = cur - (hi - pad); lo += d1; hi += d1; } else if (cur < lo + pad) { var d2 = (lo + pad) - cur; lo -= d2; hi -= d2; } }
+      }
+      zpTB = { lo: blo, hi: bhi, olo: lo, ohi: hi };
     }
   } catch (e) {}
 
@@ -4469,6 +4603,7 @@ setRange = function (lo, hi) {
   /* 11-05 照K线表: 手势中只轻量重画(重算纵轴+蜡烛/成交量/副图/RSO), 松手再整套重画一次 */
   function redrawLight() { try { setRange(YLO, YHI); buildStatics(); renderLine(); renderMarkers(); } catch (e) { redraw(); } }   /* 11-05 用户: 拖动时IV线/昨收等静态层也要跟着走, 不然松手才一下跳过去 → 每帧重建静态层 */
   var rq = 0; function redrawSoon() { if (rq) return; rq = requestAnimationFrame(function () { rq = 0; if (window.zpPanning) redrawLight(); else redraw(); }); }
+  window.zpRedrawSoon = redrawSoon; window.zpRedrawFull = redraw;   /* jl-zpyax 用 */
   function seg() {
     var hd = $('wkSeg'); if (!hd || hd.querySelector('.zp-per')) return;
     var box = document.createElement('div'); box.className = 'zp-per'; box.setAttribute('role', 'tablist');
@@ -5257,9 +5392,9 @@ window.addEventListener('click', function (e) {
 
 
 <style>
-/* 11-05: 图区锁住触摸(拖动/十字线/缩放不再带着页面跑), 页面上下滑只在右边这条"滑动带"上做 */
+/* 11-05: 图区锁住触摸(拖动/十字线/缩放不再带着页面跑), 页面上下滑只在这条"滑动带"上做; 11-08 jl-zpyax: 滑动带从右边挪到左边, 右边让给价格轴拖动缩放 */
 #ch,#zpVol,#zpPane,#zpRso,#wkSvg{touch-action:none!important}
-#zpScr{position:absolute;z-index:5;right:0;width:26px;display:none;align-items:center;justify-content:center;touch-action:pan-y;border-radius:8px 0 0 8px;background:linear-gradient(90deg,rgba(122,184,255,0),rgba(122,184,255,.16));-webkit-user-select:none;user-select:none}
+#zpScr{position:absolute;z-index:5;left:0;width:26px;display:none;align-items:center;justify-content:center;touch-action:pan-y;border-radius:0 8px 8px 0;background:linear-gradient(270deg,rgba(122,184,255,0),rgba(122,184,255,.16));-webkit-user-select:none;user-select:none}
 #zpScr b{display:block;width:4px;height:44px;border-radius:2px;background:rgba(255,255,255,.4)}
 </style>
 <script>
@@ -5277,6 +5412,67 @@ window.addEventListener('click', function (e) {
     } catch (e) { }
   }
   setInterval(sync, 400); window.addEventListener('resize', sync); sync();
+})();
+</script>
+
+<script>
+/* jl-zpyax (11-08): 价格轴拖动缩放, 从 ks.html 搬来 —— 主图右边价格轴上 按住上下拖: 上拉放大 / 下拉缩小; 双击(手机双点)价格轴复位。
+   分时、K线两种模式都管; K线模式和双指竖捏共用 window.zpYZ(>1=范围变大=缩小), 分时模式见 setRange 里 jl-zpyax 那段。
+   接入方式: 包一层 zpDrawHit —— 按在价格轴上时, 十字线/平移/页面滚动都让开(同"按在画好的线上") */
+(function () {
+  var AXX = PX0 + PW - 2, Z0 = 0.3, Z1 = 4, st = null, lastTap = 0, tip = null, raf = 0;
+  function onAxis(e) {
+    try {
+      if (window.zpDrawOn || window.zpDrawBusy) return false;
+      var s = e.target && e.target.closest ? e.target.closest('svg') : null; if (!s || s.id !== 'ch' || s.style.display === 'none') return false;
+      var r = s.getBoundingClientRect(); if (!r.width) return false;
+      var x = (e.clientX - r.left) / r.width * 360; return x >= AXX && x <= 362;
+    } catch (er) { return false; }
+  }
+  var dh0 = window.zpDrawHit;
+  window.zpDrawHit = function (e) { if (st || onAxis(e)) return true; return dh0 ? dh0(e) : false; };
+  function kMode() { return !!(window.zpPerAll && window.zpPerAll()); }
+  function paintTip(txt) {
+    var s = document.getElementById('ch'); if (!s) return;
+    if (!tip || !tip.isConnected) { tip = document.createElementNS('http://www.w3.org/2000/svg', 'text'); tip.setAttribute('id', 'zpYaxTip'); tip.setAttribute('text-anchor', 'end'); tip.setAttribute('font-size', '10'); tip.setAttribute('font-weight', '700'); tip.setAttribute('fill', '#ffffff'); tip.setAttribute('pointer-events', 'none'); }
+    tip.setAttribute('x', AXX - 3); tip.setAttribute('y', PY0 + 10); tip.textContent = txt; s.appendChild(tip);
+  }
+  function clearTip() { if (tip && tip.parentNode) tip.parentNode.removeChild(tip); }
+  function apply() {
+    if (raf) return;
+    raf = requestAnimationFrame(function () {
+      raf = 0;
+      if (kMode()) { window.zpRedrawSoon ? zpRedrawSoon() : 0; } else { window.zpRedrawFull && zpRedrawFull(); }
+      var z = window.zpYZ || 1; paintTip(z === 1 ? '纵轴 原始' : '纵轴 ×' + (1 / z).toFixed(2) + (st ? '' : ' · 双击价格轴复位'));
+    });
+  }
+  function reset() { window.zpYZ = 1; window.zpYS = 0; apply(); setTimeout(clearTip, 900); }
+  window.addEventListener('pointerdown', function (e) {
+    if (!onAxis(e) || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    e.stopPropagation(); if (e.cancelable) e.preventDefault();
+    var now = Date.now();
+    if (now - lastTap < 320) { lastTap = 0; st = null; reset(); return; }   /* 手机双点 = 复位 */
+    lastTap = now;
+    st = { id: e.pointerId, y: e.clientY, z0: window.zpYZ || 1, moved: false };
+    try { window.zpMainXH && window.zpMainXH.hide(); } catch (er) { }
+    if (kMode()) window.zpPanning = true;
+  }, true);
+  window.addEventListener('pointermove', function (e) {
+    if (!st || e.pointerId !== st.id) return;
+    e.stopPropagation(); if (e.cancelable) e.preventDefault();
+    var dy = e.clientY - st.y; if (Math.abs(dy) > 3) { st.moved = true; lastTap = 0; }
+    window.zpYZ = Math.max(Z0, Math.min(Z1, st.z0 * Math.exp(dy * 0.008)));   /* 上拉(dy<0) → 范围变小 = 放大 */
+    apply();
+  }, true);
+  function up(e) {
+    if (!st || e.pointerId !== st.id) return;
+    e.stopPropagation(); var mv = st.moved; st = null;
+    if (kMode()) { window.zpPanning = false; }
+    window.zpRedrawFull && zpRedrawFull();
+    if (mv) { var z = window.zpYZ || 1; paintTip(z === 1 ? '纵轴 原始' : '纵轴 ×' + (1 / z).toFixed(2) + ' · 双击价格轴复位'); setTimeout(clearTip, 1500); }
+  }
+  window.addEventListener('pointerup', up, true); window.addEventListener('pointercancel', up, true);
+  window.addEventListener('dblclick', function (e) { if (onAxis(e)) { e.stopPropagation(); reset(); } }, true);
 })();
 </script>
 </html>
