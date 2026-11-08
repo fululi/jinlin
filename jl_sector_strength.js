@@ -1385,7 +1385,7 @@
     var rows = Object.keys(q).filter(function (k) { return !FJ.test(k) && q[k] && isFinite(q[k].f); }).map(function (k) { return { sec: k, b: q[k] }; });
     if (!rows.length) return "";
     var hm = hmNow(), early = hm >= 915 && hm < 930;
-    var top = rows.filter(function (o) { return o.b.f >= 1e8; }).sort(function (x, y) { return (y.b.fr || 0) - (x.b.fr || 0); }).slice(0, 8); /* 回测: 按占成交比排比按净额排好; 净额<1亿的小板块不进 */
+    var top = rows.filter(function (o) { return o.b.f > 0; }).sort(function (x, y) { return (y.b.fr || 0) - (x.b.fr || 0); }).slice(0, 8); /* 回测: 按占成交比排比按净额排好; 11-08 用户: 不另加金额门槛 */
     var inn = rows.filter(function (o) { return o.b.f > 0 && o.b.p <= CORE.FUND.IN_PMAX + 1.5; }).sort(function (x, y) { return y.b.fr - x.b.fr; }).slice(0, 5);
     var out = rows.filter(function (o) { var sg = CORE.fundSig(o.b, ourAvg(o.sec)); return sg && sg.k === "out"; }).sort(function (x, y) { return x.b.f - y.b.f; }).slice(0, 4);
     var line = function (o, warn) {

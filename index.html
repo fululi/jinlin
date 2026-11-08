@@ -3145,10 +3145,7 @@ window.jlPhvlPopJL = jlPhvlPopJL; function jlPhvlPopJL(text, isHi) { /* ks-1151f
       renderMTempJL();
     }
     if (mtempJL.loading) return;
-    { /* 11-08 用户: 板块强度排名15分钟太慢 → 交易时段(9:25-15:05)5分钟一采, 其余仍15分钟; 东财限流时原有失败退避照旧 */
-      const _hm = new Date().getHours() * 100 + new Date().getMinutes(), _wd = new Date().getDay(), _gap = _wd >= 1 && _wd <= 5 && _hm >= 925 && _hm <= 1505 ? 3e5 : 9e5;
-      if (!force && cached && now - cached.at < _gap) return;
-    }
+    if (!force && cached && now - cached.at < 9e5) return;
     { /* jl-1208: 拉取去重——jlv2 每60秒已在拉同一个 ulist(secids=1.000001,0.399001) 快照; 它90秒内的样本直接用, 不再重发 */
       const _v2s = window.__jlMtSnap;
       if (_v2s && _v2s.src === "v2" && _v2s.up > 0 && _v2s.td && now - _v2s.at < 9e4) {
