@@ -716,7 +716,7 @@
     return out.sort(function (a, b) { return b[1] - a[1]; });
   }
   function memPack(sec, arr) {
-      var all = arr.map(function (r) { var pr = +r.f2, up = +r.f350; return { c: String(r.f12), n: String(r.f14 || r.f12), p: +r.f3, f: +r.f62, vr: +r.f10, pr: pr, zt: up > 0 && pr > 0 ? pr >= up - 0.001 : +r.f3 >= 9.8 }; }).filter(function (x) { return isFinite(x.p); }).sort(function (a, b) { return b.p - a.p; });
+      var all = arr.map(function (r) { var pr = +r.f2, up = +r.f350; return { c: String(r.f12), n: String(r.f14 || r.f12), p: +r.f3, f: +r.f62, vr: +r.f10, pr: pr, zt: up > 0 && pr > 0 ? pr >= up - 0.001 : +r.f3 >= 9.8 }; }).filter(function (x) { return isFinite(x.p) && !/ST|退/i.test(x.n); }).sort(function (a, b) { return b.p - a.p; }); /* 11-08 用户: 成分股里剔 ST/*ST/退市 */
       /* 用户11-04: 没封板、买得进的排前面(最多5只), 涨停的放后面(最多3只); 涨停按东财f350涨停价判, 20%板也对 */
       var list = all.filter(function (x) { return !x.zt; }).slice(0, 5).concat(all.filter(function (x) { return x.zt; }).slice(0, 3));
       return (S.mem[sec] = { t: Date.now(), list: list, none: !list.length });
@@ -1132,23 +1132,33 @@
       return best ? { c: best.c, n: best.n, l: best.l, broke: !todayCodes[best.c] } : null;
     };
     var brokeL = [];
-    var secs = Object.keys(A).filter(function (k) { var c = A[k].cur; return c && (c.k === 1 || c.k === 2 || c.k === 3); }).map(function (k) {
-      var c = A[k].cur, q = bkqOf(k), sg = q ? CORE.fundSig(q, c.avg) : null, ot = outToday(k), ld = leaderOf(k);
-      var bad = !!(ot || (sg && sg.k === "out") || (q && isFinite(q.f) && q.f < 0));
+    /* 11-08 用户: 9:15起资金就有方向——有今天板块资金(bkq, 竞价起3分钟一刷)时: 资金只看今天实时, 主力净额<0或查不到都不推;
+       板块=阶段(萌芽/启动/加速) ∪ 今天主力净流入前20(剔融资融券/股通等非题材板块), 综合分=今天主力流入排名为主+阶段为辅; 前5板块×每板块前3只; 涨停不进推荐; ST在memPack已剔。权重初值, 未回测 */
+    var fundOn = !!(S.bkq && S.bkq.m), JUNK = /融资融券|股通|昨日|MSCI|富时|标普|证金|重仓|QFII|次新|高送转|创业板综|央视|红利|小盘|大盘|中盘|低价|高价|破净|摘帽|壳资源|预增|预亏|预盈|扭亏|减亏|亏损|热股|ST股|AB股|含H股|含GDR|转债|百元股|微盘|基金|社保|养老金|上证|深证|中证|沪深|HS300/;
+    var finRank = {}, cand = {}, covered = {};
+    if (fundOn) Object.keys(S.bkq.m).filter(function (k) { var q = S.bkq.m[k]; return q && q.f > 0 && !JUNK.test(k); }).sort(function (a, b) { return S.bkq.m[b].f - S.bkq.m[a].f; }).forEach(function (k, i) { finRank[S.bkq.m[k].c] = i; });
+    Object.keys(A).forEach(function (k) { var c = A[k].cur; if (c && c.k >= 1 && c.k <= 3) { cand[k] = 1; var q = bkqOf(k); if (q) covered[q.c] = 1; } });
+    if (fundOn) Object.keys(S.bkq.m).forEach(function (k) { var q = S.bkq.m[k], r = finRank[q.c]; if (r != null && r < 20 && !covered[q.c] && !cand[k]) { cand[k] = 1; covered[q.c] = 1; } });
+    var secs = Object.keys(cand).map(function (k) {
+      var c = A[k] && A[k].cur || null, q = bkqOf(k), sg = q ? CORE.fundSig(q, c ? c.avg : q.p) : null, ot = outToday(k), ld = c ? leaderOf(k) : null;
+      var bad = !!(ot || (sg && sg.k === "out") || (q && isFinite(q.f) && q.f < 0) || (fundOn && !(q && q.f > 0)));
       if (ld && ld.broke) { bad = true; brokeL.push(k + "(" + ld.n + ld.l + "板断)"); }
-      var sc = (c.k === 3 ? 3 : c.k === 2 ? 2 : 1) * 10 + (q && q.f > 0 ? 5 : 0) - (c.rank == null ? 20 : c.rank) * 0.3 + (c.zt >= 2 ? 8 : 0) + (ld && !ld.broke ? 6 : 0) - ((c.streak || 0) >= 3 ? 8 : 0);
-      return { k: k, c: c, q: q, bad: bad, ot: ot, ld: ld, sc: sc };
+      var stg = c ? (c.k === 3 ? 3 : c.k === 2 ? 2 : 1) * 10 - (c.rank == null ? 20 : c.rank) * 0.3 + (c.zt >= 2 ? 8 : 0) + (ld && !ld.broke ? 6 : 0) - ((c.streak || 0) >= 3 ? 8 : 0) : 0;
+      var fr = q ? finRank[q.c] : null, fs = fundOn ? (fr != null ? 40 * (1 - Math.min(fr, 40) / 40) + Math.min(Math.max(q.fr || 0, 0), 15) : 0) : (q && q.f > 0 ? 5 : 0);
+      return { k: k, c: c, q: q, bad: bad, ot: ot, ld: ld, sc: stg + fs, fr: fr };
     }).filter(function (o) { return !o.bad; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 5);
     var conflict = Object.keys(A).filter(function (k) { return outToday(k) && A[k].cur && A[k].cur.k >= 1 && A[k].cur.k <= 3; }).slice(0, 3);
     var cards = "", n = 0;
     secs.forEach(function (o) {
       var m = S.mem[o.k];
       if (!m) { if (!S.recAsk) S.recAsk = {}; if (!S.recAsk[o.k]) { S.recAsk[o.k] = 1; memOf(o.k).then(function () { paint(); }); } return; }
-      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && x.f > 0; }).sort(function (a, b) { return b.f - a.f; }).slice(0, 3), zts = all.filter(function (x) { return x.zt; }).slice(0, 2);
-      if (!buy.length && !zts.length) return; n++;
+      var early = hmNow() >= 915 && hmNow() < 930; /* 竞价段个股主力净额多为0, 放宽成>=0, 再按涨幅 */
+      var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = []; /* 11-08 用户: 涨停不进推荐 */
+      if (!buy.length) return; n++;
       var lead = all.slice().sort(function (x, y) { return ((lb[y.c] || 0) - (lb[x.c] || 0)) || (y.p - x.p); })[0]; /* 11-05 用户: 老龙不一定要连板, 开启轮动的领涨股也算: 先看连板最高, 没有连板就看今天涨幅最大 */
-      var c = o.c, tile = function (v, l, col) { return '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:800;color:' + (col || "#fff") + ';line-height:1.15">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
+      var c = o.c || { name: "资金进", streak: 0, cum5: null, avg: o.q ? o.q.p : null, zt: 0 }, tile = function (v, l, col) { return '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:800;color:' + (col || "#fff") + ';line-height:1.15">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
       var runN = c.streak || 0, up = c.cum5 >= 0, risk = runN >= 3 ? "已强势" + runN + "天，后面偏回落" : c.cum5 >= 10 ? "近5天已涨多，别追高" : o.ld ? o.ld.n + o.ld.l + "板龙头在" : c.zt >= 2 ? "板块内涨停" + c.zt + "只" : o.q && o.q.f > 0 ? "资金在进" : "资金还没明显进";
+      if (o.fr != null && o.q) risk = "主力流入第" + (o.fr + 1) + " " + fmtFund(o.q.f) + (runN >= 3 || c.cum5 >= 10 ? " · " + (runN >= 3 ? "已强" + runN + "天" : "已涨多") : "");
       var row = function (x, isZt) {
         var dat = ' data-c="' + esc(x.c) + '" data-n="' + esc(x.n) + '" data-p="' + (isFinite(x.pr) ? x.pr : "") + '" data-pc="' + (isFinite(x.p) ? x.p : "") + '"', b = "flex:0 0 auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;border:1px solid rgba(255,255,255,.6);color:#fff";
         var l = lb[x.c] > 1 ? lb[x.c] + "连板" : "";
@@ -1162,11 +1172,11 @@
       };
       cards += '<div style="flex:0 0 84%;scroll-snap-align:start;box-sizing:border-box;padding:10px 12px;margin-right:8px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.25)">' +
         '<div style="display:flex;align-items:baseline;gap:8px"><span data-jlsec="' + esc(o.k) + '" style="font-size:16px;font-weight:800;color:#fff">' + esc(o.k) + '</span><span style="font-size:11px;font-weight:800;color:#ffd21f">' + esc(c.name) + '</span><span style="margin-left:auto;font-size:10.5px;font-weight:700;opacity:.8">' + esc(risk) + '</span></div>' +
-        '<div style="display:flex;margin:8px 0 4px">' + tile(runN ? "第" + runN + "天" : "新", "强势轮动", "#ffd21f") + tile((up ? "+" : "") + c.cum5.toFixed(1) + "%", "近5天累计", up ? "#ff5459" : "#2fd18b") + tile((c.avg >= 0 ? "+" : "") + (c.avg || 0).toFixed(1) + "%", "最近一天", c.avg >= 0 ? "#ff5459" : "#2fd18b") + "</div>" +
+        '<div style="display:flex;margin:8px 0 4px">' + tile(runN ? "第" + runN + "天" : "新", "强势轮动", "#ffd21f") + tile(c.cum5 == null ? "—" : (up ? "+" : "") + c.cum5.toFixed(1) + "%", "近5天累计", up ? "#ff5459" : "#2fd18b") + tile((c.avg >= 0 ? "+" : "") + (c.avg || 0).toFixed(1) + "%", "最近一天", c.avg >= 0 ? "#ff5459" : "#2fd18b") + "</div>" +
         buy.map(function (x) { return row(x, false); }).join("") + zts.map(function (x) { return row(x, true); }).join("") + "</div>";
     });
     if (!cards) return "";
-    return '<div style="font-size:12px;color:#fff;font-weight:800;margin:8px 0 4px">埋伏候选 <span style="font-size:10px;font-weight:600;opacity:.75">左右滑 · 规则未回测</span></div><div id="jlrecPg" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">' + cards + "</div>" +
+    return '<div style="font-size:12px;color:#fff;font-weight:800;margin:8px 0 4px">埋伏候选 <span style="font-size:10px;font-weight:600;opacity:.75">' + (fundOn ? "按今天主力流入排 · 已剔ST/涨停/资金流出" : "盘前=昨天收盘阶段") + ' · 左右滑 · 未回测</span></div><div id="jlrecPg" style="display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none">' + cards + "</div>" +
       (conflict.length || brokeL.length ? '<div style="font-size:10.5px;font-weight:700;color:#ff9a9d;margin-top:3px">' + (brokeL.length ? "龙头断板、不推：" + brokeL.map(esc).join("、") + "　" : "") + (conflict.length ? "主力出逃过、不推：" + conflict.map(esc).join("、") : "") + "</div>" : "");
   }
   /* 11-05 打法总纲①: 抽屉顶部"天气"——涨停数/最高板/晋级率/炸板回封, 判情绪阶段。数据=jl_zt_hist_v1(首页涨停池每日存档), 零新增请求; 阶段阈值是二手初值, 未回测 */
