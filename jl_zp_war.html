@@ -2011,8 +2011,9 @@ function daySwingJL() {
   D.forEach(function (b) { var c = b.c; if (pos) { hi = Math.max(hi, c); if (c <= hi * (1 - th)) { pos = 0; lo = c; } } else { lo = Math.min(lo, c); if (c >= lo * (1 + th)) { pos = 1; hi = c; } } });
   var cur = LIVE.last || 0; if (!(cur > 0)) return '';
   var t = Math.round(th * 100), cls, txt;
-  if (pos) { var d = (cur / hi - 1) * 100; cls = d <= -t ? ' l2' : d <= -t + 3 ? ' l1' : ''; txt = d <= -t ? '跌够' + t + '% 收盘确认→明开清' : '持有 ' + (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + '%/' + t; }
-  else { var u = (cur / lo - 1) * 100; cls = u >= t ? ' l2' : u >= t - 3 ? ' l1' : ''; txt = u >= t ? '涨够' + t + '% 收盘确认→明开买回' : '空仓 +' + u.toFixed(1) + '%/' + t; }
+  /* 11-09夜 用户: 直接写价 —— 持有: 最高收盘 + 清仓线(最高×(1−12%)); 空仓: 最低收盘 + 买回线(最低×(1+12%)) */
+  if (pos) { var d = (cur / hi - 1) * 100, ln = Math.floor(Math.round(hi * (1 - th) * 1e6) / 1e4) / 100; cls = d <= -t ? ' l2' : d <= -t + 3 ? ' l1' : ''; txt = '持有 高' + hi.toFixed(2) + ' · 清仓线' + ln.toFixed(2) + (d <= -t ? ' 收盘确认→明开清' : ''); }
+  else { var u = (cur / lo - 1) * 100, ln2 = Math.ceil(Math.round(lo * (1 + th) * 1e6) / 1e4) / 100; cls = u >= t ? ' l2' : u >= t - 3 ? ' l1' : ''; txt = '空仓 低' + lo.toFixed(2) + ' · 买回线' + ln2.toFixed(2) + (u >= t ? ' 收盘确认→明开买回' : ''); }
   return '<span class="hk hkA swg' + cls + '" title="日线波段: ' + (pos ? '持有以来最高收盘 ' + hi.toFixed(2) : '空仓以来最低收盘 ' + lo.toFixed(2)) + '"><i>日线</i>' + txt + '</span>';
 }
 /* 11-06h 用户: 振幅价位小卡 —— 放在价位尺上面, 两行小字; 跟着 回落阈值 / 每轮股数 联动; 只显示不提醒(引擎原来那套卖买照旧, 两边对比) */
