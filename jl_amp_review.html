@@ -61,7 +61,10 @@ body{font-size:12.5px}.wrap{padding:4px 8px 14px}
 <label>每次<select id="p_q"><option>500</option><option selected>1000</option><option>1500</option><option>2000</option></select>股</label>
 <label>切段<select id="p_cut"><option value="0.01">1.0%</option><option value="0.012">1.2%</option><option value="0.015" selected>1.5%</option><option value="0.02">2.0%</option></select></label>
 <label>没回落<select id="p_carry"><option value="0" selected>当天收盘接</option><option value="1">隔天等≤3天</option></select></label>
-<label>做法<select id="p_mode"><option value="r3" selected>尺子一二三轮</option><option value="old">旧振幅法(0.9倍/回落接)</option></select></label></div></details>
+<label>做法<select id="p_mode"><option value="mix" selected>混合(高开尺子/平低开小球)</option><option value="ball">阈值小球+振幅</option><option value="r3">尺子一二三轮</option><option value="old">旧振幅法(0.9倍/回落接)</option></select></label>
+<label>小球确认<select id="p_bth"><option value="0.008">0.8%</option><option value="0.01">1.0%</option><option value="0.012">1.2%</option><option value="0.015" selected>1.5%</option><option value="0.018">1.8%</option></select></label>
+<label>振幅走到<select id="p_ba"><option value="0.6">6成</option><option value="0.7">7成</option><option value="0.8" selected>8成</option><option value="0.9">9成</option><option value="1">1倍</option></select>日均</label>
+<label>卖接至少差<select id="p_bm"><option value="0.15">0.15倍</option><option value="0.25" selected>0.25倍</option><option value="0.35">0.35倍</option></select>日均</label></div></details>
 
 
 <div class="card"><div class="chips big" id="cc"></div><div class="hs" id="pc"></div><div id="sumT"></div><div id="hold"></div><div id="dkt"></div><div class="cw"><canvas id="dk" height="300"></canvas><canvas id="dkO" class="ov"></canvas></div></div>
@@ -70,7 +73,7 @@ body{font-size:12.5px}.wrap{padding:4px 8px 14px}
 <div id="dinfo"></div>
 <div class="cw"><canvas id="mk" height="300"></canvas><canvas id="mkO" class="ov"></canvas></div>
 <div id="tl"></div>
-<div class="tbar"><div class="mini"><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><span style="flex:1"></span><div class="chips" id="mvc"></div><div class="chips" id="szc"></div></div></div>
+<div class="tbar"><div class="mini"><label>确认<select id="m_bth"></select></label><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><span style="flex:1"></span><div class="chips" id="mvc"></div><div class="chips" id="szc"></div></div></div>
 <div class="tip" id="tip"></div></div>
 <script>
 const HCODES=["600105", "000892", "002172", "002343", "002716", "600011", "600127", "600371", "600489", "600547", "600795", "600900", "600916", "603986", "605577"];
@@ -118,27 +121,46 @@ function prepInfo(S,D,cut){const days=S.days,pc={},AMP={},UP={},MA={},CAT={};
 function runR3(S,D,F,P){const T=[],days=S.days.filter(d=>F.AMP[d]!=null&&F.pc[d]),DL={};
  S.days.forEach(d=>{const b=D[d];DL[d]=[b[0][0],Math.max(...b.map(x=>x[1])),Math.min(...b.map(x=>x[2]))]});
  const med=(v,df)=>{if(v.length<20)return df;v=v.slice().sort((a,b)=>a-b);return v[Math.floor(v.length/2)]};
- const CN=['①','②','③'],q=P.q;
+ const GAPS=0.02,CN=['①','②','③'],q=P.q,CAPB=0.003;
  for(const d of days){const r=D[d],Pc=F.pc[d],av=F.AMP[d]*Pc,o0=r[0][0],gap=o0/Pc-1,ty=gap>=0.01?'hi':gap<=-0.01?'lo':'fl';
   const n=S.days.indexOf(d),U=[],W=[];for(let j=Math.max(1,n-60);j<n;j++){const z=S.days[j];if(F.AMP[z]==null||!F.pc[z])continue;const a=F.AMP[z]*F.pc[z];U.push((DL[z][1]-DL[z][0])/a);W.push((DL[z][0]-DL[z][2])/a)}
-  const ku=med(U,0.375),rh=upT(o0+ku*av),RBA=Math.max(0.012,Math.min(0.035,0.27*F.AMP[d]));
+  const ku=med(U,0.375),rh=upT(o0+ku*av),rl=dnT(o0-med(W,0.455)*av),RBA=Math.max(0.012,Math.min(0.035,0.27*F.AMP[d]));
   const push=(si,s,bi,b,why,how)=>T.push({sd:d,si,s,d,bi,b,why,how,q,v:pnl(s,b,q),cat:F.CAT[d]});
   let lu=false;if(ty==='lo'){let l0=o0,h0=o0;for(const [o,h,l] of r){if(h>=upT(l0+0.9*av)){lu=true;break}if(l<=dnT(h0*(1-0.032)))break;h0=Math.max(h0,h);l0=Math.min(l0,l)}}
-  let R=0;
-  if(ty!=='lo'||lu){let st='S',lo=o0,s=0,si=0,sh=0,h1=0,plo=0;
-   if(gap>=0.02){s=o0;si=0;sh=o0;st='B'}
+  let R=0,swB=false,k0=0,hh0=o0;
+  if(ty!=='lo'||lu){let st='S',lo=o0,hx=o0,s=0,si=0,sh=0,h1=0,plo=0;
+   if(gap>=GAPS){s=o0;si=0;sh=o0;st='B'}
    for(let i=0;i<r.length&&st!=='X';i++){const [o,h,l]=r[i];
+    if(st==='S'&&R===0&&ty==='hi'&&l<=rl){swB=true;k0=i;hh0=hx;break}
     if(st==='S'){const t=R===0?(lu?upT(lo+0.9*av):Math.min(rh,upT(lo+0.9*av))):upT(plo+1.3*(h1-plo));
      if(h>=t){s=Math.max(t,o);si=i;sh=Math.max(s,h);st='B';lo=Math.min(lo,l);continue}}
-    else{const tb=dnT(sh*(1-RBA));if(l<=tb){const b=Math.min(tb,o);push(si,s,i,b,CN[R]+(R===0&&gap>=0.02&&si===0?'高开先卖':'卖'),'当天接');h1=sh;plo=Math.min(b,l);R++;st=R>=3?'X':'S';lo=Math.min(lo,l);continue}sh=Math.max(sh,h)}
-    if(st==='S'&&R>0)plo=Math.min(plo,l);lo=Math.min(lo,l)}
-   if(st==='B')push(si,s,r.length-1,r[r.length-1][3],CN[R]+'卖','收盘接')}
-  else{let st='B',hh=o0,b=0,bi=0;
-   for(let i=0;i<r.length&&st!=='X';i++){const [o,h,l]=r[i];
+    else{const tb=dnT(Math.min(sh*(1-RBA),s*(1-Math.max(CAPB,0.25*F.AMP[d]))));if(l<=tb){const b=Math.min(tb,o);push(si,s,i,b,CN[R]+(R===0&&gap>=GAPS&&si===0?'高开先卖':'卖'),'当天接');h1=sh;plo=Math.min(b,l);R++;st=R>=3?'X':'S';lo=Math.min(lo,l);continue}sh=Math.max(sh,h)}
+    if(st==='S'&&R>0)plo=Math.min(plo,l);lo=Math.min(lo,l);hx=Math.max(hx,h)}
+   if(st==='B'&&!swB)push(si,s,r.length-1,r[r.length-1][3],CN[R]+'卖','收盘接')}
+  if(swB||!(ty!=='lo'||lu)){let st='B',hh=swB?hh0:o0,b=0,bi=0;
+   for(let i=swB?k0:0;i<r.length&&st!=='X';i++){const [o,h,l]=r[i];
     if(st==='B'){const tb=dnT(hh*(1-0.032));if(l<=tb){b=Math.min(tb,o);bi=i;st='S';hh=Math.max(hh,h);continue}}
     else{const ts=rh>b*1.005?upT(Math.min(rh,b*1.027)):upT(b*1.027);if(h>=ts){const s=Math.max(ts,o);push(i,s,bi,b,CN[R]+'先接','当天接');R++;st=R>=3?'X':'B';hh=Math.max(s,h);continue}}
     hh=Math.max(hh,h)}
    if(st==='S')push(r.length-1,r[r.length-1][3],bi,b,CN[R]+'先接','收盘卖')}}
+ return T}
+/* 阈值小球+振幅(11-09夜 用户定, 复盘默认): 见 patch_1109g.py 头注释 */
+let NOTR={};
+function runBall(S,D,F,P){const T=[],CN=['①','②','③'],th=P.bth,a=P.ba,m=P.bm,q=P.q,Z=0.5,MR=2;NOTR={};
+ for(const d of S.days){if(F.AMP[d]==null||!F.pc[d])continue;const r=D[d],pc=F.pc[d],av=F.AMP[d]*pc,o0=r[0][0];
+  let st='N',dl=o0,dh=o0,rh=o0,rl=o0,p=0,pi=0,n=0,why='',seen=0;
+  const push=(si,s,bi,b,how)=>T.push({sd:d,si,s,d,bi,b,why,how,q,v:pnl(s,b,q),cat:F.CAT[d]});
+  for(let i=0;i<r.length;i++){const [o,h,l]=r[i];dh=Math.max(dh,h);dl=Math.min(dl,l);rh=Math.max(rh,h);rl=Math.min(rl,l);const amp=dh-dl;
+   if(l<=rh*(1-th)){const px=dnT(Math.min(o,rh*(1-th)));
+    if(st==='N'&&n<MR){if(amp>=a*av){seen=1;if(px-dl>=Z*amp){p=px;pi=i;st='S';why=CN[n]+'卖'}}}
+    else if(st==='B'&&px>=p+m*av){push(i,px,pi,p,'当天接');n++;st='N'}
+    rl=px;rh=px}
+   else if(h>=rl*(1+th)){const px=upT(Math.max(o,rl*(1+th)));
+    if(st==='N'&&n<MR){if(amp>=a*av){seen=1;if(dh-px>=Z*amp){p=px;pi=i;st='B';why=CN[n]+'先接'}}}
+    else if(st==='S'&&px<=p-m*av){push(pi,p,i,px,'当天接');n++;st='N'}
+    rh=px;rl=px}}
+  const L=r.length-1,c=r[L][3];if(st==='S')push(pi,p,L,c,'收盘接');if(st==='B')push(L,c,pi,p,'收盘卖');
+  if(!n&&st==='N'){const A=(dh-dl)/pc*100,need=a*F.AMP[d]*100;NOTR[d]=seen?{k:'没确认',s:'振幅走够了，但高低点没在区间上/下半确认'}:{k:'振幅不够',s:'振幅只走到 '+A.toFixed(2)+'%，没到 '+need.toFixed(2)+'%（日均 '+(F.AMP[d]*100).toFixed(1)+'% 的 '+Math.round(a*100)+'%）'}}}
  return T}
 function runT(S,D,F,P){const T=[];let carry=null;const days=S.days.filter(d=>F.AMP[d]!=null&&F.pc[d]);
  const maxS=Math.max(1,Math.min(3,Math.floor(P.base/P.q)));
@@ -162,8 +184,8 @@ function runT(S,D,F,P){const T=[];let carry=null;const days=S.days.filter(d=>F.A
 
 let DATA=null,CUTV=0.015;const CACHE={};
 let ALLD=[],AIX={};let days=[],IX={},DV=[],TR=[],NET={};
-let per=localStorage.getItem('jlamp_per')||'全部';
-function P(){const g=id=>document.getElementById(id).value;return {xa:+g('p_xa'),rb:+g('p_rb'),gap:+g('p_gap'),base:+g('p_base'),q:Math.min(+g('p_q'),+g('p_base')),carry:g('p_carry')==='1',cut:+g('p_cut'),mode:g('p_mode')||'r3'}}
+let per=localStorage.getItem('jlamp_per2')||'近一个月';
+function P(){const g=id=>document.getElementById(id).value;return {xa:+g('p_xa'),rb:+g('p_rb'),gap:+g('p_gap'),base:+g('p_base'),q:Math.min(+g('p_q'),+g('p_base')),carry:g('p_carry')==='1',cut:+g('p_cut'),mode:g('p_mode')||'mix',bth:+g('p_bth'),ba:+g('p_ba'),bm:+g('p_bm')}}
 function buildSrc(){const D={},TM={};let hd=0,ld=0;
  if(window.JL_AMP_H&&JL_AMP_H[CODE]){const x=decodeStock(JL_AMP_H[CODE]);Object.assign(D,x.D);Object.assign(TM,x.TM);hd=Object.keys(x.D).length}
  const L=liveDays(),last=Object.keys(D).sort().pop()||'';for(const d in L.out)if(d>last&&L.out[d].length>=10){D[d]=L.out[d];TM[d]=L.tm[d];ld++}
@@ -172,8 +194,8 @@ function prepInfo2(S,D,cut,dm){const F=prepInfo({days:S.days,pre:[]},D,cut);cons
  const md=S.days,mc=d=>D[d][D[d].length-1][3];let kf=1;for(let i=md.length-1;i>=0;i--)if(dm[md[i]]){kf=mc(md[i])/dm[md[i]][3];break}
  S.days.forEach(d=>{const n=dk.indexOf(d);if(n<1)return;const mi=md.indexOf(d),pd=dk[n-1];F.pc[d]=(mi>0&&md[mi-1]===pd)?mc(pd):dm[pd][3]*kf;const pv=dk.slice(Math.max(1,n-20),n);if(pv.length>=5)F.AMP[d]=mean(pv.map(z=>{const k=dk.indexOf(z);return (dm[z][1]-dm[z][2])/dm[dk[k-1]][3]}));
   const w=dk.slice(Math.max(0,n-10),n).map(z=>dm[z][3]);if(w.length>=5)F.MA[d]=dm[pd][3]>=mean(w);const g=D[d][0][0]/F.pc[d]-1;F.CAT[d]=g>=0.01?'高开':g<=-0.01?'低开':'平开'});return F}
-function load(){const p=P();CUTV=p.cut;localStorage.setItem('jlamp_p2',JSON.stringify([...document.querySelectorAll('.ps select')].map(s=>s.value)));
- const S={days:SRC.days};const F=prepInfo2(S,SRC.D,p.cut,SRC.dm);const T=p.mode==='old'?runT(S,SRC.D,F,p):runR3(S,SRC.D,F,p);const dd=S.days.filter(d=>F.AMP[d]!=null&&F.pc[d]);
+function load(){const p=P();CUTV=p.cut;{const v=JSON.stringify([...document.querySelectorAll('.ps select')].map(s=>s.value));localStorage.setItem('jlamp_p2',v);localStorage.setItem('jlamp_p4',v)}
+ const S={days:SRC.days};const F=prepInfo2(S,SRC.D,p.cut,SRC.dm);NOTR={};const T=p.mode==='old'?runT(S,SRC.D,F,p):p.mode==='r3'?runR3(S,SRC.D,F,p):p.mode==='ball'?runBall(S,SRC.D,F,p):(()=>{const a=runR3(S,SRC.D,F,p).filter(t=>t.cat==='高开'),b=runBall(S,SRC.D,F,p).filter(t=>t.cat!=='高开');for(const d in NOTR)if(F.CAT[d]==='高开')delete NOTR[d];S.days.forEach(d=>{if(F.CAT[d]==='高开'&&!a.some(t=>t.sd===d))NOTR[d]={k:'没到价',s:'高开用尺子，卖价/接价当天没到'}});return a.concat(b)})();const dd=S.days.filter(d=>F.AMP[d]!=null&&F.pc[d]);
  DATA={days:dd,tm:SRC.TM,bars:Object.fromEntries(dd.map(d=>[d,SRC.D[d].map(b=>b.map(x=>Math.round(x*100)))])),daily:dd.map(d=>{const b=SRC.D[d];return [b[0][0],Math.max(...b.map(x=>x[1])),Math.min(...b.map(x=>x[2])),b[b.length-1][3]]}),
   info:Object.fromEntries(dd.map(d=>[d,{cat:F.CAT[d],gap:+((SRC.D[d][0][0]/F.pc[d]-1)*100).toFixed(1),ma10:F.MA[d],amp:F.AMP[d]*100,pc:F.pc[d]}])),ph:CODE==='600105'?[['上涨A','2026-04-01','2026-06-25'],['下跌1','2026-06-26','2026-07-29'],['上涨B','2026-07-30','2026-09-21'],['下跌2','2026-09-22','2026-11-06']]:[],base:p.base,
   tr:T.map(t=>[t.sd,t.si,t.s,t.d,t.bi,t.b,t.why,t.how,Math.round(t.v),t.cat,t.q])};
@@ -285,7 +307,7 @@ function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.i
    let sx='',bx='';if(same&&t[0]===d){sx=' · 振'+ampAt(t[1]).toFixed(1);if(t[1]<t[4]){let mh=0;for(let j=t[1];j<t[4];j++)mh=Math.max(mh,bars[j][1]);if(mh>0)bx=' · 落'+((1-t[5]/mh)*100).toFixed(1)+'%'}}
    if(!same){if(t[0]===d)bx=' · '+t[3].slice(5);else sx=' · '+t[0].slice(5)}
    return '<div class="tr"><span>'+t[6][0]+'</span><span class="pos">'+t[2].toFixed(2)+'<small>'+sT+sx+'</small></span><span class="neg">'+t[5].toFixed(2)+'<small>'+bT+bx+'</small></span><span>'+t[10]+'<small>'+amt(t[2]*t[10])+'</small></span><span class="'+cls(t[8])+'">'+fmt(t[8])+'</span></div>'}).join('')+
-   (rows.length>1?'<div class="tr tot"><span></span><span></span><span></span><span>合计</span><span class="'+cls(tot)+'">'+fmt(tot)+'</span></div>':'')+'</div>':'<div class="tt0">这天没做</div>';
+   (rows.length>1?'<div class="tr tot"><span></span><span></span><span></span><span>合计</span><span class="'+cls(tot)+'">'+fmt(tot)+'</span></div>':'')+'</div>':'<div class="tt0">这天没做'+(NOTR[d]?' · '+NOTR[d].s:'')+'</div>';
  document.querySelectorAll('#how .dr[data-d]').forEach(e=>e.classList.toggle('on',e.dataset.d===d))}
 function mkMove(ev){const r=document.getElementById('mk').getBoundingClientRect(),p=ev.touches?ev.touches[0]:ev,x0=p.clientX-r.left,yy=p.clientY-r.top;
  const i=Math.max(0,Math.min(MK.bars.length-1,MK.B0+Math.floor((x0-MK.pl)/MK.bw))),b=MK.bars[i],x=MK.pl+(i-MK.B0)*MK.bw+MK.bw/2;
@@ -338,12 +360,12 @@ function how(){const d0=days[0],d1=days[days.length-1],pc0=DATA.info[d0].pc,c1=D
  sT.querySelectorAll('.st[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k==='全部'||e.dataset.k===cat?'全部':e.dataset.k,b=[...document.querySelectorAll('#cc button')].find(x=>x.textContent===k);b&&b.click()});
  const L=catDays(),R=L.map(d=>{const b=DATA.daily[AIX[d]],f=DATA.info[d],bs=DATA.bars[d]||[];let ih=0,il=0;bs.forEach((x,i)=>{if(x[1]>bs[ih][1])ih=i;if(x[2]<bs[il][2])il=i});const T=TR.filter(t=>t[3]===d);
   return {d,f,g:f.gap,a:(b[1]-b[2])/f.pc*100,h:(b[1]/b[0]-1)*100,l:(b[2]/b[0]-1)*100,c:(b[3]/b[0]-1)*100,up:ih<=il,n:T.length,v:sum(T)}});
- document.getElementById('dlT').textContent=(cat==='全部'?'':cat+' · ')+'逐日';document.getElementById('dlN').textContent=R.length+'天 · 新的在上';
+ document.getElementById('dlT').textContent=(cat==='全部'?'':cat+' · ')+'逐日';{const nd=R.filter(x=>!x.n).length,ka=R.filter(x=>!x.n&&NOTR[x.d]&&NOTR[x.d].k==='振幅不够').length;document.getElementById('dlN').innerHTML='做了 '+(R.length-nd)+' 天 · 没做 '+nd+' 天（振幅不够 '+ka+' · 没确认 '+(nd-ka)+'）';const fl=localStorage.getItem('jlamp_dfl')||'全部';const hd=document.getElementById('dlT');if(!document.getElementById('dflc')){const e=document.createElement('div');e.id='dflc';e.className='chips';e.style.margin='2px 0 4px';hd.parentNode.after(e)}chips('dflc',['全部','做了','没做'],fl,v=>{localStorage.setItem('jlamp_dfl',v);how()});if(fl==='做了')R.splice(0,R.length,...R.filter(x=>x.n));if(fl==='没做')R.splice(0,R.length,...R.filter(x=>!x.n))}
  const box=document.getElementById('how');if(!R.length){box.innerHTML='';return}
  const col=j=>R.map(x=>x[j]),av=j=>mean(col(j)),fu=R.filter(x=>x.up).length;
  box.innerHTML='<div class="kv"><div><small>振幅 一半在</small><b>'+qt(col('a'),.25).toFixed(1)+'–'+qt(col('a'),.75).toFixed(1)+'%</b></div><div><small>最高 对开盘</small><b class="pos">'+pf(av('h'))+'%</b></div><div><small>最低 对开盘</small><b class="neg">'+pf(av('l'))+'%</b></div><div><small>先冲 / 先探</small><b>'+fu+' / '+(R.length-fu)+'</b></div></div>'+
   '<div class="dtb"><div class="dr hd"><span>日期</span><span>开</span><span>高</span><span>低</span><span>收</span><span>振幅</span><span>做T</span></div>'+
-  [...R].reverse().map(x=>'<div class="dr'+(x.d===sel?' on':'')+'" data-d="'+x.d+'"><span><i style="background:'+CC[x.f.cat]+'"></i>'+x.d.slice(5)+'</span><span class="'+(x.g>=0?'pos':'neg')+'">'+pf(x.g)+'</span><span class="pos">'+pf(x.h)+'</span><span class="neg">'+pf(x.l)+'</span><span class="'+(x.c>=0?'pos':'neg')+'">'+pf(x.c)+'</span><span>'+x.a.toFixed(1)+'</span><span class="'+cls(x.v)+'">'+(x.n?fmt(x.v):'—')+'</span></div>').join('')+
+  [...R].reverse().map(x=>'<div class="dr'+(x.d===sel?' on':'')+'" data-d="'+x.d+'"><span><i style="background:'+CC[x.f.cat]+'"></i>'+x.d.slice(5)+'</span><span class="'+(x.g>=0?'pos':'neg')+'">'+pf(x.g)+'</span><span class="pos">'+pf(x.h)+'</span><span class="neg">'+pf(x.l)+'</span><span class="'+(x.c>=0?'pos':'neg')+'">'+pf(x.c)+'</span><span>'+x.a.toFixed(1)+'</span><span class="'+cls(x.v)+'">'+(x.n?fmt(x.v):'<small style="font-size:10px">'+(NOTR[x.d]?NOTR[x.d].k:'没做')+'</small>')+'</span></div>').join('')+
   '</div><div class="dnote">开=对昨收 · 高/低/收=对开盘 · 点一行看那天</div>';
  box.querySelectorAll('.dr[data-d]').forEach(e=>e.onclick=()=>{selDay(e.dataset.d);document.getElementById('mk').scrollIntoView({behavior:'smooth',block:'center'})})}
 const SZ={小:[260,240],中:[320,320],大:[420,460]};let sz=localStorage.getItem('jlamp_sz')||'中';
@@ -355,8 +377,8 @@ function ui(){const bs=+document.getElementById('p_base').value;
  miniSel('m_cut','p_cut',[0.008,0.01,0.012,0.015,0.018,0.02,0.025,0.03],v=>(v*100).toFixed(1)+'%');
  const pqv=+document.getElementById('p_q').value;let QL=[100,200,300,500,800,1000,1500,2000,3000].filter(v=>v<=Math.max(bs,100));
  if(pqv>0&&!QL.some(v=>Math.abs(v-pqv)<1e-9)){QL.push(pqv);QL.sort((a,b)=>a-b)}   /* 11-09: 当前每次股数不在档位里也加上, 选多少就是多少 */
- miniSel('m_q','p_q',QL,v=>v+'股');chips('pc',['全部','近一个月'].concat(DATA.ph.map(p=>p[0])),per,v=>{per=v;localStorage.setItem('jlamp_per',v);setPer();if(!(sel in IX))sel=days[days.length-1];ui();drawDK();drawMK()});chips('mvc',['分时','K线'],MKV,v=>{MKV=v;localStorage.setItem('jlamp_mkv',v);ui();drawMK()});document.getElementById('szc').dataset.k=1;chips('szc',['小','中','大'],sz,v=>{sz=v;localStorage.setItem('jlamp_sz',v);applySz();ui();drawDK();drawMK()});chips('cc',['全部'].concat(CAT),cat,v=>{cat=v;localStorage.setItem('jlamp_cat',v);ui();const L=catDays();if(L.length&&!L.includes(sel))sel=L[L.length-1];drawDK();drawMK()});how()}
-try{const sv=JSON.parse(localStorage.getItem('jlamp_p2')||'null');if(sv)document.querySelectorAll('.ps select').forEach((s,i)=>{if(sv[i]!=null)s.value=sv[i]})}catch(e){}
+ miniSel('m_q','p_q',QL,v=>v+'股');miniSel('m_bth','p_bth',[0.008,0.01,0.012,0.015,0.018],v=>(v*100).toFixed(1)+'%');chips('pc',['全部','近一个月'].concat(DATA.ph.map(p=>p[0])),per,v=>{per=v;localStorage.setItem('jlamp_per2',v);setPer();if(!(sel in IX))sel=days[days.length-1];ui();drawDK();drawMK()});chips('mvc',['分时','K线'],MKV,v=>{MKV=v;localStorage.setItem('jlamp_mkv',v);ui();drawMK()});document.getElementById('szc').dataset.k=1;chips('szc',['小','中','大'],sz,v=>{sz=v;localStorage.setItem('jlamp_sz',v);applySz();ui();drawDK();drawMK()});chips('cc',['全部'].concat(CAT),cat,v=>{cat=v;localStorage.setItem('jlamp_cat',v);ui();const L=catDays();if(L.length&&!L.includes(sel))sel=L[L.length-1];drawDK();drawMK()});how()}
+try{const sv=JSON.parse(localStorage.getItem('jlamp_p4')||'null');if(sv)document.querySelectorAll('.ps select').forEach((s,i)=>{if(sv[i]!=null)s.value=sv[i]})}catch(e){}
 sel=null;applySz();if(PW&&PW.STK&&PW.STK.qty>0){const s=document.getElementById('p_base'),q=Math.max(100,Math.round(PW.STK.qty/100)*100);if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q}
 /* 11-09 用户: 每次股数要跟做T股数联动 —— 在作战屏选1000股, 复盘这里就按1000股的买卖算; 在这里改每次, 作战屏的每轮/价位尺/振幅法金额也跟着变 */
 let QSYNC=null;
