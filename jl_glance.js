@@ -1,4 +1,4 @@
-/* jl_glance.js v1 (11-10 v4: 大盘位置下加中波段) — 首页「今日一眼」卡 (jl-1224a)
+/* jl_glance.js v1 (11-10 v5: 大盘位置下加中波段; 和盘前决策合成左右滑一张卡) — 首页「今日一眼」卡 (jl-1224a)
  * 只读 window.jlGlanceInputJL()(买入闸/ATR5开盘参数/报价) + jlLinkInputJL()(上证/预判带/异动) + jl_reso_log_v1(共振位), 不新发请求
  * 三段: ①大字灯=买入闸结论+两条主因(09:25前标"昨收数据") ②大盘位置条(预判低→高)+抄底灯 ③09:25 每只持仓/自选一行: 可买/等回踩某价/不碰
  * 规则全部是初值, 未回测(界面写明):
@@ -150,7 +150,7 @@
       if (!document.getElementById('jlGlanceCss')) { var s = document.createElement('style'); s.id = 'jlGlanceCss'; s.textContent = CSS; document.head.appendChild(s); }
       g = document.createElement('section'); g.id = 'jlGlance'; g.className = 'glass';
       var pm = document.getElementById('premarketJL'), ix = document.getElementById('indexList');
-      if (pm) home.insertBefore(g, pm); else if (ix) home.insertBefore(g, ix.nextSibling); else home.insertBefore(g, home.firstChild);
+      if (pm) pm.parentNode.insertBefore(g, pm); else if (ix) home.insertBefore(g, ix.nextSibling); else home.insertBefore(g, home.firstChild);
     }
     var G = null, K = null; try { G = window.jlGlanceInputJL && window.jlGlanceInputJL(); K = window.jlLinkInputJL && window.jlLinkInputJL(); } catch (e) { }
     if (!G) { g.innerHTML = '<div style="font-size:12px;color:#dfe9f2">今日一眼 · 数据加载中…</div>'; return; }
@@ -166,7 +166,7 @@
     /* ② 大盘位置 + 抄底灯 */
     var sh = K && K.sh, pred = K && K.pred, ds = dipState(sh, pred, K && K.ev, K && K.temp);
     var live = sh && sh.qd === today().replace(/-/g, '');
-    h += '<div class="sec"><h4><span>大盘位置 · 上证在预判带哪里</span><span>上证 ' + pc(sh && sh.pct) + '</span></h4>' + barHTML(sh, pred) +
+    h += '<div class="sec"><h4><span></span><span>上证 ' + pc(sh && sh.pct) + '</span></h4>' + barHTML(sh, pred) +
       '<div class="dip ' + (live ? ds.k : 'na') + '"><span class="dl">' + (live ? ds.txt : '未开盘') + '</span><span>' + (live ? esc(ds.why || '盘中贴近预判低时提醒：金=可低吸 · 红=别接') + (ds.k === 'buy' && G.gate.lvl === 'red' ? ' · <b style="color:#ffb35c">闸红：只当观察信号</b>' : '') : '盘中贴近预判低时提醒') + '</span></div>' +
       '<div class="predJL" id="jlMidFibJL" style="margin-top:12px">' + (window.__jlMidFibHTML || '') + '</div></div>'; /* jl-midfib 11-10: 中波段(原大盘预判卡下半)挪到这里 */
     /* ③ 09:25 判断 */
@@ -178,10 +178,45 @@
     }).join('');
     h += '</div><div class="ft"><span>规则是初值，未回测 · 每天自动记账，攒够二三十天看准不准</span><a href="./jl_tlog.html#glance">台账 ›</a></div>';
     g.innerHTML = h;
+    mountSw();
+  }
+
+  /* jl-homesw 11-10 用户: 首页「今日一眼」+「盘前决策」两张卡合成一张, 左右滑切换(两张卡各自渲染不动, 只是搬进同一个滑动框) */
+  var SWK = 'jl_homesw_v1', SWCSS = '#jlHomeSwJL{margin:0 0 10px;padding:0}' +
+    '#jlHomeSwJL .swTabs{display:flex;gap:6px;padding:10px 14px 0;position:relative;z-index:2}#jlHomeSwJL .swTabs button{border:0;border-radius:9px;padding:3px 11px;font-size:12px;font-weight:700;background:rgba(255,255,255,.06);color:#fff;opacity:.55;min-height:0;min-width:0}#jlHomeSwJL .swTabs button.on{background:rgba(255,255,255,.16);opacity:1}' +
+    '#jlHomeSwJL .swTrk{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;transition:height .2s}#jlHomeSwJL .swTrk::-webkit-scrollbar{display:none}' +
+    '#home #jlHomeSwJL .swTrk>section{box-sizing:border-box;flex:0 0 100%;min-width:100%;scroll-snap-align:start;align-self:flex-start;margin:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
+  function swIdx(trk) { return Math.round(trk.scrollLeft / (trk.clientWidth || 1)); }
+  function swFit(box) {
+    var trk = box.querySelector('.swTrk');
+    if (box.__i0 != null && trk.clientWidth > 0) { trk.scrollLeft = box.__i0 * trk.clientWidth; box.__i0 = null; }
+    var i = swIdx(trk), pg = trk.children[i], tb = box.querySelectorAll('.swTabs button');
+    if (pg) trk.style.height = pg.offsetHeight + 'px';
+    for (var k = 0; k < tb.length; k++) tb[k].classList.toggle('on', k === i);
+  }
+  function mountSw() {
+    try {
+      var a = document.getElementById('jlGlance'), b = document.getElementById('premarketJL'), box = document.getElementById('jlHomeSwJL');
+      if (!a || !b) return false;
+      if (box && a.parentNode.parentNode === box && b.parentNode.parentNode === box) { swFit(box); return true; }
+      if (!document.getElementById('jlHomeSwCss')) { var s = document.createElement('style'); s.id = 'jlHomeSwCss'; s.textContent = SWCSS; document.head.appendChild(s); }
+      if (!box) {
+        box = document.createElement('section'); box.id = 'jlHomeSwJL'; box.className = 'glass';
+        box.innerHTML = '<div class="swTabs"><button type="button" data-i="0">今日一眼</button><button type="button" data-i="1">盘前决策</button></div><div class="swTrk"></div>';
+        a.parentNode.insertBefore(box, a);
+      }
+      var trk = box.querySelector('.swTrk'); trk.appendChild(a); trk.appendChild(b);
+      box.querySelector('.swTabs').onclick = function (e) { var t = e.target.closest && e.target.closest('button[data-i]'); if (!t) return; trk.scrollTo({ left: +t.getAttribute('data-i') * trk.clientWidth, behavior: 'smooth' }); };
+      var tm = 0; trk.addEventListener('scroll', function () { clearTimeout(tm); tm = setTimeout(function () { swFit(box); try { localStorage.setItem(SWK, String(swIdx(trk))); } catch (e) { } }, 90); }, { passive: true });
+      try { if (window.ResizeObserver) { var ro = new ResizeObserver(function () { swFit(box); }); ro.observe(a); ro.observe(b); } } catch (e) { }
+      var i0 = 0; try { i0 = +localStorage.getItem(SWK) || 0; } catch (e) { }
+      box.__i0 = i0; swFit(box);
+      return true;
+    } catch (e) { return false; }
   }
 
   window.JLGlance = { barHTML: barHTML, css: function () { if (!document.getElementById('jlGlanceCss')) { var s = document.createElement('style'); s.id = 'jlGlanceCss'; s.textContent = CSS; document.head.appendChild(s); } }, decide: decide, dipState: dipState, record: record, render: render, _key: KEY };
   if (typeof document === 'undefined' || !document.getElementById) return;
-  function boot() { render(); setInterval(function () { if (!document.hidden) render(); }, 20000); }
+  function boot() { (function waitSw() { var n = 0, t = setInterval(function () { if (mountSw() || ++n > 60) clearInterval(t); }, 1000); })(); render(); setInterval(function () { if (!document.hidden) render(); }, 20000); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 1500); }); else setTimeout(boot, 1500);
 })();
