@@ -1019,8 +1019,7 @@
         '<div class="chips">' + VN.map(function (n, i) { return '<span class="chip' + (i === v ? " on" : "") + '">' + n + '</span>'; }).join("") + '</div>' +
         '<div class="row" style="margin-top:8px"><span>中小盘同步性</span><span class="' + (sync.indexOf("未同步") >= 0 ? "hl" : "mu") + '" style="font-size:9.5px">' + sync + '</span></div>' + (vrTxt ? '<div class="row" style="border-bottom:none"><small class="mono">' + vrTxt + '</small></div>' : "") + '';
     }
-    var body = rows + struct +
-      '<div class="foot">ETF主力净额≠真实净流入（份额变动×净值）· 300ETF=510300/510310/510330/159919合计 · push2his fflow 日K(盘中今日用实时净额补) · 近5日=近5根日K合计 · 同步性=成交额量比(今日÷近20日截尾均值, 盘中按U型累计占比折算; 300×4≥1.5活跃·500/1000任一≤0.65掉队·两只≥1.0承接) · 结构判断=沪深300涨跌×上涨占比交叉派生 · 托底不等于全面进攻</div>';
+    var body = rows + struct; /* 11-09 用户: 国家队页底部口径说明整段删 */
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function renderYd() {
