@@ -2003,7 +2003,7 @@ function gapHintJL() {
 /* 11-06 用户: 振幅小部件(圆环+价格尺+竞价小蜡烛), 一眼看; 原来那几排字收起, 点小部件展开/收起 */
 function ampWidgetJL(D, G) {
   var NSW = 'http://www.w3.org/2000/svg', s = document.createElementNS(NSW, 'svg'), E = function (n, a, x) { var e = document.createElementNS(NSW, n); for (var k in a) e.setAttribute(k, a[k]); if (x != null) e.textContent = x; s.appendChild(e); return e; };
-  s.setAttribute('viewBox', '0 0 344 78'); s.setAttribute('class', 'acW');
+  s.setAttribute('viewBox', '0 0 344 84'); s.setAttribute('class', 'acW');
   var C = '#ff9a3c', CD = '#4ff0ff';
   if (G) {
     var cx = 14, mid = 40, k = Math.min(4.2, 26 / Math.max(G.up, G.dn, 1));
@@ -2024,18 +2024,109 @@ function ampWidgetJL(D, G) {
   if (over && D.fl) E('circle', { 'class': 'acHalo', cx: c2, cy: cy, r: r + 5, fill: 'none', stroke: rc, 'stroke-width': 1.5, opacity: .8 });
   E('text', { x: c2, y: cy + 2, 'font-size': 13, 'font-weight': 600, fill: over ? rc : '#fff', 'text-anchor': 'middle' }, D.amp.toFixed(1));
   E('text', { x: c2, y: cy + 12, 'font-size': 7, fill: '#fff', opacity: .92, 'text-anchor': 'middle' }, '均' + D.avg.toFixed(1));
-  var X0 = 112, X1 = 334, vals = [D.lo, D.hi, D.upTo, D.dnTo, D.cur];
-  var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pd = (mx - mn) * .06 || .01; mn -= pd; mx += pd;
-  var X = function (p) { return X0 + (p - mn) / (mx - mn) * (X1 - X0); }, y = 40;
-  E('line', { x1: X(D.dnTo), x2: X(D.upTo), y1: y, y2: y, stroke: 'rgba(255,255,255,.35)', 'stroke-width': 1, 'stroke-dasharray': '2 3' });
-  [[D.dnTo, D.cur <= D.dnTo, CD, '接'], [D.upTo, D.hi >= D.upTo, C, '卖']].forEach(function (q) {
-    var x = X(q[0]); E('line', { x1: x, x2: x, y1: y - 6, y2: y + 6, stroke: q[2], 'stroke-width': q[1] ? 2 : 1, opacity: q[1] ? 1 : .6 });
-    E('text', { x: x, y: y + 16, 'font-size': 7, fill: q[2], opacity: 1, 'text-anchor': 'middle' }, q[3] + q[0].toFixed(2));
-  });
+  var RD = D.rd, X0 = 112, X1 = 334, vals = [D.lo, D.hi, D.cur];
+  if (RD) { vals.push(RD.rh, RD.rl); RD.mk.forEach(function (m) { vals.push(m.p); }); } else vals.push(D.upTo, D.dnTo);
+  var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pd = (mx - mn) * .05 || .01; mn -= pd; mx += pd;
+  var X = function (p) { return X0 + (p - mn) / (mx - mn) * (X1 - X0); }, y = 44;
+  if (!RD) {   /* 没开盘价时退回原来 卖/接 两点 */
+    E('line', { x1: X(D.dnTo), x2: X(D.upTo), y1: y, y2: y, stroke: 'rgba(255,255,255,.35)', 'stroke-width': 1, 'stroke-dasharray': '2 3' });
+    [[D.dnTo, D.cur <= D.dnTo, CD, '接'], [D.upTo, D.hi >= D.upTo, C, '卖']].forEach(function (q) {
+      var x = X(q[0]); E('line', { x1: x, x2: x, y1: y - 6, y2: y + 6, stroke: q[2], 'stroke-width': q[1] ? 2 : 1, opacity: q[1] ? 1 : .6 });
+      E('text', { x: x, y: y + 16, 'font-size': 7, fill: q[2], 'text-anchor': 'middle' }, q[3] + q[0].toFixed(2));
+    });
+  } else {
+    E('line', { x1: X(RD.rl), x2: X(RD.rh), y1: y, y2: y, stroke: 'rgba(255,255,255,.30)', 'stroke-width': 1, 'stroke-dasharray': '2 3' });
+    [[RD.rh, D.hi >= RD.rh, '最高'], [RD.rl, D.lo <= RD.rl, '最低']].forEach(function (q) {
+      var x = X(q[0]), c = q[1] ? '#ffe14d' : '#fff';
+      E('line', { x1: x, x2: x, y1: y - 4, y2: y + 8, stroke: c, 'stroke-width': 1, 'stroke-dasharray': '2 2', opacity: .8 });
+      E('path', { d: 'M' + (x - 3.5) + ' ' + (y - 9) + ' L' + (x + 3.5) + ' ' + (y - 9) + ' L' + x + ' ' + (y - 4) + ' Z', fill: c });
+      E('text', { x: Math.max(X0 + 14, Math.min(342 - 18, x)), y: y - 12, 'font-size': 7.5, fill: c, 'text-anchor': 'middle' }, q[2] + ' ' + q[0].toFixed(2));
+    });
+  }
   E('rect', { x: X(D.lo), y: y - 2.5, width: Math.max(2, X(D.hi) - X(D.lo)), height: 5, rx: 2.5, fill: 'rgba(255,255,255,.85)' });
-  E('circle', { cx: X(D.cur), cy: y, r: 4, fill: '#fff', stroke: '#0c1424', 'stroke-width': 1.5 });
-  E('text', { x: X1, y: 9, 'font-size': 8, 'text-anchor': 'end', fill: over ? rc : '#ffe14d' }, over ? '超均别追' : '剩' + (D.avg - D.amp).toFixed(1) + '%');
+  if (RD) {
+    var srt = RD.mk.map(function (m, i) { return Object.assign({ ix: i }, m); }).sort(function (a, b) { return a.p - b.p; });
+    srt.forEach(function (m, i) {
+      var x = X(m.p), out = m.p > RD.rh + 0.001 || m.p < RD.rl - 0.001, c = out ? '#7d8796' : (m.t === 'b' ? CD : C), now = !!m.wait;
+      var g = document.createElementNS(NSW, 'g'); if (m.ok) g.setAttribute('opacity', '.4'); if (now) { g.setAttribute('class', 'acNow'); g.setAttribute('style', '--c:' + c); } s.appendChild(g);
+      var A2 = function (n, a, t) { var e = E(n, a, t); g.appendChild(e); return e; };
+      A2('line', { x1: x, x2: x, y1: y - 6, y2: y + 6, stroke: c, 'stroke-width': m.ok || now ? 2 : 1.2 });
+      A2('text', { x: Math.max(X0 + 14, Math.min(342 - 22, x)), y: y + 16 + (i % 3) * 9, 'font-size': 7.5, fill: c, 'text-anchor': 'middle', 'font-weight': now ? 700 : 500 }, m.n + (m.t === 'b' ? '接' : '卖') + m.p.toFixed(2) + (m.ok ? ' ✓' : ''));
+    });
+    E('text', { x: X0, y: 9, 'font-size': 8, fill: '#fff' }, '今 高' + D.hi.toFixed(2) + ' 低' + D.lo.toFixed(2));
+  }
+  var px = window.__ampBallPx, bl = E('circle', { cx: X(D.cur), cy: y, r: 4, fill: '#fff', stroke: '#0c1424', 'stroke-width': 1.5 });
+  if (px && px.code === STK.code && Math.abs(px.p - D.cur) > 0.001) {   /* 小球从上次的价滚到现价 */
+    var an = document.createElementNS(NSW, 'animate'); an.setAttribute('class', 'acBall');
+    [['attributeName', 'cx'], ['from', X(px.p)], ['to', X(D.cur)], ['dur', '0.8s'], ['begin', 'indefinite'], ['fill', 'freeze'], ['calcMode', 'spline'], ['keyTimes', '0;1'], ['keySplines', '.4 0 .2 1']].forEach(function (q) { an.setAttribute(q[0], q[1]); });
+    bl.appendChild(an);
+  }
+  window.__ampBallPx = { code: STK.code, p: D.cur };
+  E('text', { x: X1, y: 9, 'font-size': 8, 'text-anchor': 'end', fill: over ? rc : '#ffe14d' }, RD ? RD.tr + (over ? ' · 超均' : '') : (over ? '超均别追' : '剩' + (D.avg - D.amp).toFixed(1) + '%'));
   return s;
+}
+/* 11-09夜 用户定(设计稿 振幅卡_一两轮_设计稿.html v2): 振幅卡价格尺改成"一二三轮", 9:25 按开盘自动切换.
+   ▼最高/最低 = 开盘 ± k×日均振幅(元), k=前60天(最高−开)/(最低−开) 相对当天日均振幅的中位数, 开盘后固定.
+   高开/平开(先卖后接): ①卖 = 高开≥2% 开盘价; 否则 ▼最高 和 日低+0.9×日均 谁先到; 接 = 卖后最高回落1.8%(且低于卖价1分);
+     ②③卖 = 接回后的探底低 + 1.3×(上一轮卖后最高 − 探底低).
+   低开≤−1%(先接后卖): 接 = 当天(或上一轮卖后)最高回落3.2%; 卖 = 接价+2.7% 和 ▼最高 谁先到(▼最高不到接价+0.5%就只用+2.7%).
+   最多3轮; 只用到当分钟为止已知的高低. 回测 ~/金粼量化工具/回测结果/1109_三档倍数与高开概率/(design_vs.py, lowopen_v2.py). 只显示不提醒. */
+function ampKJL() {
+  var key = STK.code + '@' + (LIVE.sessDate || '');
+  if (window.__AMPK && window.__AMPK.key === key) return window.__AMPK;
+  var sd = LIVE.sessDate || '', d = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < sd && b.c > 0 && b.h > 0; });
+  var am = function (j) { var s = 0, n = 0; for (var i = Math.max(1, j - 20); i < j; i++) { s += (d[i].h - d[i].l) / d[i - 1].c; n++; } return n >= 10 ? s / n : 0; };
+  var U = [], W = [];
+  for (var j = Math.max(21, d.length - 60); j < d.length; j++) { var a = am(j) * d[j - 1].c; if (a > 0) { U.push((d[j].h - d[j].o) / a); W.push((d[j].o - d[j].l) / a); } }
+  var med = function (v, df) { if (v.length < 20) return df; v = v.slice().sort(function (x, y) { return x - y; }); return v[Math.floor(v.length / 2)]; };
+  window.__AMPK = { key: key, ku: med(U, 0.375), kd: med(W, 0.455), n: U.length };
+  return window.__AMPK;
+}
+function ampRoundsJL(A) {
+  var o0 = LIVE.open > 0 ? LIVE.open : (A.op > 0 ? A.op : 0), pc = A.pc; if (!(o0 > 0) || !(pc > 0) || !(A.avg > 0)) return null;
+  var K = ampKJL(), av = A.avg / 100 * pc, up = function (v) { return Math.ceil(Math.round(v * 1e6) / 1e4) / 100; }, dn = function (v) { return Math.floor(Math.round(v * 1e6) / 1e4) / 100; };
+  var rh = up(o0 + K.ku * av), rl = dn(o0 - K.kd * av), gap = o0 / pc - 1, ty = gap >= 0.01 ? 'hi' : gap <= -0.01 ? 'lo' : 'fl';
+  var P = (LIVE.pts || []).filter(function (q) { return +q.hm >= 930 && q.p > 0; });
+  var mk = [], R = 0, st, cur = null, lo = o0, hi = o0, sh = 0, s = 0, b = 0, h1 = 0, plo = 0, MAXR = 3, CN = ['①', '②', '③'];
+  var add = function (t, p, ok, hm) { mk.push({ n: CN[R], t: t, p: p, ok: ok, hm: hm || '' }); };
+  if (ty !== 'lo') {
+    st = 'S';
+    if (gap >= 0.02) { s = o0; sh = o0; add('s', s, 1, '0930'); st = 'B'; }
+    for (var i = 0; i < P.length && st !== 'X'; i++) {
+      var h = P[i].h || P[i].p, l = P[i].l || P[i].p;
+      if (st === 'S') {
+        var t = R === 0 ? Math.min(rh, up(lo + 0.9 * av)) : up(plo + 1.3 * (h1 - plo));
+        if (h >= t) { s = t; sh = Math.max(t, h); add('s', s, 1, P[i].hm); st = 'B'; lo = Math.min(lo, l); hi = Math.max(hi, h); continue; }
+      } else if (st === 'B') {
+        var tb = dn(Math.min(sh * (1 - 0.018), s - 0.01));
+        if (l <= tb) { b = tb; add('b', b, 1, P[i].hm); h1 = sh; plo = Math.min(b, l); R++; st = R >= MAXR ? 'X' : 'S'; lo = Math.min(lo, l); hi = Math.max(hi, h); continue; }
+        sh = Math.max(sh, h);
+      }
+      if (st === 'S' && R > 0) plo = Math.min(plo, l);
+      lo = Math.min(lo, l); hi = Math.max(hi, h);
+    }
+    if (st === 'S') cur = { t: 's', p: R === 0 ? Math.min(rh, up(lo + 0.9 * av)) : up(plo + 1.3 * (h1 - plo)) };
+    else if (st === 'B') cur = { t: 'b', p: dn(Math.min(sh * (1 - 0.018), s - 0.01)) };
+  } else {
+    st = 'B'; var hh = o0;
+    for (var k = 0; k < P.length && st !== 'X'; k++) {
+      var h2 = P[k].h || P[k].p, l2 = P[k].l || P[k].p;
+      if (st === 'B') {
+        var tb2 = dn(hh * (1 - 0.032));
+        if (l2 <= tb2) { b = tb2; add('b', b, 1, P[k].hm); st = 'S'; hh = Math.max(hh, h2); continue; }
+      } else {
+        var ts = rh > b * 1.005 ? up(Math.min(rh, b * 1.027)) : up(b * 1.027);
+        if (h2 >= ts) { s = ts; add('s', s, 1, P[k].hm); R++; st = R >= MAXR ? 'X' : 'B'; hh = Math.max(s, h2); continue; }
+      }
+      hh = Math.max(hh, h2);
+    }
+    if (st === 'B') cur = { t: 'b', p: dn(hh * (1 - 0.032)) };
+    else if (st === 'S') cur = { t: 's', p: rh > b * 1.005 ? up(Math.min(rh, b * 1.027)) : up(b * 1.027) };
+  }
+  if (cur) { cur.n = CN[R]; cur.wait = 1; mk.push(cur); }
+  var rn = ['第一轮', '第二轮', '第三轮'][Math.min(R, 2)], lab = { hi: '高开', fl: '平开', lo: '低开' }[ty];
+  var tr = st === 'X' ? lab + ' · 三轮做完' : lab + ' · ' + rn + (cur && cur.t === 's' ? ' 等卖' : ' 等接');
+  return { ty: ty, rh: rh, rl: rl, mk: mk, tr: tr, R: R };
 }
 /* 11-08 用户: 价格尺的卖/接改成和振幅复盘页同一套: 卖 = 今天最低 + 倍数×日均振幅(默认0.9); 接 = 今天最高回落 x%(默认2.7%). 原来 上=最低+1倍日均 / 下=最高−1倍日均, 下看太深接不到 */
 function ampParJL() { var sv = null; try { sv = JSON.parse(localStorage.getItem('jlamp_p2') || 'null'); } catch (e) { } return { xa: sv && +sv[0] > 0 ? +sv[0] : 0.9, rb: sv && +sv[1] > 0 ? +sv[1] : 0.027 }; }
@@ -2058,7 +2149,9 @@ function ampCardJL() {
   try {
     var AP2 = ampParJL(), upTo2 = Math.ceil((A.lo + AP2.xa * A.avg / 100 * A.pc) * 100) / 100, dnTo2 = Math.floor(A.hi * (1 - AP2.rb) * 100) / 100;
     var D = A.amp > 0 && A.avg > 0 ? { lo: A.lo, hi: A.hi, cur: LIVE.last || A.hi, amp: A.amp, avg: A.avg, upTo: upTo2, dnTo: dnTo2, fl: A.afl } : null;
+    if (D) { try { D.rd = ampRoundsJL(A); } catch (eR) { D.rd = null; } }
     c.insertBefore(ampWidgetJL(D, G0), c.firstChild);
+    try { var anB = c.querySelector('animate.acBall'); if (anB && anB.beginElement) anB.beginElement(); } catch (eB) { }
   } catch (eW) { }
   acBind(c); rulerSwJL(c);
 }
@@ -3166,8 +3259,8 @@ body.ampRevOn #wlBtnJL,body.ampRevOn #wlPanJL{display:none!important}
 body:not(.ladOpen) #lad .pr3{display:none}body:not(.ladOpen) #lad .pr3.sum.cmp{display:flex}
 #lad .pr3{padding:4px 4px!important;font-size:11.5px!important;gap:6px!important}#lad .pr-h{cursor:pointer;font-size:11px!important;margin:0 2px 2px!important}
 #ampCardJL .dim{opacity:.55;font-size:10px}
-#ampCardJL{cursor:pointer}#ampCardJL svg.acW{display:block;width:100%;height:auto;max-height:86px}body:not(.acOpen) #ampCardJL .ac-r{display:none}
-#ampCardJL .acHalo{animation:acHaloJL 1.1s ease-in-out 6}@keyframes acHaloJL{50%{opacity:.15}}@media (prefers-reduced-motion:reduce){#ampCardJL .acHalo{animation:none}}
+#ampCardJL{cursor:pointer}#ampCardJL svg.acW{display:block;width:100%;height:auto;max-height:92px}body:not(.acOpen) #ampCardJL .ac-r{display:none}
+#ampCardJL .acNow{animation:acNowJL 1.4s ease-in-out infinite}@keyframes acNowJL{0%,100%{filter:drop-shadow(0 0 1px var(--c))}50%{filter:drop-shadow(0 0 4px var(--c)) drop-shadow(0 0 8px var(--c)) brightness(1.5)}}#ampCardJL .acHalo{animation:acHaloJL 1.1s ease-in-out 6}@keyframes acHaloJL{50%{opacity:.15}}@media (prefers-reduced-motion:reduce){#ampCardJL .acHalo{animation:none}}
 #ampCardJL b.s{color:#ff9a3c}#ampCardJL b.b{color:#4ff0ff}#ampCardJL b.w{color:#ffe14d}#ampCardJL b.ov{color:#ff8a3d}
 #ampCardJL em{margin-left:-3px}
 /* 11-08 用户: 卡面透明轻磨砂(不要死黑): 浮动面板已是半透明磨砂, 里面的卡改成淡白玻璃+细亮边, 模糊调轻 */
@@ -3435,8 +3528,7 @@ function render(){
   var cmp=bn?'<div style="margin:6px 0;color:var(--dim)">两边都有记录的 '+bn+' 天：我 <b class="'+cl(bMy)+'">'+sg(bMy)+'</b> · 引擎 <b class="'+cl(bEg)+'">'+sg(bEg)+'</b> · 差 <b class="'+cl(bMy-bEg)+'">'+sg(bMy-bEg)+'</b></div>':'<div style="margin:6px 0;color:var(--dim)">引擎收益从今天起自动记录，明天开始就能对照</div>';
   box.innerHTML='<summary style="padding:8px 12px;cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between"><span>我的T · 历史对照</span><span>'+sum+' ▾</span></summary><div style="padding:0 12px 10px">'+cmp+h+'</div>';
 }
-render();
-setInterval(render,3000);
+/* 11-09 用户: 我的T·引擎历史对照删了 → 不再每3秒记引擎收益(jl_engT_v1_) */
 })();
 </script>
 <script>

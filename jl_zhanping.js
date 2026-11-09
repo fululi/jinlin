@@ -49,7 +49,7 @@
     '#jlZpBallJL.attn{animation:jlZpAttn 1.6s ease-in-out 4}@keyframes jlZpAttn{50%{transform:scale(1.22);box-shadow:0 0 0 8px rgba(232,195,122,.30),0 5px 20px rgba(0,0,0,.5)}}' +
     '#jlZpBallJL.ring{animation:jlZpRing 1s ease-in-out 3}@keyframes jlZpRing{50%{box-shadow:0 0 0 6px rgba(232,195,122,.35),0 4px 18px rgba(0,0,0,.45)}}' +
     /* 11-08 用户: 浮动球页面卡面别死黑 → 半透明轻磨砂(同持仓卡), 战屏页面本身透明(jl_zp_war.html body.injlin) */
-    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,rgba(22,34,54,.50),rgba(10,16,28,.58));-webkit-backdrop-filter:blur(3px) saturate(130%);backdrop-filter:blur(3px) saturate(130%);border:1px solid rgba(255,255,255,.16);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 12px 40px rgba(0,0,0,.45);overflow:hidden}' +
+    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,rgba(22,34,54,.90),rgba(10,16,28,.94));-webkit-backdrop-filter:blur(16px) saturate(130%);backdrop-filter:blur(16px) saturate(130%);border:1px solid rgba(255,255,255,.16);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 12px 40px rgba(0,0,0,.45);overflow:hidden}' +
     '#jlZpSheetJL iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:dark}' +
     '#jlZpSheetJL .zx{position:absolute;right:7px;top:7px;z-index:2;width:26px;height:26px;border-radius:50%;background:rgba(15,24,42,.85);border:1px solid #2a3a55;color:#cfd8e6;font:700 13px/24px -apple-system,sans-serif;text-align:center;cursor:pointer;touch-action:manipulation}' +
     '#jlZpSheetJL .zx:active{background:rgba(42,58,85,.9)}';
@@ -230,7 +230,7 @@
 })();
 
 /* 11-07 用户: 复盘页最底下加标签「尺子A/B」「我的T·历史对照」(从作战屏挪过来)。
-   只读: 尺子A/B = iframe jl_ruler_ab.html(静态回测, 自动撑高); 我的T = 读 localStorage jl_myT_v1_<代码>_<日期>(作战屏里填的) + jl_engT_v1_(作战屏每3秒记的引擎收益)。
+   只读: 我的T = 读 localStorage jl_myT_v1_<代码>_<日期>(作战屏里填的)。11-09 用户: 引擎那一列/引擎对照删掉, 我自己的逐日记录保留。
    复盘页被重绘移除就补回; 回滚=删本段。 */
 (function () {
   var TAB = 'jl_revtab_v1';
@@ -245,21 +245,19 @@
         if ((m = /^jl_myT_v1_(\w+)_(\d{8})$/.exec(k))) {
           var n = 0, c = 0; JSON.parse(localStorage.getItem(k) || '[]').forEach(function (t) { var s = +t.s || 0, b = +t.b || 0, q = +t.q || 100; if (s > 0 && b > 0) { n += (s - b) * q - fee(s * q, 1) - fee(b * q, 0); c++; } });
           (by[m[1]] = by[m[1]] || {})[m[2]] = Object.assign((by[m[1]] || {})[m[2]] || {}, { my: c ? n : null });
-        } else if ((m = /^jl_engT_v1_(\w+)_(\d{8})$/.exec(k))) {
-          try { (by[m[1]] = by[m[1]] || {})[m[2]] = Object.assign(by[m[1]][m[2]] || {}, { eg: JSON.parse(localStorage.getItem(k)).n }); } catch (e) { }
         }
       }
     } catch (e) { }
     var codes = Object.keys(by); if (!codes.length) return '<div style="padding:10px;color:#9aa8b8;font-size:12px">还没有记录。在做T作战屏「我的T（实盘对照）」里填了成交，这里就会按天汇总。</div>';
     var nm = function (c) { try { var L = JSON.parse(localStorage.getItem('jinlin_stocks_v2') || '[]'); for (var j = 0; j < L.length; j++) if (String(L[j].code).slice(-6) === c) return L[j].name || c; } catch (e) { } return c === '600105' ? '永鼎股份' : c; };
     return codes.map(function (c) {
-      var D = by[c], ds = Object.keys(D).sort().reverse().slice(0, 60), tot = 0, bm = 0, be = 0, bn = 0, h = '';
+      var D = by[c], ds = Object.keys(D).sort().reverse().slice(0, 60), tot = 0, h = '';
       ds.forEach(function (d) {
-        var x = D[d], my = x.my, eg = x.eg; if (my != null) tot += my; if (my != null && eg != null) { bm += my; be += eg; bn++; }
-        h += '<div style="display:flex;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.08)"><span style="width:44px;color:#9aa8b8">' + d.slice(4, 6) + '-' + d.slice(6) + '</span><span style="flex:1">我 ' + (my == null ? '—' : '<b style="color:' + col(my) + '">' + sg(my) + '</b>') + '</span><span style="flex:1">引擎 ' + (eg == null ? '—' : '<b style="color:' + col(eg) + '">' + sg(eg) + '</b>') + '</span><span style="width:70px;text-align:right">' + (my != null && eg != null ? '差 <b style="color:' + col(my - eg) + '">' + sg(my - eg) + '</b>' : '') + '</span></div>';
+        var my = D[d].my; if (my == null) return; tot += my;
+        h += '<div style="display:flex;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.08)"><span style="width:44px;color:#9aa8b8">' + d.slice(4, 6) + '-' + d.slice(6) + '</span><span style="flex:1">我 <b style="color:' + col(my) + '">' + sg(my) + '</b></span></div>';
       });
       return '<div style="margin:4px 0 10px"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:3px"><span>' + nm(c) + '</span><span>累计 <b style="color:' + col(tot) + '">' + sg(tot) + '</b></span></div>' +
-        (bn ? '<div style="color:#9aa8b8;margin-bottom:3px">两边都有记录的 ' + bn + ' 天：我 <b style="color:' + col(bm) + '">' + sg(bm) + '</b> · 引擎 <b style="color:' + col(be) + '">' + sg(be) + '</b></div>' : '') + h + '</div>';
+        h + '</div>';
     }).join('');
   }
   function paint(box) {
@@ -278,7 +276,7 @@
         box = document.createElement('article'); box.id = 'jlRevTabsJL'; box.className = 'glass reviewCard';
         box.style.cssText = 'margin-top:12px;font-size:12px;line-height:1.5';
         box.innerHTML = '<style>#jlRevTabsJL .rvTabJL{display:flex;gap:6px;margin:0 0 8px}#jlRevTabsJL .rvTabJL button{flex:1;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:inherit;border-radius:14px;padding:6px 8px;font:600 12px/1.2 -apple-system,"PingFang SC",sans-serif}#jlRevTabsJL .rvTabJL button.on{background:#ffe14d;color:#111;border-color:#ffe14d}#jlRevTabsJL iframe{display:block;width:100%;min-height:600px;border:0;background:transparent;border-radius:10px}</style>' +
-          '<div class="rvTabJL"><button type="button" data-t="mt" class="on">我的T · 历史对照</button></div>' +
+          '<div class="rvTabJL"><button type="button" data-t="mt" class="on">我的T · 逐日记录</button></div>' +
           '<div class="rvMtJL"></div>';
         box.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rvTabJL button'); if (!b) return; try { localStorage.setItem(TAB, b.getAttribute('data-t')); } catch (er) { } paint(box); });
       }
