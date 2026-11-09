@@ -1186,9 +1186,33 @@ function jlStocksJL() {
   return ls;
 }
 function symOf(c) { return (/^(5|6|9)/.test(c) ? 'sh' : 'sz') + c; } /* 5/6/9=沪, 余=深(与jlSecidJL同口径) */
+/* 11-09 用户: "做T(每轮)填了存不住/不能填" —— localStorage被日K缓存占满后 setItem 会静默抛错, 每轮填的数存不进去, 输入框一失焦就被旧的存值弹回去。
+   改: 写 = localStorage写不进就写 sessionStorage + 内存; 读 = 三层里挑时间戳最新的那份(写满时 getItem 还能读到旧值, 必须比新旧),
+   填的数当场生效, 价位尺/振幅法/我的T的买卖金额都跟着算 */
+function jlQtyGetJL() {
+  var cand = [], raw = '', o = null, i;
+  try { raw = window.parent.localStorage.getItem('jl_tintra_qty_v1') || ''; } catch (e) { }
+  if (raw) { try { o = JSON.parse(raw); if (o) cand.push(o); } catch (e) { } }
+  try { raw = sessionStorage.getItem('jl_tintra_qty_v1') || ''; } catch (e) { }
+  if (raw) { try { o = JSON.parse(raw); if (o) cand.push(o); } catch (e) { } }
+  try { if (window.__jlQtyRAMJL) cand.push(window.__jlQtyRAMJL); } catch (e) { }
+  if (!cand.length) return null;
+  var best = cand[0];
+  for (i = 1; i < cand.length; i++) if ((+cand[i].__t || 0) > (+best.__t || 0)) best = cand[i];
+  return best;
+}
+function jlQtySetJL(o) { var s, ok = false;
+  try { o.__t = Date.now(); } catch (e) { }
+  s = JSON.stringify(o);
+  try { window.parent.localStorage.setItem('jl_tintra_qty_v1', s); ok = true; } catch (e) { }
+  if (!ok) { try { sessionStorage.setItem('jl_tintra_qty_v1', s); } catch (e2) { } }
+  try { window.__jlQtyRAMJL = o; } catch (e3) { }
+  return ok;
+}
 function roundQtyJL(code, qty) { /* 与 jl_trule shOf 同口径: 自设股数(jl_tintra_qty_v1)优先且不超持仓, 否则持仓×25%取整到手 */
-  var lot = 100, frac = 0.25, q;
-  try { q = (JSON.parse(window.parent.localStorage.getItem('jl_tintra_qty_v1') || 'null') || { '603986': 100 })[code]; } catch (e) { }
+  var lot = 100, frac = 0.25, q, o = jlQtyGetJL();
+  q = o ? o[code] : null;
+  if (q == null || q === '') q = { '603986': 100 }[code];
   var cap = Math.floor(qty / lot) * lot;
   if (q != null && q !== '') return Math.max(0, Math.min(cap, Math.floor(+q / lot) * lot));
   return Math.floor(qty * frac / lot) * lot || (qty >= lot ? lot : 0);
@@ -1244,12 +1268,8 @@ m.querySelector('#qtyHold').onchange = function () {
   };
 m.querySelector('#qtyRnd').onchange = function () {
     var v = Math.floor((+this.value || 0) / 100) * 100;
-    try {
-      var P = window.parent;
-      var o = JSON.parse(P.localStorage.getItem('jl_tintra_qty_v1') || 'null') || {};
-      o[STK.code] = v;
-      P.localStorage.setItem('jl_tintra_qty_v1', JSON.stringify(o));
-    } catch (e) {}
+    /* 11-09: 存进三级兜底(localStorage满了也不会退回旧值); 振幅复盘页里改"每次股数"也写同一个键, 两边联动 */
+    var o = jlQtyGetJL() || {}; o[STK.code] = v; jlQtySetJL(o);
     LIVE.sh = roundQtyJL(STK.code, STK.qty);
     this.value = LIVE.sh;
     try {
@@ -2050,9 +2070,11 @@ function ampCardJL() {
   var r2 = '';
   if (A.amp > 0 && A.avg > 0 && A.pc > 0) {
     var AP = ampParJL(), left = A.avg - A.amp, upTo = Math.ceil((A.lo + AP.xa * A.avg / 100 * A.pc) * 100) / 100, dnTo = Math.floor(A.hi * (1 - AP.rb) * 100) / 100;
+    /* 11-09 用户: 买卖金额跟每轮股数联动(选1000股=1000股的买卖, 500股=500股的) */
+    var sh2 = LIVE.sh > 0 ? LIVE.sh : 0, q2 = sh2 > 0 ? '<span class="dim">' + sh2 + '股 卖' + jlAmtJL(upTo * sh2) + ' · 接' + jlAmtJL(dnTo * sh2) + '</span>' : '';
     r2 = '<span class="k">振' + A.amp.toFixed(1) + '/' + A.avg.toFixed(1) + '</span>' + (left > 0.05
-      ? '<span>剩<b class="w">' + left.toFixed(1) + '</b></span><span>卖<b class="s">' + upTo.toFixed(2) + '</b></span><span>回落接<b class="b">' + dnTo.toFixed(2) + '</b></span>'
-      : '<b class="ov">超均别追</b><span class="dim">卖' + upTo.toFixed(2) + (A.hi >= upTo ? '✓' : '') + ' 回落接' + dnTo.toFixed(2) + ((LIVE.last || 0) > 0 && LIVE.last <= dnTo ? '✓' : '') + '</span>');   /* 11-06 用户A: 超了也留淡淡的上看/下看价, 到过的打✓ */
+      ? '<span>剩<b class="w">' + left.toFixed(1) + '</b></span><span>卖<b class="s">' + upTo.toFixed(2) + '</b></span><span>回落接<b class="b">' + dnTo.toFixed(2) + '</b></span>' + q2
+      : '<b class="ov">超均别追</b><span class="dim">卖' + upTo.toFixed(2) + (A.hi >= upTo ? '✓' : '') + ' 回落接' + dnTo.toFixed(2) + ((LIVE.last || 0) > 0 && LIVE.last <= dnTo ? '✓' : '') + '</span>' + q2);   /* 11-06 用户A: 超了也留淡淡的上看/下看价, 到过的打✓ */
   }
   c.innerHTML = (r0 ? '<div class="ac-r">' + r0 + '</div>' : '') + (r2 ? '<div class="ac-r">' + r2 + '</div>' : '');
   try {
@@ -2140,11 +2162,18 @@ function rulerRowJL() {
 /* 11-07 用户: 尺子行单独一块(不跟振幅卡收起), 左右滑.
    11-08 用户: A/B回测不准(同根K线先低后高), 删掉, 换成振幅做T复盘页 jl_amp_review.html —— 所有股票都有, 滑到才加载, 换股回第1页、下次滑到按新股重载;
    第1页=复盘页同一套参数的今日振幅价(到上看卖 / 今天最高回落x%接), 只显示不提醒 */
+function jlAmtJL(v) { return v >= 10000 ? (v / 10000).toFixed(v >= 100000 ? 1 : 2) + '万' : String(Math.round(v)); } /* 金额压缩显示: 14076→1.41万 */
 function ampRuleRowJL() {
   try {
     var A = window.__AMPJL; if (!A || A.code !== STK.code || !(A.avg > 0) || !(A.lo > 0) || !(A.pc > 0)) return '<div class="ac-r"><span class="k">振幅法</span><span>行情加载中</span></div>';
     var P = ampParJL(), up = Math.ceil((A.lo + P.xa * A.avg / 100 * A.pc) * 100) / 100, dn = Math.floor(A.hi * (1 - P.rb) * 100) / 100;
-    return '<div class="ac-r"><span class="k">振幅法</span><span>' + P.xa + '倍日均 卖<b class="s">' + up.toFixed(2) + '</b>' + (A.hi >= up ? '✓' : '') + '</span><span>回落' + (P.rb * 100).toFixed(1) + '%接<b class="b">' + dn.toFixed(2) + '</b></span></div>';
+    /* 11-09 用户: 圈出来的买卖价格要跟着做T股数走 —— 选1000股就按1000股的买卖金额算, 500股就按500股; 股数改了这里跟着变 */
+    var sh = LIVE.sh > 0 ? LIVE.sh : 0, qa = '';
+    if (sh > 0) {
+      var netR = (up - dn) * sh - fee(up * sh, true) - fee(dn * sh, false);
+      qa = '<span class="dim">' + sh + '股 卖' + jlAmtJL(up * sh) + ' 接' + jlAmtJL(dn * sh) + ' 差<b class="' + (netR >= 0 ? 's' : 'b') + '">' + (netR >= 0 ? '+' : '') + Math.round(netR) + '</b>含费</span>';
+    }
+    return '<div class="ac-r"><span class="k">振幅法</span><span>' + P.xa + '倍日均 卖<b class="s">' + up.toFixed(2) + '</b>' + (A.hi >= up ? '✓' : '') + '</span><span>回落' + (P.rb * 100).toFixed(1) + '%接<b class="b">' + dn.toFixed(2) + '</b></span>' + qa + '</div>';
   } catch (e) { return ''; }
 }
 function rulerSwJL(c) {
@@ -3305,7 +3334,11 @@ body,button,input,select{font-family:ui-rounded,"SF Pro Rounded","PingFang SC",s
 #myT .up{color:var(--red)}#myT .dn{color:var(--green)}
 </style>
 <script>
-/* jl-myT: 我的实际做T对照(独立模块, 只读引擎数据, 不改现有逻辑) */
+/* jl-myT: 我的实际做T对照(独立模块, 只读引擎数据, 不改现有逻辑)
+   11-09 用户: "做T不能填写了" —— ① localStorage 被日K缓存占满时 save() 静默失败, "+加一笔"点了就没反应(重画又从没存进去的旧数据读回空), 数字也存不住;
+   改: 内存副本永远优先 + localStorage写不进就写 sessionStorage(摘要里提示"⚠存储满"), 加一笔当场出现;
+   ② iOS 上每填完一格就整卡重画, 正要点的那格被换掉导致焦点丢、键盘收起, 感觉就是"填不了";
+   改: change 时只就地刷摘要和该行小字, 输入行不重建 */
 (function(){
 var host=document.getElementById('lad');
 if(!host||!host.parentNode)return;
@@ -3316,8 +3349,22 @@ host.parentNode.insertBefore(box,host.nextSibling);
 function sg(v){return (v>=0?'+':'')+v.toFixed(2)}
 function code(){try{return (STK&&STK.code)||'600105'}catch(e){return '600105'}}
 function key(){var d=new Date();return 'jl_myT_v1_'+code()+'_'+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2)}
-function load(){try{return JSON.parse(localStorage.getItem(key())||'[]')}catch(e){return []}}
-function save(L){try{localStorage.setItem(key(),JSON.stringify(L))}catch(e){}}
+var RAM=null,RAMK='',LSOK=true;
+function load(){
+  var k=key();
+  if(RAM&&RAMK===k)return RAM;   /* 跨天自动换新键 */
+  var L=null;
+  try{L=JSON.parse(localStorage.getItem(k)||'[]')}catch(e){}
+  if(!L||!L.length){try{var L2=JSON.parse(sessionStorage.getItem(k)||'[]');if(L2&&L2.length)L=L2}catch(e){}}
+  RAM=Array.isArray(L)?L.slice():[];RAMK=k;
+  return RAM;
+}
+function save(L){
+  RAM=L;RAMK=key();
+  var s=JSON.stringify(L);LSOK=true;
+  try{localStorage.setItem(RAMK,s)}catch(e){LSOK=false}
+  if(!LSOK){try{sessionStorage.setItem(RAMK,s)}catch(e2){}}
+}
 function G(){try{return LIVE}catch(e){return {}}}
 function engR(i){
   var L=G(),E=L.eng;if(!E)return null;
@@ -3326,39 +3373,57 @@ function engR(i){
   return null;
 }
 function feeOf(s,b,q){try{return fee(s*q,true)+fee(b*q,false)}catch(e){return 0}}
+function env(){
+  var g=G();
+  return {sh:g.sh>0?g.sh:100,DH:g.dhi>0?g.dhi:(g.hi||0),DL:(g.dlo>0&&g.dlo<1e8)?g.dlo:(g.lo||0),last:g.last||0};
+}
+function hintOf(L,i,E){
+  var t=L[i],s=+t.s||0,b=+t.b||0,q=+t.q||E.sh,eg=engR(i),c=[],net=null,fl=false;
+  if(s>0){
+    if(eg&&eg.sp)c.push('卖比引擎'+sg(s-eg.sp));
+    if(E.DH>0)c.push('距日高'+sg(s-E.DH));
+  }
+  if(b>0){
+    if(eg&&eg.bp)c.push('买比引擎'+sg(b-eg.bp));
+    if(E.DL>0)c.push('距日低'+sg(b-E.DL));
+  }
+  if(s>0&&b>0){net=(s-b)*q-feeOf(s,b,q)}
+  else if(s>0&&E.last>0){net=(s-E.last)*q-feeOf(s,E.last,q);fl=true}
+  if(net!==null){
+    c.push((fl?'浮 ':'净 ')+'<b class="'+(net>=0?'up':'dn')+'">'+sg(net)+'</b>');
+  }
+  return {txt:c.length?c.join(' · '):'',net:net,fl:fl};
+}
+function sumHTML(L,E){
+  var tot=0;
+  L.forEach(function(t,i){var x=hintOf(L,i,E);if(x.net!==null&&!x.fl)tot+=x.net});
+  return L.length?(L.length+'笔 · 已平净 <b class="'+(tot>=0?'up':'dn')+'">'+sg(tot)+'</b>'+(LSOK?'':' <b style="color:var(--amber)">⚠存储满·本次有效</b>')):((LSOK?'点开填写':'⚠存储满·仅本次有效')+' ▾');
+}
 function render(force){
   var a=document.activeElement;
   if(!force&&box.contains(a)&&a.tagName==='INPUT')return;
-  var L=load(),g=G(),sh=g.sh>0?g.sh:100,
-      DH=g.dhi>0?g.dhi:(g.hi||0),
-      DL=(g.dlo>0&&g.dlo<1e8)?g.dlo:(g.lo||0),
-      last=g.last||0,tot=0,h='';
+  var L=load(),E=env(),h='';
   L.forEach(function(t,i){
-    var s=+t.s||0,b=+t.b||0,q=+t.q||sh,eg=engR(i),c=[],net=null,fl=false;
-    if(s>0){
-      if(eg&&eg.sp)c.push('卖比引擎'+sg(s-eg.sp));
-      if(DH>0)c.push('距日高'+sg(s-DH));
-    }
-    if(b>0){
-      if(eg&&eg.bp)c.push('买比引擎'+sg(b-eg.bp));
-      if(DL>0)c.push('距日低'+sg(b-DL));
-    }
-    if(s>0&&b>0){net=(s-b)*q-feeOf(s,b,q)}
-    else if(s>0&&last>0){net=(s-last)*q-feeOf(s,last,q);fl=true}
-    if(net!==null){
-      if(!fl)tot+=net;
-      c.push((fl?'浮 ':'净 ')+'<b class="'+(net>=0?'up':'dn')+'">'+sg(net)+'</b>');
-    }
-    h+='<div class="mt-r"><b>T'+(i+1)+'</b>卖<input type="number" inputmode="decimal" step="0.01" data-i="'+i+'" data-f="s" value="'+(t.s===undefined?'':t.s)+'">买<input type="number" inputmode="decimal" step="0.01" data-i="'+i+'" data-f="b" value="'+(t.b===undefined?'':t.b)+'">股<input class="q" type="number" inputmode="numeric" step="100" data-i="'+i+'" data-f="q" value="'+(t.q||sh)+'"><button data-del="'+i+'">✕</button></div>'+(c.length?'<div class="mt-c">'+c.join(' · ')+'</div>':'');
+    var x=hintOf(L,i,E);
+    h+='<div class="mt-r"><b>T'+(i+1)+'</b>卖<input type="number" inputmode="decimal" step="0.01" data-i="'+i+'" data-f="s" value="'+(t.s===undefined?'':t.s)+'">买<input type="number" inputmode="decimal" step="0.01" data-i="'+i+'" data-f="b" value="'+(t.b===undefined?'':t.b)+'">股<input class="q" type="number" inputmode="numeric" step="100" data-i="'+i+'" data-f="q" value="'+(t.q||E.sh)+'"><button data-del="'+i+'">✕</button></div><div class="mt-c" data-hi="'+i+'"'+(x.txt?'':' style="display:none"')+'>'+(x.txt||'')+'</div>';
   });
-  box.innerHTML='<summary><span>我的T（实盘对照）</span><span>'+(L.length?L.length+'笔 · 已平净 <b class="'+(tot>=0?'up':'dn')+'">'+sg(tot)+'</b>':'点开填写 ▾')+'</span></summary><div class="mt-b">'+h+'<div style="margin-top:8px"><button data-add="1">＋ 加一笔</button></div></div>';
+  box.innerHTML='<summary><span>我的T（实盘对照）</span><span class="mTs">'+sumHTML(L,E)+'</span></summary><div class="mt-b">'+h+'<div style="margin-top:8px"><button data-add="1">＋ 加一笔</button></div></div>';
+}
+function sumLine(){   /* 就地刷新摘要+每行小字, 不动输入行(整卡重画会丢iOS焦点) */
+  var L=load(),E=env();
+  var sm=box.querySelector('.mTs');
+  if(sm)sm.innerHTML=sumHTML(L,E);
+  L.forEach(function(t,i){
+    var el=box.querySelector('.mt-c[data-hi="'+i+'"]'),x=hintOf(L,i,E);
+    if(el){el.innerHTML=x.txt;el.style.display=x.txt?'':'none';}
+  });
 }
 box.addEventListener('change',function(e){
   var t=e.target;if(!t.getAttribute||t.getAttribute('data-i')===null)return;
   var L=load(),i=+t.getAttribute('data-i'),f=t.getAttribute('data-f');
   if(!L[i])return;
   L[i][f]=t.value===''?'':+t.value;
-  save(L);render(true);
+  save(L);sumLine();
 });
 box.addEventListener('click',function(e){
   var t=e.target;if(!t.getAttribute)return;
