@@ -1927,6 +1927,7 @@ document.addEventListener("visibilitychange", () => {
       return;
     }
     const total = mfTotalJL(rows);
+    try { window.__mfTickJL = (Number.isFinite(total) ? [["两市合计", total]] : []).concat(rows.filter((r) => r && Number.isFinite(+r.amt)).map((r) => [String(r.name), +r.amt])).map((x) => [x[0], x[1], fmtFundJL(x[1])]); } catch (eTk) {} /* 11-10 市场资金收着时轮播用 */
     sum.textContent = rows.length && Number.isFinite(total) ? fmtFundJL(total) : mf != null ? fmtFundJL(mf) : marketFundsJL.error ? "\u6682\u4E0D\u53EF\u7528" : "\u7B49\u5F85\u6570\u636E";
     sum.classList.toggle("mfPendJL", !(rows.length && Number.isFinite(total) || mf != null));
     let html = rows.length ? '<div class="marketFundRow"><span><b>\u6CAA\u6DF1\u4E24\u5E02\u5408\u8BA1</b></span><small>' + (histTagJL ? histTagJL + " \u6536\u76D8\xB7" : "") + "\u4E0A\u8BC1+\u6DF1\u8BC1\u7EFC\u6307\xB7\u4E3B\u529B\u51C0\u989D" + '</small><strong class="' + (Number.isFinite(total) ? total >= 0 ? "up" : "down" : "") + '">' + (Number.isFinite(total) ? fmtFundJL(total) : "\u2014") + "</strong></div>" + rows.map((r) => '<div class="marketFundRow"><span>' + r.name + "</span><small>" + (r.pct == null ? (r.tagJL || "\u4E3B\u529B\u51C0\u989D") : (r.pct >= 0 ? "+" : "") + Number(r.pct).toFixed(2) + "%") + (r.turnover != null ? " \xB7 \u6210\u4EA4 " + fmtFundJL(r.turnover) : "") + '</small><strong class="' + (r.amt >= 0 ? "up" : "down") + '">' + fmtFundJL(r.amt) + "</strong></div>").join("") : mf != null ? '<div class="marketFundRow"><span><b>\u5168A\u4E3B\u529B\u51C0\u989D</b></span><small>\u817E\u8BAF\u5168A\u91C7\u6837 ' + (mtempJL.data.cov != null ? mtempJL.data.cov + "%" : "") + (mtempJL.data.verdict ? " \xB7 " + mtempJL.data.verdict : "") + '</small><strong class="' + (mf >= 0 ? "up" : "down") + '">' + fmtFundJL(mf) + "</strong></div>" : '<div class="marketFundRow"><span>\u5E02\u573A\u6307\u6570\u8D44\u91D1</span><small>\u6570\u636E\u6E90\u672A\u8FD4\u56DE</small><strong>\u2014</strong></div>';
@@ -2458,6 +2459,18 @@ document.addEventListener("visibilitychange", () => {
     const sm = en.querySelector("small");
     if (sm) sm.textContent = open ? "沪深 · 深证 · 创业板　再点这里收起" : "沪深 · 深证 · 创业板　点击展开真实主力净额";
   }
+  (() => { /* 11-10 用户: 市场资金收着时, 小字那行像跑马灯一样轮流显示 两市合计/上证/深证/创业板… 主力净额; 展开就停 */
+    let i = 0;
+    const st = document.createElement("style"); st.textContent = "#marketFundsEntry small.mfTkJL{display:block;overflow:hidden;height:1.5em}#marketFundsEntry small.mfTkJL i{display:block;font-style:normal;animation:mfTkIn .45s ease}@keyframes mfTkIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}#marketFundsEntry small.mfTkJL b.u{color:#ff5459}#marketFundsEntry small.mfTkJL b.d{color:#1fdc93}"; document.head.appendChild(st);
+    setInterval(() => {
+      const p = $("marketFundsPanel"), en = $("marketFundsEntry"), sm = en && en.querySelector("small"), L = window.__mfTickJL || [];
+      if (!sm || !p) return;
+      if (!p.hidden || !L.length) { if (sm.classList.contains("mfTkJL")) { sm.classList.remove("mfTkJL"); sm.textContent = p.hidden ? "沪深 · 深证 · 创业板　点击展开真实主力净额" : "沪深 · 深证 · 创业板　再点这里收起"; } return; }
+      if (document.hidden) return;
+      const x = L[i++ % L.length];
+      sm.classList.add("mfTkJL"); sm.innerHTML = '<i>' + x[0] + ' 主力 <b class="' + (x[1] >= 0 ? "u" : "d") + '">' + x[2] + "</b></i>";
+    }, 2500);
+  })();
   $("marketFundsEntry").onclick = () => {
     const p = $("marketFundsPanel");
     if (!p) return;
