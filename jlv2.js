@@ -982,6 +982,7 @@
     var body = top + '<div style="margin-top:8px">' + fac + "</div>" + mainH +
       '<div class="jh">冰点判定 · 规则组</div>' + rules +
       '<div class="jh">场景提示</div>' + scn;
+    S.__tq = { t: sn.t, zc: zc, st: stTxt, sc: sc, p: tqP, dt2: dt2, ml: ML, at: sn.at }; /* 11-10 大盘情绪三格用 */
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——质疑"1.44万亿是多了还是少了", 额度差才是人话 */
@@ -1075,6 +1076,7 @@
     }
     var lead = (vtxt ? '<div class="g2v" style="color:' + vcol + '">' + vtxt + "</div>" : "") + (stx ? '<div style="font-size:11px;line-height:1.6;color:#fff">沪深300 ' + pct(stx.p300) + "，" + Math.round(stx.upR) + "% 的股票在涨" + (stx.pcy != null ? "；创业板 " + pct(stx.pcy) : "") + "</div>" : "");
     var body = lead + '<div style="margin-top:6px">' + rows + "</div>" + struct;
+    try { var _gv = _wd0 ? _wd0.today : (e300 && isFinite(e300.today) ? e300.today : NaN); S.__gq = { v: _gv, lab: _wd0 ? "宽基合计" : "300ETF", run: typeof wr !== "undefined" && wr ? wr : (_wd0 ? null : null), vt: vtxt, asOf: _asOf }; } catch (eGq) { S.__gq = null; } /* 11-10 大盘情绪三格用 */
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function renderYd() {
@@ -1122,21 +1124,39 @@
 
   function smallOf(h) { var m0 = /<small>([\s\S]*)<\/small>/.exec(h || ""); return m0 ? m0[1] : ""; }
   function innerSum(x) { return String(x || "").replace("点标题展开", "").replace(/^<span class="jsum">/, "").replace(/<\/span>$/, ""); }
-  function renderMood(t, g) {
-    var GL = { green: ["可以买", "#ff5459"], yellow: ["只低吸", "#e0a800"], red: ["不宜买入", "#16b47a"] }, gl = null;
-    try { var LI = window.jlLinkInputJL && window.jlLinkInputJL(); gl = LI && LI.gate && GL[LI.gate.lvl]; } catch (e) { gl = null; }
+  function renderMood(t, g) { /* 11-10 用户选A: 「大盘情绪」= 温度/涨停情绪/国家队 三格并排, 点哪格下面展开哪格(原明细原样), 下面一行今天主线 */
     var W = null; try { W = window.jlZtWeatherJL && window.jlZtWeatherJL.stage(); } catch (e) { W = null; }
-    var lab = function (x) { return '<span style="flex:0 0 auto;min-width:40px;font-size:11px;font-weight:600;opacity:.7">' + x + "</span>"; };
-    var line = function (l, inner) { return '<span class="jsum" style="margin-top:6px">' + lab(l) + inner + "</span>"; };
-    var wxIn = W ? '<span class="zpill" style="font-size:12px;padding:1px 7px;color:' + W.col + ";border-color:" + W.col + '">' + esc(W.st) + '</span><span class="mono">涨停' + W.n + "</span>·<span class=\"mono\">最高" + W.mx + "板</span>·<span class=\"mono\">晋级" + (W.adv == null ? "—" : W.adv + "%") + '</span><span style="opacity:.75">' + esc(W.tip) + "</span>" : '<span style="opacity:.7">涨停池未到</span>';
-    var sum = line("温度", innerSum(t.sum)) /* jl-home1108: 闸灯去掉, 盘前决策卡已有 */ + line("情绪", wxIn) + line("国家队", innerSum(g.sum));
-    var tab = S.mtab || "t", tabs = [["t", "温度因子"], ["g", "国家队"]]; if (tab === "z") tab = "t"; /* jl-home1108: 涨停梯队页签删, 底部板块抽屉天气条为准 */
-    var bar = '<div style="display:flex;gap:6px;margin-bottom:9px">' + tabs.map(function (x) { var on = x[0] === tab; return '<span data-jlmt="' + x[0] + '" style="flex:1;text-align:center;font-size:12px;font-weight:' + (on ? 800 : 600) + ";padding:5px 0;border-radius:10px;cursor:pointer;" + (on ? "background:rgba(255,210,31,.18);color:#ffd21f;box-shadow:inset 0 0 0 1px rgba(255,210,31,.55)" : "background:rgba(255,255,255,.06);color:#fff") + '">' + x[1] + "</span>"; }).join("") + "</div>";
+    var Q = S.__tq, G2 = S.__gq, tab = S.mtab === "g" || S.mtab === "z" ? S.mtab : "t", op = !!S.open.m;
+    var pill = function (txt, col) { return '<span class="mtS" style="background:' + col + '">' + txt + "</span>"; };
+    var yi = function (v) { return isFinite(v) ? (v >= 0 ? "+" : "−") + (Math.abs(v) / 1e8).toFixed(1) + "亿" : "—"; };
+    var cell = function (k, inner) { return '<div class="mtT' + (op && tab === k ? " on" : "") + '" data-jlmt="' + k + '">' + inner + "</div>"; };
+    var tT = '<div class="mtK">温度</div>';
+    if (Q && Q.t != null) {
+      var f = Math.max(0, Math.min(100, Q.t)) / 100;
+      tT += '<div class="mtD"><svg viewBox="0 0 62 34"><path d="M5 31 A26 26 0 0 1 57 31" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="6" stroke-linecap="round"/><path d="M5 31 A26 26 0 0 1 57 31" fill="none" stroke="' + Q.zc + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="81.7" stroke-dashoffset="' + (81.7 * (1 - f)).toFixed(1) + '"/></svg><b style="color:' + Q.zc + '">' + Q.t + "</b></div>" +
+        pill(esc(Q.st), "rgba(255,255,255,.14);color:" + Q.sc) + '<div class="mtM">' + (Q.p != null ? "20日分位 " + Q.p + "%" : Q.dt2 != null ? "比昨天 " + (Q.dt2 > 0 ? "▲" : Q.dt2 < 0 ? "▼" : "") + Math.abs(Q.dt2) : "") + "</div>";
+    } else tT += '<div class="mtV">—</div><div class="mtM">采样中</div>';
+    var tZ = '<div class="mtK">涨停情绪</div>' + (W ? '<div class="mtV" style="color:#ff5459">' + W.n + "</div>" + pill(esc(W.st), W.col) + '<div class="mtM">最高 ' + W.mx + " 板 · 晋级 " + (W.adv == null ? "—" : W.adv + "%") + "</div>" : '<div class="mtV">—</div><div class="mtM">涨停池未到</div>');
+    var tG = '<div class="mtK">国家队</div>';
+    if (G2 && isFinite(G2.v)) {
+      var gc = G2.v >= 0 ? "#ff5459" : "#1fdc93", r = G2.run;
+      tG += '<div class="mtV" style="color:' + gc + '">' + yi(G2.v) + "</div>" + (r && r.n ? pill("连" + (r.sg > 0 ? "入" : "出") + " " + r.n + " 天", r.sg > 0 ? "#e0383e" : "#109a68") : pill(G2.v >= 0 ? "流入" : "流出", G2.v >= 0 ? "#e0383e" : "#109a68")) + '<div class="mtM">' + esc(G2.vt || G2.lab) + (G2.asOf ? " · 截至" + String(G2.asOf).slice(5) : "") + "</div>";
+    } else tG += '<div class="mtV">—</div><div class="mtM">ETF资金未到</div>';
+    var ml = Q && Q.ml && Q.ml.list && Q.ml.list.length ? Q.ml.list : null;
+    var mainRow = ml ? '<div class="mtMain" data-jlmain="' + esc(ml[0].sec) + '">今天主线 <i>' + ml.slice(0, 3).map(function (o) { return esc(o.sec); }).join(" · ") + "</i>" + (Q.ml.review ? '<small>' + esc(String(Q.ml.day || "").slice(5)) + " 复盘</small>" : "") + "<span>›</span></div>" : "";
+    var sum = '<div class="mtTs">' + cell("t", tT) + cell("z", tZ) + cell("g", tG) + "</div>" + mainRow;
     var bd = "";
-    if (tab === "t") bd = '<div style="font-size:10.5px;opacity:.75;margin-bottom:6px">' + smallOf(t.head) + "</div>" + (t.body || '<div style="opacity:.7">采样中…</div>');
-    else if (tab === "g") bd = '<div style="font-size:10.5px;opacity:.75;margin-bottom:6px">' + smallOf(g.head) + "</div>" + (g.body || "");
-    
-    return { head: "<b>市场情绪</b><small>温度 · 情绪 · 国家队</small>", sum: sum, body: bar + bd };
+    if (tab === "t") bd = t.body || '<div style="opacity:.7">采样中…</div>';
+    else if (tab === "z") { try { bd = window.jlZtWeatherJL ? window.jlZtWeatherJL.html(S.wxk || "") : ""; } catch (e) { bd = ""; } bd = bd || '<div style="opacity:.7">涨停池未到</div>'; }
+    else bd = g.body || "";
+    if (!document.getElementById("mtCssJL")) { var cs = document.createElement("style"); cs.id = "mtCssJL"; cs.textContent =
+      ".mtTs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.mtT{border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);padding:7px 5px 6px;text-align:center;cursor:pointer;color:#fff}" +
+      ".mtT.on{border-color:rgba(255,210,31,.75);box-shadow:inset 0 0 0 1px rgba(255,210,31,.35)}.mtK{font-size:10.5px;font-weight:700}.mtV{font:800 19px/1.2 ui-monospace,Menlo,monospace;margin-top:3px}" +
+      ".mtS{display:inline-block;font-size:10px;font-weight:800;border-radius:6px;padding:0 6px;margin-top:3px;color:#fff}.mtM{font-size:9.5px;margin-top:4px;line-height:1.35;font-weight:600}" +
+      ".mtD{position:relative;width:60px;height:33px;margin:2px auto 0}.mtD svg{width:60px;height:33px;display:block}.mtD b{position:absolute;left:0;right:0;bottom:-3px;font:800 16px/1 ui-monospace,Menlo,monospace}" +
+      ".mtMain{margin-top:7px;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 9px;border-radius:10px;background:rgba(255,255,255,.05);color:#fff;cursor:pointer}.mtMain i{font-style:normal;font-weight:800;color:#ff8a8e}.mtMain small{font-size:10px}.mtMain span{margin-left:auto}";
+      document.head.appendChild(cs); }
+    return { head: "<b>大盘情绪</b><small>" + (Q && Q.at ? esc(Q.at) + " 更新" : "") + "</small>", sum: sum, body: bd };
   }
   var moodBound = false;
   function bindMood(root) {
@@ -1147,7 +1167,7 @@
       var el = ev.target && ev.target.closest ? ev.target.closest("[data-jlmt],[data-jlwx],[data-jlstk]") : null;
       if (!el || !root.contains(el)) return;
       ev.stopPropagation();
-      if (el.hasAttribute("data-jlmt")) { S.mtab = el.getAttribute("data-jlmt"); lsSet("jlv2_mtab_v1", S.mtab); paint(); return; }
+      if (el.hasAttribute("data-jlmt")) { var _k = el.getAttribute("data-jlmt"); if (S.open.m && S.mtab === _k) S.open.m = 0; else { S.open.m = 1; S.mtab = _k; } lsSet("jlv2_mtab_v1", S.mtab); lsSet("jlv2_open_v1", S.open); paint(); return; } /* 11-10: 点格子=开这格, 再点同格=收起 */
       if (el.hasAttribute("data-jlwx")) { var k = el.getAttribute("data-jlwx"); S.wxk = S.wxk === k ? "zt" : k; paint(); return; }
       if (el.getAttribute("data-jlstk") === "open" && typeof window.ydOpenStockJL === "function") window.ydOpenStockJL(el.getAttribute("data-c"), el.getAttribute("data-n"), +el.getAttribute("data-pc") || 0);
     });
