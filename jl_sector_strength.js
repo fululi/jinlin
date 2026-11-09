@@ -1155,6 +1155,27 @@
     try { if (navigator.vibrate) navigator.vibrate([180, 90, 180]); } catch (e) {}
     clearTimeout(POPS_T); POPS_T = setTimeout(function () { if (POPS) POPS.classList.remove("on"); }, 90e3);
   }
+  /* 11-09 首页「今天主线」: 给 jlv2 温度卡用——主攻/资金最强/推荐卡板块, 只读现成数据 */
+  function mainLineJL() {
+    var out = [], A = S.ana || {}, D = S.days || [], seen = {};
+    var stg = function (sec) { var a = A[sec]; if (!a || !a.cur.k) return null; var run = D.length ? CORE.stageRun(D, D.length - 1, sec) : null, g = run ? CORE.runGain(D, D.length - 1, sec, run.n) : null; return { st: CORE.STAGES[a.cur.k], n: run ? run.n : 1, g: run && run.n >= 2 ? g : null, avg: a.cur.avg }; };
+    if (S.lead && A[S.lead]) { out.push({ sec: S.lead, kind: "主攻", s: stg(S.lead) }); seen[S.lead] = 1; }
+    var q = S.bkq && S.bkq.m, H = lsGet("jl_fundtop_v1") || {}, td = H[localDay(Date.now())] || {};
+    if (q) { var t = fundTopOf(q)[0]; if (t && !seen[t]) { out.push({ sec: t, kind: "资金最强", f: q[t].f, fr: q[t].fr, p: q[t].p, at: td.s && td.s[t] ? td.s[t].a : "", s: stg(t) }); seen[t] = 1; } }
+    var pg = document.getElementById("jlrecPg"); if (pg) Array.prototype.slice.call(pg.querySelectorAll("[data-jlrec]"), 0, 3).forEach(function (el) { var k = el.getAttribute("data-jlrec"); if (k && !seen[k] && out.length < 3) { out.push({ sec: k, kind: "埋伏候选", s: stg(k) }); seen[k] = 1; } });
+    return { list: out, day: S.dispDay || S.day, review: !!S.review };
+  }
+  function openRecJL(sec) { /* 打开抽屉并滑到这个板块的埋伏候选卡; 没有卡就打开板块详情 */
+    S.open = true; if (ROOT) { ROOT.style.display = ""; ROOT.classList.add("open"); } paint();
+    setTimeout(function () {
+      var pg = document.getElementById("jlrecPg"), el = null;
+      if (pg) Array.prototype.forEach.call(pg.querySelectorAll("[data-jlrec]"), function (x) { if (!el && x.getAttribute("data-jlrec") === sec) el = x; });
+      if (!el) { openSec(sec); return; }
+      try { pg.scrollLeft = el.offsetLeft - pg.offsetLeft; el.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+      el.style.boxShadow = "0 0 0 2px #ffe14d"; setTimeout(function () { el.style.boxShadow = ""; }, 2400);
+    }, 350);
+  }
+  window.jlMainLineJL = mainLineJL; window.jlOpenRecJL = openRecJL;
   function openSec(sec) { /* 点任何板块名 → 看这个板块的成分股(看/+自选/+持仓), 不自动收 */
     ensurePops(); clearTimeout(POPS_T);
     var x = { kind: "view", sec: sec, t: Date.now() };
@@ -1290,7 +1311,7 @@
           (isZt ? '<span style="font-size:10px;font-weight:800;color:#10131a;background:#ffd21f;border-radius:6px;padding:1px 6px">' + (l || "涨停") + ' · 排队难买</span>' : (l ? '<span style="font-size:10px;font-weight:800;color:#ffd21f">' + l + "</span>" : "")) +
           (rec ? '<span style="margin-left:auto;font-size:10px;font-weight:700;color:' + (rec.g >= 0 ? "#ff9a9d" : "#7ee0b8") + '">推荐后' + (rec.g >= 0 ? "+" : "") + rec.g.toFixed(1) + '%·第' + rec.d + '天</span>' : '') + '<b style="' + (rec ? "" : "margin-left:auto;") + 'font-size:14px;color:' + (x.p >= 0 ? "#ff5459" : "#2fd18b") + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(1) + '%</b><span data-jlstk="watch"' + dat + ' style="' + b + '">+自选</span></div>';
       };
-      cards += '<div style="flex:0 0 84%;scroll-snap-align:start;box-sizing:border-box;padding:10px 12px;margin-right:8px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.25)">' +
+      cards += '<div data-jlrec="' + esc(o.k) + '" style="flex:0 0 84%;scroll-snap-align:start;box-sizing:border-box;padding:10px 12px;margin-right:8px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.25)">' +
         '<div style="display:flex;align-items:center;gap:6px">' + secRingOf(o.k) + '<span data-jlsec="' + esc(o.k) + '" style="font-size:16px;font-weight:800;color:#fff">' + esc(o.k) + '</span><span style="font-size:11px;font-weight:800;color:#ffd21f">' + esc(c.name) + '</span><span style="margin-left:auto;font-size:10.5px;font-weight:700;opacity:.8">' + esc(risk) + '</span></div>' +
         '<div style="display:flex;margin:8px 0 4px">' + tile(runN ? "第" + runN + "天" : "新", "强势轮动", "#ffd21f") + tile(c.cum5 == null ? "—" : (up ? "+" : "") + c.cum5.toFixed(1) + "%", "近5天累计", up ? "#ff5459" : "#2fd18b") + tile((c.avg >= 0 ? "+" : "") + (c.avg || 0).toFixed(1) + "%", "最近一天", c.avg >= 0 ? "#ff5459" : "#2fd18b") + "</div>" +
         buy.map(function (x) { return row(x, false); }).join("") + zts.map(function (x) { return row(x, true); }).join("") + "</div>";

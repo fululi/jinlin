@@ -111,6 +111,11 @@
     ".jlv2 .tnow b{font-size:26px;font-family:ui-monospace,monospace}" +
     ".jlv2 .zpill{font-size:12px;color:#81e6d9;border:1px solid #81e6d9;border-radius:9px;padding:2px 9px;font-weight:600}" +
     ".jlv2 .zpill.ice{color:#5ad0ff;border-color:#5ad0ff}.jlv2 .zpill.hot{color:#ff5459;border-color:#ff5459}" +
+    ".jlv2 .t2g{display:flex;align-items:center;gap:12px;margin-top:4px}.jlv2 .t2n{font-size:44px;line-height:1;font-weight:600;letter-spacing:-1px}.jlv2 .t2s{font-size:11.5px;line-height:1.75;color:#fff}" +
+    ".jlv2 .t2p{display:inline-block;font-size:11px;padding:0 8px;border-radius:9px;border:1px solid currentColor}" +
+    ".jlv2 .t2r{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-top:1px solid rgba(255,255,255,.12)}.jlv2 .t2r .k{flex:0 0 74px;font-size:11.5px;color:#fff}.jlv2 .t2r .v{flex:0 0 auto;font-size:16px;font-weight:600}.jlv2 .t2r .m{flex:1;font-size:11px;text-align:right;line-height:1.5;color:#fff}.jlv2 .t2r .t{font-size:10px;padding:0 6px;border-radius:8px;border:1px solid currentColor;margin-left:4px;white-space:nowrap}" +
+    ".jlv2 .t2main{margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.3)}.jlv2 .t2ml{display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 0;color:#fff;cursor:pointer}.jlv2 .t2ml b{font-weight:600;color:#ffe14d;flex:0 0 auto}.jlv2 .t2ml span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.jlv2 .t2ml i{font-style:normal;margin-left:auto;font-size:11px;color:#ffe14d;flex:0 0 auto}" +
+    ".jlv2 .g2v{font-size:15px;font-weight:600;margin:2px 0}.jlv2 .g2e{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;color:#fff}.jlv2 .g2e em{font-style:normal;flex:0 0 74px}.jlv2 .g2e .bar{flex:1;height:8px;position:relative}.jlv2 .g2e .bar s{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:rgba(255,255,255,.6)}.jlv2 .g2e .bar i{position:absolute;top:0;bottom:0;border-radius:4px}.jlv2 .g2e b{flex:0 0 54px;text-align:right;font-weight:600}.jlv2 .g2e small{flex:0 0 54px;text-align:right;font-size:10.5px}.jlv2 .g2e u{text-decoration:none;flex:0 0 52px;text-align:right;font-size:10.5px}" +
     ".jlv2 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}" +
     ".jlv2 .ft{border:1px solid #ffffff10;border-radius:10px;padding:7px 8px;background:rgba(255,255,255,0.045)}" +
     ".jlv2 .ft span{font-size:12px;color:#FFFFFF;font-weight:600;display:block}" +
@@ -933,14 +938,50 @@
       if (!items.length) items = [[true, "状态正常", "无特别提示 · 按计划执行"]];
       scn = items.map(function (x) { return '<div class="scn on"><b>' + x[1] + '</b>' + x[2] + '</div>'; }).join("");
     }
-    var body =
-      scale +
-      '<div class="tnow" style="margin-top:8px"><b style="color:' + zc + '">' + sn.t + '</b><span class="' + statePill(st ? st.state : "正常") + '" style="color:' + sc + ';border-color:' + sc + '">' + (st ? st.state : "—") + '</span><span style="font-size:12px;color:#FFFFFF">' + (dt2 != null ? "昨 " + yv.t + " · " + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "—") + Math.abs(dt2) : "昨日无记录") + '</span>' + (tqP != null ? '<span style="font-size:12px;color:#FFFFFF">20日收盘分位 P' + tqP + '</span>' : '') + '</div>' +
-      '<div class="fgrid">' + grid + '</div>' +
-      (S.dtOpen && dtr ? dtDetailHtml(dtr) : "") + /* jl-1080: 跌停明细展开层(点"跌停"数字切换) */
-      '<div class="jh">冰点判定 · 规则组（非阈值）</div>' + rules +
-      '<div class="jh">场景提示 · 状态驱动</div>' + scn +
-      '<div class="foot">状态描述，不构成操作建议 · 温度=50+(涨跌比-0.5)×100 与旧卡同源 · 冰点=规则组判定（≥3项）· 阈值集中在 CFG 待回测校准 · 涨跌停池为本模块自建口径</div>';
+    /* 11-09 用户定版: 温度=半圆表盘(指针今天/小圈昨天) + 一行一个因子(左数右白话) + 今天主线(点了直接到板块强度推荐卡) */
+    var tc = function (cls) { return cls === "up" ? "#ff5459" : cls === "dn" ? "#1fdc93" : "#fff"; };
+    var ang = function (v) { var a = Math.PI * (1 - Math.max(0, Math.min(100, v)) / 100); return [75 + 63 * Math.cos(a), 82 - 63 * Math.sin(a)]; };
+    var pN = ang(sn.t), pY = yv && yv.t != null ? ang(yv.t) : null, pNi = [75 + (pN[0] - 75) * 0.82, 82 + (pN[1] - 82) * 0.82];
+    var gauge = '<svg width="150" height="92" viewBox="0 0 150 92" style="flex:0 0 auto"><defs><linearGradient id="jlT2g" x1="0" x2="1"><stop offset="0" stop-color="#4fc3ff"/><stop offset=".5" stop-color="#ffe14d"/><stop offset="1" stop-color="#ff5459"/></linearGradient></defs>' +
+      '<path d="M12 82 A63 63 0 0 1 138 82" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="11" stroke-linecap="round"/>' +
+      '<path d="M12 82 A63 63 0 0 1 138 82" fill="none" stroke="url(#jlT2g)" stroke-width="11" stroke-linecap="round" stroke-dasharray="198" stroke-dashoffset="' + (198 * (1 - Math.max(0, Math.min(100, sn.t)) / 100)).toFixed(1) + '"/>' +
+      (pY ? '<circle cx="' + pY[0].toFixed(1) + '" cy="' + pY[1].toFixed(1) + '" r="4" fill="none" stroke="#fff" stroke-width="1.3"/>' : "") +
+      '<line x1="75" y1="82" x2="' + pNi[0].toFixed(1) + '" y2="' + pNi[1].toFixed(1) + '" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="75" cy="82" r="5" fill="#fff"/>' +
+      '<text x="2" y="91" font-size="9" fill="#fff">冰</text><text x="139" y="91" font-size="9" fill="#fff">沸</text></svg>';
+    var stTxt = st ? (st.state === "正常" ? "平 · 正常" : st.state) : "—";
+    var top = '<div class="t2g">' + gauge + '<div><div class="t2n" style="color:' + zc + '">' + sn.t + '</div><div class="t2s"><span class="t2p" style="color:' + sc + '">' + stTxt + '</span></div>' +
+      '<div class="t2s">' + (dt2 != null ? "昨 " + yv.t + " → 今 " + sn.t + ' <b style="font-weight:600;color:' + (dt2 > 0 ? "#ff5459" : dt2 < 0 ? "#1fdc93" : "#fff") + '">' + (dt2 > 0 ? "▲" : dt2 < 0 ? "▼" : "") + Math.abs(dt2) + "</b>" : "昨天没记录") + (tqP != null ? "<br>20日分位 P" + tqP : "") + "</div></div></div>";
+    var rowT = function (k, v, cls, m, tag, click) { return '<div class="t2r"' + (click ? ' role="button" style="cursor:pointer" onclick="' + click + '"' : "") + '><span class="k">' + k + '</span><span class="v" style="color:' + tc(cls) + '">' + v + '</span><span class="m">' + m + (tag ? '<span class="t" style="color:' + tc(cls) + '">' + tag + "</span>" : "") + "</span></div>"; };
+    var thOf = function (c, hy) { return conOf(c) || secOf(c) || String(hy || "").replace(/[ⅠⅡⅢ]+$/, "") || "其他"; };
+    var ztRows = S.pool && S.pool.zt && S.pool.zt.rows || [], G = {};
+    ztRows.forEach(function (r) { var k = thOf(r.c, r.hy); G[k] = (G[k] || 0) + 1; });
+    var gTop = Object.keys(G).filter(function (k) { return k !== "其他"; }).sort(function (x, y) { return G[y] - G[x]; }).slice(0, 3);
+    var lbSame = topLb ? ztRows.filter(function (r) { return thOf(r.c, r.hy) === (lbTh || thOf(topLb.c, topLb.hy)); }).length : 0;
+    var premTag = st && st.prem != null ? (st.prem >= 3 ? ["up", "偏热"] : st.prem <= -1 ? ["dn", "亏钱"] : ["", "一般"]) : ["", ""];
+    var ad = amtDiff();
+    var fac =
+      rowT("上涨家数", upR + "%", upR >= 55 ? "up" : upR <= 45 ? "dn" : "", esc(sn.up) + " 涨 / " + esc(sn.down) + " 跌" + (upR <= 45 ? " · 跌的多" : upR >= 55 ? " · 涨的多" : ""), upR >= 55 ? "偏热" : upR <= 45 ? "偏冷" : "") +
+      rowT("涨停 / 跌停", (st && st.zt != null ? st.zt : "—") + " / " + (st && st.dt != null ? st.dt : "—"), st && st.zt >= 60 ? "up" : st && st.zt != null && st.zt <= 25 ? "dn" : "", "全市场的，不分板块" + (gTop.length ? "<br>涨停最多：" + gTop.map(function (k) { return esc(k) + " " + G[k]; }).join(" · ") : "") + (dtr ? "<br>点这行看跌停名单" : ""), st && st.zt >= 60 ? "偏热" : st && st.zt != null && st.zt <= 25 ? "偏冷" : "", dtr ? "__JLDtDetailJL()" : "") +
+      (S.dtOpen && dtr ? dtDetailHtml(dtr) : "") +
+      rowT("炸板率", zbr != null ? zbr + "%" : "—", zbr != null && zbr >= 40 ? "dn" : "", zbn != null && ztn != null ? "冲到涨停的 " + (zbn + ztn) + " 只里 " + zbn + " 只没封住" + (zbr >= 40 ? "<br>追涨停容易被套" : "") : "盘中暂态 · 收盘定版", zbr != null && zbr >= 40 ? "偏冷" : "") +
+      rowT("最高连板", st && st.lb != null ? st.lb + " 板" : "—", st && st.lb >= 5 ? "up" : st && st.lb != null && st.lb <= 2 ? "dn" : "", lbNm ? lbNm + (lbTh ? " · " + esc(lbTh) : "") + (lbSame > 1 ? "<br>同板块今天涨停 " + lbSame + " 只" : "") : "涨停池口径", st && st.lb >= 5 ? "偏热" : st && st.lb != null && st.lb <= 2 ? "偏冷" : "") +
+      rowT("昨涨停溢价", st && st.prem != null ? pct(st.prem) : "—", premTag[0], st && st.prem != null ? "上个交易日涨停的票，今天平均" + (st.prem >= 0 ? "又涨了 " : "跌了 ") + Math.abs(st.prem).toFixed(2) + "%<br>= 追涨停第二天" + (st.prem >= 0 ? "能赚到钱" : "在亏钱") : "T-1 · 强势股次日", premTag[1]) +
+      rowT("成交额", amtDiffHtml(), amtDiffCls(), ad != null ? "比上个交易日同时段" + (ad >= 0 ? "多 " : "少 ") + Math.abs(ad).toFixed(1) + "%" : amtDiffSub(), ad != null ? (ad >= 0 ? "放量" : "缩量") : "") +
+      rowT("热点板块", hotSec ? hotSec.streak + " 天" : (S.hot ? S.hot.streak + " 天" : "—"), hotSec ? (hotSec.avg > 0 ? "up" : "dn") : "", hotSec ? esc(hotSec.name) + " · 平均" + (hotSec.avg >= 0 ? "+" : "") + hotSec.avg.toFixed(1) + "% · 行业涨幅第一" : (S.hot ? esc(S.hot.name) + " · 行业涨幅第一" : "板块映射未覆盖"), "");
+    var ML = null; try { ML = window.jlMainLineJL && window.jlMainLineJL(); } catch (eM) { ML = null; }
+    var mainH = "";
+    if (ML && ML.list && ML.list.length) {
+      var yi = function (v) { return (v >= 0 ? "+" : "−") + (Math.abs(v) / 1e8).toFixed(1) + "亿"; };
+      mainH = '<div class="t2main"><div style="font-size:12px;font-weight:600;color:#fff">今天主线' + (ML.review ? " · " + esc(String(ML.day || "").slice(5)) + " 复盘" : "") + '</div>' + ML.list.map(function (o) {
+        var bits = [o.kind];
+        if (o.s) bits.push(o.s.st + "第" + o.s.n + "天" + (o.s.g != null ? " 累计" + (o.s.g >= 0 ? "+" : "") + o.s.g.toFixed(1) + "%" : ""));
+        if (isFinite(o.f)) bits.push("主力 " + yi(o.f) + (o.at ? " · " + o.at + "进榜" : ""));
+        return '<div class="t2ml" data-jlmain="' + esc(o.sec) + '"><b>' + esc(o.sec) + "</b><span>" + bits.join(" · ") + "</span><i>看推荐股 ›</i></div>";
+      }).join("") + "</div>";
+    }
+    var body = top + '<div style="margin-top:8px">' + fac + "</div>" + mainH +
+      '<div class="jh">冰点判定 · 规则组</div>' + rules +
+      '<div class="jh">场景提示</div>' + scn;
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function amtDiffBase() { /* jl-1076: 返回{diff(元),prev(元)}——质疑"1.44万亿是多了还是少了", 额度差才是人话 */
@@ -985,41 +1026,55 @@
     if (e300 && isFinite(e300.today)) sumParts.push('<span class="mono">300ETF ' + fmtYi(e300.today) + '</span>');
     var _wd0 = gjdWide(); if (_wd0) sumParts.push('<span class="mono">宽基 ' + fmtYi(_wd0.today) + '</span>');
     var alertDot = v === 1 ? '<span class="dot" style="color:#ffd21f"></span>' : "";
-    var rows = "";
+    /* 11-09 用户定版: 每只写清多少亿 + 连续几天流入/流出(用已拉的日K资金 arr, 零新增请求); 结论一句大字; 5个按钮/口径说明删 */
+    var yi = function (v) { return isFinite(v) ? (v >= 0 ? "+" : "−") + (Math.abs(v) / 1e8).toFixed(1) + "亿" : "—"; };
+    var runOf = function (arr) { /* 从最近一天往回数同方向的天数和这几天合计 */
+      if (!arr || !arr.length) return null; var sg = arr[arr.length - 1].v >= 0 ? 1 : -1, n = 0, sum = 0;
+      for (var i = arr.length - 1; i >= 0; i--) { var v = arr[i].v; if (!isFinite(v) || (v >= 0 ? 1 : -1) !== sg) break; n++; sum += v; }
+      return { sg: sg, n: n, sum: sum };
+    };
+    var runTxt = function (r) { return r ? '<u style="color:' + (r.sg > 0 ? "#ff5459" : "#1fdc93") + '">连' + (r.sg > 0 ? "入" : "出") + r.n + "天</u>" : "<u></u>"; };
+    var rows = "", vtxt = "", vcol = "#ffe14d";
     if (etfOk) {
       var mx = Math.max.apply(null, S.etf.map(function (r) { return r && isFinite(r.today) ? Math.abs(r.today) : 0; }).concat([1]));
-      rows = '<div class="row" style="font-size:12px;color:#FFFFFF;border-bottom:none;padding-bottom:2px"><span>品种</span><span>' + (_asOf ? '截至 ' + String(_asOf).slice(5) + ' 主力净额' : '当日主力净额') + '（红入绿出）</span><span style="text-align:right">近5日</span></div>';
-      rows += S.etf.map(function (r) {
-        if (!r) return "";
-        var w = isFinite(r.today) ? Math.max(3, Math.abs(r.today) / mx * 46) : 0;
-        var bar = isFinite(r.today) ? (r.today >= 0
-          ? '<i style="left:50%;width:' + w + '%;background:linear-gradient(90deg,#ff5459cc,#ff5459)"></i><em style="left:50%;padding:1px 4px 1px 6px;background:rgba(224,32,32,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>'
-          : '<i style="right:50%;width:' + w + '%;background:linear-gradient(270deg,#1fdc93cc,#1fdc93)"></i><em style="right:50%;padding:1px 6px 1px 4px;background:rgba(0,150,90,.92);color:#fff;font-weight:650;border-radius:8px;text-shadow:0 1px 2px rgba(0,0,0,.35);font-variant-numeric:tabular-nums">' + fmtYi(r.today) + '</em>') : '<em style="left:50%;padding-left:5px;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,.35)">—</em>';
-        return '<div class="erow"><span class="nm"><b>' + r.name + '</b><small>' + r.code + '</small></span><span class="ebar">' + bar + '</span><span class="d5 mono" style="text-align:right;font-size:12px" >' + (isFinite(r.d5) ? (r.d5 >= 0 ? "+" : "") + (r.d5 / 1e8).toFixed(1) + "亿" : "—") + '</span></div>';
-      }).join("");
-    } else rows = '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + "</div>"; /* jl-1075: 裸"未到"→降级卡(最后成功HH:MM+手动立即重试+指数退避上限5次; 收盘后mktLive停轮询也能自愈) */
-    var wd = gjdWide(), sf = shareFlow();
-    if (etfOk) {
-      rows += '<div class="row" style="margin-top:6px"><span>宽基合计<small style="margin-left:4px">300×4+50+科创50+创业板</small></span><span class="mono ' + (wd ? (wd.today >= 0 ? "up" : "dn") : "mu") + '">' + (wd ? fmtYi(wd.today) + ' · 近5日 ' + fmtYi(wd.d5) : "未齐") + '</span></div>';
-      rows += '<div class="row"><span>份额申赎(估)<small style="margin-left:4px">份额差×价</small></span><span class="mono ' + (isFinite(sf.amt) ? (sf.amt >= 0 ? "up" : "dn") : "mu") + '">' + (isFinite(sf.amt) ? fmtYi(sf.amt) + ' · ' + String(sf.d).slice(5) + ' vs ' + String(sf.prev).slice(5) : (sf.d ? "攒数据中 · 已有 " + String(sf.d).slice(5) : "份额数据暂缺")) + '</span></div>';
-    }
+      var NM = ["沪深300", "中证500", "中证1000", "红利", "上证50", "科创50", "创业板"];
+      var line = function (nm, v, d5, rn, bold) {
+        var w = isFinite(v) ? Math.max(1.5, Math.abs(v) / mx * 48) : 0;
+        return '<div class="g2e"' + (bold ? ' style="border-top:1px solid rgba(255,255,255,.2);margin-top:3px;padding-top:7px"' : "") + '><em>' + (bold ? '<b style="font-weight:600;flex:none;text-align:left">' + nm + "</b>" : nm) + '</em><span class="bar"><s></s>' + (isFinite(v) ? '<i style="' + (v >= 0 ? "left:50%;background:#ff5459" : "right:50%;background:#1fdc93") + ";width:" + w.toFixed(1) + '%"></i>' : "") + '</span><b style="color:' + (!isFinite(v) ? "#fff" : v >= 0 ? "#ff5459" : "#1fdc93") + '">' + yi(v) + '</b><small style="color:' + (!isFinite(d5) ? "#fff" : d5 >= 0 ? "#ff5459" : "#1fdc93") + '">' + yi(d5) + "</small>" + runTxt(rn) + "</div>";
+      };
+      rows = '<div class="g2e" style="font-size:10.5px;padding-bottom:0"><em></em><span style="flex:1"></span><b style="font-weight:500">' + (_asOf ? String(_asOf).slice(5) : "今天") + '</b><small>近5日</small><u>连续</u></div>';
+      rows += S.etf.map(function (r, i) { return r ? line(NM[i] || r.name, r.today, r.d5, runOf(r.arr)) : ""; }).join("");
+      var wd = gjdWide();
+      if (wd) { /* 宽基合计的连续天数: 四只按日期相加 */
+        var mm = {}, okN = CFG.gjdSum.length; CFG.gjdSum.forEach(function (i) { (S.etf[i] && S.etf[i].arr || []).forEach(function (x) { var o = mm[x.d] || (mm[x.d] = { n: 0, v: 0 }); o.n++; o.v += x.v; }); });
+        var wa = Object.keys(mm).sort().filter(function (k) { return mm[k].n === okN; }).map(function (k) { return { d: k, v: mm[k].v }; });
+        var wr = runOf(wa);
+        rows += line("宽基合计", wd.today, wd.d5, wr, 1);
+        if (wr && wr.n >= 2) rows += '<div style="font-size:11px;color:#fff;text-align:right;padding:2px 0 4px">宽基已连续 ' + wr.n + " 天净" + (wr.sg > 0 ? "流入" : "流出") + "，合计 " + yi(wr.sum) + "</div>";
+      }
+      var sf = shareFlow();
+      if (isFinite(sf.amt)) rows += '<div class="g2e"><em>份额' + (sf.amt >= 0 ? "申购" : "赎回") + '</em><span style="flex:1;font-size:10.5px">' + (sf.amt >= 0 ? "份额变多 = 有人在买入ETF" : "份额变少 = 有人在卖出ETF") + " · " + String(sf.d).slice(5) + " vs " + String(sf.prev).slice(5) + '</span><b style="color:' + (sf.amt >= 0 ? "#ff5459" : "#1fdc93") + '">' + yi(sf.amt) + "</b></div>";
+      var big = e300 && isFinite(e300.today) ? e300.today : NaN, sm = [1, 2, 5, 6].reduce(function (a, i) { var r = S.etf[i]; return a + (r && isFinite(r.today) ? r.today : 0); }, 0);
+      if (isFinite(big)) {
+        if (big > 0 && sm < 0) { vtxt = "托权重，没托小票"; }
+        else if (big > 0 && sm >= 0) { vtxt = "大小票一起托"; vcol = "#ff5459"; }
+        else if (big <= 0 && sm > 0) { vtxt = "托小票，权重在撤"; }
+        else { vtxt = "大资金在撤"; vcol = "#1fdc93"; }
+      }
+    } else rows = '<div class="g2" data-dg-key="jlv2:etf">' + dgText("jlv2:etf", "ETF 净额通道未到 · 稍后自动重试") + "</div>";
     var struct = "";
     if (stx) {
-      /* jl-VR: 同步性改用成交额量比(Kimi回测定阈): 300×4 量比≥1.5=国家队活跃; 活跃日里 500 或 1000 任一 ≤0.65=中小盘掉队; 两只都 ≥1.0=同步承接 */
       var vrOf = function (k) { var r = etfOk && S.etf[k]; return r && r.vr && isFinite(r.vr.vr) ? r.vr.vr : null; };
       var v300 = vrOf(0), v500 = vrOf(1), v1000 = vrOf(2), vfr = e300 && e300.vr ? e300.vr.frac : null;
       var sync = v300 != null && v500 != null && v1000 != null
-        ? (v300 >= 1.5 && (v500 <= 0.65 || v1000 <= 0.65) ? "托底集中于权重 · 中小盘未同步" : (v500 >= 1 && v1000 >= 1 ? "中小盘有同步承接" : "承接一般"))
-        : (vfr === 0 ? "开盘15分钟后判定" : "量比数据未到");
-      var vrTxt = v300 != null ? "量比 300×4 " + v300.toFixed(2) + (v500 != null ? " · 500 " + v500.toFixed(2) : "") + (v1000 != null ? " · 1000 " + v1000.toFixed(2) : "") + (vfr != null && vfr < 1 ? " · 已折算(" + Math.round(vfr * 100) + "%)" : "") + (e300 && e300.vr && e300.vr.d && e300.vr.d !== today() ? " · 截至 " + String(e300.vr.d).slice(5) + " 全天" : "") : ""; /* jl-VR: 当日bar未到时明示用的是哪天的全天值, 不再无声显示前一日 */
-      struct =
-        '<div class="jh">市场结构判断</div>' +
-        '<div class="row" style="border-bottom:none"><span class="bigState">' + VN[v] + '</span></div>' +
-        '<div class="row" style="border-bottom:none"><small>沪深300 ' + pct(stx.p300) + ' × 上涨占比 ' + Math.round(stx.upR) + '%</small><small>' + (stx.pcy != null ? "创业板 " + pct(stx.pcy) : "") + '</small></div>' +
-        '<div class="chips">' + VN.map(function (n, i) { return '<span class="chip' + (i === v ? " on" : "") + '">' + n + '</span>'; }).join("") + '</div>' +
-        '<div class="row" style="margin-top:8px"><span>中小盘同步性</span><span class="' + (sync.indexOf("未同步") >= 0 ? "hl" : "mu") + '" style="font-size:9.5px">' + sync + '</span></div>' + (vrTxt ? '<div class="row" style="border-bottom:none"><small class="mono">' + vrTxt + '</small></div>' : "") + '';
+        ? (v300 >= 1.5 && (v500 <= 0.65 || v1000 <= 0.65) ? "只托了权重，中小盘没跟" : (v500 >= 1 && v1000 >= 1 ? "中小盘跟上了" : "没明显放量"))
+        : (vfr === 0 ? "开盘15分钟后判定" : "量的数据未到");
+      var bx = function (v) { return v == null ? "—" : v.toFixed(2) + " 倍"; };
+      struct = '<div style="margin-top:8px;font-size:12px;display:flex;justify-content:space-between;color:#fff"><span>中小盘跟没跟上</span><span style="color:#ffe14d">' + sync + "</span></div>" +
+        (v300 != null ? '<div style="font-size:11px;line-height:1.6;color:#fff">成交量是平时的：300 ' + bx(v300) + " · 500 " + bx(v500) + " · 1000 " + bx(v1000) + (vfr != null && vfr < 1 ? "（盘中按时间折算）" : "") + "</div>" : "");
     }
-    var body = rows + struct; /* 11-09 用户: 国家队页底部口径说明整段删 */
+    var lead = (vtxt ? '<div class="g2v" style="color:' + vcol + '">' + vtxt + "</div>" : "") + (stx ? '<div style="font-size:11px;line-height:1.6;color:#fff">沪深300 ' + pct(stx.p300) + "，" + Math.round(stx.upR) + "% 的股票在涨" + (stx.pcy != null ? "；创业板 " + pct(stx.pcy) : "") + "</div>" : "");
+    var body = lead + '<div style="margin-top:6px">' + rows + "</div>" + struct;
     return { head: head, sum: '<span class="jsum">' + alertDot + sumParts.join('<span style="color:#FFFFFF">·</span>') + '</span>', body: body };
   }
   function renderYd() {
@@ -1087,6 +1142,8 @@
   function bindMood(root) {
     if (moodBound) return; moodBound = true;
     root.addEventListener("click", function (ev) {
+      var ml = ev.target && ev.target.closest ? ev.target.closest("[data-jlmain]") : null;
+      if (ml && root.contains(ml)) { ev.stopPropagation(); try { window.jlOpenRecJL && window.jlOpenRecJL(ml.getAttribute("data-jlmain")); } catch (eML) {} return; }
       var el = ev.target && ev.target.closest ? ev.target.closest("[data-jlmt],[data-jlwx],[data-jlstk]") : null;
       if (!el || !root.contains(el)) return;
       ev.stopPropagation();
