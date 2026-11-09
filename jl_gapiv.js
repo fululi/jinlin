@@ -64,7 +64,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     + ".gvJL .tgL .tgH{font:800 11px -apple-system,'PingFang SC',sans-serif;color:#fff}.gvJL .tgL .tgI{white-space:nowrap}.gvJL .tgL .tgI i{font-style:normal;color:#fff;font-size:10.5px;margin-left:3px}"
     + ".gvJL .t5{flex:none;font-size:10px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:5px;padding:0 4px;white-space:nowrap}"   /* jl-gapfix: 近5日趋势小标, 跟在回补率后面同一行流式排, 放不下自动换行, 不叠字 */
     + ".gvJL .tgL .tgI em{font-style:normal;color:#ffd84a;border:1px solid rgba(255,216,74,.6);border-radius:6px;padding:0 4px;margin-left:4px;font-size:10.5px}";   /* jl-1201 日线未补目标行 */
-  function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS; document.head.appendChild(s); } }
+  function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS + ".gvTogJL{display:block;width:100%;text-align:left;border:0;background:none;color:#fff;font:700 11.5px -apple-system,sans-serif;padding:4px 2px;min-height:0}.gvFoldAllJL>.gvJL{display:none!important}"; document.head.appendChild(s); } }
 
   async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
   async function mk(c, k, end, n) { const d = await J("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=" + c + ",m" + k + "," + (end || "") + "," + (n || 320)); return (d.data[c]["m" + k] || []).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }
@@ -262,6 +262,12 @@ dgp.forEach((g) => {
   function paint(host, code) {
     let box = host.querySelector(":scope > .gvJL");
     if (!box) { host.innerHTML = ""; box = document.createElement("div"); box.className = "gvJL"; host.appendChild(box); }
+    if (host.id !== "homeGapJL" && !host.querySelector(":scope > .gvTogJL")) { /* 11-10 用户: 持仓卡 IV 缺口可收起/展开(所有票共用一个开关, 记 jl_gapfold_v1) */
+      let f = false; try { f = localStorage.getItem("jl_gapfold_v1") === "1"; } catch (e) { }
+      const tg = document.createElement("button"); tg.type = "button"; tg.className = "gvTogJL"; tg.textContent = f ? "IV 缺口 ▸" : "IV 缺口 ▾"; host.classList.toggle("gvFoldAllJL", f); host.insertBefore(tg, box);
+      tg.addEventListener("click", (ev) => { ev.stopPropagation(); const nf = !host.classList.contains("gvFoldAllJL"); try { localStorage.setItem("jl_gapfold_v1", nf ? "1" : "0"); } catch (e) { }
+        document.querySelectorAll(".hldGapRowJL").forEach((h) => { if (h.id === "homeGapJL") return; h.classList.toggle("gvFoldAllJL", nf); const b = h.querySelector(":scope > .gvTogJL"); if (b) b.textContent = nf ? "IV 缺口 ▸" : "IV 缺口 ▾"; }); });
+    }
     const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
     if (s) s.openDone = openDone;
     const h = s && s.R ? html(s.R, openDone) + (s.src === "em" ? '<div class="wait">数据源：东财备选（腾讯暂不可用）</div>' : "") :'<div class="wait">' + (s && s.err ? (/熔断/.test(s.err) ? "行情接口拥挤，十几秒后自动重试" : "缺口数据取不到：" + s.err + "（稍后自动重试）") : "缺口数据加载中…") + "</div>";
