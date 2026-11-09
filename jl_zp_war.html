@@ -2007,14 +2007,36 @@ function ampChipsJL() {
 function daySwingJL() {
   var sd = LIVE.sessDate || '', D = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < sd && b.c > 0; });
   if (D.length < 20) return '';
-  var th = +(localStorage.getItem('jlamp_sw') || 0) || 0.12, pos = 1, hi = D[0].c, lo = 0;
-  D.forEach(function (b) { var c = b.c; if (pos) { hi = Math.max(hi, c); if (c <= hi * (1 - th)) { pos = 0; lo = c; } } else { lo = Math.min(lo, c); if (c >= lo * (1 + th)) { pos = 1; hi = c; } } });
+  var th = +(localStorage.getItem('jlamp_sw') || 0) || 0.12, pos = 1, hi = D[0].c, lo = 0, ref = D[0].c, k0 = 0;
+  D.forEach(function (b, k) { var c = b.c; if (pos) { hi = Math.max(hi, c); if (c <= hi * (1 - th)) { pos = 0; lo = c; } } else { lo = Math.min(lo, c); if (c >= lo * (1 + th)) { pos = 1; hi = c; ref = lo; k0 = k; } } });
   var cur = LIVE.last || 0; if (!(cur > 0)) return '';
   var t = Math.round(th * 100), cls, txt;
   /* 11-09夜 用户: 直接写价 —— 持有: 最高收盘 + 清仓线(最高×(1−12%)); 空仓: 最低收盘 + 买回线(最低×(1+12%)) */
-  if (pos) { var d = (cur / hi - 1) * 100, ln = Math.floor(Math.round(hi * (1 - th) * 1e6) / 1e4) / 100; cls = d <= -t ? ' l2' : d <= -t + 3 ? ' l1' : ''; txt = '持有 高' + hi.toFixed(2) + ' · 清仓线' + ln.toFixed(2) + (d <= -t ? ' 收盘确认→明开清' : ''); }
-  else { var u = (cur / lo - 1) * 100, ln2 = Math.ceil(Math.round(lo * (1 + th) * 1e6) / 1e4) / 100; cls = u >= t ? ' l2' : u >= t - 3 ? ' l1' : ''; txt = '空仓 低' + lo.toFixed(2) + ' · 买回线' + ln2.toFixed(2) + (u >= t ? ' 收盘确认→明开买回' : ''); }
-  return '<span class="hk hkA swg' + cls + '" title="日线波段: ' + (pos ? '持有以来最高收盘 ' + hi.toFixed(2) : '空仓以来最低收盘 ' + lo.toFixed(2)) + '"><i>日线</i>' + txt + '</span>';
+  if (pos) { var d = (cur / hi - 1) * 100, ln = Math.floor(Math.round(hi * (1 - th) * 1e6) / 1e4) / 100; cls = d <= -t ? ' l2' : d <= -t + 3 ? ' l1' : ''; txt = '持有 高' + hi.toFixed(2) + ' · 清仓 <em class="d">−' + t + '%</em>' + ln.toFixed(2) + (d <= -t ? ' 收盘确认' : ''); }
+  else { var u = (cur / lo - 1) * 100, ln2 = Math.ceil(Math.round(lo * (1 + th) * 1e6) / 1e4) / 100; cls = u >= t ? ' l2' : u >= t - 3 ? ' l1' : ''; txt = '空仓 低' + lo.toFixed(2) + ' · 买回 <em class="u">+' + t + '%</em>' + ln2.toFixed(2) + (u >= t ? ' 收盘确认' : ''); }
+  var rd = ''; try { if (pos) rd = dayReduceJL(D.slice(k0), ref); } catch (eR) { }
+  return rd + '<span class="hk hkA swg' + cls + '" title="日线波段: ' + (pos ? '持有以来最高收盘 ' + hi.toFixed(2) : '空仓以来最低收盘 ' + lo.toFixed(2)) + '"><i>日线</i>' + txt + '</span>';
+}
+/* 11-09夜 用户(永鼎自己的经验): 波段买回后 从波段低点涨15% 先减(小回调回落4%接, 接价≤减仓价−2%), 涨35% 再减(回补缺口接, 没缺口就回落12%). 只提示.
+   永鼎回测(日线12%+做T 上叠加, 各减5成): +60,630 → +67,533; 15只里单边大涨的会卖飞, 所以只按永鼎经验提示 */
+function dayReduceJL(S, ref) {
+  var up = function (v) { return Math.ceil(Math.round(v * 1e6) / 1e4) / 100; }, dn = function (v) { return Math.floor(Math.round(v * 1e6) / 1e4) / 100; };
+  var Z1 = up(ref * 1.15), Z2 = up(ref * 1.35), B = S.slice(); if (LIVE.last > 0) { var A9 = window.__AMPJL && window.__AMPJL.code === STK.code ? window.__AMPJL : null; B.push({ h: Math.max(A9 && A9.hi || 0, LIVE.last), l: Math.min(A9 && A9.lo > 0 ? A9.lo : LIVE.last, LIVE.last), c: LIVE.last }); }
+  var s1 = 0, h1 = 0, b1 = 0, s2 = 0, h2 = 0, b2 = 0, gaps = [];
+  B.forEach(function (b, k) {
+    var h = b.h || b.c, l = b.l || b.c; if (k > 0 && l > (B[k - 1].h || B[k - 1].c)) gaps.push(l);
+    if (s1 === 1) { h1 = Math.max(h1, h); b1 = dn(Math.min(h1 * 0.96, Z1 * 0.98)); if (l <= b1) s1 = 2; } else if (!s1 && h >= Z1) { s1 = 1; h1 = h; b1 = dn(Math.min(h1 * 0.96, Z1 * 0.98)); }
+    if (s2 === 1) { h2 = Math.max(h2, h); if (l <= b2) s2 = 2; } else if (!s2 && h >= Z2) { s2 = 1; h2 = h; var g = gaps.filter(function (x) { return x < Z2; }).sort(function (x, y) { return y - x; })[0]; b2 = dn(g ? Math.min(g, Z2 * 0.98) : Math.min(h * 0.88, Z2 * 0.98)); }
+  });
+  /* 11-09夜 用户: 写清楚 低点 / +15% / +35% 各是多少价; 接回写 −4% 和 永鼎中途回调常见的 −10% 两档 */
+  var U = function (p, v) { return '<em class="u">' + p + '</em>' + v.toFixed(2); }, Dn = function (p, v) { return '<em class="d">' + p + '</em>' + v.toFixed(2); };
+  var t;
+  var pc9 = function (v, h) { return '−' + Math.round((1 - v / h) * 100) + '%'; }, b10 = dn(h1 * 0.90);
+  if (s1 === 1) t = '①接 高' + h1.toFixed(2) + ' · ' + Dn(pc9(b1, h1), b1) + (b10 < b1 - 0.005 ? ' · ' + Dn('−10%', b10) : '');
+  else if (s2 === 1) t = '②接 高' + h2.toFixed(2) + ' · ' + Dn(pc9(b2, h2), b2);
+  else t = '低' + ref.toFixed(2) + ' · ' + (s1 ? '①✓' : U('+15%', Z1)) + ' · ' + (s2 ? '②✓' : U('+35%', Z2));
+  var hot = s1 === 1 || s2 === 1;
+  return '<span class="hk hkA swg' + (hot ? ' l1' : '') + '" title="波段低点 ' + ref.toFixed(2) + ': 涨15%减(回落接) / 涨35%减(补缺口接)"><i>减仓</i>' + t + '</span>';
 }
 /* 11-06h 用户: 振幅价位小卡 —— 放在价位尺上面, 两行小字; 跟着 回落阈值 / 每轮股数 联动; 只显示不提醒(引擎原来那套卖买照旧, 两边对比) */
 /* 11-06 用户: 竞价时一行数据提醒(不给买卖动作) —— 昨天是大涨/大跌/平常 + 今天竞价跳空 → 近240日里同类日子, 开盘后冲高/下探/收盘比开盘 的中位数 */
@@ -3445,6 +3467,7 @@ body:not(.ladOpen) #lad .pr3{display:none}body:not(.ladOpen) #lad .pr3.sum.cmp{d
 #ampCardJL .acNx .nq{margin-left:auto;font-size:10px;text-align:right;line-height:1.3;white-space:nowrap}
 #ampCardJL em{font-style:normal;margin:0}#ampCardJL em.s{color:#ff5459}#ampCardJL em.b{color:#1fdc93}#ampCardJL em.w{color:#ffe14d}
 #ampCardJL .acDn{display:flex;gap:10px;align-items:baseline;font-size:10.5px;margin:3px 2px 1px;white-space:nowrap;overflow-x:auto;scrollbar-width:none}#ampCardJL .acDn::-webkit-scrollbar{display:none}
+#hSub .hk.swg em{font-style:normal;font-size:10px;font-weight:500;margin-right:2px}#hSub .hk.swg em.u{color:#ff5459}#hSub .hk.swg em.d{color:#1fdc93}#hSub .hk.swg.l2 em{color:inherit}
 #hSub .hk.swg.l1{color:#ffe14d;border-color:rgba(255,225,77,.7)}#hSub .hk.swg.l2{color:#ff5459;border-color:rgba(255,84,89,.8);animation:swgJL 1.6s ease-in-out infinite}@keyframes swgJL{50%{opacity:.45}}
 #ampCardJL{position:relative}#ampCardJL .acDn{padding-right:52px;min-height:15px}#ampCardJL .acRv{position:absolute;right:8px;bottom:4px;color:#ffe14d;font-size:10.5px;padding:6px 0 2px 14px;cursor:pointer}
 #ampCardJL .acNx .ns{border:0!important;background:none!important;padding:0!important;border-radius:0!important;box-shadow:none!important}
