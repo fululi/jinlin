@@ -261,10 +261,10 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 <div class="foot">V2.1 · 数据：东财+腾讯（与持仓页生产同链：分时含竞价段/1分K=东财优先，5/15/30分K+日K=腾讯优先，互为兜底 · 零新浪） · 引擎＝tdt2 口径（5分K走盘 · 反弹线从卖点动态下移 · IV区五级实时重扫） · 提醒≠下单 · 盘中须保持本页打开</div>
 
 <div class="alert" id="alert" role="alert"></div><div class="edge" id="edge"></div>
-<script src="jl_pitchfork.js"></script>
-<script src="jl_elliott.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/b8/b82d4137ff.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/eb/ebc440446f.js"></script>
 <script src="jl_zp_shapes.js?v=12"></script>
-<script src="jl_macd.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/04/04f87a1a6b.js"></script>
 <script>
 /* jl-zppat (11-04): 分时形态识别(替代 1-5 浪): 三角收敛/突破 + 头肩顶/头肩底, 只画最近一个形态, 随新高低点实时跟随
    输入 = 图上已标的高低点 __SWJL(与红圈同一组, 按"回落"阈值确认) + 分时点; 不画未确认的东西:
@@ -2859,18 +2859,7 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
     }
     window.zpWkLegend = wkLegend;
     window.zpWkCdl = function () { return WK.cdl || []; };
-    function stats() {
-      var cur = WK.flat.length ? WK.flat[Math.min(WK.k, WK.flat.length - 1)] : 0, rows = '', tot = 0, nr = 0, ok = 0, win = CFG.win;
-      if (!(LIVE.sh > 0)) { setSum('持仓不足一手 · 无法统计'); $('wkTbl').innerHTML = ''; return; }
-      WK.runs.forEach(function (r, di) {
-        var rs = ((r.e && r.e.rounds) || []).filter(function (x) { return di * 10000 + +x.tB <= cur; }), net = 0, k = 0;
-        rs.forEach(function (x) { net += x.net; if (win > 0 ? x.net >= win : x.net > 0) k++; });
-        tot += net; nr += rs.length; ok += k;
-        rows += '<div style="display:flex;gap:8px;padding:5px 12px;border-top:1px solid var(--line);font-size:12.5px;color:#fff"><span style="width:50px">' + md(r.d.d8) + '</span><span style="flex:1">' + rs.length + '/' + CFG.rounds + ' 轮 · 达标 ' + k + '</span><b style="color:' + (net >= 0 ? 'var(--red)' : 'var(--green)') + '">' + (net >= 0 ? '+' : '') + net.toFixed(0) + '</b></div>';
-      });
-      setSum(WK.runs.length + ' 日 · 共 ' + nr + ' 轮 · 达标 ' + ok + (nr ? '（' + Math.round(ok / nr * 100) + '%）' : '') + ' · 净 ' + (tot >= 0 ? '+' : '') + tot.toFixed(0));
-      $('wkTbl').innerHTML = rows;
-    }
+    function stats() { return; }   /* 11-09 用户: 切到周之后的"N日·共N轮·达标·净+每日明细"统计块删掉, 周视图只留图和回放 */
     function refresh() {
       var sc = $('wkScr'); if (sc) sc.value = WK.k;
       var cur = WK.flat.length ? WK.flat[Math.min(WK.k, WK.flat.length - 1)] : 0, r = WK.runs[Math.floor(cur / 10000)], h = String(cur % 10000).padStart(4, '0');
@@ -2878,7 +2867,7 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
       draw(); stats();
     }
     function build() {
-      WK.busy = true; WK.runs = []; WK.flat = []; draw(); setSum('计算中…'); $('wkTbl').innerHTML = '';
+      WK.busy = true; WK.runs = []; WK.flat = []; draw();
       setTimeout(function () {
         try {
           weekDays().forEach(function (d8) {
@@ -2907,7 +2896,7 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
       box.innerHTML = '<div id="wkPer" style="display:flex;gap:4px;margin:2px 10px 4px">' + [[0, '走势线'], [5, '5分'], [15, '15分'], [30, '30分']].map(function (a) { return '<button type="button" data-p="' + a[0] + '" style="height:24px;padding:0 10px;border-radius:12px;border:1px solid var(--line);font:inherit;font-size:12px;font-weight:600;cursor:pointer">' + a[1] + '</button>'; }).join('') + '</div>' + '<svg id="wkSvg" viewBox="0 0 360 400" style="width:100%;height:auto;display:block;padding:0 6px"></svg>' +
         '<div style="display:flex;align-items:center;gap:8px;margin:6px 10px 0"><button class="pbtn" id="wkPlay" style="height:32px;width:76px">▶ 播放</button><input type="range" id="wkScr" min="0" max="0" value="0" step="1" style="flex:1"><span id="wkTl" style="font-size:12px;color:#fff;width:64px;text-align:right"></span></div>' +
         '<div style="display:flex;align-items:center;margin:8px 10px 0;font-size:12px;color:#fff">反弹<select id="wkB" style="' + SS + '"><option value="0.1">0.10元</option><option value="0.15">0.15元</option><option value="0.2">0.20元</option><option value="0.3">0.30元</option></select>轮次<select id="wkR" style="' + SS + '"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>达标<select id="wkW" style="' + SS + '"><option value="0">盈利</option><option value="50">≥50</option><option value="100">≥100</option><option value="200">≥200</option></select></div>' +
-        '<div id="wkSum" style="margin:8px 12px 4px;font-size:13px;font-weight:700;color:#fff"></div><div id="wkTbl"></div>';
+        '<div id="wkSum" style="display:none"></div><div id="wkTbl" style="display:none"></div>';   /* 11-09 用户: 统计块删掉, 留空壳防引用报错 */
       var ch = $('ch'); ch.parentNode.insertBefore(box, ch.nextSibling);
       $('wkB').value = String(CFG.bounce); $('wkR').value = String(CFG.rounds); $('wkW').value = String(CFG.win);
       var chg = function () {
