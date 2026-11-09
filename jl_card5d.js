@@ -96,6 +96,10 @@
       let lo = Infinity, hi = -Infinity, vmax = 1;
       vis.forEach((p) => { lo = Math.min(lo, p.p, p.avg); hi = Math.max(hi, p.p, p.avg); vmax = Math.max(vmax, p.v); });
       S.days.forEach((d, i) => { if (d.pts.length && d.pts[0].g >= a && d.pts[0].g < b) { lo = Math.min(lo, d.prec); hi = Math.max(hi, d.prec); } });
+      /* 11-09 用户: 关键位自动放进图里——未补跳空带(标注开着才算)、自己画的斐波各档, 离现价 4% 以内的纳入纵轴范围; 只改纵轴, 跳空/斐波的算法一字没动 */
+      { const L = S.P[S.P.length - 1], cur = L ? L.p : 0, keep = (v) => { if (cur > 0 && v > 0 && Math.abs(v / cur - 1) <= 0.04) { lo = Math.min(lo, v); hi = Math.max(hi, v); } };
+        if (mkOn) S.gaps.forEach((gp) => { if (gp.fi < 0) { keep(gp.lo); keep(gp.hi); } });
+        FIB.forEach((f) => { const d = f.b.v - f.a.v; FL.forEach((r) => keep(f.b.v - d * r)); }); }
       const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
       const n = b - a;
       return { base, lo, hi, vmax, n,
