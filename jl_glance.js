@@ -177,6 +177,11 @@
   var SWK = 'jl_homesw_v1', SWCSS = '#jlHomeSwJL{margin:0 0 10px;padding:0}' +
     '#jlHomeSwJL .swTabs{display:flex;gap:6px;padding:10px 14px 0;position:relative;z-index:2}#jlHomeSwJL .swTabs button{border:0;border-radius:9px;padding:3px 11px;font-size:12px;font-weight:700;background:rgba(255,255,255,.06);color:#fff;opacity:.55;min-height:0;min-width:0}#jlHomeSwJL .swTabs button.on{background:rgba(255,255,255,.16);opacity:1}' +
     '#jlHomeSwJL .swTrk{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;transition:height .2s}#jlHomeSwJL .swTrk::-webkit-scrollbar{display:none}' +
+    /* 11-10 用户: 第一张卡太大 → 紧凑 */'#jlHomeSwJL #jlGlance{padding:8px 12px 10px!important}#jlHomeSwJL .swTabs{padding:8px 12px 0}#jlHomeSwJL .swTabs button{font-size:11px;padding:2px 9px}' +
+    '#jlHomeSwJL #jlGlance .vd{padding:6px 10px;gap:9px;border-radius:11px}#jlHomeSwJL #jlGlance .vd .vs{width:38px;height:38px}#jlHomeSwJL #jlGlance .vd .vs b{font-size:13px}#jlHomeSwJL #jlGlance .vd .vs small{font-size:7.5px}' +
+    '#jlHomeSwJL #jlGlance .vd .vk{font-size:9.5px}#jlHomeSwJL #jlGlance .vd .vv{font-size:17px;letter-spacing:1px}#jlHomeSwJL #jlGlance .vd .vy{font-size:10.5px}' +
+    '#jlHomeSwJL #jlGlance .cells{margin-top:5px;gap:3px}#jlHomeSwJL #jlGlance .cells span{font-size:9.5px;padding:1px 5px}#jlHomeSwJL #jlGlance .sec{margin-top:6px;padding-top:5px}#jlHomeSwJL #jlGlance h4{margin:0;font-size:10.5px}' +
+    '#jlHomeSwJL #jlGlance .dip{font-size:11px}#jlHomeSwJL #jlGlance .dip .dl{padding:1px 8px;border-radius:7px}#jlHomeSwJL #premarketJL{padding:8px 12px 10px!important}' +
     '#home #jlHomeSwJL .swTrk>section{box-sizing:border-box;flex:0 0 100%;min-width:100%;scroll-snap-align:start;align-self:flex-start;margin:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}';
   function swIdx(trk) { return Math.round(trk.scrollLeft / (trk.clientWidth || 1)); }
   function swFit(box) {
