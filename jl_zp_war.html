@@ -131,6 +131,8 @@ body{display:flex;flex-direction:column}
 .stkseg .stk.on{background:rgba(255,214,110,.15);border-color:var(--gold);color:var(--gold)}
 body.injlin .plancard,body.injlin .sizecard,body.injlin .foot,body.injlin #cta{display:none}
 body.injlin #tabPlan{display:none}
+/* 11-09 用户: 单机直接打开也不要写死的演示件 —— 盘前计划/周五回放=10-30永鼎演示数据, 仓位测算=写死成交价; 单机只显示实盘真数据(嵌工作台不受影响) */
+body:not(.injlin) .plancard,body:not(.injlin) .sizecard,body:not(.injlin) #cta,body:not(.injlin) #tabPlan,body:not(.injlin) #tabRep{display:none}
 body.injlin{--dim:#dce7f2}
 body.injlin small,body.injlin .b2,body.injlin .meta{color:#e8f0f8;opacity:.95}
 /* jl-zp4: 嵌入面板排版收紧——价格不再 40px 大字, 盘中引擎(状态带+状态格+价位梯)挤进首屏 */
@@ -212,16 +214,16 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
     <div class="stkseg" id="stkSeg" hidden></div>
   </div>
   <div class="quote">
-    <div><div class="px dn" id="hPx">21.75</div><div class="pct dn" id="hPct">-7.96%</div><div id="hSub"></div></div>
+    <div><div class="px" id="hPx">—</div><div class="pct" id="hPct">—</div><div id="hSub"></div></div>
     <div class="stat"><div>轮次<b id="hRnd">0/3</b></div><div>今日T<b id="hT">¥0</b></div></div>
   </div>
-  <div class="meta" id="metaLine">周一 11-02 · 持仓 1900 股 · 每轮 400</div>
+  <div class="meta" id="metaLine">加载中…</div>
 </div>
 
 <div class="band calm" id="band">
-  <span class="btag" id="bTag">计划 · 盘前</span>
-  <div class="b1" id="bMain">计划就绪 · 等周一 9:30</div>
-  <div class="b2" id="bSub">盘前单先挂好；9:30 后盘中引擎接管，有信号这里会提醒</div>
+  <span class="btag" id="bTag">行情</span>
+  <div class="b1" id="bMain">行情加载中…</div>
+  <div class="b2" id="bSub"> </div>
 </div>
 
 <div class="card plancard">
@@ -232,7 +234,7 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 </div>
 
 <div class="card chartbox">
-  <div class="sech">盘中引擎<small>实盘=腾讯行情实时拉取 · 回放=10-30 复跑</small></div>
+  <div class="sech">盘中引擎<small>实盘=腾讯行情实时拉取</small></div>
   <div class="live" id="live"></div>
   <div class="lad" id="lad"></div>
   <div class="cap" id="chTitle"></div>
@@ -1087,8 +1089,8 @@ function ladderLiveJL(cur) {
   return L;
 }
 function renderLadder(cur) {
-  if (INJL && MODE === 'live') { ladderCardJL(cur); return; }
-  var L = INJL ? ladderLiveJL(cur) : [['磁铁', 27.92, 'm'], ['磁铁', 25.75, 'm'], ['卖线', 23.63, 'r'], ['缺口沿', 22.62, 'd'], ['接回', 21.75, 'g']];
+  if (MODE === 'live') { ladderCardJL(cur); return; }   /* 11-09 用户: 写死的磁铁27.92/卖线23.63演示表删掉, 单机打开也用真实价位尺(和嵌工作台同一套) */
+  var L = ladderLiveJL(cur);
   if (MODE === 'live' && LIVE.eng) {
     var e = LIVE.eng;
     if (e.sp !== null) { L.push(['反弹线', rebLineJL(e), 'g']); L.push(['卖出价', e.sp, 'r']); }
@@ -1251,11 +1253,15 @@ m.querySelector('#thrSel').onchange = function () {
 m.querySelector('#qtyHold').onchange = function () {
     var v = Math.max(0, Math.round(+this.value || 0));
     try {
-      if (window.parent.jlSetHoldQtyJL(STK.code, v)) {
+      if (!window.parent.jlSetHoldQtyJL) { /* 11-09: 单机没主工作台可联动 → 本页直接生效并存本地 */
         STK.qty = v;
-        LIVE.sh = roundQtyJL(STK.code, v);
-        metaJL();
-        try {
+        try { var o = JSON.parse(localStorage.getItem('jl_hold_v1') || '{}'); o[STK.code] = v; localStorage.setItem('jl_hold_v1', JSON.stringify(o)); } catch (e0) { }
+      } else if (window.parent.jlSetHoldQtyJL(STK.code, v)) {
+        STK.qty = v;
+      }
+      LIVE.sh = roundQtyJL(STK.code, v);
+      metaJL();
+      try {
           if (RPL) rplShowJL(RPL.I);
           else if (MODE === 'live') {
             liveCompute();
@@ -1263,7 +1269,6 @@ m.querySelector('#qtyHold').onchange = function () {
           } else renderAll();
         } catch (e2) {}
         try { resoMountJL(); } catch (e3) {}
-      }
     } catch (e) {}
   };
 m.querySelector('#qtyRnd').onchange = function () {
@@ -3088,6 +3093,7 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
     return;
   }
   setMode('live'); /* 启动时进入实盘页 */
+  try { metaJL(); } catch (e) { }   /* 11-09 用户: 单机也显示可填写的持仓/每轮/回落输入行, 替掉写死的"持仓1900股·每轮400"文字 */
 })();
 </script>
 <style>
