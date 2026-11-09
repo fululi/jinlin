@@ -108,8 +108,11 @@
         var r = route(url);
         if (r.fail) { rel(); rej(new TypeError('jlReq熔断: ' + hostOf(url) + ' 暂停到 ' + new Date(r.s.openUntil).toTimeString().slice(0, 8))); return; }
         var arg = r.go !== url ? r.go : input;
+        /* 11-09 jl-req1b: 调用方自己的超时(AbortSignal)在排队时就到点了 → 不发、不算主机失败。原来排队一挤, 腾讯 mkline 被自己的超时记成"连败4次"→整条路径熔断60秒, 首页大盘IV显示"jlReq熔断" */
+        var sig = init && init.signal, t0 = Date.now();
+        if (sig && sig.aborted) { if (r.s && r.s.probe) r.s.probe = false; rel(); rej(sig.reason || new DOMException('aborted', 'AbortError')); return; }
         oFetch(arg, init).then(function (resp) { result(r.s, resp.ok, resp.ok ? '' : 'HTTP ' + resp.status); rel(); res(resp); },
-          function (e) { result(r.s, false, String(e && e.message || e)); rel(); rej(e); });
+          function (e) { var ab = e && (e.name === 'AbortError' || e.name === 'TimeoutError') || sig && sig.aborted; if (ab && Date.now() - t0 < 6000) { if (r.s && r.s.probe) r.s.probe = false; rel(); rej(e); return; } /* 真发出去后挂满6秒以上才算主机慢 */ result(r.s, false, String(e && e.message || e)); rel(); rej(e); });
       });
     });
   };

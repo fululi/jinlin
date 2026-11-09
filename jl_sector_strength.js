@@ -518,7 +518,36 @@
       when = run.n <= 1 ? (S.review ? " · 当天" : " · 今天起") : " · 第" + cap + run.n + "天 " + String(run.from).slice(5) + "起";
       if (g != null && run.n >= 2) when += " 累计" + (g >= 0 ? "+" : "") + g.toFixed(1) + "%"; /* 这段阶段里板块一共涨了多少 */
     }
-    return ' <span style="font-size:9.5px;font-weight:700;padding:0 6px;margin-left:5px;border-radius:7px;white-space:nowrap;color:' + (c.k === 3 ? "#ffd21f" : "#fff") + ';border:1px solid ' + (c.k === 3 ? "#ffd21f" : "rgba(255,255,255,.45)") + '">' + CORE.STAGES[c.k] + when + "</span>";
+    /* 11-09 用户: 阶段/天数/累计字太暗看不到 → 亮白加粗加底 */
+    return ' <span style="font-size:10.5px;font-weight:800;padding:0 6px;margin-left:5px;border-radius:7px;white-space:nowrap;color:' + (c.k === 3 ? "#ffd21f" : "#fff") + ';background:rgba(255,255,255,.12);border:1px solid ' + (c.k === 3 ? "#ffd21f" : "rgba(255,255,255,.85)") + '">' + CORE.STAGES[c.k] + when + "</span>";
+  }
+  /* 11-09 用户: 3D轮动看不出待了几天涨了多少 → 换热力图: 一行一个板块, 一格一天(颜色=当天板块平均涨跌, 底条=阶段), 右边大字=当前阶段第几天+这段累计。数据同 S.days, 零新增请求。旧 rotHtml 留着不挂 */
+  var STC = { 1: "#8fd3ff", 2: "#ffd21f", 3: "#ff8a3d", 4: "#c58cff", 5: "#2fd18b" };
+  function heatHtml() {
+    var A = S.ana, D = S.days; if (!A || !D || !D.length) return "";
+    var last = D.length - 1, ord = { 3: 0, 2: 1, 1: 2, 4: 3, 5: 4 }, ld = S.lead && A[S.lead] ? S.lead : null, tr = lsGet("jl_secrec_v1") || {};
+    var list = Object.keys(A).filter(function (k) { return A[k].cur.k; }).sort(function (x, y) { var a = A[x].cur, b = A[y].cur; return (ord[a.k] - ord[b.k]) || ((a.rank == null ? 99 : a.rank) - (b.rank == null ? 99 : b.rank)); });
+    curPicks().concat(Object.keys(tr)).forEach(function (k) { if (list.indexOf(k) < 0 && A[k]) list.unshift(k); });
+    list = list.slice(0, 14);
+    if (!list.length) return "";
+    var nd = Math.min(8, D.length), d0 = D.length - nd, cols = D.slice(d0);
+    var bg = function (v) { if (v == null) return "rgba(255,255,255,.05)"; var a = Math.min(Math.abs(v) / 5, 1) * 0.8 + 0.12; return v >= 0 ? "rgba(255,62,70," + a.toFixed(2) + ")" : "rgba(30,200,120," + a.toFixed(2) + ")"; };
+    var cw = "flex:1 1 0;min-width:0;text-align:center";
+    var head = '<div style="display:flex;gap:2px;align-items:center;font-size:10px;font-weight:700;color:#fff;margin:4px 0 2px"><span style="flex:0 0 64px"></span>' + cols.map(function (d) { return '<span style="' + cw + '">' + String(d.day).slice(8) + "</span>"; }).join("") + '<span style="flex:0 0 78px;text-align:right">阶段·累计</span></div>';
+    var rows = list.map(function (sec) {
+      var c = A[sec].cur, run = c.k ? CORE.stageRun(D, last, sec) : null, g = run ? CORE.runGain(D, last, sec, run.n) : null, cap = run && run.n >= D.length ? "≥" : "";
+      var cells = cols.map(function (d, j) {
+        var e = d.m[sec], st = e ? CORE.stageAt(D, d0 + j, sec) : null, k = st ? st.k : 0, v = e ? e.avg : null;
+        return '<span style="' + cw + ';height:24px;line-height:21px;border-radius:4px;background:' + bg(v) + ';box-shadow:inset 0 -3px 0 ' + (k ? STC[k] : "transparent") + ';font-size:9.5px;font-weight:800;color:#fff;overflow:hidden">' + (v == null ? "" : (v >= 0 ? "+" : "") + v.toFixed(1)) + "</span>";
+      }).join("");
+      var right = c.k ? '<b style="color:' + STC[c.k] + '">' + CORE.STAGES[c.k] + "</b> 第" + cap + (run ? run.n : 1) + "天" + (g != null && run && run.n >= 2 ? '<br><b style="font-size:12px;color:' + (g >= 0 ? "#ff7a7e" : "#5ae8ab") + '">' + (g >= 0 ? "+" : "") + g.toFixed(1) + "%</b>" : "") : '<span style="opacity:.8">没阶段</span>';
+      var mark = sec === ld ? "#ffd21f" : tr[sec] ? "#8fd3ff" : "#fff";
+      return '<div data-jlsec="' + esc(sec) + '" style="display:flex;gap:2px;align-items:center;margin:2px 0"><b style="flex:0 0 64px;font-size:11px;color:' + mark + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(String(sec).replace(/概念$/, "")) + "</b>" + cells + '<span style="flex:0 0 78px;text-align:right;font-size:10.5px;font-weight:700;color:#fff;line-height:1.25">' + right + "</span></div>";
+    }).join("");
+    var lg = [1, 2, 3, 4, 5].map(function (k) { return '<span style="white-space:nowrap"><i style="display:inline-block;width:10px;height:3px;background:' + STC[k] + ';vertical-align:2px;margin-right:2px"></i>' + CORE.STAGES[k] + "</span>"; }).join(" ");
+    return '<div style="padding:7px 8px 6px;margin:2px 0 6px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.14)"><div style="display:flex;align-items:baseline;font-size:12px;color:#fff;font-weight:800">板块轮动 · 热力图' + (S.review ? '<span style="font-weight:600;font-size:10px"> · 复盘 ' + esc(S.dispDay) + "</span>" : "") + (ld ? '<span style="margin-left:auto;font-size:10.5px;color:#ffd21f">主攻 ' + esc(ld) + "</span>" : "") + "</div>" +
+      head + rows +
+      '<div style="font-size:10.5px;color:#fff;font-weight:600;margin-top:4px;line-height:1.6">格子=那天板块平均涨跌(越红越强/越绿越弱)　底条=阶段：' + lg + '<br>右边=现在的阶段连着第几天、这段一共涨了多少　黄名=主攻 蓝名=推荐过在跟' + (D.length < 3 ? "<br>历史才 " + D.length + " 天，多打开几天格子会补满" : "") + "</div></div>";
   }
   function rotHtml() {
     var A = S.ana, D = S.days; if (!A || !D || !D.length) return "";
@@ -769,10 +798,10 @@
     return '<div style="display:flex;align-items:center;gap:10px;margin-top:5px"><span style="font-size:10px;color:rgba(255,255,255,.6);font-weight:600">资金</span><svg viewBox="0 0 120 36" width="104" height="31" style="flex:0 0 auto"><line x1="0" x2="120" y1="18" y2="18" stroke="rgba(255,255,255,.25)"/>' + bars + '</svg><b style="font-size:12px;color:' + (fv.out ? "#2fd18b" : "#ff5459") + '">' + fv.w + '</b><span style="margin-left:auto;font-size:11px;font-weight:700;color:' + (fv.sum >= 0 ? "#ff5459" : "#2fd18b") + '">' + (fv.sum >= 0 ? "+" : "") + (fv.sum / 1e8).toFixed(1) + "亿</span></div>";
   }
   function pickGet() { var a = lsGet("jl_secpick_v1"); return Array.isArray(a) ? a.filter(function (x) { return typeof x === "string"; }).slice(0, 2) : []; }
-  function pickSet(a) { try { localStorage.setItem("jl_secpick_v1", JSON.stringify(a.slice(0, 2))); } catch (e) {} }
+  function pickSet(a) { try { localStorage.setItem("jl_secpick_v1", JSON.stringify(a.slice(0, 2))); localStorage.setItem("jl_secpick_off_v1", a.length ? "0" : "1"); } catch (e) {} } /* 11-09 用户: 盯的能全部×掉; 全取消后不再自动补主攻 */
   function curPicks() {
     var A = S.ana || {}, p = pickGet().filter(function (x) { return A[x]; });
-    if (!p.length) { if (S.lead && A[S.lead]) p.push(S.lead); var alt = (S.pool || []).filter(function (x) { return x !== S.lead; })[0]; if (alt) p.push(alt); }
+    if (!p.length && lsGet("jl_secpick_off_v1") !== 1) { if (S.lead && A[S.lead]) p.push(S.lead); var alt = (S.pool || []).filter(function (x) { return x !== S.lead; })[0]; if (alt) p.push(alt); }
     return p.slice(0, 2);
   }
   function trackSvg(sec) {
@@ -796,7 +825,7 @@
     var c = S.ana[sec].cur, fill = c.avg == null ? "#8b93a3" : c.avg >= 0 ? "#ff5459" : "#2fd18b", f = S.flow[sec], fv = flowVerdict(f);
     var gone = (c.k >= 4 && (!fv || fv.out || fv.weak)) || (fv && fv.out && c.streak >= 2), still = !gone && c.k >= 1 && c.k <= 3 && !(fv && fv.out);
     var bd = gone ? '<span style="font-size:10px;font-weight:800;padding:0 7px;border-radius:7px;color:#10131a;background:rgba(255,255,255,.7)">已过</span>' : still ? '<span style="font-size:10px;font-weight:800;padding:0 7px;border-radius:7px;color:#10131a;background:#ffd21f">还在</span>' : "";
-    return '<div class="jlpgC" style="flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:6px 8px 4px"><div style="display:flex;align-items:center;gap:2px">' + secRingOf(sec) + '<b data-jlsec="' + esc(sec) + '" style="font-size:13px;color:#ffd21f;text-decoration:underline;text-underline-offset:3px">' + esc(sec) + " ›</b>" + stTag(sec) + '<span style="margin-left:6px">' + bd + '</span><b style="margin-left:auto;font-size:12px;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + "</b></div>" +
+    return '<div class="jlpgC" style="flex:0 0 100%;scroll-snap-align:start;box-sizing:border-box;padding:6px 8px 4px"><div style="display:flex;align-items:center;gap:2px">' + secRingOf(sec) + '<b data-jlsec="' + esc(sec) + '" style="font-size:13px;color:#ffd21f;text-decoration:underline;text-underline-offset:3px">' + esc(sec) + " ›</b>" + stTag(sec) + '<span style="margin-left:6px">' + bd + '</span><b style="margin-left:auto;font-size:12px;color:' + fill + '">' + (c.avg == null ? "" : fmtPct(c.avg)) + '</b><span data-jlunpick="' + esc(sec) + '" style="flex:0 0 auto;margin-left:8px;width:22px;height:22px;line-height:20px;text-align:center;border-radius:50%;border:1px solid rgba(255,255,255,.7);color:#fff;font-size:13px;font-weight:800">×</span></div>' +
       trackSvg(sec) + fundRow(f, fv) + memHtml(sec) + "</div>";
   }
   function revRank() { /* 夜间/休市: 原"现在最强的板块"用最近交易日快照补上 */
@@ -842,13 +871,15 @@
       if (wx) { var k0 = wx.getAttribute("data-jlwx"); S.wx = S.wx === k0 ? "" : k0; paint(); return; }
       var sg = ev.target && ev.target.closest ? ev.target.closest("[data-jlsg]") : null;
       if (sg) { var s0 = sg.getAttribute("data-jlsg"); S.sgOpen = S.sgOpen === s0 ? "-" : s0; if (S.sgOpen !== "-") memOf(s0).then(function () { paint(); }); paint(); return; }
+      var un = ev.target && ev.target.closest ? ev.target.closest("[data-jlunpick]") : null;
+      if (un) { var ku = un.getAttribute("data-jlunpick"), pu = curPicks().filter(function (x) { return x !== ku; }); pickSet(pu); S.pickTouched = 1; ensureFlows(); paint(); return; }
       var sv = ev.target && ev.target.closest ? ev.target.closest("[data-jlsec]") : null;
       if (sv) { openSec(sv.getAttribute("data-jlsec")); return; }
       if (ev.target && ev.target.closest && ev.target.closest("[data-jlrev]")) { openReview(); return; }
       var t = ev.target && ev.target.closest ? ev.target.closest("[data-jlpick]") : null;
       if (!t) return;
       var k = t.getAttribute("data-jlpick"), p = curPicks(), i = p.indexOf(k);
-      if (i >= 0) { if (p.length > 1) p.splice(i, 1); } else { p.push(k); if (p.length > 2) p.shift(); }
+      if (i >= 0) { p.splice(i, 1); } else { p.push(k); if (p.length > 2) p.shift(); }
       pickSet(p); S.pickTouched = 1; ensureFlows(); paint();
     });
     host.appendChild(ROOT);
@@ -1144,6 +1175,67 @@
     var dd = S.days ? S.days.filter(function (d) { return d.day > e.day && d.day <= S.day; }).length : 1;
     return { g: (x.pr / e.pr - 1) * 100, d: Math.max(1, dd) };
   }
+  /* 11-09 用户: 推荐过的板块从推荐那天起记——待了几天、涨了多少才退潮。只用自己算的板块日均涨幅(S.days), 零新增请求。
+     存 jl_secrec_v1 {sec:{d0, g:{day:avg}, k:{day:阶段}}}; 推荐日收盘起算涨幅(当天什么时候推的不知道, 当天涨幅单列); 推荐后出现"退潮"或连续3天掉出快照=结束, 挪进 jl_secrec_done_v1(留100条) */
+  function trkAdd(sec) {
+    if (S.review || !S.day) return;
+    var R = lsGet("jl_secrec_v1") || {};
+    if (R[sec]) return;
+    R[sec] = { d0: S.day, g: {}, k: {} }; try { localStorage.setItem("jl_secrec_v1", JSON.stringify(R)); } catch (e) {}
+  }
+  function trkStat(r) { /* → {n, g0:推荐当天, cum:推荐日收盘至今, pk:期间最高, days:[{d,a,k}]} */
+    var ds = Object.keys(r.g).filter(function (d) { return d >= r.d0; }).sort(), c = 1, pk = 0;
+    ds.forEach(function (d) { if (d > r.d0 && r.g[d] != null) { c *= 1 + r.g[d] / 100; pk = Math.max(pk, (c - 1) * 100); } });
+    return { n: ds.length || 1, g0: r.g[r.d0], cum: (c - 1) * 100, pk: pk, days: ds.map(function (d) { return { d: d, a: r.g[d], k: r.k[d] }; }) };
+  }
+  function trkUpdate() {
+    var D = S.days || []; if (!D.length) return;
+    var R = lsGet("jl_secrec_v1") || {}, done = lsGet("jl_secrec_done_v1") || [], ch = false;
+    if (lsGet("jl_secrec_seed_v1") !== 1) { /* 第一次: 用 11-05 起埋伏候选个股记录(jl_rec_v1 带板块和首次日期)补出之前推荐过的板块 */
+      var RC = lsGet("jl_rec_v1") || {}, f = {};
+      Object.keys(RC).forEach(function (c) { var e = RC[c]; if (e && e.sec && e.day && (!f[e.sec] || e.day < f[e.sec])) f[e.sec] = e.day; });
+      Object.keys(f).forEach(function (sec) { if (!R[sec]) R[sec] = { d0: f[sec], g: {}, k: {} }; });
+      try { localStorage.setItem("jl_secrec_seed_v1", "1"); } catch (e) {} ch = true;
+    }
+    Object.keys(R).forEach(function (sec) {
+      var r = R[sec], miss = 0, end = null, why = "";
+      D.forEach(function (d, i) {
+        if (d.day < r.d0 || end) return;
+        var e = d.m[sec];
+        var st = e ? CORE.stageAt(D, i, sec) : null, k = st ? st.k : 0, closed = !(d.day === S.day && hmNow() < 1505); /* 今天盘中先不结案, 收盘才算 */
+        if (e && (r.g[d.day] !== e.avg || r.k[d.day] !== k)) { r.g[d.day] = e.avg; r.k[d.day] = k; ch = true; }
+        if (d.day <= r.d0 || !closed) return;
+        if (k === 5) { end = d.day; why = "退潮"; return; }
+        if (!e || k === 0) { if (++miss >= 3) { end = d.day; why = "降温"; } } else miss = 0; /* 连续3天没阶段(没进强势)=降温结束 */
+      });
+      if (end) { var t = trkStat(r); done.unshift({ sec: sec, d0: r.d0, end: end, why: why, n: t.n, g0: t.g0, cum: t.cum, pk: t.pk }); delete R[sec]; ch = true; }
+      else if (Object.keys(r.g).length === 0 && D[D.length - 1].day > r.d0 && D.every(function (d) { return d.day !== r.d0; })) { delete R[sec]; ch = true; } /* 推荐日的快照不在了(太久没打开) */
+    });
+    if (ch) { try { localStorage.setItem("jl_secrec_v1", JSON.stringify(R)); localStorage.setItem("jl_secrec_done_v1", JSON.stringify(done.slice(0, 100))); } catch (e) {} }
+  }
+  function trkHtml() {
+    try { trkUpdate(); } catch (e) {}
+    var R = lsGet("jl_secrec_v1") || {}, done = lsGet("jl_secrec_done_v1") || [], ks = Object.keys(R);
+    if (!ks.length && !done.length) return "";
+    var pc = function (v) { return v == null || !isFinite(v) ? "—" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; }, cl = function (v) { return v == null ? "#fff" : v >= 0 ? "#ff5459" : "#2fd18b"; };
+    var md = function (d) { return String(d).slice(5); };
+    var open = ks.map(function (k) { var t = trkStat(R[k]); t.sec = k; t.d0 = R[k].d0; var a = S.ana && S.ana[k]; t.st = a && a.cur.k ? CORE.STAGES[a.cur.k] : ""; return t; }).sort(function (a, b) { return b.cum - a.cum; });
+    var row = function (o, fin) {
+      return '<div data-jlsec="' + esc(o.sec) + '" style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.1);font-size:12px;font-weight:700;color:#fff"><b style="flex:0 0 30%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(o.sec) + '</b>' +
+        '<span style="flex:0 0 auto">' + md(o.d0) + (fin ? "→" + md(o.end) : "起") + " 第" + o.n + "天</span>" +
+        '<span style="margin-left:auto;color:' + cl(o.cum) + '">' + (o.n <= 1 ? "当天" + pc(o.g0) : pc(o.cum)) + "</span>" +
+        '<span style="flex:0 0 auto;font-size:11px;color:#ffd21f">' + (fin ? o.why : o.st || "") + (o.n > 1 ? " 最高" + pc(o.pk) : "") + "</span></div>";
+    };
+    var sum = "";
+    if (done.length) {
+      var av = function (f) { var a = done.map(f).filter(function (v) { return v != null && isFinite(v); }); return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
+      sum = '<div style="display:flex;margin:6px 0 2px">' + [[done.length + "个", "已结束"], [(av(function (o) { return o.n; }) || 0).toFixed(1) + "天", "平均待"], [pc(av(function (o) { return o.pk; })), "平均最高"], [pc(av(function (o) { return o.cum; })), "结束时平均"]].map(function (x) { return '<div style="flex:1;text-align:center"><div style="font-size:16px;font-weight:800;color:#fff">' + x[0] + '</div><div style="font-size:10.5px;font-weight:700;color:#fff;opacity:.85">' + x[1] + "</div></div>"; }).join("") + "</div>";
+    }
+    return '<div style="padding:8px 10px 6px;margin:8px 0 6px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.2)"><div style="font-size:12px;font-weight:800;color:#fff">推荐过的板块 · 待了几天、涨了多少</div>' +
+      '<div style="font-size:10.5px;font-weight:600;color:#fff;opacity:.85;margin-top:1px">从埋伏候选第一次出现那天记；涨幅=推荐日收盘起累计(板块平均)；出现退潮、或连续3天没进任何阶段(降温)=结束。数据只记这台手机打开过的日子</div>' +
+      sum + (open.length ? '<div style="font-size:11px;font-weight:800;color:#ffd21f;margin-top:6px">还在跟</div>' + open.map(function (o) { return row(o, false); }).join("") : "") +
+      (done.length ? '<div style="font-size:11px;font-weight:800;color:#ffd21f;margin-top:6px">已结束（最近8个）</div>' + done.slice(0, 8).map(function (o) { return row(o, true); }).join("") : "") + "</div>";
+  }
   function pickRecHtml() {
     /* 11-05 用户: 别做成PDF/小字, 要像App——左右滑大卡: 大数字(轮动第N天/累计涨幅/今日涨幅)+大按钮行; 涨停(连板)也列, 标"排队难买"
        板块=昨日收盘阶段为萌芽/启动/加速(没退潮)且主力没出逃; 盘前(无今日数据)就是"昨日收盘段"的早盘候选。规则是初值, 未回测 */
@@ -1182,6 +1274,7 @@
       var early = hmNow() >= 915 && hmNow() < 930; /* 竞价段个股主力净额多为0, 放宽成>=0, 再按涨幅 */
       var all = (m.list || []), buy = all.filter(function (x) { return !x.zt && x.p < 7 && (early ? x.f >= 0 : x.f > 0); }).sort(function (a, b) { return (b.f - a.f) || (b.p - a.p); }).slice(0, 3), zts = o.c && o.c.k >= 2 && o.c.k <= 3 ? all.filter(function (x) { return x.zt; }).slice(0, 5) : []; /* 11-08 用户: 真启动的好板块(阶段启动/加速+今天资金在进)才带涨停股, 标排队难买, 看一下也行 */
       if (!buy.length && !zts.length) return; n++;
+      trkAdd(o.k);
       var lead = all.slice().sort(function (x, y) { return ((lb[y.c] || 0) - (lb[x.c] || 0)) || (y.p - x.p); })[0]; /* 11-05 用户: 老龙不一定要连板, 开启轮动的领涨股也算: 先看连板最高, 没有连板就看今天涨幅最大 */
       var c = o.c || { name: "资金进", streak: 0, cum5: null, avg: o.q ? o.q.p : null, zt: 0 }, tile = function (v, l, col) { return '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:800;color:' + (col || "#fff") + ';line-height:1.15">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + "</div></div>"; };
       var runN = c.streak || 0, up = c.cum5 >= 0, risk = runN >= 3 ? "已强势" + runN + "天，后面偏回落" : c.cum5 >= 10 ? "近5天已涨多，别追高" : o.ld ? o.ld.n + o.ld.l + "板龙头在" : c.zt >= 2 ? "板块内涨停" + c.zt + "只" : o.q && o.q.f > 0 ? "资金在进" : "资金还没明显进";
@@ -1226,9 +1319,9 @@
     WXST = { st: st, col: col, tip: tip, n: n, mx: mx, adv: adv, zb: zb, day: ks[ks.length - 1] };
     var wk = kOv != null ? kOv : (S.wx || ""), tile = function (v, l, k) { var on = wk === k; return '<div data-jlwx="' + k + '" style="flex:1;text-align:center;cursor:pointer;border-radius:9px;padding:2px 0;' + (on ? "background:rgba(255,210,31,.16);box-shadow:inset 0 0 0 1px rgba(255,210,31,.55)" : "") + '"><div style="font-size:17px;font-weight:800;color:#fff;line-height:1.2">' + v + '</div><div style="font-size:10px;font-weight:600;opacity:.8">' + l + (on ? " ▴" : " ▾") + "</div></div>"; };
     return '<div style="display:flex;align-items:center;gap:6px;padding:8px 6px;margin:2px 0 6px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18)">' +
-      '<div style="flex:0 0 auto;text-align:center;padding-right:6px"><div style="font-size:19px;font-weight:900;color:' + col + '">' + st + '</div><div style="font-size:9.5px;font-weight:600;opacity:.75">' + esc((function (k) { return /^\d{8}$/.test(k) ? k.slice(4, 6) + "-" + k.slice(6) : k.slice(5); })(ks[ks.length - 1])) + "</div></div>" +
+      '<div data-jlwx="rule" style="flex:0 0 auto;text-align:center;padding:2px 6px 2px 4px;border-radius:9px;cursor:pointer;' + (wk === "rule" ? "background:rgba(255,210,31,.16);box-shadow:inset 0 0 0 1px rgba(255,210,31,.55)" : "") + '"><div style="font-size:19px;font-weight:900;color:' + col + '">' + st + (wk === "rule" ? " ▴" : " ▾") + '</div><div style="font-size:9.5px;font-weight:600;opacity:.75">' + esc((function (k) { return /^\d{8}$/.test(k) ? k.slice(4, 6) + "-" + k.slice(6) : k.slice(5); })(ks[ks.length - 1])) + "</div></div>" +
       tile(n, "涨停", "zt") + tile(mx + "板", "最高板" + (Y ? (mx > ymx ? "↑" : mx < ymx ? "↓" : "") : ""), "lb") + tile(adv == null ? "-" : adv + "%", "连板晋级", "adv") + tile(zb, "回封", "hf") +
-      '</div><div style="font-size:10.5px;font-weight:700;color:' + col + ';margin:-2px 2px 6px">' + tip + ' <span style="opacity:.6;font-weight:600;color:#fff">· 阶段规则未回测 · 点数字看名单</span></div>' + wxList(wk, T, Y);
+      '</div><div style="font-size:10.5px;font-weight:700;color:' + col + ';margin:-2px 2px 6px">' + tip + ' <span style="opacity:.6;font-weight:600;color:#fff">· 点「' + st + '」看怎么判的 · 点数字看名单</span></div>' + wxList(wk, T, Y);
   }
   var WXST = null;
   /* 11-06: 首页「市场情绪」总卡(jlv2)复用同一份天气条+名单, 不另算 */
@@ -1236,6 +1329,12 @@
   /* 天气条名单: r=[code,name,lbc,fund,zbc,fbt,hs,amount,ltsz,hy,days,ct,price,pct] */
   function wxList(k, T, Y) {
     if (!k || !T || !T.r) return "";
+    if (k === "rule" && WXST) { /* 11-09 用户: 冰点怎么对照的——把判定表摆出来, 今天命中的那条高亮; 从上往下先满足哪条算哪条 */
+      var W = WXST, rows = [["冰点", "涨停 < 25 只，或 最高板 ≤ 2 板"], ["退潮", "最高板比昨天低，且 连板晋级 < 20%"], ["高潮", "涨停 ≥ 80 只，且 最高板 ≥ 5 板"], ["分歧", "最高板比昨天低"], ["发酵", "涨停 ≥ 45 只"], ["启动", "上面都不满足"]];
+      return '<div style="padding:4px 2px 6px"><div style="font-size:12px;font-weight:800;color:#fff;margin-bottom:3px">今天：涨停 ' + W.n + ' 只 · 最高 ' + W.mx + ' 板 · 连板晋级 ' + (W.adv == null ? "-" : W.adv + "%") + '</div>' +
+        rows.map(function (r) { var on = r[0] === W.st; return '<div style="display:flex;gap:8px;padding:4px 6px;border-radius:7px;font-size:12px;font-weight:700;color:#fff;' + (on ? "background:rgba(255,210,31,.18);box-shadow:inset 0 0 0 1px rgba(255,210,31,.6)" : "") + '"><b style="flex:0 0 36px;color:' + (on ? "#ffd21f" : "#fff") + '">' + r[0] + '</b><span>' + r[1] + (on ? " ← 今天" : "") + "</span></div>"; }).join("") +
+        '<div style="font-size:11px;font-weight:600;color:#fff;margin-top:4px;line-height:1.5">从上往下，先满足哪条就是哪个。连板晋级 = 昨天涨停、今天还涨停的只数 ÷ 昨天涨停只数。门槛是参考值，没回测过。</div></div>';
+    }
     var chip = function (r, ext) { return '<span data-jlstk="open" data-c="' + esc(r[0]) + '" data-n="' + esc(r[1]) + '" data-p="' + (+r[12] || "") + '" data-pc="' + (+r[13] || "") + '" style="display:inline-block;margin:2px 6px 2px 0;font-size:12px;font-weight:700;color:#fff;white-space:nowrap">' + esc(r[1]) + (ext ? '<small style="font-weight:600;color:#ffd21f;margin-left:2px">' + ext + "</small>" : "") + "</span>"; };
     var lbTxt = function (r) { return (+r[2] || 0) >= 2 ? (+r[2]) + "板" : ""; };
     var line = function (head, body, hc) { return '<div style="display:flex;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.1)"><b style="flex:0 0 auto;min-width:64px;font-size:12px;font-weight:800;color:' + (hc || "#ffd21f") + '">' + head + '</b><div style="flex:1;min-width:0;line-height:1.5">' + body + "</div></div>"; };
@@ -1458,11 +1557,11 @@
       body += tlHtml();
       body += rk.length ? '<div style="font-size:11px;color:#fff;font-weight:700;margin:2px 0 0">现在最强的板块</div>' + rk.map(function (r, i) { return secRow(r, i); }).join("") : (hasAna && S.review ? revRank() : '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">现在股票太少，还排不出强弱（等数据多一些会自动出来）</div>');
       if (rest.length) body += '<div style="font-size:9.5px;color:rgba(255,255,255,.95);font-weight:600;margin:6px 0 2px;line-height:1.6">股票太少暂不排名：' + rest.map(function (r) { return esc(r.sector); }).join(" · ") + "</div>";
-      body += pickRecHtml(); /* 11-05 最简文字列表, 贴在板块列表后 */
-      body += rotHtml() + pickerHtml(); /* 新增: 放在原有"领涨时间线/现在最强"之后, 原内容不动 */
+      body += pickRecHtml() + trkHtml(); /* 11-05 最简文字列表, 贴在板块列表后; 11-09 推荐后跟踪 */
+      body += heatHtml() + pickerHtml(); /* 11-09: rotHtml(轮动散点+3D)换热力图 */ /* 新增: 放在原有"领涨时间线/现在最强"之后, 原内容不动 */
       /* jl-1207/secpop: 公式、口径、未归属条数、导出按钮都不上卡面(导出仍可 __JLSEC__.exportJSON()) */
     } else if (hasAna) {
-      body += tlHtml() + (S.review ? revRank() : "") + rotHtml() + pickerHtml();
+      body += tlHtml() + (S.review ? revRank() : "") + heatHtml() + pickerHtml();
     } else if (!body) {
       body = '<div style="font-size:10.5px;color:#fff;font-weight:600;padding:6px 2px">还没有数据，开盘后会自动算出来</div>';
     }
@@ -1543,5 +1642,5 @@
   setTimeout(compute, 1800);
   setInterval(function () { if (!document.hidden) compute(); }, 60e3);
   document.addEventListener("visibilitychange", function () { if (!document.hidden) setTimeout(compute, 500); });
-  window.__JLSEC__ = { CORE: CORE, S: S, rotHtml: rotHtml, pickerHtml: pickerHtml, pickLead: pickLead, compute: compute, exportJSON: exportJSON, diag: diag, surgeCheck: surgeCheck, showSurge: showSurge, fundCheck: fundCheck, fundSnapSave: fundSnapSave, openSec: openSec, openReview: openReview, paint: paint };
+  window.__JLSEC__ = { CORE: CORE, S: S, rotHtml: rotHtml, heatHtml: heatHtml, trkHtml: trkHtml, pickerHtml: pickerHtml, pickLead: pickLead, compute: compute, exportJSON: exportJSON, diag: diag, surgeCheck: surgeCheck, showSurge: showSurge, fundCheck: fundCheck, fundSnapSave: fundSnapSave, openSec: openSec, openReview: openReview, paint: paint };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -264,7 +264,7 @@ dgp.forEach((g) => {
     if (!box) { host.innerHTML = ""; box = document.createElement("div"); box.className = "gvJL"; host.appendChild(box); }
     const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
     if (s) s.openDone = openDone;
-    const h = s && s.R ? html(s.R, openDone) + (s.src === "em" ? '<div class="wait">数据源：东财备选（腾讯暂不可用）</div>' : "") :'<div class="wait">' + (s && s.err ? "缺口数据取不到：" + s.err + "（稍后自动重试）" : "缺口数据加载中…") + "</div>";
+    const h = s && s.R ? html(s.R, openDone) + (s.src === "em" ? '<div class="wait">数据源：东财备选（腾讯暂不可用）</div>' : "") :'<div class="wait">' + (s && s.err ? (/熔断/.test(s.err) ? "行情接口拥挤，十几秒后自动重试" : "缺口数据取不到：" + s.err + "（稍后自动重试）") : "缺口数据加载中…") + "</div>";
     if (box._h !== h) { box.innerHTML = h; box._h = h; const d2 = box.querySelector("details"); if (d2) d2.addEventListener("toggle", () => { if (ST[code]) ST[code].openDone = d2.open; });
       const a2 = box.querySelector(".aucL"), fb = box.querySelector(".gvFoldJL"); /* jl-1183: 折叠态记忆(会话级, ST[code].foldAuc)+点击切换 */
       if (a2 && fb) { if (s && s.foldAuc) { a2.classList.add("gvFolded"); fb.textContent = "▸"; }
