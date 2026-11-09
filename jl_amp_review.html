@@ -56,7 +56,7 @@ const d8=s=>String(s).replace(/\D/g,'').slice(0,8),iso=s=>s.slice(0,4)+'-'+s.sli
 function liveDays(){const out={},tm={};if(!PW)return {out,tm};const H=PW.LIVE.hist||{};
  const grp=k=>{const g={};(H[k]||[]).forEach(b=>{if(!(b.c>0))return;const s=String(b.t).replace(/\D/g,''),d=iso(s.slice(0,8));(g[d]=g[d]||[]).push([b.o||b.c,b.h||b.c,b.l||b.c,b.c,s.slice(8,10)+':'+s.slice(10,12)])});return g};
  const g1=grp('m1'),g5=grp('m5');const ds=new Set([...Object.keys(g1),...Object.keys(g5)]);
- ds.forEach(d=>{const a=(g1[d]&&g1[d].length>=200)?g1[d]:(g5[d]&&g5[d].length>=30?g5[d]:(g1[d]||g5[d]));out[d]=a.map(x=>x.slice(0,4));tm[d]=a.map(x=>x[4])});return {out,tm}}
+ ds.forEach(d=>{const a=(g1[d]&&(g1[d].length>=200||(g1[d][0][4]<='09:32'&&g1[d].length>=(g5[d]?g5[d].length*4:1))))?g1[d]:(g5[d]&&g5[d].length>=30?g5[d]:(g1[d]||g5[d]));out[d]=a.map(x=>x.slice(0,4));tm[d]=a.map(x=>x[4])});return {out,tm}}
 function dayMap(){const m={};if(!PW)return m;(PW.LIVE.hist.day||[]).forEach(b=>{if(b.c>0)m[iso(d8(b.t))]=[b.o,b.h,b.l,b.c]});return m}
 function loadH(){return new Promise(r=>{if(!HCODES.includes(CODE)||(window.JL_AMP_H&&JL_AMP_H[CODE]))return r();const s=document.createElement('script');s.src='jl_amp_h_'+CODE+'.js';s.onload=()=>r();s.onerror=()=>r();document.head.appendChild(s)})}
 let SRC=null;
@@ -189,7 +189,7 @@ function swings(bars,pc,avg){const C=bars.map(b=>b[3]);const P=[{i:0,p:bars[0][0
 
 function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.info[d];const cv=document.getElementById('mk'),[c,W,H]=prep(cv);const pl=6,pr=48,pt=44,pb=40,n=bars.length,B0=ZV.mk?Math.max(0,Math.min(ZV.mk[0],n-1)):0,B1=ZV.mk?Math.min(n-1,ZV.mk[1]):n-1,bw=(W-pl-pr)/(B1-B0+1),VB=bars.slice(B0,B1+1);
  const M=[];TR.forEach(t=>{if(t[0]===d)M.push({S:1,i:t[1],p:t[2],t});if(t[3]===d)M.push({S:0,i:t[4],p:t[5],t})});
- const dlo=Math.min(...bars.map(b=>b[2])),upTo=dlo+P().xa*f.amp/100*f.pc;const PLC=[];const place=(X,Y,w,h,dir,skip)=>{for(let k=0;k<16;k++){const yy=Y+(k?Math.ceil(k/2)*(h+2)*((k%2?dir:-dir)):0);if(yy<2||yy+h>H-pb+14)continue;if(!PLC.some(r=>X<r[0]+r[2]&&X+w>r[0]&&yy<r[1]+r[3]&&yy+h>r[1])){PLC.push([X,yy,w,h]);return yy}}if(skip)return null;PLC.push([X,Y,w,h]);return Y};/* 11-09 用户: skip=摆不下就不画, 不再硬叠成一团 */
+ const dlo=Math.min(...bars.map(b=>b[2])),upTo=dlo+P().xa*f.amp/100*f.pc;const PLC=[];const place=(X,Y,w,h,dir)=>{for(let k=0;k<12;k++){const yy=Y+(k?Math.ceil(k/2)*(h+2)*((k%2?dir:-dir)):0);if(yy<2||yy+h>H-pb+14)continue;if(!PLC.some(r=>X<r[0]+r[2]&&X+w>r[0]&&yy<r[1]+r[3]&&yy+h>r[1])){PLC.push([X,yy,w,h]);return yy}}PLC.push([X,Y,w,h]);return Y};
  const MV=M.filter(m=>m.i>=B0&&m.i<=B1);let hi=Math.max(...VB.map(b=>b[1]),...MV.map(m=>m.p)),lo=Math.min(...VB.map(b=>b[2]),...MV.map(m=>m.p));const pad=(hi-lo)*.08||.05;hi+=pad;lo-=pad;{const md=(hi+lo)/2,hf=(hi-lo)/2/ZV.mkY;hi=md+hf;lo=md-hf}const y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
  c.font='10.5px ui-rounded,"SF Pro Rounded","PingFang SC",-apple-system,sans-serif';for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;c.strokeStyle='rgba(255,255,255,.08)';c.beginPath();c.moveTo(pl,y(v));c.lineTo(W-pr,y(v));c.stroke();c.fillStyle='rgba(255,255,255,.78)';c.fillText(v.toFixed(2),W-pr+4,y(v)+3)}c.save();c.beginPath();c.rect(pl,0,W-pl-pr,H);c.clip();
  const TA=DATA.tm[d];['09:30','10:30','13:00','14:00'].forEach(s=>{const i=TA.indexOf(s);if(i>=B0&&i<=B1){c.fillStyle='rgba(255,255,255,.78)';c.fillText(s,Math.min(pl+(i-B0)*bw,W-pr-28),H-3)}});
@@ -202,17 +202,10 @@ function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.i
   c.font='500 11px ui-rounded,"SF Pro Rounded","PingFang SC",-apple-system,sans-serif';const ms=(m.S?m.t[6][0]+'卖':'接')+m.p.toFixed(2)+ex,mw=c.measureText(ms).width+6,MX=Math.max(pl,Math.min(x+8,W-pr-mw-2)),MY=place(MX,yy+dy+(m.S?-20:4),mw,15,m.S?-1:1);c.fillStyle=col;otx(c,ms,MX+3,MY+11);c.font='10.5px ui-rounded,"SF Pro Rounded","PingFang SC",-apple-system,sans-serif';hit.push({x,y:yy+dy,m})});
  MK={pl,pr,bw,bars,hit,W,H,B0,N:n,yv:v=>hi-(v-pt)/(H-pt-pb)*(hi-lo)};
  const SWS=swings(bars,f.pc,f.amp);MK.sws=SWS;
- /* 11-09 用户: "振幅复盘咋变成这样了" —— 切段小(如0.8%)时转折点太多, ▲▼%和"振x/x 剩x/超"满屏都是还互相叠成一团.
-    改: ①标签限量=只给幅度最大的前几个转折点配字(按图宽给预算, 没配上的只剩圆点); ②摆不下就整条不画(不再硬叠); ③标签多时第二行"振/剩"整行省略 */
- let LBS=SWS.filter(q=>q.i2>=B0&&q.i2<=B1);
- const BUD=Math.max(4,Math.min(9,Math.floor((W-pl-pr)/64)));
- if(LBS.length>BUD)LBS=LBS.slice().sort((a,b)=>Math.abs(b.leg)-Math.abs(a.leg)).slice(0,BUD).sort((a,b)=>a.i2-b.i2);
- const DENSE=LBS.length>5;
- LBS.forEach(q=>{if(q.i2<B0||q.i2>B1)return;const x=pl+(q.i2-B0)*bw+bw/2,yy=y(q.p),up=q.h===1,col=up?'#ff9a3c':'#4ff0ff';
+ SWS.forEach(q=>{if(q.i2<B0||q.i2>B1)return;const x=pl+(q.i2-B0)*bw+bw/2,yy=y(q.p),up=q.h===1,col=up?'#ff9a3c':'#4ff0ff';
   c.fillStyle=col;c.beginPath();c.arc(x,yy,3,0,7);c.fill();
-  const l1=(up?'▲':'▼')+Math.abs(q.leg).toFixed(1)+'%',l2=up&&!DENSE?('振'+q.amp.toFixed(1)+'/'+f.amp.toFixed(1)+(q.left>0.05?' 剩'+q.left.toFixed(1):' 超')):'';
-  c.font='500 11.5px ui-rounded,"SF Pro Rounded","PingFang SC",-apple-system,sans-serif';const w=Math.max(c.measureText(l1).width,l2?c.measureText(l2).width:0)+8,X=Math.max(pl,Math.min(x-w/2,W-pr-w)),Y0=place(Math.max(pl,Math.min(x-w/2,W-pr-w)),up?yy-(l2?40:26):yy+10,w,l2?32:17,up?-1:1,1);
-  if(Y0==null)return;   /* 摆不下: 点保留, 字不画 */
+  const l1=(up?'▲':'▼')+Math.abs(q.leg).toFixed(1)+'%',l2=up?('振'+q.amp.toFixed(1)+'/'+f.amp.toFixed(1)+(q.left>0.05?' 剩'+q.left.toFixed(1):' 超')):'';
+  c.font='500 11.5px ui-rounded,"SF Pro Rounded","PingFang SC",-apple-system,sans-serif';const w=Math.max(c.measureText(l1).width,l2?c.measureText(l2).width:0)+8,X=Math.max(pl,Math.min(x-w/2,W-pr-w)),Y0=place(Math.max(pl,Math.min(x-w/2,W-pr-w)),up?yy-(l2?40:26):yy+10,w,l2?32:17,up?-1:1);
   c.fillStyle=col;otx(c,l1,X+4,Y0+13);if(l2){c.font='11px ui-rounded,"SF Pro Rounded","PingFang SC",-apple-system,sans-serif';otx(c,l2,X+4,Y0+27)}});
  c.restore();
  document.getElementById('dt').textContent=d+' '+'日一二三四五六'[new Date(d).getDay()];
@@ -279,25 +272,12 @@ const SZ={小:[260,240],中:[320,320],大:[420,460]};let sz=localStorage.getItem
 function applySz(){document.getElementById('dk').dataset.h=SZ[sz][0];document.getElementById('mk').dataset.h=SZ[sz][1]}
 function miniSel(id,sid,vals,fmtv){const e=document.getElementById(id),s=document.getElementById(sid);e.innerHTML=vals.map(v=>'<option value="'+v+'">'+fmtv(v)+'</option>').join('');
  let best=vals[0];vals.forEach(v=>{if(Math.abs(v-+s.value)<Math.abs(best-+s.value))best=v});e.value=String(best);
- e.onchange=()=>{const v=+e.value;if(![...s.options].some(o=>Math.abs(+o.value-v)<1e-9)){const o=document.createElement('option');o.value=v;o.textContent=fmtv(v);s.appendChild(o)}[...s.options].forEach(o=>{if(Math.abs(+o.value-v)<1e-9)s.value=o.value});syncQ();load();ui();selDay(sel)}}
+ e.onchange=()=>{const v=+e.value;if(![...s.options].some(o=>Math.abs(+o.value-v)<1e-9)){const o=document.createElement('option');o.value=v;o.textContent=fmtv(v);s.appendChild(o)}[...s.options].forEach(o=>{if(Math.abs(+o.value-v)<1e-9)s.value=o.value});load();ui();selDay(sel)}}
 function ui(){const bs=+document.getElementById('p_base').value;
  miniSel('m_cut','p_cut',[0.008,0.01,0.012,0.015,0.018,0.02,0.025,0.03],v=>(v*100).toFixed(1)+'%');
- const pqv=+document.getElementById('p_q').value;let QL=[100,200,300,500,800,1000,1500,2000,3000].filter(v=>v<=Math.max(bs,100));
- if(pqv>0&&!QL.some(v=>Math.abs(v-pqv)<1e-9)){QL.push(pqv);QL.sort((a,b)=>a-b)}   /* 11-09: 当前每次股数不在档位里也加上, 选多少就是多少 */
- miniSel('m_q','p_q',QL,v=>v+'股');chips('pc',['全部','近一个月'].concat(DATA.ph.map(p=>p[0])),per,v=>{per=v;localStorage.setItem('jlamp_per',v);setPer();if(!(sel in IX))sel=days[days.length-1];ui();drawDK();drawMK()});document.getElementById('szc').dataset.k=1;chips('szc',['小','中','大'],sz,v=>{sz=v;localStorage.setItem('jlamp_sz',v);applySz();ui();drawDK();drawMK()});chips('cc',['全部'].concat(CAT),cat,v=>{cat=v;localStorage.setItem('jlamp_cat',v);ui();const L=catDays();if(L.length&&!L.includes(sel))sel=L[L.length-1];drawDK();drawMK()});how()}
+ miniSel('m_q','p_q',[100,200,300,500,800,1000,1500,2000,3000].filter(v=>v<=Math.max(bs,100)),v=>v+'股');chips('pc',['全部','近一个月'].concat(DATA.ph.map(p=>p[0])),per,v=>{per=v;localStorage.setItem('jlamp_per',v);setPer();if(!(sel in IX))sel=days[days.length-1];ui();drawDK();drawMK()});document.getElementById('szc').dataset.k=1;chips('szc',['小','中','大'],sz,v=>{sz=v;localStorage.setItem('jlamp_sz',v);applySz();ui();drawDK();drawMK()});chips('cc',['全部'].concat(CAT),cat,v=>{cat=v;localStorage.setItem('jlamp_cat',v);ui();const L=catDays();if(L.length&&!L.includes(sel))sel=L[L.length-1];drawDK();drawMK()});how()}
 try{const sv=JSON.parse(localStorage.getItem('jlamp_p2')||'null');if(sv)document.querySelectorAll('.ps select').forEach((s,i)=>{if(sv[i]!=null)s.value=sv[i]})}catch(e){}
 sel=null;applySz();if(PW&&PW.STK&&PW.STK.qty>0){const s=document.getElementById('p_base'),q=Math.max(100,Math.round(PW.STK.qty/100)*100);if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q}
-/* 11-09 用户: 每次股数要跟做T股数联动 —— 在作战屏选1000股, 复盘这里就按1000股的买卖算; 在这里改每次, 作战屏的每轮/价位尺/振幅法金额也跟着变 */
-let QSYNC=null;
-function syncQ(){try{if(!PW||!PW.LIVE)return;const s=document.getElementById('p_q'),q=Math.max(0,Math.floor((+s.value||0)/100)*100);QSYNC=q;PW.LIVE.sh=q;
- let o=null;try{o=JSON.parse(PW.localStorage.getItem('jl_tintra_qty_v1')||'null')}catch(e){}
- if(!o){try{o=JSON.parse(sessionStorage.getItem('jl_tintra_qty_v1')||'null')}catch(e2){}}
- o=o||{};if(PW.STK&&PW.STK.code)o[PW.STK.code]=q;try{o.__t=Date.now()}catch(e){}
- try{PW.localStorage.setItem('jl_tintra_qty_v1',JSON.stringify(o))}catch(e){}
- try{sessionStorage.setItem('jl_tintra_qty_v1',JSON.stringify(o))}catch(e){}
- try{PW.__jlQtyRAMJL=o}catch(e){}}catch(e){}}
-if(PW&&PW.LIVE&&PW.LIVE.sh>0){const s=document.getElementById('p_q'),q=Math.max(100,Math.floor(PW.LIVE.sh/100)*100);if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q}   /* 打开复盘时带上作战屏的每轮股数 */
-setInterval(()=>{try{if(!PW||!PW.LIVE||!(PW.LIVE.sh>0))return;const q=Math.floor(PW.LIVE.sh/100)*100;if(q===QSYNC)return;QSYNC=q;const s=document.getElementById('p_q');if(+s.value===q)return;if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q;load();ui();selDay(sel)}catch(e){}},2000);   /* 作战屏改了每轮, 这里跟着重算 */
 loadH().then(()=>{SRC=buildSrc();if(SRC.days.length<3){document.querySelector('.wrap').innerHTML='<div class="card">'+(NAME||CODE)+'：分钟数据还不够（'+SRC.days.length+'天），等行情加载后再右滑。</div>';return}
- load();document.querySelectorAll('.ps select').forEach(s=>s.onchange=()=>{syncQ();load();ui();selDay(sel)});ui();selDay(sel)});let LW=0;addEventListener('resize',()=>{const w=document.querySelector('.cw').clientWidth;if(Math.abs(w-LW)<2)return;LW=w;drawDK();drawMK()});LW=document.querySelector('.cw').clientWidth;
+ load();document.querySelectorAll('.ps select').forEach(s=>s.onchange=()=>{load();ui();selDay(sel)});ui();selDay(sel)});let LW=0;addEventListener('resize',()=>{const w=document.querySelector('.cw').clientWidth;if(Math.abs(w-LW)<2)return;LW=w;drawDK();drawMK()});LW=document.querySelector('.cw').clientWidth;
 </script></body></html>

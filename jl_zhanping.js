@@ -49,8 +49,7 @@
     '#jlZpBallJL.attn{animation:jlZpAttn 1.6s ease-in-out 4}@keyframes jlZpAttn{50%{transform:scale(1.22);box-shadow:0 0 0 8px rgba(232,195,122,.30),0 5px 20px rgba(0,0,0,.5)}}' +
     '#jlZpBallJL.ring{animation:jlZpRing 1s ease-in-out 3}@keyframes jlZpRing{50%{box-shadow:0 0 0 6px rgba(232,195,122,.35),0 4px 18px rgba(0,0,0,.45)}}' +
     /* 11-08 用户: 浮动球页面卡面别死黑 → 半透明轻磨砂(同持仓卡), 战屏页面本身透明(jl_zp_war.html body.injlin) */
-    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,#0d1730,#091024);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(120,160,255,.22);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}' +
-
+    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,rgba(22,34,54,.50),rgba(10,16,28,.58));-webkit-backdrop-filter:blur(3px) saturate(130%);backdrop-filter:blur(3px) saturate(130%);border:1px solid rgba(255,255,255,.16);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 12px 40px rgba(0,0,0,.45);overflow:hidden}' +
     '#jlZpSheetJL iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:dark}' +
     '#jlZpSheetJL .zx{position:absolute;right:7px;top:7px;z-index:2;width:26px;height:26px;border-radius:50%;background:rgba(15,24,42,.85);border:1px solid #2a3a55;color:#cfd8e6;font:700 13px/24px -apple-system,sans-serif;text-align:center;cursor:pointer;touch-action:manipulation}' +
     '#jlZpSheetJL .zx:active{background:rgba(42,58,85,.9)}';
