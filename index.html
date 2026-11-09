@@ -951,7 +951,7 @@ body:not(.day){--green:#3bf0ac} /* jl-1126: 夜间绿提亮(暗绿→亮绿), �
 /* jl-dedup2 11-08 资金灯展开底部: 预判/量比/近5日主力 一行; 持仓详情顶上格子只留 波段位置 */
 .fxExtraJL{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;margin:6px 10px 8px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.14);font-size:10.5px;color:#fff}
 .fxExtraJL b{font-weight:600}.fxExtraJL .fxL{margin-left:auto}
-.fxBarsJL{display:flex;gap:3px;align-items:flex-end;height:24px}.fxBarsJL i{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:12px;height:24px}.fxBarsJL i b{display:block;width:8px;max-height:16px;border-radius:2px 2px 0 0}.fxBarsJL i s{font-size:7px;text-decoration:none;line-height:1;margin-top:1px;color:#fff}
+.fxBarsJL{display:flex;gap:4px;align-items:flex-end;width:100%;margin-top:3px}.fxBarsJL i{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:46px;font-style:normal}.fxBarsJL i em{font-style:normal;font-size:9px;font-weight:700;white-space:nowrap;line-height:1.2}.fxBarsJL i.sum{justify-content:center;border-left:1px solid rgba(255,255,255,.18)}.fxBarsJL i.sum em{font-size:10.5px}.fxBarsJL i b{display:block;width:10px;max-height:18px;border-radius:2px 2px 0 0}.fxBarsJL i s{font-size:8.5px;text-decoration:none;line-height:1;margin-top:2px;color:#fff}
 .detailGrid.jlDg1JL{grid-template-columns:1fr}
 /* jl-dedup1 详情页「本票资金」: 今日资金+共振格+近5日 合成一张; 市场温度/市场环境与首页、联动球重复, 隐藏 */
 .jlOneFundJL{margin-top:10px;padding:10px 11px;border:1px solid #81e6d92c;border-radius:12px;background:linear-gradient(110deg,#0a1a2a59,#0d304026)}
@@ -5569,7 +5569,8 @@ function posRulerHTMLJL(s) {
         const all = JSON.parse(localStorage.getItem("jl_ff_v1") || "{}") || {}, cf = all[s.code] || all[String(s.code).replace(/^(sh|sz)/, "")], rows = cf && cf.rows ? cf.rows.slice(-5) : [];
         if (rows.length) {
           const mx = Math.max.apply(null, rows.map((r) => Math.abs(+r.main || 0)).concat([1]));
-          c = '<div class="fxBarsJL">' + rows.map((r) => { const v = +r.main || 0, cl = v >= 0 ? "#ff5459" : "#1fdc93"; return '<i title="' + String(r.d || "").slice(5) + " " + fmtFundJL(v) + '"><b style="height:' + Math.max(8, Math.round(Math.abs(v) / mx * 100)) + "%;background:" + cl + '"></b><s>' + String(r.d || "").slice(8) + "</s></i>"; }).join("") + "</div>";
+          const tot = rows.reduce((m, r) => m + (+r.main || 0), 0); /* 11-10 用户: 柱子下面只有日期(05 06 07…)看不懂 → 每根写 日期+金额, 末尾5日合计 */
+          c = '<div class="fxBarsJL">' + rows.map((r) => { const v = +r.main || 0, cl = v >= 0 ? "#ff5459" : "#1fdc93"; return '<i><em style="color:' + cl + '">' + fmtFundJL(v) + '</em><b style="height:' + Math.max(8, Math.round(Math.abs(v) / mx * 100)) + "%;background:" + cl + '"></b><s>' + String(r.d || "").slice(5) + "</s></i>"; }).join("") + '<i class="sum"><em style="color:' + (tot >= 0 ? "#ff5459" : "#1fdc93") + '">' + fmtFundJL(tot) + "</em><s>5日合计</s></i></div>";
         }
       } catch (e2) {}
       if (!a && !b && !c) return "";
@@ -8317,7 +8318,7 @@ function playbookHTMLJL(s, leg, swSt) {
   const WLH = { code: "", prev: -1 };
   (() => { /* 11-10 用户: ①持仓页那张小K线只在自选页看(原来要先进过自选页才藏, 现在一开始就藏) ②当前持仓的「资金灯」(资金·结构风险)挪到小K线原来的位置, 缩小一号; 别的卡里的资金灯不显示 */
     const st = document.createElement("style");
-    st.textContent = "#holds section.glass:has(#holdingChart){display:none!important}#deck .flLampJL{display:none!important}#hldFundSlotJL{margin:8px 0 0}#hldFundSlotJL .flLampJL{margin:0}#hldFundSlotJL .flLampJL>summary{padding:6px 9px;gap:6px;font-size:11px}#hldFundSlotJL .flLampJL>summary *{font-size:11px}#hldFundSlotJL .fmxJL{zoom:.9}";
+    st.textContent = "#holds section.glass:has(#holdingChart){display:none!important}#deck .flLampJL{display:none!important}#hldFundSlotJL{margin:8px 0 0}.c5TogJL{margin-left:auto;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;border-radius:9px;padding:2px 9px;font-size:11px;font-weight:700;min-height:0;min-width:0;align-self:center}#c5JL.c5FoldJL>:not(.hd):not(.htabsJL){display:none!important}#hldFundSlotJL .flLampJL{margin:0}#hldFundSlotJL .flLampJL>summary{padding:6px 9px;gap:6px;font-size:11px}#hldFundSlotJL .flLampJL>summary *{font-size:11px}#hldFundSlotJL .fmxJL{zoom:.9}";
     document.head.appendChild(st);
     const mv = () => {
       try {
@@ -8328,6 +8329,13 @@ function playbookHTMLJL(s, leg, swSt) {
         if (lp) { slot.innerHTML = ""; slot.appendChild(lp); }
       } catch (e) {}
     };
+    const c5 = () => { /* 11-10 用户: 五日图也能收起/展开(收起只留标题行+股票切换条), 记 jl_c5fold_v1 */
+      const R = document.getElementById("c5JL"), hd = R && R.querySelector(":scope > .hd"); if (!hd || hd.querySelector(".c5TogJL")) return;
+      let f = false; try { f = localStorage.getItem("jl_c5fold_v1") === "1"; } catch (e) {}
+      const b = document.createElement("button"); b.type = "button"; b.className = "c5TogJL"; b.textContent = f ? "展开 ▸" : "收起 ▾"; R.classList.toggle("c5FoldJL", f); hd.appendChild(b);
+      b.addEventListener("click", (e) => { e.stopPropagation(); const nf = R.classList.toggle("c5FoldJL"); b.textContent = nf ? "展开 ▸" : "收起 ▾"; try { localStorage.setItem("jl_c5fold_v1", nf ? "1" : "0"); } catch (er) {} });
+    };
+    setInterval(c5, 1500);
     const go = () => { mv(); const dk = document.getElementById("deck"); if (dk && window.MutationObserver) new MutationObserver(() => mv()).observe(dk, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] }); };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else setTimeout(go, 0);
   })();
