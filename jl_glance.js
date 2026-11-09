@@ -1,4 +1,4 @@
-/* jl_glance.js v1 — 首页「今日一眼」卡 (jl-1224a)
+/* jl_glance.js v1 (11-10 v4: 大盘位置下加中波段) — 首页「今日一眼」卡 (jl-1224a)
  * 只读 window.jlGlanceInputJL()(买入闸/ATR5开盘参数/报价) + jlLinkInputJL()(上证/预判带/异动) + jl_reso_log_v1(共振位), 不新发请求
  * 三段: ①大字灯=买入闸结论+两条主因(09:25前标"昨收数据") ②大盘位置条(预判低→高)+抄底灯 ③09:25 每只持仓/自选一行: 可买/等回踩某价/不碰
  * 规则全部是初值, 未回测(界面写明):
@@ -167,7 +167,8 @@
     var sh = K && K.sh, pred = K && K.pred, ds = dipState(sh, pred, K && K.ev, K && K.temp);
     var live = sh && sh.qd === today().replace(/-/g, '');
     h += '<div class="sec"><h4><span>大盘位置 · 上证在预判带哪里</span><span>上证 ' + pc(sh && sh.pct) + '</span></h4>' + barHTML(sh, pred) +
-      '<div class="dip ' + (live ? ds.k : 'na') + '"><span class="dl">' + (live ? ds.txt : '未开盘') + '</span><span>' + (live ? esc(ds.why || '盘中贴近预判低时提醒：金=可低吸 · 红=别接') + (ds.k === 'buy' && G.gate.lvl === 'red' ? ' · <b style="color:#ffb35c">闸红：只当观察信号</b>' : '') : '盘中贴近预判低时提醒') + '</span></div></div>';
+      '<div class="dip ' + (live ? ds.k : 'na') + '"><span class="dl">' + (live ? ds.txt : '未开盘') + '</span><span>' + (live ? esc(ds.why || '盘中贴近预判低时提醒：金=可低吸 · 红=别接') + (ds.k === 'buy' && G.gate.lvl === 'red' ? ' · <b style="color:#ffb35c">闸红：只当观察信号</b>' : '') : '盘中贴近预判低时提醒') + '</span></div>' +
+      '<div class="predJL" id="jlMidFibJL" style="margin-top:12px">' + (window.__jlMidFibHTML || '') + '</div></div>'; /* jl-midfib 11-10: 中波段(原大盘预判卡下半)挪到这里 */
     /* ③ 09:25 判断 */
     h += '<div class="sec"><h4><span>09:25 买入判断 · 持仓+自选</span><span>' + (d.picks ? d.gate.at + ' 锁定' : '') + '</span></h4>';
     if (!d.picks) h += '<div style="font-size:11.5px;color:#dfe9f2">' + (pre || !wk() ? '09:25 竞价出来后给出：每只一行「可买 / 等回踩某价 / 不碰」' : m >= 1000 ? '今天 09:25–10:00 没打开过 App，没有锁定的判断（不事后补，免得用盘中价冒充开盘判断）' : '等开盘价和买入闸数据…') + '</div>';
