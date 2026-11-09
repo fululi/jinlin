@@ -28,6 +28,31 @@ body.solo{background:radial-gradient(120% 80% at 10% 0%,#1c4f7a 0%,#0d2c4a 45%,#
 .nav{clear:both;justify-content:center;flex-wrap:nowrap;gap:5px;margin-top:8px;padding-top:4px}.nav button{font-size:12px;padding:3px 8px;white-space:nowrap}.nav button.ar{font-size:16px;line-height:1;padding:2px 10px}
 .dt{font-weight:600!important;font-size:14px!important;min-width:104px;text-align:center;white-space:nowrap}
 #dinfo b,.tag b{font-weight:500}.mini select{font-weight:500!important}.chips.big button,.chips button.on{font-weight:500}
+/*p1109c*/
+body{font-size:12.5px}.wrap{padding:4px 8px 14px}
+#ttl{font-size:14px!important;font-weight:600!important;margin:2px 2px 0}#ttl small{font-size:11px!important}
+#psw summary{font-size:12px!important;margin:0 2px}.ps{font-size:12px!important}.ps select{font-size:12px!important}
+.card{padding:9px 10px;border-color:rgba(255,255,255,.2)}
+.chips{gap:5px;margin:0 0 6px}.chips button{font-size:12px!important;padding:3px 10px!important;font-weight:500!important;border-radius:12px}
+.chips.big button{font-size:13px!important;padding:4px 14px!important}
+.hs{margin:0 0 6px}.hs button{font-size:11.5px!important;padding:2px 9px!important;font-weight:500!important}
+.st{display:grid;grid-template-columns:3.4em .8fr 1fr .7fr 1fr 1.3fr;font-size:12px;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.07);align-items:center;cursor:pointer}
+.st span{text-align:right}.st span:first-child{text-align:left}.st.hd{font-size:10.5px;cursor:default;padding-top:2px}.st.on{background:rgba(255,225,77,.1);border-radius:6px}.st.tot{border-bottom:0;font-weight:600}
+.rd{font-size:11.5px;margin:6px 4px 0}.rd b{font-weight:500}
+#hold{font-size:11.5px;margin:4px 4px 6px}#hold b{font-weight:500}
+#dkt{font-size:10.5px;margin:0 4px 2px}
+.ch{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin:0 2px 2px}.ch small{font-size:10.5px}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:4px 0 6px}.kv div{border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:3px 6px}.kv small{display:block;font-size:9.5px}.kv b{font-weight:500;font-size:12.5px}
+.dtb{max-height:290px;border-top:0}
+.dr{grid-template-columns:1.3fr .85fr .85fr .85fr .85fr .75fr 1.1fr!important;font-size:11.5px!important;padding:5px 2px!important;cursor:pointer}
+.dr.hd{font-size:10px!important;background:#0e1c32!important;cursor:default}.dr i,#dinfo i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.dnote{font-size:10px;margin:3px 2px 0}
+#dinfo{font-size:11.5px;margin:6px 2px 2px}#dinfo b{font-weight:500}
+.nav{margin-top:0!important;padding-top:0!important}.nav button{font-size:11px!important}.dt{font-size:13px!important;font-weight:500!important}
+.tt{margin-top:4px}.tt .tr{display:grid;grid-template-columns:1.6em 1fr 1fr .9fr .9fr;font-size:12.5px;padding:4px 2px;border-bottom:1px solid rgba(255,255,255,.07);align-items:start}
+.tt .tr span{text-align:right}.tt .tr span:first-child{text-align:left}.tt .tr small{display:block;font-size:9.5px;line-height:1.3}.tt .hd{font-size:10px;padding-bottom:2px}.tt .tot{border-bottom:0;font-weight:600}
+.tt0{font-size:11.5px;margin:6px 2px}
+.tbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}.tbar .chips{margin:0}.tbar #szc{float:none!important}.mini label{font-size:11.5px!important}.mini select{font-size:12px!important}
 </style></head><body><div class="wrap">
 <div id="ttl"></div><details id="psw"><summary>⚙ 参数（振幅倍数 / 回落 / 股数 …）</summary><div class="ps"><label>振幅到<select id="p_xa"><option>0.7</option><option>0.8</option><option selected>0.9</option><option>1.0</option></select>倍日均卖</label>
 <label>回落<select id="p_rb"><option value="0.018">1.8%</option><option value="0.027" selected>2.7%</option><option value="0.035">3.5%</option></select>接</label>
@@ -39,14 +64,13 @@ body.solo{background:radial-gradient(120% 80% at 10% 0%,#1c4f7a 0%,#0d2c4a 45%,#
 <label>做法<select id="p_mode"><option value="r3" selected>尺子一二三轮</option><option value="old">旧振幅法(0.9倍/回落接)</option></select></label></div></details>
 
 
-<div class="card"><div class="chips big" id="cc"></div><div class="chips" id="pc"></div><div id="hold" style="font-size:15px;margin:2px 0 6px"></div><div id="how"></div><div id="dkt" style="font-size:13px;color:#dfe6ee;margin:4px 0 2px"></div><div class="cw"><canvas id="dk" height="300"></canvas><canvas id="dkO" class="ov"></canvas></div>
-</div>
-<div class="card">
-<div class="mini"><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><div class="chips" id="szc" style="justify-content:flex-end;margin:0 0 4px"></div><div class="nav"><button id="pt" class="tx">« 有交易</button><button id="pv" class="ar">‹</button><span class="dt" id="dt"></span><button id="nx" class="ar">›</button><button id="nt" class="tx">有交易 »</button></div>
-<div style="margin-top:6px"><span class="tag" id="dinfo"></span></div>
+<div class="card"><div class="chips big" id="cc"></div><div class="hs" id="pc"></div><div id="sumT"></div><div id="hold"></div><div id="dkt"></div><div class="cw"><canvas id="dk" height="300"></canvas><canvas id="dkO" class="ov"></canvas></div></div>
+<div class="card"><div class="ch"><span id="dlT">逐日</span><small id="dlN"></small></div><div id="how"></div></div>
+<div class="card"><div class="nav"><button id="pt" class="tx">« 有交易</button><button id="pv" class="ar">‹</button><span class="dt" id="dt"></span><button id="nx" class="ar">›</button><button id="nt" class="tx">有交易 »</button></div>
+<div id="dinfo"></div>
 <div class="cw"><canvas id="mk" height="300"></canvas><canvas id="mkO" class="ov"></canvas></div>
-
-<div id="tl" style="margin-top:8px"></div></div>
+<div id="tl"></div>
+<div class="tbar"><div class="mini"><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><span style="flex:1"></span><div class="chips" id="mvc"></div><div class="chips" id="szc"></div></div></div>
 <div class="tip" id="tip"></div></div>
 <script>
 const HCODES=["600105", "000892", "002172", "002343", "002716", "600011", "600127", "600371", "600489", "600547", "600795", "600900", "600916", "603986", "605577"];
@@ -170,12 +194,12 @@ function prep(cv){const r=devicePixelRatio||1,w=Math.floor(cv.parentNode.clientW
  const c=cv.getContext('2d');c.setTransform(r,0,0,r,0,0);return [c,w,h]}
 /* 十字线: 画在上层透明画布, 不重画K线; 字的底是半透明, 不挡图 */
 function ovClear(id){const o=document.getElementById(id+'O');o.getContext('2d').clearRect(0,0,o.width,o.height)}
-function lab(c,x,y,s,al){c.font='11px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const w=c.measureText(s).width+8;let X=al==='r'?x-w:al==='c'?x-w/2:x;X=Math.max(0,Math.min(X,c.canvas.clientWidth-w));
+function lab(c,x,y,s,al){c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const w=c.measureText(s).width+8;let X=al==='r'?x-w:al==='c'?x-w/2:x;X=Math.max(0,Math.min(X,c.canvas.clientWidth-w));
  c.fillStyle='rgba(255,255,255,.18)';c.beginPath();c.roundRect?c.roundRect(X,y-8,w,16,4):c.rect(X,y-8,w,16);c.fill();c.fillStyle='#fff';c.fillText(s,X+4,y+4)}
 function cross(id,x,y,W,H,pl,pr,px,bt,info,lp){const o=document.getElementById(id+'O'),r=devicePixelRatio||1,c=o.getContext('2d');c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,W,H);
  c.strokeStyle='rgba(255,255,255,.55)';c.setLineDash([3,3]);c.beginPath();c.moveTo(x,0);c.lineTo(x,H);if(y!=null){c.moveTo(pl,y);c.lineTo(W-pr,y)}c.stroke();c.setLineDash([]);
  if(y!=null&&px)lab(c,W-pr+1,y,px,'l');if(y!=null&&lp)lab(c,pl,y,lp,'l');if(bt)lab(c,x,H-9,bt,'c');
- if(info){c.font='11px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const L=info.split('\n'),w=Math.max(...L.map(s=>c.measureText(s).width))+10,X=x>W/2?pl+2:W-pr-w-2;
+ if(info){c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const L=info.split('\n'),w=Math.max(...L.map(s=>c.measureText(s).width))+10,X=x>W/2?pl+2:W-pr-w-2;
   c.fillStyle='#ffffff';L.forEach((s,i)=>otx(c,s,X+5,15+i*15))}}
 function chips(id,list,val,f){const e=document.getElementById(id);e.innerHTML='';for(const v of list){const b=document.createElement('button');b.textContent=v;if(v===val)b.className='on';b.onclick=()=>f(v);e.appendChild(b)}}
 const tip=document.getElementById('tip');function showTip(x,y,s){tip.innerHTML=s;tip.style.display='block';tip.style.left=Math.min(x+12,innerWidth-tip.offsetWidth-6)+'px';tip.style.top=(y-44)+'px'}
@@ -183,10 +207,10 @@ const tip=document.getElementById('tip');function showTip(x,y,s){tip.innerHTML=s
 let DK={};
 function drawDK(){const cv=document.getElementById('dk'),[c,W,H]=prep(cv);const pl=6,pr=48,pt=8,kH=Math.round(H*.46),dotH=10,nH=Math.round(H*.1),cH=H-pt-kH-dotH-nH-26;
  const n=days.length,A0=ZV.dk?Math.max(0,Math.min(ZV.dk[0],n-1)):0,A1=ZV.dk?Math.min(n-1,ZV.dk[1]):n-1,bw=(W-pl-pr)/(A1-A0+1),VV=DV.slice(A0,A1+1),hi=Math.max(...VV.map(x=>x[1])),lo=Math.min(...VV.map(x=>x[2])),y=v=>pt+(hi-v)/(hi-lo)*kH;
- DATA.ph.forEach(([p,a,b])=>{const i0=days.findIndex(d=>d>=a);let i1=-1;days.forEach((d,i)=>{if(d<=b)i1=i});if(i0<0||i1<i0||i1<A0||i0>A1)return;c.fillStyle=p.startsWith('上涨')?'rgba(255,84,89,.10)':'rgba(31,220,147,.09)';c.fillRect(pl+(i0-A0)*bw,pt,(i1-i0+1)*bw,kH);c.fillStyle='rgba(255,255,255,.78)';c.font='11px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';c.fillText(p,pl+Math.max(0,i0-A0)*bw+3,pt+12)});
- c.fillStyle='rgba(255,255,255,.78)';c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;c.fillText(v.toFixed(1)+'元',W-pr+2,y(v)+3)}c.save();c.beginPath();c.rect(pl,0,W-pl-pr,H);c.clip();
- DV.forEach(([o,h,l,cl],i)=>{if(i<A0-1||i>A1+1)return;const x=pl+(i-A0)*bw+bw/2,col=cl>=o?'#ff5459':'#1fdc93';c.strokeStyle=col;c.beginPath();c.moveTo(x,y(h));c.lineTo(x,y(l));c.stroke();const t=Math.min(y(o),y(cl)),hh=Math.max(1,Math.abs(y(o)-y(cl))),ww=Math.max(1,bw*.7);if(cl>=o){c.strokeRect(x-ww/2,t,ww,hh)}else{c.fillStyle=col;c.fillRect(x-ww/2,t,ww,hh)}
-  const ct=DATA.info[days[i]].cat;c.fillStyle=CC[ct];c.globalAlpha=(cat==='全部'||cat===ct)?1:.15;c.beginPath();c.arc(x,pt+kH+6,Math.min(2.6,bw*.4),0,7);c.fill();c.globalAlpha=1});
+ DATA.ph.forEach(([p,a,b])=>{const i0=days.findIndex(d=>d>=a);let i1=-1;days.forEach((d,i)=>{if(d<=b)i1=i});if(i0<0||i1<i0||i1<A0||i0>A1)return;c.fillStyle=p.startsWith('上涨')?'rgba(255,84,89,.10)':'rgba(31,220,147,.09)';c.fillRect(pl+(i0-A0)*bw,pt,(i1-i0+1)*bw,kH);c.fillStyle='rgba(255,255,255,.78)';c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';c.fillText(p,pl+Math.max(0,i0-A0)*bw+3,pt+12)});
+ c.fillStyle='rgba(255,255,255,.78)';c.font='10px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;c.fillStyle='#fff';c.fillText(v.toFixed(2),W-pr+4,y(v)+3)}c.save();c.beginPath();c.rect(pl,0,W-pl-pr,H);c.clip();
+ DV.forEach(([o,h,l,cl],i)=>{if(i<A0-1||i>A1+1)return;const x=pl+(i-A0)*bw+bw/2;candle(c,x,bw,y(o),y(h),y(l),y(cl),cl>=o);
+  const ct=DATA.info[days[i]].cat;c.fillStyle=CC[ct];c.globalAlpha=(cat==='全部'||cat===ct)?1:.15;c.beginPath();c.arc(x,pt+kH+6,Math.max(.6,Math.min(2.2,bw*.38)),0,7);c.fill();c.globalAlpha=1});
  const nm=NET[cat],mx=Math.max(1,...Object.values(nm).map(Math.abs)),ny0=pt+kH+dotH+nH/2+2;c.strokeStyle='rgba(255,255,255,.14)';c.beginPath();c.moveTo(pl,ny0);c.lineTo(W-pr,ny0);c.stroke();
  days.forEach((d,i)=>{const v=nm[d];if(!v)return;const hh=v/mx*(nH/2);c.fillStyle=v>0?'#ff5459':'#1fdc93';c.fillRect(pl+(i-A0)*bw+bw*.1,ny0-Math.max(hh,0),Math.max(1,bw*.8),Math.abs(hh)||1)});
  c.fillStyle='rgba(255,255,255,.78)';c.fillText('当天',W-pr+4,ny0+3);
@@ -194,8 +218,8 @@ function drawDK(){const cv=document.getElementById('dk'),[c,W,H]=prep(cv);const 
  const yc=v=>cy0+(mxv-v)/((mxv-mn)||1)*cH;c.strokeStyle='rgba(255,255,255,.14)';c.beginPath();c.moveTo(pl,yc(0));c.lineTo(W-pr,yc(0));c.stroke();c.fillStyle='rgba(255,255,255,.78)';c.fillText('0',W-pr+4,yc(0)+3);
  const lines=[['全部','#ffffff']].concat(CAT.map(k=>[k,CC[k]]));let ly=[];
  for(const [k,col] of lines){const on=cat==='全部'||cat===k;c.strokeStyle=col;c.globalAlpha=on?1:.35;c.lineWidth=cat===k?3:(k==='全部'?2.2:1.6);c.beginPath();cum[k].forEach((v,i)=>{const x=pl+(i-A0)*bw+bw/2;i?c.lineTo(x,yc(v)):c.moveTo(x,yc(v))});c.stroke();c.lineWidth=1;
-  let yy=yc(cum[k][A1]);while(ly.some(z=>Math.abs(z-yy)<11))yy+=11;ly.push(yy);c.globalAlpha=1;c.font='500 11.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const s=(k==='全部'?'合计':k)+' '+fmt(cum[k][A1]),tw=c.measureText(s).width;c.fillStyle=k==='平开'?'#dfe6ee':col;otx(c,s,W-pr-tw-5,yy+3);c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif'}
- if(sel){const i=IX[sel];c.strokeStyle='#ffffff';c.setLineDash([3,3]);c.strokeRect(pl+(i-A0)*bw,pt,bw,H-pt-4);c.setLineDash([])}c.restore();
+  let yy=yc(cum[k][A1]);while(ly.some(z=>Math.abs(z-yy)<11))yy+=11;ly.push(yy);c.globalAlpha=1;c.font='500 10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const s=(k==='全部'?'合计':k)+' '+fmt(cum[k][A1]),tw=c.measureText(s).width;c.fillStyle=k==='平开'?'#dfe6ee':col;otx(c,s,W-pr-tw-5,yy+3);c.font='10px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif'}
+ if(sel){const i=IX[sel];c.fillStyle='rgba(255,225,77,.16)';c.fillRect(pl+(i-A0)*bw,pt,Math.max(2,bw),H-pt-4)}c.restore();
  DK={pl,pr,pt,kH,bw,cum,hi,lo,W,H,A0,N:n};document.getElementById('dkt').textContent=days[A0]+' ～ '+days[A1]}
 const dkI=ev=>{const r=document.getElementById('dk').getBoundingClientRect();return Math.max(0,Math.min(days.length-1,DK.A0+Math.floor(((ev.touches?ev.touches[0].clientX:ev.clientX)-r.left-DK.pl)/DK.bw)))};
 document.getElementById('dk').addEventListener('click',ev=>{if(ZG.moved)return;selDay(days[dkI(ev)])});
@@ -217,42 +241,52 @@ function swings(bars,pc,avg){const C=bars.map(b=>b[3]);const P=[{i:0,p:bars[0][0
   q.leg=(q.p/P[n-1].p-1)*100;q.amp=(dhi-dlo)/pc*100;q.left=avg-q.amp});
  return P.slice(1).filter((q,i)=>i===0||Math.abs(q.leg)>=1.0)}
 
-function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.info[d];const cv=document.getElementById('mk'),[c,W,H]=prep(cv);const pl=6,pr=48,pt=44,pb=40,n=bars.length,B0=ZV.mk?Math.max(0,Math.min(ZV.mk[0],n-1)):0,B1=ZV.mk?Math.min(n-1,ZV.mk[1]):n-1,bw=(W-pl-pr)/(B1-B0+1),VB=bars.slice(B0,B1+1);
- const M=[];TR.forEach(t=>{if(t[0]===d)M.push({S:1,i:t[1],p:t[2],t});if(t[3]===d)M.push({S:0,i:t[4],p:t[5],t})});
- const dlo=Math.min(...bars.map(b=>b[2])),upTo=dlo+P().xa*f.amp/100*f.pc;const PLC=[];const place=(X,Y,w,h,dir,skip)=>{for(let k=0;k<16;k++){const yy=Y+(k?Math.ceil(k/2)*(h+2)*((k%2?dir:-dir)):0);if(yy<2||yy+h>H-pb+14)continue;if(!PLC.some(r=>X<r[0]+r[2]&&X+w>r[0]&&yy<r[1]+r[3]&&yy+h>r[1])){PLC.push([X,yy,w,h]);return yy}}if(skip)return null;PLC.push([X,Y,w,h]);return Y};/* 11-09 用户: skip=摆不下就不画, 不再硬叠成一团 */
- const MV=M.filter(m=>m.i>=B0&&m.i<=B1);let hi=Math.max(...VB.map(b=>b[1]),...MV.map(m=>m.p)),lo=Math.min(...VB.map(b=>b[2]),...MV.map(m=>m.p));const pad=(hi-lo)*.08||.05;hi+=pad;lo-=pad;{const md=(hi+lo)/2,hf=(hi-lo)/2/ZV.mkY;hi=md+hf;lo=md-hf}const y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb);
- c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;c.strokeStyle='rgba(255,255,255,.08)';c.beginPath();c.moveTo(pl,y(v));c.lineTo(W-pr,y(v));c.stroke();c.fillStyle='rgba(255,255,255,.78)';c.fillText(v.toFixed(2),W-pr+4,y(v)+3)}c.save();c.beginPath();c.rect(pl,0,W-pl-pr,H);c.clip();
- const TA=DATA.tm[d];['09:30','10:30','13:00','14:00'].forEach(s=>{const i=TA.indexOf(s);if(i>=B0&&i<=B1){c.fillStyle='rgba(255,255,255,.78)';c.fillText(s,Math.min(pl+(i-B0)*bw,W-pr-28),H-3)}});
- if(f.pc){c.strokeStyle='rgba(255,255,255,.45)';c.setLineDash([2,3]);c.beginPath();c.moveTo(pl,y(f.pc));c.lineTo(W-pr,y(f.pc));c.stroke();c.setLineDash([]);c.fillStyle='rgba(255,255,255,.78)';c.fillText('昨收',pl+2,y(f.pc)-3);PLC.push([pl,y(f.pc)-14,30,14])}
- if(P().mode==='old'&&upTo<hi){c.strokeStyle='#ffe14d';c.setLineDash([5,3]);c.beginPath();c.moveTo(pl,y(upTo));c.lineTo(W-pr,y(upTo));c.stroke();c.setLineDash([]);c.fillStyle='#ffe14d';c.fillText('卖线'+upTo.toFixed(2),pl+2,y(upTo)-3);PLC.push([pl,y(upTo)-14,70,14])}
- bars.forEach(([o,h,l,cl],i)=>{if(i<B0-1||i>B1+1)return;const x=pl+(i-B0)*bw+bw/2,col=cl>=o?'#ff5459':'#1fdc93';c.strokeStyle=col;c.beginPath();c.moveTo(x,y(h));c.lineTo(x,y(l));c.stroke();const t=Math.min(y(o),y(cl)),hh=Math.max(1,Math.abs(y(o)-y(cl))),ww=Math.max(1,bw*.7);if(cl>=o){c.strokeRect(x-ww/2,t,ww,hh)}else{c.fillStyle=col;c.fillRect(x-ww/2,t,ww,hh)}});
- const hit=[];MV.forEach(m=>{const x=pl+(m.i-B0)*bw+bw/2,yy=y(m.p),col=m.S?'#ff5459':'#1fdc93',dy=m.S?-11:11,s=7;c.strokeStyle=col;c.globalAlpha=.5;c.setLineDash([4,3]);c.beginPath();c.moveTo(pl,yy);c.lineTo(W-pr,yy);c.stroke();c.setLineDash([]);c.globalAlpha=1;
-  c.beginPath();if(m.S){c.moveTo(x-s,yy+dy-s);c.lineTo(x+s,yy+dy-s);c.lineTo(x,yy+dy+2)}else{c.moveTo(x-s,yy+dy+s);c.lineTo(x+s,yy+dy+s);c.lineTo(x,yy+dy-2)}c.closePath();c.fillStyle=col;c.fill();
-  const q0=m.t[10]||0,amt=v=>v>=1e4?(v/1e4).toFixed(2)+'万':String(Math.round(v));let ex='';
-  if(P().mode!=='old'){let dl=1e9,dh=0;for(let j=0;j<=m.i;j++){dl=Math.min(dl,bars[j][2]);dh=Math.max(dh,bars[j][1])}
-   if(m.S)ex=' '+q0+'股 '+amt(m.p*q0)+' · 振'+((Math.max(dh,m.p)-dl)/f.pc*100).toFixed(1)+'/'+f.amp.toFixed(1);
-   else{const s0=m.t[1],a0=Math.min(s0,m.i);let mh=0;if(s0<m.i){for(let j=s0;j<m.i;j++)mh=Math.max(mh,bars[j][1])}ex=' '+q0+'股 '+amt(m.p*q0)+(mh>0?' · 高'+mh.toFixed(2)+'回落'+((1-m.p/mh)*100).toFixed(1)+'%':'')+' · 差'+(m.t[8]>=0?'+':'')+m.t[8]+(m.t[7]==='收盘接'?'(收盘)':'')}}
-  else if(!m.S&&m.t[0]!==d){ex=' ('+m.t[0].slice(5)+'卖'+m.t[2].toFixed(2)+'的隔天接回)'}else if(!m.S){const s0=m.t[1];let mh=0;for(let j=s0;j<m.i;j++)mh=Math.max(mh,bars[j][1]);if(mh>0)ex=' (高'+mh.toFixed(2)+'回落'+((1-m.p/mh)*100).toFixed(1)+'%)'}else{let dl=1e9,dh=0;for(let j=0;j<=m.i;j++){dl=Math.min(dl,bars[j][2]);dh=Math.max(dh,bars[j][1])}ex=' 振'+((Math.max(dh,m.p)-dl)/f.pc*100).toFixed(1)+'/'+f.amp.toFixed(1)}
-  c.font='500 10px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const ms=(m.S?m.t[6][0]+'卖':m.t[6][0]+'接')+m.p.toFixed(2)+ex,mw=c.measureText(ms).width+6,MX=Math.max(pl,Math.min(x+8,W-pr-mw-2)),MY=place(MX,yy+dy+(m.S?-20:4),mw,15,m.S?-1:1);c.fillStyle=col;otx(c,ms,MX+3,MY+11);c.font='10.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';hit.push({x,y:yy+dy,m})});
- MK={pl,pr,bw,bars,hit,W,H,B0,N:n,yv:v=>hi-(v-pt)/(H-pt-pb)*(hi-lo)};
- const SWS=swings(bars,f.pc,f.amp);MK.sws=SWS;
- /* 11-09 用户: "振幅复盘咋变成这样了" —— 切段小(如0.8%)时转折点太多, ▲▼%和"振x/x 剩x/超"满屏都是还互相叠成一团.
-    改: ①标签限量=只给幅度最大的前几个转折点配字(按图宽给预算, 没配上的只剩圆点); ②摆不下就整条不画(不再硬叠); ③标签多时第二行"振/剩"整行省略 */
- let LBS=SWS.filter(q=>q.i2>=B0&&q.i2<=B1);
- const BUD=Math.max(4,Math.min(9,Math.floor((W-pl-pr)/64)));
+let MKV=localStorage.getItem('jlamp_mkv')||'分时';
+const FT=(w,s)=>w+' '+s+'px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';
+/* 像素对齐的蜡烛: 影线1px不穿实体, 阳线够宽才空心 */
+function candle(c,xc,bw,yo,yh,yl,yc,up){const col=up?'#ff5459':'#1fdc93';let ww=Math.max(1,Math.floor(bw*.68));if(ww>2&&ww%2===0)ww--;
+ const bx=Math.round(xc-ww/2),xs=bx+Math.floor(ww/2)+.5,t=Math.round(Math.min(yo,yc)),bb=Math.max(t+1,Math.round(Math.max(yo,yc)));
+ c.lineWidth=1;c.strokeStyle=col;c.fillStyle=col;c.beginPath();c.moveTo(xs,Math.round(yh));c.lineTo(xs,t);c.moveTo(xs,bb);c.lineTo(xs,Math.round(yl));c.stroke();
+ if(up&&ww>=4)c.strokeRect(bx+.5,t+.5,ww-1,Math.max(1,bb-t-1));else c.fillRect(bx,t,ww,bb-t)}
+function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.info[d],TA=DATA.tm[d]||[];const cv=document.getElementById('mk'),[c,W,H]=prep(cv);
+ const pl=4,pr=44,pt=14,pb=18,n=bars.length,B0=ZV.mk?Math.max(0,Math.min(ZV.mk[0],n-1)):0,B1=ZV.mk?Math.min(n-1,ZV.mk[1]):n-1,bw=(W-pl-pr)/(B1-B0+1),VB=bars.slice(B0,B1+1);
+ const M=[];TR.forEach(t=>{if(t[0]===d)M.push({S:1,i:t[1],p:t[2],t});if(t[3]===d)M.push({S:0,i:t[4],p:t[5],t})});const MV=M.filter(m=>m.i>=B0&&m.i<=B1);
+ let hi=Math.max(...VB.map(b=>b[1]),...MV.map(m=>m.p)),lo=Math.min(...VB.map(b=>b[2]),...MV.map(m=>m.p));const pad=(hi-lo)*.12||.05;hi+=pad;lo-=pad;{const md=(hi+lo)/2,hf=(hi-lo)/2/ZV.mkY;hi=md+hf;lo=md-hf}
+ const y=v=>pt+(hi-v)/(hi-lo)*(H-pt-pb),X=i=>pl+(i-B0)*bw+bw/2,sn=v=>Math.round(v)+.5,PLC=[];
+ const place=(X0,Y,w,h,dir,skip)=>{for(let k=0;k<12;k++){const yy=Y+(k?Math.ceil(k/2)*(h+2)*((k%2?dir:-dir)):0);if(yy<1||yy+h>H-pb)continue;if(!PLC.some(r=>X0<r[0]+r[2]&&X0+w>r[0]&&yy<r[1]+r[3]&&yy+h>r[1])){PLC.push([X0,yy,w,h]);return yy}}if(skip)return null;PLC.push([X0,Y,w,h]);return Y};
+ c.lineWidth=1;c.font=FT(400,10);
+ for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,yy=sn(y(v));c.strokeStyle='rgba(255,255,255,.07)';c.beginPath();c.moveTo(pl,yy);c.lineTo(W-pr,yy);c.stroke();c.fillStyle='#fff';c.fillText(v.toFixed(2),W-pr+5,yy+3.5)}
+ ['09:30','10:30','13:00','14:00'].forEach(s=>{const i=TA.indexOf(s);if(i<B0||i>B1)return;const xx=sn(X(i));if(s!=='09:30'){c.strokeStyle='rgba(255,255,255,.07)';c.beginPath();c.moveTo(xx,pt);c.lineTo(xx,H-pb);c.stroke()}c.fillStyle='#fff';c.fillText(s,Math.max(pl,Math.min(xx-(s==='09:30'?0:13),W-pr-27)),H-5)});
+ c.save();c.beginPath();c.rect(pl,0,W-pl-pr,H-pb);c.clip();
+ if(f.pc&&f.pc<hi&&f.pc>lo){const yy=sn(y(f.pc));c.strokeStyle='rgba(255,255,255,.35)';c.setLineDash([2,3]);c.beginPath();c.moveTo(pl,yy);c.lineTo(W-pr,yy);c.stroke();c.setLineDash([]);c.fillStyle='#fff';c.font=FT(400,9.5);otx(c,'昨收',pl+2,yy-3);PLC.push([pl,yy-13,26,13])}
+ const i0=Math.max(0,B0-1),i1=Math.min(n-1,B1+1);
+ if(MKV==='K线'){const gs=bw>=4?1:bw>=1.6?3:5;for(let g=Math.floor(i0/gs)*gs;g<=i1;g+=gs){const e=Math.min(n-1,g+gs-1);let o=bars[g][0],h=-1e9,l=1e9,cl=bars[e][3];for(let j=g;j<=e;j++){h=Math.max(h,bars[j][1]);l=Math.min(l,bars[j][2])}candle(c,X((g+e)/2),bw*gs,y(o),y(h),y(l),y(cl),cl>=o)}}
+ else{const pts=[];for(let i=i0;i<=i1;i++)pts.push([X(i),y(bars[i][3])]);const gr=c.createLinearGradient(0,pt,0,H-pb);gr.addColorStop(0,'rgba(120,190,255,.26)');gr.addColorStop(1,'rgba(120,190,255,0)');
+  c.beginPath();pts.forEach((p,k)=>k?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.lineTo(pts[pts.length-1][0],H-pb);c.lineTo(pts[0][0],H-pb);c.closePath();c.fillStyle=gr;c.fill();
+  c.beginPath();pts.forEach((p,k)=>k?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.strokeStyle='#ffffff';c.lineWidth=1.3;c.lineJoin='round';c.stroke();c.lineWidth=1}
+ /* 同一天的卖→接连一条细虚线: 黄=赚 白=亏 */
+ TR.filter(t=>t[0]===d&&t[3]===d).forEach(t=>{c.strokeStyle=t[8]>=0?'rgba(255,225,77,.8)':'rgba(255,255,255,.5)';c.setLineDash([3,3]);c.beginPath();c.moveTo(X(t[1]),y(t[2]));c.lineTo(X(t[4]),y(t[5]));c.stroke();c.setLineDash([])});
+ const hit=[];MV.forEach(m=>{const x=X(m.i),yy=y(m.p),col=m.S?'#ff5459':'#1fdc93',s=4.5;c.fillStyle=col;c.beginPath();if(m.S){c.moveTo(x-s,yy-10);c.lineTo(x+s,yy-10);c.lineTo(x,yy-3)}else{c.moveTo(x-s,yy+10);c.lineTo(x+s,yy+10);c.lineTo(x,yy+3)}c.closePath();c.fill();
+  c.beginPath();c.arc(x,yy,2,0,7);c.fill();
+  c.font=FT(500,10);const ms=m.t[6][0]+(m.S?'卖':'接')+m.p.toFixed(2),mw=c.measureText(ms).width+4,MX=Math.max(pl,Math.min(x-mw/2,W-pr-mw)),MY=place(MX,m.S?yy-25:yy+12,mw,13,m.S?-1:1);c.fillStyle=col;otx(c,ms,MX+2,MY+10);hit.push({x,y:yy,m})});
+ const SWS=swings(bars,f.pc,f.amp);let LBS=SWS.filter(q=>q.i2>=B0&&q.i2<=B1);const BUD=Math.max(3,Math.min(7,Math.floor((W-pl-pr)/70)));
  if(LBS.length>BUD)LBS=LBS.slice().sort((a,b)=>Math.abs(b.leg)-Math.abs(a.leg)).slice(0,BUD).sort((a,b)=>a.i2-b.i2);
- const DENSE=LBS.length>5;
- LBS.forEach(q=>{if(q.i2<B0||q.i2>B1)return;const x=pl+(q.i2-B0)*bw+bw/2,yy=y(q.p),up=q.h===1,col=up?'#ff9a3c':'#4ff0ff';
-  c.fillStyle=col;c.beginPath();c.arc(x,yy,3,0,7);c.fill();
-  const l1=(up?'▲':'▼')+Math.abs(q.leg).toFixed(1)+'%',l2=up&&!DENSE?('振'+q.amp.toFixed(1)+'/'+f.amp.toFixed(1)+(q.left>0.05?' 剩'+q.left.toFixed(1):' 超')):'';
-  c.font='500 11.5px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';const w=Math.max(c.measureText(l1).width,l2?c.measureText(l2).width:0)+8,X=Math.max(pl,Math.min(x-w/2,W-pr-w)),Y0=place(Math.max(pl,Math.min(x-w/2,W-pr-w)),up?yy-(l2?40:26):yy+10,w,l2?32:17,up?-1:1,1);
-  if(Y0==null)return;   /* 摆不下: 点保留, 字不画 */
-  c.fillStyle=col;otx(c,l1,X+4,Y0+13);if(l2){c.font='11px ui-rounded,"SF Pro Rounded","Yuanti SC","PingFang SC",-apple-system,sans-serif';otx(c,l2,X+4,Y0+27)}});
+ LBS.forEach(q=>{const x=X(q.i2),yy=y(q.p),up=q.h===1,col=up?'#ff9a3c':'#4ff0ff';c.fillStyle=col;c.beginPath();c.arc(x,yy,2.2,0,7);c.fill();
+  c.font=FT(500,9.5);const l1=(up?'▲':'▼')+Math.abs(q.leg).toFixed(1)+'%',w=c.measureText(l1).width+4,XX=Math.max(pl,Math.min(x-w/2,W-pr-w)),Y0=place(XX,up?yy-17:yy+5,w,12,up?-1:1,1);if(Y0==null)return;otx(c,l1,XX+2,Y0+9.5)});
  c.restore();
+ MK={pl,pr,bw,bars,hit,W,H,B0,N:n,yv:v=>hi-(v-pt)/(H-pt-pb)*(hi-lo),sws:SWS};
  document.getElementById('dt').textContent=d+' '+'日一二三四五六'[new Date(d).getDay()];
- const dh=Math.max(...bars.map(b=>b[1]));
- document.getElementById('dinfo').innerHTML='<b style="color:'+CC[f.cat]+'">'+f.cat+' '+(f.gap>=0?'+':'')+f.gap+'%</b> · '+phaseOf(d)+' · '+(f.ma10?'10日线上':'10日线下'+(document.getElementById('p_carry').value==='1'?'(没回落可隔天接)':''))+' · 今振幅 '+((dh-dlo)/f.pc*100).toFixed(1)+'% / 日均 '+f.amp.toFixed(1)+'%';
- const chain='<div style="margin:4px 0 6px;font-size:13px">'+MK.sws.map(q=>'<span style="color:'+(q.h?'#ff9a3c':'#4ff0ff')+';font-weight:600">'+(q.h?'▲':'▼')+Math.abs(q.leg).toFixed(1)+'</span>'+(q.h?'<span style="color:#dfe6ee">('+(q.left>0.05?'剩'+q.left.toFixed(1):'超均')+')</span>':'')).join(' → ')+'</div>';const rows=TR.filter(t=>t[0]===d||t[3]===d);document.getElementById('tl').innerHTML=chain+rows.map(t=>'<span class="pill">'+t[6].slice(1,3)+' '+t[10]+'股 卖'+t[2].toFixed(2)+' → '+t[7].replace('当天','').replace('数据截止按收盘','截止')+' '+t[5].toFixed(2)+' <b class="'+cls(t[8])+'">'+fmt(t[8])+'</b></span>').join('')||'<span class="pill">这天没做</span>'}
+ const dh=Math.max(...bars.map(b=>b[1])),dl=Math.min(...bars.map(b=>b[2]));
+ document.getElementById('dinfo').innerHTML='<i style="background:'+CC[f.cat]+'"></i><b style="color:'+CC[f.cat]+'">'+f.cat+' '+pf(f.gap)+'%</b> · 振幅 今 <b>'+((dh-dl)/f.pc*100).toFixed(1)+'%</b> / 均 '+f.amp.toFixed(1)+'% · '+(f.ma10?'10日线上':'10日线下')+(phaseOf(d)?' · '+phaseOf(d):'');
+ const rows=TR.filter(t=>t[0]===d||t[3]===d),amt=v=>v>=1e4?(v/1e4).toFixed(2)+'万':String(Math.round(v)),tot=sum(rows.filter(t=>t[3]===d));
+ const ampAt=i=>{let a=1e9,b=0;for(let j=0;j<=i;j++){a=Math.min(a,bars[j][2]);b=Math.max(b,bars[j][1])}return (b-a)/f.pc*100};
+ document.getElementById('tl').innerHTML=rows.length?'<div class="tt"><div class="tr hd"><span>轮</span><span>卖</span><span>接</span><span>股数</span><span>差价</span></div>'+rows.map(t=>{
+   const same=t[0]===t[3],sT=/收盘卖/.test(t[7])?'收盘':tm(t[1],t[0]),bT=/收盘接|到期|截止/.test(t[7])?'收盘':tm(t[4],t[3]);
+   let sx='',bx='';if(same&&t[0]===d){sx=' · 振'+ampAt(t[1]).toFixed(1);if(t[1]<t[4]){let mh=0;for(let j=t[1];j<t[4];j++)mh=Math.max(mh,bars[j][1]);if(mh>0)bx=' · 落'+((1-t[5]/mh)*100).toFixed(1)+'%'}}
+   if(!same){if(t[0]===d)bx=' · '+t[3].slice(5);else sx=' · '+t[0].slice(5)}
+   return '<div class="tr"><span>'+t[6][0]+'</span><span class="pos">'+t[2].toFixed(2)+'<small>'+sT+sx+'</small></span><span class="neg">'+t[5].toFixed(2)+'<small>'+bT+bx+'</small></span><span>'+t[10]+'<small>'+amt(t[2]*t[10])+'</small></span><span class="'+cls(t[8])+'">'+fmt(t[8])+'</span></div>'}).join('')+
+   (rows.length>1?'<div class="tr tot"><span></span><span></span><span></span><span>合计</span><span class="'+cls(tot)+'">'+fmt(tot)+'</span></div>':'')+'</div>':'<div class="tt0">这天没做</div>';
+ document.querySelectorAll('#how .dr[data-d]').forEach(e=>e.classList.toggle('on',e.dataset.d===d))}
 function mkMove(ev){const r=document.getElementById('mk').getBoundingClientRect(),p=ev.touches?ev.touches[0]:ev,x0=p.clientX-r.left,yy=p.clientY-r.top;
  const i=Math.max(0,Math.min(MK.bars.length-1,MK.B0+Math.floor((x0-MK.pl)/MK.bw))),b=MK.bars[i],x=MK.pl+(i-MK.B0)*MK.bw+MK.bw/2;
  const h=MK.hit.find(z=>Math.abs(z.x-x0)<9&&Math.abs(z.y-yy)<10);let info=tm(i,sel)+' 开'+b[0]+' 高'+b[1]+' 低'+b[2]+' 收'+b[3]+' 距昨收'+((b[3]/DATA.info[sel].pc-1)*100).toFixed(1)+'%';
@@ -291,39 +325,27 @@ const step=s=>{const L=catDays();if(!L.length)return;const nx=s>0?L.find(d=>d>se
 function stepT(s){const td=[...new Set(TR.filter(t=>cat==='全部'||t[9]===cat).flatMap(t=>cat==='全部'?[t[0],t[3]]:[t[0]]))].filter(d=>d in IX).sort();const nx=s>0?td.find(d=>d>sel):[...td].reverse().find(d=>d<sel);if(nx)selDay(nx)}
 pv.onclick=()=>step(-1);nx.onclick=()=>step(1);pt.onclick=()=>stepT(-1);nt.onclick=()=>stepT(1);
 
-/* 每种开盘一张示意图(不是真实走势) + 三个大数字 */
-const STEP={
- 高开:{p:[[0,40],[14,10],[34,26],[60,34],[86,14],[110,28],[140,22]],m:[[16,10,'S','高开冲高 卖'],[60,34,'B','回落 接'],[86,14,'S','再冲 卖'],[110,28,'B','回落 接']]},
- 平开:{p:[[0,30],[30,36],[60,46],[96,12],[120,26],[140,22]],m:[[96,12,'S','振幅到了 卖'],[120,26,'B','回落 接']]},
- 低开:{p:[[0,30],[24,46],[44,52],[90,18],[116,34],[140,30]],m:[[44,52,'L','先探底 不动'],[90,18,'S','振幅到了 卖'],[116,34,'B','回落 接']]}};
-function svgOf(k){const S=STEP[k],X=v=>10+v*2.8,Y=v=>10+v*2.2;let s='<svg viewBox="0 0 420 140"><line x1="10" y1="'+Y(30)+'" x2="410" y2="'+Y(30)+'" stroke="rgba(255,255,255,.4)" stroke-dasharray="4 4"/><text x="12" y="'+(Y(30)-4)+'" font-size="11" fill="rgba(255,255,255,.78)">昨收</text>';
- s+='<polyline fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round" points="'+S.p.map(q=>X(q[0])+','+Y(q[1])).join(' ')+'"/>';
- S.m.forEach(([x,y,t,l])=>{const c=t==='S'?'#ff5459':t==='B'?'#1fdc93':'rgba(255,255,255,.78)',dy=t==='S'?-14:16;s+=t==='L'?'<circle cx="'+X(x)+'" cy="'+Y(y)+'" r="6" fill="none" stroke="'+c+'" stroke-width="2"/>':'<path d="'+(t==='S'?'M'+(X(x)-8)+','+(Y(y)-18)+'h16l-8,10z':'M'+(X(x)-8)+','+(Y(y)+18)+'h16l-8,-10z')+'" fill="'+c+'"/>';
-  s+='<text x="'+X(x)+'" y="'+(Y(y)+dy+(t==='S'?-8:14))+'" font-size="14" font-weight="700" fill="'+c+'" text-anchor="middle">'+l+'</text>'});
- return s+'</svg>'}
-/* 11-09晚 用户: 选高开/平开/低开 → 这一类每天都列清楚(开高低收+振幅), 再给振幅/高低点大概率落在哪 */
 const qt=(a,p)=>{const b=[...a].sort((x,y)=>x-y);if(!b.length)return 0;const i=(b.length-1)*p,j=Math.floor(i);return b[j]+(b[Math.min(j+1,b.length-1)]-b[j])*(i-j)};
 const pf=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(1);
-function dstat(k,full){const L=days.filter(d=>DATA.info[d].cat===k);if(!L.length)return '';
- const R=L.map(d=>{const b=DATA.daily[AIX[d]],f=DATA.info[d],bs=DATA.bars[d]||[];let ih=0,il=0;bs.forEach((x,i)=>{if(x[1]>bs[ih][1])ih=i;if(x[2]<bs[il][2])il=i});
-  return {d,g:f.gap,a:(b[1]-b[2])/f.pc*100,h:(b[1]/b[0]-1)*100,l:(b[2]/b[0]-1)*100,c:(b[3]/b[0]-1)*100,up:ih<=il}});
- const col=j=>R.map(x=>x[j]),av=j=>col(j).reduce((s,v)=>s+v,0)/R.length,N=R.length,pc=n=>Math.round(n/N*100)+'%';
- const A=col('a'),bk=[[0,4],[4,6],[6,8],[8,99]].map(([a,b])=>[a,b,A.filter(v=>v>=a&&v<b).length]),top=bk.reduce((m,x)=>x[2]>m[2]?x:m);
- const cu=R.filter(x=>x.c>0).length,fu=R.filter(x=>x.up).length;
- let h='<div class="dst"><div>'+N+'天 · 振幅 均<b>'+av('a').toFixed(1)+'%</b> · 一半的天在 <b>'+qt(A,.25).toFixed(1)+'–'+qt(A,.75).toFixed(1)+'%</b></div>'+
-  '<div class="bk">'+bk.map(([a,b,n])=>'<span'+(n===top[2]&&n?' class="on"':'')+'>'+(b>90?'≥'+a:a+'–'+b)+'% <b>'+pc(n)+'</b></span>').join('')+'</div>'+
-  '<div>相对开盘：高 均<b class="pos">'+pf(av('h'))+'%</b>（一半 '+pf(qt(col('h'),.25))+'~'+pf(qt(col('h'),.75))+'）· 低 均<b class="neg">'+pf(av('l'))+'%</b>（一半 '+pf(qt(col('l'),.75))+'~'+pf(qt(col('l'),.25))+'）</div>'+
-  '<div>收 均<b class="'+(av('c')>=0?'pos':'neg')+'">'+pf(av('c'))+'%</b> · 收在开盘上方 <b>'+cu+'/'+N+'</b> · 先冲高 <b>'+fu+'</b> 天 / 先探底 <b>'+(N-fu)+'</b> 天</div></div>';
- if(full){h+='<div class="dtb"><div class="dr hd"><span>日期</span><span>开</span><span>高</span><span>低</span><span>收</span><span>振幅</span><span>先</span></div>'+
-  [...R].reverse().map(x=>'<div class="dr'+(x.d===sel?' on':'')+'" data-d="'+x.d+'"><span>'+x.d.slice(5)+'</span><span class="'+(x.g>=0?'pos':'neg')+'">'+pf(x.g)+'</span><span class="pos">'+pf(x.h)+'</span><span class="neg">'+pf(x.l)+'</span><span class="'+(x.c>=0?'pos':'neg')+'">'+pf(x.c)+'</span><span>'+x.a.toFixed(1)+'</span><span>'+(x.up?'冲':'探')+'</span></div>').join('')+
-  '</div><div class="dnote">开=相对昨收，高/低/收=相对开盘，点一行看那天</div>'}
- return h}
+/* 11-09晚 用户: 高低开/哪天怎么开要整合 —— 总览一张小表(点行=切这一类) + 逐日一张表(开高低收振幅+当天做T差价, 点行看那天) */
 function how(){const d0=days[0],d1=days[days.length-1],pc0=DATA.info[d0].pc,c1=DATA.daily[AIX[d1]][3],hd=DATA.base*(c1-pc0),tt=TR.reduce((s,t)=>s+t[8],0);
- document.getElementById('hold').innerHTML=d0.slice(5)+'～'+d1.slice(5)+'：一直拿'+DATA.base+'股 <b class="'+cls(hd)+'">'+fmt(hd)+'</b> · 做T差价 <b class="'+cls(tt)+'">'+fmt(tt)+'</b>（做T是在拿着的基础上多赚/少亏的）';
- const box=document.getElementById('how');const ks=cat==='全部'?CAT:[cat];
- box.innerHTML=ks.map(k=>{const T=TR.filter(t=>t[9]===k),a=T.filter(t=>t[7]==='当天接'||t[7]==='隔天接'),b=T.filter(t=>!(t[7]==='当天接'||t[7]==='隔天接'));
-  return '<div class="hw">'+(cat==='全部'?'<b style="font-size:16px;color:'+CC[k]+';width:44px">'+k+'</b>':'')+(cat==='全部'?'':svgOf(k))+'<div class="nums"><div class="num"><b class="pos">'+fmt(sum(a))+'</b><span>回落接回 '+a.length+'笔</span></div><div class="num"><b class="neg">'+fmt(sum(b))+'</b><span>没回落高价接 '+b.length+'笔</span></div><div class="num"><b class="'+cls(sum(T))+'">'+fmt(sum(T))+'</b><span>合计</span></div></div></div>'+dstat(k,cat!=='全部')}).join('');
- box.querySelectorAll('.dr[data-d]').forEach(e=>e.onclick=()=>{selDay(e.dataset.d);box.querySelectorAll('.dr.on').forEach(x=>x.classList.remove('on'));e.classList.add('on');document.getElementById('mk').scrollIntoView({behavior:'smooth',block:'center'})})}
+ document.getElementById('hold').innerHTML='同期一直拿 '+DATA.base+' 股 <b class="'+cls(hd)+'">'+fmt(hd)+'</b> · 做T多出 <b class="'+cls(tt)+'">'+fmt(tt)+'</b>';
+ const one=k=>{const L=days.filter(d=>k==='全部'||DATA.info[d].cat===k),T=TR.filter(t=>k==='全部'||t[9]===k);if(!L.length)return '';
+  const A=L.map(d=>{const b=DATA.daily[AIX[d]];return (b[1]-b[2])/DATA.info[d].pc*100}),cl=T.filter(t=>!/当天接|隔天接/.test(t[7])).length,v=sum(T);
+  return '<div class="st'+(k==='全部'?' tot':'')+(cat===k&&k!=='全部'?' on':'')+'" data-k="'+k+'"><span style="color:'+(CC[k]||'#fff')+'">'+(k==='全部'?'合计':k)+'</span><span>'+L.length+'</span><span>'+mean(A).toFixed(1)+'%</span><span>'+T.length+'</span><span>'+cl+'</span><span class="'+cls(v)+'">'+fmt(v)+'</span></div>'};
+ const R3=['①','②','③'].map(r=>{const T=TR.filter(t=>(cat==='全部'||t[9]===cat)&&t[6][0]===r);return T.length?r+' '+T.length+'笔 <b class="'+cls(sum(T))+'">'+fmt(sum(T))+'</b>':''}).filter(Boolean).join(' · ');
+ const sT=document.getElementById('sumT');sT.innerHTML='<div class="st hd"><span>开盘</span><span>天</span><span>振幅均</span><span>笔</span><span>收盘平</span><span>做T差价</span></div>'+CAT.map(one).join('')+one('全部')+(R3?'<div class="rd">'+(cat==='全部'?'':cat+' · ')+'按轮　'+R3+'</div>':'');
+ sT.querySelectorAll('.st[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k==='全部'||e.dataset.k===cat?'全部':e.dataset.k,b=[...document.querySelectorAll('#cc button')].find(x=>x.textContent===k);b&&b.click()});
+ const L=catDays(),R=L.map(d=>{const b=DATA.daily[AIX[d]],f=DATA.info[d],bs=DATA.bars[d]||[];let ih=0,il=0;bs.forEach((x,i)=>{if(x[1]>bs[ih][1])ih=i;if(x[2]<bs[il][2])il=i});const T=TR.filter(t=>t[3]===d);
+  return {d,f,g:f.gap,a:(b[1]-b[2])/f.pc*100,h:(b[1]/b[0]-1)*100,l:(b[2]/b[0]-1)*100,c:(b[3]/b[0]-1)*100,up:ih<=il,n:T.length,v:sum(T)}});
+ document.getElementById('dlT').textContent=(cat==='全部'?'':cat+' · ')+'逐日';document.getElementById('dlN').textContent=R.length+'天 · 新的在上';
+ const box=document.getElementById('how');if(!R.length){box.innerHTML='';return}
+ const col=j=>R.map(x=>x[j]),av=j=>mean(col(j)),fu=R.filter(x=>x.up).length;
+ box.innerHTML='<div class="kv"><div><small>振幅 一半在</small><b>'+qt(col('a'),.25).toFixed(1)+'–'+qt(col('a'),.75).toFixed(1)+'%</b></div><div><small>最高 对开盘</small><b class="pos">'+pf(av('h'))+'%</b></div><div><small>最低 对开盘</small><b class="neg">'+pf(av('l'))+'%</b></div><div><small>先冲 / 先探</small><b>'+fu+' / '+(R.length-fu)+'</b></div></div>'+
+  '<div class="dtb"><div class="dr hd"><span>日期</span><span>开</span><span>高</span><span>低</span><span>收</span><span>振幅</span><span>做T</span></div>'+
+  [...R].reverse().map(x=>'<div class="dr'+(x.d===sel?' on':'')+'" data-d="'+x.d+'"><span><i style="background:'+CC[x.f.cat]+'"></i>'+x.d.slice(5)+'</span><span class="'+(x.g>=0?'pos':'neg')+'">'+pf(x.g)+'</span><span class="pos">'+pf(x.h)+'</span><span class="neg">'+pf(x.l)+'</span><span class="'+(x.c>=0?'pos':'neg')+'">'+pf(x.c)+'</span><span>'+x.a.toFixed(1)+'</span><span class="'+cls(x.v)+'">'+(x.n?fmt(x.v):'—')+'</span></div>').join('')+
+  '</div><div class="dnote">开=对昨收 · 高/低/收=对开盘 · 点一行看那天</div>';
+ box.querySelectorAll('.dr[data-d]').forEach(e=>e.onclick=()=>{selDay(e.dataset.d);document.getElementById('mk').scrollIntoView({behavior:'smooth',block:'center'})})}
 const SZ={小:[260,240],中:[320,320],大:[420,460]};let sz=localStorage.getItem('jlamp_sz')||'中';
 function applySz(){document.getElementById('dk').dataset.h=SZ[sz][0];document.getElementById('mk').dataset.h=SZ[sz][1]}
 function miniSel(id,sid,vals,fmtv){const e=document.getElementById(id),s=document.getElementById(sid);e.innerHTML=vals.map(v=>'<option value="'+v+'">'+fmtv(v)+'</option>').join('');
@@ -333,7 +355,7 @@ function ui(){const bs=+document.getElementById('p_base').value;
  miniSel('m_cut','p_cut',[0.008,0.01,0.012,0.015,0.018,0.02,0.025,0.03],v=>(v*100).toFixed(1)+'%');
  const pqv=+document.getElementById('p_q').value;let QL=[100,200,300,500,800,1000,1500,2000,3000].filter(v=>v<=Math.max(bs,100));
  if(pqv>0&&!QL.some(v=>Math.abs(v-pqv)<1e-9)){QL.push(pqv);QL.sort((a,b)=>a-b)}   /* 11-09: 当前每次股数不在档位里也加上, 选多少就是多少 */
- miniSel('m_q','p_q',QL,v=>v+'股');chips('pc',['全部','近一个月'].concat(DATA.ph.map(p=>p[0])),per,v=>{per=v;localStorage.setItem('jlamp_per',v);setPer();if(!(sel in IX))sel=days[days.length-1];ui();drawDK();drawMK()});document.getElementById('szc').dataset.k=1;chips('szc',['小','中','大'],sz,v=>{sz=v;localStorage.setItem('jlamp_sz',v);applySz();ui();drawDK();drawMK()});chips('cc',['全部'].concat(CAT),cat,v=>{cat=v;localStorage.setItem('jlamp_cat',v);ui();const L=catDays();if(L.length&&!L.includes(sel))sel=L[L.length-1];drawDK();drawMK()});how()}
+ miniSel('m_q','p_q',QL,v=>v+'股');chips('pc',['全部','近一个月'].concat(DATA.ph.map(p=>p[0])),per,v=>{per=v;localStorage.setItem('jlamp_per',v);setPer();if(!(sel in IX))sel=days[days.length-1];ui();drawDK();drawMK()});chips('mvc',['分时','K线'],MKV,v=>{MKV=v;localStorage.setItem('jlamp_mkv',v);ui();drawMK()});document.getElementById('szc').dataset.k=1;chips('szc',['小','中','大'],sz,v=>{sz=v;localStorage.setItem('jlamp_sz',v);applySz();ui();drawDK();drawMK()});chips('cc',['全部'].concat(CAT),cat,v=>{cat=v;localStorage.setItem('jlamp_cat',v);ui();const L=catDays();if(L.length&&!L.includes(sel))sel=L[L.length-1];drawDK();drawMK()});how()}
 try{const sv=JSON.parse(localStorage.getItem('jlamp_p2')||'null');if(sv)document.querySelectorAll('.ps select').forEach((s,i)=>{if(sv[i]!=null)s.value=sv[i]})}catch(e){}
 sel=null;applySz();if(PW&&PW.STK&&PW.STK.qty>0){const s=document.getElementById('p_base'),q=Math.max(100,Math.round(PW.STK.qty/100)*100);if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q}
 /* 11-09 用户: 每次股数要跟做T股数联动 —— 在作战屏选1000股, 复盘这里就按1000股的买卖算; 在这里改每次, 作战屏的每轮/价位尺/振幅法金额也跟着变 */
