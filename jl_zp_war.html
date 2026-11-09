@@ -778,7 +778,7 @@ try {
     var AJ = { code: STK.code, op: LIVE.open > 0 ? LIVE.open : 0, pc: pcv, hi: ahiJL, lo: aloJL, amp: 0, avg: 0, alv: 0, seg: null };
     if (ahiJL > 0 && aloJL > 0) {
       var a1 = avdJL || (PARJL ? PARJL.a1 : 0), a2 = avdJL ? avdJL * 1.4 : (PARJL ? PARJL.a2 : 0);
-      AJ.amp = (ahiJL - aloJL) / pcv * 100; AJ.avg = a1; AJ.alv = a1 ? (AJ.amp >= a2 ? 2 : AJ.amp >= a1 ? 1 : 0) : 0; AJ.afl = flashJL('amp', AJ.alv);
+      AJ.amp = (ahiJL - aloJL) / pcv * 100; AJ.avg = a1; AJ.afb = !avdJL; AJ.alv = a1 ? (AJ.amp >= a2 ? 2 : AJ.amp >= a1 ? 1 : 0) : 0; AJ.afl = flashJL('amp', AJ.alv);
     }
     var weakJL0 = (LIVE.last > 0 && LIVE.last / pcv - 1 <= -0.03) || (LIVE.open > 0 && LIVE.open / pcv - 1 <= -0.02);
     if (ext && ext.p > 0 && dirH !== 0) { SEGAVJL = dirH === 1 ? SEGUPJL : SEGDNJL; }
@@ -2091,6 +2091,7 @@ function ampWidgetJL(D, G) {
   E('text', { x: c2, y: cy + 14, 'font-size': 7.5, fill: '#fff', opacity: .92, 'text-anchor': 'middle' }, '均' + D.avg.toFixed(1));
   E('text', { x: c2, y: cy + r + 13, 'font-size': 9, 'font-weight': 600, fill: lf > 0.05 ? '#ffe14d' : '#ff7a2e', 'text-anchor': 'middle' }, lf > 0.05 ? '剩' + lf.toFixed(1) + '%' : '超' + (-lf).toFixed(1) + '%');
   E('circle', { 'class': 'acRingHit', cx: c2, cy: cy + 4, r: r + 12, fill: 'transparent' });   /* 11-10 用户: 点圆环 展开/收起下面 */
+  if (D.fb) E('text', { x: c2, y: cy + r + 23, 'font-size': 7.5, fill: '#fff', opacity: .8, 'text-anchor': 'middle' }, '日均加载中');   /* 11-10 用户: 日K没拉到时均用备用值, 旁边小字提示 */
   var RD = D.rd, X0 = 112, X1 = 334, vals = [D.lo, D.hi, D.cur];
   if (RD && RD.rh > 0) { X0 = 146; X1 = 298; }   /* 右端价不压尺子上的卖接短线 */   /* 11-10 用户: 两端留位置写 最低价(左)/最高价(右), 和小球同一行 */
   if (RD) { if (RD.rh > 0) vals.push(RD.rh, RD.rl); RD.mk.forEach(function (m) { if (!m.proj) vals.push(m.p); }); } else vals.push(D.upTo, D.dnTo);
@@ -2345,7 +2346,7 @@ function ampCardJL() {
   var oldW = c.querySelector('svg.acW'); if (oldW) oldW.remove();   /* 11-09夜 用户: 竞价那行(数在左边小蜡烛)和 振x/x 剩x 那行(圆环有)不要, 换成下一步 + 做完的轮 */
   try {
     var AP2 = ampParJL(), upTo2 = Math.ceil((A.lo + AP2.xa * A.avg / 100 * A.pc) * 100) / 100, dnTo2 = Math.floor(A.hi * (1 - AP2.rb) * 100) / 100;
-    var D = A.amp >= 0 && A.avg > 0 ? { lo: A.lo, hi: A.hi, cur: LIVE.last || A.hi, amp: A.amp, avg: A.avg, upTo: upTo2, dnTo: dnTo2, fl: A.afl } : null;
+    var D = A.amp >= 0 && A.avg > 0 ? { lo: A.lo, hi: A.hi, cur: LIVE.last || A.hi, amp: A.amp, avg: A.avg, upTo: upTo2, dnTo: dnTo2, fl: A.afl, fb: !!A.afb } : null;
     if (D) { D.rd = RD1; window.__RDJL = D.rd ? { code: STK.code, rd: D.rd } : null; }
     c.insertBefore(ampWidgetJL(D, G0), c.firstChild);
     try { var anB = c.querySelector('animate.acBall'); if (anB && anB.beginElement) anB.beginElement(); } catch (eB) { }
