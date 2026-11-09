@@ -264,9 +264,9 @@ dgp.forEach((g) => {
     if (!box) { host.innerHTML = ""; box = document.createElement("div"); box.className = "gvJL"; host.appendChild(box); }
     if (host.id !== "homeGapJL" && !host.querySelector(":scope > .gvTogJL")) { /* 11-10 用户: 持仓卡 IV 缺口可收起/展开(所有票共用一个开关, 记 jl_gapfold_v1) */
       let f = false; try { f = localStorage.getItem("jl_gapfold_v1") === "1"; } catch (e) { }
-      const tg = document.createElement("button"); tg.type = "button"; tg.className = "gvTogJL"; tg.textContent = f ? "IV 缺口 ▸" : "IV 缺口 ▾"; host.classList.toggle("gvFoldAllJL", f); host.insertBefore(tg, box);
-      tg.addEventListener("click", (ev) => { ev.stopPropagation(); const nf = !host.classList.contains("gvFoldAllJL"); try { localStorage.setItem("jl_gapfold_v1", nf ? "1" : "0"); } catch (e) { }
-        document.querySelectorAll(".hldGapRowJL").forEach((h) => { if (h.id === "homeGapJL") return; h.classList.toggle("gvFoldAllJL", nf); const b = h.querySelector(":scope > .gvTogJL"); if (b) b.textContent = nf ? "IV 缺口 ▸" : "IV 缺口 ▾"; }); });
+      const tg = document.createElement("button"); tg.type = "button"; tg.className = "gvTogJL"; tg.innerHTML = "IV 缺口 <i>" + (f ? "▸" : "▾") + "</i>"; tg.setAttribute("aria-label", "展开或收起缺口"); host.classList.toggle("gvFoldAllJL", f); host.insertBefore(tg, box);
+      tg.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); const nf = !host.classList.contains("gvFoldAllJL"); try { localStorage.setItem("jl_gapfold_v1", nf ? "1" : "0"); } catch (e) { }
+        document.querySelectorAll(".hldGapRowJL").forEach((h) => { if (h.id === "homeGapJL") return; h.classList.toggle("gvFoldAllJL", nf); const b = h.querySelector(":scope > .gvTogJL > i"); if (b) b.textContent = nf ? "▸" : "▾"; }); });
     }
     const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
     if (s) s.openDone = openDone;
