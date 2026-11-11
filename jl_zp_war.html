@@ -2023,6 +2023,7 @@ function ampChipsJL() {
   var h = '<span class="hk hkA"><i>高</i>' + A.hi.toFixed(2) + pc(A.hi) + '</span><span class="hk hkA"><i>低</i>' + A.lo.toFixed(2) + pc(A.lo) + '</span>' +
     '<span class="hk hkA amp l' + A.alv + (A.afl ? ' fl' : '') + '"><i>振幅</i>' + A.amp.toFixed(1) + '%' + (A.avg ? ' <i>· 均</i>' + A.avg.toFixed(1) + '%' : '') + '</span>';
   try { var sw = daySwingJL(); if (sw) h += sw; } catch (eSw) { }
+  try { var dg1 = dayGradeJL(); if (dg1) h += dg1; } catch (eDg) { }
   try { var ev1 = envChipJL(); if (ev1) h += ev1; } catch (eEv) { }
   if (A.seg && 0) h += '<span class="hk hkA seg ' + (A.seg.up ? 'su' : 'sd') + ' s' + A.seg.lv + (A.seg.fl ? ' fl' : '') + '">' + A.seg.t.replace(/[<>&]/g, '') + '</span>';
   hs.insertAdjacentHTML('beforeend', h);
@@ -2037,11 +2038,58 @@ function daySwingJL() {
   D.forEach(function (b, k) { var c = b.c; if (pos) { hi = Math.max(hi, c); if (c <= hi * (1 - th)) { pos = 0; lo = c; } } else { lo = Math.min(lo, c); if (c >= lo * (1 + th)) { pos = 1; hi = c; ref = lo; k0 = k; } } });
   var cur = LIVE.last || 0; if (!(cur > 0)) return '';
   var t = Math.round(th * 100), cls, txt;
+  /* 11-12 用户: 收盘后/非交易时段不再无限闪 —— 盘中触线才闪; 收盘后写死成"已确认·次日开盘买回/清仓", 不再跳 */
+  var hm0 = hmNow(), wd0 = new Date().getDay(), open0 = liveToday() && wd0 > 0 && wd0 < 6 && hm0 >= 930 && hm0 < 1505;
   /* 11-09夜 用户: 直接写价 —— 持有: 最高收盘 + 清仓线(最高×(1−12%)); 空仓: 最低收盘 + 买回线(最低×(1+12%)) */
-  if (pos) { var d = (cur / hi - 1) * 100, ln = Math.floor(Math.round(hi * (1 - th) * 1e6) / 1e4) / 100; cls = d <= -t ? ' l2' : d <= -t + 3 ? ' l1' : ''; txt = '持有 高' + hi.toFixed(2) + ' · 清仓 <em class="d">−' + t + '%</em>' + ln.toFixed(2) + (d <= -t ? ' 收盘确认' : ''); }
-  else { var u = (cur / lo - 1) * 100, ln2 = Math.ceil(Math.round(lo * (1 + th) * 1e6) / 1e4) / 100; cls = u >= t ? ' l2' : u >= t - 3 ? ' l1' : ''; txt = '空仓 低' + lo.toFixed(2) + ' · 买回 <em class="u">+' + t + '%</em>' + ln2.toFixed(2) + (u >= t ? ' 收盘确认' : ''); }
+  if (pos) { var d = (cur / hi - 1) * 100, ln = Math.floor(Math.round(hi * (1 - th) * 1e6) / 1e4) / 100;
+    if (d <= -t) { cls = open0 ? ' l2' : ' l2s'; txt = '持有 高' + hi.toFixed(2) + ' · 清仓 <em class="d">−' + t + '%</em>' + ln.toFixed(2) + (open0 ? ' 收盘确认' : ' 已确认 · 次日开盘清仓'); }
+    else { cls = open0 && d <= -t + 3 ? ' l1' : ''; txt = '持有 高' + hi.toFixed(2) + ' · 清仓 <em class="d">−' + t + '%</em>' + ln.toFixed(2) + (open0 ? '' : ' · 未到'); } }
+  else { var u = (cur / lo - 1) * 100, ln2 = Math.ceil(Math.round(lo * (1 + th) * 1e6) / 1e4) / 100;
+    if (u >= t) { cls = open0 ? ' l2' : ' l2s'; txt = '空仓 低' + lo.toFixed(2) + ' · 买回 <em class="u">+' + t + '%</em>' + ln2.toFixed(2) + (open0 ? ' 收盘确认' : ' 已确认 · 次日开盘买回'); }
+    else { cls = open0 && u >= t - 3 ? ' l1' : ''; txt = '空仓 低' + lo.toFixed(2) + ' · 买回 <em class="u">+' + t + '%</em>' + ln2.toFixed(2) + (open0 ? '' : ' · 未到'); } }
   var rd = ''; try { if (pos) rd = dayReduceJL(D.slice(k0), ref); } catch (eR) { }
   return rd + '<span class="hk hkA swg' + cls + '" title="日线波段: ' + (pos ? '持有以来最高收盘 ' + hi.toFixed(2) : '空仓以来最低收盘 ' + lo.toFixed(2)) + '"><i>日线</i>' + txt + '</span>';
+}
+/* 11-12 用户: 单边/震荡定档(只显示不改算法) —— 三层: ①日线 MA5/10/20 排列 + 现价距MA5 ②10:00 定强/平/弱(开盘后60分钟涨跌 ÷ 日均振幅, |x|≥0.35)
+   ③15分最近四根有没有抬高低点。回测口径(125天/永鼎): 缠绕+空头赚钱, 多头最差(高开追卖接不回); 强档做T最亏, 强+没抬低尤其. 只写结论, 不生成买卖价 */
+function dayGradeJL() {
+  try {
+    var sd = LIVE.sessDate || '', D = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < sd && b.c > 0; });
+    if (D.length < 20) return '';
+    var cur = LIVE.last || 0; if (!(cur > 0)) return '';
+    var ma = function (n) { var a = D.slice(-n), s = 0; a.forEach(function (b) { s += b.c; }); return a.length ? s / a.length : 0; };
+    var m5 = ma(5), m10 = ma(10), m20 = ma(20);
+    var arr = (m5 > m10 && m10 > m20) ? 1 : (m5 < m10 && m10 < m20) ? -1 : 0, arrT = arr > 0 ? '多头' : arr < 0 ? '空头' : '缠绕';
+    var dist = m5 > 0 ? (cur / m5 - 1) * 100 : 0;
+    /* 日均振幅(近20日, 和前20日口径一致) */
+    var s2 = 0, n2 = 0;
+    for (var k = Math.max(1, D.length - 20); k < D.length; k++) { var p0 = D[k - 1].c; if (p0 > 0 && D[k].h > 0) { s2 += (D[k].h - D[k].l) / p0 * 100; n2++; } }
+    var avd = n2 >= 5 ? s2 / n2 : 0;
+    /* 10:00 定档: 开盘后60分钟的涨跌 ÷ 日均振幅 */
+    var op = LIVE.open > 0 ? LIVE.open : 0, p10 = 0;
+    (LIVE.pts || []).forEach(function (q) { var hm = +q.hm; if (hm >= 930 && hm <= 1000 && q.p > 0) p10 = q.p; });
+    var ratio = null;
+    /* 11-12 用户: 定档只认本交易日 10:00 那个点(有就算, 回放同样); 没有就写"待10:00", 不拿昨天的档充今天 */
+    if (op > 0 && avd > 0 && p10 > 0) ratio = (p10 / op - 1) * 100 / avd;
+    var g = null; if (ratio != null) g = ratio >= 0.35 ? 1 : ratio <= -0.35 ? -1 : 0;
+    /* 15分结构: 最近四根 低点是否抬高 / 高点是否抬高 */
+    var H15 = (LIVE.hist.m15 || []).filter(function (b) { return b.c > 0 && b.l > 0; }).slice(-4), upLo = 0, upHi = 0;
+    for (var i = 1; i < H15.length; i++) { if (H15[i].l > H15[i - 1].l) upLo++; if (H15[i].h > H15[i - 1].h) upHi++; }
+    var strT = H15.length >= 3 ? (upLo >= 2 ? '抬低' : upLo === 0 ? '破低' : '低点平') : '';
+    var gt = g === 1 ? '<b class="o">强</b>' : g === -1 ? '<b class="w">弱</b>' : g === 0 ? '<b class="m">平</b>' : '<b class="m">待10:00</b>';
+    var rt = arr !== 0 && Math.abs(dist) >= 5 ? ' <b class="o">离MA5 ' + (dist >= 0 ? '+' : '') + dist.toFixed(1) + '%</b>' : '';
+    /* 11-12 用户: 只写"可做/少做"太玄 —— 每个词后面直接给一句人话做法 */
+    var hot;
+    if (g === 1) hot = strT === '抬低' ? ' <b class="s">可做·按正常来回</b>' : ' <b class="r">少做·只回落接一次</b>';
+    else if (g === -1) hot = strT === '破低' ? ' <b class="r">少做·别接飞刀</b>' : ' <b class="s">可做·先卖后接</b>';
+    else if (g === 0) hot = ' <b class="s">可做·正常来回</b>';
+    else hot = '';
+    var tip = '日线 ' + arrT + '（MA5 ' + m5.toFixed(2) + ' / MA10 ' + m10.toFixed(2) + ' / MA20 ' + m20.toFixed(2) + '），现价离MA5 ' + (dist >= 0 ? '+' : '') + dist.toFixed(1) + '%\n'
+      + '10:00 档 = 开盘后60分钟涨跌 ÷ 日均振幅 ' + avd.toFixed(1) + '%' + (ratio == null ? '（还没到10:00）' : ' = ' + ratio.toFixed(2) + '，|x|≥0.35 算强/弱') + '\n'
+      + '15分最近四根：低点抬高 ' + upLo + '/3 次\n'
+      + '可做 = 今天适合来回做T；少做 = 方向太猛，来回做容易卖飞或接飞刀';
+    return '<span class="hk hkA dg" title="' + tip.replace(/"/g, '') + '"><i>定档</i>' + arrT + rt + ' · ' + gt + (strT ? ' · ' + strT : '') + hot + '</span>';
+  } catch (e) { return ''; }
 }
 /* 11-12 用户: "a股跟着大盘走, 盘中的流入流出要有提前预警" —— 顶部加一格大盘: 上证涨跌 + 两市主力占成交 + 本票所在板块涨跌/占成交.
    数据只读首页 jlLinkInputJL()(买入闸+市场资金快照+板块资金, 都是首页本来就有的), 零新增请求; 首页没开/没拉到就不显示. */
@@ -2319,7 +2367,17 @@ function ampBallJL(A) {
     mk.push({ n: CN[n], t: 'b', p: pb, f: !(ok && !hiZ), wait: ok && !hiZ ? 1 : 0, l: hiZ ? '再接≤' : '确认接' });
     nx = ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (th * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: ps2, cb: pb, hiZ: hiZ };
   }
-  var tr = '小球 · ' + lab + ' · ' + (n >= MR && st === 'N' ? '两轮做完' : (CN[n] || '') + (st === 'S' ? ' 等接' : st === 'B' ? ' 等卖' : ok ? ' 等确认' : ' 等振幅'));
+  /* 11-12 用户: "尺子写着等确认, 可价早就超了" —— 原来三种情况都写「等确认/等卖/等接」, 不说是等哪个价、要等多少.
+     改成把"在等什么价的什么动作"写全: 已越过就直接说按现价做, 没越过就写等哪个价 */
+  var stTxt, hiZx = (cur - dl) >= Z * (dh - dl), w0 = st === 'S' ? dn(p - m * av) : st === 'B' ? up(p + m * av) : 0;
+  if (n >= MR && st === 'N') stTxt = '两轮做完';
+  else if (!ok) stTxt = (CN[n] || '') + ' 等振幅 · 还差 ' + ((need - ampN) / pc * 100).toFixed(1) + '%';
+  else if (st === 'S') stTxt = (CN[n] || '') + (cur <= w0 + 1e-9 ? ' 已跌破接价' + w0.toFixed(2) + ' · 按现价接' : ' 等接 ' + w0.toFixed(2));
+  else if (st === 'B') stTxt = (CN[n] || '') + (cur >= w0 - 1e-9 ? ' 已超卖价' + w0.toFixed(2) + ' · 按现价卖' : ' 等卖 ' + w0.toFixed(2));
+  else stTxt = (CN[n] || '') + (hiZx
+    ? (cur >= cs - 1e-9 ? ' 已回落够 · 按现价卖' : ' 等回落到 ' + cs.toFixed(2) + ' 确认卖')
+    : (cur <= cb + 1e-9 ? ' 已反弹够 · 按现价接' : ' 等反弹到 ' + cb.toFixed(2) + ' 确认接'));
+  var tr = '小球 · ' + lab + ' · ' + stTxt;
   return { mode: 'ball', ty: ty, mk: mk, tr: tr, R: n, nx: nx, done: done, need: need / pc * 100, th: th };
 }
 function ampPlanJL(A) {   /* 混合: 高开(≥1%) 尺子一二三轮, 平开/低开 小球 */
@@ -3579,8 +3637,9 @@ body:not(.ladOpen) #lad .pr3{display:none}body:not(.ladOpen) #lad .pr3.sum.cmp{d
 #ampCardJL .acNx .nq{margin-left:auto;font-size:10px;text-align:right;line-height:1.3;white-space:nowrap}
 #ampCardJL em{font-style:normal;margin:0}#ampCardJL em.s{color:#ff5459}#ampCardJL em.b{color:#1fdc93}#ampCardJL em.w{color:#ffe14d}
 #ampCardJL .acDn{display:flex;gap:10px;align-items:baseline;font-size:10.5px;margin:3px 2px 1px;white-space:nowrap;overflow-x:auto;scrollbar-width:none}#ampCardJL .acDn::-webkit-scrollbar{display:none}
-#hSub .hk.swg em{font-style:normal;font-size:10px;font-weight:500;margin-right:2px}#hSub .hk.swg em.u{color:#ff5459}#hSub .hk.swg em.d{color:#1fdc93}#hSub .hk.swg.l2 em{color:inherit}
-#hSub .hk.swg.l1{color:#ffe14d;border-color:rgba(255,225,77,.7)}#hSub .hk.swg.l2{color:#ff5459;border-color:rgba(255,84,89,.8);animation:swgJL 1.6s ease-in-out infinite}@keyframes swgJL{50%{opacity:.45}}
+#hSub .hk.dg b{font-weight:700}#hSub .hk.dg b.s{color:#4dffb4}#hSub .hk.dg b.w{color:#4ff0ff}#hSub .hk.dg b.m{color:#fff;opacity:.85}#hSub .hk.dg b.r{color:#ff8a8f}#hSub .hk.dg b.o{color:#ffc58f}
+#hSub .hk.swg em{font-style:normal;font-size:10px;font-weight:600;margin-right:2px}#hSub .hk.swg i{opacity:1!important;color:#fff}#hSub .hk.swg em.u{color:#ff7b85}#hSub .hk.swg em.d{color:#4dffb4}#hSub .hk.swg.l1 em,#hSub .hk.swg.l2 em,#hSub .hk.swg.l2s em{color:inherit}
+#hSub .hk.swg.l1{color:#ffe14d;border-color:rgba(255,225,77,.7)}#hSub .hk.swg.l2{color:#ff5459;border-color:rgba(255,84,89,.8);animation:swgJL 1.6s ease-in-out infinite}#hSub .hk.swg.l2s{color:#ff8a8f;border-color:rgba(255,84,89,.55);background:rgba(255,84,89,.10)}@keyframes swgJL{50%{opacity:.45}}
 #ampCardJL{position:relative}#ampCardJL .acDn{padding-right:52px;min-height:15px}#ampCardJL .acRv{position:absolute;right:8px;bottom:4px;color:#ffe14d;font-size:10.5px;padding:6px 0 2px 14px;cursor:pointer}
 #ampCardJL .acNx .ns{border:0!important;background:none!important;padding:0!important;border-radius:0!important;box-shadow:none!important}
 
@@ -6034,7 +6093,8 @@ window.addEventListener('click', function (e) {
 </script>
 <style>
 /* 11-10 用户: 段提示挪进振幅卡尺子左上中间; 回放/实盘 = 引擎图右上两个小透明图标; 播放条小 */
-#ampCardJL .acSeg{position:absolute;top:20px;left:34%;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;border:1px solid;white-space:nowrap;pointer-events:none;z-index:2}
+/* 11-12 用户: 段提示橘字压到尺子上了 → 不再绝对定位浮在尺子上, 改成尺子下面单独一行 */
+#ampCardJL .acSeg{display:inline-block;margin:3px 2px 1px;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:6px;border:1px solid;white-space:nowrap;pointer-events:none}
 #ampCardJL .acSeg.su{color:#ff9a4d;border-color:rgba(255,138,61,.75);background:rgba(255,138,61,.12)}
 #ampCardJL .acSeg.sd{color:#4ff0ff;border-color:rgba(79,240,255,.7);background:rgba(79,240,255,.10)}
 #ampCardJL .acSeg.s2,#ampCardJL .acSeg.s3{font-weight:800}#ampCardJL .acSeg.su.s2,#ampCardJL .acSeg.su.s3{color:#ff7a2e;background:rgba(255,122,46,.2)}#ampCardJL .acSeg.sd.s2,#ampCardJL .acSeg.sd.s3{color:#2fe9ff;background:rgba(47,233,255,.18)}#ampCardJL .acSeg.s3{border-width:2px}#ampCardJL .acSeg.f1{animation:segW1JL 1.6s ease-in-out infinite}#ampCardJL .acSeg.f2{animation:hkGlowJL .9s ease-in-out infinite}#ampCardJL .acSeg.f3{animation:segW3JL .8s ease-in-out infinite}@keyframes segW1JL{50%{opacity:.55}}@keyframes segW3JL{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 18px 6px currentColor,0 0 4px 1px currentColor inset}}#ampCardJL .acSeg.s0{opacity:.7}
