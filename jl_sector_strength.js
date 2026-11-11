@@ -796,17 +796,30 @@
   /* jl-fsnap(1104): 用户: 别让电脑每天跑数据——App开着时把每3分钟的板块资金顺手存手机里(零新增请求), 复盘台账⑨里一键导出, 以后拿来回测
      IDB jinlin_secfund/s, 主键 k=日期|HH:MM; 东财板块 b:{名:[涨幅,主力净额(万元),净占比]} + 我们自己的板块强度 o:{名:[平均涨幅,上涨率,只数]}; 只存交易时段, 保留40个交易日 */
   /* 11-11 退潮领先用: 每个板块每天最后取到的"收盘前"主力净额落一行(零新增请求, 复用同一次采样)。跟 fundSnapSave 的3分钟流水分开存, 只留日粒度 */
+  /* 11-12 覆盖度可查(只改落存, 不动算法/阈值/提醒): ①起点 930→915(用户: 9:15竞价起资金就有方向, 原来这15分钟白采) ②每次落盘记当日元信息 first/last/n,
+     存独立键 jl_secfund_day_meta_v1——回测取数前先看 n 和 last: last<1500=当天没收盘(值不是收盘值), n 明显偏少=当天大部分板块没进过流入/流出前100。
+     取值口径不变(同一板块仍以当日最后一次采样为准, 已是"最接近收盘"的那次); 不做"取绝对值最大", 那会把中途 -8000万、收盘只 -100万的板块记成 -8000万。
+     合并式写入(cur 从 H[day] 起)保证只会累积不会缩水, 单次抓取失败不会把整天抹掉。 */
   function fundDaySave() {
     try {
       var hm = hmNow(), wd = new Date().getDay();
-      if (wd < 1 || wd > 5 || hm < 930 || hm > 1505) return;
+      if (wd < 1 || wd > 5 || hm < 915 || hm > 1505) return;
       var day = localDay(Date.now()), H = lsGet("jl_secfund_day_v1") || {}, cur = H[day] || {};
       var q = S.bkq && S.bkq.m; if (!q) return;
       Object.keys(q).forEach(function (n) { if (isFinite(q[n].f)) cur[n] = Math.round(q[n].f / 1e4); }); /* 万元 */
       H[day] = cur;
       Object.keys(H).sort().slice(0, -30).forEach(function (d) { delete H[d]; }); /* 留30个交易日 */
       localStorage.setItem("jl_secfund_day_v1", JSON.stringify(H));
+      var M = lsGet("jl_secfund_day_meta_v1") || {}, mm = M[day] || { first: hm, last: hm, n: 0 };
+      mm.last = hm; mm.n = Object.keys(cur).length; M[day] = mm;
+      Object.keys(M).sort().slice(0, -30).forEach(function (d) { delete M[d]; });
+      localStorage.setItem("jl_secfund_day_meta_v1", JSON.stringify(M));
     } catch (e) {}
+  }
+  function fundDayMeta() { /* 覆盖度自查: {天数, 有收盘采样的天数, 每天 n/last} —— 回测取数前用它判断样本能不能用 */
+    var H = lsGet("jl_secfund_day_v1") || {}, M = lsGet("jl_secfund_day_meta_v1") || {}, days = Object.keys(H).sort();
+    return { days: days.length, closed: days.filter(function (d) { return M[d] && M[d].last >= 1500; }).length,
+      list: days.map(function (d) { return { day: d, n: Object.keys(H[d] || {}).length, last: (M[d] && M[d].last) || 0 }; }) };
   }
   function fundHistOf(sec) { /* → {day: 主力净额(万元)}, 只取这一个板块 */
     var H = lsGet("jl_secfund_day_v1") || {}, o = {}, n = CORE.unalias(sec);
@@ -1897,6 +1910,7 @@
       c2 = heatHtml();
       c3 = pickerHtml();
     }
+    var body;
     var any = (c1 + c2 + c3).trim();
     if (!any) body = '<div class="jf">还没有数据，开盘后会自动算出来</div>';
     else body = (c1 ? card("今天实时", c1head, ld && !S.review ? "主攻 " + esc(ld) : "", c1) : "")
@@ -1911,7 +1925,7 @@
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
     R.classList.toggle("surge", sgHot);
-    R.style.display = (has && S.last.ranked && S.last.ranked.length) || hasAna || (S.bkq && body) ? "" : "none"; /* jl-1208: 无强度排名(样本不足/无数据)整卡收起不占位, 有排名自动出现 */
+    R.style.display = ""; /* 本地修复：无数据也保留抽屉入口，内容区显示现有空状态；全屏隐藏仍由 CSS 控制。 */
     var nb = document.getElementById("jlsectBody");
     if (nb) nb.scrollTop = sc;
     var _pg1 = document.getElementById("jlpgPager"), _ch1 = document.getElementById("jlpgChips");
@@ -1974,7 +1988,7 @@
     } catch (e) {}
   }
 
-  function diag() { return { day: S.day, at: S.at, ztSrc: S.ztSrc, stat: S.stat, sectors: S.last ? S.last.recs.length : 0, t3: S.lastT3 ? S.lastT3.length : 0, snapKeys: S.keys ? S.keys.size : -1 }; }
+  function diag() { return { day: S.day, at: S.at, ztSrc: S.ztSrc, stat: S.stat, sectors: S.last ? S.last.recs.length : 0, t3: S.lastT3 ? S.lastT3.length : 0, snapKeys: S.keys ? S.keys.size : -1, fundDay: fundDayMeta() }; } /* 11-12: 带板块资金日归档覆盖度(天数/收盘采样天数/每天条数) */
 
   openDB();
   setTimeout(compute, 1800);
