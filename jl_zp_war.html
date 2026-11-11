@@ -261,6 +261,21 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 <div class="foot">V2.1 · 数据：东财+腾讯（与持仓页生产同链：分时含竞价段/1分K=东财优先，5/15/30分K+日K=腾讯优先，互为兜底 · 零新浪） · 引擎＝tdt2 口径（5分K走盘 · 反弹线从卖点动态下移 · IV区五级实时重扫） · 提醒≠下单 · 盘中须保持本页打开</div>
 
 <div class="alert" id="alert" role="alert"></div><div class="edge" id="edge"></div>
+<script>
+/* 11-11 用户: "把缓存清一下" —— 存储满(⚠存储满·本次有效)是首页日K/筹码/ATR缓存占满; 只清这三类(都会从接口自动重建), 持仓/画线/做T记录/设置不碰.
+   今天先清一次; 之后写不进(满了)也自动清. 清完把 sessionStorage 里暂存的"我的T"搬回 localStorage */
+(function(){
+  try{
+    var LS=localStorage,full=false;
+    try{LS.setItem('jl_lsprobe',new Array(4097).join('x'));LS.removeItem('jl_lsprobe')}catch(e){full=true}
+    if(!full&&LS.getItem('jl_purge_1111')==='1')return;
+    var rm=[];for(var i=0;i<LS.length;i++){var k=LS.key(i);if(/^(jl_dk_|jl_cyq2_|jl_atr5_)/.test(k))rm.push(k)}
+    rm.forEach(function(k){try{LS.removeItem(k)}catch(e){}});
+    try{for(var j=0;j<sessionStorage.length;j++){var s=sessionStorage.key(j);if(/^jl_myT_v1_/.test(s)){var v=sessionStorage.getItem(s);if(v&&v!=='[]'&&!(LS.getItem(s)&&LS.getItem(s)!=='[]'))LS.setItem(s,v)}}}catch(e){}
+    LS.setItem('jl_purge_1111','1');
+  }catch(e){}
+})();
+</script>
 <script src="jl_pitchfork.js"></script>
 <script src="jl_elliott.js"></script>
 <script src="jl_zp_shapes.js?v=12"></script>
@@ -2265,9 +2280,12 @@ function ampBallJL(A) {
   else if (st === 'B') { var ts = up(p + m * av); mk.push({ n: CN[n], t: 'b', p: p, ok: 1 }); mk.push({ n: CN[n], t: 's', p: ts, wait: 1, l: '卖≥' }); nx = { n: CN[n], t: 's', p: ts, le: '≥', sub: '高点回落' + (th * 100).toFixed(1) + '%确认 · 现' + Math.max(cs, cur).toFixed(2), pos: p }; }
   else if (n < MR) {
     var hiZ = cur - dl >= Z * ampN;
-    mk.push({ n: CN[n], t: 's', p: cs, f: !(ok && hiZ), wait: ok && hiZ ? 1 : 0, l: '确认卖' });
-    mk.push({ n: CN[n], t: 'b', p: cb, f: !(ok && !hiZ), wait: ok && !hiZ ? 1 : 0, l: '确认接' });
-    nx = ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (th * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: cs, cb: cb };
+    /* 11-11 用户: "尺子让我高买低卖(22.84卖/23.25接)" —— 原来把"先卖"和"先接"两个备选价并排写成 卖/接, 看着像一对. 只改显示(算法不动):
+       价在区间上半 → 先卖 cs, 配对的接 = 卖−0.25×日均; 下半 → 先接 cb, 配对的卖 = 接+0.25×日均. 接永远低于卖 */
+    var pb = hiZ ? dn(cs - m * av) : cb, ps2 = hiZ ? cs : up(cb + m * av);
+    mk.push({ n: CN[n], t: 's', p: ps2, f: !(ok && hiZ), wait: ok && hiZ ? 1 : 0, l: hiZ ? '确认卖' : '再卖≥' });
+    mk.push({ n: CN[n], t: 'b', p: pb, f: !(ok && !hiZ), wait: ok && !hiZ ? 1 : 0, l: hiZ ? '再接≤' : '确认接' });
+    nx = ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (th * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: ps2, cb: pb, hiZ: hiZ };
   }
   var tr = '小球 · ' + lab + ' · ' + (n >= MR && st === 'N' ? '两轮做完' : (CN[n] || '') + (st === 'S' ? ' 等接' : st === 'B' ? ' 等卖' : ok ? ' 等确认' : ' 等振幅'));
   return { mode: 'ball', ty: ty, mk: mk, tr: tr, R: n, nx: nx, done: done, need: need / pc * 100, th: th };
@@ -2292,7 +2310,7 @@ function ampNextHtmlJL(RD, A) {
   if (RD.mode === 'ball') {
     var x = RD.nx;
     if (!x) h = '<div class="acNx"><b class="np">做完</b><span class="ns">两轮</span></div>';
-    else if (x.idle) h = '<div class="acNx"><span class="nn">' + x.n + '</span><b class="np">先不动</b><span class="ns">振幅还差 ' + (x.need < 0.1 ? x.need.toFixed(2) : x.need.toFixed(1)) + '%</span><span class="nq">卖 <em class="s">' + x.cs.toFixed(2) + '</em><br>接 <em class="b">' + x.cb.toFixed(2) + '</em></span></div>';
+    else if (x.idle) h = '<div class="acNx"><span class="nn">' + x.n + '</span><b class="np">先不动</b><span class="ns">振幅还差 ' + (x.need < 0.1 ? x.need.toFixed(2) : x.need.toFixed(1)) + '%</span><span class="nq">' + (x.hiZ === false ? '先接 <em class="b">' + x.cb.toFixed(2) + '</em><br>再卖≥ <em class="s">' + x.cs.toFixed(2) + '</em>' : '先卖 <em class="s">' + x.cs.toFixed(2) + '</em><br>再接≤ <em class="b">' + x.cb.toFixed(2) + '</em>') + '</span></div>';
     else h = big(x.n, x.t, x.p, x.le, x.sub);
     RD.done.forEach(function (d) { dn.push(dnRow(d.n, d.s, d.b, d.f === 's')); });
   } else {
