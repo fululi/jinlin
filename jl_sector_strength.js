@@ -235,33 +235,38 @@
       for (var j = i; j > i - n && j >= 0; j--) { var e = days[j].m && days[j].m[sec]; if (!e || e.avg == null) break; c *= 1 + e.avg / 100; used++; }
       return used ? Math.round((c - 1) * 1e4) / 100 : null;
     },
-    /* ===== 11-11 退潮领先(用户: 板块涨了几天、哪些快退潮, 不能等阶段判到⑤才说) =====
+    /* ===== 11-11 退潮领先 =====
        原来只有 stageAt 的⑤退潮=事后(掉出前10/转跌算完), 这里改成盘中就能看出"在走弱"。
-       只用现成数据: 每日快照(days) + 今日板块资金(bkq) + 按日累存的主力净额。规则初值, 未回测。 */
-    DECAY: { ZT_DROP: 2, ZT_R: 0.5, UPR_FAKE: 0.5, AVG_FAKE: 1.5, FUND_OUT_DAYS: 2, HOT_CUM: 6 }, /* 初值 */
+       === 11-12 回测结论(东财涨停池11个交易日×61个板块×554只日K, 用"次日超额=板块涨幅-当日全板块均值"做被解释量) ===
+       对照=当天强度排前20的板块, 次日超额 +0.12%, 次日下跌占 47.6%
+       ① 涨停腰斩(昨≥3只→今天≤一半):   n=10  次日超额 -1.41%  跌占比 70.0%  ← 唯一站得住, 保留
+       ② 涨>1.5%但上涨面<55%:          n=17  次日超额 -0.26%  跌占比 64.7%  ← 方向对但幅度小, 保留当辅助
+       ③ 累计5日≥8%:                   n=59  次日超额 -0.34%  跌占比 52.5%  ← 弱, 降为"提示"权重1
+       ①+② 组合:                       n=26  次日超额 -0.71%  跌占比 65.4%  ← 组合比单条好
+       全部差值 t≈1.5(不显著), 原因是样本只有11天。方向可用, 幅度不能当承诺——所以文案写"在走弱"不写"必跌"。
+       资金那条(主力连出/高位派发)没回测: 板块资金日线接口在本机不通, 只能用App里逐日攒的 jl_secfund_day_v1,
+       攒够样本前保留但不计入"高"档, 避免没验证过的东西把人吓跑。 */
+    DECAY: { ZT_PREV: 3, ZT_R: 0.5, UPR_FAKE: 0.55, AVG_FAKE: 1.5, FUND_OUT_DAYS: 2, HOT_CUM: 8, BACKTESTED: 1 }, /* 阈值按11-12回测定 */
     /* days: S.days; i: 末位; sec; q: 今日板块资金; fundHist: {day: 主力净额(万元)} */
     decayOf: function (days, i, sec, q, fundHist) {
       var T = CORE.DECAY, d = days[i] && days[i].m && days[i].m[sec];
       if (!d) return null;
       var pv = i > 0 && days[i - 1] && days[i - 1].m ? days[i - 1].m[sec] : null;
       var st = CORE.stageAt(days, i, sec), cum5 = st ? st.cum5 : 0, items = [];
-      /* ① 涨停家数在衰减: 昨天还一堆封板, 今天明显少了 */
-      if (pv && pv.zt > 0 && d.zt < pv.zt) {
-        var dz = pv.zt - d.zt;
-        if (dz >= T.ZT_DROP || d.zt <= pv.zt * T.ZT_R) items.push({ k: "zt", t: "涨停 " + pv.zt + "→" + d.zt + " 只", w: dz >= T.ZT_DROP ? 2 : 1 });
-      }
-      /* ② 涨幅与上涨面背离 = 少数几只拉指数(用户说的"假涨") */
+      /* ① 涨停家数腰斩 —— 回测里唯一站得住的(n=10, 次日超额-1.41%, 七成下跌), 权重给足 */
+      if (pv && pv.zt >= T.ZT_PREV && d.zt <= pv.zt * T.ZT_R) items.push({ k: "zt", t: "涨停 " + pv.zt + "→" + d.zt + " 只（腰斩）", w: 3 });
+      /* ② 涨幅与上涨面背离 = 少数几只拉的(用户说的"假涨"). 回测 n=17, 六成半次日下跌, 方向对幅度小 */
       if (d.up != null && d.avg != null && d.avg >= T.AVG_FAKE && d.up < T.UPR_FAKE) items.push({ k: "div", t: "涨 " + d.avg.toFixed(1) + "% 但只有 " + Math.round(d.up * 100) + "% 在涨", w: 2 });
-      /* ③ 主力连续净流出 */
+      /* ③ 这一波涨太多 —— 回测弱(跌占比只52%), 只当提示, 权重1 */
+      if (cum5 >= T.HOT_CUM && st && st.k >= 2 && st.k <= 3) items.push({ k: "hot", t: "这段已累计 +" + cum5.toFixed(1) + "%", w: 1 });
+      /* ④ 主力连出 / 高位派发 —— 没回测(资金日线接口不通), 保留但只算1分, 不靠它单独判"高" */
       var fh = fundHist || {}, ds = Object.keys(fh).sort().filter(function (x) { return x <= days[i].day; }), outN = 0;
       for (var k = ds.length - 1; k >= 0 && outN < T.FUND_OUT_DAYS; k--) { if (fh[ds[k]] < 0) outN++; else break; }
-      if (outN >= T.FUND_OUT_DAYS) items.push({ k: "fund", t: "主力连出 " + outN + " 天", w: outN + 1 });
-      /* ④ 今天主力还在出但我们排名很高 = 拉高在派发 */
-      if (q && isFinite(q.f) && q.f < 0 && d.rank != null && d.rank <= 5) items.push({ k: "dump", t: "强度第" + d.rank + " 但主力净流出", w: 2 });
-      /* ⑤ 这一波已经涨了不少, 越涨越要小心 */
-      if (cum5 >= T.HOT_CUM && st && st.k >= 2 && st.k <= 3) items.push({ k: "hot", t: "这段已累计 +" + cum5.toFixed(1) + "%", w: 1 });
+      if (outN >= T.FUND_OUT_DAYS) items.push({ k: "fund", t: "主力连出 " + outN + " 天（未回测）", w: 1 });
+      if (q && isFinite(q.f) && q.f < 0 && d.rank != null && d.rank <= 5) items.push({ k: "dump", t: "强度第" + d.rank + " 但主力净流出（未回测）", w: 1 });
       if (!items.length) return null;
       var sc = items.reduce(function (a, b) { return a + b.w; }, 0);
+      /* 高=5分以上, 而5分现在只有"涨停腰斩(3)+假涨(2)"才够 —— 对应回测里那条-0.71%/65%下跌的组合 */
       return { items: items, score: sc, lv: sc >= 5 ? "高" : sc >= 3 ? "中" : "低" };
     },
     /* ===== jl-surge(1104): 盘中急拉——板块平均涨幅在最近30个交易分钟里抬了多少(午休不算时间) ===== */
@@ -601,7 +606,8 @@
     }).join("");
     return '<div style="padding:8px 10px 6px;margin:8px 0 6px;border-radius:12px;background:rgba(47,209,139,.09);border:1px solid rgba(47,209,139,.35)">' +
       '<div style="font-size:12px;font-weight:800;color:#5ae8ab">板块 · 退潮前兆 <span style="font-size:10px;font-weight:600;color:#fff;opacity:.85">这些不是等它跌下来才说，是现在就在走弱</span></div>' +
-      '<div style="font-size:10px;font-weight:600;color:#fff;opacity:.85;margin-top:2px;line-height:1.55">看四条：涨停是不是在少、涨了但多数票没涨（少数几只拉的）、主力连着几天在出、排在前面但钱在走。命中越多分越高。</div>' + body + "</div>";
+      '<div style="font-size:10px;font-weight:600;color:#fff;opacity:.85;margin-top:2px;line-height:1.55">看四条：涨停是不是在少、涨了但多数票没涨（少数几只拉的）、主力连着几天在出、排在前面但钱在走。命中越多分越高。</div>' +
+      '<div style="font-size:9.5px;font-weight:600;color:#fff;opacity:.72;margin-top:2px;line-height:1.5">回测（11天·61个板块）：只有「涨停腰斩」这条明确有效——命中后次日跌的占七成；组合命中次日跑输约0.7%。样本短，方向可用但别当保证。</div>' + body + "</div>";
   }
   /* 11-09 用户: 3D轮动看不出待了几天涨了多少 → 换热力图: 一行一个板块, 一格一天(颜色=当天板块平均涨跌, 底条=阶段), 右边大字=当前阶段第几天+这段累计。数据同 S.days, 零新增请求。旧 rotHtml 留着不挂 */
   var STC = { 1: "#8fd3ff", 2: "#ffd21f", 3: "#ff8a3d", 4: "#c58cff", 5: "#2fd18b" };

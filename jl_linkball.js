@@ -296,7 +296,10 @@
 
   /* ---------- 挂载 / 刷新 ---------- */
   function phone() { return document.querySelector('.phone'); }
+  /* 11-12 用户: 联动球原来只在持仓页出现, 想在上证脉冲提醒时随时能点开——改成各页都在(K线全屏除外)。
+     原因: 提醒是全局的(大盘快拉/持仓板块急变/同步冲高), 球却只在持仓页, 等于提醒响了也看不见。 */
   function onHolds() { var v = $('holds'); return !!(v && !v.hidden); }
+  function showBall() { return !document.body.classList.contains('ksFullJL'); } /* K线全屏时让位给走势图 */
   function mount() {
     var ph = phone();
     if (!ph) return false;
@@ -343,7 +346,7 @@
     var D = null; try { D = window.jlLinkInputJL ? window.jlLinkInputJL() : null; } catch (e) { }
     st.last = D;
     checkAlerts(D);
-    var b = $('jlLkBall'), sh = $('jlLkSheet'), show = onHolds();
+    var b = $('jlLkBall'), sh = $('jlLkSheet'), show = showBall();
     b.style.display = show ? '' : 'none';
     place();
     b.innerHTML = ballHTML(D);
@@ -351,6 +354,6 @@
     if (!sh.hidden) { var y = sh.scrollTop; sh.innerHTML = sheetHTML(D); sh.scrollTop = y; }
   }
   window.JLLink = { tick: tick, input: function () { return st.last; }, alerts: todayA, _check: checkAlerts, _st: st };
-  function boot() { tick(); setInterval(tick, 20000); document.addEventListener('click', function () { setTimeout(function () { var b = $('jlLkBall'); if (b) b.style.display = onHolds() ? '' : 'none'; if (!onHolds() && st.open) { st.open = false; var s = $('jlLkSheet'); if (s) s.hidden = true; } }, 50); }, true); }
+  function boot() { tick(); setInterval(tick, 20000); document.addEventListener('click', function () { setTimeout(function () { var b = $('jlLkBall'); if (b) b.style.display = showBall() ? '' : 'none'; if (!showBall() && st.open) { st.open = false; var s = $('jlLkSheet'); if (s) s.hidden = true; } }, 50); }, true); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else setTimeout(boot, 0);
 })();
