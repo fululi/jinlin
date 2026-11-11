@@ -8,6 +8,7 @@
  */
 (function () {
   var POS = 'jl_lkball_pos', AK = 'jl_link_alert_v1', NEAR = 0.003, SURGE = 1.0, SWIN = 10, KEEP = 60;
+  var IDXP = 0.3, IDXW = 8, SYNC = 0.75, MAXMUL = 3; /* 11-11 上证脉冲×持仓同步: 8分钟内上证抬0.3个点, 持仓抬到它的75%~3倍之间=大盘带的(超过3倍算它自己强, 不报) */
   var UP = '#ff5459', DN = '#1fdc93', MID = '#8fa8b3', GOLD = '#e8c37a';
   var st = { open: false, pick: 0, unread: 0, last: null, samp: {}, pos: null };
 
@@ -72,6 +73,29 @@
       if (h.secPct - lo >= SURGE) alert1('su-' + h.sec + slot, h.sec + ' ' + SWIN + '分钟内拉升 ' + (h.secPct - lo).toFixed(1) + '个点（现' + pc(h.secPct, 1) + '）', 'hi');
       if (hi - h.secPct >= SURGE) alert1('sd-' + h.sec + slot, h.sec + ' ' + SWIN + '分钟内回落 ' + (hi - h.secPct).toFixed(1) + '个点（现' + pc(h.secPct, 1) + '）', 'lo');
     });
+    /* 11-11 用户: 今天卖飞了——上冲和上证走势一模一样; 等于大盘带的冲高, 不是个股自己走强, 这种高点常常就是短线顶。
+       做法: 记上证和每只持仓的涨幅采样, 上证在 IDXW 分钟内抬了 ≥IDXP 个点, 同时某只票同期涨幅 ≥ 上证涨幅×SYNC(默认七成半)=跟着大盘抬的, 报一次。
+       反过来说: 上证抬了但票没动 = 它自己弱; 上证没抬票自己冲 = 独立走强(那种是好事, 不在这里报)。 */
+    (function () {
+      var now = Date.now(), td2 = today(), sh = D.sh;
+      if (!sh || sh.qd !== td2.replace(/-/g, '') || !ok(sh.pct)) return;
+      var s1 = st.idxs = (st.idxs || []).filter(function (x) { return now - x.t <= IDXW * 6e4; });
+      s1.push({ t: now, p: sh.pct });
+      var base = s1[0]; if (!base || s1.length < 3) return;
+      var rise = sh.pct - base.p;
+      if (rise < IDXP) return;
+      var slot = Math.floor(now / 18e5);
+      (D.holds || []).forEach(function (h) {
+        if (!ok(h.pct)) return;
+        var hs = st['ps_' + h.code] = (st['ps_' + h.code] || []).filter(function (x) { return now - x.t <= IDXW * 6e4; });
+        hs.push({ t: now, p: h.pct });
+        var b0 = hs[0]; if (!b0 || hs.length < 3) return;
+        var hr = h.pct - b0.p;
+        if (hr >= rise * SYNC && hr <= rise * MAXMUL && hr >= IDXP * 0.8) {
+          alert1('sync-' + h.code + slot, h.name + ' 这波 +' + hr.toFixed(2) + ' 个点是跟着上证抬的（同期上证 +' + rise.toFixed(2) + '）—— 大盘带的冲高，不是它自己走强，注意别在这追/别在这等高', 'lo');
+        }
+      });
+    })();
   }
   window.addEventListener('jlreso:near', function (e) {
     var d = e.detail || {}, nm = d.code === 'sh000001' ? '上证' : d.code;
