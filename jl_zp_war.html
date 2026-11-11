@@ -415,6 +415,49 @@ function ivStartXJL(t0) {
     var x = xOfHmJL(t0.slice(8, 12)); return x == null ? PX0 : Math.max(PX0, Math.min(LX - 30, x));
   } catch (e) { return PX0; }
 }
+/* 11-12 用户: 日级 ATR 带 —— 价直接取台账已算好的表(ATRB_TAB), 页面不再自己算 k/ATR.
+   台账口径: 中心=当日收盘, 上沿=带上沿, 下沿=带下沿; S2=上沿, S1=中心与上沿中间, B1=中心与下沿中间, B2=下沿.
+   四个价在 分时/1分/5分/15分/日 都贴细线, 线尾只有一个小字+价, 不写大字, 不进引擎、不弹提醒. */
+var ATRB_TAB = {
+  '000547': { d: '2026-09-15', pc: 14.41, S2: 14.82, S1: 14.62, B1: 14.23, B2: 14.05 },
+  '000892': { d: '2026-11-11', pc: 5.18, S2: 5.44, S1: 5.31, B1: 5.05, B2: 4.92 },
+  '001211': { d: '2026-11-11', pc: 29.64, S2: 31.31, S1: 30.48, B1: 28.95, B2: 28.27 },
+  '001388': { d: '2026-11-11', pc: 24.54, S2: 25.45, S1: 24.99, B1: 24.02, B2: 23.49 },
+  '002716': { d: '2026-11-06', pc: 7.53, S2: 7.85, S1: 7.69, B1: 7.42, B2: 7.30 },
+  '003026': { d: '2026-10-23', pc: 27.06, S2: 28.41, S1: 27.73, B1: 26.42, B2: 25.78 },
+  '301123': { d: '2026-10-23', pc: 52.90, S2: 56.42, S1: 54.66, B1: 51.33, B2: 49.75 },
+  '515880': { d: '2026-10-23', pc: 0.514, S2: 0.530, S1: 0.522, B1: 0.502, B2: 0.490 },
+  '589420': { d: '2026-10-23', pc: 0.632, S2: 0.640, S1: 0.636, B1: 0.606, B2: 0.580 },
+  '600105': { d: '2026-11-11', pc: 24.41, S2: 26.28, S1: 25.34, B1: 23.76, B2: 23.10 },
+  '600176': { d: '2026-10-26', pc: 30.85, S2: 35.11, S1: 32.98, B1: 31.08, B2: 31.31 },
+  '600498': { d: '2026-10-23', pc: 30.31, S2: 32.10, S1: 31.20, B1: 29.57, B2: 28.83 },
+  '600650': { d: '2026-11-06', pc: 10.79, S2: 11.10, S1: 10.95, B1: 10.63, B2: 10.48 },
+  '600875': { d: '2026-09-15', pc: 24.12, S2: 24.80, S1: 24.46, B1: 23.86, B2: 23.59 },
+  '603986': { d: '2026-11-11', pc: 259.62, S2: 273.67, S1: 266.64, B1: 254.07, B2: 248.52 },
+  '605589': { d: '2026-10-23', pc: 30.60, S2: 32.11, S1: 31.36, B1: 29.91, B2: 29.22 }
+};
+function atrBandJL() {
+  var t = ATRB_TAB[STK.code || ''];
+  return t && t.S2 > 0 ? t : null;
+}
+function atrBandLinesJL(labs) {
+  if (!INJL || LIVE.idx) return;
+  var B = atrBandJL(); if (!B) return;
+  var dec = B.pc >= 1 ? 2 : 3, fx = function (x) { return x.toFixed(dec); };
+  var L = [
+    { t: 'S2', p: B.S2, c: 'var(--red)', a: .55 },
+    { t: 'S1', p: B.S1, c: 'var(--red)', a: .38 },
+    { t: 'B1', p: B.B1, c: 'var(--green)', a: .38 },
+    { t: 'B2', p: B.B2, c: 'var(--green)', a: .55 }
+  ];
+  L.forEach(function (o) {
+    var p = o.p; if (!(p > 0)) return;
+    if (p < YLO - (YHI - YLO) || p > YHI + (YHI - YLO)) return;   /* 早画一点, 别等进视野才出来 */
+    var y = Y(p); if (y < PY0 - 1 || y > PY0 + PH + 1) return;
+    svg.appendChild(el('line', { x1: PX0, y1: y, x2: LX - 6, y2: y, stroke: o.c, 'stroke-width': .5, 'stroke-dasharray': '4 4', opacity: o.a }));
+    labs.push({ y: y, t: o.t + ' ' + fx(p), c: o.c });
+  });
+}
 function staticsLiveJL() {
   var pc = LIVE.pc || 0, cur = LIVE.last || pc, Z = null, labs = [];
   try { Z = zonesForLive(null, null); } catch (e) { }
@@ -463,6 +506,7 @@ function staticsLiveJL() {
   }
   var DH = LIVE.dhi > 0 ? LIVE.dhi : LIVE.hi, DL = LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : LIVE.lo;
   /* jl-hl2: 日高/日低线字删 */
+  try { atrBandLinesJL(labs); } catch (eB) { }   /* 11-12: 日级四价 S2/S1/B1/B2 贴到当前周期(分时/1/5/15分/日都一样画) */
   SLAB = labs;   /* 字不在这里画: 交给 renderMarkers 和引擎线的字合成一列统一排 */
 }
 var SLAB = [], IVEDGE = [];   /* IVEDGE: 当前图上IV区边价, 卖目标线与之重合就不再画红线(免得盖住IV线) */
@@ -482,11 +526,7 @@ function labColJL(g, labs) {
 function buildStatics() {
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   if (INJL) { staticsLiveJL(); } else {
-  svg.appendChild(el('rect', { x: PX0, y: Y(LV.bandHi), width: PW, height: Y(LV.bandLo) - Y(LV.bandHi), fill: 'var(--red)', opacity: .12 }));
-  svg.appendChild(tx(PX0 + PW - 4, Y(LV.bandHi) + 19, '缺口区 22.62–23.63', 'var(--red)', 11, 'end', 600));
-  [[LV.far, 'var(--red)', 1.5], [LV.bandLo, 'var(--red)', .8], [LV.buyLine, 'var(--green)', 1.5]].forEach(function (l) {
-    svg.appendChild(el('line', { x1: PX0, y1: Y(l[0]), x2: LX - 6, y2: Y(l[0]), stroke: l[1], 'stroke-width': l[2], 'stroke-dasharray': '5 3', opacity: l[2] < 1 ? .6 : 1 }));
-  });
+  /* 11-12 用户: 单独打开时的演示样例(卖线/缺口区/缺口沿/接回/上方磁铁)全部删掉, 一条都不留 */
   }
   svg.appendChild(el('line', { x1: xOfHmJL('1130'), y1: PY0, x2: xOfHmJL('1130'), y2: PY0 + PH, stroke: 'var(--line)' }));
   svg.appendChild(tx(PX0, PY0 + PH + 16, '09:30'));
@@ -495,12 +535,6 @@ function buildStatics() {
   svg.appendChild(el('polyline', { id: 'pline', fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1, 'stroke-linejoin': 'round' }));
   svg.appendChild(el('g', { id: 'mk' }));
   svg.appendChild(el('line', { id: 'cnow', x1: PX0, x2: LX - 6, stroke: 'var(--ink)', 'stroke-width': .7, 'stroke-dasharray': '1 3', opacity: .7 }));
-  if (!INJL) {
-  svg.appendChild(tx(PX0 + PW - 4, Y(LV.far) - 9, '23.63 卖线 +8.6%', 'var(--red)', 11, 'end', 700));
-  svg.appendChild(tx(PX0 + PW - 4, Y(LV.bandLo) + 14, '22.62 缺口沿 +4.0%', 'var(--txt)', 11, 'end', 600));
-  svg.appendChild(tx(X(15), Y(LV.buyLine) - 8, '21.75 接回 · 昨收', 'var(--green)', 11, 'start', 700));
-  svg.appendChild(tx(PX0 + PW - 4, 11, '上方磁铁 25.75 +18.4% · 27.92 +28.4%', 'var(--txt)', 10.5, 'end', 600));
-  }
   svg.appendChild(el('circle', { id: 'curDot', r: 3.5, fill: 'var(--ink)' }));
   svg.appendChild(el('g', { id: 'auc' }));   /* 竞价段(9:15-9:25撮合指导价)·左缘刻度 */
 }
@@ -526,12 +560,13 @@ function renderMarkers() {
     g.appendChild(tx(lx0, ly0, sell ? '卖' : '买', GD, 7.5, early ? 'start' : 'end', 600));
   });
   /* jl-zp4: 引擎当前要盯的价画在图上——已卖: 卖出价+反弹线(跟着卖出后低点下移); 没卖: 卖目标 */
+  var labs9 = (INJL ? SLAB.slice() : []);
   if (MODE === 'live' && LIVE.eng) {
     var e = LIVE.eng, Ls = [], lastY = -99;
     /* 11-11 用户: 图上「卖出 x / 反弹线 y」两条线是旧 tdt2 引擎(卖后最低+0.15)的遗留, 和尺子/小球两套口径不是一回事, 看着互相矛盾 → 摘掉不再画 */
     if (e.sp !== null) { }
     else if (e.lastTp && e.rounds.length < LIVE.roundsMax) Ls.push([e.lastTp, 'var(--red)', null]);
-    var labs = (INJL ? SLAB.slice() : []);
+    var labs = labs9;
     Ls = Ls.filter(function (l) { return !(l[2] === null && IVEDGE.some(function (v) { return Math.abs(v - l[0]) < 0.0051; })); });
     Ls.forEach(function (l) {
       var y = Y(l[0]); if (y < PY0 - 2 || y > PY0 + PH + 2) return;
@@ -539,6 +574,8 @@ function renderMarkers() {
       if (l[2]) labs.push({ y: y, t: l[2], c: l[1], b: 1 });
     });
     labColJL(g, labs);   /* jl-zp6: 缺口/IV区/昨收/日高低 + 卖目标/卖出/反弹线 合成右侧一列, 自动错开 */
+  } else if (labs9.length) {
+    labColJL(g, labs9);   /* 11-12: 引擎还没出结果时, 日级 S2/S1/B1/B2 四个价照样要贴在右侧 (分时/1/5/15分/日都一样) */
   }
 }
 /* 回落阈值: 每只股票×周期单独存(localStorage zp_thr_v1; 分时键=代码, 1/5/15分键=代码@周期), 周期没设过=沿用分时那个, 分时也没设过=1.5% */
