@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="zh-CN"><head>
-<script src="jl_req.js?v=2"></script><script>/* jl-bkshare 11-08 用户: 板块主力资金首页多处重复拉 → 合成一路。同一个地址走 jlReq(同地址并发去重+170秒共用), 谁先要谁拉, 其余直接用 */
+<script src="jl_req.js?v=3"></script><script>/* jl-bkshare 11-08 用户: 板块主力资金首页多处重复拉 → 合成一路。同一个地址走 jlReq(同地址并发去重+170秒共用), 谁先要谁拉, 其余直接用 */
 window.jlBkShareJL = function (kind) {
   var F = "f2,f3,f6,f12,f14,f62,f66,f84,f184,f15,f16,f18,f104,f105,f106,f128,f140", B = "https://push2.eastmoney.com/api/qt/clist/get?pn=1&np=1&fltt=2&invt=2&ut=7eea3edcaed734bea9cbfc24409ed989&fields=" + F;
   var U = { indIn: "&fid=f62&po=1&pz=120&fs=m:90+t:2", indUp: "&fid=f3&po=1&pz=100&fs=m:90+t:2", allIn: "&fid=f62&po=1&pz=100&fs=m:90+t:2,m:90+t:3", allOut: "&fid=f62&po=0&pz=100&fs=m:90+t:2,m:90+t:3", allUp: "&fid=f3&po=1&pz=100&fs=m:90+t:2,m:90+t:3" }[kind];
