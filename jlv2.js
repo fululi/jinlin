@@ -1299,7 +1299,7 @@
     if (GC.show.px) {
       s += '<path d="' + pth(px, Yp) + '" fill="none" stroke="#fff" stroke-width="' + hw("px") + '"/>' + t(W - Rp + 4, A[0] + 8, ph.toFixed(0)) + t(W - Rp + 4, A[1] - 6, pl.toFixed(0));
       if (!m) { var sd = R.map(function (r) { return shM[r.d]; }).filter(function (v) { return v != null; }), sa = sd.length ? sd.reduce(function (a, b) { return a + Math.abs(b); }, 0) / sd.length : 0;
-        if (sa > 0) R.forEach(function (r, i) { var v = shM[r.d]; if (v == null) return; if (v >= 2 * sa) s += '<path d="M' + X(i).toFixed(1) + "," + (Yp(px[i]) + 5).toFixed(1) + ' l-3,5 h6z" fill="#40d0e0"/>'; else if (v <= -2 * sa) s += '<path d="M' + X(i).toFixed(1) + "," + (Yp(px[i]) - 5).toFixed(1) + ' l-3,-5 h6z" fill="#ff5459"/>'; }); }
+        if (sa > 0) R.forEach(function (r, i) { var v = shM[r.d]; if (v == null) return; if (v >= 2 * sa || v <= -2 * sa) s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Yp(px[i]).toFixed(1) + '" r="2.2" fill="' + (v > 0 ? "#40d0e0" : "#ff5459") + '" stroke="#0d1730" stroke-width=".8"/>';   /* 11-13 用户嫌三角丑 → 大额申赎日=线上一个小圆点(青申购/红赎回) */ }); }
     }
     s += '<text x="' + (Lp + 2) + '" y="' + (A[0] + 8) + '" fill="#fff" font-size="9.5" font-weight="600">沪深300</text>';
     s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '" stroke="#ffffff40" stroke-width=".6" stroke-dasharray="3 3"/>';
