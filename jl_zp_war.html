@@ -199,6 +199,9 @@ body.injlin .lad{border:0;margin:0 10px 8px;overflow:visible}
 .pr2.hit{outline:2px solid var(--amber);outline-offset:-2px}
 body.injlin .top{flex-wrap:wrap;row-gap:6px}body.injlin .name{flex:1;min-width:0}body.injlin .name small{display:inline;margin-left:6px}body.injlin .stkseg{order:3;width:100%;margin-top:0}body.injlin .stkseg .stk{padding:3px 9px;font-size:11.5px}
 body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body.injlin .rst{height:32px;width:32px}
+
+/* 11-12 用户: 压字看不清 —— 图表内所有文字加深色描边底, 压在K线/轨道线/刻度上也能读; 零布局改动 */
+#ch text,#zpVol text,#zpPane text,#zpRso text,#zpSub text{paint-order:stroke;stroke:rgba(10,14,19,.94);stroke-width:2.6px;stroke-linejoin:round}
 </style>
 </head>
 <body class="plan">
@@ -276,10 +279,10 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
   }catch(e){}
 })();
 </script>
-<script src="https://sfile.chatglm.cn/workspace/file/b8/b82d4137ff.js"></script>
-<script src="https://sfile.chatglm.cn/workspace/file/eb/ebc440446f.js"></script>
+<script src="jl_pitchfork.js"></script>
+<script src="jl_elliott.js"></script>
 <script src="jl_zp_shapes.js?v=12"></script>
-<script src="https://sfile.chatglm.cn/workspace/file/04/04f87a1a6b.js"></script>
+<script src="jl_macd.js"></script>
 <script>
 /* jl-zppat (11-04): 分时形态识别(替代 1-5 浪): 三角收敛/突破 + 头肩顶/头肩底, 只画最近一个形态, 随新高低点实时跟随
    输入 = 图上已标的高低点 __SWJL(与红圈同一组, 按"回落"阈值确认) + 分时点; 不画未确认的东西:
@@ -1813,6 +1816,7 @@ function openType() {
    jl-zp4: 买卖提醒只从引擎结果出(引擎已含正在走的那根), 去掉原来另算一套的"到反弹线/到卖目标"预触(口径和引擎不一致, 会和引擎买回重复响)。 */
 function liveKeys() {
   var ks = [], e = LIVE.eng, ot = openType();
+  try { (window.__jlRsoKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'rso|' + ev.id, k: 'rso', main: ev.txt, sub: 'RSO 回归斜率信号' }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道 */
   if (ot && LIVE.ts.slice(8, 12) >= '0925') {
     ks.push({
       id: 'open', k: ot.lo ? 'sellOpen' : 'buyOpen',
@@ -1848,7 +1852,7 @@ function liveCompute() {
   var alertable = !LIVE.base && liveToday() && (function () { var p = phaseNow(); return p === 'preOpen' || p === 'am' || p === 'lunch' || p === 'pm' || p === 'end'; })();
   ks.forEach(function (x) {
     if (!LIVE.keys[x.id]) {
-      LIVE.keys[x.id] = { t: Date.now(), a: alertable ? 1 : 0 };   /* a=这次真的响过; 浮球据此判断"刚发生的第一条"也要弹 */
+      LIVE.keys[x.id] = { t: Date.now(), a: alertable ? 1 : 0, txt: x.main || '' };   /* a=这次真的响过; 浮球据此判断"刚发生的第一条"也要弹 */
       if (alertable) {
         /* 11-09晚: 旧引擎R1提醒下线, 不响不震不弹 */
         var b = $('band'); b.classList.add('flash'); setTimeout(function () { b.classList.remove('flash'); }, 2600);
@@ -2439,7 +2443,7 @@ function ampNextHtmlJL(RD, A) {
      不许再写"还差 -x%", 改成「已越过 · 按现价 24.40 卖」, 并用 .near 高亮提醒现在就做 */
   var big = function (n, t, p, le, sub) {
     var past = cur > 0 && (t === 's' ? cur >= p - 1e-9 : cur <= p + 1e-9);
-    var lbl = t === 's' ? ('卖' + (le ? ' ' + le : '') + ' ' + p.toFixed(2)) : (isBall ? '反弹到 ' + p.toFixed(2) + ' 接' : '接' + (le ? ' ' + le : '') + ' ' + p.toFixed(2));
+    var lbl = t === 's' ? ('卖' + (le ? ' ' + le : '') + ' ' + p.toFixed(2)) : (isBall && !past ? '反弹到 ' + p.toFixed(2) + ' 接' : '接' + (le ? ' ' + le : '') + ' ' + p.toFixed(2));   /* 11-12 用户: 价已在接价下方时不再写"反弹到"免得自相矛盾 */
     var side = past ? '<span class="ns past">已越过 · 按现价 ' + cur.toFixed(2) + (t === 's' ? ' 卖' : ' 接') + '</span>'
       : (cur > 0 ? '<span class="ns">还差 ' + ((p - cur) >= 0 ? '+' : '−') + Math.abs((p - cur) / cur * 100).toFixed(1) + '%</span>' : '');
     return '<div class="acNx"><span class="nn">' + n + '</span><b class="np ' + t + ((past || near(p)) ? ' near' : '') + '"><i class="nd"></i>' + lbl + '</b>' + side + (sub ? '<span class="ns">' + sub + '</span>' : '') + '</div>';
@@ -5844,7 +5848,7 @@ window.addEventListener('click', function (e) {
       if (!l.al) return;
       if (a < l.v && b >= l.v) msgs.push(['u' + i + '|' + l.v, 'RSO 上穿 ' + l.v.toFixed(4)]); else if (a > l.v && b <= l.v) msgs.push(['d' + i + '|' + l.v, 'RSO 下穿 ' + l.v.toFixed(4)]);
     });
-    msgs.forEach(function (m) { var id = bk + '|' + m[0]; if (fired[id]) return; fired[id] = 1; if (!silent) toast(code() + ' ' + m[1]); });
+    msgs.forEach(function (m) { var id = bk + '|' + m[0]; if (fired[id]) return; fired[id] = 1; if (!silent) { toast(code() + ' ' + m[1]); (window.__jlRsoKeys = window.__jlRsoKeys || []).push({ id: id, txt: code() + ' ' + m[1] }); } });   /* 11-12 用户: RSO穿越事件同步推主提醒系统(引擎liveKeys排空→横幅闪+浮球金环闪字), toast保留 */
   }
 
   function Yv(v) { return view.top + (view.hi - v) / (view.hi - view.lo) * (view.bot - view.top); }
