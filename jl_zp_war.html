@@ -4412,7 +4412,9 @@ body.injlin .band.calm:has(#bMain:empty){display:none}
     if (o && o.d === t) return o.v;
     if (!avBusy[code] && typeof jget === 'function' && typeof dayURL === 'function') {
       avBusy[code] = 1; var sy = sym(code);
-      try { dayGetJL(24, sy).then(function (j) {
+      try { dayGetJL(24, sy).then(function (j) { var D0 = j && j.data && j.data[sy], R0 = (D0 && (D0.qfqday || D0.day)) || []; if (R0.length < 8) throw new Error('short'); return j; }).then(null, function () {   /* 11-13: 腾讯不通/太短 → 东财日K兜底(转成腾讯同款行) */
+          return emK(101, 30, 1, sy).then(function (rows) { var o = {}; o[sy] = { qfqday: rows.map(function (b) { return [b.t, b.o, b.c, b.h, b.l, b.v]; }) }; return { data: o }; });
+        }).then(function (j) {
         var D = j && j.data && j.data[sy], R = (D && (D.qfqday || D.day)) || [], v = [];
         R = R.filter(function (r) { return String(r[0]).replace(/\D/g, '') < t; });
         for (var i = 1; i < R.length; i++) { var pc = +R[i - 1][2], h = +R[i][3], l = +R[i][4]; if (pc > 0 && h >= l) v.push((h - l) / pc * 100); }
