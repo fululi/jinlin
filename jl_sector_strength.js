@@ -1176,9 +1176,15 @@
       var st = sgStore(), i = S.days.length - 1, seen = lsGet("jl_decay_seen_v1") || {};
       if (seen.d !== S.day) seen = { d: S.day, k: {} };
       var put = [], ch = false;
-      Object.keys(S.ana || {}).forEach(function (sec) {
+      /* 11-12 用户: 持仓板块必须一起判退潮——原来只扫 S.ana(快照里本来就有的板块), 持仓所在板块不在里面就永远不判 */
+      var scanSecs = Object.keys(S.ana || {});
+      try {
+        if (!S.heldSecs || S.heldSecsDay !== S.day) { S.heldSecs = CORE.heldSecMap(); S.heldSecsDay = S.day; }
+        Object.keys(S.heldSecs || {}).forEach(function (k) { if (scanSecs.indexOf(k) < 0) scanSecs.push(k); });
+      } catch (eH) {}
+      scanSecs.forEach(function (sec) {
         var dk; try { dk = CORE.decayOf(S.days, i, sec, bkqOf(sec), fundHistOf(sec)); } catch (e) { return; }
-        if (!dk || dk.lv !== "高") return;
+        if (!dk || dk.lv === "低") return; /* 11-12 用户: 都报——中(≥3分, 单条涨停腰斩就是3分)也弹, 不再只认5分以上的"高" */
         if (seen.k[sec]) return;
         var why = scopeOf(sec); if (!why) return;
         var q = bkqOf(sec), a = S.ana[sec] && S.ana[sec].cur ? S.ana[sec].cur.avg : (q ? q.p : 0);
