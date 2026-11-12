@@ -279,10 +279,266 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
   }catch(e){}
 })();
 </script>
-<script src="https://sfile.chatglm.cn/workspace/file/b8/b82d4137ff.js"></script>
-<script src="https://sfile.chatglm.cn/workspace/file/eb/ebc440446f.js"></script>
+<script>/* jl_pitchfork.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
+/*! jl_pitchfork.js — 作T作战屏 SVG 干草叉（复用页面已有的 window.__SWJL 转折点，不另找枢轴）
+ *
+ * Pitchfork.drawSVG(svg, swings, opt)
+ *   swings : window.__SWJL = [{p:价格, h:1高/0低, hm:'0945'}, ...] 高低交替，取最后三个当 A/B/C
+ *   opt.X  : hm -> 横坐标（传 xOfHmJL）
+ *   opt.Y  : 价格 -> 纵坐标（传页面的 Y）
+ *   opt.xEnd  : 线延长到的右边界（页面是 LX-6）
+ *   opt.clip  : [x1,y1,x2,y2] 绘图区，线超出会被裁掉
+ *   opt.before: 插到哪个元素之前（传 #pline，让干草叉在走势线下面）
+ * 返回 {A,B,C,slope,medAt(x)}；不足三个转折点返回 null
+ */
+(function (g) {
+  var NS = 'http://www.w3.org/2000/svg';
+  function E(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  function drawSVG(svg, S, o) {
+    var old = svg.querySelector('#pfk'); if (old) old.parentNode.removeChild(old);
+    if (!S || S.length < 3) return null;
+    var P = S.slice(-3).map(function (m) { return { x: m.x != null ? m.x : o.X(m.hm), p: m.p }; });
+    for (var i = 0; i < 3; i++) if (P[i].x == null || !isFinite(P[i].x)) return null;
+    var A = P[0], B = P[1], C = P[2];
+    var mx = (B.x + C.x) / 2, my = (B.p + C.p) / 2;
+    if (mx <= A.x) return null;
+    var s = (my - A.p) / (mx - A.x);                       // 每像素的价格变化
+    var med = function (x) { return A.p + s * (x - A.x); };
+    var dB = B.p - med(B.x), dC = C.p - med(C.x);
+    var offs = [dC, dC / 2, 0, dB / 2, dB].sort(function (a, b) { return a - b; });
+
+    var x0 = A.x, x1 = o.xEnd, c = o.clip || [0, 0, 1e4, 1e4];
+    var VIO = '#b695ff';                                    // 紫色：避开页面里 红=卖 / 绿=买 的语义
+    var gp = E('g', { id: 'pfk', 'pointer-events': 'none' });
+    var cid = 'pfclip' + (svg.id || '');
+    var cp = E('clipPath', { id: cid });
+    cp.appendChild(E('rect', { x: c[0], y: c[1], width: c[2] - c[0], height: c[3] - c[1] }));
+    gp.appendChild(cp);
+    var inner = E('g', { 'clip-path': 'url(#' + cid + ')' });
+    var Yl = function (off, x) { return o.Y(med(x) + off); };
+    var line = function (off, w, op, dash) {
+      var a = { x1: x0, y1: Yl(off, x0), x2: x1, y2: Yl(off, x1), stroke: VIO, 'stroke-width': w, opacity: op };
+      if (dash) a['stroke-dasharray'] = dash;
+      inner.appendChild(E('line', a));
+    };
+    // 外轨之间极淡的底色
+    inner.appendChild(E('polygon', {
+      points: [x0, Yl(offs[0], x0), x1, Yl(offs[0], x1), x1, Yl(offs[4], x1), x0, Yl(offs[4], x0)].join(','),
+      fill: VIO, opacity: 0.06
+    }));
+    line(offs[0], 0.8, 0.55); line(offs[4], 0.8, 0.55);     // 外轨
+    line(offs[1], 0.8, 0.5, '3 3'); line(offs[3], 0.8, 0.5, '3 3'); // 0.5 线
+    line(0, 1.2, 0.95);                                     // 中线
+    gp.appendChild(inner);
+    [A, B, C].forEach(function (q) { gp.appendChild(E('circle', { cx: q.x, cy: o.Y(q.p), r: 2.2, fill: VIO, opacity: 0.9 })); });
+
+    if (o.before && o.before.parentNode === svg) svg.insertBefore(gp, o.before); else svg.appendChild(gp);
+    return { A: A, B: B, C: C, slope: s, medAt: med };
+  }
+
+  g.Pitchfork = { drawSVG: drawSVG };
+})(window);
+</script>
+<script>/* jl_elliott.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
+/*! jl_elliott.js — 艾略特波浪指标（推动浪 Impulse 1-5 + 锯齿浪 Zigzag a-b-c），SVG 叠加版
+ * 规则按 TradingView 官方说明：
+ *  推动浪：2浪回撤≤1浪100%；3浪超过1浪终点；3浪不是1/3/5中最短；4浪不进入1浪区域
+ *  锯齿浪：b浪短于a浪；c浪超过a浪终点
+ *
+ * Elliott.swingsFrom(pts, thr)  pts=[{hm,p}] 分时点（周视图可直接传 {x,p}，x=已算好的横坐标，此时 opt.X 可不传）；thr=反向幅度(0.008=0.8%) → 高低交替的转折点
+ * Elliott.detect(swings)        → {type:'impulse'|'zigzag', s:+1/-1, P:[转折点...]} 或 null
+ * Elliott.drawSVG(svg, swings, opt)  opt:{X:hm->x, Y:price->y, clip:[x1,y1,x2,y2], xEnd, before}
+ */
+(function (g) {
+  var NS = 'http://www.w3.org/2000/svg';
+  function E(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+
+  // 转折点：反向走出 thr 才确认（与作战屏 __SWJL 同一算法，阈值可单独调）
+  function swingsFrom(pts, thr) {
+    var SW = [], dir = 0, ext = null;
+    pts.forEach(function (q, ix) {
+      if (!(q.p > 0)) return;
+      if (!ext) { ext = { ix: ix, p: q.p }; return; }
+      if (dir >= 0 && q.p > ext.p) { ext = { ix: ix, p: q.p }; dir = 1; }
+      else if (dir <= 0 && q.p < ext.p) { ext = { ix: ix, p: q.p }; dir = -1; }
+      else if (dir === 1 && q.p < ext.p * (1 - thr)) { SW.push({ p: ext.p, h: 1, hm: pts[ext.ix].hm, x: pts[ext.ix].x }); ext = { ix: ix, p: q.p }; dir = -1; }
+      else if (dir === -1 && q.p > ext.p * (1 + thr)) { SW.push({ p: ext.p, h: 0, hm: pts[ext.ix].hm, x: pts[ext.ix].x }); ext = { ix: ix, p: q.p }; dir = 1; }
+    });
+    return SW;
+  }
+
+  // s=+1 上行形态（起点是低点）；s=-1 下行形态（价格取反后用同一套规则）
+  function isImpulse(P, s) {
+    if (P[0].h !== (s > 0 ? 0 : 1)) return false;
+    var v = P.map(function (q) { return s * q.p; });
+    if (!(v[1] > v[0] && v[2] > v[0] && v[3] > v[1] && v[4] > v[1] && v[4] < v[3] && v[5] > v[4])) return false;
+    var w1 = v[1] - v[0], w3 = v[3] - v[2], w5 = v[5] - v[4];
+    return !(w3 < w1 && w3 < w5);
+  }
+  function isZigzag(P, s) {
+    if (P[0].h !== (s > 0 ? 0 : 1)) return false;
+    var v = P.map(function (q) { return s * q.p; });
+    return v[1] > v[0] && v[2] < v[1] && v[2] > v[0] && v[3] > v[1] && v[3] > v[2];
+  }
+
+  // 只看以最近两个转折点结尾的形态，取振幅最大的；同等振幅优先推动浪
+  function detect(S) {
+    var n = S.length, best = null;
+    for (var e = n - 1; e >= Math.max(0, n - 2); e--) {
+      [[6, 'impulse', isImpulse], [4, 'zigzag', isZigzag]].forEach(function (c) {
+        var st = e - c[0] + 1; if (st < 0) return;
+        var P = S.slice(st, e + 1);
+        [1, -1].forEach(function (s) {
+          if (!c[2](P, s)) return;
+          var amp = Math.abs(P[P.length - 1].p - P[0].p) / P[0].p;
+          if (!best || amp > best.amp + 1e-9 || (Math.abs(amp - best.amp) <= 1e-9 && c[1] === 'impulse'))
+            best = { type: c[1], s: s, P: P, amp: amp };
+        });
+      });
+    }
+    return best;
+  }
+
+  function drawSVG(svg, S, o) {
+    var old = svg.querySelector('#ell'); if (old) old.parentNode.removeChild(old);
+    var R = detect(S || []); if (!R) return null;
+    var pt = R.P.map(function (q) { return { x: q.x != null ? q.x : o.X(q.hm), p: q.p, h: q.h }; });
+    for (var i = 0; i < pt.length; i++) if (pt[i].x == null || !isFinite(pt[i].x)) return null;
+    var ORG = '#ff7a00', BLU = '#4d7cff', c = o.clip || [0, 0, 1e4, 1e4];
+    var gp = E('g', { id: 'ell', 'pointer-events': 'none' });
+    var ecid = 'ellclip' + (svg.id || ''), cp = E('clipPath', { id: ecid });
+    cp.appendChild(E('rect', { x: c[0], y: c[1], width: c[2] - c[0], height: c[3] - c[1] }));
+    gp.appendChild(cp);
+    var inner = E('g', { 'clip-path': 'url(#' + ecid + ')' });
+
+    // 蓝色通道：推动浪 = 过2、4浪低点连线 + 过3浪的平行线；锯齿浪 = 过起点与b浪连线 + 过a浪的平行线
+    var L = pt.length - 1, a1, a2, b;
+    if (R.type === 'impulse') { a1 = pt[2]; a2 = pt[4]; b = pt[3]; } else { a1 = pt[0]; a2 = pt[2]; b = pt[1]; }
+    if (a2.x > a1.x) {
+      var m = (a2.p - a1.p) / (a2.x - a1.x), x0 = a1.x;
+      var x1 = Math.min(o.xEnd || 1e4, pt[L].x + (pt[L].x - pt[0].x) * 0.2);
+      var pr = function (x, ref) { return ref.p + m * (x - ref.x); };
+      [[a1, x0], [b, Math.min(b.x, x0)]].forEach(function (d) {
+        inner.appendChild(E('line', { x1: d[1], y1: o.Y(pr(d[1], d[0])), x2: x1, y2: o.Y(pr(x1, d[0])), stroke: BLU, 'stroke-width': .7, opacity: 0.7 }));
+      });
+    }
+    // 橙色波浪折线
+    inner.appendChild(E('polyline', {
+      points: pt.map(function (q) { return q.x.toFixed(1) + ',' + o.Y(q.p).toFixed(1); }).join(' '),
+      fill: 'none', stroke: ORG, 'stroke-width': .9, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', opacity: 0.92
+    }));
+    gp.appendChild(inner);
+
+    var names = R.type === 'impulse' ? ['', '1', '2', '3', '4', '5'] : ['', 'a', 'b', 'c'];
+    pt.forEach(function (q, k) {
+      if (!names[k]) return;
+      var t = E('text', {
+        x: q.x, y: o.Y(q.p) + (q.h ? -4 : 10), fill: ORG, 'font-size': 7.5, 'font-weight': 600, 'text-anchor': 'middle',
+        stroke: 'rgba(5,10,16,.9)', 'stroke-width': 2, 'paint-order': 'stroke', 'stroke-linejoin': 'round'
+      });
+      t.textContent = names[k]; gp.appendChild(t);
+    });
+
+    if (o.before && o.before.parentNode === svg) svg.insertBefore(gp, o.before); else svg.appendChild(gp);
+    return { type: R.type, dir: R.s > 0 ? '上行' : '下行', pivots: R.P };
+  }
+
+  g.Elliott = { swingsFrom: swingsFrom, detect: detect, drawSVG: drawSVG };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
 <script src="jl_zp_shapes.js?v=12"></script>
-<script src="https://sfile.chatglm.cn/workspace/file/04/04f87a1a6b.js"></script>
+<script>/* jl_macd.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
+/*! jl_macd.js — 分时 MACD 副图（MACDFS 12,26,9），仿同花顺：红绿柱 + DIF(白) + DEA(橙)
+ * 做成独立的一块 SVG，插在走势图下面，不画在图上，所以不会压住任何字。
+ * 横坐标与上面的分时图对齐（用同一个 X 函数）。
+ *
+ * MacdFS.draw(svg, pts, {X: hm->x, x0: 绘图区左, x1: 绘图区右})
+ *   svg = 走势图的 svg；pts = LIVE.pts = [{hm,p},...]
+ * MacdFS.calc(prices, 12, 26, 9) -> {dif, dea, hist}   hist = (DIF-DEA)*2（同花顺口径）
+ */
+(function (g) {
+  var NS = 'http://www.w3.org/2000/svg';
+  function E(n, a, t) {
+    var e = document.createElementNS(NS, n);
+    for (var k in a) e.setAttribute(k, a[k]);
+    if (t != null) e.textContent = t;
+    return e;
+  }
+  function ema(arr, n) {
+    var k = 2 / (n + 1), o = [], v;
+    arr.forEach(function (x, i) { v = i ? x * k + v * (1 - k) : x; o.push(v); });
+    return o;
+  }
+  function calc(prices, S, L, M) {
+    var a = ema(prices, S || 12), b = ema(prices, L || 26);
+    var dif = a.map(function (x, i) { return x - b[i]; });
+    var dea = ema(dif, M || 9);
+    var hist = dif.map(function (x, i) { return (x - dea[i]) * 2; });
+    return { dif: dif, dea: dea, hist: hist };
+  }
+
+  function draw(svg, pts, o) {
+    var par = svg && svg.parentNode;
+    if (!par || !pts || pts.length < 2) return null;
+    var host = par.querySelector('#macdfs');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'macdfs';
+      host.style.cssText = 'margin-top:4px;pointer-events:none';
+      par.insertBefore(host, svg.nextSibling);
+    }
+    var vb = svg.viewBox && svg.viewBox.baseVal;
+    var W = (vb && vb.width) || 342, H = 92, top = 17, bot = H - 6;
+    var xs = [], ps = [];
+    pts.forEach(function (q) {
+      var x = o.X(q.hm);
+      if (q.p > 0 && x != null && isFinite(x)) { xs.push(x); ps.push(q.p); }
+    });
+    if (ps.length < 2) return null;
+
+    var R = calc(ps, 12, 26, 9), m = 1e-9, i;
+    for (i = 0; i < ps.length; i++) m = Math.max(m, Math.abs(R.dif[i]), Math.abs(R.dea[i]), Math.abs(R.hist[i]));
+    var mid = (top + bot) / 2, half = (bot - top) / 2 - 1;
+    var Y = function (v) { return mid - v / m * half; };
+
+    var sv = E('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', style: 'display:block' });
+    var RED = '#ef5350', GRN = '#34d399', DIF = '#e6ebf2', DEA = '#ffb84d';
+    sv.appendChild(E('line', { x1: o.x0, y1: mid, x2: o.x1, y2: mid, stroke: '#8a96a6', 'stroke-width': 0.6, 'stroke-dasharray': '3 3', opacity: 0.6 }));
+
+    var bw = Math.max(0.5, (o.x1 - o.x0) / 240 * 0.7);       // 一天约 240 个点
+    for (i = 0; i < ps.length; i++) {
+      var h = R.hist[i], y = Y(h), y0 = mid;
+      sv.appendChild(E('rect', {
+        x: (xs[i] - bw / 2).toFixed(2), y: Math.min(y, y0).toFixed(2),
+        width: bw.toFixed(2), height: Math.max(0.4, Math.abs(y - y0)).toFixed(2),
+        fill: h >= 0 ? RED : GRN, opacity: 0.9
+      }));
+    }
+    var line = function (arr, c, w) {
+      sv.appendChild(E('polyline', {
+        points: arr.map(function (v, k) { return xs[k].toFixed(1) + ',' + Y(v).toFixed(1); }).join(' '),
+        fill: 'none', stroke: c, 'stroke-width': w, 'stroke-linejoin': 'round'
+      }));
+    };
+    line(R.dif, DIF, 1); line(R.dea, DEA, 1);
+
+    var n = ps.length - 1, d = Math.abs(R.dif[n]) >= 1 ? 2 : 3, f = function (v) { return v.toFixed(d); };
+    sv.appendChild(E('text', { x: o.x0, y: 11, fill: '#8a96a6', 'font-size': 9 }, 'MACDFS (12,26,9)'));
+    var t = E('text', { x: o.x1, y: 11, 'font-size': 9, 'text-anchor': 'end' });
+    t.appendChild(E('tspan', { fill: DIF }, 'DIF ' + f(R.dif[n]) + '  '));
+    t.appendChild(E('tspan', { fill: DEA }, 'DEA ' + f(R.dea[n]) + '  '));
+    t.appendChild(E('tspan', { fill: R.hist[n] >= 0 ? RED : GRN }, 'MACD ' + f(R.hist[n])));
+    sv.appendChild(t);
+
+    host.innerHTML = '';
+    host.appendChild(sv);
+    return { dif: R.dif[n], dea: R.dea[n], hist: R.hist[n] };
+  }
+
+  g.MacdFS = { calc: calc, draw: draw };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
 <script>
 /* jl-zppat (11-04): 分时形态识别(替代 1-5 浪): 三角收敛/突破 + 头肩顶/头肩底, 只画最近一个形态, 随新高低点实时跟随
    输入 = 图上已标的高低点 __SWJL(与红圈同一组, 按"回落"阈值确认) + 分时点; 不画未确认的东西:
@@ -4774,7 +5030,7 @@ body.injlin .chartbox>#zpSub{order:1}
     rsoList: function () { return loadH().filter(function (h) { return h.pn === 'rso' && h.v != null && !rsoHid(h); }); },
     selRso: function () { var H = loadH(); return selH >= 0 && H[selH] && H[selH].pn === 'rso' ? selH : -1; },
     selAl: function () { var H = loadH(), i = this.selRso(); return i >= 0 ? !!H[i].al : false; },
-    toggleAl: function (i) { var H = loadH(); if (H[i]) { H[i].al = !H[i].al; saveH(H); paint(); } }
+    toggleAl: function (i) { var H = loadH(); if (H[i]) { H[i].al = !H[i].al; saveH(H); paint(); return H[i].al; } }
   };
   window.zpDrawPaintWk = function () { var r = $('wkSvg'); if (r) { try { paintLines('wk', r, load()); } catch (e) { } } };
   window.zpDrawPaintRso = function () { var r = $('zpRso'); if (r && r.style.display !== 'none') { try { paintLines('rso', r, load()); } catch (e) { } } };
@@ -5705,7 +5961,7 @@ window.addEventListener('click', function (e) {
       if (ch && (!ch.querySelector('.zq-lay') || s !== lastSig)) { lastSig = s; paint(); }
     } catch (e) { }
   }, 300);
-  mountBar(); paint();
+  mountBar(); paint(); try { bellBtn(); } catch (e) { }
 })();
 </script>
 <script>
@@ -5810,7 +6066,9 @@ window.addEventListener('click', function (e) {
         else if (a === 'cfg') { panel.style.display = panel.style.display === 'none' ? 'grid' : 'none'; }
         else if (a === 'bell') {
           var hapi = window.zpHlApi, hsi = hapi ? hapi.selRso() : -1;
-          if (hsi >= 0) hapi.toggleAl(hsi); else S.ax = !S.ax;   /* 选中一条RSO水平线=给这条设/取消穿越提醒; 没选中=开关"上穿/下穿信号线"提醒 */
+          if (hsi >= 0) { note(hapi.toggleAl(hsi) ? '🔔 该线穿越提醒已开' : '🔕 该线穿越提醒已关'); }   /* 选中一条RSO水平线=给这条设/取消穿越提醒 */
+          else { S.ax = !S.ax; note(S.ax ? '🔔 RSO信号线穿越提醒已开' : '🔕 RSO信号线穿越提醒已关'); }   /* 11-12 用户: 点铃铛必须有反应 */
+          bellBtn();
           try { window.Notification && Notification.permission === 'default' && Notification.requestPermission(); } catch (_) { }
           save();
         }
@@ -5860,6 +6118,8 @@ window.addEventListener('click', function (e) {
   }
   function busy() { }
 
+  function note(t) { var d = document.createElement('div'); d.className = 'zr-toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 3000); }   /* 静默确认气泡(不震不响) */
+  function bellBtn() { try { var bb = wrap.querySelector('[data-a="bell"]'); if (bb) { bb.style.color = S.ax ? '#ffd66e' : ''; bb.style.textShadow = S.ax ? '0 0 9px rgba(255,214,110,.75)' : ''; } } catch (e) { } }   /* 提醒开着=铃铛点亮 */
   function toast(t) {
     var d = document.createElement('div'); d.className = 'zr-toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 4500);
     try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (_) { }
