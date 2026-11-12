@@ -279,10 +279,10 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
   }catch(e){}
 })();
 </script>
-<script src="jl_pitchfork.js"></script>
-<script src="jl_elliott.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/b8/b82d4137ff.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/eb/ebc440446f.js"></script>
 <script src="jl_zp_shapes.js?v=12"></script>
-<script src="jl_macd.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/04/04f87a1a6b.js"></script>
 <script>
 /* jl-zppat (11-04): 分时形态识别(替代 1-5 浪): 三角收敛/突破 + 头肩顶/头肩底, 只画最近一个形态, 随新高低点实时跟随
    输入 = 图上已标的高低点 __SWJL(与红圈同一组, 按"回落"阈值确认) + 分时点; 不画未确认的东西:
@@ -835,6 +835,7 @@ try {
     if (ahiJL > 0 && aloJL > 0) {
       var a1 = avdJL || (PARJL ? PARJL.a1 : 0), a2 = avdJL ? avdJL * 1.4 : (PARJL ? PARJL.a2 : 0);
       AJ.amp = (ahiJL - aloJL) / pcv * 100; AJ.avg = a1; AJ.afb = !avdJL; AJ.alv = a1 ? (AJ.amp >= a2 ? 2 : AJ.amp >= a1 ? 1 : 0) : 0; AJ.afl = flashJL('amp', AJ.alv);
+    try { var _aO = jlSigLatch('amp|' + ((window.STK && STK.code) || ''), AJ.alv); if (_aO != null && AJ.alv > _aO && AJ.alv > 0) jlSigPush('振幅', '今日已走振幅 ' + AJ.amp.toFixed(1) + '% · ' + (AJ.alv >= 2 ? '超20日均值1.4倍(' + AJ.avg.toFixed(1) + '%) · 日内空间基本用完, 追高谨慎' : '到20日均值(' + AJ.avg.toFixed(1) + '%) · 剩余空间不多'), 'amp' + AJ.alv + '|' + (LIVE.sessDate || '')); } catch (e) { }   /* 11-12: 振幅已走事实提醒 */
     }
     var weakJL0 = (LIVE.last > 0 && LIVE.last / pcv - 1 <= -0.03) || (LIVE.open > 0 && LIVE.open / pcv - 1 <= -0.02);
     if (ext && ext.p > 0 && dirH !== 0) { SEGAVJL = dirH === 1 ? SEGUPJL : SEGDNJL; }
@@ -1814,9 +1815,21 @@ function openType() {
 
 /* ---- 事件（与上一轮对比，新事件才响铃；回填只记不响） ----
    jl-zp4: 买卖提醒只从引擎结果出(引擎已含正在走的那根), 去掉原来另算一套的"到反弹线/到卖目标"预触(口径和引擎不一致, 会和引擎买回重复响)。 */
+/* 11-12 jl-sig: B/C/D 提醒共用信号桥(RSO走__jlRsoKeys), 阶段护栏+每票锁存基线 */
+function jlSigPush(lbl, txt, id) {
+  try {
+    if (!LIVE.ts || !liveToday()) return;
+    var p = phaseNow(); if (p !== 'am' && p !== 'pm') return;
+    (window.__jlSigKeys = window.__jlSigKeys || []).push({ id: id, lbl: lbl, txt: txt, sub: lbl + '信号' });
+  } catch (e) { }
+}
+function jlSigLatch(k, v) { var L = (window.__jlSigLatch = window.__jlSigLatch || {}), o = L[k]; L[k] = v; return o; }
+function jlSigCtrl(v) { try { if (v == null) return; var clv = v >= 100 ? 3 : v >= 50 ? 2 : v > 0 ? 1 : 0, o = jlSigLatch('ctrl|' + ((window.STK && STK.code) || ''), clv); if (o != null && o !== clv) jlSigPush('控盘', ['无控盘', '低控盘', '中控盘', '高控盘'][clv] + ' ' + Math.round(v) + '（价格公式）', 'ctrl' + clv + '|' + (LIVE.sessDate || '') + '|' + Math.round(v)); } catch (e) { } }
+function jlSigCum(lastRow, fM) { try { if (!lastRow || !(Math.abs(lastRow.cum) >= 0.05)) return; var f = lastRow.cum >= 0 ? 1 : 0, o = jlSigLatch('cum|' + ((window.STK && STK.code) || ''), f); if (o != null && o !== f) jlSigPush('资金', '主力累计转' + (f ? '净流入 ' : '净流出 ') + fM(lastRow.cum), 'cum' + f + '|' + lastRow.hm); } catch (e) { } }
 function liveKeys() {
   var ks = [], e = LIVE.eng, ot = openType();
-  try { (window.__jlRsoKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'rso|' + ev.id, k: 'rso', main: ev.txt, sub: 'RSO 回归斜率信号' }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道 */
+  try { (window.__jlRsoKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'rso|' + ev.id, k: 'rso', main: ev.txt, sub: 'RSO 回归斜率信号', lbl: 'RSO' }); }); } catch (er) { }
+  try { (window.__jlSigKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'sig|' + ev.id, k: 'rso', main: ev.lbl + ' ' + ev.txt, sub: ev.sub || '信号提醒', lbl: ev.lbl, txt: ev.txt }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道 */
   if (ot && LIVE.ts.slice(8, 12) >= '0925') {
     ks.push({
       id: 'open', k: ot.lo ? 'sellOpen' : 'buyOpen',
@@ -1837,6 +1850,17 @@ function liveKeys() {
   return ks;
 }
 function liveCompute() {
+  try {   /* 11-12: 手画水平线价格穿越提醒(挂最前, 不足一手/指数也照常盯线) */
+    if (window.__jlSigPrevSym !== (LIVE.sym || '')) { window.__jlSigPrevPx = 0; window.__jlSigPrevSym = LIVE.sym || ''; }
+    if (LIVE.last > 0 && window.__jlSigPrevPx > 0 && window.zpHlApi) {
+      var _pp = window.__jlSigPrevPx, _np = LIVE.last;
+      window.zpHlApi.mainLines().forEach(function (h) {
+        if (_pp < h.p && _np >= h.p) jlSigPush('画线', '价格上穿你的线 ' + h.p.toFixed(2), 'hlU|' + h.p + '|' + (LIVE.ts || '').slice(9));
+        else if (_pp > h.p && _np <= h.p) jlSigPush('画线', '价格跌破你的线 ' + h.p.toFixed(2), 'hlD|' + h.p + '|' + (LIVE.ts || '').slice(9));
+      });
+    }
+    window.__jlSigPrevPx = LIVE.last;
+  } catch (e) { }
   if (INJL && !(LIVE.sh > 0)) { LIVE.eng = null; return; }   /* 不足一手: 不跑引擎不提醒 */
   if (LIVE.idx) { LIVE.eng = null; LIVE.dhi = LIVE.hi; LIVE.dlo = LIVE.lo; return; }   /* 11-12 用户: 指数只看行情, 引擎不对它算买卖(尺子/小球走的是引擎以外的算法, 下面单独挡) */
   if (LIVE.err || RPL) return;                                 /* jl-zp4: 断链/滞后时不拿旧数据算; 回放中不动实盘状态 */
@@ -1852,7 +1876,7 @@ function liveCompute() {
   var alertable = !LIVE.base && liveToday() && (function () { var p = phaseNow(); return p === 'preOpen' || p === 'am' || p === 'lunch' || p === 'pm' || p === 'end'; })();
   ks.forEach(function (x) {
     if (!LIVE.keys[x.id]) {
-      LIVE.keys[x.id] = { t: Date.now(), a: alertable ? 1 : 0, txt: x.main || '' };   /* a=这次真的响过; 浮球据此判断"刚发生的第一条"也要弹 */
+      LIVE.keys[x.id] = { t: Date.now(), a: alertable ? 1 : 0, txt: x.txt || x.main || '', lbl: x.lbl || '' };   /* a=这次真的响过; 浮球据此判断"刚发生的第一条"也要弹 */
       if (alertable) {
         /* 11-09晚: 旧引擎R1提醒下线, 不响不震不弹 */
         var b = $('band'); b.classList.add('flash'); setTimeout(function () { b.classList.remove('flash'); }, 2600);
@@ -4366,6 +4390,7 @@ body.injlin .chartbox>#zpSub{order:1}
   function drawCtrl(P) {
     var s = pSvg; s.innerHTML = '';
     var C = ctrlOf(P), last = null, i; for (i = C.length - 1; i >= 0; i--) if (C[i] != null) { last = i; break; }
+    try { if (last != null) jlSigCtrl(C[last]); } catch (e) { }   /* 11-12: 控盘等级变化提醒 */
     if (last == null) { legend(s, [['控盘 · 价格公式', TXT], ['开盘约35分钟后出数', TXT]]); D.pane = null; return; }
     var mx = 120; C.forEach(function (v, k) { if (v != null && v > mx && P[k].vis !== false) mx = v; });
     var top = 16, bot = PH2 - 3, Y2 = function (v) { return bot - v / mx * (bot - top); };
@@ -4418,7 +4443,7 @@ body.injlin .chartbox>#zpSub{order:1}
     R.forEach(function (r) { var y = YD(r.d); g.appendChild(E('rect', { x: (r.x - bw / 2).toFixed(2), y: Math.min(y, mid).toFixed(2), width: bw.toFixed(2), height: Math.max(.4, Math.abs(y - mid)).toFixed(2), fill: r.d >= 0 ? UP : DN })); });
     s.appendChild(g);
     var area = 'M' + R[0].x.toFixed(1) + ',' + mid + ' ' + R.map(function (r) { return 'L' + r.x.toFixed(1) + ',' + YC(r.cum).toFixed(1); }).join(' ') + ' L' + R[R.length - 1].x.toFixed(1) + ',' + mid + 'Z';
-    var lastC = R[R.length - 1].cum;
+    var lastC = R[R.length - 1].cum; try { jlSigCum(R[R.length - 1], fM); } catch (e) { }   /* 11-12: 主力累计翻红翻绿提醒 */
     s.appendChild(E('path', { d: area, fill: lastC >= 0 ? 'rgba(242,54,69,.14)' : 'rgba(8,153,129,.16)' }));
     s.appendChild(E('polyline', { points: R.map(function (r) { return r.x.toFixed(1) + ',' + YC(r.cum).toFixed(1); }).join(' '), fill: 'none', stroke: '#ffd66e', 'stroke-width': 1.3, 'stroke-linejoin': 'round' }));
     var lg = function (k) { var r = R[k]; return [['主力净额', TXT], ['累计 ' + fM(r.cum), r.cum >= 0 ? UP : DN], ['本分钟 ' + fM(r.d), r.d >= 0 ? UP : DN]]; };
@@ -4484,6 +4509,7 @@ body.injlin .chartbox>#zpSub{order:1}
     });
     var lastDv = DV[DV.length - 1];
     var lg = function (k) { var r = R[k]; return [['控盘+资金', TXT], [lvl(ctrlAt(r.hm)), TXT], ['主力累计 ' + fM(r.cum), r.cum >= 0 ? UP : DN]]; };
+    try { jlSigCum(R[R.length - 1], fM); jlSigCtrl(ctrlAt(R.length ? R[R.length - 1].hm : '')); } catch (e) { }   /* 11-12: 控盘+资金双提醒 */
     var base = lg(R.length - 1); if (lastDv) base.push([(lastDv.k === '积' ? '● 积 ' : '● 撤 ') + lastDv.hm.slice(0, 2) + ':' + lastDv.hm.slice(2), lastDv.k === '积' ? '#5ab0ff' : '#ff6fae']);
     D.pane = { vy: function (y) { return (mid - y) / half * mc; }, fmt: fM, snaps: function (k) { return [['累计', R[k].cum, YC(R[k].cum)]]; }, P: R, lg: lg, base: base };
   }
@@ -4744,6 +4770,7 @@ body.injlin .chartbox>#zpSub{order:1}
   function paint() { var L = load(); svgs().forEach(function (x) { try { paintLines(x[0], x[1], L); } catch (e) { } }); paintBar(L); }
   window.zpDrawPaint = paint;
   window.zpHlApi = {
+    mainLines: function () { return loadH().filter(function (h) { return (!h.pn || h.pn === 'ch') && h.p > 0; }); },   /* 11-12: 主图水平价格线(触碰提醒用) */
     rsoList: function () { return loadH().filter(function (h) { return h.pn === 'rso' && h.v != null && !rsoHid(h); }); },
     selRso: function () { var H = loadH(); return selH >= 0 && H[selH] && H[selH].pn === 'rso' ? selH : -1; },
     selAl: function () { var H = loadH(), i = this.selRso(); return i >= 0 ? !!H[i].al : false; },

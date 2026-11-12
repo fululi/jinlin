@@ -157,12 +157,12 @@
           for (var k in ks) if (!st.seen[k]) { st.seen[k] = 1; fresh.push(k); }
           if (fresh.length) {                                       /* 含第一次(0→1)触发 */
             st.badge += fresh.length;
-            var last = null, i, kd, rsoTxt = null;
-            for (i = 0; i < fresh.length; i++) { kd = kindOf(fresh[i], w.LIVE); if (kd) last = kd; else if (fresh[i].indexOf('rso|') === 0) { var rkv = ks[fresh[i]]; if (rkv && rkv.txt) rsoTxt = rkv.txt; } }
+            var last = null, i, kd, rsoTxt = null, rsoLbl = 'RSO';
+            for (i = 0; i < fresh.length; i++) { kd = kindOf(fresh[i], w.LIVE); if (kd) last = kd; else if (fresh[i].indexOf('rso|') === 0 || fresh[i].indexOf('sig|') === 0) { var rkv = ks[fresh[i]]; if (rkv && rkv.txt) { rsoTxt = rkv.txt; rsoLbl = rkv.lbl || 'RSO'; } } }
             var px = w.LIVE.last > 0 ? f2(w.LIVE.last) : '';
             if (last === 'sell') flash('sell', '卖出!', px);
             else if (last === 'buy') flash('buy', '买回!', px);
-            else if (rsoTxt) flash('reso', 'RSO', rsoTxt);   /* 11-12: RSO信号金环闪字, 不冒充卖/买指令 */
+            else if (rsoTxt) flash('reso', rsoLbl, rsoTxt);   /* 11-12: RSO信号金环闪字, 不冒充卖/买指令 */
             else ring();
           }
         }
