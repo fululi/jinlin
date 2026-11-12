@@ -2862,7 +2862,7 @@ function ampWidgetJL(D, G) {
    低开≤−1%(先接后卖): 接 = 当天(或上一轮卖后)最高回落3.2%; 卖 = 接价+2.7% 和 ▼最高 谁先到(▼最高不到接价+0.5%就只用+2.7%).
    最多3轮; 只用到当分钟为止已知的高低. 回测 ~/金粼量化工具/回测结果/1109_三档倍数与高开概率/(design_vs.py, lowopen_v2.py). 只显示不提醒. */
 function ampKJL() {
-  var key = STK.code + '@' + (LIVE.sessDate || '');
+  var key = STK.code + '@' + (LIVE.sessDate || '') + (LIVE.dayCached ? '@c' : '');   /* 11-13: 用本机缓存日K算的系数, 等新日K到了重算一次(公式不变) */
   if (window.__AMPK && window.__AMPK.key === key) return window.__AMPK;
   var sd = LIVE.sessDate || '', d = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < sd && b.c > 0 && b.h > 0; });
   var am = function (j) { var s = 0, n = 0; for (var i = Math.max(1, j - 20); i < j; i++) { s += (d[i].h - d[i].l) / d[i - 1].c; n++; } return n >= 10 ? s / n : 0; };
