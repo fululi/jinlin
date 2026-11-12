@@ -7354,7 +7354,7 @@ function ensureCyqKS(code) {
     // ks-0920-39: 东财被封时腾讯兜底(qfq日K800根+qt.gtimg流通市值估算换手率,源标签注明估算)
     var tc = txPrefix(code, true);
     Promise.all([
-      fetch("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq").then(function (r) { return r.json(); }),
+      fetch("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + tc + ",day,,,800,qfq").then(function (r) { return r.json(); }),
       fetch("https://qt.gtimg.cn/q=" + tc).then(function (r) { return r.arrayBuffer(); })
     ]).then(function (rs) {
       var kd = rs[0], nn = kd && kd.data && kd.data[tc];

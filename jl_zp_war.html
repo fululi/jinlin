@@ -276,10 +276,10 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
   }catch(e){}
 })();
 </script>
-<script src="jl_pitchfork.js"></script>
-<script src="jl_elliott.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/b8/b82d4137ff.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/eb/ebc440446f.js"></script>
 <script src="jl_zp_shapes.js?v=12"></script>
-<script src="jl_macd.js"></script>
+<script src="https://sfile.chatglm.cn/workspace/file/04/04f87a1a6b.js"></script>
 <script>
 /* jl-zppat (11-04): 分时形态识别(替代 1-5 浪): 三角收敛/突破 + 头肩顶/头肩底, 只画最近一个形态, 随新高低点实时跟随
    输入 = 图上已标的高低点 __SWJL(与红圈同一组, 按"回落"阈值确认) + 分时点; 不画未确认的东西:
@@ -1692,7 +1692,7 @@ function jget(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { re
 /* jl-zp4: 所有取数函数都带上发起时的股票代码(sym), 切票后旧请求不会去拉新票、也不会读错键 */
 function mkURL(scale, n, sym) { return 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=' + (sym || LIVE.sym) + ',' + scale + ',,' + n + '&_t=' + Date.now(); }
 function mkURLbf(scale, anchor, n, sym) { return 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=' + (sym || LIVE.sym) + ',' + scale + ',' + anchor + ',' + n + '&_t=' + Date.now(); }
-function dayURL(n, sym) { return 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=' + (sym || LIVE.sym) + ',day,,,' + n + ',qfq&_t=' + Date.now(); }
+function dayURL(n, sym) { return 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + (sym || LIVE.sym) + ',day,,,' + n + ',qfq&_t=' + Date.now(); }
 function mrow(x) { return { t: x[0], o: +x[1], c: +x[2], h: +x[3], l: +x[4], v: +x[5] || 0 }; }   /* 腾讯行序：时间,开,收,高,低,量(手) */
 function tFmt(lb) { return lb === '0925' ? '开盘' : lb.slice(0, 2) + ':' + lb.slice(2); }
 function slotOf(lb) {

@@ -41,7 +41,7 @@
 
     async function load(keep) {
       const c = pf(code);
-      const [d5, dkr] = await Promise.all([J("https://web.ifzq.gtimg.cn/appstock/app/day/query?code=" + c), J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq").catch(() => J("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq"))]);
+      const [d5, dkr] = await Promise.all([J("https://web.ifzq.gtimg.cn/appstock/app/day/query?code=" + c), J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq").catch(() => J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq"))]);
       const raw = d5.data[c].data.slice().reverse(), dk = (dkr.data[c].qfqday || dkr.data[c].day).map((r) => ({ t: r[0].replace(/-/g, ""), o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] }));
       const days = [], P = [];
       raw.forEach((d, di) => {
