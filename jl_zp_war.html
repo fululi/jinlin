@@ -1948,10 +1948,16 @@ function engNetJL(e) { var s = 0; (e && e.rounds || []).forEach(function (x) { s
 /* ---- 行情拉取：腾讯 + 东财（与持仓页生产同链，零新浪） ----
    优先级(照 jl_gapiv/ensureM1JL)：分时+竞价段=东财 trends2 → 腾讯 minute 兜底；
    1分K=东财 klt=1 → 腾讯 mkline m1 兜底；5/15/30分K+日K=腾讯 → 东财兜底；实时快照 qt=腾讯。 */
-function jget(u) { return fetch(u, { cache: 'no-store' }).then(function (r) { return r.json(); }); }
+function jget(u) { var _c = new AbortController(), _t = setTimeout(function () { _c.abort(); }, 7000); return fetch(u, { cache: 'no-store', signal: _c.signal }).then(function (r) { return r.json(); }).finally(function () { clearTimeout(_t); }); }   /* 11-12 用户: 手机网络挂死→7秒掐断, 腾讯/东财兜底才接得上 */
 /* jl-zp4: 所有取数函数都带上发起时的股票代码(sym), 切票后旧请求不会去拉新票、也不会读错键 */
 function mkURL(scale, n, sym) { return 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=' + (sym || LIVE.sym) + ',' + scale + ',,' + n + '&_t=' + Date.now(); }
 function mkURLbf(scale, anchor, n, sym) { return 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=' + (sym || LIVE.sym) + ',' + scale + ',' + anchor + ',' + n + '&_t=' + Date.now(); }
+var DAY_HOSTS_JL = ['web.ifzq.gtimg.cn', 'ifzq.gtimg.cn', 'web.sqt.gtimg.cn', 'proxy.finance.qq.com/ifzqgtimg'];   /* 11-12 用户: 单域名在他手机上挂死 → 四域名轮询 */
+function dayGetJL(n, sym) {
+  var i = 0;
+  function nx() { if (i >= DAY_HOSTS_JL.length) return Promise.reject(new Error('dayK all hosts failed')); var h = DAY_HOSTS_JL[i++]; return jget('https://' + h + '/appstock/app/fqkline/get?param=' + (sym || LIVE.sym) + ',day,,,' + n + ',qfq&_t=' + Date.now()).catch(function () { return nx(); }); }
+  return nx();
+}
 function dayURL(n, sym) { return 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + (sym || LIVE.sym) + ',day,,,' + n + ',qfq&_t=' + Date.now(); }
 function mrow(x) { return { t: x[0], o: +x[1], c: +x[2], h: +x[3], l: +x[4], v: +x[5] || 0 }; }   /* 腾讯行序：时间,开,收,高,低,量(手) */
 function tFmt(lb) { return lb === '0925' ? '开盘' : lb.slice(0, 2) + ':' + lb.slice(2); }
@@ -2188,7 +2194,7 @@ function livePoll() {
   if (slow) {
     Pm15 = jget(mkURL('m15', 640, sym)).then(function (j) { var d = j && j.data && j.data[sym]; if (!d || !d.m15) throw new Error('x'); return d.m15.map(mrow); }, function () { return emK(15, 320, 0, sym); });
     Pm30 = jget(mkURL('m30', 320, sym)).then(function (j) { var d = j && j.data && j.data[sym]; if (!d || !d.m30) throw new Error('x'); return d.m30.map(mrow); }, function () { return emK(30, 320, 0, sym); });
-    Pday = jget(dayURL(240, sym)).then(function (j) { var d = j && j.data && j.data[sym]; var rs = d && (d.qfqday || d.day); if (!rs) throw new Error('x'); return rs.map(mrow); }, function () { return emK(101, 240, 1, sym); });
+    Pday = dayGetJL(240, sym).then(function (j) { var d = j && j.data && j.data[sym]; var rs = d && (d.qfqday || d.day); if (!rs) throw new Error('x'); return rs.map(mrow); }, function () { return emK(101, 240, 1, sym); });
   }
   LIVE.slowN++;
   var names = ['m5', 'pts', 'm1'].concat(slow ? ['m15', 'm30', 'day'] : []);
@@ -2498,10 +2504,10 @@ function ampWidgetJL(D, G) {
   E('circle', { cx: c2, cy: cy, r: r, fill: 'none', stroke: rc, 'stroke-width': 4.5, 'stroke-linecap': 'round', 'stroke-dasharray': (L * f) + ' ' + L, transform: 'rotate(-90 ' + c2 + ' ' + cy + ')' });
   if (over && D.fl) E('circle', { 'class': 'acHalo', cx: c2, cy: cy, r: r + 5, fill: 'none', stroke: rc, 'stroke-width': 1.5, opacity: .8 });
   E('text', { x: c2, y: cy + 3, 'font-size': 15, 'font-weight': 700, fill: over ? rc : '#fff', 'text-anchor': 'middle' }, D.amp.toFixed(1));
-  E('text', { x: c2, y: cy + 14, 'font-size': 7.5, fill: '#fff', opacity: .92, 'text-anchor': 'middle' }, '均' + D.avg.toFixed(1));
-  E('text', { x: c2, y: cy + r + 13, 'font-size': 9, 'font-weight': 600, fill: lf > 0.05 ? '#ffe14d' : '#ff7a2e', 'text-anchor': 'middle' }, lf > 0.05 ? '剩' + lf.toFixed(1) + '%' : '超' + (-lf).toFixed(1) + '%');
+  E('text', { x: c2, y: cy + 14, 'font-size': 9.5, fill: '#fff', opacity: .92, 'text-anchor': 'middle' }, '均' + D.avg.toFixed(1));
+  E('text', { x: c2, y: cy + r + 14, 'font-size': 13, 'font-weight': 700, fill: lf > 0.05 ? '#ffe14d' : '#ff7a2e', 'text-anchor': 'middle' }, lf > 0.05 ? '剩' + lf.toFixed(1) + '%' : '超' + (-lf).toFixed(1) + '%');   /* 11-12 用户: 贼小9px → 13px粗体 */
   E('circle', { 'class': 'acRingHit', cx: c2, cy: cy + 4, r: r + 12, fill: 'transparent' });   /* 11-10 用户: 点圆环 展开/收起下面 */
-  if (D.fb) E('text', { x: c2, y: cy + r + 23, 'font-size': 7.5, fill: '#fff', opacity: .8, 'text-anchor': 'middle' }, '日均加载中');   /* 11-10 用户: 日K没拉到时均用备用值, 旁边小字提示 */
+  if (D.fb) E('text', { x: c2, y: cy + r + 27, 'font-size': 7.5, fill: '#fff', opacity: .8, 'text-anchor': 'middle' }, '日均加载中(备用值)');   /* 11-10 用户: 日K没拉到时均用备用值, 旁边小字提示 */
   var RD = D.rd, X0 = 112, X1 = 334, vals = [D.lo, D.hi, D.cur];
   if (RD && RD.rh > 0) { X0 = 146; X1 = 298; }   /* 右端价不压尺子上的卖接短线 */   /* 11-10 用户: 两端留位置写 最低价(左)/最高价(右), 和小球同一行 */
   if (RD) { if (RD.rh > 0) vals.push(RD.rh, RD.rl); RD.mk.forEach(function (m) { if (!m.proj) vals.push(m.p); }); } else vals.push(D.upTo, D.dnTo);
@@ -3954,7 +3960,7 @@ body:not(.ladOpen) #lad .pr3{display:none}body:not(.ladOpen) #lad .pr3.sum.cmp{d
 #ampCardJL .acNx .np.s{color:#ff5459}#ampCardJL .acNx .np.b{color:#1fdc93}
 #ampCardJL .acNx .np .nd{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:3px;background:currentColor;box-shadow:0 0 4px currentColor}#ampCardJL .acNx .np.near .nd{animation:acNdJL .8s ease-in-out infinite;box-shadow:0 0 10px 2px currentColor}#ampCardJL .acNx .np.near{animation:acNpJL 1.2s ease-in-out infinite}@keyframes acNpJL{50%{text-shadow:0 0 10px currentColor}}#ampCardJL .acNx .np:not(.s):not(.b) .nd{display:none}
 @keyframes acNdJL{50%{opacity:.2}}
-#ampCardJL .acNx .ns{font-size:10.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ampCardJL .acNx .ns{font-size:14px;font-weight:700;color:#ffd66e;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}   /* 11-12 用户: 还差%贼小 → 10.5px加粗加大到14px */
 #ampCardJL .acNx .ns.past{color:#ffe14d;font-weight:700}
 #ampCardJL .acNx .nq{margin-left:auto;font-size:10px;text-align:right;line-height:1.3;white-space:nowrap}
 #ampCardJL em{font-style:normal;margin:0}#ampCardJL em.s{color:#ff5459}#ampCardJL em.b{color:#1fdc93}#ampCardJL em.w{color:#ffe14d}
@@ -4035,7 +4041,7 @@ body.injlin .band.calm:has(#bMain:empty){display:none}
     if (o && o.d === t) return o.v;
     if (!avBusy[code] && typeof jget === 'function' && typeof dayURL === 'function') {
       avBusy[code] = 1; var sy = sym(code);
-      try { jget(dayURL(24, sy)).then(function (j) {
+      try { dayGetJL(24, sy).then(function (j) {
         var D = j && j.data && j.data[sy], R = (D && (D.qfqday || D.day)) || [], v = [];
         R = R.filter(function (r) { return String(r[0]).replace(/\D/g, '') < t; });
         for (var i = 1; i < R.length; i++) { var pc = +R[i - 1][2], h = +R[i][3], l = +R[i][4]; if (pc > 0 && h >= l) v.push((h - l) / pc * 100); }
@@ -4496,8 +4502,10 @@ body.injlin .stat{flex:none;gap:10px}
 #hSub .hk.seg.su{color:#ff9a4d;border-color:rgba(255,138,61,.75);background:rgba(255,138,61,.12)}
 #hSub .hk.seg.sd{color:#4ff0ff;border-color:rgba(79,240,255,.7);background:rgba(79,240,255,.10)}
 #hSub .hk.seg.s3{border-width:2px}
-#hSub .hk.fl{animation:hkGlowJL .7s ease-in-out 8}
-@keyframes hkGlowJL{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 12px 3px currentColor}}
+#hSub .hk.fl{animation:hkGlowJL .8s ease-in-out 10}
+@keyframes hkGlowJL{0%,100%{box-shadow:0 0 0 0 transparent;text-shadow:none}50%{box-shadow:0 0 18px 5px currentColor;text-shadow:0 0 9px currentColor}}
+.acHalo{animation:acHaloJL .5s ease-in-out infinite;pointer-events:none}   /* 11-12 用户: 振幅信号闪不明显 → 仪表光环频闪 */
+@keyframes acHaloJL{0%,100%{opacity:.12;stroke-width:1.5}50%{opacity:1;stroke-width:4.5}}
 /* 搜索: 一行窄条 + 按钮 */
 #zpSearch{margin-top:8px}
 #zpSearch .zs-row{display:flex;gap:6px;align-items:center}
