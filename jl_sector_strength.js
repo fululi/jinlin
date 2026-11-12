@@ -195,7 +195,7 @@
     bucket: function (at) { return Math.floor((+at || 0) / CORE.BUCKET_MS) * CORE.BUCKET_MS; },
     /* ===== jl-fund(1104): 板块主力资金信号(东财概念板块 f3涨幅/f62主力净额/f184主力净占比%) =====
        用户11-04: 小金属9:45主力已净流入13.76亿(占成交9.3%)而板块才+0.7%, 下午才拉——要能提前埋伏; 反过来科技股常急拉但大资金在出, 也要标出来 */
-    FUND: { IN_FR: 6, IN_F: 3e8, IN_PMAX: 1.5, IN_PMIN: -1.5, OUT_P: 2, OUT_FR: -2, OUT_F: 5e7, DRAIN_P: -1, DRAIN_FR: -3 }, /* 初值, 未回测 */
+    FUND: { IN_FR: 6, IN_F: 3e8, IN_PMAX: 1.5, IN_PMIN: -1.5, OUT_P: 2, OUT_FR: -2, OUT_F: 5e7, DRAIN_P: -1, DRAIN_FR: -3 }, /* 初值, 未回测; 11-13 核实: fr=东财f184主力净占比=主力净额÷当日总成交额(用户东财App永鼎资金页8档合计=成交额验算), 门槛按此口径定 */
     fundSig: function (q, ourAvg, th) {
       th = th || CORE.FUND;
       if (!q || !isFinite(q.p) || !isFinite(q.f)) return null;
