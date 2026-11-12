@@ -792,7 +792,7 @@
     };
     S.bkqP = share("allIn").then(function (d) { eat(d); return share("allOut"); }).then(function (d) { eat(d); }).then(function () {
       S.bkqP = null;
-      if (Object.keys(m).length > 50) { S.bkq = { t: Date.now(), m: m }; fundTopRec(); fundSnapSave(); fundDaySave(); fundCheck(); paint(); }
+      if (Object.keys(m).length > 50) { S.bkq = { t: Date.now(), m: m }; fundTopRec(); fundSnapSave(); fundDaySave(); bkStrongCheck(); fundCheck(); paint(); } /* 11-12: 先判强势/急拉, 再判资金——出逃提醒最后弹、在最上面 */
     }, function () { S.bkqP = null; });
   }
   /* jl-fsnap(1104): 用户: 别让电脑每天跑数据——App开着时把每3分钟的板块资金顺手存手机里(零新增请求), 复盘台账⑨里一键导出, 以后拿来回测
@@ -863,7 +863,51 @@
     if (sg && sg.k === "out") chip += '<span style="font-size:9.5px;font-weight:800;padding:0 5px;border-radius:6px;color:#10131a;background:#2fd18b;white-space:nowrap">' + sg.txt + "</span>";
     return chip;
   }
-  /* 资金先进: 当天每个板块只提醒一次(9:30–14:30); 拉升主力在出: 只在列表/急拉弹窗里标, 不单独弹 */
+  /* ===== 11-12 用户: "早上某个板块涨得好肯定要弹出来" + "都要实时, 又怕被封" =====
+     原来急拉只看自己算的板块涨幅(全A翻页15分钟一次), 一早就强、之后不再冲的板块永远不弹, 盘中急拉也常漏。
+     这里只用 S.bkq(东财板块资金, 本来就3分钟一取, 带 f3涨幅/f104上涨家数/f105下跌家数) —— 零新增请求, 被封风险不变。
+     东财口径只用来"弹不弹", 抽屉排名仍是自己算的(用户不要东财口径排名)。门槛初值, 未回测。
+     覆盖面: bkq 只有主力流入前100+流出前100, 资金不进不出的中间板块看不到。 */
+  var BKS = { P: 2, UR: 0.7, MIN_N: 8, PTOP: 10 };
+  function bkStrongCheck() {
+    try {
+      if (!S.bkq || !S.bkq.m) return;
+      var now = S.bkq.t, wd = new Date(now).getDay(), hm = new Date(now).getHours() * 100 + new Date(now).getMinutes();
+      if (wd < 1 || wd > 5 || hm < 935 || hm > 1500 || (hm > 1130 && hm < 1300) || localDay(now) !== S.day) return;
+      var q = S.bkq.m, names = Object.keys(q).filter(function (k) { return !FJ_.test(k) && q[k] && isFinite(q[k].p); });
+      var cur = { t: now, m: {} }; names.forEach(function (k) { cur.m[k] = q[k].p; });
+      if (!S.bh || S.bhDay !== S.day) { S.bh = []; S.bhDay = S.day; }
+      var pRank = {}; names.slice().sort(function (a, b) { return q[b].p - q[a].p; }).forEach(function (k, i) { pRank[k] = i + 1; });
+      var st = sgStore(), fresh = [], tn = CORE.tradeMin(now), TH = CORE.SURGE;
+      names.forEach(function (k) {
+        var b = q[k], n = (b.nu || 0) + (b.nd || 0), ur = n ? b.nu / n : null, sec = CORE.alias(k);
+        if (n < BKS.MIN_N) return;
+        var why = scopeOf(sec) || (pRank[k] <= BKS.PTOP ? "今天涨幅前" + BKS.PTOP : null); if (!why) return;
+        var has = function (kd) { return st.list.some(function (x) { return x.sec === sec && (x.kind || "") === kd; }); };
+        /* ① 板块强势: 涨≥2% 且 七成以上在涨, 一天一次 */
+        if (b.p >= BKS.P && ur >= BKS.UR && !has("strong")) {
+          var x1 = { kind: "strong", t: now, sec: sec, a: b.p, bp: b.p, u: ur, n: n, z: 0, f: b.f, fr: b.fr, why: why };
+          st.list.push(x1); fresh.push(x1);
+        }
+        /* ② 急拉(东财涨幅版): 30个交易分钟内抬≥1.5点, 同自己那版门槛; 已经报过急拉的不重报 */
+        if (b.p >= TH.AVG && (ur == null || ur >= TH.UPR) && !has("")) {
+          var base = null, age = 0;
+          S.bh.forEach(function (h) { var v = h.m[k], dt = tn - CORE.tradeMin(h.t); if (v == null || dt <= 0 || dt > TH.WIN) return; age = Math.max(age, dt); if (base == null || v < base) base = v; });
+          if (base != null && age >= TH.MIN_AGE && b.p - base >= TH.D) {
+            var x2 = { t: now, sec: sec, d: Math.round((b.p - base) * 100) / 100, a: b.p, u: ur, n: n, z: 0, age: age, why: why, src: "em" };
+            st.list.push(x2); fresh.push(x2);
+          }
+        }
+      });
+      S.bh.push(cur); if (S.bh.length > 40) S.bh.shift();
+      if (!fresh.length) return;
+      try { localStorage.setItem("jl_secsurge_v1", JSON.stringify(st)); } catch (e) {} histSave(st.d, st.list);
+      S.surges = st.list; S.sgOpen = fresh[0].sec;
+      memOf(fresh[0].sec).then(function () { paint(); });
+      if (!document.hidden) showSurge(fresh[0], fresh.length - 1);
+    } catch (e) {}
+  }
+  /* 资金先进 / 主力在出: 每个板块每种一天提醒一次(9:30–15:00), 都会弹(旧注释说"主力在出不单独弹"已过时) */
   function fundCheck(force) { /* force=调试钩(预览验收用), 跳过交易时段判断 */
     try {
       if (!S.bkq || !S.ana) return;
@@ -1302,7 +1346,7 @@
     var st = sgStore(); st.list.forEach(function (y) { if (y.sec === x.sec && y.kind === x.kind) { y.stk = x.stk; y.stkT = x.stkT; } });
     try { localStorage.setItem("jl_secsurge_v1", JSON.stringify(st)); } catch (e) {} histSave(st.d, st.list);
   }
-  function kindTitle(x) { return x.kind === "view" ? "板块详情" : x.kind === "fund" ? "💰 资金先进" : x.kind === "out" ? "⚠ 主力在出" : "⚡ 板块急拉"; }
+  function kindTitle(x) { return x.kind === "strong" ? "🔥 板块强势" : x.kind === "view" ? "板块详情" : x.kind === "fund" ? "💰 资金先进" : x.kind === "out" ? "⚠ 主力在出" : "⚡ 板块急拉"; }
   function sheetCard(x, review) {
     var tt = x.t2 || x.t, d = x.d2 || x.d, a = x.a2 != null ? x.a2 : x.a, bits = [];
     if (x.u != null && x.n) bits.push(x.n + "只里 " + Math.round(x.u * x.n) + "只在涨");
@@ -1313,9 +1357,10 @@
       ? "板块已经跌 <b>" + fmtPct(x.bp) + "</b>，主力还在净流出 <b style=\"color:#2fd18b\">" + fmtFund(x.f) + "</b>（占成交 " + (+x.fr).toFixed(1) + "%），不是回踩、是在走货"
       : "板块涨 <b>" + fmtPct(x.bp) + "</b>，主力却净流出 <b style=\"color:#2fd18b\">" + fmtFund(x.f) + "</b>（占成交 " + (+x.fr).toFixed(1) + "%），小心假拉，手里有的考虑先走");
     else if (x.kind === "view") { var A = S.ana && S.ana[x.sec], c = A && A.cur, q = bkqOf(x.sec); body = '<span data-jlpin="' + esc(x.sec) + '" style="float:right;font-size:10.5px;font-weight:800;padding:1px 8px;border-radius:7px;border:1px solid #ffd21f;color:#ffd21f">' + (curPicks().indexOf(x.sec) >= 0 ? "已在我盯的" : "+盯这个板块") + "</span>" + (c && c.avg != null ? "今天平均 <b>" + fmtPct(c.avg) + "</b>" : q ? "今天 <b>" + fmtPct(q.p) + "</b>" : "") + (c && c.rank ? " · 强度第" + c.rank : "") + stTag(x.sec) + (q && isFinite(q.f) ? "<br>主力今天 <b style=\"color:" + (q.f >= 0 ? "#ff5459" : "#2fd18b") + "\">" + fmtFund(q.f) + "</b>（占成交 " + (isFinite(q.fr) ? q.fr.toFixed(1) : "—") + "%）" : ""); }
+    else if (x.kind === "strong") body = "板块涨 <b>" + fmtPct(x.bp) + "</b>，" + (x.n ? x.n + "只里 " + Math.round(x.u * x.n) + "只在涨" : "") + (isFinite(x.f) ? "，主力 <b style=\"color:" + (x.f >= 0 ? "#ff5459" : "#2fd18b") + "\">" + fmtFund(x.f) + "</b>" : "") + "<br><span style=\"opacity:.8\">东财板块涨幅口径 · 普涨不是一两只拉的</span>";
     else body = x.age + "分钟内平均涨幅 <b>+" + (+d).toFixed(2) + "个点</b>，那时平均 <b>" + fmtPct(a) + "</b>";
     if (bits.length && x.kind !== "view") body += "<br>" + bits.join(" · ");
-    if ((x.kind === "surge" || x.kind === "fund" || !x.kind) && outToday(x.sec) && outToday(x.sec) !== x) body += "<br><b style=\"color:#ff9a9d\">⚠ 冲突：" + hhmm(outToday(x.sec).t2 || outToday(x.sec).t) + " 这个板块主力出逃过，别当成干净的买点</b>";
+    if ((x.kind === "surge" || x.kind === "fund" || x.kind === "strong" || !x.kind) && outToday(x.sec) && outToday(x.sec) !== x) body += "<br><b style=\"color:#ff9a9d\">⚠ 冲突：" + hhmm(outToday(x.sec).t2 || outToday(x.sec).t) + " 这个板块主力出逃过，别当成干净的买点</b>";
     var stk = review ? (x.stk ? '<div style="font-size:9.5px;opacity:.7;font-weight:700">提醒那会儿的价（' + hhmm(x.stkT || tt) + "）</div>" + stkRows(x.stk) : '<div style="font-size:10px;opacity:.6;font-weight:600">当时没存成分股</div>') : stkList(x.sec);
     return '<div class="jlsgP" data-sec="' + esc(x.sec) + '" data-kind="' + (x.kind || "surge") + '"><div class="jlsgK">' + kindTitle(x) + (x.kind !== "view" ? " · " + hhmm(tt) : "") + (x.t2 ? " · 二次加速" : "") + (x.why ? " · " + esc(x.why) : "") + '</div><div class="jlsgH" style="display:flex;align-items:center;gap:6px">' + secRingOf(x.sec) + "<span>" + esc(x.sec) + "</span>" + '</div><div class="jlsgB">' + body + '</div><div class="jlsgL">' + stk + "</div></div>";
   }
@@ -1782,7 +1827,7 @@
     return '<div style="padding:7px 9px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,84,89,.1);border:1px solid rgba(255,84,89,.55)"><div style="display:flex;font-size:11.5px;color:#ff7a7e;font-weight:800;margin-bottom:2px">⚡ 今天的板块提醒<span data-jlrev="1" style="margin-left:auto;font-size:10.5px;color:#fff;text-decoration:underline">按日期复盘 ›</span></div>' +
       L.map(function (x) {
         var on = x.sec === open && x === L.filter(function (y) { return y.sec === open; })[0], now = curA[x.sec], fund = x.kind === "fund";
-        return '<div data-jlsg="' + esc(x.sec) + '" style="display:flex;align-items:center;gap:7px;font-size:11px;color:#fff;font-weight:600;line-height:2"><span style="flex:0 0 40px;opacity:.9">' + hhmm(x.t2 || x.t) + '</span><b style="color:#ffd21f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%">' + esc(x.sec) + '</b><span style="font-size:10px;white-space:nowrap;color:' + (fund ? "#ffd21f" : x.kind === "out" ? "#2fd18b" : "#ff7a7e") + '">' + (fund ? "💰资金先进 " + fmtFund(x.f) : x.kind === "out" ? "⚠主力在出 " + fmtFund(x.f) : "⚡急拉+" + (x.d2 || x.d).toFixed(1) + "点") + '</span><span style="margin-left:auto;color:' + ((now != null ? now : x.a || 0) >= 0 ? "#ff5459" : "#2fd18b") + '">' + (now != null ? "现" + fmtPct(now) : x.a != null ? fmtPct(x.a) : "") + '</span><span style="font-size:10px;opacity:.8">' + (on ? "▾" : "▸") + "</span></div>" +
+        return '<div data-jlsg="' + esc(x.sec) + '" style="display:flex;align-items:center;gap:7px;font-size:11px;color:#fff;font-weight:600;line-height:2"><span style="flex:0 0 40px;opacity:.9">' + hhmm(x.t2 || x.t) + '</span><b style="color:#ffd21f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%">' + esc(x.sec) + '</b><span style="font-size:10px;white-space:nowrap;color:' + (fund ? "#ffd21f" : x.kind === "out" ? "#2fd18b" : "#ff7a7e") + '">' + (x.kind === "strong" ? "🔥强势" + fmtPct(x.bp) : fund ? "💰资金先进 " + fmtFund(x.f) : x.kind === "out" ? "⚠主力在出 " + fmtFund(x.f) : "⚡急拉+" + (x.d2 || x.d).toFixed(1) + "点") + '</span><span style="margin-left:auto;color:' + ((now != null ? now : x.a || 0) >= 0 ? "#ff5459" : "#2fd18b") + '">' + (now != null ? "现" + fmtPct(now) : x.a != null ? fmtPct(x.a) : "") + '</span><span style="font-size:10px;opacity:.8">' + (on ? "▾" : "▸") + "</span></div>" +
           (on ? '<div style="padding:0 0 4px 6px;border-left:2px solid rgba(255,84,89,.5);margin-left:4px">' + stkList(x.sec) + "</div>" : "");
       }).join("") + '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600;line-height:1.5">⚡急拉＝30个交易分钟里板块平均涨幅抬≥1.5个点、现平均≥+1%、六成以上在涨<br>💰资金先进＝主力净流入≥3亿且占成交≥6%，板块涨幅在−1.5%～+1.5%<br>⚠主力在出＝涨≥2%且占成交≤−2%；或涨不足2%／跌着且占成交≤−3%（阴着出货，11-12新增）<br>只提醒当天真火的：我盯的 + 今天强度前20 + 今天主力流入前20 + 近3天强势的（跑路也报）。都是初值，未回测</div></div>'; /* 11-12: 图例补上微涨/跌着出货两条新路径 */
   }
@@ -1895,7 +1940,7 @@
     if (hasAna && S.review) sub = "复盘 " + S.dispDay + (S.lead ? " · 主攻 " + S.lead : "");
     var sgL = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); }), sg0 = sgL[0];
     var sgHot = !!(sg0 && S.live && Date.now() - (sg0.t2 || sg0.t) < 40 * 60e3);
-    if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : sg0.kind === "out" ? "⚠" + sg0.sec + " 主力在出 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : ""); /* 11-12: 有提醒时手柄只显示提醒(不再拼"最强"尾巴, 两条拼一起必截断成省略号) */
+    if (sg0 && S.live) sub = (sg0.kind === "strong" ? "🔥" + sg0.sec + " 强势 " : sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : sg0.kind === "out" ? "⚠" + sg0.sec + " 主力在出 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : ""); /* 11-12: 有提醒时手柄只显示提醒(不再拼"最强"尾巴, 两条拼一起必截断成省略号) */
     /* ===== 11-12 用户: 抽屉重排成 3 张卡 =====
        ① 今天实时: 资金榜 → 情绪天气 → 领涨时间线 → 现在最强板块
        ② 复盘: 退潮前兆 → 板块轮动热力图
