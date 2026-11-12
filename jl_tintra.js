@@ -252,7 +252,7 @@
     return piv;
   }
   var CSS = "#tintraJL{margin:10px 0;padding:12px 13px}#tintraJL .tiHdJL{display:flex;align-items:center;gap:7px;margin-bottom:8px}#tintraJL .tiHdJL b{font-size:16px;color:#fff}#tintraJL .tiHdJL span{font-size:15px;color:#fff;font-weight:700}" +
-    "#tintraJL .tiPillJL{margin-left:auto;font:800 12px -apple-system,'PingFang SC',sans-serif;border-radius:10px;padding:2px 9px;color:#1a0508;background:#81e6d9}#tintraJL .tiPillJL.buy{background:#ffd84a}#tintraJL .tiPillJL.off{background:rgba(255,255,255,.18);color:#fff}#tintraJL .tiPillJL.hit{background:#ff5459;color:#fff;animation:tiBlinkJL 1s steps(2) infinite}@keyframes tiBlinkJL{50%{opacity:.45}}" +
+    "#tintraJL .tiPillJL{margin-left:auto;font:800 12px -apple-system,'PingFang SC',sans-serif;border-radius:10px;padding:2px 9px;color:#1a0508;background:#81e6d9}#tintraJL .tiPillJL.buy{background:#ffd84a}#tintraJL .tiPillJL.off{background:rgba(255,255,255,.18);color:#fff}#tintraJL .tiPillJL.hit{background:#ff5459;color:#fff;animation:tiBlinkJL 1s steps(2) infinite!important /* 11-12: 全局animation:none省电规则误杀提醒闪→白名单 */}@keyframes tiBlinkJL{50%{opacity:.45}}" +
     "#tintraJL .tiBigJL{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;font:800 15px -apple-system,'PingFang SC',sans-serif;color:#fff;margin:0 0 4px}#tintraJL .tiBigJL em{font-style:normal;font:800 30px ui-monospace,Menlo,monospace}#tintraJL .tiBigJL .sell{color:#ff5459}#tintraJL .tiBigJL .buy{color:#1fdc93}" +
     "#tintraJL .tiBigJL small{font-size:13.5px;font-weight:700;color:#fff}#tintraJL .tiBigJL button{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:11px;padding:2px 9px;font:700 12.5px -apple-system,sans-serif}" +
     "#tintraJL .tiWhyJL{font:600 13px/1.65 -apple-system,'PingFang SC',sans-serif;color:#fff;margin:0 0 6px}#tintraJL .tiWhyJL b{font-family:ui-monospace,Menlo,monospace}" +
@@ -267,7 +267,7 @@
     "#tintraBallJL.buy{border-color:#ffd84a}#tintraBallJL[hidden]{display:none}" +
     "#tintraBallJL s{text-decoration:none;font:800 10px/1 -apple-system,sans-serif}#tintraBallJL b{font:800 14px/1.15 ui-monospace,Menlo,monospace;margin:2px 0 1px}#tintraBallJL.sell b{color:#ff7a80}#tintraBallJL.buy b{color:#3ff0a8}" +
     "#tintraBallJL small{font:700 9px/1 -apple-system,sans-serif;max-width:56px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}" +
-    "#tintraBallJL.near{animation:tiPulseJL 1.2s ease-in-out infinite}#tintraBallJL.hit{background:radial-gradient(circle at 35% 30%,#ff6b70,#8a1018 75%);border-color:#fff;animation:tiPulseJL .8s ease-in-out infinite}#tintraBallJL.hit b{color:#fff}" +
+    "#tintraBallJL.near{animation:tiPulseJL 1.2s ease-in-out infinite!important /* 11-12: 全局animation:none省电规则误杀提醒闪→白名单 */}#tintraBallJL.hit{background:radial-gradient(circle at 35% 30%,#ff6b70,#8a1018 75%);border-color:#fff;animation:tiPulseJL .8s ease-in-out infinite!important /* 11-12: 全局animation:none省电规则误杀提醒闪→白名单 */}#tintraBallJL.hit b{color:#fff}" +
     "@keyframes tiPulseJL{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 0 rgba(255,216,74,.7)}50%{box-shadow:0 4px 16px rgba(0,0,0,.45),0 0 0 10px rgba(255,216,74,0)}}";
   /* 小分时图: 价格线 + 未补IV带 + 分时高低点(标跌/涨幅) + 每轮卖▼接▲ + 下一步价位虚线 */
   function drawMini(cv, r, a) {

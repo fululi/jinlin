@@ -126,7 +126,7 @@
     '#jlLkBall svg{position:absolute;inset:0}#jlLkBall .bt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;pointer-events:none}' +
     '#jlLkBall .bt b{font-size:12px}#jlLkBall .bt span{font-size:8.5px;color:#dfe7f2}' +
     '#jlLkBall i{position:absolute;right:1px;top:1px;min-width:13px;height:13px;border-radius:7px;border:2px solid #0f1828;font:700 8px/9px -apple-system,sans-serif;color:#10202a;text-align:center;font-style:normal}' +
-    '#jlLkBall.ring{animation:jlLkRing 1s ease-in-out 3}@keyframes jlLkRing{50%{box-shadow:0 0 0 7px rgba(232,195,122,.45),0 4px 18px rgba(0,0,0,.45)}}' +
+    '#jlLkBall.ring{animation:jlLkRing 1s ease-in-out 3!important}   /* 11-12 用户: 全局animation:none省电规则误杀联动球提醒环 → 白名单 */@keyframes jlLkRing{50%{box-shadow:0 0 0 7px rgba(232,195,122,.45),0 4px 18px rgba(0,0,0,.45)}}' +
     '#jlLkSheet{position:fixed;z-index:70;max-height:74vh;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;background:rgba(10,17,30,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);' +
     'border:1px solid #2a3a55;border-radius:16px;padding:10px 10px 12px;color:#e9eef5;font:12px/1.4 -apple-system,"PingFang SC",sans-serif}' +
     '#jlLkSheet[hidden]{display:none}#jlLkSheet .sh{display:flex;align-items:center;gap:8px;margin-bottom:4px}#jlLkSheet .sh b{color:' + GOLD + ';font-size:13px;flex:1}' +

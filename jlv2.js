@@ -88,7 +88,7 @@
   var css = document.createElement("style");
   css.textContent =
     "#jlv2root{margin-top:14px}" +
-    ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#FFFFFF;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
+    ".jlv2{position:relative;overflow:hidden;background:rgba(255,255,255,0.055);border:1px solid rgba(255,215,130,0.22);border-radius:20px;padding:15px;margin-top:14px;color:#FFFFFF;backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5)}"+".jlv2::after{content:\"\";position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,220,150,.30) 50%,transparent 60%);transform:translateX(-100%);pointer-events:none;border-radius:inherit}"+".jlv2:active::after{animation:jlShine2 .6s ease!important /* 11-12: 全局animation:none省电规则误杀提醒闪→白名单 */}"+".jlv2>*{position:relative;z-index:1}"+"@keyframes jlShine2{to{transform:translateX(100%)}}" +
     "body.day .jlv2{background:rgba(0,0,0,0.03);border-color:#0a7d6b3d;color:#12262b}" +
     "" + /* 11-06: 旧温度v1卡/国家队A卡并进「市场情绪」总卡, 只隐藏不删(回滚删这一行) */
     ".jlv2 h3{font-size:12px;font-weight:600;margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}" +

@@ -117,7 +117,7 @@
     ':is(#jlGlance,#jlLkSheet) .gz .bb b{font:800 12px ui-monospace,Menlo,monospace;margin-right:5px}:is(#jlGlance,#jlLkSheet) .gz .bb i{font-style:normal;color:#ffd27a}' +
     ':is(#jlGlance,#jlLkSheet) .gz .sc{position:relative;height:16px;margin-top:7px}:is(#jlGlance,#jlLkSheet) .gz .sc span{position:absolute;top:0;font-size:10px;white-space:nowrap;background:rgba(7,13,24,.55);border-radius:4px;padding:0 5px;color:#fff}:is(#jlGlance,#jlLkSheet) .gz .sc em{font-style:normal;margin-right:3px}' +
     '#jlGlance .dip{display:flex;align-items:center;gap:8px;font-size:12px}#jlGlance .dip .dl{font-weight:800;border-radius:9px;padding:3px 10px;color:#fff}' +
-    '#jlGlance .dip.buy .dl{background:#d9a514;animation:jlGlBlink 1s ease-in-out infinite}#jlGlance .dip.avoid .dl{background:#e0383e}#jlGlance .dip.off .dl,#jlGlance .dip.na .dl{background:#3a4a64}' +
+    '#jlGlance .dip.buy .dl{background:#d9a514;animation:jlGlBlink 1s ease-in-out infinite!important /* 11-12: 全局animation:none省电规则误杀提醒闪→白名单 */}#jlGlance .dip.avoid .dl{background:#e0383e}#jlGlance .dip.off .dl,#jlGlance .dip.na .dl{background:#3a4a64}' +
     '@keyframes jlGlBlink{50%{box-shadow:0 0 0 6px rgba(217,165,20,.35)}}' +
     '#jlGlance .pk{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:baseline;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.08);font-size:12px}#jlGlance .pk:last-child{border-bottom:0}' +
     '#jlGlance .pk .a{font-weight:800;border-radius:8px;padding:1px 8px;font-size:12px;white-space:nowrap}#jlGlance .pk .a.buy{background:#e0383e;color:#fff}#jlGlance .pk .a.wait{background:#e0a800;color:#10202a}#jlGlance .pk .a.skip{background:#16b47a;color:#fff}#jlGlance .pk .a.na{background:#3a4a64;color:#dfe9f2}' +

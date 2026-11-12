@@ -151,7 +151,7 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
     '.jlReso .rw.s{border-color:#ffd21f}.jlReso .rw b{font-size:14px;font-variant-numeric:tabular-nums}.jlReso .rw.s b{color:#ffd21f}' +
     '.jlReso .rw small{opacity:.75;font-size:10.5px}.jlReso .rw.hit{opacity:.55}' +
     '.jlReso .cur{display:flex;align-items:center;gap:6px;margin:4px 0}.jlReso .cur i{width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 6px #fff}' +
-    '.jlReso .cur span{flex:1;height:1px;background:#ffffff40}.jlReso .rw.near{animation:jlResoBlink 1s ease-in-out infinite}' +
+    '.jlReso .cur span{flex:1;height:1px;background:#ffffff40}.jlReso .rw.near{animation:jlResoBlink 1s ease-in-out infinite!important /* 11-12: 全局animation:none省电规则误杀提醒闪→白名单 */}' +
     '@keyframes jlResoBlink{50%{background:#ffd21f33}}.jlReso .ft{opacity:.6;font-size:10px;margin-top:4px}';
 
   function render(host, code) {
