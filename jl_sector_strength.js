@@ -202,8 +202,9 @@
       var fr = isFinite(q.fr) ? q.fr : 0, up = Math.max(q.p, isFinite(ourAvg) ? ourAvg : -99);
       if (fr >= th.IN_FR && q.f >= th.IN_F && q.p <= th.IN_PMAX && q.p >= th.IN_PMIN) return { k: "in", txt: "资金先进" };
       if (up >= th.OUT_P && q.f < 0 && fr <= th.OUT_FR) return { k: "out", txt: "拉升·主力在出" };
-      /* 11-11 用户: 原来只有"涨着钱在出"才报, 板块跌着钱也在走这种正常退潮形态全漏——补一条纯流出 */
-      if (up < 0 && q.f < 0 && fr <= th.DRAIN_FR) return { k: "out", txt: "跌着·主力在流出", drain: 1 };
+      /* 11-11 用户: 原来只有"涨着钱在出"才报, 板块跌着钱也在走这种正常退潮形态全漏——补一条纯流出
+         11-12 用户: 通信技术+1.04%而主力净占比-3.41%(光通信CPO占仓6成)整个下午没报——0~2%微涨出货两头不沾(拉升出要涨够2%, 跌着出要真跌), 并进本条: 涨不够2%也算, 门槛从严一档(净占比≤-3%) */
+      if (up < th.OUT_P && q.f < 0 && fr <= th.DRAIN_FR) return { k: "out", txt: q.p < 0 ? "跌着·主力在流出" : "微涨·主力在出", drain: q.p < 0 ? 1 : 0 }; /* drain按板块实际涨跌定文案(不按up: ourAvg=null时isFinite(null)为真被当0, 跌着的板块up会被抬到0) */
       return null;
     },
     /* jl-scope(1104 第二版): 用户: 不是1000多个板块都报, 也不是固定的科技名单——当天实际火的板块(强度强/主力真在进)才提醒; 前几天火的板块在跑路也要提醒 */
