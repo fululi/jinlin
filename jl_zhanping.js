@@ -1,4 +1,6 @@
 /* jl_zhanping.js v4 — 做T作战屏 · 浮球壳 (2026-11-01)
+ * 11-12 用户: 首页全局 *{animation:none!important} 省电规则把浮球触发闪也误杀了
+ *   → 四条事件动画(等买回脉冲/触发弹跳/首现脉冲/提醒金环)加!important白名单; 平时全站动画照旧关闭省电。
  * v4.2 (jl-zp4, 本地未推): ①任何取数异常球都显示"断链·已停算" ②首次定基线时, 战屏90秒内真响过的提醒照样弹 ③面板改载 jl_zp_war.html(原中文文件名改英文, 部署/编码不出岔)。
  * v4.1: ①真弹跳(卖出红/买回绿/共振金, 球面闪字20秒) ②第一次触发(0→1)也弹跳(旧版只在已有提醒时才响应) ③到共振位接jlreso:near ④三轮即收工(原写死4轮) ⑤5分K断链/滞后球显示"断链"。
  * v4: ①球面直接反映"是否触发"(未触发/已触发·等买回/已买回/收工, 边框灰/红脉冲/绿/橙) ②z-index拉到最高+每3秒自检, 球或面板被页面重绘移除就补回 ③file://打开时iframe跨域读不到持仓, 面板底部明确提示改用http(s)打开。
@@ -40,14 +42,14 @@
     '#jlZpBallJL[data-k=done]{border-color:#1fdc93;box-shadow:0 0 0 3px rgba(31,220,147,.22),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL[data-k=warn]{border-color:#ffb84d;box-shadow:0 0 0 3px rgba(255,184,77,.22),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL[data-k=trig]{border-color:#ff5459;box-shadow:0 0 0 3px rgba(255,84,89,.28),0 5px 20px rgba(0,0,0,.5)}' +
-    '#jlZpBallJL[data-k=trig]:not(.ring):not(.attn){animation:jlZpTrig 1.4s ease-in-out infinite}@keyframes jlZpTrig{50%{box-shadow:0 0 0 9px rgba(255,84,89,.30),0 5px 20px rgba(0,0,0,.5)}}' +
+    '#jlZpBallJL[data-k=trig]:not(.ring):not(.attn){animation:jlZpTrig 1.4s ease-in-out infinite!important}@keyframes jlZpTrig{50%{box-shadow:0 0 0 9px rgba(255,84,89,.30),0 5px 20px rgba(0,0,0,.5)}}' +
     '#jlZpSheetJL[data-err=file]::after{content:"当前是 file:// 打开, 战屏与持仓页被浏览器隔离, 读不到持仓。请用 http(s) 地址打开 index.html";position:absolute;left:10px;right:10px;bottom:10px;z-index:3;padding:9px 11px;border-radius:10px;background:#3a2a10;border:1px solid #ffb84d;color:#ffe2b0;font:600 12px/1.45 -apple-system,sans-serif}' +
-    '#jlZpBallJL.bnc{animation:jlZpBnc .9s cubic-bezier(.3,.7,.4,1) 4}@keyframes jlZpBnc{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-22px) scale(1.12)}55%{transform:translateY(0) scale(.94)}75%{transform:translateY(-9px) scale(1.04)}}' +
+    '#jlZpBallJL.bnc{animation:jlZpBnc .9s cubic-bezier(.3,.7,.4,1) 4!important}@keyframes jlZpBnc{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-22px) scale(1.12)}55%{transform:translateY(0) scale(.94)}75%{transform:translateY(-9px) scale(1.04)}}' +
     '#jlZpBallJL[data-k=sell]{border-color:#ff5459;box-shadow:0 0 0 5px rgba(255,84,89,.35),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL[data-k=buy]{border-color:#1fdc93;box-shadow:0 0 0 5px rgba(31,220,147,.35),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL[data-k=reso]{border-color:#e8c37a;box-shadow:0 0 0 5px rgba(232,195,122,.38),0 5px 20px rgba(0,0,0,.5)}' +
-    '#jlZpBallJL.attn{animation:jlZpAttn 1.6s ease-in-out 4}@keyframes jlZpAttn{50%{transform:scale(1.22);box-shadow:0 0 0 8px rgba(232,195,122,.30),0 5px 20px rgba(0,0,0,.5)}}' +
-    '#jlZpBallJL.ring{animation:jlZpRing 1s ease-in-out 3}@keyframes jlZpRing{50%{box-shadow:0 0 0 6px rgba(232,195,122,.35),0 4px 18px rgba(0,0,0,.45)}}' +
+    '#jlZpBallJL.attn{animation:jlZpAttn 1.6s ease-in-out 4!important}@keyframes jlZpAttn{50%{transform:scale(1.22);box-shadow:0 0 0 8px rgba(232,195,122,.30),0 5px 20px rgba(0,0,0,.5)}}' +
+    '#jlZpBallJL.ring{animation:jlZpRing 1s ease-in-out 3!important}@keyframes jlZpRing{50%{box-shadow:0 0 0 6px rgba(232,195,122,.35),0 4px 18px rgba(0,0,0,.45)}}' +
     /* 11-08 用户: 浮动球页面卡面别死黑 → 半透明轻磨砂(同持仓卡), 战屏页面本身透明(jl_zp_war.html body.injlin) */
     /* 11-09晚 用户: 作战屏背景灰蒙蒙 → 恢复用户03:00在线上自己改的深蓝实底 #0d1730→#091024, 不透明不磨砂(半透明会把首页透成灰) */
     '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,#0d1730,#091024);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(120,160,255,.22);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}' +
