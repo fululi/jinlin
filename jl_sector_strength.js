@@ -3,7 +3,7 @@
    ①根卡墨绿(rgba(10,26,34,.72)+#81e6d9绿描边)退场→持仓页白玻璃同族(145°白渐变+blur(2px)saturate(160%)brightness(1.08)+白.5描边+inset白高光/外投影族) ②开发术语人话化: "mtemp rows缺失"→"暂无强度数据", "无mtemp"→"暂无数据", 无涨幅数据的板块多卡"数据缺失"小块→合并一行 ③小灰字→白亮两色(数值.95/元信息.78), 红色逻辑#ff8b8f→亮红#ff5459, 卡标题#81e6d9→白 ④大K线图表背景: 评估结论=不属本文件(ks.html体系, v0.84.54已改深蓝香槟金), 本文件无图表对象
    jl-C批次(2026-10-11, 用户四点要求, 依旧只动渲染/交互层, CORE计算/IDB/口径/数据零触碰):
      ①挂载根修: body尾部(被甩到页面最底·导航之下·浏览器栏遮半截)→挂进.phone玻璃抽屉, absolute bottom=54对齐底部tab新高度(index.html jl-1114同步改), z=33(nav30之上/picker·news遮罩面板35/36之下, 弹层仍可盖抽屉)
-     ②交互: 底部玻璃抽屉——手柄(拖条+标题+数据时点)常驻tab上方32px, 点按开合/上拉下滑手势(位移>28px或速度>0.45px/ms判向, 小抖动回弹), 开合=max-height裁剪动画(32px↔min(58vh,520px)), 内容区内滚+滚动位置跨刷新保留
+     ②交互: 底部玻璃抽屉——手柄(拖条+标题+数据时点)常驻tab上方22px, 点按开合/上拉下滑手势(位移>28px或速度>0.45px/ms判向, 小抖动回弹), 开合=max-height裁剪动画(22px↔min(58vh,520px)), 内容区内滚+滚动位置跨刷新保留
      ③文字: 灰字rgba(255,255,255,.78)全→亮白.95+加粗(600-700), 红维持亮红#ff5459(A股红涨), 标题去"v0(T4a)"开发后缀
      ④prefers-reduced-motion: 过渡关闭; 老浏览器无PointerEvent回落click
    基准: jinlin_clone@7ba89e8 (v0.84.38已推送)
@@ -199,11 +199,12 @@
     fundSig: function (q, ourAvg, th) {
       th = th || CORE.FUND;
       if (!q || !isFinite(q.p) || !isFinite(q.f)) return null;
-      var fr = isFinite(q.fr) ? q.fr : 0, up = Math.max(q.p, isFinite(ourAvg) ? ourAvg : -99);
+      var fr = isFinite(q.fr) ? q.fr : 0, up = Math.max(q.p, ourAvg != null && isFinite(ourAvg) ? ourAvg : -99); /* 11-12: isFinite(null)为真, 显式排除 */
       if (fr >= th.IN_FR && q.f >= th.IN_F && q.p <= th.IN_PMAX && q.p >= th.IN_PMIN) return { k: "in", txt: "资金先进" };
       if (up >= th.OUT_P && q.f < 0 && fr <= th.OUT_FR) return { k: "out", txt: "拉升·主力在出" };
-      /* 11-11 用户: 原来只有"涨着钱在出"才报, 板块跌着钱也在走这种正常退潮形态全漏——补一条纯流出 */
-      if (up < 0 && q.f < 0 && fr <= th.DRAIN_FR) return { k: "out", txt: "跌着·主力在流出", drain: 1 };
+      /* 11-11 用户: 原来只有"涨着钱在出"才报, 板块跌着钱也在走这种正常退潮形态全漏——补一条纯流出
+         11-12 用户: 通信技术+1.04%而主力净占比-3.41%(光通信CPO占仓6成)整个下午没报——0~2%微涨出货两头不沾(拉升出要涨够2%, 跌着出要真跌), 并进本条: 涨不够2%也算, 门槛从严一档(净占比≤-3%) */
+      if (up < th.OUT_P && q.f < 0 && fr <= th.DRAIN_FR) return { k: "out", txt: q.p < 0 ? "跌着·主力在流出" : "微涨·主力在出", drain: q.p < 0 ? 1 : 0 }; /* drain按板块实际涨跌定文案(不按up: ourAvg=null时isFinite(null)为真被当0, 跌着的板块up会被抬到0) */
       return null;
     },
     /* jl-scope(1104 第二版): 用户: 不是1000多个板块都报, 也不是固定的科技名单——当天实际火的板块(强度强/主力真在进)才提醒; 前几天火的板块在跑路也要提醒 */
@@ -448,8 +449,8 @@
 
   /* ============ 渲染: 底部玻璃抽屉(jl-C: body尾卡→挂.phone, bottom对齐底部tab54px; CSS自注入) ============ */
   var ROOT = null;
-  var DRAG = { on: false, y0: 0, dy: 0, t0: 0 }; /* jl-C: 手柄拖拽态, paint()拖拽中跳过防DOM重建丢监听 */
-  var JSEC_CSS = "#jlsectroot{position:absolute;left:8px;right:8px;bottom:54px;z-index:33;overflow:hidden;pointer-events:none;max-height:22px;transition:max-height .34s cubic-bezier(.32,.72,.28,1);border-radius:12px 12px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.4);border-bottom:0;backdrop-filter:blur(2px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(2px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}#jlsectroot.open{background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.045))}" /* 11-11 用户: 开态原来 .38 深蓝半透会透底图、也不搭持仓页; 改持仓卡同款白玻璃家族(只加密一档保证长文字可读, 仍走 blur2 saturate160 brightness1.08 那套) */ /* 根=裁剪容器: max-height 32(只露手柄)↔min(58vh,520px)开; 遮罩裁剪=隐藏体不压导航不吞点击 */
+  var DRAG = { on: false, y0: 0, dy: 0, t0: 0, h0: 0 }; /* jl-C: 手柄拖拽态, paint()拖拽中跳过防DOM重建丢监听 */
+  var JSEC_CSS = "#jlsectroot{position:absolute;left:8px;right:8px;bottom:54px;z-index:33;overflow:hidden;pointer-events:none;max-height:22px;transition:max-height .34s cubic-bezier(.32,.72,.28,1);border-radius:12px 12px 0 0;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.4);border-bottom:0;backdrop-filter:blur(2px) saturate(160%) brightness(1.08);-webkit-backdrop-filter:blur(2px) saturate(160%) brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}#jlsectroot.open{background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.045))}" /* 11-11 用户: 开态原来 .38 深蓝半透会透底图、也不搭持仓页; 改持仓卡同款白玻璃家族(只加密一档保证长文字可读, 仍走 blur2 saturate160 brightness1.08 那套) */ /* 根=裁剪容器: max-height 22(只露手柄)↔min(58vh,520px)开; 遮罩裁剪=隐藏体不压导航不吞点击 */
     + "#jlsectroot.open{max-height:min(58vh,520px)}"
     + "body.ksFullJL #jlsectroot{display:none!important}" /* K线全屏模式nav隐藏, 抽屉同退场 */
     + "#jlsectHandle{height:22px;display:flex;align-items:center;gap:6px;padding:0 10px;pointer-events:auto;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none}" /* touch-action:none=拖拽不被页面滚动抢占 */
@@ -457,6 +458,7 @@
     + "#jlsectHandle b{font-size:11px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
     + "#jlsectHandle small{font-size:10px;color:#FFFFFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
     + "#jlsectHandle small.jlsecNo{color:#ffd84a;font-size:9.5px;font-weight:700}"
+    + "#jlsectHandle .jlsecRd{flex:0 0 auto;font-size:9.5px;font-weight:800;color:#10131a;background:#ff5459;border-radius:8px;padding:1px 6px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.35)}" /* 11-12 未读角标 */
     + "#jlsectHandle .jlsecArr{margin-left:auto;flex:0 0 auto;font-size:10px;color:#FFFFFF;font-weight:700;transition:transform .3s}"
     + "#jlsectroot.open .jlsecArr{transform:rotate(180deg)}"
     + "#jlsectBody{overflow-y:auto;max-height:calc(min(58vh,520px) - 34px);pointer-events:auto;overscroll-behavior:contain;padding:2px 11px 12px}" /* 内容区内滚, 关态被根裁剪自然无事件 */
@@ -477,10 +479,10 @@
     + "#jlsecSurge .jlsgD{display:inline-block;min-width:22px;text-align:center;font-size:17px;line-height:1;cursor:pointer;color:#fff}"
     + "#jlsecSurge .jlsgDots{text-align:center;margin-top:4px}#jlsecSurge .jlsgDots i{display:inline-block;width:6px;height:5px;margin:0 2px;border-radius:3px;background:rgba(255,255,255,.35)}#jlsecSurge .jlsgDots i.on{width:14px;background:#fff}"
     + "#jlsecSurge.view{border-color:rgba(255,255,255,.7);background:linear-gradient(150deg,rgba(22,30,44,.96),rgba(12,16,26,.95));animation:none!important}#jlsecSurge.view .jlsgT{color:#fff}"
-    + "#jlsecSurge.out{border-color:#2fd18b;background:linear-gradient(150deg,rgba(8,44,32,.95),rgba(10,16,18,.94))}#jlsecSurge.out .jlsgT{color:#5ae8ab}#jlsecSurge.out.on{animation-name:jlsgPulseO}"
+    + "#jlsecSurge.out.on{animation-name:jlsgPulseO}"
     + "#jlsecSurge.decay{border-color:#2fd18b;background:linear-gradient(150deg,rgba(6,40,28,.96),rgba(10,18,14,.95))}#jlsecSurge.decay.on{animation-name:jlsgPulseO}" /* 11-11 退潮前兆窗: 绿=在走弱 */
     + "@keyframes jlsgPulseO{0%{box-shadow:0 0 0 0 rgba(47,209,139,.75),0 10px 30px rgba(0,0,0,.5)}80%{box-shadow:0 0 0 14px rgba(47,209,139,0),0 10px 30px rgba(0,0,0,.5)}100%{box-shadow:0 0 0 0 rgba(47,209,139,0),0 10px 30px rgba(0,0,0,.5)}}"
-    + "#jlsecSurge.fund{border-color:#ffd21f;background:linear-gradient(150deg,rgba(52,40,8,.95),rgba(18,14,10,.94))}#jlsecSurge.fund .jlsgT{color:#ffd21f}#jlsecSurge.fund.on{animation-name:jlsgPulseG}#jlsecSurge.out{border-color:#2fd18b;background:linear-gradient(150deg,rgba(8,46,32,.95),rgba(10,18,14,.94))}#jlsecSurge.out .jlsgT{color:#2fd18b}"
+    + "#jlsecSurge.fund{border-color:#ffd21f;background:linear-gradient(150deg,rgba(52,40,8,.95),rgba(18,14,10,.94))}#jlsecSurge.fund .jlsgT{color:#ffd21f}#jlsecSurge.fund.on{animation-name:jlsgPulseG}#jlsecSurge.out{border-color:#2fd18b;background:linear-gradient(150deg,rgba(8,46,32,.95),rgba(10,18,14,.94))}#jlsecSurge.out .jlsgT{color:#2fd18b}" /* 11-12: 此处为 .out 生效样式; 上方同名旧定义已删 */
     + "@keyframes jlsgPulseG{0%{box-shadow:0 0 0 0 rgba(255,210,31,.75),0 10px 30px rgba(0,0,0,.5)}80%{box-shadow:0 0 0 14px rgba(255,210,31,0),0 10px 30px rgba(0,0,0,.5)}100%{box-shadow:0 0 0 0 rgba(255,210,31,0),0 10px 30px rgba(0,0,0,.5)}}"
     + "#jlsectroot.surge{border-color:#ff5459;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 0 12px rgba(255,84,89,.65)}#jlsectroot.surge #jlsectHandle small{color:#ffd21f}"
     /* 11-12 热力图改版: 表头+日期列+等宽数字, 缺数据那天=斜纹 */
@@ -511,7 +513,7 @@
     + "@media (prefers-reduced-motion:reduce){#jlsectroot{transition:none}#jlsectHandle .jlsecArr{transition:none}#jlsecPop{transition:none}#jlsecSurge{transition:none;animation:none!important}}";
 
   /* ============ jl-rot(2026-11-03): 板块生命周期圆环——在原抽屉上加, 原内容不动。历史=既有IDB快照(零新请求), 阶段=CORE.stageAt ============ */
-  var STC = ["", "rgba(255,255,255,.6)", "#ffffff", "#ffd21f", "rgba(255,255,255,.45)", "rgba(255,255,255,.3)"]; /* 单色系: 白=冷/暖金=热/灰=退, 红绿只留给涨跌与资金 */
+  /* 11-12: 原此处 STC 数组被下方同名对象覆盖, 已删 */ /* 单色系: 白=冷/暖金=热/灰=退, 红绿只留给涨跌与资金 */
   function dayMapOf(recs) {
     var m = {};
     (recs || []).forEach(function (r) {
@@ -809,7 +811,7 @@
       Object.keys(q).forEach(function (n) { if (isFinite(q[n].f)) cur[n] = Math.round(q[n].f / 1e4); }); /* 万元 */
       H[day] = cur;
       Object.keys(H).sort().slice(0, -30).forEach(function (d) { delete H[d]; }); /* 留30个交易日 */
-      localStorage.setItem("jl_secfund_day_v1", JSON.stringify(H));
+      localStorage.setItem("jl_secfund_day_v1", JSON.stringify(H)); FDH.H = null; /* 写后缓存作废 */
       var M = lsGet("jl_secfund_day_meta_v1") || {}, mm = M[day] || { first: hm, last: hm, n: 0 };
       mm.last = hm; mm.n = Object.keys(cur).length; M[day] = mm;
       Object.keys(M).sort().slice(0, -30).forEach(function (d) { delete M[d]; });
@@ -821,8 +823,10 @@
     return { days: days.length, closed: days.filter(function (d) { return M[d] && M[d].last >= 1500; }).length,
       list: days.map(function (d) { return { day: d, n: Object.keys(H[d] || {}).length, last: (M[d] && M[d].last) || 0 }; }) };
   }
+  var FDH = { t: 0, H: null }; /* 11-12: 日归档解析缓存——原来每个板块各解析一遍, 一次刷新几百次 */
+  function fundDayAll() { if (!FDH.H || Date.now() - FDH.t > 5000) { FDH.H = lsGet("jl_secfund_day_v1") || {}; FDH.t = Date.now(); } return FDH.H; }
   function fundHistOf(sec) { /* → {day: 主力净额(万元)}, 只取这一个板块 */
-    var H = lsGet("jl_secfund_day_v1") || {}, o = {}, n = CORE.unalias(sec);
+    var H = fundDayAll(), o = {}, n = CORE.unalias(sec);
     Object.keys(H).forEach(function (d) {
       var m = H[d]; if (!m) return;
       var v = m[n]; if (v == null) v = m[String(n).replace(/概念$/, "")]; if (v == null) v = m[n + "概念"];
@@ -866,6 +870,7 @@
       var hm = hmNow(), wd = new Date().getDay();
       if (!force && (wd < 1 || wd > 5 || hm < 930 || hm > 1500 || localDay(Date.now()) !== S.day)) return; /* 11-11 用户: 原来卡在1430, 尾盘出货整段不报; 放宽到收盘 */
       var st = sgStore(), fresh = [];
+      if (!S.heldSecs || S.heldSecsDay !== S.day) { try { S.heldSecs = CORE.heldSecMap(); } catch (e) { S.heldSecs = {}; } S.heldSecsDay = S.day; } /* 11-12修: 首轮 scopeOf 还没跑, 持仓板块漏查 */
       var cand = Object.keys(S.ana), seen = {}; cand.forEach(function (k) { seen[CORE.unalias(k)] = 1; });
       fundRankOf(cand[0] || ""); Object.keys(S.bkqRank || {}).forEach(function (k) { if (S.bkqRank[k] <= CORE.TOPN && !seen[k] && !seen[k + "概念"] && !seen[k.replace(/概念$/, "")]) cand.push(CORE.alias(k)); }); /* 东财板块里主力流入前20但不在我们归属表里的(如贵金属)也看 */
       Object.keys(S.heldSecs || {}).forEach(function (k) { if (!seen[k]) { seen[k] = 1; cand.push(k); } }); /* 11-11: 持仓板块即使没有任何排名数据也要逐个查资金 */
@@ -875,7 +880,7 @@
         var why = scopeOf(sec); if (!why) return;
         var kind = sg.k === "in" ? "fund" : "out";
         if (st.list.some(function (x) { return x.sec === sec && x.kind === kind; })) return;
-        var a = S.ana[sec] ? S.ana[sec].cur : { avg: q.p, zt: 0 }, x = { kind: kind, t: S.bkq.t, sec: sec, a: a.avg, bp: q.p, f: q.f, fr: q.fr, z: a.zt || 0, why: why };
+        var a = S.ana[sec] ? S.ana[sec].cur : { avg: q.p, zt: 0 }, x = { kind: kind, t: S.bkq.t, sec: sec, a: a.avg, bp: q.p, f: q.f, fr: q.fr, z: a.zt || 0, why: why, drain: sg.drain || 0 }; /* 11-12: 补drain字段——原来漏带, 跌着流出的板块弹窗文案错走"小心假拉"那版 */
         st.list.push(x); fresh.push(x);
       });
       if (!fresh.length) return;
@@ -1107,7 +1112,7 @@
     var sg = tlSegs();
     if (!sg.length) return "";
     return '<div style="padding:7px 9px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,210,31,.07);border:1px solid rgba(255,210,31,.22)"><div style="font-size:11px;color:#ffd21f;font-weight:700;margin-bottom:3px">' + (S.tlShow && S.tlShow !== S.day ? esc(S.tlShow) + ' 谁在领涨（按时间段·复盘）' : '今天谁在领涨（按时间段）') + '</div>' +
-      sg.map(function (g) { var t0 = new Date(g.k0).toTimeString().slice(0, 5), t1 = new Date(g.k1 + CORE.BUCKET_MS).toTimeString().slice(0, 5); return '<div style="display:flex;gap:8px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.75"><span style="flex:0 0 76px;opacity:.95">' + t0 + "–" + t1 + '</span><b style="color:#ffd21f">' + esc(g.s) + '</b><span style="margin-left:auto;color:' + (g.v.a >= 0 ? "#ff5459" : "#5ae8ab") + '">' + fmtPct(g.v.a) + "</span></div>"; }).join("") + "</div>";
+      sg.map(function (g) { var t0 = new Date(g.k0).toTimeString().slice(0, 5), t1 = new Date(g.k1 + CORE.BUCKET_MS).toTimeString().slice(0, 5); return '<div style="display:flex;gap:8px;font-size:10.5px;color:#fff;font-weight:600;line-height:1.75"><span style="flex:0 0 76px;opacity:.95">' + t0 + "–" + t1 + '</span><b style="color:' + (g.v.a >= 0 ? "#ffd21f" : "rgba(255,255,255,.75)") + '">' + esc(g.s) + (g.v.a >= 0 ? "" : "（全线跌·最抗跌）") + '</b><span style="margin-left:auto;color:' + (g.v.a >= 0 ? "#ff5459" : "#5ae8ab") + '">' + fmtPct(g.v.a) + "</span></div>"; }).join("") + "</div>"; /* 11-12: 跌日"领涨"是负数看着像坏了——标明这是最抗跌而非真领涨 */
   }
   /* ============ jl-surge(1104): 盘中板块急拉提醒 + 个股(看/+自选/+持仓) ============
      用户11-04: 小金属13:00后半小时拉起来(东财小金属指数 13:15 +0.19% → 13:45 +3.22%), 湖南白银13:40才+7%、14:23封板——提醒要醒目、要带个股、点了能进K线和加自选/持仓 */
@@ -1143,7 +1148,17 @@
     if (!S.heldSecs || S.heldSecsDay !== S.day) { try { S.heldSecs = CORE.heldSecMap(); } catch (e) { S.heldSecs = {}; } S.heldSecsDay = S.day; } /* 11-11: 每日算一次持仓板块表 */
     return CORE.alertScope(sec, A && A.cur ? A.cur.rank : null, curPicks(), fundRankOf(sec), recentTopOf(sec), S.heldSecs);
   }
-  function sgStore() { var s = lsGet("jl_secsurge_v1"); return s && s.d === S.day && Array.isArray(s.list) ? s : { d: S.day, list: [] }; }
+  function sgStore() {
+    var s = lsGet("jl_secsurge_v1");
+    if (s && s.d === S.day && Array.isArray(s.list) && s.list.length) return s;
+    /* 11-12 用户: 下午主存被清/写失败后"今天的板块提醒"只剩最新一批, 上午15条全丢、预制菜14:02报过14:16又重报——主存读不到时从历史存恢复(两把钥匙分开存, 一把丢另一把还在) */
+    var hb = histAll()[S.day];
+    if (hb && hb.length) { var r = { d: S.day, list: hb }; try { localStorage.setItem("jl_secsurge_v1", JSON.stringify(r)); } catch (e) {} return r; }
+    return { d: S.day, list: [] };
+  }
+  /* 11-12 用户: "弹窗只在触发那一下弹, 人不在就错过了, 发生的事情我得知道" —— 加未读水位: showSurge/openReview 让用户看到即清零; 手柄红角标常驻提示今天还有几条没看(含刚弹过没看到的) */
+  function rdStamp() { try { var st = sgStore(); localStorage.setItem("jl_secrd_v1", JSON.stringify({ d: st.d, n: st.list.length })); } catch (e) {} }
+  function rdUnread() { try { var st = sgStore(), r = lsGet("jl_secrd_v1"); return Math.max(0, st.list.length - (r && r.d === st.d ? r.n : 0)); } catch (e) { return 0; } }
   function hhmm(t) { return new Date(+t).toTimeString().slice(0, 5); }
   function surgeCheck() {
     try {
@@ -1272,7 +1287,11 @@
   function histAll() { var h = lsGet("jl_secsurge_hist_v1"); return h && typeof h === "object" ? h : {}; }
   function histSave(day, list) {
     try {
-      var h = histAll(); h[day] = list.map(function (x) { var o = {}; for (var k in x) o[k] = x[k]; return o; });
+      var h = histAll(), old = h[day] || [], key = function (x) { return x.sec + "|" + (x.kind || ""); };
+      /* 11-12: 历史存改合并(同板块+同类型以新数据覆盖, 旧独有条目保留)——原来整体替换, 主存一旦重置, 历史也被5条新提醒覆盖成只剩5条, 上午全天的记录跟着陪葬 */
+      var by = {}; old.forEach(function (x) { by[key(x)] = x; });
+      (list || []).forEach(function (x) { by[key(x)] = { kind: x.kind, t: x.t, t2: x.t2, sec: x.sec, d: x.d, a: x.a, a2: x.a2, u: x.u, n: x.n, z: x.z, bp: x.bp, f: x.f, fr: x.fr, why: x.why, drain: x.drain, stk: x.stk, stkT: x.stkT }; });
+      h[day] = Object.keys(by).map(function (k) { return by[k]; });
       Object.keys(h).sort().slice(0, -20).forEach(function (d) { delete h[d]; });
       localStorage.setItem("jl_secsurge_hist_v1", JSON.stringify(h));
     } catch (e) {}
@@ -1368,6 +1387,7 @@
   }
   function showSurge(x, more, refresh) {
     ensurePops();
+    if (!document.hidden) rdStamp(); /* 11-12: 窗真弹到屏幕上了=看过, 未读清零; 后台静默记录的不清 */
     if (POPS && POPS.className.indexOf("decay") >= 0) POPS.className = ""; /* 退潮窗占着就先让位给新的急拉/资金提醒 */
     if (refresh) { if (SH.day === S.day) { snapStk(x); sheetRefresh(); } return; }
     SH.day = S.day; SH.items = sheetItems(S.day);
@@ -1404,7 +1424,7 @@
     SH.day = S.day; SH.items = [x]; SH.i = 0; sheetPlace(); sheetRender();
     memOf(sec).then(function () { if (SH.items[0] === x) sheetRefresh(); });
   }
-  function openReview() { ensurePops(); clearTimeout(POPS_T); var ds = sheetDays(); SH.day = ds.indexOf(S.day) >= 0 ? S.day : ds[ds.length - 1] || S.day; SH.items = sheetItems(SH.day); SH.i = 0; sheetPlace(); sheetRender(); }
+  function openReview() { ensurePops(); clearTimeout(POPS_T); rdStamp(); /* 11-12: 打开提醒列表=看过 */ var ds = sheetDays(); SH.day = ds.indexOf(S.day) >= 0 ? S.day : ds[ds.length - 1] || S.day; SH.items = sheetItems(SH.day); SH.i = 0; sheetPlace(); sheetRender(); }
   /* 11-05 用户: 要"当天可埋伏的股票", 按板块给, 标理由和风险。只用现成数据(强度排名/急拉/资金/成分股), 零新增请求(成分股沿用点板块时的取法, 每板块只取一次)
      规则(初值, 未回测): 板块=急拉/资金先进/强度前3/我盯的, 且主力没在出、板块主力净额不为负; 个股=没涨停、涨幅<7%、主力净流入>0, 取净流入最大2只 */
   function outToday(sec) { var r = null; (S.surges || []).forEach(function (x) { if (x.sec === sec && x.kind === "out" && (!r || (x.t2 || x.t) < (r.t2 || r.t))) r = x; }); return r; } /* 11-05: 当天出逃过的板块, 推荐/急拉处标冲突 */
@@ -1412,7 +1432,7 @@
   function recTrack(x, sec) {
     if (!(x.pr > 0) || !S.day) return null;
     var R = lsGet("jl_rec_v1") || {}, e = R[x.c];
-    if (!e || (S.day > e.day && e.day === undefined)) e = null;
+    if (!e) e = null;
     if (!e) { R[x.c] = { day: S.day, pr: x.pr, n: x.n, sec: sec }; var ks = Object.keys(R); if (ks.length > 300) ks.sort(function (a, b) { return R[a].day < R[b].day ? -1 : 1; }).slice(0, ks.length - 300).forEach(function (k) { delete R[k]; }); try { localStorage.setItem("jl_rec_v1", JSON.stringify(R)); } catch (er) {} return null; }
     if (e.day >= S.day) return null;
     var dd = S.days ? S.days.filter(function (d) { return d.day > e.day && d.day <= S.day; }).length : 1;
@@ -1449,7 +1469,7 @@
     var wr = Math.round(win / cnt * 100), avg = sum / cnt;
     var show = rows.slice(0, 12).map(function (r) {
       var c = r.s.g >= 0 ? "#ff5459" : "#2fd18b", f = function (v) { return (v >= 0 ? "+" : "") + v.toFixed(1) + "%"; };
-      return '<div class="jlrow" data-jlstk="open" data-c="' + esc(r.c) + '" data-n="' + esc(r.n) + '" data-p="' + r.pr.toFixed(2) + '" data-pc="' + r.s.g.toFixed(2) + '" style="cursor:pointer;align-items:flex-start">' +
+      return '<div class="jlrow" data-jlstk="open" data-c="' + esc(r.c) + '" data-n="' + esc(r.n) + '" data-p="' + r.s.px.toFixed(2) + '" data-pc="" style="cursor:pointer;align-items:flex-start">' +
         '<em><span style="display:flex;align-items:baseline;gap:5px"><b style="font-weight:500;white-space:nowrap">' + esc(r.n) + '</b>' + (r.sec ? '<s>' + esc(r.sec) + "</s>" : "") +
         '<s class="jn" style="margin-left:auto">' + String(r.d0).slice(5) + " · " + r.pr.toFixed(2) + " · 第" + r.s.d + "天</s></span></em>" +
         '<b class="jn" style="flex:0 0 58px;color:' + c + '">' + f(r.s.g) + "</b>" +
@@ -1764,7 +1784,7 @@
         var on = x.sec === open && x === L.filter(function (y) { return y.sec === open; })[0], now = curA[x.sec], fund = x.kind === "fund";
         return '<div data-jlsg="' + esc(x.sec) + '" style="display:flex;align-items:center;gap:7px;font-size:11px;color:#fff;font-weight:600;line-height:2"><span style="flex:0 0 40px;opacity:.9">' + hhmm(x.t2 || x.t) + '</span><b style="color:#ffd21f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%">' + esc(x.sec) + '</b><span style="font-size:10px;white-space:nowrap;color:' + (fund ? "#ffd21f" : x.kind === "out" ? "#2fd18b" : "#ff7a7e") + '">' + (fund ? "💰资金先进 " + fmtFund(x.f) : x.kind === "out" ? "⚠主力在出 " + fmtFund(x.f) : "⚡急拉+" + (x.d2 || x.d).toFixed(1) + "点") + '</span><span style="margin-left:auto;color:' + ((now != null ? now : x.a || 0) >= 0 ? "#ff5459" : "#2fd18b") + '">' + (now != null ? "现" + fmtPct(now) : x.a != null ? fmtPct(x.a) : "") + '</span><span style="font-size:10px;opacity:.8">' + (on ? "▾" : "▸") + "</span></div>" +
           (on ? '<div style="padding:0 0 4px 6px;border-left:2px solid rgba(255,84,89,.5);margin-left:4px">' + stkList(x.sec) + "</div>" : "");
-      }).join("") + '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600;line-height:1.5">⚡急拉＝30个交易分钟里板块平均涨幅抬≥1.5个点、现平均≥+1%、六成以上在涨<br>💰资金先进＝主力净流入≥3亿且占成交≥6%，板块涨幅在−1.5%～+1.5%<br>⚠主力在出＝板块涨≥2%但主力净流出、占成交≤−2%<br>只提醒当天真火的：我盯的 + 今天强度前20 + 今天主力流入前20 + 近3天强势的（跑路也报）。都是初值，未回测</div></div>';
+      }).join("") + '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600;line-height:1.5">⚡急拉＝30个交易分钟里板块平均涨幅抬≥1.5个点、现平均≥+1%、六成以上在涨<br>💰资金先进＝主力净流入≥3亿且占成交≥6%，板块涨幅在−1.5%～+1.5%<br>⚠主力在出＝涨≥2%且占成交≤−2%；或涨不足2%／跌着且占成交≤−3%（阴着出货，11-12新增）<br>只提醒当天真火的：我盯的 + 今天强度前20 + 今天主力流入前20 + 近3天强势的（跑路也报）。都是初值，未回测</div></div>'; /* 11-12: 图例补上微涨/跌着出货两条新路径 */
   }
   /* jl-fund: 资金看板——9:15竞价起就有; 埋伏候选=资金在进但还没怎么涨, 假拉=涨了但主力在出 */
   /* 11-09 用户: 资金最强榜按时间记下来——几点进榜、在榜多久、连续上榜几天。每次板块资金刷新(3分钟, 同一份数据, 零新增请求)记一笔前8; 存 jl_fundtop_v1 {day:{lt, ns, s:{板块:{a首次,z最近,n次数,b最好名次}}}} 留30天 */
@@ -1802,8 +1822,8 @@
   }
   function fundBoardHtml() {
     if (!S.bkq) return "";
-    var q = S.bkq.q || {};
-    var rows = Object.keys(q).filter(function (k) { return !FJ.test(k) && q[k] && isFinite(q[k].f); }).map(function (k) { return { sec: k, b: q[k] }; });
+    var q = S.bkq.m || {}; /* 11-12修: 原 S.bkq.q 不存在, 整块恒空 */
+    var rows = Object.keys(q).filter(function (k) { return !FJ_.test(k) && q[k] && isFinite(q[k].f); }).map(function (k) { return { sec: k, b: q[k] }; });
     if (!rows.length) return "";
     var hm = hmNow(), early = hm >= 915 && hm < 930;
     var top = rows.filter(function (o) { return o.b.f > 0; }).sort(function (x, y) { return (y.b.fr || 0) - (x.b.fr || 0); }).slice(0, 8);
@@ -1869,13 +1889,13 @@
     var sub = has ? (S.day + " · 强度样本 · " + (S.at ? "数据时点 " + new Date(+S.at).toTimeString().slice(0, 5) : "暂无数据")) : "暂无强度数据"; /* jl-1166c: 明确这是强度样本，不是板块资金状态 */
     if (has && S.last.ranked && S.last.ranked.length) { /* jl-1208: 有排名时手柄直接报最强两个板块——抽屉不打开也看得到有没有内容、谁最强 */
       var _rr = S.last.ranked, _r0 = _rr[0], _r1 = _rr[1], _a0 = _r0.factors && _r0.factors.avgPct, _tt = S.at;
-      sub = "最强 " + _r0.sector + (_a0 && _a0.state === "ok" ? " " + fmtPct(_a0.raw) : "") + (_r1 ? " · " + _r1.sector : "") + (_tt ? " · " + new Date(+_tt).toTimeString().slice(0, 5) : "");
+      sub = "最强" + (_a0 && _a0.state === "ok" && _a0.raw < 0 ? "（全线跌·最抗跌）" : "") + " " + _r0.sector + (_a0 && _a0.state === "ok" ? " " + fmtPct(_a0.raw) : "") + (_r1 ? " · " + _r1.sector : "") + (_tt ? " · " + new Date(+_tt).toTimeString().slice(0, 5) : ""); /* 11-12: 榜一是负数时标注这是最抗跌, 不然像显示错了 */
     }
     var hasAna = !!(S.ana && Object.keys(S.ana).length);
     if (hasAna && S.review) sub = "复盘 " + S.dispDay + (S.lead ? " · 主攻 " + S.lead : "");
     var sgL = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); }), sg0 = sgL[0];
     var sgHot = !!(sg0 && S.live && Date.now() - (sg0.t2 || sg0.t) < 40 * 60e3);
-    if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : "") + " · " + sub;
+    if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : sg0.kind === "out" ? "⚠" + sg0.sec + " 主力在出 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : ""); /* 11-12: 有提醒时手柄只显示提醒(不再拼"最强"尾巴, 两条拼一起必截断成省略号) */
     /* ===== 11-12 用户: 抽屉重排成 3 张卡 =====
        ① 今天实时: 资金榜 → 情绪天气 → 领涨时间线 → 现在最强板块
        ② 复盘: 退潮前兆 → 板块轮动热力图
@@ -1927,7 +1947,8 @@
     var _pg0 = document.getElementById("jlpgPager"), _ch0 = document.getElementById("jlpgChips"), pgL = _pg0 ? _pg0.scrollLeft : 0, chL = _ch0 ? _ch0.scrollLeft : 0;
     var _rp0 = document.getElementById("jlrecPg"), recL = _rp0 ? _rp0.scrollLeft : 0;
     var prevB = document.getElementById("jlsectBody"), sc = prevB ? prevB.scrollTop : 0; /* 刷新保留滚动位置 */
-    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
+    var _rdN = rdUnread(); /* 11-12: 手柄未读角标——今天有几条提醒没看过, 红字常驻直到点开提醒列表 */
+    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b>' + (_rdN > 0 ? '<span class="jlsecRd">' + _rdN + '条未读</span>' : '') + '<small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
     R.classList.toggle("surge", sgHot);
@@ -1947,7 +1968,7 @@
     if (!R) return;
     function capH() { return Math.min(window.innerHeight * 0.58, 520); }
     h.addEventListener("pointerdown", function (e) {
-      DRAG.on = true; DRAG.y0 = e.clientY; DRAG.dy = 0; DRAG.t0 = Date.now();
+      DRAG.on = true; DRAG.y0 = e.clientY; DRAG.dy = 0; DRAG.t0 = Date.now(); DRAG.h0 = R.getBoundingClientRect().height; /* 11-12修: 按下时记一次起始高度 */
       R.style.transition = "none";
       try { h.setPointerCapture(e.pointerId); } catch (ec) {}
       e.preventDefault();
@@ -1955,8 +1976,7 @@
     h.addEventListener("pointermove", function (e) {
       if (!DRAG.on) return;
       DRAG.dy = e.clientY - DRAG.y0;
-      var base = Math.max(22, Math.min(capH(), R.getBoundingClientRect().height - DRAG.dy));
-      R.style.maxHeight = Math.max(22, Math.min(capH(), base)) + "px"; /* 上拉(dy<0)抽屉变高, 下滑收矮, 32~capH夹紧 */
+      R.style.maxHeight = Math.max(22, Math.min(capH(), DRAG.h0 - DRAG.dy)) + "px"; /* 11-12修: 原每帧用当前高度再减总位移=重复扣, 越拖越快 */ /* 上拉(dy<0)抽屉变高, 下滑收矮, 32~capH夹紧 */
     });
     function up() {
       if (!DRAG.on) return;
