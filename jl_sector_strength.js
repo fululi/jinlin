@@ -201,10 +201,10 @@
       if (!q || !isFinite(q.p) || !isFinite(q.f)) return null;
       var fr = isFinite(q.fr) ? q.fr : 0, up = Math.max(q.p, ourAvg != null && isFinite(ourAvg) ? ourAvg : -99); /* 11-12: isFinite(null)为真, 显式排除 */
       if (fr >= th.IN_FR && q.f >= th.IN_F && q.p <= th.IN_PMAX && q.p >= th.IN_PMIN) return { k: "in", txt: "资金先进" };
-      if (up >= th.OUT_P && q.f < 0 && fr <= th.OUT_FR) return { k: "out", txt: "拉升·主力在出" };
+      if (up >= th.OUT_P && q.f < 0 && fr <= th.OUT_FR) return { k: "out", txt: "拉高在出", tier: 1 }; /* 11-13 白话三档: 1拉高在出/2不涨在出/3跌着在出 (只改文案, 条件不动) */
       /* 11-11 用户: 原来只有"涨着钱在出"才报, 板块跌着钱也在走这种正常退潮形态全漏——补一条纯流出
          11-12 用户: 通信技术+1.04%而主力净占比-3.41%(光通信CPO占仓6成)整个下午没报——0~2%微涨出货两头不沾(拉升出要涨够2%, 跌着出要真跌), 并进本条: 涨不够2%也算, 门槛从严一档(净占比≤-3%) */
-      if (up < th.OUT_P && q.f < 0 && fr <= th.DRAIN_FR) return { k: "out", txt: q.p < 0 ? "跌着·主力在流出" : "微涨·主力在出", drain: q.p < 0 ? 1 : 0 }; /* drain按板块实际涨跌定文案(不按up: ourAvg=null时isFinite(null)为真被当0, 跌着的板块up会被抬到0) */
+      if (up < th.OUT_P && q.f < 0 && fr <= th.DRAIN_FR) return { k: "out", txt: q.p < 0 ? "跌着在出" : "不涨在出", tier: q.p < 0 ? 3 : 2, drain: q.p < 0 ? 1 : 0 }; /* drain按板块实际涨跌定文案(不按up: ourAvg=null时isFinite(null)为真被当0, 跌着的板块up会被抬到0) */
       return null;
     },
     /* jl-scope(1104 第二版): 用户: 不是1000多个板块都报, 也不是固定的科技名单——当天实际火的板块(强度强/主力真在进)才提醒; 前几天火的板块在跑路也要提醒 */
@@ -792,7 +792,7 @@
     };
     S.bkqP = share("allIn").then(function (d) { eat(d); return share("allOut"); }).then(function (d) { eat(d); }).then(function () {
       S.bkqP = null;
-      if (Object.keys(m).length > 50) { S.bkq = { t: Date.now(), m: m }; fundTopRec(); fundSnapSave(); fundDaySave(); bkStrongCheck(); fundCheck(); paint(); } /* 11-12: 先判强势/急拉, 再判资金——出逃提醒最后弹、在最上面 */
+      if (Object.keys(m).length > 50) { S.bkq = { t: Date.now(), m: m }; fundTopRec(); fundSnapSave(); fundDaySave(); bkStrongCheck(); outTrack(); fundCheck(); paint(); } /* 11-12: 先判强势/急拉, 再判资金——出逃提醒最后弹、在最上面 */
     }, function () { S.bkqP = null; });
   }
   /* jl-fsnap(1104): 用户: 别让电脑每天跑数据——App开着时把每3分钟的板块资金顺手存手机里(零新增请求), 复盘台账⑨里一键导出, 以后拿来回测
@@ -868,6 +868,44 @@
      这里只用 S.bkq(东财板块资金, 本来就3分钟一取, 带 f3涨幅/f104上涨家数/f105下跌家数) —— 零新增请求, 被封风险不变。
      东财口径只用来"弹不弹", 抽屉排名仍是自己算的(用户不要东财口径排名)。门槛初值, 未回测。
      覆盖面: bkq 只有主力流入前100+流出前100, 资金不进不出的中间板块看不到。 */
+  /* ===== 11-13 用户:「涨了但主力在出」重点优化 → 改名「钱在走」, 白话三档 + 危险度排序 + 持续多久 + 流出加速/放缓 =====
+     全部用 S.bkq(3分钟一取的板块资金)现成字段, 零新增请求。
+     持续: 每个板块连续被判"在出"的起点存 jl_secout_v1 {d, m:{东财名:{t0, t1}}}; 中间断档>10分钟(没被判在出/没进流出前100)=重新起算。
+     趋势: 本次主力净额 vs 12~20个交易分钟前那次; 流出又多了 ≥10%且≥2000万=加速, 少了同样幅度=放缓, 否则持平。S.bh 只在内存, 刚开App约15分钟内显示"—"。
+     危险度: (涨幅+2, 跌超2%按0算) × |净占比| —— 涨得越多、出得越狠越靠前, 拉高在出自然排最上。权重初值, 未回测。 */
+  var OUTN = ["", "拉高在出", "不涨在出", "跌着在出"];
+  function outTierOf(x) { if (x.tier) return x.tier; var p = +x.bp; return p >= CORE.FUND.OUT_P ? 1 : p >= 0 ? 2 : 3; } /* 旧记录没存档位, 按涨幅补 */
+  function outDanger(b) { return Math.max(0, (+b.p || 0) + 2) * Math.abs(+b.fr || 0); }
+  function outKeyOf(sec) { var q = S.bkq && S.bkq.m; if (!q) return null; var n = CORE.unalias(sec); return q[n] ? n : q[String(n).replace(/概念$/, "")] ? String(n).replace(/概念$/, "") : q[n + "概念"] ? n + "概念" : null; }
+  function outTrack() {
+    try {
+      if (!S.bkq || !S.bkq.m) return;
+      var now = S.bkq.t, day = localDay(now), O = lsGet("jl_secout_v1");
+      if (!O || O.d !== day) O = { d: day, m: {} };
+      var q = S.bkq.m, seen = {};
+      Object.keys(q).forEach(function (k) {
+        if (FJ_.test(k)) return;
+        var sg = CORE.fundSig(q[k], ourAvg(CORE.alias(k)));
+        if (!sg || sg.k !== "out") return;
+        seen[k] = 1; var e = O.m[k];
+        if (!e || now - e.t1 > 10 * 60e3) O.m[k] = { t0: now, t1: now }; else e.t1 = now;
+      });
+      Object.keys(O.m).forEach(function (k) { if (!seen[k] && now - O.m[k].t1 > 10 * 60e3) delete O.m[k]; });
+      S.outT = O; localStorage.setItem("jl_secout_v1", JSON.stringify(O));
+    } catch (e) {}
+  }
+  function outInfo(k) { /* k=东财名 → {min 持续分钟, tr: "加速"/"放缓"/"持平"/""} */
+    var O = S.outT || lsGet("jl_secout_v1"), e = O && O.m && O.m[k], r = { min: null, tr: "" };
+    if (e) r.min = Math.max(0, Math.round((CORE.tradeMin(e.t1) - CORE.tradeMin(e.t0))));
+    var q = S.bkq && S.bkq.m && S.bkq.m[k], H = S.bh || [];
+    if (q && isFinite(q.f) && H.length > 1) {
+      var tn = CORE.tradeMin(S.bkq.t), ref = null;
+      for (var i = H.length - 1; i >= 0; i--) { var dt = tn - CORE.tradeMin(H[i].t); if (dt >= 12 && dt <= 20 && H[i].f && isFinite(H[i].f[k])) { ref = H[i].f[k]; break; } }
+      if (ref != null) { var d = q.f - ref, gate = Math.max(2e7, Math.abs(ref) * 0.1); r.tr = d <= -gate ? "加速" : d >= gate ? "放缓" : "持平"; }
+    }
+    return r;
+  }
+  function outDurTxt(m) { return m == null ? "" : m < 3 ? "刚出现" : m >= 60 ? "已" + Math.floor(m / 60) + "时" + (m % 60 ? m % 60 + "分" : "") : "已" + m + "分"; }
   var BKS = { P: 2, UR: 0.7, MIN_N: 8, PTOP: 10 };
   function bkStrongCheck() {
     try {
@@ -875,7 +913,7 @@
       var now = S.bkq.t, wd = new Date(now).getDay(), hm = new Date(now).getHours() * 100 + new Date(now).getMinutes();
       if (wd < 1 || wd > 5 || hm < 935 || hm > 1500 || (hm > 1130 && hm < 1300) || localDay(now) !== S.day) return;
       var q = S.bkq.m, names = Object.keys(q).filter(function (k) { return !FJ_.test(k) && q[k] && isFinite(q[k].p); });
-      var cur = { t: now, m: {} }; names.forEach(function (k) { cur.m[k] = q[k].p; });
+      var cur = { t: now, m: {}, f: {} }; names.forEach(function (k) { cur.m[k] = q[k].p; if (isFinite(q[k].f)) cur.f[k] = q[k].f; }); /* 11-13: 顺带记主力净额, 给「钱在走」算加速/放缓 */
       if (!S.bh || S.bhDay !== S.day) { S.bh = []; S.bhDay = S.day; }
       var pRank = {}; names.slice().sort(function (a, b) { return q[b].p - q[a].p; }).forEach(function (k, i) { pRank[k] = i + 1; });
       var st = sgStore(), fresh = [], tn = CORE.tradeMin(now), TH = CORE.SURGE;
@@ -924,7 +962,7 @@
         var why = scopeOf(sec); if (!why) return;
         var kind = sg.k === "in" ? "fund" : "out";
         if (st.list.some(function (x) { return x.sec === sec && x.kind === kind; })) return;
-        var a = S.ana[sec] ? S.ana[sec].cur : { avg: q.p, zt: 0 }, x = { kind: kind, t: S.bkq.t, sec: sec, a: a.avg, bp: q.p, f: q.f, fr: q.fr, z: a.zt || 0, why: why, drain: sg.drain || 0 }; /* 11-12: 补drain字段——原来漏带, 跌着流出的板块弹窗文案错走"小心假拉"那版 */
+        var a = S.ana[sec] ? S.ana[sec].cur : { avg: q.p, zt: 0 }, x = { kind: kind, t: S.bkq.t, sec: sec, a: a.avg, bp: q.p, f: q.f, fr: q.fr, z: a.zt || 0, why: why, drain: sg.drain || 0, tier: sg.tier || 0 }; /* 11-12: 补drain字段——原来漏带, 跌着流出的板块弹窗文案错走"小心假拉"那版 */
         st.list.push(x); fresh.push(x);
       });
       if (!fresh.length) return;
@@ -1346,16 +1384,19 @@
     var st = sgStore(); st.list.forEach(function (y) { if (y.sec === x.sec && y.kind === x.kind) { y.stk = x.stk; y.stkT = x.stkT; } });
     try { localStorage.setItem("jl_secsurge_v1", JSON.stringify(st)); } catch (e) {} histSave(st.d, st.list);
   }
-  function kindTitle(x) { return x.kind === "strong" ? "🔥 板块强势" : x.kind === "view" ? "板块详情" : x.kind === "fund" ? "💰 资金先进" : x.kind === "out" ? "⚠ 主力在出" : "⚡ 板块急拉"; }
+  function kindTitle(x) { return x.kind === "strong" ? "🔥 板块强势" : x.kind === "view" ? "板块详情" : x.kind === "fund" ? "💰 资金先进" : x.kind === "out" ? "⚠ " + OUTN[outTierOf(x)] : "⚡ 板块急拉"; }
   function sheetCard(x, review) {
     var tt = x.t2 || x.t, d = x.d2 || x.d, a = x.a2 != null ? x.a2 : x.a, bits = [];
     if (x.u != null && x.n) bits.push(x.n + "只里 " + Math.round(x.u * x.n) + "只在涨");
     if (x.z > 0) bits.push("涨停 " + x.z + "只");
     var body;
     if (x.kind === "fund") body = "主力已净流入 <b>" + fmtFund(x.f) + "</b>（占成交 " + (+x.fr).toFixed(1) + "%），板块才 " + fmtPct(x.bp) + "，资金先到、价格还没动";
-    else if (x.kind === "out") body = (x.drain
-      ? "板块已经跌 <b>" + fmtPct(x.bp) + "</b>，主力还在净流出 <b style=\"color:#2fd18b\">" + fmtFund(x.f) + "</b>（占成交 " + (+x.fr).toFixed(1) + "%），不是回踩、是在走货"
-      : "板块涨 <b>" + fmtPct(x.bp) + "</b>，主力却净流出 <b style=\"color:#2fd18b\">" + fmtFund(x.f) + "</b>（占成交 " + (+x.fr).toFixed(1) + "%），小心假拉，手里有的考虑先走");
+    else if (x.kind === "out") { /* 11-13 白话三档: 一行数字 + 一句话结论 */
+      var oT = outTierOf(x), oK = outKeyOf(x.sec), oI = oK && !review ? outInfo(oK) : { min: null, tr: "" };
+      body = "板块 <b>" + fmtPct(x.bp) + "</b> · 主力净流出 <b style=\"color:#2fd18b\">" + fmtFund(Math.abs(x.f)).replace("+", "") + "</b>（占成交 " + (+x.fr).toFixed(1) + "%）" +
+        (oI.min != null || oI.tr ? "<br>" + [outDurTxt(oI.min), oI.tr ? "流出" + oI.tr : ""].filter(Boolean).join(" · ") : "") +
+        "<br><b>" + ["", "涨着但大资金在卖，手里有的考虑先走", "价格不动、大资金在卖，别当横盘蓄力", "跌着大资金还在卖，不是回踩，别急着抄"][oT] + "</b>";
+    }
     else if (x.kind === "view") { var A = S.ana && S.ana[x.sec], c = A && A.cur, q = bkqOf(x.sec); body = '<span data-jlpin="' + esc(x.sec) + '" style="float:right;font-size:10.5px;font-weight:800;padding:1px 8px;border-radius:7px;border:1px solid #ffd21f;color:#ffd21f">' + (curPicks().indexOf(x.sec) >= 0 ? "已在我盯的" : "+盯这个板块") + "</span>" + (c && c.avg != null ? "今天平均 <b>" + fmtPct(c.avg) + "</b>" : q ? "今天 <b>" + fmtPct(q.p) + "</b>" : "") + (c && c.rank ? " · 强度第" + c.rank : "") + stTag(x.sec) + (q && isFinite(q.f) ? "<br>主力今天 <b style=\"color:" + (q.f >= 0 ? "#ff5459" : "#2fd18b") + "\">" + fmtFund(q.f) + "</b>（占成交 " + (isFinite(q.fr) ? q.fr.toFixed(1) : "—") + "%）" : ""); }
     else if (x.kind === "strong") body = "板块涨 <b>" + fmtPct(x.bp) + "</b>，" + (x.n ? x.n + "只里 " + Math.round(x.u * x.n) + "只在涨" : "") + (isFinite(x.f) ? "，主力 <b style=\"color:" + (x.f >= 0 ? "#ff5459" : "#2fd18b") + "\">" + fmtFund(x.f) + "</b>" : "") + "<br><span style=\"opacity:.8\">东财板块涨幅口径 · 普涨不是一两只拉的</span>";
     else body = x.age + "分钟内平均涨幅 <b>+" + (+d).toFixed(2) + "个点</b>，那时平均 <b>" + fmtPct(a) + "</b>";
@@ -1730,7 +1771,7 @@
     L.sort(function (a, b) { return ((a.q && isFinite(a.q.f) ? a.q.f : 0) > 0 ? 1 : 0) - ((b.q && isFinite(b.q.f) ? b.q.f : 0) > 0 ? 1 : 0) || ((a.q ? a.q.f : 0) - (b.q ? b.q.f : 0)); });
     var rows = L.map(function (o) {
       var f = o.q && isFinite(o.q.f) ? o.q.f : null, out = f != null && f < 0, bad = o.sg && o.sg.k === "out";
-      return '<div data-jlsec="' + esc(o.k) + '" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)"><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#fff">' + esc(o.k) + (bad ? ' <span style="font-size:10px;font-weight:800;color:#10131a;background:#2fd18b;border-radius:6px;padding:0 5px">拉升·主力在出</span>' : "") + '</div><div style="font-size:10.5px;font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + o.names.map(esc).join("、") + "</div></div>" +
+      return '<div data-jlsec="' + esc(o.k) + '" style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)"><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#fff">' + esc(o.k) + (bad ? ' <span style="font-size:10px;font-weight:800;color:#10131a;background:#2fd18b;border-radius:6px;padding:0 5px">' + esc(o.sg.txt) + '</span>' : "") + '</div><div style="font-size:10.5px;font-weight:600;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + o.names.map(esc).join("、") + "</div></div>" +
         '<div style="text-align:right"><div style="font-size:15px;font-weight:800;color:' + (f == null ? "#8b93a3" : out ? "#2fd18b" : "#ff5459") + '">' + (f == null ? "无资金数据" : (out ? "出 " : "进 ") + fmtFund(Math.abs(f)).replace("+", "")) + '</div><div style="font-size:10px;font-weight:600;opacity:.8">板块' + (o.avg == null ? "" : " " + fmtPct(o.avg)) + "</div></div></div>";
     }).join("");
     return '<div style="padding:8px 10px;margin:2px 0 6px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16)"><div style="font-size:12px;font-weight:800;color:#fff">我的持仓所在细分 · 资金 <span style="font-size:10px;font-weight:600;opacity:.7">绿=主力净流出，红=净流入</span></div>' + rows + "</div>";
@@ -1827,9 +1868,9 @@
     return '<div style="padding:7px 9px 5px;margin:2px 0 6px;border-radius:9px;background:rgba(255,84,89,.1);border:1px solid rgba(255,84,89,.55)"><div style="display:flex;font-size:11.5px;color:#ff7a7e;font-weight:800;margin-bottom:2px">⚡ 今天的板块提醒<span data-jlrev="1" style="margin-left:auto;font-size:10.5px;color:#fff;text-decoration:underline">按日期复盘 ›</span></div>' +
       L.map(function (x) {
         var on = x.sec === open && x === L.filter(function (y) { return y.sec === open; })[0], now = curA[x.sec], fund = x.kind === "fund";
-        return '<div data-jlsg="' + esc(x.sec) + '" style="display:flex;align-items:center;gap:7px;font-size:11px;color:#fff;font-weight:600;line-height:2"><span style="flex:0 0 40px;opacity:.9">' + hhmm(x.t2 || x.t) + '</span><b style="color:#ffd21f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%">' + esc(x.sec) + '</b><span style="font-size:10px;white-space:nowrap;color:' + (fund ? "#ffd21f" : x.kind === "out" ? "#2fd18b" : "#ff7a7e") + '">' + (x.kind === "strong" ? "🔥强势" + fmtPct(x.bp) : fund ? "💰资金先进 " + fmtFund(x.f) : x.kind === "out" ? "⚠主力在出 " + fmtFund(x.f) : "⚡急拉+" + (x.d2 || x.d).toFixed(1) + "点") + '</span><span style="margin-left:auto;color:' + ((now != null ? now : x.a || 0) >= 0 ? "#ff5459" : "#2fd18b") + '">' + (now != null ? "现" + fmtPct(now) : x.a != null ? fmtPct(x.a) : "") + '</span><span style="font-size:10px;opacity:.8">' + (on ? "▾" : "▸") + "</span></div>" +
+        return '<div data-jlsg="' + esc(x.sec) + '" style="display:flex;align-items:center;gap:7px;font-size:11px;color:#fff;font-weight:600;line-height:2"><span style="flex:0 0 40px;opacity:.9">' + hhmm(x.t2 || x.t) + '</span><b style="color:#ffd21f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42%">' + esc(x.sec) + '</b><span style="font-size:10px;white-space:nowrap;color:' + (fund ? "#ffd21f" : x.kind === "out" ? "#2fd18b" : "#ff7a7e") + '">' + (x.kind === "strong" ? "🔥强势" + fmtPct(x.bp) : fund ? "💰资金先进 " + fmtFund(x.f) : x.kind === "out" ? "⚠" + OUTN[outTierOf(x)] + " " + fmtFund(x.f) : "⚡急拉+" + (x.d2 || x.d).toFixed(1) + "点") + '</span><span style="margin-left:auto;color:' + ((now != null ? now : x.a || 0) >= 0 ? "#ff5459" : "#2fd18b") + '">' + (now != null ? "现" + fmtPct(now) : x.a != null ? fmtPct(x.a) : "") + '</span><span style="font-size:10px;opacity:.8">' + (on ? "▾" : "▸") + "</span></div>" +
           (on ? '<div style="padding:0 0 4px 6px;border-left:2px solid rgba(255,84,89,.5);margin-left:4px">' + stkList(x.sec) + "</div>" : "");
-      }).join("") + '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600;line-height:1.5">⚡急拉＝30个交易分钟里板块平均涨幅抬≥1.5个点、现平均≥+1%、六成以上在涨<br>💰资金先进＝主力净流入≥3亿且占成交≥6%，板块涨幅在−1.5%～+1.5%<br>⚠主力在出＝涨≥2%且占成交≤−2%；或涨不足2%／跌着且占成交≤−3%（阴着出货，11-12新增）<br>只提醒当天真火的：我盯的 + 今天强度前20 + 今天主力流入前20 + 近3天强势的（跑路也报）。都是初值，未回测</div></div>'; /* 11-12: 图例补上微涨/跌着出货两条新路径 */
+      }).join("") + '<div style="font-size:9.5px;color:rgba(255,255,255,.6);font-weight:600;line-height:1.5">⚡急拉＝30个交易分钟里板块平均涨幅抬≥1.5个点、现平均≥+1%、六成以上在涨<br>💰资金先进＝主力净流入≥3亿且占成交≥6%，板块涨幅在−1.5%～+1.5%<br>⚠钱在走＝拉高在出（涨≥2%、主力净流出占成交≤−2%）／不涨在出（涨0～2%、≤−3%）／跌着在出（下跌、≤−3%）<br>只提醒当天真火的：我盯的 + 今天强度前20 + 今天主力流入前20 + 近3天强势的（跑路也报）。都是初值，未回测</div></div>'; /* 11-12: 图例补上微涨/跌着出货两条新路径 */
   }
   /* jl-fund: 资金看板——9:15竞价起就有; 埋伏候选=资金在进但还没怎么涨, 假拉=涨了但主力在出 */
   /* 11-09 用户: 资金最强榜按时间记下来——几点进榜、在榜多久、连续上榜几天。每次板块资金刷新(3分钟, 同一份数据, 零新增请求)记一笔前8; 存 jl_fundtop_v1 {day:{lt, ns, s:{板块:{a首次,z最近,n次数,b最好名次}}}} 留30天 */
@@ -1874,7 +1915,7 @@
     var top = rows.filter(function (o) { return o.b.f > 0; }).sort(function (x, y) { return (y.b.fr || 0) - (x.b.fr || 0); }).slice(0, 8);
     var topSet = {}; top.forEach(function (o) { topSet[o.sec] = 1; });
     var inn = rows.filter(function (o) { return !topSet[o.sec] && o.b.f > 0 && o.b.p <= CORE.FUND.IN_PMAX + 1.5; }).sort(function (x, y) { return y.b.fr - x.b.fr; }).slice(0, 4);
-    var out = rows.filter(function (o) { var sg = CORE.fundSig(o.b, ourAvg(o.sec)); return sg && sg.k === "out"; }).sort(function (x, y) { return x.b.f - y.b.f; }).slice(0, 4);
+    var out = rows.filter(function (o) { var sg = CORE.fundSig(o.b, ourAvg(o.sec)); if (sg && sg.k === "out") { o.sg = sg; return true; } return false; }).sort(function (x, y) { return outDanger(y.b) - outDanger(x.b); }).slice(0, 6); /* 11-13: 按危险度排, 4→6条 */
     /* 11-12 统一排版: 表头一行(名称/涨幅/主力/占比), 数字等宽右对齐, 字重 500/600 */
     var line = function (o, warn) {
       var sg = CORE.fundSig(o.b, ourAvg(o.sec));
@@ -1889,7 +1930,19 @@
     return '<div class="jlsh"><b>板块资金</b><i>' + (early ? "竞价中 · " : "") + "3分钟一更 · " + hhmm(S.bkq.t) + "</i></div>" +
       (top.length ? th + top.map(function (o) { return line(o); }).join("") + fundTopHtml() : "") +
       (inn.length ? '<div class="jlsh"><b>资金在进、还没怎么涨</b><i>埋伏候选</i></div>' + inn.map(function (o) { return line(o); }).join("") : "") +
-      (out.length ? '<div class="jlsh"><b style="color:#5ae8ab">涨了但主力在出</b><i>小心假拉</i></div>' + out.map(function (o) { return line(o, 1); }).join("") : "") +
+      (out.length ? '<div class="jlsh"><b style="color:#5ae8ab">钱在走</b><i>主力净流出 · 越危险越靠前</i></div>' +
+        '<div class="jlst"><span style="flex:1 1 auto">板块 · 持续</span><span class="jn" style="flex:0 0 52px">涨幅</span><span class="jn" style="flex:0 0 56px">主力</span><span class="jn" style="flex:0 0 40px">占比</span><span class="jn" style="flex:0 0 30px">趋势</span></div>' +
+        out.map(function (o) {
+          var t = o.sg.tier || 1, I = outInfo(o.sec), tc = t === 1 ? "#ff5459" : t === 2 ? "#ffd21f" : "#5ae8ab";
+          return '<div class="jlrow" data-jlsec="' + esc(o.sec) + '" style="align-items:flex-start">' +
+            '<em><span style="display:block;font-weight:500">' + esc(o.sec) + '<i class="jtag" style="color:' + tc + ';margin-left:5px">' + OUTN[t] + "</i></span>" +
+            (I.min != null ? '<span style="display:block;font-size:9.5px;font-weight:400;opacity:.7;margin-top:1px">' + outDurTxt(I.min) + "</span>" : "") + "</em>" +
+            '<b class="jn" style="flex:0 0 52px;color:' + (o.b.p >= 0 ? "#ff5459" : "#2fd18b") + '">' + fmtPct(o.b.p) + "</b>" +
+            '<b class="jn" style="flex:0 0 56px;color:#2fd18b">' + fmtFund(o.b.f) + "</b>" +
+            '<b class="jn" style="flex:0 0 40px;opacity:.85;font-weight:400">' + (isFinite(o.b.fr) ? o.b.fr.toFixed(1) + "%" : "—") + "</b>" +
+            '<b class="jn" style="flex:0 0 30px;font-size:10px;font-weight:500;color:' + (I.tr === "加速" ? "#2fd18b" : "#fff") + ';opacity:' + (I.tr ? 1 : .5) + '">' + (I.tr === "加速" ? "▼加速" : I.tr === "放缓" ? "放缓" : I.tr === "持平" ? "持平" : "—") + "</b></div>";
+        }).join("") +
+        '<div class="jf">拉高在出最危险；持续越久越不是偶然；趋势比的是 15 分钟前的主力净额。</div>' : "") +
       (early ? '<div class="jf">竞价段主力数据还很少，9:30 后会越来越准</div>' : "");
   }
   var POP = null, POP_T = 0;
@@ -1940,7 +1993,7 @@
     if (hasAna && S.review) sub = "复盘 " + S.dispDay + (S.lead ? " · 主攻 " + S.lead : "");
     var sgL = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); }), sg0 = sgL[0];
     var sgHot = !!(sg0 && S.live && Date.now() - (sg0.t2 || sg0.t) < 40 * 60e3);
-    if (sg0 && S.live) sub = (sg0.kind === "strong" ? "🔥" + sg0.sec + " 强势 " : sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : sg0.kind === "out" ? "⚠" + sg0.sec + " 主力在出 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : ""); /* 11-12: 有提醒时手柄只显示提醒(不再拼"最强"尾巴, 两条拼一起必截断成省略号) */
+    if (sg0 && S.live) sub = (sg0.kind === "strong" ? "🔥" + sg0.sec + " 强势 " : sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : sg0.kind === "out" ? "⚠" + sg0.sec + " " + OUTN[outTierOf(sg0)] + " " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : ""); /* 11-12: 有提醒时手柄只显示提醒(不再拼"最强"尾巴, 两条拼一起必截断成省略号) */
     /* ===== 11-12 用户: 抽屉重排成 3 张卡 =====
        ① 今天实时: 资金榜 → 情绪天气 → 领涨时间线 → 现在最强板块
        ② 复盘: 退潮前兆 → 板块轮动热力图
