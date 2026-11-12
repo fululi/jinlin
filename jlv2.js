@@ -1124,6 +1124,178 @@
 
   function smallOf(h) { var m0 = /<small>([\s\S]*)<\/small>/.exec(h || ""); return m0 ? m0[1] : ""; }
   function innerSum(x) { return String(x || "").replace("点标题展开", "").replace(/^<span class="jsum">/, "").replace(/<\/span>$/, ""); }
+  /* ===== 11-13 用户: 国家队 ETF 资金曲线(设计稿 v2 定稿, 放市场情绪卡·国家队页签, 原红绿柱明细保留在下面) =====
+     五灯: ①份额申赎(本机份额快照 jlv2_etf_share_v1, 近5日合计 vs 日均|申赎|×5) ②主力净额(300ETF×4 今日÷近20日均|净额|, 同现有A卡口径)
+           ③成交放量(300ETF×4 成交额量比≥1.5, 按主力方向定红绿) ④折溢价(IOPV 未接, 灰) ⑤指数位置(沪深300 60日区间 ≤30%绿/≥70%红)
+     曲线: 日线=沪深300收盘 + 主力净额累计(300×4) + 份额申赎累计 + 成交额/20日均; 分时=沪深300分时 + 300×4 分钟主力净额累计. 只显示, 不进任何买卖/闸门判断 */
+  var GC_SIDS = ["1.510300", "1.510310", "1.510330", "0.159919"];
+  var GC = { d: null, dAt: 0, dBusy: false, m: null, mAt: 0, mBusy: false, per: lsGet("jlv2_gc_per_v1", "60"), show: lsGet("jlv2_gc_show_v1", { px: 1, mf: 1, sh: 1 }), hi: "" };
+  function gcLoadD() {
+    if (GC.dBusy || (GC.d && Date.now() - GC.dAt < 300000)) return;
+    GC.dBusy = true;
+    var left = 1 + GC_SIDS.length * 2, px = null, flow = [], amt = [];
+    var done = function () {
+      if (--left > 0) return;
+      GC.dBusy = false; GC.dAt = Date.now();
+      if (!px || !px.length) { GC.d = GC.d || null; return; }
+      var fm = {}, am = {};
+      flow.forEach(function (kl) { (kl || []).forEach(function (r) { var p = r.split(","), o = fm[p[0]] || (fm[p[0]] = { n: 0, v: 0 }); o.n++; o.v += +p[1]; }); });
+      amt.forEach(function (kl) { (kl || []).forEach(function (r) { var p = r.split(","), o = am[p[0]] || (am[p[0]] = { n: 0, v: 0 }); o.n++; o.v += +p[1]; }); });
+      var nF = flow.filter(Boolean).length, nA = amt.filter(Boolean).length;
+      GC.d = px.map(function (r) { var f = fm[r.d], a = am[r.d]; return { d: r.d, c: r.c, mf: f && f.n === nF ? f.v : null, a: a && a.n === nA ? a.v : null }; });
+      try { paint(); } catch (e) { }
+    };
+    jsonp(P2H, "/api/qt/stock/kline/get?secid=1.000300&klt=101&fqt=1&lmt=140&end=20500101&fields1=f1&fields2=f51,f53&ut=" + UT, function (e, d) {
+      try { px = d.data.klines.map(function (r) { var p = r.split(","); return { d: p[0], c: +p[1] }; }); } catch (e2) { px = null; }
+      done();
+    });
+    GC_SIDS.forEach(function (sid, j) {
+      jsonp(P2H, "/api/qt/stock/fflow/daykline/get?secid=" + sid + "&lmt=140&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52&ut=" + UT, function (e, d) { flow[j] = !e && d && d.data && d.data.klines ? d.data.klines : null; done(); });
+      jsonp(P2H, "/api/qt/stock/kline/get?secid=" + sid + "&klt=101&fqt=0&lmt=140&end=20500101&fields1=f1&fields2=f51,f57&ut=" + UT, function (e, d) { amt[j] = !e && d && d.data && d.data.klines ? d.data.klines : null; done(); });
+    });
+  }
+  function gcLoadM() {
+    var live = nowMin() >= 925 && nowMin() <= 1505;
+    if (GC.mBusy || (GC.m && Date.now() - GC.mAt < (live ? 60000 : 600000))) return;
+    GC.mBusy = true;
+    var left = 1 + GC_SIDS.length, px = null, fl = [];
+    var done = function () {
+      if (--left > 0) return;
+      GC.mBusy = false; GC.mAt = Date.now();
+      if (!px || !px.length) return;
+      var fm = {}, nF = fl.filter(Boolean).length;
+      fl.forEach(function (kl) { (kl || []).forEach(function (r) { var p = r.split(","), t = p[0].slice(11, 16), o = fm[t] || (fm[t] = { n: 0, v: 0 }); o.n++; o.v += +p[1]; }); });
+      GC.m = px.map(function (r) { var f = fm[r.t]; return { d: r.t, c: r.c, mf: f && f.n === nF ? f.v : null, a: r.a }; });
+      try { paint(); } catch (e) { }
+    };
+    jsonp(P2H, "/api/qt/stock/trends2/get?secid=1.000300&ndays=1&iscr=0&fields1=f1,f2&fields2=f51,f53,f57&ut=" + UT, function (e, d) {
+      try { px = d.data.trends.map(function (r) { var p = r.split(","); return { t: p[0].slice(11, 16), c: +p[1], a: +p[2] }; }).filter(function (r) { return r.t >= "09:30" && r.t <= "15:00"; }); } catch (e2) { px = null; }
+      done();
+    });
+    GC_SIDS.forEach(function (sid, j) {
+      jsonp(P2, "/api/qt/stock/fflow/kline/get?secid=" + sid + "&klt=1&lmt=0&fields1=f1,f2,f3,f7&fields2=f51,f52&ut=" + UT, function (e, d) { fl[j] = !e && d && d.data && d.data.klines ? d.data.klines : null; done(); });
+    });
+  }
+  function gcShares() { /* 本机份额快照 → [{d, v(元)}] 每日申赎额(份额差×价) */
+    var h = lsGet("jlv2_etf_share_v1", {}), ks = Object.keys(h).sort(), out = [];
+    for (var i = 1; i < ks.length; i++) {
+      var a = h[ks[i - 1]], b = h[ks[i]], s = 0, n = 0;
+      for (var c in b) if (a[c]) { s += (b[c][0] - a[c][0]) * b[c][1]; n++; }
+      if (n) out.push({ d: ks[i], v: s });
+    }
+    return out;
+  }
+  function gcLamps() {
+    var E = S.etf && S.etf[0], L = [];
+    var sh = gcShares(), s5 = sh.slice(-5).reduce(function (x, r) { return x + r.v; }, 0), ab = sh.length ? sh.reduce(function (x, r) { return x + Math.abs(r.v); }, 0) / sh.length : 0;
+    if (sh.length >= 3 && ab > 0) { var k1 = s5 / (ab * Math.min(5, sh.length)); L.push(["份额申赎", (s5 >= 0 ? "+" : "−") + (Math.abs(s5) / 1e8).toFixed(0) + "亿", k1 >= 0.6 ? "g" : k1 <= -0.6 ? "r" : "x", Math.min(1, Math.abs(k1)), "sh"]); }
+    else L.push(["份额申赎", "攒数据", "x", 0, "sh"]);
+    if (E && isFinite(E.rel)) L.push(["主力净额", E.rel.toFixed(1) + "倍", E.rel >= 1.5 ? "g" : E.rel <= -1.5 ? "r" : "x", Math.min(1, Math.abs(E.rel) / 3), "mf"]);
+    else L.push(["主力净额", "—", "x", 0, "mf"]);
+    var vr = E && E.vr && isFinite(E.vr.vr) ? E.vr.vr : NaN;
+    if (isFinite(vr)) L.push(["成交放量", vr.toFixed(1) + "倍", vr >= 1.5 ? (E.today >= 0 ? "g" : "r") : "x", Math.min(1, vr / 2.5), "vo"]);
+    else L.push(["成交放量", "—", "x", 0, "vo"]);
+    L.push(["折溢价", "未接", "x", 0, ""]);
+    var D = GC.d ? GC.d.slice(-60) : null;
+    if (D && D.length >= 20) { var cs = D.map(function (r) { return r.c; }), lo = Math.min.apply(null, cs), hi = Math.max.apply(null, cs), pos = hi > lo ? (cs[cs.length - 1] - lo) / (hi - lo) : 0.5;
+      L.push(["指数位置", Math.round(pos * 100) + "%" + (pos <= 0.3 ? "低" : pos >= 0.7 ? "高" : ""), pos <= 0.3 ? "g" : pos >= 0.7 ? "r" : "x", pos <= 0.3 ? 1 - pos : pos >= 0.7 ? pos : 0.3, "px"]); }
+    else L.push(["指数位置", "—", "x", 0, "px"]);
+    return L;
+  }
+  function gcHtml() {
+    gcLoadD(); if (GC.per === "m") gcLoadM();
+    var L = gcLamps(), ng = L.filter(function (l) { return l[2] === "g"; }).length, nr = L.filter(function (l) { return l[2] === "r"; }).length;
+    var st = ng >= 3 ? ["吸筹 · 托底", "#1fdc93"] : nr >= 3 ? ["出货 · 撤退", "#ff5459"] : ["观望", "#ffffff"];
+    var sc = Math.max(ng, nr), col = ng >= nr ? "#1fdc93" : "#ff5459", r = 26, cc = 2 * Math.PI * r;
+    var asOf = GC.d && GC.d.length ? GC.d[GC.d.length - 1].d.slice(5) : "";
+    var h = '<div class="gcW"><div class="gcTop"><div class="gcRing"><svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="' + r + '" fill="none" stroke="#ffffff1a" stroke-width="5"/>' + (sc ? '<circle cx="31" cy="31" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + (cc * sc / 5).toFixed(1) + " " + cc.toFixed(1) + '" transform="rotate(-90 31 31)"/>' : "") + '</svg><b>' + sc + '<small>/5</small></b></div>' +
+      '<div class="gcTt"><div class="gcS" style="color:' + st[1] + '">' + st[0] + '</div><div class="gcM">300ETF×4' + (asOf ? " · " + asOf : "") + '</div></div></div>';
+    h += '<div class="gcL">' + L.map(function (l) { return '<div class="gcLp ' + l[2] + (GC.hi && GC.hi === l[4] ? " on" : "") + '" data-gch="' + l[4] + '"><i></i><div class="n">' + l[0] + '</div><div class="v">' + l[1] + '</div><div class="bar"><u style="width:' + Math.round(l[3] * 100) + '%"></u></div></div>'; }).join("") + "</div>";
+    h += '<div class="gcRow"><div class="gcSeg">' + [["20", "20日"], ["60", "60日"], ["120", "120日"], ["m", "分时"]].map(function (p) { return '<button data-gcp="' + p[0] + '"' + (GC.per === p[0] ? ' class="on"' : "") + ">" + p[1] + "</button>"; }).join("") + '</div><div class="gcLg">' +
+      [["px", "沪深300", "#fff"], ["mf", "主力", "#ffb347"], ["sh", "申赎", "#40d0e0"]].map(function (l) { return '<button data-gcl="' + l[0] + '"' + (GC.show[l[0]] ? "" : ' class="off"') + ' style="--c:' + l[2] + '"><i></i>' + l[1] + "</button>"; }).join("") + "</div></div>";
+    h += '<div class="gcCw" id="gcCwJL">' + gcSvg() + '<div class="gcTip" id="gcTipJL"></div></div></div>';
+    if (!document.getElementById("gcCssJL")) { var cs = document.createElement("style"); cs.id = "gcCssJL"; cs.textContent =
+      ".gcW{margin:2px 0 10px;color:#fff}.gcTop{display:flex;align-items:center;gap:12px}.gcRing{position:relative;width:54px;height:54px;flex:none}.gcRing svg{width:54px;height:54px;display:block}.gcRing b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:800 16px ui-monospace,Menlo,monospace}.gcRing b small{font:600 9.5px -apple-system}" +
+      ".gcS{font-size:15px;font-weight:800}.gcM{font-size:10.5px;margin-top:2px}.gcL{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:10px 0 6px}" +
+      ".gcLp{border:1px solid #ffffff22;border-radius:10px;padding:6px 2px 5px;text-align:center;cursor:pointer}.gcLp.on{border-color:#81e6d9}.gcLp i{display:block;width:8px;height:8px;border-radius:50%;margin:0 auto 4px;background:#ffffff40}" +
+      ".gcLp .n{font-size:10px;white-space:nowrap}.gcLp .v{font:700 10.5px ui-monospace,Menlo,monospace;margin-top:2px;white-space:nowrap}.gcLp .bar{height:3px;border-radius:2px;background:#ffffff1a;margin:4px 4px 0;overflow:hidden}.gcLp .bar u{display:block;height:100%;background:#ffffff40}" +
+      ".gcLp.g i{background:#1fdc93;box-shadow:0 0 7px #1fdc93}.gcLp.g .v{color:#1fdc93}.gcLp.g .bar u{background:#1fdc93}.gcLp.r i{background:#ff5459;box-shadow:0 0 7px #ff5459}.gcLp.r .v{color:#ff5459}.gcLp.r .bar u{background:#ff5459}" +
+      ".gcRow{display:flex;align-items:center;gap:6px;margin:8px 0 4px}.gcSeg{display:flex;border:1px solid #ffffff26;border-radius:9px;overflow:hidden}.gcSeg button{background:transparent;border:0;color:#fff;font-size:11px;padding:4px 8px}.gcSeg button.on{background:#81e6d933}" +
+      ".gcLg{margin-left:auto;display:flex;gap:4px}.gcLg button{background:transparent;border:1px solid #ffffff22;border-radius:7px;color:#fff;font-size:10px;padding:2px 5px;display:flex;align-items:center;gap:3px}.gcLg button i{width:9px;height:2px;background:var(--c)}.gcLg button.off{opacity:.35}" +
+      ".gcCw{position:relative;touch-action:pan-y}.gcCw svg{display:block;width:100%}.gcTip{position:absolute;top:12px;pointer-events:none;background:rgba(9,16,36,.85);border:1px solid #ffffff2e;border-radius:9px;padding:6px 8px;font:11px/1.55 ui-monospace,Menlo,monospace;display:none;white-space:nowrap}";
+      document.head.appendChild(cs); }
+    return h;
+  }
+  var GCV = null;   /* 当前曲线视图(十字线用) */
+  function gcSvg() {
+    var m = GC.per === "m", src = m ? GC.m : GC.d;
+    if (!src || src.length < 2) return '<div style="padding:30px 0;text-align:center;font-size:11px">' + (m ? "分时" : "日线") + "数据加载中…</div>";
+    var R = m ? src : src.slice(-(+GC.per));
+    var shM = {}; if (!m) gcShares().forEach(function (r) { shM[r.d] = r.v; });
+    var mf = [], sh = [], vo = [], cm = 0, cs = 0, hasSh = false;
+    var amts = m ? null : (GC.d || []).map(function (r) { return r.a; });
+    var off = m ? 0 : GC.d.length - R.length;
+    R.forEach(function (r, i) {
+      if (m) mf.push(r.mf); else { if (r.mf != null) cm += r.mf; mf.push(r.mf != null ? cm : null); }
+      if (!m) { if (shM[r.d] != null) { cs += shM[r.d]; hasSh = true; sh.push(cs); } else sh.push(hasSh ? cs : null); }
+      if (m) vo.push(r.a || 0);
+      else { var k = off + i, base = amts.slice(Math.max(0, k - 20), k).filter(function (v) { return v > 0; }), av = base.length ? base.reduce(function (a, b) { return a + b; }, 0) / base.length : 0; vo.push(av > 0 && r.a > 0 ? r.a / av : 0); }
+    });
+    var n = R.length, W = 360, Lp = 4, Rp = 44, A = [10, 96], B = [106, 184], V = [198, 236];
+    var X = function (i) { return Lp + (n > 1 ? i / (n - 1) : 0) * (W - Lp - Rp); };
+    var px = R.map(function (r) { return r.c; }), pl = Math.min.apply(null, px), ph = Math.max.apply(null, px), pp = (ph - pl) * 0.08 || 1;
+    var Yp = function (v) { return A[1] - (v - pl + pp) / (ph - pl + 2 * pp) * (A[1] - A[0]); };
+    var fv = [0]; if (GC.show.mf) mf.forEach(function (v) { if (v != null) fv.push(v); }); if (GC.show.sh && !m) sh.forEach(function (v) { if (v != null) fv.push(v); });
+    var fl = Math.min.apply(null, fv), fh = Math.max.apply(null, fv); if (fh - fl <= 0) fh = fl + 1;
+    var Yf = function (v) { return B[1] - (v - fl) / (fh - fl) * (B[1] - B[0]); }, y0 = Yf(0);
+    var vm = Math.max.apply(null, vo.concat([m ? 1 : 1.6])), Yv = function (v) { return V[1] - v / vm * (V[1] - V[0]); };
+    var pth = function (a, Y) { var s = "", pen = false; a.forEach(function (v, i) { if (v == null) { pen = false; return; } s += (pen ? "L" : "M") + X(i).toFixed(1) + "," + Y(v).toFixed(1); pen = true; }); return s; };
+    var yi = function (v) { return v == null ? "—" : (v >= 0 ? "+" : "−") + (Math.abs(v) / 1e8).toFixed(Math.abs(v) >= 1e10 ? 0 : 1) + "亿"; };
+    var t = function (x, y, s, c, a) { return '<text x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + (c || "#fff") + '" font-size="9" font-family="Menlo,monospace"' + (a ? ' text-anchor="' + a + '"' : "") + ">" + s + "</text>"; };
+    var s = '<svg viewBox="0 0 360 250" id="gcSvJL"><defs><linearGradient id="gcU" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5459" stop-opacity=".35"/><stop offset="1" stop-color="#ff5459" stop-opacity="0"/></linearGradient><linearGradient id="gcD" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1fdc93" stop-opacity=".35"/><stop offset="1" stop-color="#1fdc93" stop-opacity="0"/></linearGradient>' +
+      '<clipPath id="gcCa"><rect x="0" y="' + (B[0] - 2) + '" width="360" height="' + Math.max(0, y0 - B[0] + 2).toFixed(1) + '"/></clipPath><clipPath id="gcCb"><rect x="0" y="' + y0.toFixed(1) + '" width="360" height="' + Math.max(0, B[1] - y0 + 2).toFixed(1) + '"/></clipPath></defs>';
+    [A, B].forEach(function (r) { for (var k = 0; k <= 3; k++) { var y = r[0] + k * (r[1] - r[0]) / 3; s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + y + '" y2="' + y + '" stroke="#ffffff0e" stroke-dasharray="1 3"/>'; } });
+    var hw = function (k) { return GC.hi === k ? 1.9 : 1.25; };
+    if (GC.show.px) {
+      s += '<path d="' + pth(px, Yp) + '" fill="none" stroke="#fff" stroke-width="' + hw("px") + '"/>' + t(W - Rp + 4, A[0] + 8, ph.toFixed(0)) + t(W - Rp + 4, A[1] - 6, pl.toFixed(0));
+      if (!m) { var sd = R.map(function (r) { return shM[r.d]; }).filter(function (v) { return v != null; }), sa = sd.length ? sd.reduce(function (a, b) { return a + Math.abs(b); }, 0) / sd.length : 0;
+        if (sa > 0) R.forEach(function (r, i) { var v = shM[r.d]; if (v == null) return; if (v >= 2 * sa) s += '<path d="M' + X(i).toFixed(1) + "," + (Yp(px[i]) + 5).toFixed(1) + ' l-3,5 h6z" fill="#40d0e0"/>'; else if (v <= -2 * sa) s += '<path d="M' + X(i).toFixed(1) + "," + (Yp(px[i]) - 5).toFixed(1) + ' l-3,-5 h6z" fill="#ff5459"/>'; }); }
+    }
+    s += '<text x="' + (Lp + 2) + '" y="' + (A[0] + 8) + '" fill="#fff" font-size="9.5" font-weight="600">沪深300</text>';
+    s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '" stroke="#ffffff40" stroke-width=".6" stroke-dasharray="3 3"/>' + t(W - Rp + 4, y0 + 3, "0");
+    var lastI = function (a) { for (var i = a.length - 1; i >= 0; i--) if (a[i] != null) return i; return -1; };
+    if (GC.show.mf) { var pm = pth(mf, Yf), i1 = lastI(mf), i0 = mf.findIndex(function (v) { return v != null; });
+      if (pm && i1 > i0) { var ar = pm + "L" + X(i1).toFixed(1) + "," + y0.toFixed(1) + "L" + X(i0).toFixed(1) + "," + y0.toFixed(1) + "Z";
+        s += '<path d="' + ar + '" fill="url(#gcU)" clip-path="url(#gcCa)"/><path d="' + ar + '" fill="url(#gcD)" clip-path="url(#gcCb)"/><path d="' + pm + '" fill="none" stroke="#ffb347" stroke-width="' + hw("mf") + '"/>' +
+          '<circle cx="' + X(i1).toFixed(1) + '" cy="' + Yf(mf[i1]).toFixed(1) + '" r="2.6" fill="#ffb347"/>' + t(W - Rp + 4, Yf(mf[i1]) + 3, yi(mf[i1]), "#ffb347"); } }
+    if (GC.show.sh && !m) { var ps = pth(sh, Yf), i2 = lastI(sh);
+      if (ps && i2 >= 0) s += '<path d="' + ps + '" fill="none" stroke="#40d0e0" stroke-width="' + hw("sh") + '"/><circle cx="' + X(i2).toFixed(1) + '" cy="' + Yf(sh[i2]).toFixed(1) + '" r="2.6" fill="#40d0e0"/>' + t(W - Rp + 4, Yf(sh[i2]) + 12, yi(sh[i2]), "#40d0e0"); }
+    s += '<text x="' + (Lp + 2) + '" y="' + (B[0] + 8) + '" fill="#fff" font-size="9.5" font-weight="600">资金累计' + (m ? " · 分钟" : "") + (!m && !hasSh ? " · 申赎攒数据中" : "") + "</text>";
+    var bw = Math.max(0.8, (W - Lp - Rp) / n * 0.68);
+    vo.forEach(function (v, i) { if (!(v > 0)) return; var y = Yv(v); s += '<rect x="' + (X(i) - bw / 2).toFixed(2) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(2) + '" height="' + (V[1] - y).toFixed(1) + '" fill="' + (!m && v >= 1.5 ? "#ff5459" : "#ffffff3a") + '" opacity="' + (GC.hi === "vo" || !GC.hi ? 1 : 0.6) + '"/>'; });
+    if (!m) s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + Yv(1.5).toFixed(1) + '" y2="' + Yv(1.5).toFixed(1) + '" stroke="#ffd21f" stroke-width=".7" stroke-dasharray="3 3"/>' + t(W - Rp + 4, Yv(1.5) + 3, "1.5×", "#ffd21f");
+    s += '<text x="' + (Lp + 2) + '" y="' + (V[0] - 2) + '" fill="#fff" font-size="9.5" font-weight="600">' + (m ? "沪深300 成交额" : "300ETF×4 成交额 / 20日均") + "</text>";
+    var lb = function (r) { return m ? r.d : r.d.slice(5); };
+    s += t(Lp, 248, lb(R[0])) + t((Lp + W - Rp) / 2, 248, lb(R[n >> 1]), null, "middle") + t(W - Rp, 248, lb(R[n - 1]), null, "end");
+    s += '<g id="gcXhJL"></g></svg>';
+    GCV = { m: m, R: R, px: px, mf: mf, sh: sh, vo: vo, X: X, Yp: Yp, Yf: Yf, n: n, W: W, Lp: Lp, Rp: Rp, A: A, V: V, yi: yi };
+    return s;
+  }
+  function gcCross(ev, root) {
+    var cw = root.querySelector("#gcCwJL"), tb = root.querySelector("#gcTipJL"), g = root.querySelector("#gcXhJL"); if (!cw || !tb || !g || !GCV) return;
+    var e = ev.touches ? ev.touches[0] : ev, r = cw.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * GCV.W, V = GCV;
+    var i = Math.round((x - V.Lp) / (V.W - V.Lp - V.Rp) * (V.n - 1)); i = Math.max(0, Math.min(V.n - 1, i));
+    var xx = V.X(i), h = '<line x1="' + xx + '" x2="' + xx + '" y1="' + V.A[0] + '" y2="' + V.V[1] + '" stroke="#fff" stroke-width=".6" stroke-dasharray="3 3"/>';
+    if (GC.show.px) h += '<circle cx="' + xx + '" cy="' + V.Yp(V.px[i]) + '" r="3" fill="#fff"/>';
+    if (GC.show.mf && V.mf[i] != null) h += '<circle cx="' + xx + '" cy="' + V.Yf(V.mf[i]) + '" r="3" fill="#ffb347"/>';
+    if (GC.show.sh && !V.m && V.sh[i] != null) h += '<circle cx="' + xx + '" cy="' + V.Yf(V.sh[i]) + '" r="3" fill="#40d0e0"/>';
+    g.innerHTML = h;
+    var dp = i ? (V.px[i] / V.px[i - 1] - 1) * 100 : 0;
+    tb.innerHTML = "<b>" + V.R[i].d + "</b><br>沪深300 " + V.px[i].toFixed(1) + (V.m ? "" : ' <span style="color:' + (dp >= 0 ? "#ff5459" : "#1fdc93") + '">' + (dp >= 0 ? "+" : "") + dp.toFixed(2) + "%</span>") +
+      '<br><span style="color:#ffb347">主力 ' + V.yi(V.mf[i]) + "</span>" + (V.m ? "" : '<br><span style="color:#40d0e0">申赎 ' + V.yi(V.sh[i]) + "</span><br>成交 " + (V.vo[i] > 0 ? V.vo[i].toFixed(2) + "×" : "—"));
+    tb.style.display = "block"; var pxl = xx / V.W * r.width; tb.style.left = (pxl > r.width / 2 ? pxl - tb.offsetWidth - 10 : pxl + 10) + "px";
+  }
+  function gcOff(root) { var tb = root.querySelector("#gcTipJL"), g = root.querySelector("#gcXhJL"); if (tb) tb.style.display = "none"; if (g) g.innerHTML = ""; }
   function renderMood(t, g) { /* 11-10 用户选A: 「大盘情绪」= 温度/涨停情绪/国家队 三格并排, 点哪格下面展开哪格(原明细原样), 下面一行今天主线 */
     var W = null; try { W = window.jlZtWeatherJL && window.jlZtWeatherJL.stage(); } catch (e) { W = null; }
     var Q = S.__tq, G2 = S.__gq, tab = S.mtab === "g" || S.mtab === "z" ? S.mtab : "t", op = !!S.open.m;
@@ -1148,7 +1320,7 @@
     var bd = "";
     if (tab === "t") bd = t.body || '<div style="opacity:.7">采样中…</div>';
     else if (tab === "z") { try { bd = window.jlZtWeatherJL ? window.jlZtWeatherJL.html(S.wxk || "") : ""; } catch (e) { bd = ""; } bd = bd || '<div style="opacity:.7">涨停池未到</div>'; }
-    else bd = g.body || "";
+    else { var gch = ""; try { if (op) gch = gcHtml(); } catch (eGc) { gch = ""; } bd = gch + (g.body || ""); }   /* 11-13: 国家队页签上面加资金曲线, 原明细照旧在下面 */
     if (!document.getElementById("mtCssJL")) { var cs = document.createElement("style"); cs.id = "mtCssJL"; cs.textContent =
       ".mtTs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.mtT{border-radius:13px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);padding:7px 5px 6px;text-align:center;cursor:pointer;color:#fff}" +
       ".mtT.on{border-color:rgba(255,210,31,.75);box-shadow:inset 0 0 0 1px rgba(255,210,31,.35)}.mtK{font-size:10.5px;font-weight:700}.mtV{font:800 19px/1.2 ui-monospace,Menlo,monospace;margin-top:3px}" +
@@ -1161,9 +1333,21 @@
   var moodBound = false;
   function bindMood(root) {
     if (moodBound) return; moodBound = true;
+    var gcIn = function (ev) { return ev.target && ev.target.closest && ev.target.closest("#gcCwJL"); };
+    root.addEventListener("mousemove", function (ev) { if (gcIn(ev)) gcCross(ev, root); });
+    root.addEventListener("mouseleave", function () { gcOff(root); }, true);
+    root.addEventListener("touchstart", function (ev) { if (gcIn(ev)) gcCross(ev, root); }, { passive: true });
+    root.addEventListener("touchmove", function (ev) { if (gcIn(ev)) gcCross(ev, root); }, { passive: true });
+    root.addEventListener("touchend", function () { gcOff(root); });
     root.addEventListener("click", function (ev) {
       var ml = ev.target && ev.target.closest ? ev.target.closest("[data-jlmain]") : null;
       if (ml && root.contains(ml)) { ev.stopPropagation(); try { window.jlOpenRecJL && window.jlOpenRecJL(ml.getAttribute("data-jlmain")); } catch (eML) {} return; }
+      var gq = ev.target && ev.target.closest ? ev.target.closest("[data-gcp],[data-gcl],[data-gch]") : null;
+      if (gq && root.contains(gq)) { ev.stopPropagation();
+        if (gq.hasAttribute("data-gcp")) { GC.per = gq.getAttribute("data-gcp"); lsSet("jlv2_gc_per_v1", GC.per); }
+        else if (gq.hasAttribute("data-gcl")) { var lk = gq.getAttribute("data-gcl"); GC.show[lk] = GC.show[lk] ? 0 : 1; lsSet("jlv2_gc_show_v1", GC.show); }
+        else { var hk = gq.getAttribute("data-gch"); if (!hk) return; GC.hi = GC.hi === hk ? "" : hk; }
+        paint(); return; }
       var el = ev.target && ev.target.closest ? ev.target.closest("[data-jlmt],[data-jlwx],[data-jlstk]") : null;
       if (!el || !root.contains(el)) return;
       ev.stopPropagation();

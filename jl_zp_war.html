@@ -688,7 +688,8 @@ var dg = function (t) { return String(t).replace(/\D/g, ''); };
 var PX0 = 6, PW = 330, PY0 = 14, PH = 260, LX = 342;   /* 引擎图加高 190→260 (viewBox 236→306) */
 var YLO = 21.55, YHI = 23.85;
 var X = function (i) { return PX0 + i * (PW / 47); };
-var Y = function (p) { return PY0 + (YHI - p) / (YHI - YLO) * PH; };
+var YRES = 0;   /* 11-13 用户: 量柱退回独立VOL格, 主图不再给量带留底(原52) */ //   /* 11-13g 用户: 量柱嵌在主图底部看不清 → 价格只画到 PH-YRES, 最下面 YRES 留给量柱带, 不再重叠 */
+var Y = function (p) { return PY0 + (YHI - p) / (YHI - YLO) * (PH - YRES); };
 var NS = 'http://www.w3.org/2000/svg';
 function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
 function tx(x, y, s, fill, size, anchor, w) {
@@ -752,7 +753,7 @@ function atrBandLinesJL(labs) {
   L.forEach(function (o) {
     var p = o.p; if (!(p > 0)) return;
     if (p < YLO - (YHI - YLO) || p > YHI + (YHI - YLO)) return;   /* 早画一点, 别等进视野才出来 */
-    var y = Y(p); if (y < PY0 - 1 || y > PY0 + PH + 1) return;
+    var y = Y(p); if (y < PY0 - 1 || y > PY0 + PH - YRES + 1) return;
     svg.appendChild(el('line', { x1: PX0, y1: y, x2: LX - 6, y2: y, stroke: o.c, 'stroke-width': .5, 'stroke-dasharray': '4 4', opacity: o.a }));
     labs.push({ y: y, t: o.t + ' ' + fx(p), c: o.c });
   });
@@ -769,9 +770,9 @@ function staticsLiveJL() {
     var ttl = function (n) { var t = document.createElementNS('http://www.w3.org/2000/svg', 'title'); t.textContent = tag; n.appendChild(t); return n; };
     if (y2 - y1 > 0) svg.appendChild(ttl(el('rect', { x: bx0, y: y1, width: Math.max(1, PX0 + PW - bx0), height: Math.max(2, y2 - y1), fill: col, opacity: .15, 'pointer-events': 'all' })));
     [hi, lo].forEach(function (pp) { if (inR(pp)) svg.appendChild(ttl(el('line', { x1: bx0, y1: Y(pp), x2: LX - 6, y2: Y(pp), stroke: col, 'stroke-width': .5, opacity: .95 }))); });
-    var ly = inR(edge) ? Y(edge) : (edge > YHI ? PY0 + 2 : PY0 + PH - 2);
+    var ly = inR(edge) ? Y(edge) : (edge > YHI ? PY0 + 2 : PY0 + PH - YRES - 2);
     if (tag && inR(edge)) {
-      var tyy = Math.max(PY0 + 8, Math.min(PY0 + PH - 2, ly + (hi > YHI || edge === hi ? -2 : 8)));
+      var tyy = Math.max(PY0 + 8, Math.min(PY0 + PH - YRES - 2, ly + (hi > YHI || edge === hi ? -2 : 8)));
       for (var uq = 0; uq < IVTAG.length; uq++) if (Math.abs(IVTAG[uq] - tyy) < 9) return;
       IVTAG.push(tyy);
       var tt = tx(Math.max(bx0 + 3, PX0 + 28), tyy, tag.slice(0, 1) + ' iv' + (t0 ? ' ' + (t0.slice(0, 8) === LIVE.sessDate ? t0.slice(8, 10) + ':' + t0.slice(10, 12) : t0.slice(4, 6) + '-' + t0.slice(6, 8)) : '')   /* 写明从哪天(今天的写时刻) */, col, 7.5, 'start', 500);
@@ -868,7 +869,7 @@ function renderMarkers() {
     var labs = labs9;
     Ls = Ls.filter(function (l) { return !(l[2] === null && IVEDGE.some(function (v) { return Math.abs(v - l[0]) < 0.0051; })); });
     Ls.forEach(function (l) {
-      var y = Y(l[0]); if (y < PY0 - 2 || y > PY0 + PH + 2) return;
+      var y = Y(l[0]); if (y < PY0 - 2 || y > PY0 + PH - YRES + 2) return;
       g.appendChild(el('line', { x1: PX0, y1: y, x2: LX - 6, y2: y, stroke: l[1], 'stroke-width': .8, 'stroke-dasharray': '6 3' }));
       if (l[2]) labs.push({ y: y, t: l[2], c: l[1], b: 1 });
     });
@@ -1595,7 +1596,7 @@ function liveResetJL() {
   try { LIVE.stop(); } catch (e) { }
   LIVE.gen = (LIVE.gen || 0) + 1; LIVE.fetching = false; LIVE.m5At = 0; LIVE.lastOk = 0; LIVE.latch = {}; LIVE.ebars = []; LIVE.dhi = 0; LIVE.dlo = 0; /* 代次+1: 旧股票在途请求回来后一律丢弃 */
   LIVE.pc = 0; LIVE.open = 0; LIVE.last = 0; LIVE.hi = 0; LIVE.lo = 0; LIVE.ts = ''; LIVE.pct = 0; LIVE.sessDate = '';
-  LIVE.hist = { day: [], m30: [], m15: [], m5: [], m1: [] }; LIVE.m1bf = []; LIVE.m1sess = []; LIVE.bars = [];
+  LIVE.hist = { day: [], m30: [], m15: [], m5: [], m1: [] }; LIVE.m1bf = []; LIVE.m1sess = []; LIVE.bars = []; LIVE.dayCached = false;
   LIVE.eng = null; LIVE.keys = {}; LIVE.pts = []; LIVE.auc = null; LIVE.err = null; LIVE.srcs = { m5: '', m1: '', pts: '' };
   ZCACHE = {};
 }
@@ -2240,7 +2241,8 @@ function livePoll() {
   LIVE.fetching = true;
   var gen = LIVE.gen, sym = LIVE.sym, qtOk = false;   /* jl-zp4: 本轮发起时的票+代次, 回包一律按它对 */
   var sameDay = function (b) { return dg(b.t).slice(0, 8) === LIVE.sessDate; };
-  var slow = (LIVE.slowN % 6 === 0) || !(LIVE.hist.day && LIVE.hist.day.length);   /* 11-13 修: 日K没拉到就每轮重拉(原来要等6轮, 收盘后60秒一轮=6分钟, 日K档只剩今天一根大方块) */
+  var slow = (LIVE.slowN % 6 === 0) || !(LIVE.hist.day && LIVE.hist.day.length) || !!LIVE.dayCached;   /* 11-13 修: 日K没拉到就每轮重拉(原来要等6轮, 收盘后60秒一轮=6分钟, 日K档只剩今天一根大方块) */
+  if (!(LIVE.hist.day && LIVE.hist.day.length)) try { var dkc0 = JSON.parse(localStorage.getItem('zp_dayk_v1_' + sym) || 'null'); if (dkc0 && dkc0.length >= 25) { LIVE.hist.day = dkc0.map(mrow); LIVE.dayCached = true; } } catch (eDk0) { }   /* 11-13: 先用本地存的日K顶上, 等新的拉到再换(日均不再先显示备用5.4%) */
   /* ① 5分K+qt快照: 腾讯(主) → 东财(兜底) */
   var Pm5 = jget(mkURL('m5', 480, sym)).then(function (j) {
     var d = j && j.data && j.data[sym];
@@ -2337,6 +2339,13 @@ function livePoll() {
       if (got.m15 && got.m15.length) LIVE.hist.m15 = got.m15;
       if (got.m30 && got.m30.length) LIVE.hist.m30 = got.m30;
       if (got.day && got.day.length) LIVE.hist.day = got.day;
+      /* 11-13 用户: 日K没拉到时日均退回写死5.4%(实际6.7%)致尺子价偏 → 拉到就存本地(近120根), 拉不到先用上次存的; 算法不变 */
+      try {
+        var dkKey = 'zp_dayk_v1_' + sym;
+        if (got.day && got.day.length >= 25) localStorage.setItem(dkKey, JSON.stringify(got.day.slice(-120).map(function (b) { return [b.t, b.o, b.c, b.h, b.l, b.v]; })));
+        else if (!(LIVE.hist.day && LIVE.hist.day.length >= 25)) { var dkc = JSON.parse(localStorage.getItem(dkKey) || 'null'); if (dkc && dkc.length >= 25) { LIVE.hist.day = dkc.map(mrow); LIVE.dayCached = true; } }
+        if (got.day && got.day.length) LIVE.dayCached = false;
+      } catch (eDk) { }
       var sig1 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
       if (sig0 !== sig1) ZCACHE = {};   /* 大周期数据更新了: 清缺口区缓存, 不沿用旧结果 */
     }
@@ -4890,11 +4899,11 @@ body.injlin #metaLine select{height:26px}
 #zpSub{margin-top:2px;user-select:none;-webkit-user-select:none}
 body.injlin .chartbox>#zpSub{order:1}
 #zpSub svg{display:block;width:100%;touch-action:pan-y}
-#zpSub #zpYy{margin-top:4px;border-top:1px solid rgba(255,255,255,.08)}#hSub .hk.yyJL{cursor:pointer}#hSub .hk.yyJL.on{border-color:rgba(255,71,87,.6)}
+#zpSub #zpYyB{border-bottom:1px solid rgba(255,255,255,.08)}#zpSub #zpYy{margin-top:4px;border-top:1px solid rgba(255,255,255,.08)}#hSub .hk.yyJL{cursor:pointer}#hSub .hk.yyJL.on{border-color:rgba(255,71,87,.6)}
 #ch,#zpVol{touch-action:pan-y}   /* 11-04: 捏合/横滑交给图自己处理(否则手机浏览器抢走手势→pointercancel 缩放卡住), 竖滑照旧滚页面 */
 #zpSub .zb-seg{display:flex;gap:4px;margin:6px 6px 2px}
 #zpSub .zb-seg button{height:24px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--sub);color:#fff;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
-#zpSub .zb-seg button.zt{margin-left:auto;padding:0 8px;color:#e9a6ff}#zpSub .zb-seg button.zt.on{background:rgba(224,90,224,.18);border-color:#e05ae0;color:#ff9bff}
+#zpSub .zb-seg button.zt{margin-left:auto;padding:0 8px;color:#e9a6ff}#zpSub .zb-seg button.zt.on{background:rgba(224,90,224,.18);border-color:#e05ae0;color:#ff9bff}#zpSub .zb-seg button[data-t=yyb]{margin-left:6px}
 #zpSub .zb-seg button.on{background:rgba(122,184,255,.18);border-color:var(--blue);color:var(--blue)}
 </style>
 <script>
@@ -4902,11 +4911,12 @@ body.injlin .chartbox>#zpSub{order:1}
    与主图同一横轴(xOfHmJL), 十字线双向联动: 主图拖 → 副图同一时刻竖线+读数; 副图上长按拖 → 主图十字线跟着走。
    控盘 = 价格公式(B1–B6, 35根高低位+SMA, 与K线表 ctrlCalc 同式), 不含资金数据; 主力 = 东财1分钟资金流(f52 主力净额, 当日累计). */
 (function () {
-  var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_sub_v1', VH = 62, PH2 = 104, YH = 74;
+  var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_sub_v1', VH = 62, PH2 = 104, YH = 74;   /* 11-13 用户: VOL 越改越小 → 退回独立一格 h62(同线上v382); 主力意愿在最底下单独一格 YH */
+  var VB0 = function () { return PY0 + PH - 1; }, VB1 = function () { return PY0 + PH - 40; };   /* 上面留 ~10 给读数行 */   /* 主图底部量带 y 范围 */
   var UP = '#ff4757', DN = '#1ee3a0', TXT = '#ffffff';
   var mode = 'zz';   /* 11-12 用户: MACD 换成共振追涨(与K线表 ks.html zzArr 同式) */
   try { var m0 = localStorage.getItem(KEY); if (m0 === 'macd') { m0 = 'zz'; localStorage.setItem(KEY, 'zz'); } if (/^(zz|ctrl|flow|mix)$/.test(m0)) mode = m0; } catch (e) { }
-  var box = null, vSvg = null, pSvg = null, D = { pts: [], vol: null, pane: null }, curHm = null, ptr = null, drv = false;
+  var box = null, vSvg = null, pSvg = null, ySvg = null, D = { pts: [], vol: null, pane: null, yy: null }, curHm = null, ptr = null, drv = false;
   var FF = { sym: '', d: '', rows: null, t: 0, busy: false, err: '' };
   function E(n, a, t) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; }
   function X0() { return PX0; } function X1() { return LX - 6; }
@@ -4917,13 +4927,15 @@ body.injlin .chartbox>#zpSub{order:1}
     if (box && box.parentNode) return true;
     var ch = $('ch'); if (!ch || !ch.parentNode) return false;
     box = document.createElement('div'); box.id = 'zpSub';
-    box.innerHTML = '<svg id="zpVol" viewBox="0 0 360 ' + VH + '" aria-label="成交量"></svg>' +
-      '<div class="zb-seg" role="tablist"><button data-m="zz">共振</button><button data-m="ctrl">控盘</button><button data-m="flow">主力资金</button><button data-m="mix">控盘+资金</button><button data-t="zzmk" title="主图共振紫起点紫点 显示/隐藏">紫点</button></div>' +
-      '<svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg>' ;   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
+    box.innerHTML = '<svg id="zpYyB" viewBox="0 0 360 ' + YH + '" aria-label="主力意愿"></svg>' +   /* 11-13 用户圈的位置: 主图时间轴正下方、VOL 上面 */
+      '<svg id="zpVol" viewBox="0 0 360 ' + VH + '" aria-label="成交量"></svg>' +
+      '<div class="zb-seg" role="tablist"><button data-m="zz">共振</button><button data-m="ctrl">控盘</button><button data-m="flow">主力资金</button><button data-m="mix">控盘+资金</button><button data-t="zzmk" title="主图共振紫起点紫点 显示/隐藏">紫点</button><button data-t="yyb" title="主力意愿 显示/隐藏">意愿</button></div>' +
+      '<svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg>';   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
     ch.parentNode.insertBefore(box, ch.nextSibling);
-    vSvg = box.querySelector('#zpVol'); pSvg = box.querySelector('#zpPane');
+    vSvg = box.querySelector('#zpVol'); pSvg = box.querySelector('#zpPane'); ySvg = box.querySelector('#zpYyB');
     box.querySelector('.zb-seg').onclick = function (ev) {
       var b = ev.target.closest ? ev.target.closest('button') : null; if (!b) return;
+      if (b.getAttribute('data-t') === 'yyb') { var yo = yyOn(); try { localStorage.setItem('zp_yy_v1', yo ? '0' : '1'); } catch (e) { } render(); return; }   /* 11-13: 主力意愿格 显示/隐藏(和顶部「意愿」图标同一个开关) */
       if (b.getAttribute('data-t') === 'zzmk') { ZMK = !ZMK; try { localStorage.setItem('zp_zzmk_v1', ZMK ? '1' : '0'); } catch (e) { } render(); return; }   /* 11-12夜: 紫点开关, 不切副图 */
       mode = b.getAttribute('data-m'); try { localStorage.setItem(KEY, mode); } catch (e) { }
       render();
@@ -4931,7 +4943,7 @@ body.injlin .chartbox>#zpSub{order:1}
     bindTouch();
     return true;
   }
-  function segPaint() { if (!box) return; box.querySelectorAll('.zb-seg button').forEach(function (b) { b.className = b.getAttribute('data-t') === 'zzmk' ? (ZMK ? 'on zt' : 'zt') : b.getAttribute('data-m') === mode ? 'on' : ''; }); }
+  function segPaint() { if (!box) return; box.querySelectorAll('.zb-seg button').forEach(function (b) { b.className = b.getAttribute('data-t') === 'yyb' ? (yyOn() ? 'on zt' : 'zt') : b.getAttribute('data-t') === 'zzmk' ? (ZMK ? 'on zt' : 'zt') : b.getAttribute('data-m') === mode ? 'on' : ''; }); }
   var ZMK = true; try { ZMK = localStorage.getItem('zp_zzmk_v1') !== '0'; } catch (e) { }
   var ZW = 120;   /* VAR6 三层LLV(最长90+30根)窗口: 前120根不满, 红绿底/共振紫不准 → 不画底色、不标点, 紫柱按普通紫画 */
   /* 11-12夜 用户"没看出共振提醒": 主图上共振紫第一根K线的最低价下方画紫点(和K线表同口径); 副图选哪个都画; 周期=主图当前周期(分时=1分, K线=5/15/30分) */
@@ -4948,7 +4960,7 @@ body.injlin .chartbox>#zpSub{order:1}
      线 = 主力净额累计(东财 f52). 分时/1/5/15分 = 当日1分钟累计(K线按蜡烛取该根最后一分钟); 日K = 每日主力净额逐日累加, 今天那根用当日分钟累计实时补.
      叠图缩放: 视窗内这条线的最低/最高 对齐 视窗内K线最低价/最高价, 高低点直接跟价格比.
      掉头(快版, 不重画): 连续 YY_N 根反向 且 离本段高/低点 ≥ YY_FL×截至该分钟成交额(日K不设门槛) → 这一根确认; 线变色+小三角, 分时最新一分钟确认掉头弹提醒. 只显示, 不进买卖算法 */
-  var YY_N = 2, YY_FL = 0.001, YY_W = 10;   /* YY_W: 主力净占比滚动窗口(分钟) */
+  var YY_N = 2, YY_FL = 0.001, YY_W = 3;   /* YY_W: 主力净占比滚动窗口(分钟); 11-13e 10→3, 用户要高点对得上 */
   var FFD = { sym: '', rows: null, t: 0, busy: false };
   function yyOn() { try { return localStorage.getItem('zp_yy_v1') !== '0'; } catch (e) { return true; } }
   function yyTurnsGen(V, TH, i0) {   /* V=累计数组, TH[i]=门槛(可0), 返回 [{dir,turn}] */
@@ -4986,61 +4998,59 @@ body.injlin .chartbox>#zpSub{order:1}
       .then(function (r) { if (FFD.sym !== sym) return; FFD.rows = r; FFD.t = Date.now(); }, function () { if (FFD.sym !== sym) return; FFD.t = Date.now() - 240000; })
       .then(function () { FFD.busy = false; if (yyOn()) render(); });
   }
-  function drawYy(P) {   /* 11-13d 用户: 主力意愿 = 一条线, 嵌在 VOL 格里(量柱上面叠), 无箭头无文字; 数值只在十字线/鼠标停住时显示在 VOL 读数里
-       线 = 主力净占比(东财 f52 主力净额 ÷ 同期成交额 ×100%, 用户给的通达信【主力净占比】同口径), 取近 YY_W 分钟滚动 → 反应快;
-       分时/1/5/15分: 当日1分钟数据, K线按该根最后一分钟的值; 日K: 每日 主力净额÷当日成交额(量×收盘估算) */
-    var ch = $('ch'); if (ch) { var o1 = ch.querySelector('#yyOvJL'); if (o1) o1.remove(); }
+  function drawYy(P) {   /* 11-13 用户(第4版): 东财「主力意愿」样式 —— K线引擎最下面单独一格, 一条线 = 开盘起累计主力净额(东财 f52, 1分钟);
+       K线模式取该根最后一分钟的累计值; 日K = 每日主力净额逐日累加(今天那根用分钟累计实时补). 无箭头无文字, 十字线/鼠标停住左上显示该点数值.
+       东财屏上的「多空力度」是L2逐笔算的, 我们拿不到; 这条线走势对得上, 数值不会一样. 只显示, 不进买卖算法 */
+    var ch = $('ch'); if (ch) ['#yyOvJL', '#yyVolJL'].forEach(function (q) { var o = ch.querySelector(q); if (o) o.remove(); });
     var sOld = box && box.querySelector('#zpYy'); if (sOld) sOld.style.display = 'none';
-    var s = vSvg; if (!s) return; var o2 = s.querySelector('#yyVolJL'); if (o2) o2.remove();
-    if (!yyOn() || LIVE.idx || !P || !P.length) return;
+    var s = ySvg; if (!s) return; s.innerHTML = '';
+    if (!yyOn() || LIVE.idx || !P || !P.length) { s.style.display = 'none'; return; } s.style.display = '';
     var per = window.zpPerOf ? zpPerOf() : 0, Vk = new Array(P.length).fill(null), any = false;
     if (per === 101) {
-      loadFFD(); if (!FFD.rows) return;
-      var byD = {}; FFD.rows.forEach(function (r) { byD[r.d] = r.main; });
-      loadFF(); if (!RPL && FF.rows && FF.rows.length && LIVE.sessDate && FF.d === LIVE.sessDate) byD[LIVE.sessDate] = FF.rows[FF.rows.length - 1].main;
-      P.forEach(function (p, k) { var m = byD[p.d], am = p.d === LIVE.sessDate && LIVE.amt > 0 ? LIVE.amt : (p.v || 0) * 100 * p.p; if (m != null && am > 0) { Vk[k] = m / am * 100; any = true; } });
+      loadFFD(); if (!FFD.rows) { legend(s, [['主力意愿', TXT], ['加载中', TXT]]); return; }
+      var byD = {}, cum = 0; FFD.rows.forEach(function (r) { cum += r.main; byD[r.d] = cum; });
+      loadFF(); if (!RPL && FF.rows && FF.rows.length && LIVE.sessDate && FF.d === LIVE.sessDate) { var prevC = 0; FFD.rows.forEach(function (r) { if (r.d < LIVE.sessDate) prevC += r.main; }); byD[LIVE.sessDate] = prevC + FF.rows[FF.rows.length - 1].main; }
+      P.forEach(function (p, k) { var m = byD[p.d]; if (m != null) { Vk[k] = m; any = true; } });
     } else {
       loadFF();
-      if (RPL || !FF.rows || !FF.rows.length || (LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate)) return;
-      var Pt = LIVE.pts || [], am = {}, ca = 0; Pt.forEach(function (q) { if (+q.hm < 930) return; ca += q.a > 0 ? q.a : (q.v || 0) * 100 * q.p; am[hm4(q.hm)] = ca; });
-      var R = FF.rows, M = [], A = [], lastA = 0, byHm = {};
-      R.forEach(function (r) { var h = hm4(r.hm); if (am[h] != null) lastA = am[h]; M.push(r.main); A.push(lastA); });
-      for (var i = 0; i < R.length; i++) { var j = Math.max(-1, i - YY_W), dm = M[i] - (j >= 0 ? M[j] : 0), da = A[i] - (j >= 0 ? A[j] : 0); if (da > 0) byHm[hm4(R[i].hm)] = dm / da * 100; }
+      if (RPL || !FF.rows || !FF.rows.length || (LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate)) { legend(s, [['主力意愿', TXT], [RPL ? '回放无资金数据' : '加载中', TXT]]); return; }
+      var byHm = {}; FF.rows.forEach(function (r) { byHm[hm4(r.hm)] = r.main; });
       var KK = per > 0 && window.zpKeyOfHm, keyV = {};
-      if (KK) R.forEach(function (r) { var h = hm4(r.hm), k = zpKeyOfHm(r.hm); if (k && byHm[h] != null) keyV[k] = byHm[h]; });
+      if (KK) FF.rows.forEach(function (r) { var k = zpKeyOfHm(r.hm); if (k) keyV[k] = r.main; });
       P.forEach(function (p, k) { var v = KK ? keyV[p.hm] : byHm[p.hm]; if (v != null) { Vk[k] = v; any = true; } });
     }
-    if (!any) return;
-    var x0 = X0(), x1 = X1(), mxA = 1;
-    P.forEach(function (p, k) { if (Vk[k] != null && p.vis !== false && p.x >= x0 - 1 && p.x <= x1 + 1) mxA = Math.max(mxA, Math.abs(Vk[k])); });
-    var top = 14, bot = VH - 2, mid = (top + bot) / 2, half = (bot - top) / 2, Yv = function (v) { return mid - v / mxA * half; };
-    var g = E('g', { id: 'yyVolJL', 'pointer-events': 'none' });
-    g.appendChild(E('line', { x1: x0, x2: x1, y1: mid, y2: mid, stroke: 'rgba(255,255,255,.22)', 'stroke-width': .6, 'stroke-dasharray': '3 3' }));
+    if (!any) { legend(s, [['主力意愿', TXT], ['今天还没有数据', TXT]]); return; }
+    var x0 = X0(), x1 = X1(), mn = 0, mx = 0;
+    P.forEach(function (p, k) { if (Vk[k] != null && p.vis !== false && p.x >= x0 - 1 && p.x <= x1 + 1) { mn = Math.min(mn, Vk[k]); mx = Math.max(mx, Vk[k]); } });
+    if (mx - mn <= 0) mx = mn + 1;
+    var top = 14, bot = YH - 3, Yv = function (v) { return bot - (v - mn) / (mx - mn) * (bot - top); };
+    var y0 = Yv(0);
+    s.appendChild(E('line', { x1: x0, x2: x1, y1: y0.toFixed(1), y2: y0.toFixed(1), stroke: 'rgba(255,255,255,.25)', 'stroke-width': .6, 'stroke-dasharray': '3 3' }));
     var pts = [], segs = [];
     P.forEach(function (p, k) { if (Vk[k] == null || p.vis === false || !(p.x >= x0 - 1 && p.x <= x1 + 1)) { if (pts.length) segs.push(pts); pts = []; return; } pts.push(p.x.toFixed(1) + ',' + Yv(Vk[k]).toFixed(1)); });
     if (pts.length) segs.push(pts);
-    segs.forEach(function (a) { if (a.length > 1) g.appendChild(E('polyline', { points: a.join(' '), fill: 'none', stroke: '#ffffff', 'stroke-width': 1.2, 'stroke-linejoin': 'round', opacity: .95 })); });
-    s.appendChild(g);
-    if (D.vol && D.vol.lg) { var lg0 = D.vol.lg; D.vol.lg = function (k) { var a = lg0(k); if (Vk[k] != null) a.push(['主力净占比 ' + (Vk[k] >= 0 ? '+' : '') + Vk[k].toFixed(1) + '%', Vk[k] >= 0 ? UP : DN]); return a; }; }
+    segs.forEach(function (a) { if (a.length > 1) s.appendChild(E('polyline', { points: a.join(' '), fill: 'none', stroke: '#ffffff', 'stroke-width': 1.2, 'stroke-linejoin': 'round', opacity: .95 })); });
+    s.appendChild(E('text', { x: x1, y: (top + 7).toFixed(1), fill: 'rgba(255,255,255,.6)', 'font-size': 8.5, 'text-anchor': 'end' }, fM(mx)));
+    s.appendChild(E('text', { x: x1, y: (bot - 1).toFixed(1), fill: 'rgba(255,255,255,.6)', 'font-size': 8.5, 'text-anchor': 'end' }, fM(mn)));
+    var tl = function (q) { var h = String(q.e || q.hm); return q.d && q.d !== LIVE.sessDate && per === 101 ? q.d.slice(4, 6) + '-' + q.d.slice(6) : h.slice(-4, -2) + ':' + h.slice(-2); };
+    var lastK = -1; for (var i2 = P.length - 1; i2 >= 0; i2--) if (Vk[i2] != null) { lastK = i2; break; }
+    var col = function (v) { return v >= 0 ? UP : DN; };
+    D.yy = { P: P, V: Vk, lg: function (k) { return [['主力意愿', TXT], [tl(P[k]), TXT], [fM(Vk[k]), col(Vk[k])]]; },
+      base: lastK >= 0 ? [['主力意愿', TXT], ['最新', TXT], [fM(Vk[lastK]), col(Vk[lastK])]] : [['主力意愿', TXT]] };
   }
+
   window.zpYyTurns = yyTurns;
   function zzMarks(P, Z) {
     var ch = $('ch'); if (!ch) return; var old = ch.querySelector('#zzMkJL'); if (old) old.remove();
     if (!ZMK || !Z || ch.style.display === 'none' || typeof Y !== 'function') return;
-    var g = E('g', { id: 'zzMkJL', 'pointer-events': 'none' }), x1 = X1(), yB = PY0 + PH - 3, n = 0;
+    var g = E('g', { id: 'zzMkJL', 'pointer-events': 'none' }), x1 = X1(), yB = PY0 + PH - YRES - 3, n = 0;
     for (var i = Math.max(Z.warm, 1); i < P.length; i++) {
       if (Z.purple[i] !== 2 || Z.purple[i - 1] === 2 || P[i].vis === false) continue;
       var x = P[i].x; if (!(x >= X0() && x <= x1)) continue;
       var y = Math.min(Y(P[i].l != null ? P[i].l : P[i].p) + 7, yB);
       g.appendChild(E('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 3.2, fill: '#e05ae0', stroke: 'rgba(8,12,10,.85)', 'stroke-width': .8 })); n++;
     }
-    for (var j = Math.max(Z.warm, 1); j < P.length; j++) {   /* 11-13 用户: 共振到顶回落那一根, 主图最高价上方▼ */
-      if (!zzDown(Z, j) || P[j].vis === false) continue;
-      var xd = P[j].x; if (!(xd >= X0() && xd <= x1)) continue;
-      var yh = Math.max(Y(P[j].h != null ? P[j].h : P[j].p) - 5, PY0 + 6);
-      g.appendChild(E('path', { d: 'M' + xd.toFixed(1) + ',' + yh.toFixed(1) + ' l-3.6,-6 h7.2 z', fill: '#1ee3a0', stroke: 'rgba(8,12,10,.85)', 'stroke-width': .7 })); n++;
-    }
-    try { var jl = P.length - 2; if (jl > 0 && jl >= Z.warm && zzDown(Z, jl)) jlSigPush('共振', '共振到顶回落 ' + String(P[jl].e || P[jl].hm).slice(-4).replace(/(\d\d)(\d\d)/, '$1:$2'), 'zzdn|' + STK.code + '|' + (LIVE.sessDate || '') + '|' + P[jl].hm); } catch (eD) { }   /* 只判收完的那根 */
+    /* 11-13f: ▲▼ 提醒改由 zalCheck 按副图菜单勾选(默认勾到顶▼/见底▲) */
     if (n) ch.appendChild(g);
   }
   function ptsNow() {
@@ -5085,6 +5095,7 @@ body.injlin .chartbox>#zpSub{order:1}
     D.vol.base = [['VOL', TXT], ['今日 ' + fV(tot), TXT], ['最新 ' + fV(P[P.length - 1].v), TXT]];
   }
 
+
   /* ── 11-12 共振追涨(用户实盘验证口径, 与 ks.html zzArr 同式照搬): M1=500*(EMA(C,6)-EMA(C,18))/EMA(C,18)+2, M2=EMA(M1,3);
         背景红绿=DEMA(VAR1,2,2)对VAR6; M1>2出紫柱, 共振紫(实心亮紫)需DEMA>VAR6. 分时无开盘价时 O 用上一分钟收 ── */
   function zzCalc(B) {
@@ -5106,6 +5117,8 @@ body.injlin .chartbox>#zpSub{order:1}
   window.zpZzCalc = zzCalc;
   window.zpSubRenderJL = function () { try { render(); } catch (e) { } };   /* 周视图副图同一个公式 */
   function zzLg(Z, k, f) { var p = Z.purple[k]; return [['共振', TXT], ['M1 ' + f(Z.M1[k]), '#ffd21f'], ['M2 ' + f(Z.M2[k]), '#4a9eff'], [p === 2 ? '共振紫' : p ? '紫' : '—', p === 2 ? '#e870e8' : p ? 'rgba(232,112,232,.7)' : TXT], [Z.bg[k] ? '红底' : '绿底', Z.bg[k] ? '#ff6b6b' : '#3fd28a']]; }
+  function zzUp(Z, i) { return i > 0 && Z.M1[i] < 0 && Z.M1[i - 1] <= Z.M2[i - 1] && Z.M1[i] > Z.M2[i]; }   /* 11-13e 用户要共振最低也标: 深位金叉(M1<0时上穿M2), 回测平均晚最低点1根 */
+  var ZZ_ARW = 20;   /* 箭头只用 M1/M2(EMA), 20根就稳, 不用等120根预热 */
   function zzDown(Z, i) { return i > 0 && Z.purple[i - 1] > 0 && Z.M1[i - 1] >= Z.M2[i - 1] && Z.M1[i] < Z.M2[i]; }   /* 11-13: 共振到顶回落 = 前一根还在紫区且M1≥M2, 这一根M1下穿M2 */
   function drawZz(P, Z) {
     var s = pSvg; s.innerHTML = '';
@@ -5118,12 +5131,11 @@ body.injlin .chartbox>#zpSub{order:1}
     for (i = Z.warm; i < P.length; i++) { if (P[i].vis === false) continue; g.appendChild(E('rect', { x: (P[i].x - bw / 2).toFixed(2), y: Math.min(y2, y_2).toFixed(2), width: bw.toFixed(2), height: Math.max(1, Math.abs(y_2 - y2)).toFixed(2), fill: Z.bg[i] ? 'rgba(224,82,82,.18)' : 'rgba(63,168,96,.18)' })); }
     [0, 2].forEach(function (lv) { g.appendChild(E('line', { x1: X0(), x2: X1(), y1: Yz(lv), y2: Yz(lv), stroke: 'rgba(154,186,197,.4)', 'stroke-width': .6 })); });
     for (i = 0; i < P.length; i++) { if (P[i].vis === false || !Z.purple[i]) continue; var yt = Yz(Z.M1[i]); g.appendChild(E('rect', { x: (P[i].x - bw / 2).toFixed(2), y: Math.min(yt, y2).toFixed(2), width: bw.toFixed(2), height: Math.max(.5, Math.abs(y2 - yt)).toFixed(2), fill: Z.purple[i] === 2 && i >= Z.warm ? '#d94fd9' : 'rgba(217,79,217,.38)' }));
-      if (i >= Z.warm && Z.purple[i] === 2 && Z.purple[i - 1] !== 2) g.appendChild(E('path', { d: 'M' + P[i].x.toFixed(1) + ',' + (bot - 5).toFixed(1) + ' l-3.2,5 h6.4 z', fill: '#ff7bff' })); }   /* 共振紫起点: 副图底部小▲ */
-    for (i = Math.max(Z.warm, 1); i < P.length; i++) { if (P[i].vis === false || !zzDown(Z, i)) continue; var yd = Math.max(top + 1, Yz(Math.max(Z.M1[i - 1], Z.M2[i - 1])) - 9);
-      g.appendChild(E('path', { d: 'M' + P[i].x.toFixed(1) + ',' + (yd + 6).toFixed(1) + ' l-3.4,-6 h6.8 z', fill: '#1ee3a0' })); }   /* 11-13 用户: 共振到顶回落(紫区里M1下穿M2) 那一根: 副图▼ */
+    }   /* 11-13h 用户: 三角全撤(紫起点▲/见底▲/到顶▼) */
     s.appendChild(g);
     var line = function (a, c) { s.appendChild(E('polyline', { points: a.map(function (v, k) { return P[k].vis === false ? '' : P[k].x.toFixed(1) + ',' + Yz(v).toFixed(1); }).filter(Boolean).join(' '), fill: 'none', stroke: c, 'stroke-width': 1.2, 'stroke-linejoin': 'round' })); };
     line(Z.M1, '#ffd21f'); line(Z.M2, '#4a9eff');
+    try { zalDraw(s, Yz, top, bot); } catch (eZ) { }
     var f = function (v) { return v.toFixed(2); }, lg = function (k) { return k < Z.warm ? [['共振', TXT], ['M1 ' + f(Z.M1[k]), '#ffd21f'], ['M2 ' + f(Z.M2[k]), '#4a9eff'], ['前' + Z.warm + '根预热·红绿底未定', TXT]] : zzLg(Z, k, f); };
     D.pane = { vy: function (y) { return hi - (y - top) / (bot - top) * (hi - lo); }, fmt: f, snaps: function (k) { return [['M1', Z.M1[k], Yz(Z.M1[k])], ['M2', Z.M2[k], Yz(Z.M2[k])]]; }, P: P, lg: lg, base: lg(P.length - 1) };
   }
@@ -5288,6 +5300,8 @@ body.injlin .chartbox>#zpSub{order:1}
 
   function legends() {
     if (D.vol) { var k = curHm == null ? null : atHm(D.vol.P, curHm); legend(vSvg, k == null ? D.vol.base : D.vol.lg(k)); }
+    try { var oL0 = $('ch') && $('ch').querySelector('#volLgJL'); if (oL0) oL0.remove(); } catch (eL0) { }
+    if (D.yy && ySvg) { var k3 = curHm == null ? null : atHm(D.yy.P, curHm); legend(ySvg, k3 == null || D.yy.V[k3] == null ? D.yy.base : D.yy.lg(k3)); xhLine(ySvg, YH - 2); } else if (ySvg) { var oy = ySvg.querySelector('.zb-xh'); if (oy) oy.remove(); }
     if (D.pane) { var k2 = curHm == null ? null : atHm(D.pane.P, curHm); legend(pSvg, k2 == null ? D.pane.base : D.pane.lg(k2)); }
     xhLine(vSvg, VH - 2); xhLine(pSvg, PH2 - 2);
     [['vol', vSvg, VH], ['pane', pSvg, PH2]].forEach(function (z) { var o = z[1].querySelector('.zb-ptr'); if (o) o.remove(); });
@@ -5302,13 +5316,67 @@ body.injlin .chartbox>#zpSub{order:1}
       }
     }
   }
+  /* ===== 11-13f 用户: 像 TradingView 一样在共振副图上设提醒(不要小闹钟图标) =====
+     副图上 双击/双点(手机) 或 右键 → 小菜单: ① 在这个高度画一条提醒线(M1 穿过就提醒) ② 勾选条件: M1上穿M2 / M1下穿M2 / 到顶▼ / 见底▲; 已画的线可删.
+     线=细虚线+右侧数值小标签; 开着的条件在副图右上角一行细字. 每只票分开存 zp_zzal_v1. 只判收完的那根K线(分时=上一分钟). */
+  var ZAK = 'zp_zzal_v1';
+  function zalAll() { try { return JSON.parse(localStorage.getItem(ZAK) || '{}') || {}; } catch (e) { return {}; } }
+  function zalOf() { var A = zalAll(), c = (STK && STK.code) || ''; var o = A[c] || { lines: [], c: {} }; o.lines = o.lines || []; o.c = o.c || {}; return o; }
+  function zalSave(o) { var A = zalAll(); A[(STK && STK.code) || ''] = o; try { localStorage.setItem(ZAK, JSON.stringify(A)); } catch (e) { } }
+  var ZAL_NM = { up: 'M1上穿M2', dn: 'M1下穿M2', top: '到顶▼', bot: '见底▲' };
+  function zalDraw(s, Yz, top, bot) {   /* drawZz 末尾调用: 画提醒线 + 右上角条件 */
+    var o = zalOf(), x0 = X0(), x1 = X1();
+    o.lines.forEach(function (v) { var y = Yz(v); if (!(y >= top - 1 && y <= bot + 1)) return;
+      s.appendChild(E('line', { x1: x0, x2: x1, y1: y.toFixed(1), y2: y.toFixed(1), stroke: '#ffd21f', 'stroke-width': .7, 'stroke-dasharray': '4 3', opacity: .85, 'pointer-events': 'none' }));
+      var lab = v.toFixed(2), w = lab.length * 5.4 + 6;
+      s.appendChild(E('rect', { x: (x1 - w).toFixed(1), y: (y - 6).toFixed(1), width: w.toFixed(1), height: 11, rx: 2.5, fill: 'rgba(255,210,31,.88)', 'pointer-events': 'none' }));
+      s.appendChild(E('text', { x: (x1 - 3).toFixed(1), y: (y + 3).toFixed(1), fill: '#141820', 'font-size': 8.5, 'font-weight': 700, 'text-anchor': 'end', 'pointer-events': 'none' }, lab)); });
+    var on = Object.keys(ZAL_NM).filter(function (k) { return o.c[k]; }).map(function (k) { return ZAL_NM[k]; });
+    if (o.lines.length) on.push(o.lines.length + '条线');
+    if (on.length) s.appendChild(E('text', { x: x1, y: 10, fill: 'rgba(255,255,255,.78)', 'font-size': 8.5, 'text-anchor': 'end', 'pointer-events': 'none' }, '提醒 ' + on.join(' · ')));
+  }
+  function zalCheck(P, Z) {   /* render 里每次调用, 不管副图选哪个 */
+    if (!Z || P.length < 3) return; var j = P.length - 2, o = zalOf(), a = Z.M1[j - 1], b = Z.M1[j], tm = String(P[j].e || P[j].hm).slice(-4), t = tm.slice(0, 2) + ':' + tm.slice(2), id = (STK.code || '') + '|' + (LIVE.sessDate || '') + '|' + P[j].hm;
+    if (j < ZZ_ARW) return;
+    var say = function (k, txt) { try { jlSigPush('共振', '共振 ' + txt + ' ' + t, 'zal|' + k + '|' + id); } catch (e) { } };
+    o.lines.forEach(function (v) { if (a < v && b >= v) say('lu' + v, 'M1上穿' + v.toFixed(2)); else if (a > v && b <= v) say('ld' + v, 'M1下穿' + v.toFixed(2)); });
+    if (o.c.up && Z.M1[j - 1] <= Z.M2[j - 1] && Z.M1[j] > Z.M2[j]) say('up', 'M1上穿M2');
+    if (o.c.dn && Z.M1[j - 1] >= Z.M2[j - 1] && Z.M1[j] < Z.M2[j]) say('dn', 'M1下穿M2');
+    if (o.c.top && zzDown(Z, j)) say('top', '到顶回落▼');
+    if (o.c.bot && zzUp(Z, j)) say('bot', '见底拐头▲');
+  }
+  function zalMenu(cx, cy) {
+    if (mode !== 'zz' || !D.pane || !D.pane.vy) return;
+    var old = document.getElementById('zalMenuJL'); if (old) old.remove();
+    var r = pSvg.getBoundingClientRect(), vy = (cy - r.top) / r.height * PH2, v = Math.round(D.pane.vy(vy) * 100) / 100, o = zalOf();
+    var m = document.createElement('div'); m.id = 'zalMenuJL';
+    m.style.cssText = 'position:fixed;z-index:99999;min-width:150px;padding:6px 4px;border-radius:12px;background:rgba(22,28,40,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);box-shadow:0 8px 28px rgba(0,0,0,.45);color:#fff;font-size:13px;line-height:1.2';
+    var row = function (html, fn) { var d = document.createElement('div'); d.innerHTML = html; d.style.cssText = 'padding:7px 10px;border-radius:8px;cursor:pointer;white-space:nowrap'; d.onmouseenter = function () { d.style.background = 'rgba(255,255,255,.08)'; }; d.onmouseleave = function () { d.style.background = ''; }; d.onclick = function (e) { e.stopPropagation(); fn(); }; m.appendChild(d); return d; };
+    row('＋ 在 <b style="color:#ffd21f">' + v.toFixed(2) + '</b> 画提醒线', function () { o.lines.push(v); zalSave(o); close(); render(); });
+    var sep = function () { var h = document.createElement('div'); h.style.cssText = 'height:1px;margin:4px 8px;background:rgba(255,255,255,.12)'; m.appendChild(h); };
+    sep();
+    Object.keys(ZAL_NM).forEach(function (k) { var d = row((o.c[k] ? '☑ ' : '☐ ') + ZAL_NM[k] + ' 时提醒', function () { o.c[k] = o.c[k] ? 0 : 1; zalSave(o); d.innerHTML = (o.c[k] ? '☑ ' : '☐ ') + ZAL_NM[k] + ' 时提醒'; render(); }); });
+    if (o.lines.length) { sep(); o.lines.slice().forEach(function (lv, i) { var d = row('✕ 删线 ' + lv.toFixed(2), function () { o.lines.splice(o.lines.indexOf(lv), 1); zalSave(o); d.remove(); render(); }); }); }
+    document.body.appendChild(m);
+    var w = m.offsetWidth, h = m.offsetHeight; m.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, cx - w / 2)) + 'px'; m.style.top = Math.max(6, Math.min(window.innerHeight - h - 6, cy + 8)) + 'px';
+    function close() { m.remove(); document.removeEventListener('pointerdown', out, true); }
+    function out(e) { if (!m.contains(e.target)) close(); }
+    setTimeout(function () { document.addEventListener('pointerdown', out, true); }, 0);
+  }
+  function zalBind() {
+    if (!pSvg || pSvg.__zal) return; pSvg.__zal = 1;
+    var lt = 0, lx = 0, ly = 0;
+    pSvg.addEventListener('contextmenu', function (e) { if (mode !== 'zz') return; e.preventDefault(); zalMenu(e.clientX, e.clientY); });
+    pSvg.addEventListener('pointerup', function (e) { var n = Date.now(); if (n - lt < 330 && Math.abs(e.clientX - lx) < 24 && Math.abs(e.clientY - ly) < 24) { lt = 0; zalMenu(e.clientX, e.clientY); return; } lt = n; lx = e.clientX; ly = e.clientY; });
+  }
   function render() {
     try {
-      if (!mount()) return;
+      if (!mount()) return; try { zalBind(); } catch (eB) { }
       segPaint();
-      var P = ptsNow(); D.vol = null; D.pane = null;
+      var P = ptsNow(); D.vol = null; D.pane = null; D.yy = null;
       var Zz = null; try { Zz = zzOf(P); } catch (eZ) { }
       try { zzMarks(P, Zz); } catch (eM) { }
+      try { zalCheck(P, Zz); } catch (eA) { }
       drawVol(P);
       try { drawYy(P); } catch (eY) { }
       if (mode === 'ctrl') drawCtrl(P); else if (mode === 'flow') drawFlow(P); else if (mode === 'mix') drawMix(P); else drawZz(P, Zz);
@@ -5330,8 +5398,9 @@ body.injlin .chartbox>#zpSub{order:1}
       P.forEach(function (q) { if (q.vis === false) return; var d = Math.abs(q.x - sxv); if (d < bd) { bd = d; best = q; } });
       if (!best) return;
       ptr = null;
-      var wh = curWh || (cy >= pSvg.getBoundingClientRect().top ? 'pane' : 'vol'), sr = wh === 'vol' ? D.vol : D.pane;
-      if (sr && sr.vy && cy != null) {
+      var wh = curWh || (ySvg && cy >= ySvg.getBoundingClientRect().top ? 'yyb' : cy >= pSvg.getBoundingClientRect().top ? 'pane' : 'vol'), sr = wh === 'vol' ? D.vol : D.pane;
+      if (wh === 'yyb') { if (D.yy) { var ky = 0, bdy = 1e9; D.yy.P.forEach(function (q, ii) { var d = Math.abs(q.x - sxv); if (d < bdy) { bdy = d; ky = ii; } }); if (D.yy.P[ky] && D.yy.P[ky].hm != null) curHm = D.yy.P[ky].hm; } }
+      else if (sr && sr.vy && cy != null) {
         var rr = (wh === 'vol' ? vSvg : pSvg).getBoundingClientRect(), vh = wh === 'vol' ? VH : PH2, yy = Math.max(14, Math.min(vh - 3, (cy - rr.top) / rr.height * vh));
         var kk = 0, bd2 = 1e9; sr.P.forEach(function (q, ii) { var d = Math.abs(q.x - sxv); if (d < bd2) { bd2 = d; kk = ii; } });
         ptr = { which: wh, y: yy, val: sr.vy(yy), tag: '', x: null };
@@ -5347,7 +5416,7 @@ body.injlin .chartbox>#zpSub{order:1}
     var inS = function (t) { return !window.zpDrawOn && !window.zpDrawBusy && t && t.closest && t.closest('#zpSub svg'); };
     box.addEventListener('pointerdown', function (e) {
       if (!inS(e.target) || (window.zpDrawHit && window.zpDrawHit(e))) return;
-      curWh = e.target.closest('svg').id === 'zpVol' ? 'vol' : 'pane';
+      var sid0 = e.target.closest('svg').id; curWh = sid0 === 'zpVol' ? 'vol' : sid0 === 'zpYyB' ? 'yyb' : 'pane';
       if (e.pointerType === 'mouse') { on(); go(e.clientX, e.clientY); return; }
       sx = e.clientX; sy = e.clientY; clearTimeout(tm);
       if (act) { go(e.clientX, e.clientY); return; }
@@ -5430,7 +5499,7 @@ body.injlin .chartbox>#zpSub{order:1}
   function svgs() { return [['ch', $('ch')], ['vol', $('zpVol')], ['pane', $('zpPane')], ['rso', $('zpRso')], ['wk', $('wkSvg')]].filter(function (x) { return x[1] && x[1].style.display !== 'none'; }); }
   function pnOf(t) { var s = t && t.closest ? t.closest('svg') : null; if (!s) return null; if (s.id === 'ch') return ['ch', s]; if (s.id === 'zpVol') return ['vol', s]; if (s.id === 'zpPane') return ['pane', s]; if (s.id === 'zpRso') return ['rso', s]; if (s.id === 'wkSvg') return ['wk', s]; return null; }
   function toS(svg, cx, cy) { var m = svg.getScreenCTM(); if (!m) return null; var p = svg.createSVGPoint(); p.x = cx; p.y = cy; p = p.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
-  function pOfY(y) { return YHI - (y - PY0) / PH * (YHI - YLO); }
+  function pOfY(y) { return YHI - (y - PY0) / (PH - YRES) * (YHI - YLO); }
   function wkG() { return window.__WKG || { lo: 0, hi: 1, Y0: 20, H: 148 }; }
   function pOfYwk(y) { var g = wkG(); return g.hi - (y - g.Y0) / g.H * (g.hi - g.lo); }
   function yOfPwk(p) { var g = wkG(); return g.Y0 + (g.hi - p) / (g.hi - g.lo) * g.H; }
@@ -6251,7 +6320,7 @@ document.addEventListener('touchmove', function (e) {
   function code() { return (window.STK && STK.code) || ''; }
   function day() { return (window.LIVE && LIVE.sessDate) || ''; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-  function pOfY(y) { return YHI - (y - PY0) / PH * (YHI - YLO); }
+  function pOfY(y) { return YHI - (y - PY0) / (PH - YRES) * (YHI - YLO); }
   function toS(svg, cx, cy) { var m = svg.getScreenCTM(); if (!m) return null; var p = svg.createSVGPoint(); p.x = cx; p.y = cy; p = p.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
   function dSeg(px, py, ax, ay, bx, by) { var dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)) : 0; return Math.hypot(px - (ax + t * dx), py - (ay + t * dy)); }
   function lockOn() { return !!document.querySelector('.zd-bar .zd-lk.on'); }

@@ -99,7 +99,8 @@
       /* 11-09 用户: 关键位自动放进图里——未补跳空带(标注开着才算)、自己画的斐波各档, 离现价 4% 以内的纳入纵轴范围; 只改纵轴, 跳空/斐波的算法一字没动 */
       { const L = S.P[S.P.length - 1], cur = L ? L.p : 0, keep = (v) => { if (cur > 0 && v > 0 && Math.abs(v / cur - 1) <= 0.04) { lo = Math.min(lo, v); hi = Math.max(hi, v); } };
         if (mkOn) S.gaps.forEach((gp) => { if (gp.fi < 0) { keep(gp.lo); keep(gp.hi); } });
-        FIB.forEach((f) => { const d = f.b.v - f.a.v; FL.forEach((r) => keep(f.b.v - d * r)); }); }
+        FIB.forEach((f) => { const d = f.b.v - f.a.v; FL.forEach((r) => keep(f.b.v - d * r)); });
+        { const T = tierSB(); if (T) { keep(T.s1); keep(T.b1); keep(T.s2); keep(T.b2); } } }
       const pad = (hi - lo) * 0.06 || 1; lo -= pad; hi += pad;
       const n = b - a;
       return { base, lo, hi, vmax, n,
@@ -191,10 +192,35 @@
       });
       drawAuto(x, s);
       drawFibs(x, s);
+      drawSB(x, s);
     }
     /* ===== 斐波那契画线: 两点(按下=0, 松开=1), 存在 localStorage, 按分钟序号+价格记, 缩放平移都跟着走 ===== */
-    const FL = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618];
-    const FC = { 0: "#ffffff", 0.236: "#ff5459", 0.382: "#ffb347", 0.5: "#4dffbf", 0.618: "#00f0ff", 0.786: "#7aa8ff", 1: "#ffffff", 1.272: "#ffd84a", 1.618: "#ff7ad9" };
+    const FL = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618, 2.618];   /* 11-13 用户: 加到 2.618 */
+    const FC = { 0: "#ffffff", 0.236: "#ff5459", 0.382: "#ffb347", 0.5: "#4dffbf", 0.618: "#00f0ff", 0.786: "#7aa8ff", 1: "#ffffff", 1.272: "#ffd84a", 1.618: "#ff7ad9", 2.618: "#ff8a80" };
+    /* 11-13 用户: 持仓页五日图画 S1/S2/B1/B2 细线 —— 只读首页档位记录 jinlin_tier_memo_v1(和持仓卡梯子同一份), 算法不碰 */
+    let sbSig = "";
+    function tierSB() {
+      try {
+        const all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}"), m = all[code], L = S && S.days[S.days.length - 1];
+        if (!m || !m.r || !L) return null;
+        const dk = String(m.dk || all.d || "").replace(/\D/g, ""); if (dk && dk < L.date) return null;   /* 比五日最后一天还旧的梯子不画 */
+        const g = (a, i) => (a && +a[i] > 0 ? +a[i] : 0);
+        const T = { s1: g(m.r.sells, 0), s2: g(m.r.sells, 1), b1: g(m.r.buys, 0), b2: g(m.r.buys, 1) };
+        return T.s1 || T.b1 ? T : null;
+      } catch (e) { return null; }
+    }
+    function drawSB(x, s) {
+      const T = tierSB(); sbSig = JSON.stringify(T); if (!T) return;
+      const L = S.days[S.days.length - 1], g0 = L.pts.length ? L.pts[0].g : view.a, xL = Math.max(G.l, s.X(g0)), xR = G.l + G.pw;
+      if (xR <= xL) return;
+      x.save(); x.font = "700 9.5px ui-monospace,Menlo";
+      [["S2", T.s2, "#ff8a8e"], ["S1", T.s1, "#ff5459"], ["B1", T.b1, "#1fdc93"], ["B2", T.b2, "#6ee7b7"]].forEach((z) => {
+        if (!(z[1] > 0)) return; const y = Math.round(s.Y(z[1])) + 0.5; if (y < G.t || y > G.mainB) return;
+        x.strokeStyle = z[2]; x.globalAlpha = 0.85; x.lineWidth = 0.8; if (z[0].endsWith("2")) x.setLineDash([3, 3]); line(x, xL, y, xR, y); x.setLineDash([]); x.globalAlpha = 1;
+        put(x, z[0] + " " + f2(z[1]), xR - 2, y - 2, "right", z[2]);
+      });
+      x.restore(); x.lineWidth = 1;
+    }
     let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;
     const fibKey = () => "jl5d_fib_" + code;
     function fibLoad() { try { FIB = JSON.parse(localStorage.getItem(fibKey()) || "[]"); } catch (e) { FIB = []; } fibSel = -1; }
@@ -408,7 +434,7 @@
     $("rst").onclick = () => { if (S) { view = { a: 0, b: S.P.length }; reqB(); } };
     addEventListener("resize", () => { if (S && ROOT.offsetParent) { size(); drawBase(); drawOv(); } });
     return {
-      set(c, n) { if (c === code) { if (n) { NAME = n; head._k = ""; head(); } return; } code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; setFib(false); $("info").innerHTML = "<span>五日分时加载中…</span>"; load().catch((e) => { $("info").innerHTML = "<span>五日分时取不到：" + (e && e.message || "网络") + "</span>"; }); },
+      set(c, n) { if (c === code) { if (n) { NAME = n; head._k = ""; head(); } if (S && JSON.stringify(tierSB()) !== sbSig) reqB(); return; } code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; setFib(false); $("info").innerHTML = "<span>五日分时加载中…</span>"; load().catch((e) => { $("info").innerHTML = "<span>五日分时取不到：" + (e && e.message || "网络") + "</span>"; }); },
       tick() { if (!code || pd || fibMode || fibDraft) return; load(true).catch(() => { }); }
     };
   }
