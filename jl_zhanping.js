@@ -116,12 +116,15 @@
     st.open = !st.open;
     var sh = $('jlZpSheetJL'); if (!sh) return;
     sh.hidden = !st.open;
-    if (st.open) { st.badge = 0; ballPaint(); }
+    if (st.open) { st.badge = 0; if (st.flash && st.flash.until === Infinity) st.flash = null; ballPaint(); }
   }
 
   /* ---------- 提醒: 弹跳 + 闪字(20秒) ---------- */
   function flash(kind, b, t) {
-    st.flash = { k: kind, b: b, t: t, until: Date.now() + 20000, bnc: 1 };
+    /* 11-12夜 用户: 卖出!/买回! 一直亮到点开浮球(原20秒); 共振位/RSO等其它提醒仍20秒 */
+    var keep = kind === 'sell' || kind === 'buy';
+    if (!keep && st.flash && st.flash.until === Infinity) { ring(); return; }   /* 卖/买还没点开时, 别的提醒不盖掉它 */
+    st.flash = { k: kind, b: b, t: t, until: keep ? Infinity : Date.now() + 20000, bnc: 1 };
     ballPaint();
     try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) { }
     var fo = st.flash; setTimeout(function () { if (fo) fo.bnc = 0; ballPaint(); }, 3800);   /* 弹跳4次后停, 闪字留到20秒 */

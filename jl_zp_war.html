@@ -2155,7 +2155,38 @@ function liveKeys() {
   }
   return ks;
 }
+/* 11-12夜 用户: 共振紫提醒(5分+15分) —— 公式用副图同一个 zpZzCalc(与K线表 zzArr 逐点一致).
+   只看「已收完」的K线(K线时间=该根结束时刻, 结束时刻 ≤ 行情时钟才算收完, 正在走的那根不判, 防紫柱忽出忽没);
+   最后一根收完的K线 共振紫(实心亮紫) 且 前一根不是 → 提醒一次(走信号桥: 提醒条+作战球金环闪字).
+   15分: 往日用 hist.m15; 当天用 5分K 三根合一根(o首/h最高/l最低/c末), 不等 15分K 6轮才刷新一次的延迟 */
+function zzBucketJL(hm) { var m = Math.floor(hm / 100) * 60 + hm % 100, ix = m <= 690 ? Math.ceil((m - 570) / 15) : 8 + Math.ceil((m - 780) / 15), e = ix <= 8 ? 570 + 15 * ix : 780 + 15 * (ix - 8); return Math.floor(e / 60) * 100 + e % 60; }
+function zzBarsJL(per) {
+  var sd = LIVE.sessDate || '', now = clockHmJL(), m5 = (LIVE.hist.m5 || []).filter(function (b) { return b && b.c > 0; });
+  var done = function (b) { var d = dg(b.t); return d.slice(0, 8) < sd || +d.slice(8, 12) <= now; };
+  if (per === 5) return m5.filter(done).map(function (b) { return { t: dg(b.t), o: b.o, h: b.h, l: b.l, c: b.c }; });
+  var old = (LIVE.hist.m15 || []).filter(function (b) { return b && b.c > 0 && dg(b.t).slice(0, 8) < sd; }).map(function (b) { return { t: dg(b.t), o: b.o, h: b.h, l: b.l, c: b.c }; });
+  var G = [], cur = null;
+  m5.forEach(function (b) { var d = dg(b.t); if (d.slice(0, 8) !== sd) return; var hm = +d.slice(8, 12); if (hm < 931 || hm > 1500) return; var e = zzBucketJL(hm);
+    if (!cur || cur.e !== e) { cur = { e: e, t: sd + String(e).padStart(4, '0'), o: b.o, h: b.h, l: b.l, c: b.c, last: hm }; G.push(cur); } else { cur.h = Math.max(cur.h, b.h); cur.l = Math.min(cur.l, b.l); cur.c = b.c; cur.last = hm; } });
+  G = G.filter(function (g) { return g.last === g.e && g.e <= now; });   /* 这一刻钟的最后一根5分K已收完 → 这根15分K才算收完 */
+  return old.concat(G);
+}
+function zzAlertJL() {
+  try {
+    if (RPL || !window.zpZzCalc || !LIVE.ts || !liveToday() || LIVE.idx) return;
+    var ph = phaseNow(); if (ph !== 'am' && ph !== 'pm' && ph !== 'end') return;
+    var SN = window.__zzSeenJL || (window.__zzSeenJL = {});
+    [5, 15].forEach(function (per) {
+      var B = zzBarsJL(per), n = B.length - 1; if (n < 130) return;   /* 历史不够(VAR6要往前看约120根)就不报 */
+      var Z = zpZzCalc(B), last = B[n]; if (last.t.slice(0, 8) !== LIVE.sessDate) return;
+      if (Z.purple[n] !== 2 || Z.purple[n - 1] === 2) return;
+      var id = 'zz' + per + '|' + STK.code + '|' + last.t; if (SN[id]) return; SN[id] = 1;
+      jlSigPush('共振', per + '分 共振紫 ' + last.t.slice(8, 10) + ':' + last.t.slice(10, 12) + ' 收' + last.c.toFixed(2) + ' M1 ' + Z.M1[n].toFixed(2), id);
+    });
+  } catch (e) { }
+}
 function liveCompute() {
+  zzAlertJL();
   try {   /* 11-12: 手画水平线价格穿越提醒(挂最前, 不足一手/指数也照常盯线) */
     if (window.__jlSigPrevSym !== (LIVE.sym || '')) { window.__jlSigPrevPx = 0; window.__jlSigPrevSym = LIVE.sym || ''; }
     jlSigLines(window.__jlSigPrevPx, LIVE.last, (LIVE.ts || '').slice(9));
@@ -2929,6 +2960,23 @@ function ampNextHtmlJL(RD, A) {
 }
 /* 11-12 用户(设计稿v5): 下一步一排排齐 —— ① 买 −2.8% ≤23.10   卖 ≥24.30   1100股 +1,293
    只读尺子/小球算好的价(RD), 不改算法; 已成交的那条腿写 B价✓/S价✓, 在等的那条腿写 ≤/≥价 和离现价%; 钱 = 按每轮股数算的卖接差价(扣费) */
+/* 11-12夜 用户: 作战球改按「下一步」那排闪 —— 尺子/小球算法里某条腿刚成交(mk 里新出现 ok 腿, 和这一排的 S价✓/B价✓ 同一个数据)
+   → 写进 LIVE.keys(id 以 stouch|/touch| 开头, 浮球 kindOf 认作 卖出!/买回!). 不用"现价≥卖价"判断: 小球的卖是"从最高回落th确认", 到价≠成交.
+   每票每天第一次算到的已成交腿只当基线不响(打开页面时上午做过的不补响); 回放/非当日/非盘中不记 */
+function touchOkJL(RD) {
+  if (!RD || !RD.mk || RPL || !LIVE.ts || !liveToday() || !STK || !STK.code) return;
+  var ph = phaseNow(), live = ph === 'am' || ph === 'pm', ck = STK.code + '|' + (LIVE.sessDate || ''), S0 = window.__touchSeenJL;
+  if (!S0 || S0.ck !== ck) S0 = window.__touchSeenJL = { ck: ck, k: {}, seeded: false };
+  RD.mk.forEach(function (m) {
+    if (!m.ok || m.proj || !(m.p > 0)) return;
+    var id = (m.t === 's' ? 'stouch|' : 'touch|') + ck + '|' + (m.n || '') + '|' + m.p.toFixed(2);
+    if (S0.k[id]) return; S0.k[id] = 1;
+    if (!S0.seeded || !live || LIVE.keys[id]) return;
+    if (m.hm && /^\d{4}$/.test(m.hm)) { var nd = new Date(), nm = nd.getHours() * 60 + nd.getMinutes(), mm = +m.hm.slice(0, 2) * 60 + +m.hm.slice(2); if (nm - mm > 5) return; }   /* 带成交时刻的(尺子腿): 5分钟以前的不补响 */
+    LIVE.keys[id] = { t: Date.now(), a: 1, txt: (m.n || '') + (m.t === 's' ? '卖 ' : '买回 ') + m.p.toFixed(2), lbl: m.t === 's' ? '卖' : '买' };
+  });
+  S0.seeded = true;
+}
 function ampRowJL(RD, A, q, cur, net, near) {
   if (!RD) return '';
   var sg = function (v) { return (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString('en-US'); };
@@ -2995,6 +3043,7 @@ function ampCardJL() {
     var sh2 = LIVE.sh > 0 ? LIVE.sh : 0, q2 = sh2 > 0 ? '<span class="dim">' + sh2 + '股 卖' + jlAmtJL(upTo * sh2) + ' · 接' + jlAmtJL(dnTo * sh2) + '</span>' : '';
     /* 11-09晚 用户: 这行原来还是旧口径(最低+0.9倍卖 / 最高回落2.7%接), 和尺子对不上 → 改成尺子正在等的价 + 股数金额 */
     var RD1 = null; try { RD1 = ampPlanJL(A); } catch (eR1) { }
+    try { touchOkJL(RD1); } catch (eT) { }   /* 11-12夜: 作战球按下一步那排闪 */
     try { if (RD1 && !(RD1.rh > 0)) { var o9 = LIVE.open > 0 ? LIVE.open : A.op, K9 = ampKJL(), av9 = A.avg / 100 * A.pc; if (o9 > 0) { RD1.rh = Math.ceil(Math.round((o9 + K9.ku * av9) * 1e6) / 1e4) / 100; RD1.rl = Math.floor(Math.round((o9 - K9.kd * av9) * 1e6) / 1e4) / 100; } } } catch (eRf) { }   /* 11-10 用户: 平开/低开(小球)也要 ▼最高/最低 参考 */
     if (RD1) {
       var wt = RD1.mk.filter(function (m) { return m.wait; });
