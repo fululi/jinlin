@@ -59,8 +59,9 @@ body{font-size:12.5px}.wrap{padding:4px 8px 14px}
 #monT .mt.md{font-size:10.5px;padding:3px 3px 3px 10px;cursor:pointer}#monT .mt.md.on{background:rgba(255,225,77,.12)}#monT .mt.md i{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:4px;vertical-align:1px}#monT .mt .nt{font-size:9.5px}#monT .mt small{display:block;font-size:9px;line-height:1.2}#monT .mt.md small{display:inline;margin-left:4px}
 #monT .swc{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:6px 2px 4px;font-size:11.5px}#monT .swc span{color:#ffe14d}#monT .swc button{border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;border-radius:10px;padding:1px 9px;font:inherit;font-size:11px}#monT .swc button.on{background:#ffe14d;color:#10202f;border-color:#ffe14d}#monT .swc small{flex-basis:100%;font-size:10px;margin-left:2px}
 #monT .mt.hd{font-size:9.5px;padding-top:2px}#monT .mt.tot{border-bottom:0;font-weight:600}
+.rvSeg{display:flex;border:1px solid #ffffff26;border-radius:9px;overflow:hidden;margin:6px 0 2px}.rvSeg button{flex:1;background:transparent;border:0;color:#fff;font-size:12px;padding:5px}.rvSeg button.on{background:#81e6d933}body.ldOn .wrap>.card:not(#ldCard),body.ldOn #psw{display:none}body:not(.ldOn) #ldCard{display:none}
 </style></head><body><div class="wrap">
-<div id="ttl"></div><details id="psw"><summary>⚙ 参数（振幅倍数 / 回落 / 股数 …）</summary><div class="ps"><label>振幅到<select id="p_xa"><option>0.7</option><option>0.8</option><option selected>0.9</option><option>1.0</option></select>倍日均卖</label>
+<div id="ttl"></div><div class="rvSeg" id="rvSeg"><button data-rv="r" class="on">复盘</button><button data-rv="l">台账</button></div><div class="card" id="ldCard"><div id="ldBox"></div></div><details id="psw"><summary>⚙ 参数（振幅倍数 / 回落 / 股数 …）</summary><div class="ps"><label>振幅到<select id="p_xa"><option>0.7</option><option>0.8</option><option selected>0.9</option><option>1.0</option></select>倍日均卖</label>
 <label>回落<select id="p_rb"><option value="0.018">1.8%</option><option value="0.027" selected>2.7%</option><option value="0.035">3.5%</option></select>接</label>
 <label>高开先卖<select id="p_gap"><option value="0">不用</option><option value="0.01">≥1%</option><option value="0.02" selected>≥2%</option><option value="0.03">≥3%</option></select></label>
 <label>底仓<select id="p_base"><option>1000</option><option selected>2000</option><option>3000</option><option>5000</option></select>股</label>
@@ -81,7 +82,12 @@ body{font-size:12.5px}.wrap{padding:4px 8px 14px}
 <div id="tl"></div>
 <div class="tbar"><div class="mini"><label>确认<select id="m_bth"></select></label><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><span style="flex:1"></span><div class="chips" id="mvc"></div><div class="chips" id="szc"></div></div></div>
 <div class="tip" id="tip"></div></div>
-<script src="jl_mix_engine.js?v=1"></script>
+<script src="jl_mix_engine.js?v=1"></script><script src="jl_ledger.js?v=1"></script>
+<script>/* 11-13 用户: 复盘页加「台账」页签(信号台账, 只读) */
+(function () { var sg = document.getElementById('rvSeg'); if (!sg) return; var cd = new URLSearchParams(location.search).get('code') || '600105';
+  sg.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; var l = b.getAttribute('data-rv') === 'l'; document.body.classList.toggle('ldOn', l); sg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); if (l && window.JLLedger) JLLedger.render(document.getElementById('ldBox'), cd); };
+})();
+</script>
 <script>
 const HCODES=["600105", "000892", "002172", "002343", "002716", "600011", "600127", "600371", "600489", "600547", "600795", "600900", "600916", "603986", "605577"];
 

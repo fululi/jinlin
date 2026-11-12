@@ -1130,14 +1130,29 @@
      曲线: 日线=沪深300收盘 + 主力净额累计(300×4) + 份额申赎累计 + 成交额/20日均; 分时=沪深300分时 + 300×4 分钟主力净额累计. 只显示, 不进任何买卖/闸门判断 */
   var GC_SIDS = ["1.510300", "1.510310", "1.510330", "0.159919"];
   var GC = { d: null, dAt: 0, dBusy: false, m: null, mAt: 0, mBusy: false, per: lsGet("jlv2_gc_per_v1", "60"), show: lsGet("jlv2_gc_show_v1", { px: 1, mf: 1, sh: 1 }), hi: "" };
+  function gcTxD(cb) {   /* 腾讯 fqkline(允许跨域): 沪深300 收盘 + 4只300ETF 成交额(量×收 近似, 只用来算 ÷20日均 的倍数) */
+    var syms = ["sh000300"].concat(GC_SIDS.map(function (s) { return (s.charAt(0) === "1" ? "sh" : "sz") + s.slice(2); })), res = [], left = syms.length;
+    syms.forEach(function (sy, j) {
+      fetch("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + sy + ",day,,,140,qfq&_t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (d) {
+        var k = d && d.data && d.data[sy]; res[j] = k ? (k.qfqday || k.day || null) : null;
+      }).catch(function () { res[j] = null; }).then(function () {
+        if (--left > 0) return;
+        var px = res[0] ? res[0].map(function (r) { return { d: r[0], c: +r[2] }; }) : null;
+        var am = res.slice(1).every(Boolean) ? res.slice(1).map(function (rows) { return rows.map(function (r) { return r[0] + "," + (+r[5] * 100 * +r[2]); }); }) : null;
+        cb(px, am);
+      });
+    });
+  }
   function gcLoadD() {
     if (GC.dBusy || (GC.d && Date.now() - GC.dAt < 300000)) return;
     GC.dBusy = true;
     var left = 1 + GC_SIDS.length * 2, px = null, flow = [], amt = [];
     var done = function () {
       if (--left > 0) return;
-      GC.dBusy = false; GC.dAt = Date.now();
-      if (!px || !px.length) { GC.d = GC.d || null; return; }
+      if ((!px || !px.length || amt.filter(Boolean).length < GC_SIDS.length) && !GC._txTried) { GC._txTried = 1; left = 1; gcTxD(function (tp, ta) { if (!px || !px.length) px = tp; if (ta && ta.length) { amt = ta; GC.amtSrc = "tx"; } done(); }); return; }   /* 11-13: 东财不通 → 腾讯日K兜底(价/量), 主力净额只有东财 */
+      GC._txTried = 0; GC.dBusy = false; GC.dAt = Date.now(); GC.mfOk = flow.filter(Boolean).length === GC_SIDS.length;
+      if (!px || !px.length) { GC.d = GC.d || null; GC.err = "行情通道不通"; try { paint(); } catch (e) { } return; }
+      GC.err = "";
       var fm = {}, am = {};
       flow.forEach(function (kl) { (kl || []).forEach(function (r) { var p = r.split(","), o = fm[p[0]] || (fm[p[0]] = { n: 0, v: 0 }); o.n++; o.v += +p[1]; }); });
       amt.forEach(function (kl) { (kl || []).forEach(function (r) { var p = r.split(","), o = am[p[0]] || (am[p[0]] = { n: 0, v: 0 }); o.n++; o.v += +p[1]; }); });
@@ -1176,14 +1191,35 @@
       jsonp(P2, "/api/qt/stock/fflow/kline/get?secid=" + sid + "&klt=1&lmt=0&fields1=f1,f2,f3,f7&fields2=f51,f52&ut=" + UT, function (e, d) { fl[j] = !e && d && d.data && d.data.klines ? d.data.klines : null; done(); });
     });
   }
-  function gcShares() { /* 本机份额快照 → [{d, v(元)}] 每日申赎额(份额差×价) */
-    var h = lsGet("jlv2_etf_share_v1", {}), ks = Object.keys(h).sort(), out = [];
+  /* 11-13 用户导出 jl_etf_hist.js(7只 近140日 份额/收盘价/收盘折溢价) 当历史底, 之后的日子接本机每日快照 jlv2_etf_share_v1.
+     份额只有沪市5只(深市159919/159915 交易所不给), 申赎口径统一按这5只, 前后不混. */
+  var GC_SH5 = ["510300", "510310", "510330", "510050", "588000"], GC_P4 = ["510300", "510310", "510330", "159919"];
+  function gcHistLoad() {
+    if (window.JL_ETF_HIST || GC.hLd) return; GC.hLd = 1;
+    try { var sc = document.createElement("script"); sc.src = "jl_etf_hist.js?v=1"; sc.onload = function () { try { paint(); } catch (e) { } }; document.head.appendChild(sc); } catch (e) { }
+  }
+  function gcShares() { /* → [{d, v(元)}] 每日申赎额 = Σ(份额差 × 当日收盘价) */
+    var H = window.JL_ETF_HIST, M = {}, last = "", h = lsGet("jlv2_etf_share_v1", {});
+    if (H && H.d) {
+      last = H.d[H.d.length - 1];
+      H.d.forEach(function (d, i) { var o = {}; GC_SH5.forEach(function (c) { var z = H.c[c]; if (z && z.sh && z.sh[i] > 0) o[c] = [z.sh[i], z.px[i]]; }); M[d] = o; });
+      var ref = M[last] && M[last]["510300"], loc = null; Object.keys(h).sort().forEach(function (d) { if (h[d] && h[d]["510300"]) loc = h[d]["510300"]; });
+      var k = 0;   /* 本机快照单位不确定(东财 f38): 和历史末日比, 挑 1/1e4/1e8 里最接近的倍数; 差太远就不接 */
+      if (ref && loc && loc[0] > 0) { var r0 = ref[0] / loc[0]; [1, 1e4, 1e8, 1e-4].forEach(function (m) { if (!k || Math.abs(Math.log(r0 / m)) < Math.abs(Math.log(r0 / k))) k = m; }); if (Math.abs(Math.log(r0 / k)) > 0.25) k = 0; }
+      if (k) Object.keys(h).forEach(function (d) { if (d <= last) return; var o = {}; GC_SH5.forEach(function (c) { if (h[d][c] && h[d][c][0] > 0) o[c] = [h[d][c][0] * k, h[d][c][1]]; }); M[d] = o; });
+    } else Object.keys(h).forEach(function (d) { M[d] = h[d]; });
+    var ks = Object.keys(M).sort(), out = [];
     for (var i = 1; i < ks.length; i++) {
-      var a = h[ks[i - 1]], b = h[ks[i]], s = 0, n = 0;
-      for (var c in b) if (a[c]) { s += (b[c][0] - a[c][0]) * b[c][1]; n++; }
-      if (n) out.push({ d: ks[i], v: s });
+      var a = M[ks[i - 1]], b = M[ks[i]], s2 = 0, n = 0;
+      for (var c in b) if (a[c]) { s2 += (b[c][0] - a[c][0]) * b[c][1]; n++; }
+      if (n) out.push({ d: ks[i], v: s2 });
     }
     return out;
+  }
+  function gcPrem() { /* → {d: 4只300ETF 收盘折溢价均值(%)} */
+    var H = window.JL_ETF_HIST, o = {}; if (!H || !H.d) return o;
+    H.d.forEach(function (d, i) { var s2 = 0, n = 0; GC_P4.forEach(function (c) { var z = H.c[c]; if (z && z.pr && isFinite(z.pr[i])) { s2 += z.pr[i]; n++; } }); if (n) o[d] = s2 / n; });
+    return o;
   }
   function gcLamps() {
     var E = S.etf && S.etf[0], L = [];
@@ -1195,7 +1231,10 @@
     var vr = E && E.vr && isFinite(E.vr.vr) ? E.vr.vr : NaN;
     if (isFinite(vr)) L.push(["成交放量", vr.toFixed(1) + "倍", vr >= 1.5 ? (E.today >= 0 ? "g" : "r") : "x", Math.min(1, vr / 2.5), "vo"]);
     else L.push(["成交放量", "—", "x", 0, "vo"]);
-    L.push(["折溢价", "未接", "x", 0, ""]);
+    var PR = gcPrem(), pk = Object.keys(PR).sort();
+    if (pk.length >= 20) { var pv = PR[pk[pk.length - 1]], w = pk.slice(-60).map(function (d) { return PR[d]; }), pq = w.filter(function (v) { return v <= pv; }).length / w.length;   /* 和自己近60日比: 溢价偏高=资金抢着买 */
+      L.push(["折溢价", (pv >= 0 ? "+" : "") + pv.toFixed(2) + "%", pq >= 0.8 ? "g" : pq <= 0.2 ? "r" : "x", pq >= 0.8 ? pq : pq <= 0.2 ? 1 - pq : 0.3, "pr"]); }
+    else L.push(["折溢价", "—", "x", 0, ""]);
     var D = GC.d ? GC.d.slice(-60) : null;
     if (D && D.length >= 20) { var cs = D.map(function (r) { return r.c; }), lo = Math.min.apply(null, cs), hi = Math.max.apply(null, cs), pos = hi > lo ? (cs[cs.length - 1] - lo) / (hi - lo) : 0.5;
       L.push(["指数位置", Math.round(pos * 100) + "%" + (pos <= 0.3 ? "低" : pos >= 0.7 ? "高" : ""), pos <= 0.3 ? "g" : pos >= 0.7 ? "r" : "x", pos <= 0.3 ? 1 - pos : pos >= 0.7 ? pos : 0.3, "px"]); }
@@ -1203,13 +1242,13 @@
     return L;
   }
   function gcHtml() {
-    gcLoadD(); if (GC.per === "m") gcLoadM();
+    gcHistLoad(); gcLoadD(); if (GC.per === "m") gcLoadM();
     var L = gcLamps(), ng = L.filter(function (l) { return l[2] === "g"; }).length, nr = L.filter(function (l) { return l[2] === "r"; }).length;
     var st = ng >= 3 ? ["吸筹 · 托底", "#1fdc93"] : nr >= 3 ? ["出货 · 撤退", "#ff5459"] : ["观望", "#ffffff"];
     var sc = Math.max(ng, nr), col = ng >= nr ? "#1fdc93" : "#ff5459", r = 26, cc = 2 * Math.PI * r;
     var asOf = GC.d && GC.d.length ? GC.d[GC.d.length - 1].d.slice(5) : "";
     var h = '<div class="gcW"><div class="gcTop"><div class="gcRing"><svg viewBox="0 0 62 62"><circle cx="31" cy="31" r="' + r + '" fill="none" stroke="#ffffff1a" stroke-width="5"/>' + (sc ? '<circle cx="31" cy="31" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + (cc * sc / 5).toFixed(1) + " " + cc.toFixed(1) + '" transform="rotate(-90 31 31)"/>' : "") + '</svg><b>' + sc + '<small>/5</small></b></div>' +
-      '<div class="gcTt"><div class="gcS" style="color:' + st[1] + '">' + st[0] + '</div><div class="gcM">300ETF×4' + (asOf ? " · " + asOf : "") + '</div></div></div>';
+      '<div class="gcTt"><div class="gcS" style="color:' + st[1] + '">' + st[0] + '</div><div class="gcM">300ETF×4' + (asOf ? " · " + asOf : "") + (window.JL_ETF_HIST ? " · 份额/折溢价至 " + JL_ETF_HIST.asOf.slice(5) : "") + '</div></div></div>';
     h += '<div class="gcL">' + L.map(function (l) { return '<div class="gcLp ' + l[2] + (GC.hi && GC.hi === l[4] ? " on" : "") + '" data-gch="' + l[4] + '"><i></i><div class="n">' + l[0] + '</div><div class="v">' + l[1] + '</div><div class="bar"><u style="width:' + Math.round(l[3] * 100) + '%"></u></div></div>'; }).join("") + "</div>";
     h += '<div class="gcRow"><div class="gcSeg">' + [["20", "20日"], ["60", "60日"], ["120", "120日"], ["m", "分时"]].map(function (p) { return '<button data-gcp="' + p[0] + '"' + (GC.per === p[0] ? ' class="on"' : "") + ">" + p[1] + "</button>"; }).join("") + '</div><div class="gcLg">' +
       [["px", "沪深300", "#fff"], ["mf", "主力", "#ffb347"], ["sh", "申赎", "#40d0e0"]].map(function (l) { return '<button data-gcl="' + l[0] + '"' + (GC.show[l[0]] ? "" : ' class="off"') + ' style="--c:' + l[2] + '"><i></i>' + l[1] + "</button>"; }).join("") + "</div></div>";
@@ -1229,9 +1268,9 @@
   var GCV = null;   /* 当前曲线视图(十字线用) */
   function gcSvg() {
     var m = GC.per === "m", src = m ? GC.m : GC.d;
-    if (!src || src.length < 2) return '<div style="padding:30px 0;text-align:center;font-size:11px">' + (m ? "分时" : "日线") + "数据加载中…</div>";
+    if (!src || src.length < 2) return '<div style="padding:30px 0;text-align:center;font-size:11px">' + (m ? "分时" : "日线") + (GC.err && !m ? " · " + GC.err + " · 5分钟后自动重试" : "数据加载中…") + "</div>";
     var R = m ? src : src.slice(-(+GC.per));
-    var shM = {}; if (!m) gcShares().forEach(function (r) { shM[r.d] = r.v; });
+    var shM = {}, prM = m ? {} : gcPrem(); if (!m) gcShares().forEach(function (r) { shM[r.d] = r.v; });
     var mf = [], sh = [], vo = [], cm = 0, cs = 0, hasSh = false;
     var amts = m ? null : (GC.d || []).map(function (r) { return r.a; });
     var off = m ? 0 : GC.d.length - R.length;
@@ -1245,9 +1284,10 @@
     var X = function (i) { return Lp + (n > 1 ? i / (n - 1) : 0) * (W - Lp - Rp); };
     var px = R.map(function (r) { return r.c; }), pl = Math.min.apply(null, px), ph = Math.max.apply(null, px), pp = (ph - pl) * 0.08 || 1;
     var Yp = function (v) { return A[1] - (v - pl + pp) / (ph - pl + 2 * pp) * (A[1] - A[0]); };
-    var fv = [0]; if (GC.show.mf) mf.forEach(function (v) { if (v != null) fv.push(v); }); if (GC.show.sh && !m) sh.forEach(function (v) { if (v != null) fv.push(v); });
-    var fl = Math.min.apply(null, fv), fh = Math.max.apply(null, fv); if (fh - fl <= 0) fh = fl + 1;
-    var Yf = function (v) { return B[1] - (v - fl) / (fh - fl) * (B[1] - B[0]); }, y0 = Yf(0);
+    /* 11-13: 主力净额(几十亿)和份额申赎(上千亿)量级差太多 → 各用各的刻度, 零轴共用在中间; 右侧标各自最新值 */
+    var amx = function (a) { var x = 0; a.forEach(function (v) { if (v != null) x = Math.max(x, Math.abs(v)); }); return x || 1; };
+    var midB = (B[0] + B[1]) / 2, hB = (B[1] - B[0]) / 2 - 2, kM = amx(mf) * 1.05, kS = amx(sh) * 1.05;
+    var Yf = function (v) { return midB - v / kM * hB; }, Ys = function (v) { return midB - v / kS * hB; }, y0 = midB;
     var vm = Math.max.apply(null, vo.concat([m ? 1 : 1.6])), Yv = function (v) { return V[1] - v / vm * (V[1] - V[0]); };
     var pth = function (a, Y) { var s = "", pen = false; a.forEach(function (v, i) { if (v == null) { pen = false; return; } s += (pen ? "L" : "M") + X(i).toFixed(1) + "," + Y(v).toFixed(1); pen = true; }); return s; };
     var yi = function (v) { return v == null ? "—" : (v >= 0 ? "+" : "−") + (Math.abs(v) / 1e8).toFixed(Math.abs(v) >= 1e10 ? 0 : 1) + "亿"; };
@@ -1262,15 +1302,20 @@
         if (sa > 0) R.forEach(function (r, i) { var v = shM[r.d]; if (v == null) return; if (v >= 2 * sa) s += '<path d="M' + X(i).toFixed(1) + "," + (Yp(px[i]) + 5).toFixed(1) + ' l-3,5 h6z" fill="#40d0e0"/>'; else if (v <= -2 * sa) s += '<path d="M' + X(i).toFixed(1) + "," + (Yp(px[i]) - 5).toFixed(1) + ' l-3,-5 h6z" fill="#ff5459"/>'; }); }
     }
     s += '<text x="' + (Lp + 2) + '" y="' + (A[0] + 8) + '" fill="#fff" font-size="9.5" font-weight="600">沪深300</text>';
-    s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '" stroke="#ffffff40" stroke-width=".6" stroke-dasharray="3 3"/>' + t(W - Rp + 4, y0 + 3, "0");
+    s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + y0.toFixed(1) + '" y2="' + y0.toFixed(1) + '" stroke="#ffffff40" stroke-width=".6" stroke-dasharray="3 3"/>';
     var lastI = function (a) { for (var i = a.length - 1; i >= 0; i--) if (a[i] != null) return i; return -1; };
     if (GC.show.mf) { var pm = pth(mf, Yf), i1 = lastI(mf), i0 = mf.findIndex(function (v) { return v != null; });
       if (pm && i1 > i0) { var ar = pm + "L" + X(i1).toFixed(1) + "," + y0.toFixed(1) + "L" + X(i0).toFixed(1) + "," + y0.toFixed(1) + "Z";
         s += '<path d="' + ar + '" fill="url(#gcU)" clip-path="url(#gcCa)"/><path d="' + ar + '" fill="url(#gcD)" clip-path="url(#gcCb)"/><path d="' + pm + '" fill="none" stroke="#ffb347" stroke-width="' + hw("mf") + '"/>' +
           '<circle cx="' + X(i1).toFixed(1) + '" cy="' + Yf(mf[i1]).toFixed(1) + '" r="2.6" fill="#ffb347"/>' + t(W - Rp + 4, Yf(mf[i1]) + 3, yi(mf[i1]), "#ffb347"); } }
-    if (GC.show.sh && !m) { var ps = pth(sh, Yf), i2 = lastI(sh);
-      if (ps && i2 >= 0) s += '<path d="' + ps + '" fill="none" stroke="#40d0e0" stroke-width="' + hw("sh") + '"/><circle cx="' + X(i2).toFixed(1) + '" cy="' + Yf(sh[i2]).toFixed(1) + '" r="2.6" fill="#40d0e0"/>' + t(W - Rp + 4, Yf(sh[i2]) + 12, yi(sh[i2]), "#40d0e0"); }
-    s += '<text x="' + (Lp + 2) + '" y="' + (B[0] + 8) + '" fill="#fff" font-size="9.5" font-weight="600">资金累计' + (m ? " · 分钟" : "") + (!m && !hasSh ? " · 申赎攒数据中" : "") + "</text>";
+    /* 11-13 用户定 v2 设计稿: 份额申赎 = 累计青线(各用各的刻度); 左上一行补 昨日/近N日 合计 */
+    var dS = R.map(function (r) { return m ? null : shM[r.d] != null ? shM[r.d] : null; }), sumS = 0, nS = 0, lastS = null;
+    dS.forEach(function (v) { if (v != null) { sumS += v; nS++; lastS = v; } });
+    if (GC.show.sh && !m) { var ps = pth(sh, Ys), i2 = lastI(sh);
+      if (ps && i2 >= 0) { var ySl = Ys(sh[i2]), yMl = GC.show.mf && lastI(mf) >= 0 ? Yf(mf[lastI(mf)]) : -99; if (Math.abs(ySl - yMl) < 10) ySl = yMl + (ySl >= yMl ? 10 : -10);
+        s += '<path d="' + ps + '" fill="none" stroke="#40d0e0" stroke-width="' + hw("sh") + '"/><circle cx="' + X(i2).toFixed(1) + '" cy="' + Ys(sh[i2]).toFixed(1) + '" r="2.6" fill="#40d0e0"/>' + t(W - Rp + 4, ySl + 3, yi(sh[i2]), "#40d0e0"); } }
+    s += '<text x="' + (Lp + 2) + '" y="' + (B[0] + 8) + '" font-size="9.5" font-weight="600"><tspan fill="#ffb347">主力累计</tspan>' + (m ? '<tspan fill="#fff"> · 分钟</tspan>' : "") + (!m && GC.mfOk === false ? '<tspan fill="#fff"> · 东财主力通道不通</tspan>' : "") +
+      (!m && nS ? '<tspan fill="#40d0e0" dx="8">申赎</tspan><tspan fill="#fff"> 昨日 </tspan><tspan fill="' + (lastS >= 0 ? "#ff5459" : "#1fdc93") + '">' + yi(lastS) + '</tspan><tspan fill="#fff"> · 近' + nS + '日 </tspan><tspan fill="' + (sumS >= 0 ? "#ff5459" : "#1fdc93") + '">' + yi(sumS) + "</tspan>" : !m ? '<tspan fill="#fff"> · 申赎攒数据中</tspan>' : "") + "</text>";
     var bw = Math.max(0.8, (W - Lp - Rp) / n * 0.68);
     vo.forEach(function (v, i) { if (!(v > 0)) return; var y = Yv(v); s += '<rect x="' + (X(i) - bw / 2).toFixed(2) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(2) + '" height="' + (V[1] - y).toFixed(1) + '" fill="' + (!m && v >= 1.5 ? "#ff5459" : "#ffffff3a") + '" opacity="' + (GC.hi === "vo" || !GC.hi ? 1 : 0.6) + '"/>'; });
     if (!m) s += '<line x1="' + Lp + '" x2="' + (W - Rp) + '" y1="' + Yv(1.5).toFixed(1) + '" y2="' + Yv(1.5).toFixed(1) + '" stroke="#ffd21f" stroke-width=".7" stroke-dasharray="3 3"/>' + t(W - Rp + 4, Yv(1.5) + 3, "1.5×", "#ffd21f");
@@ -1278,7 +1323,7 @@
     var lb = function (r) { return m ? r.d : r.d.slice(5); };
     s += t(Lp, 248, lb(R[0])) + t((Lp + W - Rp) / 2, 248, lb(R[n >> 1]), null, "middle") + t(W - Rp, 248, lb(R[n - 1]), null, "end");
     s += '<g id="gcXhJL"></g></svg>';
-    GCV = { m: m, R: R, px: px, mf: mf, sh: sh, vo: vo, X: X, Yp: Yp, Yf: Yf, n: n, W: W, Lp: Lp, Rp: Rp, A: A, V: V, yi: yi };
+    GCV = { m: m, R: R, px: px, mf: mf, sh: sh, vo: vo, shM: shM, prM: prM, X: X, Yp: Yp, Yf: Yf, Ys: Ys, n: n, W: W, Lp: Lp, Rp: Rp, A: A, V: V, yi: yi };
     return s;
   }
   function gcCross(ev, root) {
@@ -1288,11 +1333,12 @@
     var xx = V.X(i), h = '<line x1="' + xx + '" x2="' + xx + '" y1="' + V.A[0] + '" y2="' + V.V[1] + '" stroke="#fff" stroke-width=".6" stroke-dasharray="3 3"/>';
     if (GC.show.px) h += '<circle cx="' + xx + '" cy="' + V.Yp(V.px[i]) + '" r="3" fill="#fff"/>';
     if (GC.show.mf && V.mf[i] != null) h += '<circle cx="' + xx + '" cy="' + V.Yf(V.mf[i]) + '" r="3" fill="#ffb347"/>';
-    if (GC.show.sh && !V.m && V.sh[i] != null) h += '<circle cx="' + xx + '" cy="' + V.Yf(V.sh[i]) + '" r="3" fill="#40d0e0"/>';
+    if (GC.show.sh && !V.m && V.sh[i] != null) h += '<circle cx="' + xx + '" cy="' + V.Ys(V.sh[i]) + '" r="3" fill="#40d0e0"/>';
+    
     g.innerHTML = h;
     var dp = i ? (V.px[i] / V.px[i - 1] - 1) * 100 : 0;
     tb.innerHTML = "<b>" + V.R[i].d + "</b><br>沪深300 " + V.px[i].toFixed(1) + (V.m ? "" : ' <span style="color:' + (dp >= 0 ? "#ff5459" : "#1fdc93") + '">' + (dp >= 0 ? "+" : "") + dp.toFixed(2) + "%</span>") +
-      '<br><span style="color:#ffb347">主力 ' + V.yi(V.mf[i]) + "</span>" + (V.m ? "" : '<br><span style="color:#40d0e0">申赎 ' + V.yi(V.sh[i]) + "</span><br>成交 " + (V.vo[i] > 0 ? V.vo[i].toFixed(2) + "×" : "—"));
+      '<br><span style="color:#ffb347">主力累计 ' + V.yi(V.mf[i]) + "</span>" + (V.m ? "" : '<br><span style="color:#40d0e0">申赎 当日 ' + V.yi(V.shM[V.R[i].d]) + " · 累计 " + V.yi(V.sh[i]) + "</span>" + (V.prM[V.R[i].d] != null ? "<br>折溢价 " + (V.prM[V.R[i].d] >= 0 ? "+" : "") + V.prM[V.R[i].d].toFixed(2) + "%" : "") + "<br>成交 " + (V.vo[i] > 0 ? V.vo[i].toFixed(2) + "×" : "—"));
     tb.style.display = "block"; var pxl = xx / V.W * r.width; tb.style.left = (pxl > r.width / 2 ? pxl - tb.offsetWidth - 10 : pxl + 10) + "px";
   }
   function gcOff(root) { var tb = root.querySelector("#gcTipJL"), g = root.querySelector("#gcXhJL"); if (tb) tb.style.display = "none"; if (g) g.innerHTML = ""; }
