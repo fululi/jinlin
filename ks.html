@@ -854,7 +854,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { amp: true, ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, rlm: false, sixsig: false, jitu: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
+  ind: { amp: true, ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, zzl: true, rlm: false, sixsig: false, jitu: false, phvl: true }, /* jl-1004: 六信号默认关(实证卖侧清/离戳后常续涨, 回测亦负超额; 指标条[六信号]可手动开) */ /* ks-0930: 反应位横线组默认关(打开K线不要直接显示), 指标行[反应位]可手动点回 */ // ks-0906-8: EMA/变色MA(曲线)默认关,用户要的是直趋势线不要曲线; ks-0906-11: ctrl=控盘度近似; ks-0906-13: volMain=VOL叠加主图省一幅副图; ks-0906-20d: vp=量分布(买卖量剖面); ks-0914-cyq: cyq=筹码分布(三角分布+换手衰减,与通达信对账误差≤0.07元); ks-0918-zz: zz=共振追涨副图(用户实盘验证口径)
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawColor: "#ffd21f", pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false, // 默认线形走势; simple=从持仓卡打开的简洁模式; ks-1012: drawColor=抽屉色板当前色(新画线用)
   favs: ["ind:phvl"], favPick: false, favHide: false, /* ks-1022b: 高低区默认入收藏栏(常驻顶栏一步开关) */ // ks-0906-16: ★收藏栏(工具/指标点星入栏,取消收藏≠关闭功能)
@@ -919,7 +919,7 @@ function restore() {
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = (o.klt === "TS") ? "TS" : normalizeKlt(o.klt); /* ks-1151 K2/D1: TS身份持久化, 刷新后仍停留分时 */
     S.ts.on = (S.klt === "TS");
-    if (o.ind) { S.ind = o.ind; if (S.ind.amp == null) S.ind.amp = true; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.jitu == null) S.ind.jitu = false; /* jl-1227: 积突默认关(研究型信号不强制亮), 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
+    if (o.ind) { S.ind = o.ind; if (S.ind.amp == null) S.ind.amp = true; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false; /* ks-0930: 默认关, 老存档同口径 */ if (S.ind.sixsig == null) S.ind.sixsig = true; /* ks-0929-53: 六信号默认开, 老存档同口径 */ if (S.ind.jitu == null) S.ind.jitu = false; /* jl-1227: 积突默认关(研究型信号不强制亮), 老存档同口径 */ if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false; /* ks-1012任务二: DDX附图不跨会话记忆——每次进页默认收起、主图满高; 会话内切股/切周期保持当前开关 */ if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.dsup == null) S.ind.dsup = false; if (S.ind.lsr == null) S.ind.lsr = false; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; if (S.ind.zzl == null) S.ind.zzl = true; /* 11-12夜: 主图共振线默认开 */ } S.yZoom = 1; S.yOff = 0; // ks-0916: 纵向缩放不跨会话,打开即标准视图
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.lineColor) S.lineColor = o.lineColor; /* ks-1151fix10 */
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
@@ -936,7 +936,7 @@ function restore() {
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
     if (window.KS_T) { S.theme = "d"; applyTheme(); } /* jl-1061: 嵌入态强制深色主题——存档是浅色主题, 浅灰网格/价签/十字线压在玻璃上全看不清; 独立版主题不受影响 */
-    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, sixsig: false, jitu: false, phvl: true };
+    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: true, paneTop: false, cost: true, tqs: true, dsup: false, hma: false, lsr: false, zz: true, zzl: true, sixsig: false, jitu: false, phvl: true };
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
@@ -1156,7 +1156,7 @@ function zzArr(kl) {
   M2 = ema2(M1, 3);
   DE = ema2(ema2(V1, 2), 2);
   for (i = 0; i < n; i++) { bg.push(DE[i] > V6[i] ? 1 : 0); purple.push(M1[i] > 2 ? (bg[i] ? 2 : 1) : 0); }
-  var r = { M1: M1, M2: M2, bg: bg, purple: purple };
+  var r = { M1: M1, M2: M2, bg: bg, purple: purple, V6: V6, DE: DE }; // 11-12夜: 带出 VAR6/DEMA 给主图共振线
   _zzCache = { k: kl, v: r };
   return r;
 }
@@ -2741,6 +2741,8 @@ function drawReal() {
   var _tp8 = document.querySelector(".tpan"); if (_tp8 && _tp8.style.display === "none") _tp8.style.display = ""; /* ks-1151fix10d: K线路径还原◀▶平移钮 */
   renderPHVLMarksJL(ctx, v); /* ks-1022: PHVL高低点标记·顶层 */
   renderFundStamps(ctx, v); // ks-0906-27: 只留低位"吸"单字戳(回测唯一正超额)
+  renderZzLineJL(ctx, v); // 11-12夜 用户: 主图共振线(VAR6 价位线, 红绿=副图红绿底)
+  renderZzMarkJL(ctx, v); // 11-12夜 用户: 共振紫开始那根K线底下画紫点(主图上不开副图也看得到)
   renderSixSigJL(ctx, v); // ks-0929-53: 六信号戳(买侧转/仓/加在K线下方, 卖侧顶/清/离在上方)
   try { JITU_KS.render(ctx, v); } catch (eJT) { } /* jl-1227: 积突信号层(仅1分周期: 积=低点下蓝点 突=高点上橙▲+突破位虚线, 失效灰✕; 引擎与主站jl_jitu.js同源, 三场景回归PASS; 数据走既有分钟资金流通道零新增请求; 回滚=删本行) */
   renderMonitor(ctx, v);
@@ -6139,7 +6141,8 @@ function drawTSJL(ctx, w, hh) { /* ks-1151 K10+fix7+fix8: 分时渲染——引�
   try { renderICT(ctx, v); } catch (e1) { if (window.console) console.warn("[ts.ict]", e1); }
   try { renderAmpJL(ctx, v); } catch (eA) { if (window.console) console.warn("[amp]", eA); }
   try { renderGapsJL(ctx, v); } catch (eG9) { if (window.console) console.warn("[ts.gaps]", eG9); }
-  try { renderBollTSJL(ctx, v); } catch (eB9) { if (window.console) console.warn("[ts.boll]", eB9); } /* ks-1151fix8: BOLL三线(自吞异常不拖垮主图) */
+  try { renderBollTSJL(ctx, v); } catch (eB9) { if (window.console) console.warn("[ts.boll]", eB9); }
+  try { renderZzLineJL(ctx, v); renderZzMarkJL(ctx, v); } catch (eZz) { if (window.console) console.warn("[ts.zz]", eZz); } /* 11-13 用户: 分时也画共振线+紫点(1分K, 实时) */ /* ks-1151fix8: BOLL三线(自吞异常不拖垮主图) */
   try { renderCostLine(ctx, v); } catch (e3) { if (window.console) console.warn("[ts.cost]", e3); } /* ks-1151fix10d: 撤renderDailyLevels调用——昨高/昨低/今开/今高/今低/最新六线与引擎昨收线+高低标记+跟随价签全重复(用户图: 兆易高开低走, 今开浅灰虚线贴顶横穿像杂线); 成本线保留(坐标走引擎轴正确, 持仓成本分时要看) */
   try { renderCYQ(ctx, v); } catch (e6) { if (window.console) console.warn("[ts.cyq]", e6); }
   try { renderVP(ctx, v); } catch (e7) { if (window.console) console.warn("[ts.vp]", e7); }
@@ -8293,6 +8296,36 @@ function sixSigMarksJL() {
   S._sixSigJL = { key: key, marks: marks };
   return marks;
 }
+/* 11-12夜 用户: 共振紫(M1>2 且 DEMA>VAR6, 副图实心亮紫)的「第一根」→ 主图该K线最低价下方一个紫点; 与副图同一个 zzArr(S.kl), 每个周期各自算; 分时/五日折线不画 */
+var ZZ_WARM = 120; // VAR6 = 三层LLV(最长90+30根)套EMA35, 已加载数据的头120根窗口不满、值不准 → 主图线和紫点都从第120根起画
+/* 11-12夜 用户: 共振线 = 共振公式里的 VAR6(三层最低价均值, 是价格)直接画在主图; 每段颜色 = 副图红绿底同一判断: DEMA(VAR1,2,2) > VAR6 红, 否则绿 */
+function renderZzLineJL(ctx, v) {
+  if (!S.ind.zzl || !S.kl.length) return; /* 11-13 用户: 分时也要有(分时 S.kl 含昨日1分K, 预热够; 最新一分钟实时跟着变) */
+  var zz = zzArr(S.kl), V6 = zz.V6, a = Math.max(v.i0, ZZ_WARM + 1), b = v.i1;
+  if (a >= b || !V6) return;
+  ctx.save(); ctx.beginPath(); ctx.rect(v.padL, v.pTop, v.plotW, v.priceH); ctx.clip(); /* 线跑出价格区(纵向缩放/拖动后)不画进副图 */
+  ctx.lineWidth = 1.6; ctx.lineJoin = "round";
+  var col = null;
+  for (var i = a; i < b; i++) {
+    var c = zz.bg[i] ? "#ff5c5c" : "#2fd18a";
+    if (c !== col) { if (col) ctx.stroke(); col = c; ctx.strokeStyle = c; ctx.beginPath(); if (i - 1 >= v.i0) ctx.moveTo(v.X(i - 1), v.Y(V6[i - 1])); else { ctx.moveTo(v.X(i), v.Y(V6[i])); continue; } }
+    ctx.lineTo(v.X(i), v.Y(V6[i]));
+  }
+  if (col) ctx.stroke();
+  ctx.restore();
+}
+function renderZzMarkJL(ctx, v) {
+  if (!S.ind.zz || !S.kl.length) return; /* 11-13: 分时/折线也标 */
+  var zz = zzArr(S.kl), kl = S.kl, yMax = v.pTop + v.priceH - 4;
+  ctx.save();
+  for (var i = Math.max(v.i0, ZZ_WARM + 1); i < v.i1; i++) {
+    if (zz.purple[i] !== 2 || zz.purple[i - 1] === 2) continue;
+    var x = v.X(i), y = Math.min(v.Y(kl[i][3]) + 8, yMax);
+    ctx.fillStyle = "#e05ae0"; ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(8,12,10,0.85)"; ctx.lineWidth = 0.8; ctx.stroke();
+  }
+  ctx.restore();
+}
 function renderSixSigJL(ctx, v) {
   if (!S.ind.sixsig || S.klt !== "101" || !S.kl.length) return;
   var marks = sixSigMarksJL(), kl = S.kl;
@@ -8534,7 +8567,7 @@ var JITU_KS = (function () {
   return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
 })();
 /* ================= 指标开关行 ================= */
-var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["dsup", "SR"], ["lsr", "SR带"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 /* ---- ★收藏栏(ks-0906-16): 点「＋挑收藏」进入挑选模式, 点工具/指标按钮上的☆即入栏; 取消收藏只从栏里消失,功能本身不关; 栏头可收起 ---- */
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
@@ -8792,7 +8825,7 @@ function applyUrl() {
       document.documentElement.classList.remove("theme-la", "theme-lc"); if (typeof S !== "undefined") S.theme = ""; // 金粼0913: 内嵌强制深色, 与金粼底融合
       // 金粼0913晚: 内嵌默认开 三角/SR/OB/VOL叠加/BSL·SSL流动性; 关掉 ICT 结构标记(ms)——BOS 只留三角突破那一枚(上黄下红, 部署版自带)
       // 金粼0913深夜(口径定案): 每次打开都恢复默认开——隐藏/删除只是本次会话有效, 不做跨会话持久化, 重开必须看到指标在
-      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.vi = true; /* ks-1022g: 嵌入态默认开VI实体缺口(与OB/FVG同族) */ S.ind.volMain = true; S.ind.phvl = true; /* ks-1022c: 嵌入态每次打开恢复高低区显示(与金粼默认开口径一致) */ S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
+      if (typeof S !== "undefined" && S.ind) { S.ind.atri = true; S.ind.dsup = false; /* ks-0928: SR默认关,与RLM重复 */ S.ind.ob = true; S.ind.vi = true; S.ind.zzl = true; /* 11-12夜: 共振线同口径, 每次打开默认显示 */ /* ks-1022g: 嵌入态默认开VI实体缺口(与OB/FVG同族) */ S.ind.volMain = true; S.ind.phvl = true; /* ks-1022c: 嵌入态每次打开恢复高低区显示(与金粼默认开口径一致) */ S.ind.liq = true; S.ind.ms = false; S.ind.rlm = false; /* ks-0930: 金粼内嵌默认不画反应位 */ S.ind.sixsig = false; /* jl-1004: 内嵌默认关六信号(实证卖侧戳误导); 指标条[六信号]可手动开 */ }
       S.lineMode = false; // 金粼0914: 内嵌大图必须是蜡烛K线——存档里 lineMode=true 会把主图变成蓝色收盘价折线(用户看到的"实时线盖图"), 内嵌强制蜡烛, 可用紧凑条「K/线」切回
       // 金粼0913晚(重打在部署版上): 单行抽屉紧凑条(周期/画线/指标/幅图 + 删除/清空/隐藏/锁定/提醒), 替代☰多行展开
       if (!document.getElementById("ksBarJL")) {
@@ -8824,6 +8857,7 @@ function applyUrl() {
         var ctb = mk("K型▾", function () { ctypePopJL(this); }, "图表类型: 蜡烛/空心/美国线/平均K/面积"); // ks-p3-11
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)"); // ks-p3-14
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
+        var zlb = mk("共振线", function () { S.ind.zzl = !S.ind.zzl; this.classList.toggle("on", !!S.ind.zzl); try { store(); buildInds(); } catch (eZ) { } draw(); hint(S.ind.zzl ? "共振线已显示(红=DEMA在线上方, 绿=在下方)" : "共振线已隐藏"); }, "主图共振线 VAR6: 显示/隐藏"); zlb.classList.toggle("on", !!S.ind.zzl); // 11-12夜 用户: 小图标并排, 随时隐藏显示
         document.body.insertBefore(bar, document.body.firstChild);
       }
     }
