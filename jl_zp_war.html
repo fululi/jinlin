@@ -2249,7 +2249,7 @@ function livePoll() {
   var gen = LIVE.gen, sym = LIVE.sym, qtOk = false;   /* jl-zp4: 本轮发起时的票+代次, 回包一律按它对 */
   var sameDay = function (b) { return dg(b.t).slice(0, 8) === LIVE.sessDate; };
   var slow = (LIVE.slowN % 6 === 0) || !(LIVE.hist.day && LIVE.hist.day.length) || !!LIVE.dayCached;   /* 11-13 修: 日K没拉到就每轮重拉(原来要等6轮, 收盘后60秒一轮=6分钟, 日K档只剩今天一根大方块) */
-  if (!(LIVE.hist.day && LIVE.hist.day.length)) try { var dkc0 = JSON.parse(localStorage.getItem('zp_dayk_v1_' + sym) || 'null'); if (dkc0 && dkc0.length >= 25) { LIVE.hist.day = dkc0.map(mrow); LIVE.dayCached = true; } } catch (eDk0) { }   /* 11-13: 先用本地存的日K顶上, 等新的拉到再换(日均不再先显示备用5.4%) */
+  if (!(LIVE.hist.day && LIVE.hist.day.length)) try { var dkc0 = JSON.parse(localStorage.getItem('zp_dayk_v1_' + sym) || 'null'); if (dkc0 && dkc0.length >= 25) { var l0 = dg(dkc0[dkc0.length - 1][0]).slice(0, 8), n0 = new Date(), t0 = new Date(+l0.slice(0, 4), +l0.slice(4, 6) - 1, +l0.slice(6, 8)); if ((n0 - t0) / 864e5 <= 8) { LIVE.hist.day = dkc0.map(mrow); LIVE.dayCached = true; } } } catch (eDk0) { }   /* 11-13: 先用本地存的日K顶上, 等新的拉到再换(日均不再先显示备用5.4%) */
   /* ① 5分K+qt快照: 腾讯(主) → 东财(兜底) */
   var Pm5 = jget(mkURL('m5', 480, sym)).then(function (j) {
     var d = j && j.data && j.data[sym];
@@ -2280,7 +2280,7 @@ function livePoll() {
   if (slow) {
     Pm15 = jget(mkURL('m15', 640, sym)).then(function (j) { var d = j && j.data && j.data[sym]; if (!d || !d.m15) throw new Error('x'); return d.m15.map(mrow); }, function () { return emK(15, 320, 0, sym); });
     Pm30 = jget(mkURL('m30', 320, sym)).then(function (j) { var d = j && j.data && j.data[sym]; if (!d || !d.m30) throw new Error('x'); return d.m30.map(mrow); }, function () { return emK(30, 320, 0, sym); });
-    Pday = dayGetJL(240, sym).then(function (j) { var d = j && j.data && j.data[sym]; var rs = d && (d.qfqday || d.day); if (!rs) throw new Error('x'); return rs.map(mrow); }, function () { return emK(101, 240, 1, sym); });
+    Pday = dayGetJL(240, sym).then(function (j) { var d = j && j.data && j.data[sym]; var rs = d && (d.qfqday || d.day); if (!rs || rs.length < 25) throw new Error('x'); return rs.map(mrow); }).then(null, function () { return emK(101, 240, 1, sym); });   /* 11-13: 腾讯返回太短(<25根)也换东财 */
   }
   LIVE.slowN++;
   var names = ['m5', 'pts', 'm1'].concat(slow ? ['m15', 'm30', 'day'] : []);
@@ -2345,14 +2345,19 @@ function livePoll() {
       var sig0 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
       if (got.m15 && got.m15.length) LIVE.hist.m15 = got.m15;
       if (got.m30 && got.m30.length) LIVE.hist.m30 = got.m30;
-      if (got.day && got.day.length) LIVE.hist.day = got.day;
-      /* 11-13 用户: 日K没拉到时日均退回写死5.4%(实际6.7%)致尺子价偏 → 拉到就存本地(近120根), 拉不到先用上次存的; 算法不变 */
+      /* 11-13 用户「今天日K被干掉了, 不要再这种数据错」: 日K先验货再用 —— 至少25根、价格>0且高≥低、最后一根不比本机存的旧;
+         合格才替换并存本机(近120根); 不合格/没拉到 → 用本机存的(7天内的才用); 公式不变 */
       try {
-        var dkKey = 'zp_dayk_v1_' + sym;
-        if (got.day && got.day.length >= 25) localStorage.setItem(dkKey, JSON.stringify(got.day.slice(-120).map(function (b) { return [b.t, b.o, b.c, b.h, b.l, b.v]; })));
-        else if (!(LIVE.hist.day && LIVE.hist.day.length >= 25)) { var dkc = JSON.parse(localStorage.getItem(dkKey) || 'null'); if (dkc && dkc.length >= 25) { LIVE.hist.day = dkc.map(mrow); LIVE.dayCached = true; } }
-        if (got.day && got.day.length) LIVE.dayCached = false;
-      } catch (eDk) { }
+        var dkKey = 'zp_dayk_v1_' + sym, dkc = null; try { dkc = JSON.parse(localStorage.getItem(dkKey) || 'null'); } catch (eP) { dkc = null; }
+        var dLast = function (a, f) { return a && a.length ? dg(f ? a[a.length - 1][0] : a[a.length - 1].t).slice(0, 8) : ''; };
+        var okDay = !!(got.day && got.day.length >= 25 && got.day.slice(-25).every(function (b) { return b.c > 0 && b.h > 0 && b.l > 0 && b.h >= b.l; }) && (!dkc || dLast(got.day) >= dLast(dkc, 1)));
+        if (okDay) { LIVE.hist.day = got.day; LIVE.dayCached = false; localStorage.setItem(dkKey, JSON.stringify(got.day.slice(-120).map(function (b) { return [b.t, b.o, b.c, b.h, b.l, b.v]; }))); }
+        else if (!(LIVE.hist.day && LIVE.hist.day.length >= 25 && !LIVE.dayCached)) {
+          var fresh = dkc && dkc.length >= 25 && (function () { var a = dLast(dkc, 1), sd = LIVE.sessDate || ''; if (!a || !sd) return !!a; var t1 = new Date(+sd.slice(0, 4), +sd.slice(4, 6) - 1, +sd.slice(6, 8)), t0 = new Date(+a.slice(0, 4), +a.slice(4, 6) - 1, +a.slice(6, 8)); return (t1 - t0) / 864e5 <= 7; })();
+          if (fresh) { LIVE.hist.day = dkc.map(mrow); LIVE.dayCached = true; }
+          else if (got.day && got.day.length) { LIVE.hist.day = got.day; LIVE.dayCached = false; }   /* 本机也没有能用的 → 先用拉到的(哪怕短) */
+        }
+      } catch (eDk) { if (got.day && got.day.length && !(LIVE.hist.day && LIVE.hist.day.length)) LIVE.hist.day = got.day; }
       var sig1 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
       if (sig0 !== sig1) ZCACHE = {};   /* 大周期数据更新了: 清缺口区缓存, 不沿用旧结果 */
     }
@@ -2800,7 +2805,7 @@ function ampWidgetJL(D, G) {
   E('text', { x: c2, y: cy + 14, 'font-size': 9.5, fill: '#fff', opacity: .92, 'text-anchor': 'middle' }, '均' + D.avg.toFixed(1));
   E('text', { x: c2, y: cy + r + 14, 'font-size': 13, 'font-weight': 700, fill: lf > 0.05 ? '#ffe14d' : '#ff7a2e', 'text-anchor': 'middle' }, lf > 0.05 ? '剩' + lf.toFixed(1) + '%' : '超' + (-lf).toFixed(1) + '%');   /* 11-12 用户: 贼小9px → 13px粗体 */
   E('circle', { 'class': 'acRingHit', cx: c2, cy: cy + 4, r: r + 12, fill: 'transparent' });   /* 11-10 用户: 点圆环 展开/收起下面 */
-  if (D.fb) E('text', { x: c2, y: cy + r + 27, 'font-size': 7.5, fill: '#fff', opacity: .8, 'text-anchor': 'middle' }, '日均加载中(备用值)');   /* 11-10 用户: 日K没拉到时均用备用值, 旁边小字提示 */
+  if (D.fb) E('text', { x: c2, y: cy + r + 27, 'font-size': 8.5, 'font-weight': 700, fill: '#ffd21f', 'text-anchor': 'middle' }, '⚠ 日K没拿到 · 价位不准');   /* 11-13: 备用值时醒目提示, 别照着做 */   /* 11-10 用户: 日K没拉到时均用备用值, 旁边小字提示 */
   var RD = D.rd, X0 = 112, X1 = 334, vals = [D.lo, D.hi, D.cur];
   if (RD && RD.rh > 0) { X0 = 146; X1 = 298; }   /* 右端价不压尺子上的卖接短线 */   /* 11-10 用户: 两端留位置写 最低价(左)/最高价(右), 和小球同一行 */
   if (RD) { if (RD.rh > 0) vals.push(RD.rh, RD.rl); RD.mk.forEach(function (m) { if (!m.proj) vals.push(m.p); }); } else vals.push(D.upTo, D.dnTo);
