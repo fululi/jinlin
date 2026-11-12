@@ -1091,7 +1091,7 @@ try {
     if (ahiJL > 0 && aloJL > 0) {
       var a1 = avdJL || (PARJL ? PARJL.a1 : 0), a2 = avdJL ? avdJL * 1.4 : (PARJL ? PARJL.a2 : 0);
       AJ.amp = (ahiJL - aloJL) / pcv * 100; AJ.avg = a1; AJ.afb = !avdJL; AJ.alv = a1 ? (AJ.amp >= a2 ? 2 : AJ.amp >= a1 ? 1 : 0) : 0; AJ.afl = flashJL('amp', AJ.alv);
-    try { var _aO = jlSigLatch('amp|' + ((window.STK && STK.code) || ''), AJ.alv); if (_aO != null && AJ.alv > _aO && AJ.alv > 0) jlSigPush('振幅', '今日已走振幅 ' + AJ.amp.toFixed(1) + '% · ' + (AJ.alv >= 2 ? '超20日均值1.4倍(' + AJ.avg.toFixed(1) + '%) · 日内空间基本用完, 追高谨慎' : '到20日均值(' + AJ.avg.toFixed(1) + '%) · 剩余空间不多'), 'amp' + AJ.alv + '|' + (LIVE.sessDate || '')); } catch (e) { }   /* 11-12: 振幅已走事实提醒 */
+    try { var _aO = jlSigLatch((RPL ? 'rp|' : '') + 'amp|' + ((window.STK && STK.code) || ''), AJ.alv); if (_aO != null && AJ.alv > _aO && AJ.alv > 0) jlSigPush('振幅', '今日已走振幅 ' + AJ.amp.toFixed(1) + '% · ' + (AJ.alv >= 2 ? '超20日均值1.4倍(' + AJ.avg.toFixed(1) + '%) · 日内空间基本用完, 追高谨慎' : '到20日均值(' + AJ.avg.toFixed(1) + '%) · 剩余空间不多'), 'amp' + AJ.alv + '|' + (LIVE.sessDate || '')); } catch (e) { }   /* 11-12: 振幅已走事实提醒 */
     }
     var weakJL0 = (LIVE.last > 0 && LIVE.last / pcv - 1 <= -0.03) || (LIVE.open > 0 && LIVE.open / pcv - 1 <= -0.02);
     if (ext && ext.p > 0 && dirH !== 0) { SEGAVJL = dirH === 1 ? SEGUPJL : SEGDNJL; }
@@ -2074,18 +2074,18 @@ function openType() {
 /* 11-12 jl-sig: B/C/D 提醒共用信号桥(RSO走__jlRsoKeys), 阶段护栏+每票锁存基线 */
 function jlSigPush(lbl, txt, id) {
   try {
-    if (!LIVE.ts || !liveToday()) return;
-    var p = phaseNow(); if (p !== 'am' && p !== 'pm') return;
+    if (!RPL) { if (!LIVE.ts || !liveToday()) return; var p = phaseNow(); if (p !== 'am' && p !== 'pm') return; }   /* 回放中放行(演练), 文字自动带【回放】前缀 */
     (window.__jlSigKeys = window.__jlSigKeys || []).push({ id: id, lbl: lbl, txt: txt, sub: lbl + '信号' });
   } catch (e) { }
 }
+function jlSigLines(pp, np, ts) { try { if (!(pp > 0) || !(np > 0) || !window.zpHlApi) return; window.zpHlApi.mainLines().forEach(function (h) { if (pp < h.p && np >= h.p) jlSigPush('画线', '价格上穿你的线 ' + h.p.toFixed(2), 'hlU|' + h.p + '|' + ts); else if (pp > h.p && np <= h.p) jlSigPush('画线', '价格跌破你的线 ' + h.p.toFixed(2), 'hlD|' + h.p + '|' + ts); }); } catch (e) { } }
 function jlSigLatch(k, v) { var L = (window.__jlSigLatch = window.__jlSigLatch || {}), o = L[k]; L[k] = v; return o; }
-function jlSigCtrl(v) { try { if (v == null) return; var clv = v >= 100 ? 3 : v >= 50 ? 2 : v > 0 ? 1 : 0, o = jlSigLatch('ctrl|' + ((window.STK && STK.code) || ''), clv); if (o != null && o !== clv) jlSigPush('控盘', ['无控盘', '低控盘', '中控盘', '高控盘'][clv] + ' ' + Math.round(v) + '（价格公式）', 'ctrl' + clv + '|' + (LIVE.sessDate || '') + '|' + Math.round(v)); } catch (e) { } }
-function jlSigCum(lastRow, fM) { try { if (!lastRow || !(Math.abs(lastRow.cum) >= 0.05)) return; var f = lastRow.cum >= 0 ? 1 : 0, o = jlSigLatch('cum|' + ((window.STK && STK.code) || ''), f); if (o != null && o !== f) jlSigPush('资金', '主力累计转' + (f ? '净流入 ' : '净流出 ') + fM(lastRow.cum), 'cum' + f + '|' + lastRow.hm); } catch (e) { } }
+function jlSigCtrl(v) { try { if (v == null) return; var clv = v >= 100 ? 3 : v >= 50 ? 2 : v > 0 ? 1 : 0, o = jlSigLatch((RPL ? 'rp|' : '') + 'ctrl|' + ((window.STK && STK.code) || ''), clv); if (o != null && o !== clv) jlSigPush('控盘', ['无控盘', '低控盘', '中控盘', '高控盘'][clv] + ' ' + Math.round(v) + '（价格公式）', 'ctrl' + clv + '|' + (LIVE.sessDate || '') + '|' + Math.round(v)); } catch (e) { } }
+function jlSigCum(lastRow, fM) { try { if (!lastRow || !(Math.abs(lastRow.cum) >= 0.05)) return; var f = lastRow.cum >= 0 ? 1 : 0, o = jlSigLatch((RPL ? 'rp|' : '') + 'cum|' + ((window.STK && STK.code) || ''), f); if (o != null && o !== f) jlSigPush('资金', '主力累计转' + (f ? '净流入 ' : '净流出 ') + fM(lastRow.cum), 'cum' + f + '|' + lastRow.hm); } catch (e) { } }
 function liveKeys() {
   var ks = [], e = LIVE.eng, ot = openType();
-  try { (window.__jlRsoKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'rso|' + ev.id, k: 'rso', main: ev.txt, sub: 'RSO 回归斜率信号', lbl: 'RSO' }); }); } catch (er) { }
-  try { (window.__jlSigKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'sig|' + ev.id, k: 'rso', main: ev.lbl + ' ' + ev.txt, sub: ev.sub || '信号提醒', lbl: ev.lbl, txt: ev.txt }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道 */
+  try { var _rp = RPL ? '【回放】' : ''; (window.__jlRsoKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'rso|' + ev.id, k: 'rso', main: _rp + ev.txt, sub: 'RSO 回归斜率信号', lbl: 'RSO' }); }); } catch (er) { }
+  try { var _rp2 = RPL ? '【回放】' : ''; (window.__jlSigKeys || []).splice(0).forEach(function (ev) { ks.push({ id: 'sig|' + ev.id, k: 'rso', main: ev.lbl + ' ' + _rp2 + ev.txt, sub: ev.sub || '信号提醒', lbl: ev.lbl, txt: _rp2 + ev.txt }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道 */
   if (ot && LIVE.ts.slice(8, 12) >= '0925') {
     ks.push({
       id: 'open', k: ot.lo ? 'sellOpen' : 'buyOpen',
@@ -2108,13 +2108,7 @@ function liveKeys() {
 function liveCompute() {
   try {   /* 11-12: 手画水平线价格穿越提醒(挂最前, 不足一手/指数也照常盯线) */
     if (window.__jlSigPrevSym !== (LIVE.sym || '')) { window.__jlSigPrevPx = 0; window.__jlSigPrevSym = LIVE.sym || ''; }
-    if (LIVE.last > 0 && window.__jlSigPrevPx > 0 && window.zpHlApi) {
-      var _pp = window.__jlSigPrevPx, _np = LIVE.last;
-      window.zpHlApi.mainLines().forEach(function (h) {
-        if (_pp < h.p && _np >= h.p) jlSigPush('画线', '价格上穿你的线 ' + h.p.toFixed(2), 'hlU|' + h.p + '|' + (LIVE.ts || '').slice(9));
-        else if (_pp > h.p && _np <= h.p) jlSigPush('画线', '价格跌破你的线 ' + h.p.toFixed(2), 'hlD|' + h.p + '|' + (LIVE.ts || '').slice(9));
-      });
-    }
+    jlSigLines(window.__jlSigPrevPx, LIVE.last, (LIVE.ts || '').slice(9));
     window.__jlSigPrevPx = LIVE.last;
   } catch (e) { }
   if (INJL && !(LIVE.sh > 0)) { LIVE.eng = null; return; }   /* 不足一手: 不跑引擎不提醒 */
@@ -3262,8 +3256,15 @@ function rplShowJL(i, alertNew) {
   R.eng = runEngine(R.bars.slice(0, R.I + 1), {});
   rplSwapJL(true);
   try {
+    jlSigLines(R.ppJL || 0, LIVE.last, 'rp' + R.I); R.ppJL = LIVE.last;   /* 11-12: 回放价也盯手画线 */
     var ks = liveKeys(), seen = {};
-    ks.forEach(function (x) { if (/^(sell|buy)\d/.test(x.id)) { seen[x.id] = 1; if (alertNew && !R.seen[x.id]) fireAlert(x); } });
+    ks.forEach(function (x) {
+      if (/^(sell|buy)\d/.test(x.id)) { seen[x.id] = 1; if (alertNew && !R.seen[x.id]) fireAlert(x); }
+      else if (alertNew && (x.id.indexOf('sig|') === 0 || x.id.indexOf('rso|') === 0) && !LIVE.keys[x.id]) {
+        LIVE.keys[x.id] = { t: Date.now(), a: 1, txt: x.txt || x.main || '', lbl: x.lbl || '' };   /* 11-12: 信号键入册 → 浮球金环闪字 */
+        try { var b = $('band'); b.classList.add('flash'); setTimeout(function () { b.classList.remove('flash'); }, 2600); } catch (er) { }
+      }
+    });
     R.seen = seen;
     liveRender(true);
   } finally { rplSwapJL(false); }
@@ -3280,7 +3281,7 @@ function rplEnterJL() {
   if (RPL) return;
   var src = (LIVE.ebars && LIVE.ebars.length ? LIVE.ebars : engBarsJL()).filter(function (b) { return !b.partial; });
   if (!src.length) { $('bMain').textContent = '还没有走完的5分K · 暂时没法回放'; return; }
-  RPL = { bars: src, pts: (LIVE.pts || []).slice(), I: 0, seen: {}, t: null, eng: null };
+  RPL = { bars: src, pts: (LIVE.pts || []).slice(), I: 0, seen: {}, t: null, eng: null }; try { var _sl = window.__jlSigLatch || {}; Object.keys(_sl).forEach(function (k) { if (k.indexOf('rp|') === 0) delete _sl[k]; }); } catch (e) { }   /* 11-12: 演练锁存清零, 可反复回放看提醒 */
   document.body.classList.add('rpl');
   $('tabRep').className = 'tab on'; $('tabLive').className = 'tab';
   $('scr').max = src.length - 1; $('scr').value = 0;
@@ -6056,7 +6057,7 @@ window.addEventListener('click', function (e) {
     if (!wrap) {
       wrap = document.createElement('div'); wrap.id = 'zpRsoW';
       wrap.innerHTML = '<div class="zr-h"><span class="zr-t">Regression Slope Osc</span>' +
-        '<button type="button" data-a="bell" title="提醒: 选中一条RSO水平线=该线穿越提醒; 没选中=RSO上穿/下穿信号线提醒">🔔</button><button type="button" data-a="cfg" title="设置">⚙</button></div>';
+        '<button type="button" data-a="bell" style="opacity:.55;padding:1px 3px" title="提醒: 选中一条RSO水平线=该线穿越提醒; 没选中=RSO上穿/下穿信号线提醒"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button><button type="button" data-a="cfg" title="设置">⚙</button></div>';
       svg = document.createElementNS(NS, 'svg'); svg.id = 'zpRso'; svg.setAttribute('viewBox', '0 0 360 ' + S.h);
       svg.style.cssText = 'width:100%;display:block;touch-action:pan-y'; wrap.appendChild(svg);
       buildPanel(); wrap.appendChild(panel);
@@ -6119,7 +6120,7 @@ window.addEventListener('click', function (e) {
   function busy() { }
 
   function note(t) { var d = document.createElement('div'); d.className = 'zr-toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 3000); }   /* 静默确认气泡(不震不响) */
-  function bellBtn() { try { var bb = wrap.querySelector('[data-a="bell"]'); if (bb) { bb.style.color = S.ax ? '#ffd66e' : ''; bb.style.textShadow = S.ax ? '0 0 9px rgba(255,214,110,.75)' : ''; } } catch (e) { } }   /* 提醒开着=铃铛点亮 */
+  function bellBtn() { try { var bb = wrap.querySelector('[data-a="bell"]'); if (bb) { bb.style.color = S.ax ? '#ffd66e' : ''; bb.style.filter = S.ax ? 'drop-shadow(0 0 4px rgba(255,214,110,.9))' : ''; bb.style.opacity = S.ax ? '1' : ''; } } catch (e) { } }   /* 提醒开着=铃铛点亮 */
   function toast(t) {
     var d = document.createElement('div'); d.className = 'zr-toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 4500);
     try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (_) { }
