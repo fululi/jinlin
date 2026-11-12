@@ -1,11 +1,15 @@
-/* jl_req.js v1 — 统一请求层 (jl-req1)
+/* jl_req.js v2 — 统一请求层 (jl-req1c)
  * 必须是页面第一个脚本: 在入口处拦截所有发往 东财/腾讯 的 JSONP(<script src>) 与 fetch, 现有调用点一行不改:
  *   ① 按主机限速排队(最小间隔+并发上限)
- *   ② 熔断: 同主机连续失败 FAILN 次 → 打开 COOL 毫秒, 期间有备口就改走备口(push2↔push2delay, push2his 资金流→push2delay), 没备口就立刻判失败(调用方马上走自己的兜底, 不再干等超时/不再狂打)
+ *   ② 熔断: 同主机连续失败 FAILN 次 → 打开 COOL 毫秒, 期间有备口就改走备口(池轮转, 见 altOf), 没备口就立刻判失败(调用方马上走自己的兜底, 不再干等超时/不再狂打)
  *      冷却到点放 1 个探路请求(半开), 成功即恢复
  *   ③ 排队期间调用方已放弃(JSONP 回调函数已删) → 不再发
  *   ④ 统计: window.jlReq.stats(), 每日汇总落 jl_req_day_v1(留30天)
  * 新代码用 jlReq.jsonp(url,{ttl,timeout}) / jlReq.json(url,{ttl}): 带同 URL 并发去重 + 短缓存
+ * jl-req1c 11-12: 当日东财 push2 边缘大面积抖动(push2/push2delay/push2his 时通时断, trafficmanager 轮换出口),
+ *   原备口只有 push2↔push2delay 一条, 两头一起挂就全天拉不到数据 → 板块资金/急拉/出逃/退潮提醒全哑。
+ *   实测 1.push2 / 2.push2 / 1.push2his / 2.push2his 与主站同服务同数据(数字前缀口), 故备口改为按池轮转(每次取下一个, 备口自身熔断照记)。
+ *   上线: index.html 引用本文件 ?v=2→3 (v1 备口逻辑还原 = 本文件 altOf 还原成 v1 的 push2↔push2delay 互换)。
  * 回滚: 删 index.html <head> 里引用本文件的一行即可(拦截全部失效, 行为回到原样)
  */
 (function () {
@@ -28,12 +32,18 @@
     var k = keyOf(u); if (!k || !ruleOf(k.split('/')[0])) return null;
     return B[k] || (B[k] = { k: k, h: k.split('/')[0], fail: 0, openUntil: 0, probe: false, lastErr: '', st: { ok: 0, err: 0, fast: 0, alt: 0, drop: 0 } });
   }
+  var ALTQ = 0; /* 11-12 备口轮转指针: 每次取池中下一个, 避免反复撞同一个坏口 */
   function altOf(u) {
-    var x; try { x = new URL(u, location.href); } catch (e) { return null; }
-    if (x.hostname === 'push2.eastmoney.com') x.hostname = 'push2delay.eastmoney.com';
-    else if (x.hostname === 'push2delay.eastmoney.com') x.hostname = 'push2.eastmoney.com';
-    else if (x.hostname === 'push2his.eastmoney.com' && /\/api\/qt\/stock\/fflow\//.test(x.pathname)) x.hostname = 'push2delay.eastmoney.com';
+    var x, h, pool; try { x = new URL(u, location.href); } catch (e) { return null; }
+    h = x.hostname;
+    /* 11-12 jl-req1c: 数字前缀口(1./2.push2, 1./2.push2his)与主站同服务同数据, push2delay 是延时口放最后 */
+    if (h === 'push2.eastmoney.com') pool = ['1.push2.eastmoney.com', '2.push2.eastmoney.com', 'push2delay.eastmoney.com'];
+    else if (h === 'push2delay.eastmoney.com') pool = ['push2.eastmoney.com', '1.push2.eastmoney.com', '2.push2.eastmoney.com'];
+    else if (h === '1.push2.eastmoney.com' || h === '2.push2.eastmoney.com') pool = ['push2.eastmoney.com', 'push2delay.eastmoney.com'];
+    else if (h === 'push2his.eastmoney.com') pool = ['1.push2his.eastmoney.com', '2.push2his.eastmoney.com', 'push2delay.eastmoney.com'];
+    else if (h === '1.push2his.eastmoney.com' || h === '2.push2his.eastmoney.com') pool = ['push2his.eastmoney.com', 'push2delay.eastmoney.com'];
     else return null;
+    x.hostname = pool[ALTQ++ % pool.length];
     return x.href;
   }
   function isOpen(s) { return s.openUntil > Date.now(); }
