@@ -458,6 +458,7 @@
     + "#jlsectHandle b{font-size:11px;color:#fff;font-weight:700;letter-spacing:.5px;flex:0 0 auto}"
     + "#jlsectHandle small{font-size:10px;color:#FFFFFF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" /* jl-C: 灰.78→亮白.95加粗 */
     + "#jlsectHandle small.jlsecNo{color:#ffd84a;font-size:9.5px;font-weight:700}"
+    + "#jlsectHandle .jlsecRd{flex:0 0 auto;font-size:9.5px;font-weight:800;color:#10131a;background:#ff5459;border-radius:8px;padding:1px 6px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.35)}" /* 11-12 未读角标 */
     + "#jlsectHandle .jlsecArr{margin-left:auto;flex:0 0 auto;font-size:10px;color:#FFFFFF;font-weight:700;transition:transform .3s}"
     + "#jlsectroot.open .jlsecArr{transform:rotate(180deg)}"
     + "#jlsectBody{overflow-y:auto;max-height:calc(min(58vh,520px) - 34px);pointer-events:auto;overscroll-behavior:contain;padding:2px 11px 12px}" /* 内容区内滚, 关态被根裁剪自然无事件 */
@@ -876,7 +877,7 @@
         var why = scopeOf(sec); if (!why) return;
         var kind = sg.k === "in" ? "fund" : "out";
         if (st.list.some(function (x) { return x.sec === sec && x.kind === kind; })) return;
-        var a = S.ana[sec] ? S.ana[sec].cur : { avg: q.p, zt: 0 }, x = { kind: kind, t: S.bkq.t, sec: sec, a: a.avg, bp: q.p, f: q.f, fr: q.fr, z: a.zt || 0, why: why };
+        var a = S.ana[sec] ? S.ana[sec].cur : { avg: q.p, zt: 0 }, x = { kind: kind, t: S.bkq.t, sec: sec, a: a.avg, bp: q.p, f: q.f, fr: q.fr, z: a.zt || 0, why: why, drain: sg.drain || 0 }; /* 11-12: 补drain字段——原来漏带, 跌着流出的板块弹窗文案错走"小心假拉"那版 */
         st.list.push(x); fresh.push(x);
       });
       if (!fresh.length) return;
@@ -1145,6 +1146,9 @@
     return CORE.alertScope(sec, A && A.cur ? A.cur.rank : null, curPicks(), fundRankOf(sec), recentTopOf(sec), S.heldSecs);
   }
   function sgStore() { var s = lsGet("jl_secsurge_v1"); return s && s.d === S.day && Array.isArray(s.list) ? s : { d: S.day, list: [] }; }
+  /* 11-12 用户: "弹窗只在触发那一下弹, 人不在就错过了, 发生的事情我得知道" —— 加未读水位: showSurge/openReview 让用户看到即清零; 手柄红角标常驻提示今天还有几条没看(含刚弹过没看到的) */
+  function rdStamp() { try { var st = sgStore(); localStorage.setItem("jl_secrd_v1", JSON.stringify({ d: st.d, n: st.list.length })); } catch (e) {} }
+  function rdUnread() { try { var st = sgStore(), r = lsGet("jl_secrd_v1"); return Math.max(0, st.list.length - (r && r.d === st.d ? r.n : 0)); } catch (e) { return 0; } }
   function hhmm(t) { return new Date(+t).toTimeString().slice(0, 5); }
   function surgeCheck() {
     try {
@@ -1363,6 +1367,7 @@
   }
   function showSurge(x, more, refresh) {
     ensurePops();
+    if (!document.hidden) rdStamp(); /* 11-12: 窗真弹到屏幕上了=看过, 未读清零; 后台静默记录的不清 */
     if (POPS && POPS.className.indexOf("decay") >= 0) POPS.className = ""; /* 退潮窗占着就先让位给新的急拉/资金提醒 */
     if (refresh) { if (SH.day === S.day) { snapStk(x); sheetRefresh(); } return; }
     SH.day = S.day; SH.items = sheetItems(S.day);
@@ -1399,7 +1404,7 @@
     SH.day = S.day; SH.items = [x]; SH.i = 0; sheetPlace(); sheetRender();
     memOf(sec).then(function () { if (SH.items[0] === x) sheetRefresh(); });
   }
-  function openReview() { ensurePops(); clearTimeout(POPS_T); var ds = sheetDays(); SH.day = ds.indexOf(S.day) >= 0 ? S.day : ds[ds.length - 1] || S.day; SH.items = sheetItems(SH.day); SH.i = 0; sheetPlace(); sheetRender(); }
+  function openReview() { ensurePops(); clearTimeout(POPS_T); rdStamp(); /* 11-12: 打开提醒列表=看过 */ var ds = sheetDays(); SH.day = ds.indexOf(S.day) >= 0 ? S.day : ds[ds.length - 1] || S.day; SH.items = sheetItems(SH.day); SH.i = 0; sheetPlace(); sheetRender(); }
   /* 11-05 用户: 要"当天可埋伏的股票", 按板块给, 标理由和风险。只用现成数据(强度排名/急拉/资金/成分股), 零新增请求(成分股沿用点板块时的取法, 每板块只取一次)
      规则(初值, 未回测): 板块=急拉/资金先进/强度前3/我盯的, 且主力没在出、板块主力净额不为负; 个股=没涨停、涨幅<7%、主力净流入>0, 取净流入最大2只 */
   function outToday(sec) { var r = null; (S.surges || []).forEach(function (x) { if (x.sec === sec && x.kind === "out" && (!r || (x.t2 || x.t) < (r.t2 || r.t))) r = x; }); return r; } /* 11-05: 当天出逃过的板块, 推荐/急拉处标冲突 */
@@ -1870,7 +1875,7 @@
     if (hasAna && S.review) sub = "复盘 " + S.dispDay + (S.lead ? " · 主攻 " + S.lead : "");
     var sgL = (S.surges || []).slice().sort(function (x, y) { return (y.t2 || y.t) - (x.t2 || x.t); }), sg0 = sgL[0];
     var sgHot = !!(sg0 && S.live && Date.now() - (sg0.t2 || sg0.t) < 40 * 60e3);
-    if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : "") + " · " + sub;
+    if (sg0 && S.live) sub = (sg0.kind === "fund" ? "💰" + sg0.sec + " 资金先进 " : sg0.kind === "out" ? "⚠" + sg0.sec + " 主力在出 " : "⚡" + sg0.sec + " 急拉 ") + hhmm(sg0.t2 || sg0.t) + (sgL.length > 1 ? " 等" + sgL.length + "个" : "") + " · " + sub; /* 11-12: 出货也顶上手柄——回来看一眼就知道错过了什么 */
     /* ===== 11-12 用户: 抽屉重排成 3 张卡 =====
        ① 今天实时: 资金榜 → 情绪天气 → 领涨时间线 → 现在最强板块
        ② 复盘: 退潮前兆 → 板块轮动热力图
@@ -1922,7 +1927,8 @@
     var _pg0 = document.getElementById("jlpgPager"), _ch0 = document.getElementById("jlpgChips"), pgL = _pg0 ? _pg0.scrollLeft : 0, chL = _ch0 ? _ch0.scrollLeft : 0;
     var _rp0 = document.getElementById("jlrecPg"), recL = _rp0 ? _rp0.scrollLeft : 0;
     var prevB = document.getElementById("jlsectBody"), sc = prevB ? prevB.scrollTop : 0; /* 刷新保留滚动位置 */
-    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b><small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
+    var _rdN = rdUnread(); /* 11-12: 手柄未读角标——今天有几条提醒没看过, 红字常驻直到点开提醒列表 */
+    R.innerHTML = '<div id="jlsectHandle"><span class="jlsecGrab"></span><b>板块强度</b>' + (_rdN > 0 ? '<span class="jlsecRd">' + _rdN + '条未读</span>' : '') + '<small' + (has ? '' : ' class="jlsecNo"') + '>' + esc(sub) + '</small><span class="jlsecArr">⌄</span></div>' +
       '<div id="jlsectBody">' + body + "</div>";
     R.classList.toggle("open", !!S.open);
     R.classList.toggle("surge", sgHot);
