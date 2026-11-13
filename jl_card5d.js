@@ -33,7 +33,33 @@
     const WK = "日一二三四五六";
     const idx = (t) => { const mm = +t.slice(0, 2) * 60 + +t.slice(2, 4); return mm <= 690 ? Math.max(0, mm - 570) : Math.min(240, 120 + (mm - 780)); };
     const tOf = (k) => { const mm = k <= 120 ? 570 + k : 780 + (k - 120); return String(Math.floor(mm / 60)).padStart(2, "0") + ":" + String(mm % 60).padStart(2, "0"); };
-    async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store" }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
+    /* 11-14 用户「用东财备份」: 腾讯拿不到时走东财(JSONP, 和作战屏 emJ 同法); 换成腾讯同样的数据形状, 下面画图代码一行不改 */
+    let EMN = 0;
+    function emJP(u) { return new Promise((ok, no) => { const cb = "c5em" + Date.now() + "_" + (EMN++), sc = document.createElement("script"); let done = false; const fin = (d) => { if (done) return; done = true; delete window[cb]; if (sc.parentNode) sc.parentNode.removeChild(sc); d ? ok(d) : no(Error("东财连不上")); }; window[cb] = fin; setTimeout(() => fin(null), 9000); sc.onerror = () => fin(null); sc.src = u + "&cb=" + cb + "&_=" + Date.now(); document.head.appendChild(sc); }); }
+    const emSec = (c) => (/^sh/.test(c) ? "1." : "0.") + c.slice(2), EMUT = "&ut=fa5fd1943c7b386f172d6893dbfba10b";
+    function emDayK(c, n) {   /* 东财日K(前复权) → 腾讯 qfqday 行 [日期,开,收,高,低,量] */
+      return emJP("https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=" + emSec(c) + "&klt=101&fqt=1&lmt=" + n + "&end=20500101&fields1=f1,f2,f3&fields2=f51,f52,f53,f54,f55,f56" + EMUT).then((d) => {
+        const k = d && d.data && d.data.klines; if (!k || !k.length) throw Error("东财无日K");
+        return { data: { [c]: { qfqday: k.map((r) => r.split(",")).map((a) => [a[0], a[1], a[2], a[3], a[4], a[5]]) } } };
+      });
+    }
+    function em5(c) {   /* 东财五日分时 trends2 ndays=5 → 腾讯 day/query 形状: 每天 {date, prec, data:["HHMM 价 累计量(手) 累计额(元)"]}, 新的在前 */
+      return emJP("https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid=" + emSec(c) + "&fields1=f1,f2,f3,f4,f5,f6,f7,f8&fields2=f51,f52,f53,f54,f55,f56,f57,f58&ndays=5&iscr=0&iscca=0" + EMUT).then(async (d) => {
+        const t = d && d.data && d.data.trends; if (!t || !t.length) throw Error("东财无五日分时");
+        const by = {}, ord = [];
+        t.forEach((s) => { const a = s.split(","), dt = a[0].slice(0, 10).replace(/-/g, ""), hm = a[0].slice(11, 16).replace(":", ""); if (hm < "0930" || hm > "1500" || !(+a[2] > 0)) return; if (!by[dt]) { by[dt] = { cv: 0, ca: 0, rows: [], last: 0 }; ord.push(dt); } const o = by[dt]; o.cv += +a[5] || 0; o.ca += +a[6] || 0; o.last = +a[2]; o.rows.push(hm + " " + a[2] + " " + o.cv + " " + o.ca.toFixed(2)); });
+        /* 每天昨收 = 前一天最后一分钟收盘; 第一天的昨收要日K里它前一天的收盘, 拿不到这一天就不画(不瞎猜) */
+        let p0 = 0; try { const K = (await emDayK(c, 12)).data[c].qfqday, i = K.findIndex((r) => r[0].replace(/-/g, "") === ord[0]); if (i > 0) p0 = +K[i - 1][2]; } catch (e) { }
+        const out = []; ord.forEach((dt, i) => { const prec = i ? by[ord[i - 1]].last : p0; if (prec > 0) out.push({ date: dt, prec: String(prec), data: by[dt].rows }); });
+        if (!out.length) throw Error("东财五日分时不全");
+        return { data: { [c]: { data: out.reverse() } } };
+      });
+    }
+    /* 11-14: 原来 fetch 不设超时 → 手机上腾讯挂住就一直卡, 东财备份轮不到; 改成 5 秒掐断(同作战屏 jget) */
+    async function J(u) { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 5000); try { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: ac.signal }); if (!r.ok) throw Error("HTTP " + r.status); return await r.json(); } finally { clearTimeout(tm); } }
+    /* 11-14: 腾讯四域名轮询(同作战屏 DAY_HOSTS_JL), 原来"重试"只是同一域名再打一次 */
+    const TXH = ["web.ifzq.gtimg.cn", "ifzq.gtimg.cn", "web.sqt.gtimg.cn", "proxy.finance.qq.com/ifzqgtimg"];
+    function TX(path) { let i = 0; const nx = () => (i >= TXH.length ? Promise.reject(Error("腾讯各域名都连不上")) : J("https://" + TXH[i++] + path).catch(nx)); return nx(); }
 
     let S = null;   /* {days:[{date,prec,pts:[{k,p,v,avg}]}], P:[全部点], gaps:[...]} */
     let view = { a: 0, b: 0 };   /* 可见点区间 [a,b) */
@@ -41,8 +67,8 @@
 
     async function load(keep) {
       const c = pf(code);
-      const [d5, dkr] = await Promise.all([J("https://web.ifzq.gtimg.cn/appstock/app/day/query?code=" + c), J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq").catch(() => J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq"))]);
-      const raw = d5.data[c].data.slice().reverse(), dk = (dkr.data[c].qfqday || dkr.data[c].day).map((r) => ({ t: r[0].replace(/-/g, ""), o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] }));
+      const [d5, dkr] = await Promise.all([TX("/appstock/app/day/query?code=" + c).then((j) => { if (!j || !j.data || !j.data[c] || !j.data[c].data || !j.data[c].data.length) throw Error("腾讯无五日分时"); return j; }).catch(() => em5(c)), TX("/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq").catch(() => emDayK(c, 10)).catch(() => null)]);   /* 11-14: 腾讯日K fqkline 各域名都 501 时五日图整张"取不到" → 日K只是核对用, 拿不到就不要它, 五日分时照画 */
+      const raw = d5.data[c].data.slice().reverse(), dk = ((dkr && dkr.data && dkr.data[c] && (dkr.data[c].qfqday || dkr.data[c].day)) || []).map((r) => ({ t: r[0].replace(/-/g, ""), o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] }));
       const days = [], P = [];
       raw.forEach((d, di) => {
         let pv = 0, pa = 0, tot = 0; const pts = [];
