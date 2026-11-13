@@ -25,6 +25,8 @@
   /* 方向: 卖/向下类 -1, 买/向上类 +1, 其它 0(只记不判对错) */
   function dirOf(lbl, txt) {
     var s = (lbl || "") + " " + (txt || "");
+    if (/RSO/.test(s) && /高位/.test(s)) return -1;   /* 11-13: RSO 到高位 = 看回落; 到低位 = 看反弹 */
+    if (/RSO/.test(s) && /低位/.test(s)) return 1;
     if (/卖|下穿|到顶|跌破|流出|掉头↓|高抛|▼|转弱|冲高回落/.test(s)) return -1;
     if (/买|接|上穿|见底|突破|流入|掉头↑|低吸|▲|转强|探底回升/.test(s)) return 1;
     return 0;
@@ -32,6 +34,8 @@
   /* 归类: 台账「成绩」按这个分组 */
   function kindOf(lbl, txt) {
     var s = (lbl || "") + " " + (txt || "");
+    if (/^资金验证/.test(lbl || "")) { var mk = (txt || "").match(/真拉|虚拉|吸筹|真跌/), pd = (lbl || "").replace("资金验证", "").trim(); return "资金验证" + (pd ? " " + pd : " 15分") + " " + (mk ? mk[0] : ""); }   /* 15分/日/周 分开统计 */   /* 11-13: 真拉/虚拉/吸筹/真跌 分组 */
+    if (/RSO/.test(s) && /高位|低位/.test(s)) { var pm = s.match(/RSO (5分|15分|日线)/); return "RSO " + (pm ? pm[1] : "") + (/高位/.test(s) ? " 高位" : " 低位"); }   /* 11-13: 分周期统计 5/15/日 谁准 */
     if (/RSO/.test(s)) return /上穿/.test(s) ? "RSO 上穿" : /下穿/.test(s) ? "RSO 下穿" : "RSO";
     if (/共振/.test(s)) return /到顶|▼/.test(s) ? "共振到顶▼" : /见底|▲/.test(s) ? "共振见底▲" : /上穿/.test(s) ? "共振 M1上穿" : /下穿/.test(s) ? "共振 M1下穿" : "共振紫";
     if (/意愿/.test(s)) return /↓|转弱|下/.test(s) ? "意愿掉头↓" : "意愿掉头↑";
