@@ -1711,7 +1711,7 @@ function resoMountJL() {
 }
 function liveResetJL() {
   try { LIVE.stop(); } catch (e) { }
-  LIVE.gen = (LIVE.gen || 0) + 1; LIVE.fetching = false; LIVE.m5At = 0; LIVE.lastOk = 0; LIVE.latch = {}; LIVE.ebars = []; LIVE.dhi = 0; LIVE.dlo = 0; /* 代次+1: 旧股票在途请求回来后一律丢弃 */
+  LIVE.gen = (LIVE.gen || 0) + 1; LIVE.fetching = false; LIVE.slowBusy = false; LIVE.m5At = 0; LIVE.lastOk = 0; LIVE.latch = {}; LIVE.ebars = []; LIVE.dhi = 0; LIVE.dlo = 0; /* 代次+1: 旧股票在途请求回来后一律丢弃 */
   LIVE.pc = 0; LIVE.open = 0; LIVE.last = 0; LIVE.hi = 0; LIVE.lo = 0; LIVE.ts = ''; LIVE.pct = 0; LIVE.sessDate = '';
   LIVE.hist = { day: [], m30: [], m15: [], m5: [], m1: [] }; LIVE.m1bf = []; LIVE.m1sess = []; LIVE.bars = []; LIVE.dayCached = false;
   LIVE.eng = null; LIVE.keys = {}; LIVE.pts = []; LIVE.auc = null; LIVE.err = null; LIVE.srcs = { m5: '', m1: '', pts: '' };
@@ -2228,7 +2228,7 @@ function cdText() {
 function tsFmt() { return LIVE.ts && LIVE.ts.length >= 14 ? LIVE.ts.slice(4, 6) + '-' + LIVE.ts.slice(6, 8) + ' ' + LIVE.ts.slice(8, 10) + ':' + LIVE.ts.slice(10, 12) + ':' + LIVE.ts.slice(12, 14) : '—'; }
 function sessFmt() { return LIVE.sessDate ? LIVE.sessDate.slice(4, 6) + '-' + LIVE.sessDate.slice(6, 8) : '—'; }
 function srcTag() {
-  var f = function (s) { return s === 'em' ? '东财' : s === 'tx' ? '腾讯' : '—'; };
+  var f = function (s) { return s === 'em' ? '东财' : s === 'tx' ? '腾讯' : (s || '—'); };   /* 11-14: 「1分K补」「断·停在上一轮」也显示出来 */
   return '分时:' + f(LIVE.srcs.pts) + ' · 1分K:' + f(LIVE.srcs.m1) + ' · 5分K:' + f(LIVE.srcs.m5) + ' · 零新浪';
 }
 function barTm(i) { return (BARS && BARS[i]) ? BARS[i][0].slice(0, 2) + ':' + BARS[i][0].slice(2) : ''; }
@@ -2381,12 +2381,41 @@ function liveSchedule() {
   if (!LIVE.on) return;
   LIVE.pollT = setTimeout(livePoll, liveDelay());
 }
+/* 11-14 用户「分时要及时」: 15/30分K+日K 慢通道不再拖住分时那一轮 —— 单独回来单独并入, 并入后重算一次(公式不变) */
+function liveSlowApply(got, sym) {
+  var sig0 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
+  if (got.m15 && got.m15.length) LIVE.hist.m15 = got.m15;
+  if (got.m30 && got.m30.length) LIVE.hist.m30 = got.m30;
+  /* 11-13 用户「今天日K被干掉了, 不要再这种数据错」: 日K先验货再用 —— 至少25根、价格>0且高≥低、最后一根不比本机存的旧;
+     合格才替换并存本机(近120根); 不合格/没拉到 → 用本机存的(7天内的才用); 公式不变 */
+  try {
+    var dkKey = 'zp_dayk_v1_' + sym, dkc = null; try { dkc = JSON.parse(localStorage.getItem(dkKey) || 'null'); } catch (eP) { dkc = null; }
+    var dLast = function (a, f) { return a && a.length ? dg(f ? a[a.length - 1][0] : a[a.length - 1].t).slice(0, 8) : ''; };
+    var okDay = !!(got.day && got.day.length >= 25 && got.day.slice(-25).every(function (b) { return b.c > 0 && b.h > 0 && b.l > 0 && b.h >= b.l; }) && (!dkc || dLast(got.day) >= dLast(dkc, 1)));
+    if (okDay) { LIVE.hist.day = got.day; LIVE.dayCached = false; localStorage.setItem(dkKey, JSON.stringify(got.day.slice(-120).map(function (b) { return [b.t, b.o, b.c, b.h, b.l, b.v]; }))); }
+    else if (!(LIVE.hist.day && LIVE.hist.day.length >= 25 && !LIVE.dayCached)) {
+      var fresh = dkc && dkc.length >= 25 && (function () { var a = dLast(dkc, 1), sd = LIVE.sessDate || ''; if (!a || !sd) return !!a; var t1 = new Date(+sd.slice(0, 4), +sd.slice(4, 6) - 1, +sd.slice(6, 8)), t0 = new Date(+a.slice(0, 4), +a.slice(4, 6) - 1, +a.slice(6, 8)); return (t1 - t0) / 864e5 <= 7; })();
+      if (fresh) { LIVE.hist.day = dkc.map(mrow); LIVE.dayCached = true; }
+      else if (got.day && got.day.length) { LIVE.hist.day = got.day; LIVE.dayCached = false; }   /* 本机也没有能用的 → 先用拉到的(哪怕短) */
+    }
+  } catch (eDk) { if (got.day && got.day.length && !(LIVE.hist.day && LIVE.hist.day.length)) LIVE.hist.day = got.day; }
+  var sig1 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
+  if (sig0 !== sig1) ZCACHE = {};   /* 大周期数据更新了: 清缺口区缓存, 不沿用旧结果 */
+}
+function liveSlowAfter() {
+  if (!LIVE.qtOkLast && LIVE.sessDate) {   /* 本轮没腾讯快照时昨收靠日K: 日K晚到了这里补上 */
+    var dcl = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < LIVE.sessDate; });
+    if (dcl.length) { LIVE.pc = dcl[dcl.length - 1].c; if (LIVE.err === '拿不到昨收 · 暂停计算') LIVE.err = null; }
+  }
+  if (!LIVE.err && LIVE.m5okLast) liveCompute();
+  if (MODE === 'live') liveRender();
+}
 function livePoll() {
   if (!LIVE.on || LIVE.fetching) { liveSchedule(); return; }
   LIVE.fetching = true;
   var gen = LIVE.gen, sym = LIVE.sym, qtOk = false;   /* jl-zp4: 本轮发起时的票+代次, 回包一律按它对 */
   var sameDay = function (b) { return dg(b.t).slice(0, 8) === LIVE.sessDate; };
-  var slow = (LIVE.slowN % 6 === 0) || !(LIVE.hist.day && LIVE.hist.day.length) || !!LIVE.dayCached;   /* 11-13 修: 日K没拉到就每轮重拉(原来要等6轮, 收盘后60秒一轮=6分钟, 日K档只剩今天一根大方块) */
+  var slow = !LIVE.slowBusy && ((LIVE.slowN % 6 === 0) || !(LIVE.hist.day && LIVE.hist.day.length) || !!LIVE.dayCached);   /* 11-14: 慢通道在途就不再叠一组 */   /* 11-13 修: 日K没拉到就每轮重拉(原来要等6轮, 收盘后60秒一轮=6分钟, 日K档只剩今天一根大方块) */
   if (!(LIVE.hist.day && LIVE.hist.day.length)) try { var dkc0 = JSON.parse(localStorage.getItem('zp_dayk_v1_' + sym) || 'null'); if (dkc0 && dkc0.length >= 25) { var l0 = dg(dkc0[dkc0.length - 1][0]).slice(0, 8), n0 = new Date(), t0 = new Date(+l0.slice(0, 4), +l0.slice(4, 6) - 1, +l0.slice(6, 8)); if ((n0 - t0) / 864e5 <= 8) { LIVE.hist.day = dkc0.map(mrow); LIVE.dayCached = true; } } } catch (eDk0) { }   /* 11-13: 先用本地存的日K顶上, 等新的拉到再换(日均不再先显示备用5.4%) */
   /* ① 5分K+qt快照: 腾讯(主) → 东财(兜底) */
   var Pm5 = jget(mkURL('m5', 480, sym)).then(function (j) {
@@ -2420,9 +2449,18 @@ function livePoll() {
     Pm30 = jget(mkURL('m30', 320, sym)).then(function (j) { var d = j && j.data && j.data[sym]; if (!d || !d.m30) throw new Error('x'); return d.m30.map(mrow); }, function () { return emK(30, 320, 0, sym); });
     Pday = dayGetJL(240, sym).then(function (j) { var d = j && j.data && j.data[sym]; var rs = d && (d.qfqday || d.day); if (!rs || rs.length < 25) throw new Error('x'); return rs.map(mrow); }).then(null, function () { return emK(101, 240, 1, sym); });   /* 11-13: 腾讯返回太短(<25根)也换东财 */
   }
+  if (slow) {
+    LIVE.slowBusy = true;
+    Promise.all([Pm15, Pm30, Pday].map(function (p) { return p.then(function (v) { return v; }, function () { return null; }); })).then(function (r3) {
+      if (gen !== LIVE.gen) return;
+      LIVE.slowBusy = false;
+      try { liveSlowApply({ m15: r3[0], m30: r3[1], day: r3[2] }, sym); } catch (eS) { }
+      liveSlowAfter();
+    });
+  }
   LIVE.slowN++;
-  var names = ['m5', 'pts', 'm1'].concat(slow ? ['m15', 'm30', 'day'] : []);
-  var ps = { m5: Pm5, pts: Ppts, m1: Pm1, m15: Pm15, m30: Pm30, day: Pday };
+  var names = ['m5', 'pts', 'm1'];   /* 11-14: 分时这一轮只等快的三路 */
+  var ps = { m5: Pm5, pts: Ppts, m1: Pm1 };
   Promise.all(names.map(function (k) { return ps[k].then(function (v) { return { k: k, v: v }; }, function () { return { k: k, v: null }; }); })).then(function (rs) {
     if (gen !== LIVE.gen) return;   /* 已切票: 这批数据属于旧股票, 整批丢弃 */
     LIVE.fetching = false;
@@ -2448,11 +2486,12 @@ function livePoll() {
     }
     /* 分时 + 竞价段 */
     if (got.pts && got.pts.date && LIVE.sessDate && got.pts.date !== LIVE.sessDate) { LIVE.pts = []; LIVE.auc = null; got.pts = null; }   /* jl-zp4: 分时不是本交易日的(盘前接口还挂着昨天) → 不用 */
+    var ptsFresh = false;   /* 11-14: 本轮分时有没有真拿到; 没拿到不能悄悄停在上一轮 */
     if (got.pts && got.pts.pts && got.pts.pts.length) {
       LIVE.srcs.pts = got.pts.src;
       LIVE.pts = got.pts.pts;
       LIVE.auc = got.pts.auc;
-      ok = true;
+      ok = true; ptsFresh = true;
     } else if (got.pts && got.pts.auc && !(LIVE.pts && LIVE.pts.length)) { LIVE.auc = got.pts.auc; LIVE.srcs.pts = got.pts.src; }   /* 11-14 用户「竞价是否能在9:30前出现」: 9:15–9:29 只有竞价段, 也写进来 */
     /* 1分K */
     if (got.m1 && got.m1.rows && got.m1.rows.length) {
@@ -2479,26 +2518,6 @@ function livePoll() {
       LIVE.m1sess = LIVE.hist.m1.filter(sameDay);
       ok = true;
     }
-    if (slow) {
-      var sig0 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
-      if (got.m15 && got.m15.length) LIVE.hist.m15 = got.m15;
-      if (got.m30 && got.m30.length) LIVE.hist.m30 = got.m30;
-      /* 11-13 用户「今天日K被干掉了, 不要再这种数据错」: 日K先验货再用 —— 至少25根、价格>0且高≥低、最后一根不比本机存的旧;
-         合格才替换并存本机(近120根); 不合格/没拉到 → 用本机存的(7天内的才用); 公式不变 */
-      try {
-        var dkKey = 'zp_dayk_v1_' + sym, dkc = null; try { dkc = JSON.parse(localStorage.getItem(dkKey) || 'null'); } catch (eP) { dkc = null; }
-        var dLast = function (a, f) { return a && a.length ? dg(f ? a[a.length - 1][0] : a[a.length - 1].t).slice(0, 8) : ''; };
-        var okDay = !!(got.day && got.day.length >= 25 && got.day.slice(-25).every(function (b) { return b.c > 0 && b.h > 0 && b.l > 0 && b.h >= b.l; }) && (!dkc || dLast(got.day) >= dLast(dkc, 1)));
-        if (okDay) { LIVE.hist.day = got.day; LIVE.dayCached = false; localStorage.setItem(dkKey, JSON.stringify(got.day.slice(-120).map(function (b) { return [b.t, b.o, b.c, b.h, b.l, b.v]; }))); }
-        else if (!(LIVE.hist.day && LIVE.hist.day.length >= 25 && !LIVE.dayCached)) {
-          var fresh = dkc && dkc.length >= 25 && (function () { var a = dLast(dkc, 1), sd = LIVE.sessDate || ''; if (!a || !sd) return !!a; var t1 = new Date(+sd.slice(0, 4), +sd.slice(4, 6) - 1, +sd.slice(6, 8)), t0 = new Date(+a.slice(0, 4), +a.slice(4, 6) - 1, +a.slice(6, 8)); return (t1 - t0) / 864e5 <= 7; })();
-          if (fresh) { LIVE.hist.day = dkc.map(mrow); LIVE.dayCached = true; }
-          else if (got.day && got.day.length) { LIVE.hist.day = got.day; LIVE.dayCached = false; }   /* 本机也没有能用的 → 先用拉到的(哪怕短) */
-        }
-      } catch (eDk) { if (got.day && got.day.length && !(LIVE.hist.day && LIVE.hist.day.length)) LIVE.hist.day = got.day; }
-      var sig1 = ['m15', 'm30', 'day'].map(function (k) { var a = LIVE.hist[k]; return a.length + '@' + (a.length ? a[a.length - 1].t : ''); }).join('|');
-      if (sig0 !== sig1) ZCACHE = {};   /* 大周期数据更新了: 清缺口区缓存, 不沿用旧结果 */
-    }
     if (!qtOk && LIVE.sessDate) {   /* jl-zp5: 本轮没拿到腾讯快照 → 昨收取日K里会话日前一根收盘(东财分时的 prePrice 休市时会给成当天收盘, 曾把 23.63 错成 21.75, 引擎把低开读成高开) */
       var dcl = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < LIVE.sessDate; });
       if (dcl.length) LIVE.pc = dcl[dcl.length - 1].c;
@@ -2506,17 +2525,21 @@ function livePoll() {
     }
     if (!ok) LIVE.err = '行情接口无数据';
     /* 分时线两路(东财分时/腾讯分时)都没拿到 → 用当天1分K补出分时点: 高低点红圈、回落阈值、十字线、副图都靠它, 原来这里一空全空 */
-    if ((!LIVE.pts || !LIVE.pts.length) && LIVE.m1sess && LIVE.m1sess.length) {
+    if (!ptsFresh && LIVE.m1sess && LIVE.m1sess.length && (got.m1 || !LIVE.pts || !LIVE.pts.length)) {   /* 11-14: 分时本轮没拿到 → 本轮1分K顶上(原来只在分时为空时才补, 有旧分时就一直停着) */
       LIVE.pts = LIVE.m1sess.map(function (b) { var hm = hmOf(b.t); return { hm: String(hm).padStart(4, '0'), p: b.c, h: b.h, l: b.l, v: b.v || 0 }; }).filter(function (q) { return +q.hm >= 930 && q.p > 0; });
-      LIVE.srcs.pts = LIVE.srcs.pts || ('1分K补(' + (LIVE.srcs.m1 || '') + ')');
+      LIVE.srcs.pts = '1分K补(' + (LIVE.srcs.m1 === 'em' ? '东财' : LIVE.srcs.m1 === 'tx' ? '腾讯' : '') + ')';
     }
-    else if (!m5ok) LIVE.err = '5分K断链 · 已暂停计算(旧K线不参与决策)';
+    else if (!ptsFresh && LIVE.pts && LIVE.pts.length) LIVE.srcs.pts = '断·停在上一轮';
+    /* 11-14 修2: 断链/滞后检查不再跟"1分K补分时"连成 else, 任何时候都查 */
+    if (!m5ok) LIVE.err = '5分K断链 · 已暂停计算(旧K线不参与决策)';
     else if (liveToday() && (function () {   /* 5分K拿到了但明显滞后(末根离现在>15分钟) */
       var p = phaseNow(), nm = hmNow(), lb = LIVE.bars.length ? hmOf(LIVE.bars[LIVE.bars.length - 1].t) : 0;
       var cur = Math.floor(nm / 100) * 60 + nm % 100, lm = Math.floor(lb / 100) * 60 + lb % 100;
       return ((p === 'am' && nm >= 945) || (p === 'pm' && nm >= 1315)) && cur - lm > 15;
     })()) { LIVE.err = '行情滞后(末根5分K距现在>15分钟) · 已暂停计算'; m5ok = false; }
-    if (ok && m5ok) { liveCompute(); ledgerFeedJL(); }
+    LIVE.qtOkLast = qtOk; LIVE.m5okLast = ok && m5ok;
+    var dayWait = !(LIVE.hist.day && LIVE.hist.day.length) && LIVE.slowBusy;   /* 11-14: 开机第一轮日K还在路上 → 先画不算, 日K到了 liveSlowAfter 再算(免得基线少日K) */
+    if (ok && m5ok && !dayWait) { liveCompute(); ledgerFeedJL(); }
     if (MODE === 'live') liveRender();
     liveSchedule();
   });
