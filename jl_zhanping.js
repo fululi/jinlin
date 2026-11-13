@@ -36,6 +36,9 @@
     'border:1.5px solid rgba(232,195,122,.55);box-shadow:0 0 0 3px rgba(232,195,122,.16),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL .bt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;pointer-events:none}' +
     '#jlZpBallJL .bt b{font-size:13px;font-weight:800;color:#f4ead2}#jlZpBallJL .bt span{font-size:8.5px;color:#c3d0e2}' +
+    /* 11-13 用户: 球上提示字太小看不清、也不说哪只票 → 提醒时球横向撑成胶囊: 第一行 票名·卖出!/RSO, 第二行 价/内容, 字放大 */
+    '#jlZpBallJL.wide{width:auto;min-width:58px;max-width:min(78vw,280px);padding:0 16px;border-radius:29px}' +
+    '#jlZpBallJL.wide .bt{position:static;height:100%;white-space:nowrap}#jlZpBallJL.wide .bt b{font-size:14px}#jlZpBallJL.wide .bt span{font-size:12.5px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
     '#jlZpBallJL i{position:absolute;right:1px;top:1px;min-width:13px;height:13px;border-radius:7px;border:2px solid #0f1828;font:700 8px/9px -apple-system,sans-serif;color:#10202a;text-align:center;font-style:normal;display:none}' +
     '#jlZpBallJL.badge i{display:block;background:' + GOLD + '}' +
     '#jlZpBallJL[data-k=idle]{border-color:rgba(143,168,179,.75)}' +
@@ -96,8 +99,8 @@
   function ballPaint() {
     var b = st.ball; if (!b) return;
     var s = ballState(), fl = st.flash && Date.now() < st.flash.until ? st.flash : null;
-    if (fl) s = { b: fl.b, t: fl.t, p: '', k: fl.k };
-    b.className = (fl && fl.bnc ? 'bnc ' : '') + (st.badge ? 'badge ' : '') + (b.dataset.ring === '1' ? 'ring ' : '') + (Date.now() < (st.attnT || 0) ? 'attn' : '');
+    if (fl) s = { b: (fl.nm ? fl.nm + ' · ' : '') + fl.b, t: fl.t, p: '', k: fl.k };
+    b.className = (fl ? 'wide ' : '') + (fl && fl.bnc ? 'bnc ' : '') + (st.badge ? 'badge ' : '') + (b.dataset.ring === '1' ? 'ring ' : '') + (Date.now() < (st.attnT || 0) ? 'attn' : '');
     b.setAttribute('data-k', s.k || 'idle');
     b.innerHTML = '<div class="bt"><b>' + (s.b || '做T') + '</b><span>' + s.t + (s.p ? ' ' + s.p : '') + '</span></div><i>' + (st.badge > 9 ? '9+' : st.badge) + '</i>';
     try {
@@ -124,8 +127,8 @@
     /* 11-12夜 用户: 卖出!/买回! 一直亮到点开浮球(原20秒); 共振位/RSO等其它提醒仍20秒 */
     var keep = kind === 'sell' || kind === 'buy';
     if (!keep && st.flash && st.flash.until === Infinity) { ring(); return; }   /* 卖/买还没点开时, 别的提醒不盖掉它 */
-    st.flash = { k: kind, b: b, t: t, until: keep ? Infinity : Date.now() + 20000, bnc: 1 };
-    ballPaint();
+    st.flash = { k: kind, b: b, t: t, nm: arguments[3] || '', until: keep ? Infinity : Date.now() + 20000, bnc: 1 };
+    ballPaint(); try { place(); } catch (eP) { }
     try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) { }
     var fo = st.flash; setTimeout(function () { if (fo) fo.bnc = 0; ballPaint(); }, 3800);   /* 弹跳4次后停, 闪字留到20秒 */
     setTimeout(function () { if (st.flash && Date.now() >= st.flash.until) { st.flash = null; ballPaint(); } }, 20100);
@@ -140,7 +143,7 @@
     try {
       var d = ev.detail || {}, cs = curStk();
       if (cs.code && d.code && String(d.code).replace(/\D/g, '') !== String(cs.code).replace(/\D/g, '')) return;   /* 只提醒当前票 */
-      st.badge += 1; flash('reso', '共振位', f2(d.p) + '×' + (d.n || '')); st.attnT = 0;
+      st.badge += 1; flash('reso', '共振位', f2(d.p) + '×' + (d.n || ''), cs.name || cs.code || ''); st.attnT = 0;
     } catch (e) { }
   });
 
@@ -160,12 +163,13 @@
           for (var k in ks) if (!st.seen[k]) { st.seen[k] = 1; fresh.push(k); }
           if (fresh.length) {                                       /* 含第一次(0→1)触发 */
             st.badge += fresh.length;
-            var last = null, i, kd, rsoTxt = null, rsoLbl = 'RSO';
-            for (i = 0; i < fresh.length; i++) { kd = kindOf(fresh[i], w.LIVE); if (kd) last = kd; else if (fresh[i].indexOf('rso|') === 0 || fresh[i].indexOf('sig|') === 0) { var rkv = ks[fresh[i]]; if (rkv && rkv.txt) { rsoTxt = rkv.txt; rsoLbl = rkv.lbl || 'RSO'; } } }
-            var px = w.LIVE.last > 0 ? f2(w.LIVE.last) : '';
-            if (last === 'sell') flash('sell', '卖出!', px);
-            else if (last === 'buy') flash('buy', '买回!', px);
-            else if (rsoTxt) flash('reso', rsoLbl, rsoTxt);   /* 11-12: RSO信号金环闪字, 不冒充卖/买指令 */
+            var last = null, i, kd, rsoTxt = null, rsoLbl = 'RSO', tdTxt = '';
+            for (i = 0; i < fresh.length; i++) { kd = kindOf(fresh[i], w.LIVE); if (kd) { last = kd; tdTxt = (ks[fresh[i]] && ks[fresh[i]].txt) || ''; } else if (fresh[i].indexOf('rso|') === 0 || fresh[i].indexOf('sig|') === 0) { var rkv = ks[fresh[i]]; if (rkv && rkv.txt) { rsoTxt = rkv.txt; rsoLbl = rkv.lbl || 'RSO'; } } }
+            var px = w.LIVE.last > 0 ? f2(w.LIVE.last) : '', nmS = (w.STK && (w.STK.name || w.STK.code)) || '';
+            /* 11-13 用户: 球的买卖提醒要说哪只票 → 「永鼎股份 · 卖出!」+「②卖 24.01」 */
+            if (last === 'sell') flash('sell', '卖出!', tdTxt || px, nmS);
+            else if (last === 'buy') flash('buy', '买回!', tdTxt || px, nmS);
+            else if (rsoTxt) flash('reso', rsoLbl, rsoTxt.indexOf(nmS) === 0 ? rsoTxt.slice(nmS.length).replace(/^ · /, '') : rsoTxt, nmS);   /* 11-12: RSO信号金环闪字, 不冒充卖/买指令; 票名放第一行 */
             else ring();
           }
         }

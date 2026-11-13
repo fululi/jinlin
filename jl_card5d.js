@@ -193,6 +193,7 @@
       drawAuto(x, s);
       drawFibs(x, s);
       drawSB(x, s);
+      try { drawWave(x, s, G.l, G.l + G.pw); } catch (eW) { }   /* 波段是日线级: 五天整宽画 */
     }
     /* ===== 斐波那契画线: 两点(按下=0, 松开=1), 存在 localStorage, 按分钟序号+价格记, 缩放平移都跟着走 ===== */
     const FL = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1, 1.272, 1.618, 2.618];   /* 11-13 用户: 加到 2.618 */
@@ -221,7 +222,25 @@
       });
       x.restore(); x.lineWidth = 1;
     }
-    let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;
+    /* 11-13 用户: 持仓卡五日分时把日线波段高低也画出来 —— 细线、价格清楚; 数据=作战屏日线波段(jl_wave_v1, 打开过作战屏的票才有) */
+    function drawWave(x, s, xL, xR) {
+      let W = null; try { W = JSON.parse(localStorage.getItem("jl_wave_v1") || "{}")[code]; } catch (e) { }
+      if (!W || !(W.lo > 0)) return;
+      const Ls = [["波段低", W.lo, "#4ff0ff"], ["波段高", W.hi, "#ffb84d"]];
+      if (W.b1 > 0) Ls.push(["①接回", W.b1, "#1fdc93"]); else if (!W.s1 && W.z1 > 0) Ls.push(["①减+15%", W.z1, "#ff9a3c"]);
+      if (W.b2 > 0) Ls.push(["②接回", W.b2, "#1fdc93"]); else if (W.s1 && !W.s2 && W.z2 > 0) Ls.push(["②减+35%", W.z2, "#ff9a3c"]);
+      x.save(); x.font = "500 9.5px ui-monospace,Menlo"; x.lineWidth = 0.7;
+      let upN = 0, dnN = 0;
+      Ls.forEach((z) => {
+        if (!(z[1] > 0)) return; const y0 = s.Y(z[1]), t = z[0] + " " + f2(z[1]);
+        if (y0 < G.t) { put(x, "↑" + t, xL + 4 + (upN++) * 92, G.t + 9, "left", z[2]); return; }      /* 超出视窗: 顶/底边给箭头价签 */
+        if (y0 > G.mainB) { put(x, "↓" + t, xL + 4 + (dnN++) * 92, G.mainB - 3, "left", z[2]); return; }
+        const y = Math.round(y0) + 0.5;
+        x.strokeStyle = z[2]; x.globalAlpha = 0.7; x.setLineDash([1.5, 2.5]); line(x, xL, y, xR, y); x.setLineDash([]); x.globalAlpha = 1;
+        put(x, t, xL + 4, y - 2, "left", z[2]);   /* 价签放左边, 不和右边 S1/B1 撞 */
+      });
+      x.restore(); x.lineWidth = 1;
+    }
     const fibKey = () => "jl5d_fib_" + code;
     function fibLoad() { try { FIB = JSON.parse(localStorage.getItem(fibKey()) || "[]"); } catch (e) { FIB = []; } fibSel = -1; }
     function fibSave() { try { localStorage.setItem(fibKey(), JSON.stringify(FIB)); } catch (e) { } }
