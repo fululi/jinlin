@@ -5,7 +5,7 @@
    回滚: index.html 删 jl_card5d.js 引用即恢复原小K线, 其代码一行没删。 */
 (function () {
   "use strict";
-  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:18px}#c5JL .hd .px{font:800 20px ui-monospace,Menlo,monospace;margin-left:auto}#c5JL .hd .pc{font:800 13px ui-monospace,Menlo,monospace}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:0 1px 3px rgba(0,0,0,.6)}#c5JL .info{text-shadow:0 1px 3px rgba(0,0,0,.7)}#c5JL .info{height:18px;margin:6px 3px 2px;font:700 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:4px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:700 12px inherit;white-space:nowrap}#c5JL .hd .px{font-size:28px!important}#c5JL .bad{color:#ff7a85}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}';
+  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:14px;font-weight:500;letter-spacing:.3px;color:#fff}#c5JL .hd .px{font:400 20px -apple-system,"SF Pro Display","PingFang SC",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;margin-left:auto}#c5JL .hd .pc{font:500 13px -apple-system,"SF Pro Text",sans-serif;font-variant-numeric:tabular-nums}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:none}#c5JL .hd .mono{font-weight:400;font-size:12px;color:#fff;opacity:1}#c5JL .info{text-shadow:none}#c5JL .info{height:18px;margin:6px 3px 2px;font:400 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:4px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:500 12px inherit;white-space:nowrap}#c5JL .hd .px{font-size:28px!important}#c5JL .bad{color:#ff7a85}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}#c5JL .hd .c5TogJL{pointer-events:auto!important;cursor:pointer}#c5JL .htabsJL button{font-weight:500!important;font-size:12px!important;color:#fff!important;padding:4px 10px!important;text-shadow:none!important}#c5JL .htabsJL button small{opacity:1!important;font-weight:400!important;color:#fff!important}#c5JL .htabsJL button.on{background:#ffe45c!important;border-color:#ffe45c!important;color:#000!important;font-weight:600!important}#c5JL .htabsJL button.on small{color:#000!important}#c5JL .box:not([style*="height"]){margin-top:0}';
   let ROOT = null, api = null, timer = 0;
   function mount() {
     if (ROOT) return true;
@@ -69,6 +69,7 @@
       /* 定时刷新: 同一只票保持当前缩放; 原来贴着最右(看最新)就继续贴着最右 */
       if (keep && old && old.code === c && view.b > view.a) { const n = view.b - view.a; view = view.b >= oldN ? { a: Math.max(0, P.length - n), b: P.length } : { a: Math.min(view.a, Math.max(0, P.length - n)), b: Math.min(view.b, P.length) }; }
       else { view = { a: 0, b: P.length }; fibLoad(); }
+      fibRemap();   /* 11-14 用户: 过一天斐波锚点左偏一天 → 每次取数按「日期+分钟」找回所在位置 */
       head._k = "";
       head(); size(); drawBase(); drawOv();
     }
@@ -111,7 +112,7 @@
 
     let SC = null, LB = [];   /* SC=当前视图坐标(底图算一次, 十字线直接用); LB=已放置的文字框, 防重叠 */
     /* 放文字: 撞到已放的就上下挪一行, 挪不开就不画 */
-    function put(x, t, X, Y, al, col) {
+    function put(x, t, X, Y, al, col, ly) {   /* 11-14: ly = 这个字所属那条线的 y; 字被挤开 ≥12px 时画一根细引线连回那条线 */
       const w = x.measureText(t).width, h = 11;
       /* jl-1202b: 不加实心底(会挡走势线), 改为文字描黑边; 摆位优先避开白色走势线, 实在避不开才压线 */
       const hitLine = (r) => { const s = SC; if (!s || !S || !S.P) return false; for (let g = view.a; g < view.b; g++) { const P = S.P[g]; if (!P) continue; const X0 = s.X(g); if (X0 < r.L || X0 > r.R) continue; const Y0 = s.Y(P.p); if (Y0 >= r.T && Y0 <= r.B) return true; } return false; };
@@ -122,13 +123,17 @@
           if (r.T < G.t || r.B > G.mainB) continue;
           if (LB.some((q) => r.L < q.R && r.R > q.L && r.T < q.B && r.B > q.T)) continue;
           if (pass === 0 && hitLine(r)) continue;
-          pick = { r, L, y }; break;
+          pick = { r, L, y, d }; break;
         }
         if (pick) break;
       }
       if (!pick) return false;
       LB.push(pick.r);
-      x.save(); x.textAlign = "left"; x.lineJoin = "round"; x.lineWidth = 3; x.strokeStyle = "rgba(6,10,24,.9)"; x.strokeText(t, pick.L, pick.y);
+      x.save(); x.textAlign = "left"; x.lineJoin = "round"; x.lineWidth = 1.6; x.strokeStyle = "rgba(6,10,24,.9)"; x.strokeText(t, pick.L, pick.y);
+      if (ly != null && Math.abs(pick.d) >= 12) {   /* 引线: 从字的左下/左上角竖到线上, 线上一个小点 */
+        const lx = pick.L - 2, y0 = pick.d < 0 ? pick.y + 2 : pick.y - 9;
+        x.save(); x.strokeStyle = col; x.globalAlpha = 0.7; x.lineWidth = 0.6; x.setLineDash([]); line(x, lx, y0, lx, ly); x.globalAlpha = 1; x.fillStyle = col; x.beginPath(); x.arc(lx, ly, 1.4, 0, 7); x.fill(); x.restore();
+      }
       x.fillStyle = col; x.fillText(t, pick.L, pick.y); x.restore(); return true;
     }
     function drawBase() {
@@ -147,7 +152,7 @@
         if (g1 < a || g0 >= b) return;
         if (i && g0 >= a) { const xx = Math.round(s.X(g0) - 0.5 * G.pw / s.n) + 0.5; x.strokeStyle = "rgba(255,255,255,.35)"; x.setLineDash([3, 3]); line(x, xx, G.t, xx, G.volB); x.setLineDash([]); }
         const xm = (s.X(Math.max(a, g0)) + s.X(Math.min(b - 1, g1))) / 2, dt = new Date(+d.date.slice(0, 4), +d.date.slice(4, 6) - 1, +d.date.slice(6));
-        x.font = "700 10.5px -apple-system,PingFang SC"; x.fillStyle = "#fff"; x.textAlign = "center";
+        x.font = "400 10.5px -apple-system,PingFang SC"; x.fillStyle = "#fff"; x.textAlign = "center";
         x.fillText(d.date.slice(4, 6) + "-" + d.date.slice(6) + " 周" + WK[dt.getDay()], xm, G.axB - 4);
       });
       /* 跳空带: 未补=延伸到最右, 已补=停在补回那一分钟 + ✓签 */
@@ -155,7 +160,7 @@
         const e = gp.fi < 0 ? b - 1 : gp.fi; if (e < a || gp.st >= b) return;
         const c = gp.up ? "0,240,255" : "255,230,0", x0 = s.X(Math.max(a, gp.st)), x1 = s.X(Math.min(b - 1, e)), y1 = s.Y(gp.hi), y2 = s.Y(gp.lo);
         x.fillStyle = "rgba(" + c + "," + (gp.fi < 0 ? 0.14 : 0.07) + ")"; x.fillRect(x0, y1, Math.max(1, x1 - x0), y2 - y1);
-        x.strokeStyle = "rgba(" + c + "," + (gp.fi < 0 ? 0.75 : 0.35) + ")"; x.lineWidth = 1; if (gp.fi >= 0) x.setLineDash([3, 3]); line(x, x0, y1 + 0.5, x1, y1 + 0.5); line(x, x0, y2 - 0.5, x1, y2 - 0.5); x.setLineDash([]);   /* jl-1202: 带底调淡+上下沿线 */
+        x.strokeStyle = "rgba(" + c + "," + (gp.fi < 0 ? 0.95 : 0.35) + ")"; x.lineWidth = 0.6; if (gp.fi >= 0) x.setLineDash([3, 3]); line(x, x0, y1 + 0.5, x1, y1 + 0.5); line(x, x0, y2 - 0.5, x1, y2 - 0.5); x.setLineDash([]); x.lineWidth = 1;   /* jl-1202: 带底调淡+上下沿线 */
         gp._lab = { c: "rgb(" + c + ")", x1, y1, y2 };
       });
       /* 量: 真实每分钟量, 跟着价格涨跌着色 */
@@ -167,8 +172,8 @@
         const vis = d.pts.filter((p) => p.g >= a && p.g < b); if (!vis.length) return;
         const xa = s.X(vis[0].g), xb = s.X(vis[vis.length - 1].g);
         x.strokeStyle = "rgba(255,255,255,.55)"; x.setLineDash([2, 3]); line(x, xa, s.Y(d.prec), xb, s.Y(d.prec)); x.setLineDash([]);
-        x.lineWidth = 1; x.strokeStyle = "#ffd84a"; path(x, vis, (p) => s.X(p.g), (p) => s.Y(p.avg));
-        x.lineWidth = 1.4; x.strokeStyle = "#fff"; path(x, vis, (p) => s.X(p.g), (p) => s.Y(p.p));
+        x.lineWidth = 0.8; x.strokeStyle = "#ffd84a"; path(x, vis, (p) => s.X(p.g), (p) => s.Y(p.avg));
+        x.lineWidth = 1; x.strokeStyle = "#fff"; path(x, vis, (p) => s.X(p.g), (p) => s.Y(p.p));
         const p0 = d.pts[0]; if (p0.g >= a && p0.g < b) {
           const xx = s.X(p0.g), up = p0.p >= d.prec, col = up ? "#ff5459" : "#1fdc93";
           x.strokeStyle = col; x.lineWidth = 2; line(x, xx, s.Y(d.prec), xx, s.Y(p0.p)); x.lineWidth = 1;
@@ -183,7 +188,7 @@
         tag(x, sg(pc), G.l + 1, y, "left", Math.abs(pc) < 0.005 ? "#fff" : pc > 0 ? "#ff5459" : "#1fdc93", 1);
       }
       /* 文字最后统一放, 互相避让: 竞价% → 已补✓ → 未补日期 */
-      x.font = "800 9.5px -apple-system";
+      x.font = "400 9.5px -apple-system";
       S.days.forEach((d) => { if (d._lab && d.pts[0].g >= a && d.pts[0].g < b) put(x, d._lab.t, d._lab.x, d._lab.y, "left", d._lab.c); d._lab = null; });
       S.gaps.forEach((gp) => {
         const L = gp._lab; gp._lab = null; if (!L) return;
@@ -214,7 +219,7 @@
       const T = tierSB(); sbSig = JSON.stringify(T); if (!T) return;
       const L = S.days[S.days.length - 1], g0 = L.pts.length ? L.pts[0].g : view.a, xL = Math.max(G.l, s.X(g0)), xR = G.l + G.pw;
       if (xR <= xL) return;
-      x.save(); x.font = "700 9.5px ui-monospace,Menlo";
+      x.save(); x.font = "400 9.5px ui-monospace,Menlo";
       [["S2", T.s2, "#ff8a8e"], ["S1", T.s1, "#ff5459"], ["B1", T.b1, "#1fdc93"], ["B2", T.b2, "#6ee7b7"]].forEach((z) => {
         if (!(z[1] > 0)) return; const y = Math.round(s.Y(z[1])) + 0.5; if (y < G.t || y > G.mainB) return;
         x.strokeStyle = z[2]; x.globalAlpha = 0.85; x.lineWidth = 0.8; if (z[0].endsWith("2")) x.setLineDash([3, 3]); line(x, xL, y, xR, y); x.setLineDash([]); x.globalAlpha = 1;
@@ -222,6 +227,7 @@
       });
       x.restore(); x.lineWidth = 1;
     }
+    let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;   /* 11-13晚: 上次加 drawWave 时这行被误删 → 五日图整张加载不出来, 恢复 */
     /* 11-13 用户: 持仓卡五日分时把日线波段高低也画出来 —— 细线、价格清楚; 数据=作战屏日线波段(jl_wave_v1, 打开过作战屏的票才有) */
     function drawWave(x, s, xL, xR) {
       let W = null; try { W = JSON.parse(localStorage.getItem("jl_wave_v1") || "{}")[code]; } catch (e) { }
@@ -229,7 +235,7 @@
       const Ls = [["波段低", W.lo, "#4ff0ff"], ["波段高", W.hi, "#ffb84d"]];
       if (W.b1 > 0) Ls.push(["①接回", W.b1, "#1fdc93"]); else if (!W.s1 && W.z1 > 0) Ls.push(["①减+15%", W.z1, "#ff9a3c"]);
       if (W.b2 > 0) Ls.push(["②接回", W.b2, "#1fdc93"]); else if (W.s1 && !W.s2 && W.z2 > 0) Ls.push(["②减+35%", W.z2, "#ff9a3c"]);
-      x.save(); x.font = "500 9.5px ui-monospace,Menlo"; x.lineWidth = 0.7;
+      x.save(); x.font = "400 9.5px ui-monospace,Menlo"; x.lineWidth = 0.7;
       let upN = 0, dnN = 0;
       Ls.forEach((z) => {
         if (!(z[1] > 0)) return; const y0 = s.Y(z[1]), t = z[0] + " " + f2(z[1]);
@@ -243,7 +249,17 @@
     }
     const fibKey = () => "jl5d_fib_" + code;
     function fibLoad() { try { FIB = JSON.parse(localStorage.getItem(fibKey()) || "[]"); } catch (e) { FIB = []; } fibSel = -1; }
-    function fibSave() { try { localStorage.setItem(fibKey(), JSON.stringify(FIB)); } catch (e) { } }
+    function fibStamp(q) { const P = S && S.P && S.P[q.g]; if (P && S.days[P.di]) { q.d = S.days[P.di].date; q.t = P.t; } }
+    function fibSave() { try { FIB.forEach((f) => { fibStamp(f.a); fibStamp(f.b); }); localStorage.setItem(fibKey(), JSON.stringify(FIB)); } catch (e) { } }
+    function fibRemap() {   /* 有 d/t 的锚点: 在当前五日数据里按日期+分钟找 g; 那天已滚出五日窗口 → 放到最左外面(线照样从左边画进来) */
+      if (!S || !FIB.length) return; let stamp = false; const ix = {};
+      S.P.forEach((p) => { ix[S.days[p.di].date + "|" + p.t] = p.g; });
+      FIB.forEach((f) => [f.a, f.b].forEach((q) => {
+        if (q.d && q.t) { const g = ix[q.d + "|" + q.t]; if (g != null) q.g = g; else if (S.days.length && q.d < S.days[0].date) q.g = -1; }
+        else stamp = true;   /* 旧画线没有日期: 按现在的位置补记一次, 以后就不再偏 */
+      }));
+      if (stamp) fibSave();
+    }
     function drawFibs(x, s) { FIB.forEach((f, i) => drawFib(x, s, f, i === fibSel)); if (fibDraft && fibDraft.b) drawFib(x, s, fibDraft, true); }
     function drawFib(x, s, f, sel) {
       const xa = s.X(f.a.g), xb = s.X(f.b.g), xL = Math.min(xa, xb), xR = G.l + G.pw, d = f.b.v - f.a.v;
@@ -254,11 +270,12 @@
       x.globalAlpha = 1;
       /* 两锚点斜虚线 */
       x.strokeStyle = "rgba(255,255,255,.7)"; x.setLineDash([4, 3]); line(x, xa, s.Y(f.a.v), xb, s.Y(f.b.v)); x.setLineDash([]);
-      x.font = "700 9.5px ui-monospace,Menlo"; x.textAlign = "left";
+      x.font = "400 9.5px ui-monospace,Menlo"; x.textAlign = "left";
+      const lxF = fibLabX(f, s);   /* 11-14 用户「斐波太靠右, 能不能左右滑」: 档位字整列可左右拖(f.lx), 放不下自动往左收; 线和价都不动 */
       FL.forEach((r) => {
         const v = f.b.v - d * r, y = Math.round(s.Y(v)) + 0.5; if (y < 2 || y > G.mainB) return;
         x.strokeStyle = FC[r]; x.lineWidth = sel ? 1.4 : 1; line(x, xL, y, xR, y);
-        x.fillStyle = FC[r]; x.fillText(r + " (" + f2(v) + ")", xL + 3, y - 2);
+        x.fillStyle = FC[r]; x.fillText(r + " (" + f2(v) + ")", lxF, y - 2);
       });
       [f.a, f.b].forEach((p) => { x.fillStyle = "#fff"; x.strokeStyle = "#2962ff"; x.lineWidth = 2; x.beginPath(); x.arc(s.X(p.g), s.Y(p.v), sel ? 4.5 : 3.5, 0, 7); x.fill(); x.stroke(); });
       x.restore(); x.lineWidth = 1;
@@ -339,9 +356,9 @@
       use.forEach((l) => { const y = Math.round(s.Y(l.v)) + 0.5; if (y < 2 || y > G.mainB) return; x.strokeStyle = l.c; x.globalAlpha = l.dash && l.src !== "D" ? 0.75 : 0.85; x.setLineDash(l.dash || []); line(x, Math.max(G.l, l.xs), y, xR, y); x.setLineDash([]); x.globalAlpha = 1; });
       x.restore();
       /* 文字: 共振处只出一个金色「×N 价 来源」, 其余各自一个, 用 put 互相避让 */
-      x.font = "800 9.5px ui-monospace,Menlo";
-      zones.forEach((z) => { const vm = (z.lo + z.hi) / 2; put(x, "×" + z.n + " " + f2(vm) + " " + z.m.map((m) => m.t).join("+"), Math.max(G.l + 2, z.xs + 3), s.Y(vm) - 4, "left", "#ffd84a"); });
-      use.forEach((l) => { if (zones.some((z) => l.v >= z.lo - 1e-9 && l.v <= z.hi + 1e-9)) return; put(x, l.t + " " + f2(l.v), Math.max(G.l + 2, l.xs + 3), s.Y(l.v) - 2, "left", l.c); });
+      x.font = "400 9.5px ui-monospace,Menlo";
+      zones.forEach((z) => { const vm = (z.lo + z.hi) / 2; put(x, "×" + z.n + " " + f2(vm) + " " + z.m.map((m) => m.t).join("+"), Math.max(G.l + 2, z.xs + 3), s.Y(vm) - 4, "left", "#ffd84a", s.Y(vm)); });
+      use.forEach((l) => { if (zones.some((z) => l.v >= z.lo - 1e-9 && l.v <= z.hi + 1e-9)) return; put(x, l.t + " " + f2(l.v), Math.max(G.l + 2, l.xs + 3), s.Y(l.v) - 2, "left", l.c, Math.round(s.Y(l.v)) + 0.5); });
     }
     /* 屏幕点 → {g, v}; 靠近价格线 12px 内吸附到当分钟价格 */
     function toPt(p) {
@@ -351,9 +368,12 @@
       return { g, v: +v.toFixed(3) };
     }
     /* 按到画线: 两端圆点 12px 内 = 拖这个点; 线身 8px 内 = 整条平移 */
+    const FIB_LW = 78;   /* 档位字一列最宽 ≈「2.618 (24.15)」 */
+    function fibLabX(f, s) { const xL = Math.min(s.X(f.a.g), s.X(f.b.g)); return Math.max(G.l + 2, Math.min(G.l + G.pw - FIB_LW - 2, xL + 3 + (f.lx || 0))); }
     function fibGrab(p) {
       const s = SC;
       for (let i = FIB.length - 1; i >= 0; i--) { const f = FIB[i]; for (const k of ["a", "b"]) if (Math.hypot(s.X(f[k].g) - p.x, s.Y(f[k].v) - p.y) < 12) return { i, k }; }
+      for (let i = FIB.length - 1; i >= 0; i--) { const f = FIB[i], d = f.b.v - f.a.v, lx = fibLabX(f, s); if (p.x >= lx - 4 && p.x <= lx + FIB_LW && FL.some((r) => { const y = s.Y(f.b.v - d * r); return p.y >= y - 12 && p.y <= y + 2; })) return { i, k: "lab", lx0: f.lx || 0 }; }   /* 按住档位字 = 只左右挪字 */
       const h = fibHit(p); return h >= 0 ? { i: h, k: "all" } : null;
     }
     function fibHit(p) {
@@ -370,7 +390,7 @@
       const s = SC, g = Math.max(view.a, Math.min(view.b - 1, Math.round(view.a + (cross.x - G.l) / G.pw * s.n - 0.5))), p = S.P[g], d = S.days[p.di];
       const xx = Math.round(s.X(g)) + 0.5, cy = Math.max(G.t, Math.min(G.mainB, cross.y)), yy = Math.round(cy) + 0.5, vy = s.hi - (cy - G.t) / (G.mainB - G.t) * (s.hi - s.lo);
       /* 竖线对齐到分钟, 横线跟着手指走(像 TradingView), 价格线上那一分钟打白点 */
-      x.strokeStyle = "rgba(255,255,255,.8)"; x.setLineDash([3, 3]); line(x, xx, G.t, xx, G.volB); line(x, G.l, yy, G.l + G.pw, yy); x.setLineDash([]);
+      x.strokeStyle = "rgba(255,255,255,.8)"; x.setLineDash([3, 3]); line(x, xx, 0, xx, G.volB); line(x, G.l, yy, G.l + G.pw, yy); x.setLineDash([]);   /* 11-14 用户: 价格那行透出十字线 */
       x.fillStyle = "#fff"; x.beginPath(); x.arc(xx, s.Y(p.p), 3, 0, 7); x.fill();
       { const bw = Math.max(2, G.pw / s.n * 0.8), vy = s.V(p.v); x.fillStyle = "#fff"; x.fillRect(xx - bw / 2, vy, bw, G.volB - vy); tag(x, p.v + "手", Math.min(G.l + G.pw - 30, xx + 4), Math.max(G.volT + 6, vy - 7), "left", "#fff", 1); }
       const pc = (vy / s.base - 1) * 100, pcD = (p.p / d.prec - 1) * 100, col = pc >= 0 ? "#ff5459" : "#1fdc93";
@@ -380,7 +400,7 @@
       $("info").innerHTML = '<span>' + d.date.slice(4, 6) + "-" + d.date.slice(6) + " " + tOf(p.k) + '</span><span>价 ' + f2(p.p) + '</span><span class="' + (pcD >= 0 ? "up" : "dn") + '">当日' + sg(pcD) + '</span><span style="color:#ffd84a">均 ' + f2(p.avg) + "</span><span>量 " + p.v + "手</span>";
     }
     function tag(x, t, X, Y, al, col, soft) {
-      x.font = (soft ? "700 9.5px" : "800 10px") + " ui-monospace,Menlo"; const w = x.measureText(t).width + (soft ? 6 : 8), h = soft ? 13 : 15;
+      x.font = (soft ? "400 9.5px" : "500 10px") + " ui-monospace,Menlo"; const w = x.measureText(t).width + (soft ? 6 : 8), h = soft ? 13 : 15;
       const L = al === "left" ? X : al === "right" ? X - w : X - w / 2;
       if (LB && x.canvas && x.canvas.getAttribute("data-c5") === "base") LB.push({ L: L - 2, R: L + w + 2, T: Y - h / 2 - 1, B: Y + h / 2 + 1 });   /* jl-1202: 轴价签进避让表 */
       x.fillStyle = soft ? "rgba(30,12,24,.45)" : "rgba(20,10,20,.62)"; rr(x, L, Y - h / 2, w, h, 4); x.fill(); if (!soft) { x.strokeStyle = col; x.lineWidth = 1; x.stroke(); }
@@ -418,6 +438,7 @@
       if (fibDraft) { fibDraft.b = toPt(p); cross = p; reqO(); return; }
       if (pd && pd.grab) {
         const G2 = pd.grab, f = FIB[G2.i], q = toPt(p);
+        if (G2.k === "lab") { f.lx = Math.round(G2.lx0 + (p.x - pd.x)); reqB(); return; }
         if (G2.k === "all") { const dg = q.g - G2.p0.g, dv = q.v - G2.p0.v, cl = (g) => Math.max(0, Math.min(S.P.length - 1, g));
           f.a = { g: cl(G2.a0.g + dg), v: +(G2.a0.v + dv).toFixed(3) }; f.b = { g: cl(G2.b0.g + dg), v: +(G2.b0.v + dv).toFixed(3) }; }
         else f[G2.k] = q;
@@ -439,7 +460,10 @@
     box.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && !pd) { cross = null; reqO(); } });
     box.addEventListener("pointerenter", () => { BR = box.getBoundingClientRect(); });
     addEventListener("scroll", () => { BR = null; }, { passive: true });
-    box.addEventListener("wheel", (e) => { if (!(e.metaKey)) return; /* 10-27: 普通滚动放行给页面, 只有 Ctrl/Cmd+滚轮或触控板捏合才缩放 */ e.preventDefault(); zoomTo(view.a, view.b, e.deltaY > 0 ? 1.15 : 1 / 1.15, loc(e).x); }, { passive: false });
+    box.addEventListener("wheel", (e) => {
+      if (!S || !SC) return;
+      if (!(e.metaKey || e.ctrlKey) && Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 1) { e.preventDefault(); const n = view.b - view.a, sh = Math.round(e.deltaX / G.pw * n) || (e.deltaX > 0 ? 1 : -1); setView(view.a + sh, view.b + sh); return; }   /* 11-14 用户「电脑左右滑放大不行」: 触控板左右滑=平移 */
+      if (!(e.metaKey || e.ctrlKey)) return;   /* 触控板双指捏合浏览器给的是 ctrlKey, 原来只认 metaKey 所以捏不动 */ /* 10-27: 普通滚动放行给页面, 只有 Ctrl/Cmd+滚轮或触控板捏合才缩放 */ e.preventDefault(); zoomTo(view.a, view.b, e.deltaY > 0 ? 1.15 : 1 / 1.15, loc(e).x); }, { passive: false });
     function setFib(on) { fibMode = on; $("fib").classList.toggle("on", on); }
     $("fib").onclick = () => setFib(!fibMode);
     $("auto").classList.toggle("on", autoOn);

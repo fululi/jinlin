@@ -155,7 +155,7 @@ function runR3(S,D,F,P){const T=[],days=S.days.filter(d=>F.AMP[d]!=null&&F.pc[d]
  return T}
 function runBall(S,D,F,P){const T=[];NOTR={};
  for(const d of S.days){if(F.AMP[d]==null||!F.pc[d])continue;const r=D[d];
-  const X=JLMIX.ball({P:dayP(D,d),o0:r[0][0],pc:F.pc[d],avg:F.AMP[d]*100,th:P.bth,a:P.ba,m:P.bm,cur:r[r.length-1][3]});if(!X)continue;
+  const X=JLMIX.ball({code:CODE,P:dayP(D,d),o0:r[0][0],pc:F.pc[d],avg:F.AMP[d]*100,th:P.bth,a:P.ba,m:P.bm,cur:r[r.length-1][3]});if(!X)continue;
   X.trades.forEach(t=>T.push({sd:d,si:t.si,s:t.s,d,bi:t.bi,b:t.b,why:t.why,how:'当天接',q:P.q,v:pnl(t.s,t.b,P.q),cat:F.CAT[d]}));
   closeOpen(T,X.open,d,r,P.q,F.CAT[d]);
   if(!X.trades.length&&!X.open){const need=P.ba*F.AMP[d]*100;NOTR[d]=X.seen?{k:'没确认',s:'振幅走够了，但高低点没在区间上/下半确认'}:{k:'振幅不够',s:'振幅只走到 '+X.amp.toFixed(2)+'%，没到 '+need.toFixed(2)+'%（日均 '+(F.AMP[d]*100).toFixed(1)+'% 的 '+Math.round(P.ba*100)+'%）'}}}

@@ -58,7 +58,13 @@
     '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,#0d1730,#091024);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(120,160,255,.22);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}' +
     '#jlZpSheetJL iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:dark}' +
     '#jlZpSheetJL .zx{position:absolute;right:7px;top:7px;z-index:2;width:26px;height:26px;border-radius:50%;background:rgba(15,24,42,.85);border:1px solid #2a3a55;color:#cfd8e6;font:700 13px/24px -apple-system,sans-serif;text-align:center;cursor:pointer;touch-action:manipulation}' +
-    '#jlZpSheetJL .zx:active{background:rgba(42,58,85,.9)}';
+    '#jlZpSheetJL .zx:active{background:rgba(42,58,85,.9)}' +
+    /* 11-13夜 用户: 作战屏能放大缩小、放大要清楚 → ✕ 左边两个小圆标 − / +; 整个 iframe 按比例矢量放大(布局不变, 字/图不糊) */
+    '#jlZpSheetJL .zz{position:absolute;top:9px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(15,24,42,.55);border:1px solid rgba(255,255,255,.45);color:#fff;font:500 14px/20px ui-rounded,-apple-system,sans-serif;text-align:center;cursor:pointer;user-select:none;touch-action:manipulation}' +
+    '#jlZpSheetJL .zz:active{background:rgba(42,58,85,.9)}' +
+    '#jlZpSheetJL .zzT{position:absolute;top:12px;z-index:2;font:500 10px/16px ui-rounded,-apple-system,sans-serif;color:#fff;pointer-events:none;opacity:0;transition:opacity .3s}' +
+    '#jlZpSheetJL .zzT.on{opacity:1}' +
+    '#jlZpSheetJL iframe{transform-origin:0 0}';
   function styleOnce() { if (!$('jlZpCssJL')) { var s = document.createElement('style'); s.id = 'jlZpCssJL'; s.textContent = CSS; document.head.appendChild(s); } }
 
   /* ---------- 浮球 ---------- */
@@ -83,11 +89,25 @@
       var d = new Date(), ds = '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
       var today = L.sessDate === ds, e = L.eng, pre = today ? '' : '自检·';
       if (!L.bars || !L.bars.length) return { b: '未触发', t: today ? '待开盘' : '拉数据', p: p, k: 'idle' };
+      /* 11-13晚 用户: 浮球状态跟现行 尺子/小球(作战屏「下一步」那排 __RDJL.mk), 不再读旧引擎 LIVE.eng */
+      try {
+        var W = st.win, R = W && W.__RDJL, cs0 = curStk(), mk = R && (R.mk || (R.rd && R.rd.mk));
+        if (mk && mk.length && (!R.code || !cs0.code || R.code === cs0.code)) {
+          var lb0 = L.bars[L.bars.length - 1], hm0 = lb0 ? +String(lb0.t).slice(-4) : 0;
+          var okL = mk.filter(function (m) { return m.ok && !m.proj && m.p > 0; }), nx = mk.filter(function (m) { return !m.ok && !m.proj && m.p > 0; })[0], la = okL[okL.length - 1];
+          var nxs = nx ? (nx.n || '') + (nx.t === 's' ? '卖' : '接') + f2(nx.p) : '';
+          if (hm0 >= 1500) return { b: '收工', t: pre + '今日收工', p: p, k: 'done' };
+          if (!la) return { b: '未触发', t: pre + (nxs || '盯盘中'), p: '', k: 'idle' };
+          if (la.t === 's') return { b: '已卖', t: pre + (nxs ? '等' + nxs : '等接'), p: '', k: 'trig' };
+          return { b: '已接', t: pre + (nxs ? '等' + nxs : '等卖'), p: '', k: 'done' };
+        }
+      } catch (eR) { }
       if (e) {
         if (e.sp !== null) return { b: '已触发', t: pre + '等买回', p: p, k: 'trig' };            /* 已卖出, 等回落买回 */
         /* 收工跟作战屏引擎同一口径: 做满轮次 / 14:55 尾盘兜底买回后 / 15:00 收盘后 */
         var done = false;
-        try { if (st.win && typeof st.win.engDoneJL === 'function') done = !!st.win.engDoneJL(e); else { var lr = e.rounds && e.rounds[e.rounds.length - 1], lb = L.bars[L.bars.length - 1], hm = lb ? +String(lb.t).slice(-4) : 0; done = (e.rounds && e.rounds.length >= RM) || (lr && lr.bWhy === '尾盘兜底') || hm >= 1500; } } catch (eD) { }
+        /* 11-13晚 用户「浮球收工时间总是提前」: 原来读旧引擎 e.rounds 做满3轮就收工(现行是尺子/小球, 旧引擎早早做满) → 只按收盘 15:00 收工 */
+        try { var lb = L.bars[L.bars.length - 1], hm = lb ? +String(lb.t).slice(-4) : 0; done = hm >= 1500; } catch (eD) { }
         if (done) return { b: '收工', t: pre + '今日收工', p: p, k: 'done' };
         if (e.rounds && e.rounds.length) return { b: '已买回', t: pre + '等再冲高', p: p, k: 'done' };
         if (today && e.lowOpen) return { b: '已触发', t: '低开卖', p: p, k: 'trig' };
@@ -190,7 +210,7 @@
     var b = document.createElement('div'); b.id = 'jlZpBallJL';
     var sh = document.createElement('div'); sh.id = 'jlZpSheetJL'; sh.hidden = true;
     try {
-      sh.innerHTML = '<span class="zx" id="jlZpXJL">✕</span><iframe id="jlZpFrameJL" src="' + SRC + '" referrerpolicy="no-referrer"></iframe>';
+      sh.innerHTML = '<span class="zx" id="jlZpXJL">✕</span><span class="zz" data-z="1" style="right:38px" title="放大(双击复原)">+</span><span class="zz" data-z="-1" style="right:64px" title="缩小(双击复原)">−</span><span class="zzT" style="right:92px"></span><iframe id="jlZpFrameJL" src="' + SRC + '" referrerpolicy="no-referrer"></iframe>';
     } catch (e) { }
     document.body.appendChild(sh); document.body.appendChild(b);
     st.ball = b; st.attnT = Date.now() + 8000; /* 首次出现脉冲8秒引人注意 */
@@ -208,6 +228,28 @@
     }, 3000);
     try { window.addEventListener('resize', function () { try { place(); } catch (e) { } }); setInterval(function () { try { var r = b.getBoundingClientRect(); if (r.right < 20 || r.bottom < 20 || r.left > (window.innerWidth || 375) - 20 || r.top > (window.innerHeight || 667) - 20) place(); } catch (e) { } }, 3000); } catch (e) { }
     try { console.log('[JLZp v4] 浮球已挂载'); } catch (e) { }
+    /* ②b 11-13夜 放大缩小: 面板按比例变大, iframe 内部仍按 430 宽排版, 用 transform 整体放大(矢量重绘, 清楚); 存 jl_zp_zoom_v1 */
+    try {
+      var ZS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2], zk = 'jl_zp_zoom_v1', zt = 0;
+      var zNow = function () { var v = +localStorage.getItem(zk); return ZS.indexOf(v) >= 0 ? v : 1; };
+      var zApply = function (z, say) {
+        var fr = $('jlZpFrameJL'); if (!fr) return;
+        if (z === 1) { sh.style.width = sh.style.height = ''; fr.style.width = fr.style.height = fr.style.transform = ''; }
+        else {
+          var W = Math.min((window.innerWidth || 400) * 0.96, 430 * z), H = Math.min((window.innerHeight || 700) - 60, Math.min((window.innerHeight || 700) * 0.86, 720) * z);
+          sh.style.width = W + 'px'; sh.style.height = H + 'px';
+          fr.style.width = (W / z) + 'px'; fr.style.height = (H / z) + 'px'; fr.style.transform = 'scale(' + z + ')';
+        }
+        if (say) { var T = sh.querySelector('.zzT'); if (T) { T.textContent = Math.round(z * 100) + '%'; T.classList.add('on'); clearTimeout(zt); zt = setTimeout(function () { T.classList.remove('on'); }, 1200); } }
+        try { fr.contentWindow && fr.contentWindow.dispatchEvent(new Event('resize')); } catch (eR) { }
+      };
+      sh.querySelectorAll('.zz').forEach(function (k) {
+        k.addEventListener('click', function (e) { e.stopPropagation(); var i = ZS.indexOf(zNow()) + (+k.getAttribute('data-z')); i = Math.max(0, Math.min(ZS.length - 1, i)); localStorage.setItem(zk, String(ZS[i])); zApply(ZS[i], 1); });
+        k.addEventListener('dblclick', function (e) { e.stopPropagation(); localStorage.setItem(zk, '1'); zApply(1, 1); });
+      });
+      zApply(zNow());
+      window.addEventListener('resize', function () { try { zApply(zNow()); } catch (eZ) { } });
+    } catch (e) { }
     /* ②交互绑定 */
     try {
       var s0 = null, moved = false;
