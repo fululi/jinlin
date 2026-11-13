@@ -38,7 +38,7 @@
     '#jlZpBallJL .bt b{font-size:13px;font-weight:800;color:#f4ead2}#jlZpBallJL .bt span{font-size:8.5px;color:#c3d0e2}' +
     /* 11-13 用户: 球上提示字太小看不清、也不说哪只票 → 提醒时球横向撑成胶囊: 第一行 票名·卖出!/RSO, 第二行 价/内容, 字放大 */
     '#jlZpBallJL.wide{width:auto;min-width:58px;max-width:min(78vw,280px);padding:0 16px;border-radius:29px}' +
-    '#jlZpBallJL.wide .bt{position:static;height:100%;white-space:nowrap}#jlZpBallJL.wide .bt b{font-size:14px}#jlZpBallJL.wide .bt span{font-size:12.5px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;max-width:100%}' +
+    '#jlZpBallJL.wide .bt{position:static;height:100%;white-space:nowrap}#jlZpBallJL.wide .bt b{font-size:14px}#jlZpBallJL.wide .bt span{font-size:12px;font-weight:500;color:#fff;overflow:hidden;max-width:100%;white-space:normal;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#jlZpBallJL.wide{height:auto;min-height:58px;padding:6px 16px}' +
     '#jlZpBallJL i{position:absolute;right:1px;top:1px;min-width:13px;height:13px;border-radius:7px;border:2px solid #0f1828;font:700 8px/9px -apple-system,sans-serif;color:#10202a;text-align:center;font-style:normal;display:none}' +
     '#jlZpBallJL.badge i{display:block;background:' + GOLD + '}' +
     '#jlZpBallJL[data-k=idle]{border-color:rgba(143,168,179,.75)}' +
