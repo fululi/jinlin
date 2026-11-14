@@ -1,8 +1,12 @@
-/* jl_gapiv.js v2 (2026-10-28, jl-1180 缺口区改版) —— 持仓卡「缺口 / iv」行: 未补/今日新增/今日已补三段分类、限高可见滚动条、竞价与回补率紧凑小格、同价周期合并; 计算与取数同 v1 零改动。
-   数据: 只用腾讯(日K fqkline / 分钟K mkline 30·15·5·1 / 当日分时 minute)。每只票 60 秒最多取一次。
-   口径与 App unfilledVIJL 一致: VI = 相邻两根K线, 后一根开盘离前一根收盘 > 0.05%, 分钟级还须影线重叠; 补回 = 之后碰到前一根收盘(远沿)。
-   开盘缺口: 昨收→今开, 补回价 = 昨收; 补完后又回到缺口里待满 5 分钟的每一段写「再次回补」。
-   只负责持仓卡这一行的显示, 不改分时图、台账(collectGapsJL)和任何计算。回滚: index.html 删 jl_gapiv.js 引用即回到原缺口行。 */
+/* jl_gapiv.js v3 (2026-11-14, 缺口重点跟进版式——1:1 复刻用户效果图「缺口重点跟进_效果图.html」)
+   持仓卡「缺口/iv」整版重排: 重点跟进(红框脉冲, 上/下各取距现价最近的未补) + 今日iv宫格(分钟级当日事件: 出现/已补/未补+补回时刻) + ↑iv(现价上方·按补满价降序·最近4行+远的折叠) + 现价分割线 + ↓iv(镜像)。
+   =S2/=S1/=B1/=B2 白标: 链作战屏 jl_zp_war.html 的固定价位表 ATRB_TAB(台账口径: 中心=当日收盘, S2=带上沿, S1=中心与上沿中间, B1=中心与下沿中间, B2=带下沿);
+   取法=同源 fetch 作战屏页抽出 var ATRB_TAB={...}, localStorage jl_atrb_v1 缓存12h, 失败静默不标(不影响主功能); 作战屏表一更新这里自动跟。原 v2 的 jlTierPxJL(持仓卡动态档)口径不再使用(11-14 用户指正: 必须链作战屏真值)。
+   相对 v2 的全部差异(数据层/扫描口径/VI/补回判定零改动, 仅渲染层+以下4处):
+   ① dk 80→400根日K(远端历史缺口进「远的」折叠; 台账喂的仍是最后80根, 与线上一致) ② 未补缺口距现价窗口 8%→40%(远的折叠显示而非整段消失)
+   ③ compute 追加输出 R.ev(当日分钟级事件)与 g.pr(回补率数值), 原字段一个不动 ④ 取数失败时回退显示 localStorage 缓存的上次成功结果(带⚠角标, 3.5天内)——手机弱网也能看到内容。
+   竞价卡/今日回补率格/日线未补目标行被新版式替换(信息并入宫格与分组行)。每只票60秒最多取一次。
+   回滚: git revert 本文件, index.html 引用 jl_gapiv.js?v=11→10。 */
 (function () {
   "use strict";
   const RT = {"600105":{"1分":[[[66,78],[74,83]],[[59,73],[66,80]],[[53,69],[63,78]],[[53,69],[60,77]]],"5分":[[[79,87],[80,88]],[[68,82],[67,82]],[[62,77],[63,80]],[[61,77],[63,81]]],"15分":[[[86,87],[82,88]],[[67,78],[68,82]],[[63,76],[63,79]],[[63,76],[61,81]]],"30分":[[[92,95],[88,93]],[[78,84],[65,80]],[[67,75],[70,83]],[[66,76],[70,85]]],"日":[[20,36,38],[30,53,63]]},"603986":{"1分":[[[70,77],[78,87]],[[63,71],[70,82]],[[57,67],[66,80]],[[52,65],[62,77]]],"5分":[[[61,69],[72,82]],[[53,65],[68,79]],[[50,64],[64,76]],[[43,59],[59,73]]],"15分":[[[76,81],[69,78]],[[68,78],[71,80]],[[57,70],[64,74]],[[58,70],[54,64]]],"30分":[[[83,83],[95,95]],[[81,85],[85,87]],[[70,77],[75,78]],[[62,74],[68,73]]],"日":[[24,50,59],[26,44,53]]}}; /* 同 index.html jl-1165 回补率表; jl-zp7(11-01): +30分(同243日1分钟数据同口径重跑, 每格样本29~92) · 日线换成400根日K同口径重跑(原243日内样本偏少, 下缺口偏高5~12点) */
@@ -28,49 +32,53 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
 
   const f2 = (x) => (+x).toFixed(2), sg = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
   const gC = (b) => (b ? "#00f0ff" : "#ffe600");   /* 青蓝↓ = 要跌下来补, 黄↑ = 要涨上去补 */
-
-  const CSS = ".gvJL{font:600 11.5px/1.35 -apple-system,'PingFang SC',sans-serif;color:#fff;text-shadow:none;margin-top:5px;cursor:default}"
-    + ".gvJL *{box-sizing:border-box}.gvJL .mono{font-family:ui-monospace,Menlo,monospace}"
-    + ".gvJL .aucL{display:grid;grid-template-columns:1fr auto;gap:1px 8px;align-items:center;border:1px solid;border-radius:8px;padding:4px 7px}"
-    + ".gvJL .ln1{font-size:12px;font-weight:800}.gvJL .ln1 .big{font:800 15px ui-monospace,Menlo,monospace}"
-    + ".gvJL .ln2{font:800 12.5px ui-monospace,Menlo,monospace;text-align:right}.gvJL .ln2 .sz{font-size:10.5px;color:#fff;margin-left:4px}"
-    + ".gvJL .ln3{grid-column:1/3;font:700 11px ui-monospace,Menlo,monospace;margin-top:1px}.gvJL .okc{color:#4dffbf;font-size:13px}"
-    + ".gvJL .ln4{grid-column:1/3;font:700 10.5px ui-monospace,Menlo,monospace}"
-    + ".gvJL .gScroll{max-height:252px;overflow-y:scroll;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#ffe600 rgba(255,255,255,.12);scrollbar-gutter:stable;padding-right:3px;margin-top:5px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(0,0,0,.12)}"
-    + ".gvJL .gScroll::-webkit-scrollbar{width:7px}.gvJL .gScroll::-webkit-scrollbar-track{background:rgba(255,255,255,.12);border-radius:7px}"
-    + ".gvJL .gScroll::-webkit-scrollbar-thumb{background:#ffe600;border-radius:7px;min-height:32px}"
-    + ".gvJL .gSec{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(20,35,65,.98);border-bottom:1px solid rgba(255,255,255,.18);font-size:11px}"
-    + ".gvJL .gSec span{font-size:10px;color:#fff}.gvJL .gSec.new{color:#ffe600}.gvJL .gSec.doneH{color:#4dffbf}"
-    + ".gvJL .g{display:grid;grid-template-columns:16px 1fr auto;gap:2px 5px;align-items:center;padding:4px 6px;border-radius:7px;margin:3px 4px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13)}"
-    + ".gvJL .g.in{border-color:#fff;background:rgba(255,255,255,.11)}"
-    + ".gvJL .ar{font:900 13px/1 -apple-system;text-align:center}.gvJL .z{font:800 12.5px ui-monospace,Menlo,monospace}"
-    + ".gvJL .r{text-align:right;font-size:10.5px;white-space:nowrap}"
-    + ".gvJL .n,.gvJL .tm{grid-column:2/4;display:flex;flex-wrap:wrap;gap:1px 7px;font-size:10.5px}.gvJL .tm{font:700 10.5px ui-monospace,Menlo,monospace}"
-    + ".gvJL .tag{display:inline-block;border-radius:6px;padding:0 4px;font-size:10px;font-weight:800;margin-left:3px;vertical-align:1px}"
-    + ".gvJL .tN{background:#fff;color:#1a0508}.gvJL .tIn{border:1px solid #fff}"
-    + ".gvJL .done{display:flex;justify-content:space-between;gap:6px;padding:4px 7px;font-size:11px;border-bottom:1px dashed rgba(255,255,255,.2)}"
-    + ".gvJL .gEmpty{padding:5px 8px;font-size:11px;color:#fff}"
-    + ".gvJL .rateH{display:flex;justify-content:space-between;margin:5px 2px 2px;font-size:10.5px}.gvJL .rateH b{font-size:11px}"
-    + ".gvJL .rate{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;text-align:center;font-size:9.5px}"
-    + ".gvJL .rate div{border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:2px 0;white-space:nowrap}.gvJL .rate b{display:inline;font:800 11px ui-monospace,Menlo,monospace;margin:0 2px}"
-    + ".gvJL .aucL{position:relative}" /* jl-1183 */
-    + ".gvJL .ln4w{grid-column:1/3;display:flex;flex-wrap:wrap;gap:1px 10px}"
-    + ".gvJL .ln4w .ln4{white-space:nowrap}"
-    + ".gvJL .gvFoldJL{position:absolute;top:1px;right:3px;background:transparent;border:0;color:#fff;font-size:11px;line-height:1;padding:3px 6px;cursor:pointer}"
-    + ".gvJL .gvFoldJL:active{opacity:1}"
-    + ".gvJL .aucL.gvFolded .ln3,.gvJL .aucL.gvFolded .ln4w{display:none}"
-    + ".gvJL .wait{font-size:11px;padding:4px 2px}"
-    + ".gvJL .tgL{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding:4px 8px;margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);font:800 12px ui-monospace,Menlo,monospace}"
-    + ".gvJL .tgL .tgH{font:800 11px -apple-system,'PingFang SC',sans-serif;color:#fff}.gvJL .tgL .tgI{white-space:nowrap}.gvJL .tgL .tgI i{font-style:normal;color:#fff;font-size:10.5px;margin-left:3px}"
-    + ".gvJL .t5{flex:none;font-size:10px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:5px;padding:0 4px;white-space:nowrap}"   /* jl-gapfix: 近5日趋势小标, 跟在回补率后面同一行流式排, 放不下自动换行, 不叠字 */
-    + ".gvJL i.tgT{font:700 9px/13px -apple-system,sans-serif;font-style:normal;background:#fff;color:#000;border-radius:3px;padding:0 4px;margin-left:4px}.gvJL .tgL .tgI em{font-style:normal;color:#ffd84a;border:1px solid rgba(255,216,74,.6);border-radius:6px;padding:0 4px;margin-left:4px;font-size:10.5px}";   /* jl-1201 日线未补目标行 */
-  function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS + ".gvTogJL{display:block;width:100%;text-align:left;border:0;background:none;color:#fff;font:700 11.5px -apple-system,sans-serif;padding:4px 2px;min-height:0}.gvFoldAllJL>.gvJL{display:none!important}"; document.head.appendChild(s); } }
+  const CSS = ".gvJL{font:600 11px/1.42 -apple-system,'PingFang SC',sans-serif;color:#fff;margin-top:4px;cursor:default}"
+    + ".gvJL *{box-sizing:border-box}"
+    + ".gvJL .u{color:#ffe600}.gvJL .d{color:#00f0ff}"   /* ↑黄=要涨上去补, ↓青=要跌下来补 */
+    + ".gvJL .fcs{border:1px solid #ff5252;border-radius:10px;padding:6px 9px 7px;margin:3px 0 2px;background:rgba(255,82,82,.08);animation:gvFcsJL 2.2s ease-in-out infinite}"   /* 重点跟进红框(脉冲) */
+    + "@keyframes gvFcsJL{50%{border-color:rgba(255,82,82,.4)}}"
+    + ".gvJL .fcs .ft{display:flex;align-items:center;gap:5px;font:800 10.5px -apple-system,'PingFang SC',sans-serif;color:#ff8a8a;margin-bottom:3px}"
+    + ".gvJL .fcs .ft::before{content:'';width:6px;height:6px;border-radius:50%;background:#ff5252;box-shadow:0 0 6px #ff5252;animation:gvDotJL 1.6s ease-in-out infinite}"
+    + "@keyframes gvDotJL{50%{opacity:.3}}"
+    + ".gvJL .fx{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 7px;padding:2px 0;font:700 11.5px ui-monospace,Menlo,monospace;color:rgba(255,255,255,.92)}"
+    + ".gvJL .fx .px{font-size:13px;font-weight:800}"
+    + ".gvJL .fxd{font:800 11px ui-monospace,Menlo,monospace;color:#fff}"
+    + ".gvJL .lvTxt{font:600 10.5px -apple-system,'PingFang SC',sans-serif;color:rgba(255,255,255,.85)}"
+    + ".gvJL .fx .pb{margin-left:auto;font:700 10px -apple-system,sans-serif;white-space:nowrap;color:rgba(255,255,255,.78)}"
+    + ".gvJL .gsec{display:flex;align-items:center;gap:6px;font:800 11px -apple-system,'PingFang SC',sans-serif;margin:8px 0 3px;padding:0 3px}"
+    + ".gvJL .gsec .sum{font:600 10px -apple-system,sans-serif;color:rgba(255,255,255,.62)}"
+    + ".gvJL .gsec .fb{margin-left:auto;font:600 9.5px -apple-system,sans-serif;border:1px solid #fff;border-radius:5px;padding:0 5px;line-height:15px;background:none;color:#fff;cursor:pointer}"
+    + ".gvJL .tday{display:grid;grid-template-columns:1fr 1fr;gap:2px 6px;padding:2px 3px;font:700 10px ui-monospace,Menlo,monospace}"
+    + ".gvJL .ti{color:rgba(255,255,255,.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+    + ".gvJL .ti b{font-weight:800}"
+    + ".gvJL .ti.op{background:rgba(255,150,60,.16);border:1px solid rgba(255,150,60,.55);border-radius:6px;padding:1px 5px;color:#ffb46a}"   /* 未补事件橙底 */
+    + ".gvJL .gr{padding:4px 7px;border-radius:7px;margin:1px 0}"
+    + ".gvJL .gr.hot{background:rgba(255,82,82,.14);border:1px solid rgba(255,82,82,.6)}"   /* 重点跟进行/回补中 */
+    + ".gvJL .gr.warm{background:rgba(255,150,60,.1);border:1px solid rgba(255,150,60,.4)}"   /* 还差≤7% */
+    + ".gvJL .gr .a{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}"
+    + ".gvJL .gr .px{font:800 12.5px ui-monospace,Menlo,monospace}"
+    + ".gvJL .lv{display:inline-flex;gap:2px}"
+    + ".gvJL .lv i{font-style:normal;font:700 9px/14px -apple-system,sans-serif;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.22);border-radius:4px;padding:0 3px;min-width:15px;text-align:center}"
+    + ".gvJL .lv i.on{color:#000;font-weight:800}"
+    + ".gvJL .lv i.on.u{background:#ffe600;border-color:#ffe600}.gvJL .lv i.on.d{background:#00f0ff;border-color:#00f0ff}"
+    + ".gvJL .gr .pb{margin-left:auto;font:700 9.5px -apple-system,sans-serif;white-space:nowrap;color:rgba(255,255,255,.75)}"
+    + ".gvJL .pb b{color:#fff;font-weight:800}"
+    + ".gvJL .gr .b{font:600 9.5px ui-monospace,Menlo,monospace;color:rgba(255,255,255,.6);margin-top:1px;padding-left:1px}"
+    + ".gvJL .gr .b b{color:#fff;font-weight:800}"
+    + ".gvJL .now{display:flex;align-items:center;gap:8px;color:#fff;font:800 10.5px ui-monospace,Menlo,monospace;margin:7px 0 5px;white-space:nowrap}"
+    + ".gvJL .now::before,.gvJL .now::after{content:'';flex:1;border-top:1px dashed rgba(255,255,255,.32)}"
+    + ".gvJL .gfold{font:600 9.5px ui-monospace,Menlo,monospace;color:rgba(255,255,255,.55);border:1px dashed rgba(255,255,255,.24);border-radius:6px;padding:3px 6px;margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+    + ".gvJL .gEmpty{padding:4px 8px;font-size:10.5px;color:rgba(255,255,255,.5)}"
+    + ".gvJL .wait{font-size:10.5px;padding:4px 2px}"
+    + ".gvJL .stale{font:600 9.5px -apple-system,sans-serif;color:#ffb46a;padding:3px 2px 1px}"
+    + ".gvJL i.tgT{font:700 9px/13px -apple-system,sans-serif;font-style:normal;background:#fff;color:#000;border-radius:3px;padding:0 4px;margin-left:4px}";
+  function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS + ".gvTogJL{display:flex;align-items:baseline;gap:5px;width:100%;text-align:left;border:0;background:none;color:#fff;font:700 11.5px -apple-system,sans-serif;padding:4px 2px;min-height:0}.gvTogJL .gvPxJL{margin-left:auto;font:700 10.5px ui-monospace,Menlo,monospace;color:rgba(255,255,255,.85)}.gvFoldAllJL>.gvJL{display:none!important}"; document.head.appendChild(s); } }
 
   async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
   async function mk(c, k, end, n) { const d = await J("https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline?param=" + c + ",m" + k + "," + (end || "") + "," + (n || 320)); return (d.data[c]["m" + k] || []).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }
   /* 1分钟一次只给320根(约1.3天), 按结束时刻往前再补一页800根, 凑满近5个交易日 */
   async function mk1(c) { const a = await mk(c, 1); if (!a.length) return a; let b = []; try { b = await mk(c, 1, a[0].t, 800); } catch (e) { } const s = a[0].t; return b.filter((x) => x.t < s).concat(a); }
-  async function dk(c) { const d = await J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,80,qfq"); const n = d.data[c]; return (n.qfqday || n.day).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }
+  async function dk(c) { const d = await J("https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=" + c + ",day,,,400,qfq"); const n = d.data[c]; return (n.qfqday || n.day).map((r) => ({ t: r[0], o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] })); }   /* v3: 80→400根日K, 远端历史缺口进「远的」折叠; 台账在render里仍喂最后80根=原口径 */
   async function mn(c) { const d = await J("https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=" + c); const x = d.data[c]; let pv = 0; return { date: x.data.date, pts: x.data.data.map((s) => { const a = s.split(" "), cv = +a[2], v = cv - pv; pv = cv; return { t: a[0], p: +a[1], v: v }; }) }; }
 
   /* ===== jl-1197: 东财备选——腾讯失败先原地重试一次, 仍失败才走东财; 每只票各自判断, 不设全局标记 ===== */
@@ -147,8 +155,9 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     const tgt = { up: tg(true), dn: tg(false) };
     const ref = op || last;
     window._gvAll = all.map(g => g.lv + " " + g.lo + "-" + g.hi + (g.ft ? " 已补" : " 未补"));
+    const ev = all.filter((g) => g.lv !== "日" && g.d === today).slice().sort((a, b) => dg(a.t) - dg(b.t));   /* v3: 今日分钟级事件→宫格(在距离窗/小缺口过滤之前取, 与效果图计数口径一致) */
 
-    all = all.filter((g) => Math.abs((g.lo + g.hi) / 2 / last - 1) <= 0.08);
+    all = all.filter((g) => Math.abs((g.lo + g.hi) / 2 / last - 1) <= 0.40);   /* v3: 8%→40%, 远的折叠显示而非整段消失 */
     all = all.filter((g) => !(g.lv === "1分" && g.ft && (g.hi - g.lo) / ref < 0.002));   /* 1分钟 <0.2% 的已补缺口不显示, 未补的照常显示 */
 
     const open = all.filter((g) => !g.ft), done = all.filter((g) => g.ft);
@@ -172,11 +181,11 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
       if (L === "日") {   /* jl-gapfix: 日线缺口用"已挂几天"那一档 */
         const td = RTD[code], fi = D.findIndex((x) => dg(x.t).slice(0, 8) === bd), nowM = new Date().getHours() * 60 + new Date().getMinutes();
         const lastDone = isToday && nowM < 900 ? D.length - 2 : D.length - 1, age = fi >= 0 ? lastDone - fi : -1;
-        if (td && age >= 0) { const r = td[g.bull ? "u" : "d"][1 + Math.min(age, 5)]; g.rt = md(bd) + "起·已挂" + (age + 1) + "天 · 下一交易日补 " + r[1] + "% · 3日内补 " + r[2] + "%（样本" + r[0] + "）"; }
-        else if (td && age < 0) { const r = td[g.bull ? "u" : "d"][0]; g.rt = "今日形成 · 当天补 " + r[1] + "% · 次日前补 " + r[2] + "% · 3日内补 " + r[3] + "%"; }
+        if (td && age >= 0) { const r = td[g.bull ? "u" : "d"][1 + Math.min(age, 5)]; g.rt = md(bd) + "起·已挂" + (age + 1) + "天 · 下一交易日补 " + r[1] + "% · 3日内补 " + r[2] + "%（样本" + r[0] + "）"; g.pr = [null, r[1], r[2]]; }
+        else if (td && age < 0) { const r = td[g.bull ? "u" : "d"][0]; g.rt = "今日形成 · 当天补 " + r[1] + "% · 次日前补 " + r[2] + "% · 3日内补 " + r[3] + "%"; g.pr = [r[1], r[2], r[3]]; }
       } else if (bd === today) {   /* 今天形成的分钟缺口: 本地重算表(该时点仍未补) */
         const r = MT[code] && MT[code][L] ? (MT[code][L][ck] || [])[g.bull ? 0 : 1] : null;
-        g.rt = !r ? "" : r[0] < 5 ? "样本不足（" + r[0] + "个）" : (ck < 3 ? "当天补 " + r[1] + "% · " : "") + "次日前 " + r[2] + "% · 3日内 " + r[3] + "%（" + r[0] + "个）";
+        g.rt = !r ? "" : r[0] < 5 ? "样本不足（" + r[0] + "个）" : (ck < 3 ? "当天补 " + r[1] + "% · " : "") + "次日前 " + r[2] + "% · 3日内 " + r[3] + "%（" + r[0] + "个）"; g.pr = !r || r[0] < 5 ? null : (ck < 3 ? [r[1], r[2], r[3]] : [null, r[2], r[3]]);
       } else g.rt = md(bd) + "起的分钟缺口 · 隔日无统计";   /* jl-gapfix: 原拿"今天形成"的概率套到往天缺口上, 偏高, 不再显示 */
       g.born = g.mem.slice().sort((a, b) => dg(a.t) - dg(b.t)).map((m) => ({ lv: m.lv, t: dg(m.t) }));
       const t0 = g.born[0].t.padEnd(12, "9").slice(0, 12), segs = []; let on = false;
@@ -202,88 +211,130 @@ dgp.forEach((g) => {
     dgp.sort((a, b) => b.N - a.N || dg(b.ft) - dg(a.ft));
     const tr = {}; LV.forEach((L) => { const t = all.filter((g) => g.lv === L && g.d === today); tr[L] = { n: t.length, k: t.filter((g) => g.ft).length }; });
     const b5 = D[D.length - (isToday ? 6 : 5)], t5 = b5 && b5.c > 0 ? (last / b5.c - 1) * 100 : null;   /* jl-gapfix: 近5个交易日涨跌, 提示回补率在单边行情里会偏 */
-    return { today, pre, op, opg, grp, dgp, tr, tgt, code, last, t5 };
+    return { today, pre, op, opg, grp, dgp, tr, tgt, code, last, t5, ev };
   }
 
-  /* jl-1201: 日线未补目标行 + 中波段斐波(同持仓卡中波段条)落在缺口内=双向验证 */
-  /* 11-14 用户: 缺口沿(含±0.15%)压在持仓卡 S1/B1... 档价上 → 在 iv 后挂 =S1 / =B1 小白标 */
+
+  /* ===== =S2/=S1/=B1/=B2 白标数据源: 作战屏固定价位表 ATRB_TAB (11-14 用户定: 必须链作战屏真值, 不再用持仓卡动态档) =====
+     同源 fetch jl_zp_war.html 抽出 var ATRB_TAB={...}; localStorage jl_atrb_v1 缓存12h; 失败静默(不标, 不影响缺口主功能); 拿到后重刷已画的卡。
+     撞标规则(沿用 v2 的0.15%容差): 档价落在缺口区间[lo,hi]±0.15%内 → 档价压在缺口沿上、或补缺口途中必过档价, 都算撞上。 */
+  let ATRB = null, ATRBfly = 0;
+  function atrbKick() {
+    if (ATRB || ATRBfly) return;
+    try { const c = JSON.parse(localStorage.getItem("jl_atrb_v1") || "null"); if (c && c.at && Date.now() - c.at < 43200000 && c.t) { ATRB = c.t; return; } } catch (e) { }
+    ATRBfly = 1;
+    fetch("jl_zp_war.html", { cache: "no-store" }).then((r) => (r.ok ? r.text() : Promise.reject())).then((txt) => {
+      let t = null;
+      const m = txt.match(/var\s+ATRB_TAB\s*=\s*\{[\s\S]*?\};/);
+      if (m) { try { t = (new Function("return (" + m[0].replace(/^var\s+ATRB_TAB\s*=\s*/, "").replace(/;\s*$/, "") + ")"))(); } catch (e) { } }
+      ATRB = t || {}; ATRBfly = 0;
+      try { if (t && Object.keys(t).length) localStorage.setItem("jl_atrb_v1", JSON.stringify({ at: Date.now(), t: t })); } catch (e) { }
+      document.querySelectorAll(".hldGapRowJL[data-gv]").forEach((h) => paint(h, h.getAttribute("data-gv")));
+    }).catch(() => { ATRBfly = 0; });
+  }
   function tierTag(code, lo, hi) {
-    let T = null; try { T = window.jlTierPxJL ? window.jlTierPxJL(code) : null; } catch (e) { }
-    if (!T) return "";
-    const tol = (hi + lo) / 2 * 0.0015, hitI = (arr) => arr.findIndex((v) => v >= lo - tol && v <= hi + tol);
-    let k = hitI(T.S), nm = k >= 0 ? "S" + (k + 1) : "";
-    if (k < 0) { k = hitI(T.B); nm = k >= 0 ? "B" + (k + 1) : ""; }
-    return nm ? ' <i class="tgT">=' + nm + "</i>" : "";
+    const T = ATRB && ATRB[String(code).replace(/\D/g, "")]; if (!T) return "";
+    const hits = [];
+    [["S2", T.S2], ["S1", T.S1], ["B1", T.B1], ["B2", T.B2]].forEach(function (p) {
+      const v = Number(p[1]);
+      if (!isFinite(v) || v <= 0) return;
+      if (lo - v * 0.0015 <= v && v <= hi + v * 0.0015) hits.push(p[0]);
+    });
+    return hits.length ? " " + hits.map(function (n) { return '<i class="tgT">=' + n + "</i>"; }).join("") : "";
   }
-  function tgtHtml(R) {
-    if (!R.tgt) return "";
-    let F = null; try { F = window.jlFibLvJL ? window.jlFibLvJL(R.code) : null; } catch (e) { }
-    const it = (g, up) => {
-      if (!g) return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ iv 无" : "↓ iv 无") + "</span>";
-      const z = Math.abs(g.hi - g.lo) / g.hi < 0.0015 ? f2((g.lo + g.hi) / 2) : f2(g.lo) + "–" + f2(g.hi);
-      let fb = null; if (F && F.lv) F.lv.forEach((l) => { if (l.v >= g.lo * 0.997 && l.v <= g.hi * 1.003 && (!fb || Math.abs(l.v - (g.lo + g.hi) / 2) < Math.abs(fb.v - (g.lo + g.hi) / 2))) fb = l; });
-      return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ " : "↓ ") + z + tierTag(R.code, g.lo, g.hi) + " <b>" + (g.inZ ? "回补中" : sg(g.dist)) + "</b><i>" + g.d + "</i>" + (fb ? "<em>≈" + (fb.r === 0 || fb.r === 1 ? ((fb.r === 0) === (F.dir < 0) ? "段低" : "段高") : "斐波" + fb.r) + " " + f2(fb.v) + "</em>" : "") + "</span>";
-    };
-    return '<div class="tgL"><span class="tgH">日线未补</span>' + it(R.tgt.up, true) + it(R.tgt.dn, false) + "</div>";
-  }
-  function html(R, openDone) {
-    let h = tgtHtml(R);
-    if (R.op) {
-      const o = R.opg, col = o ? gC(o.up) : "#fff";
-      if (o) {
-        const rem = Math.abs(o.ext - R.pre);
-        h += '<div class="aucL" style="border-color:' + col + '"><div class="ln1">竞 ' + (o.up ? "高开" : "低开") + ' <span class="big" style="color:' + col + '">' + sg(o.pct) + "</span></div>"
-          + '<div class="ln2" style="color:' + col + '">' + (o.up ? "↓" : "↑") + " iv " + f2(R.op) + "–" + f2(R.pre) + ' <span class="sz">' + f2(o.size) + (/^(sh|sz)/.test(String(R.code)) ? "点" : "元") + "</span></div>"
-          + '<div class="ln3">' + (o.st === "done" ? '<span class="okc">✓</span> ' + o.ft : "还差 " + f2(rem) + (/^(sh|sz)/.test(String(R.code)) ? "点" : "元") + " · 已补 " + Math.round(o.prog * 100) + "%") + "</div>"
-          + (OGT[R.code] ? (() => { const a = Math.abs(o.pct), r = OGT[R.code][o.up ? "u" : "d"].find((x) => a >= x[0] && a < x[1]); if (!r || !r[2]) return ""; const sg2 = (v) => (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
-            return '<div class="ln4">' + (o.up ? "高开" : "低开") + r[0] + "–" + (r[1] < 99 ? r[1] + "%" : "以上") + " 历史" + r[2] + "次：当天补 " + r[3] + "% · 次日前 " + r[4] + "% · 3日内 " + r[5] + "%</div>"
-              + '<div class="ln4">' + (o.up ? "开盘卖→补回买" : "开盘买→补回卖") + "（没补收盘" + (o.up ? "买" : "卖") + "）平均 " + sg2(r[6]) + " · 没补那些天 " + sg2(r[7]) + "</div>"; })() : "") /* jl-gapfix 1104b: 按今日缺口大小那一档 */
-          + (o.back && o.back.length ? '<div class="ln4w">' + o.back.map((b) => '<span class="ln4">再次回补 ' + b + "</span>").join("") + "</div>" : "") /* jl-1183: 回补记录横排 */
-          + '<button class="gvFoldJL" type="button" aria-label="收起或展开回补记录">▾</button>' + "</div>";
-      } else h += '<div class="aucL" style="border-color:#fff"><div class="ln1">竞 平开 <span class="big">0.00%</span></div></div>';
-    }
-    const gapRow = (g) => {
-      const z = (g.hi - g.lo) / g.mid < 0.0015 ? f2(g.mid) : f2(g.lo) + "–" + f2(g.hi);
-      return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>" + tierTag(R.code, g.lo, g.hi)
-        + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : (() => { const oh = Math.max(...g.mem.map((m) => m.hi)), ol = Math.min(...g.mem.map((m) => m.lo)), u = oh > ol ? (g.bull ? (oh - g.hi) : (g.lo - ol)) / (oh - ol) : 0; return u >= 0.05 ? '<span class="tag tIn">最深已回' + Math.round(u * 100) + "%</span>" : ""; })()) + "</span>"
-        + '<span class="r">' + (g.vsOp != null ? "距开盘 <b>" + sg(g.vsOp) + "</b>" : "") + "<br>距现价 <b>" + sg(g.dist) + "</b></span>"
-        + (g.rt ? '<span class="n"><span>' + g.rt + "</span>" + (R.t5 != null ? '<span class="t5">近5日' + (R.t5 >= 0 ? "涨" : "跌") + Math.abs(R.t5).toFixed(1) + "%</span>" : "") + "</span>" : "")
-        + '<span class="tm">' + g.born.map((b) => "<span>" + LVN[b.lv] + " " + fmt(b) + "</span>").join("")
-        + (g.touch.length ? g.touch.slice(-4).map((t) => "<span>" + t.slice(4, 6) + "-" + t.slice(6, 8) + " " + t.slice(8, 10) + ":" + t.slice(10, 12) + " 碰过</span>").join("") + (g.touch.length > 4 ? "<span>共碰 " + g.touch.length + " 次</span>" : "") : "") + "</span></div>";
-    };
-    const doneRow = (g) => '<div class="done"><span><span style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + " iv " + f2(g.lo) + "–" + f2(g.hi) + "</span>" + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + '<br><span style="font-size:10.5px">' + g.mem.slice().sort((a, b) => ORD[b.lv] - ORD[a.lv]).map((m) => LVN[m.lv] + " " + fmt(m)).join(" · ") + ' 形成</span></span><span class="mono" style="white-space:nowrap">已补 ' + hm(g.ft) + " @" + f2(g.fp) + "</span></div>";
 
-    const isNew = (g) => g.born.some((b) => b.t.slice(0, 8) === R.today);
-    const fresh = R.grp.filter(isNew), old = R.grp.filter((g) => !isNew(g));
-    h += '<div class="gScroll" tabindex="0" aria-label="缺口列表，上下滑动查看">'
-      + '<div class="gSec"><b>未补 ' + old.length + '</b><span>同价周期已合并</span></div>'
-      + (old.length ? old.map(gapRow).join("") : '<div class="gEmpty">无</div>')
-      + '<div class="gSec new"><b>今日新增 ' + fresh.length + '</b><span>未补目标</span></div>'
-      + (fresh.length ? fresh.map(gapRow).join("") : '<div class="gEmpty">无</div>')
-      + '<div class="gSec doneH"><b>今日已补 ' + R.dgp.length + '</b><span>补回时间 / 价格</span></div>'
-      + (R.dgp.length ? R.dgp.map(doneRow).join("") : '<div class="gEmpty">无</div>') + '</div>';
-    h += '<div class="rateH"><b>今日回补率</b><span>已补/出现 · 盘中实时</span></div><div class="rate">'
-      + LV.map((L) => "<div>" + LVN[L] + "<b>" + (R.tr[L].n ? Math.round(R.tr[L].k / R.tr[L].n * 100) + "%" : "—") + "</b>" + R.tr[L].k + "/" + R.tr[L].n + "</div>").join("") + "</div>";
+  /* ===== 效果图版式: 重点跟进 + 今日iv宫格 + ↑iv/现价/↓iv 对称梯 + 远的折叠 ===== */
+  const dtxt = (ms) => { const d = new Date(ms); return String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  function html(R, sf) {
+    sf = sf || {};
+    const last = R.last, yr = String(R.today).slice(0, 4);
+    const side = (g) => ((g.lo + g.hi) / 2 >= last ? "u" : "d");      /* 缺口带在现价上方→↑黄, 下方→↓青; 现价在带内按中点归侧 */
+    const fe = (g) => (g.bull ? g.lo : g.hi);                          /* 补满价 = 前收(远沿) */
+    const dd = (g) => Math.abs(fe(g) / last - 1) * 100;                /* 还差% = 现价到补满价 */
+    const zone = (g) => ((g.hi - g.lo) / g.lo < 0.0015 ? f2((g.lo + g.hi) / 2) : f2(g.lo) + "–" + f2(g.hi));
+    const has = (g, lv) => g.lvs.indexOf(lv) >= 0;
+    const kai = (g) => g.lvs.indexOf("日") >= 0 && g.mem.some(function (m) { return m.lv === "日" && (m.hi - m.lo) / m.lo >= 0.001; });   /* 开盘缺口(≥0.1%的开盘偏离) */
+    const lvTxt = (g) => {
+      const ms = g.lvs.filter(function (l) { return l !== "日"; }).sort(function (a, b) { return ORD[b] - ORD[a]; });
+      const out = [];
+      if (has(g, "日")) out.push(kai(g) ? "日线+开盘" : "日线");
+      if (ms.length) out.push((ms.length >= 2 ? ms.map(function (x) { return x.replace("分", ""); }).join("/") : ms[0].replace("分", "")) + "分" + (ms.length >= 2 ? "重合" : ""));
+      return out.join(" · ");
+    };
+    const pills = (g, s) => '<span class="lv">' + [["日", "日"], ["开", "开"], ["30分", "30"], ["15分", "15"], ["5分", "5"], ["1分", "1"]].map(function (p) {
+      const on = p[0] === "开" ? kai(g) : has(g, p[0]);
+      return '<i class="' + (on ? "on " + s : "") + '">' + p[1] + "</i>";
+    }).join("") + "</span>";
+    const born = (g) => {
+      const b = g.born[0], d = String(b.t).slice(0, 8);
+      const ds = d.slice(0, 4) === yr ? d.slice(4, 6) + "-" + d.slice(6, 8) : d.slice(0, 4) + "-" + d.slice(4, 6) + "-" + d.slice(6, 8);
+      return b.lv === "日" ? ds + " 开盘" : ds + " " + String(b.t).slice(8, 10) + ":" + String(b.t).slice(10, 12);
+    };
+    const pb = (g) => {
+      if (!g.pr) return "";
+      const L = ["当天", "次日", "3日"], out = [];
+      g.pr.forEach(function (v, i) { if (v != null && isFinite(v)) out.push(L[i] + "<b>" + Math.round(v) + "%</b>"); });
+      return out.length ? '<span class="pb">' + out.join(" ") + "</span>" : "";
+    };
+
+    const ups = R.grp.filter(function (g) { return side(g) === "u"; }).sort(function (a, b) { return dd(a) - dd(b); });
+    const dns = R.grp.filter(function (g) { return side(g) === "d"; }).sort(function (a, b) { return dd(a) - dd(b); });
+    const row = (g, fu, fd) => {
+      const s = side(g), hot = g === fu || g === fd || g.inG, warm = !hot && dd(g) <= 7;
+      const olo = Math.min.apply(null, g.mem.map(function (m) { return m.lo; })), ohi = Math.max.apply(null, g.mem.map(function (m) { return m.hi; }));   /* 形成时的原始缺口区间(与剩余带区分) */
+      const oz = (ohi - olo) / olo < 0.0015 ? f2((olo + ohi) / 2) : f2(olo) + "–" + f2(ohi);
+      return '<div class="gr' + (hot ? " hot" : warm ? " warm" : "") + '"><div class="a">'
+        + '<b class="px ' + s + '">' + (s === "u" ? "↑" : "↓") + f2(fe(g)) + "</b>" + tierTag(R.code, g.lo, g.hi) + pills(g, s)
+        + (g.inG ? '<span class="fxd">回补中</span>' : "") + pb(g) + "</div>"
+        + '<div class="b">' + born(g) + " · " + oz + " · 当时缺口 " + ((ohi - olo) / olo * 100).toFixed(1) + "% → " + (g.inG ? "回补中" : "现在还差 <b>" + dd(g).toFixed(1) + "%</b>") + "</div></div>";
+    };
+    const fold = (list) => (!list.length ? "" : '<div class="gfold">▸ 远的 ' + list.length + " 个：" + list.slice(0, 4).map(function (g) { return f2(fe(g)); }).join(" · ") + (list.length > 4 ? " …" : "") + "</div>");
+    const fx = (g) => {
+      const s = side(g);
+      return '<div class="fx"><b class="px ' + s + '">' + (s === "u" ? "↑" : "↓") + f2(fe(g)) + "</b>"
+        + '<span class="fxd">' + (g.inG ? "回补中" : "还差 " + dd(g).toFixed(1) + "%") + "</span>"
+        + '<span class="lvTxt">' + lvTxt(g) + "</span>" + tierTag(R.code, g.lo, g.hi) + pb(g) + "</div>";
+    };
+    const sec = (title, sum, key) => '<div class="gsec">' + title + (sum ? '<span class="sum">' + sum + "</span>" : "")
+      + '<button class="fb" type="button" data-fbs="' + key + '">' + (sf[key] ? "展开 ▸" : "收起 ▴") + "</button></div>";
+
+    let h = '<div class="fcs"><div class="ft">重点跟进</div>' + (ups.length || dns.length ? [ups[0], dns[0]].filter(Boolean).map(fx).join("") : '<div class="fx"><span class="lvTxt">无未补缺口</span></div>') + "</div>";
+
+    const evs = R.ev || [];
+    const k = evs.filter(function (e) { return e.ft; }).length;
+    h += sec('<span>今日 iv · ' + md(R.today) + "</span>", "出现 " + evs.length + " · 已补 " + k + " · 未补 " + (evs.length - k), "t")
+      + (sf.t ? "" : (evs.length ? '<div class="tday">' + evs.map(function (e) {
+        const s = e.bull ? "d" : "u";
+        return '<div class="ti' + (e.ft ? "" : " op") + '">' + hm(e.t) + " " + e.lv + ' <b class="' + s + '">' + (e.bull ? "↓" : "↑") + f2(e.bull ? e.lo : e.hi) + "</b> " + (e.ft ? "✓" + hm(e.ft) : "未补") + "</div>";
+      }).join("") + "</div>" : '<div class="gEmpty">今日无分钟级缺口</div>'));
+
+    h += sec('<b class="u">↑ iv</b>', ups.length + " 个", "u")
+      + (sf.u ? "" : fold(ups.slice(4)) + ups.slice(0, 4).sort(function (a, b) { return fe(b) - fe(a); }).map(function (g) { return row(g, ups[0], dns[0]); }).join(""));
+    h += '<div class="now">现价 ' + f2(last) + "</div>";
+    h += sec('<b class="d">↓ iv</b>', dns.length + " 个", "d")
+      + (sf.d ? "" : dns.slice(0, 4).map(function (g) { return row(g, ups[0], dns[0]); }).join("") + fold(dns.slice(4)));
     return h;
   }
 
-  const ST = {};   /* code → {at, fly, R, err} */
+  const ST = {};   /* code → {at, fly, R, src, err, sf(分节折叠), stale(缓存回退角标)} */
   function paint(host, code) {
     let box = host.querySelector(":scope > .gvJL");
     if (!box) { host.innerHTML = ""; box = document.createElement("div"); box.className = "gvJL"; host.appendChild(box); }
     if (host.id !== "homeGapJL" && !host.querySelector(":scope > .gvTogJL")) { /* 11-10 用户: 持仓卡 IV 缺口可收起/展开(所有票共用一个开关, 记 jl_gapfold_v1) */
       let f = false; try { f = localStorage.getItem("jl_gapfold_v1") === "1"; } catch (e) { }
-      const tg = document.createElement("button"); tg.type = "button"; tg.className = "gvTogJL"; tg.innerHTML = "IV 缺口 <i>" + (f ? "▸" : "▾") + "</i>"; tg.setAttribute("aria-label", "展开或收起缺口"); host.classList.toggle("gvFoldAllJL", f); host.insertBefore(tg, box);
+      const tg = document.createElement("button"); tg.type = "button"; tg.className = "gvTogJL"; tg.innerHTML = "IV 缺口 <i>" + (f ? "▸" : "▾") + '</i><span class="gvPxJL"></span>'; tg.setAttribute("aria-label", "展开或收起缺口"); host.classList.toggle("gvFoldAllJL", f); host.insertBefore(tg, box);
       tg.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); const nf = !host.classList.contains("gvFoldAllJL"); try { localStorage.setItem("jl_gapfold_v1", nf ? "1" : "0"); } catch (e) { }
         document.querySelectorAll(".hldGapRowJL").forEach((h) => { if (h.id === "homeGapJL") return; h.classList.toggle("gvFoldAllJL", nf); const b = h.querySelector(":scope > .gvTogJL > i"); if (b) b.textContent = nf ? "▸" : "▾"; }); });
     }
-    const s = ST[code], det = box.querySelector("details"), openDone = det ? det.open : !!(s && s.openDone);
-    if (s) s.openDone = openDone;
-    const h = s && s.R ? html(s.R, openDone) + (s.src === "em" ? '<div class="wait">数据源：东财备选（腾讯暂不可用）</div>' : "") :'<div class="wait">' + (s && s.err ? (/熔断/.test(s.err) ? "行情接口拥挤，十几秒后自动重试" : "缺口数据取不到：" + s.err + "（稍后自动重试）") : "缺口数据加载中…") + "</div>";
-    if (box._h !== h) { box.innerHTML = h; box._h = h; const d2 = box.querySelector("details"); if (d2) d2.addEventListener("toggle", () => { if (ST[code]) ST[code].openDone = d2.open; });
-      const a2 = box.querySelector(".aucL"), fb = box.querySelector(".gvFoldJL"); /* jl-1183: 折叠态记忆(会话级, ST[code].foldAuc)+点击切换 */
-      if (a2 && fb) { if (s && s.foldAuc) { a2.classList.add("gvFolded"); fb.textContent = "▸"; }
-        fb.addEventListener("click", (ev) => { ev.stopPropagation(); const f = a2.classList.toggle("gvFolded"); fb.textContent = f ? "▸" : "▾"; if (ST[code]) ST[code].foldAuc = f; }); } }
+    const s = ST[code], pxEl = host.querySelector(":scope > .gvTogJL > .gvPxJL");
+    if (pxEl) pxEl.textContent = s && s.R ? "现价 " + f2(s.R.last) : "";
+    const h = s && s.R
+      ? html(s.R, s.sf) + (s.src === "em" ? '<div class="wait">数据源：东财备选（腾讯暂不可用）</div>' : "") + (s.stale ? '<div class="stale">⚠ 接口失败，暂显缓存（' + s.stale.md + '），稍后自动重试</div>' : "")
+      : '<div class="wait">' + (s && s.err ? (/熔断/.test(s.err) ? "行情接口拥挤，十几秒后自动重试" : "缺口数据取不到：" + s.err + "（稍后自动重试）") : "缺口数据加载中…") + "</div>";
+    if (box._h !== h) {
+      box.innerHTML = h; box._h = h;
+      box.querySelectorAll(".fb").forEach((b) => b.addEventListener("click", (ev) => { ev.stopPropagation(); ev.preventDefault(); const k = b.getAttribute("data-fbs"); if (s) { s.sf = s.sf || {}; s.sf[k] = !s.sf[k]; paint(host, code); } }));
+    }
   }
   function render(host, code) {
     ensureCss();
@@ -291,16 +342,27 @@ dgp.forEach((g) => {
     code = px || String(code).replace(/\D/g, "");
     host.onclick = (e) => e.stopPropagation();   /* 点这一块不翻卡、不触发原缺口行的展开 */
     host.setAttribute("data-gv", code);
+    atrbKick();   /* =S/B 标要作战屏 ATRB_TAB(同源抓取, 12h缓存) */
     const s = ST[code] = ST[code] || { at: 0 };
     paint(host, code);
     if (s.fly || Date.now() - s.at < 60000) return;
     s.fly = 1;
     const c = px || pf(code);
     getAll(c).then((g) => {
-      s.R = compute(code, ...g.r); s.src = g.src;
-      if (!px && g.src === "tx" && window.jlCollectGapsJL) { try { window.jlCollectGapsJL(code, [["日", g.r[0]], ["30分", g.r[1]], ["15分", g.r[2]], ["5分", g.r[3]], ["1分", g.r[4]]]); } catch (eL) { } }   /* jl-gapfix: 台账与卡片同源同口径 */ s.err = ""; s.at = Date.now(); s.fly = 0;
+      s.R = compute(code, ...g.r); s.src = g.src; s.stale = null; s.err = ""; s.at = Date.now(); s.fly = 0;
+      try { localStorage.setItem("jl_gapR_" + code, JSON.stringify({ at: Date.now(), R: s.R })); } catch (e) { }   /* v3: 弱网回退缓存 */
+      if (!px && g.src === "tx" && window.jlCollectGapsJL) { try { window.jlCollectGapsJL(code, [["日", g.r[0].slice(-80)], ["30分", g.r[1]], ["15分", g.r[2]], ["5分", g.r[3]], ["1分", g.r[4]]]); } catch (eL) { } }   /* jl-gapfix: 台账与卡片同源同口径; v3: 日线400根仅供显示, 台账仍喂最后80根=原口径 */
       document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code));
-    }).catch((e) => { s.err = e && e.message || "网络"; s.at = Date.now() - 45000; s.fly = 0; document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code)); });
+    }).catch((e) => {
+      s.err = e && e.message || "网络"; s.at = Date.now() - 45000; s.fly = 0;
+      if (!s.R) {   /* v3: 取不到→回退上次成功缓存(3.5天内), 带⚠角标 */
+        try {
+          const c2 = JSON.parse(localStorage.getItem("jl_gapR_" + code) || "null");
+          if (c2 && c2.R && c2.R.last && Date.now() - c2.at < 302400000) { s.R = c2.R; s.src = ""; s.stale = { md: dtxt(c2.at) }; }
+        } catch (e2) { }
+      }
+      document.querySelectorAll('.hldGapRowJL[data-gv="' + code + '"]').forEach((el) => paint(el, code));
+    });
   }
   window.JLGapIV = { render, compute, _st: ST };
 })();
