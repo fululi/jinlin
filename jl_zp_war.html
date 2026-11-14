@@ -3802,8 +3802,8 @@ function gapPosJL(cur) {   /* 引擎IV区优先; 没有就看台账缺口 */
   var G = ledgerGapsJL(cur), up = null, dn = null, inn = null;
   G.forEach(function (g) { if (cur >= g.lo && cur <= g.hi) inn = g; else if (g.lo > cur) { if (!up || g.lo < up.lo) up = g; } else if (!dn || g.hi > dn.hi) dn = g; });
   if (inn) return '台账缺口内 ' + inn.lvs.join('/');
-  if (up && (!dn || up.lo - cur <= cur - dn.hi)) return '上方台账缺口 ' + up.lo.toFixed(2);
-  if (dn) return '下方台账缺口 ' + dn.hi.toFixed(2);
+  if (up && (!dn || up.lo - cur <= cur - dn.hi)) return '↑ iv ' + up.lo.toFixed(2);
+  if (dn) return '↓ iv ' + dn.hi.toFixed(2);
   return '—';
 }
 function engCardJL() {
@@ -3854,7 +3854,7 @@ function ladderCardJL(cur) { /* jl-hl8: 价位尺=三轮(分时已确认高点�
   try {
     var Z = zonesForLive(null, null), best = null;
     if (Z && Z.grp && cur > 0) Z.grp.forEach(function (g) { var d = g.lo > cur ? g.lo - cur : g.hi < cur ? cur - g.hi : 0; if (d > 0 && (!best || d < best.d)) best = { g: g, d: d }; });
-    if (best) { var g = best.g, up = g.lo > cur; h += '<div class="pr3 iv"><span class="tg">IV</span><span>' + (up ? '上方回补 ' : '下方回补 ') + g.lo.toFixed(2) + '–' + g.hi.toFixed(2) + '</span><em>' + pf(up ? g.lo : g.hi, cur) + '</em></div>'; }
+    if (best) { var g = best.g, up = g.lo > cur; h += '<div class="pr3 iv"><span class="tg">IV</span><span>' + '<b style="color:' + (up ? '#ffe600' : '#00f0ff') + '">' + (up ? '↑' : '↓') + ' iv</b> ' + g.lo.toFixed(2) + '–' + g.hi.toFixed(2) + '</span><em>' + pf(up ? g.lo : g.hi, cur) + '</em></div>'; }
   } catch (er) { }
   $('lad').innerHTML = '<div class="pr-h">价位尺 · 事后参考<span>' + n + '轮 ' + sg(tt) + ' ' + (document.body.classList.contains('ladOpen') ? '▴' : '▾') + '</span></div>' + h;
   var lb = $('lad'); if (!lb.__f) { lb.__f = 1; try { if (localStorage.getItem('zp_ladopen_v1') === '1') document.body.classList.add('ladOpen'); } catch (e) { }
