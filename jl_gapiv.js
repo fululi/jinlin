@@ -63,7 +63,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     + ".gvJL .tgL{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;padding:4px 8px;margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);font:800 12px ui-monospace,Menlo,monospace}"
     + ".gvJL .tgL .tgH{font:800 11px -apple-system,'PingFang SC',sans-serif;color:#fff}.gvJL .tgL .tgI{white-space:nowrap}.gvJL .tgL .tgI i{font-style:normal;color:#fff;font-size:10.5px;margin-left:3px}"
     + ".gvJL .t5{flex:none;font-size:10px;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:5px;padding:0 4px;white-space:nowrap}"   /* jl-gapfix: 近5日趋势小标, 跟在回补率后面同一行流式排, 放不下自动换行, 不叠字 */
-    + ".gvJL .tgL .tgI em{font-style:normal;color:#ffd84a;border:1px solid rgba(255,216,74,.6);border-radius:6px;padding:0 4px;margin-left:4px;font-size:10.5px}";   /* jl-1201 日线未补目标行 */
+    + ".gvJL i.tgT{font:700 9px/13px -apple-system,sans-serif;font-style:normal;background:#fff;color:#000;border-radius:3px;padding:0 4px;margin-left:4px}.gvJL .tgL .tgI em{font-style:normal;color:#ffd84a;border:1px solid rgba(255,216,74,.6);border-radius:6px;padding:0 4px;margin-left:4px;font-size:10.5px}";   /* jl-1201 日线未补目标行 */
   function ensureCss() { if (!document.getElementById("gvCssJL")) { const s = document.createElement("style"); s.id = "gvCssJL"; s.textContent = CSS + ".gvTogJL{display:block;width:100%;text-align:left;border:0;background:none;color:#fff;font:700 11.5px -apple-system,sans-serif;padding:4px 2px;min-height:0}.gvFoldAllJL>.gvJL{display:none!important}"; document.head.appendChild(s); } }
 
   async function J(u) { const r = await fetch(u + (u.includes("?") ? "&" : "?") + "_t=" + Date.now(), { cache: "no-store", signal: AbortSignal.timeout ? AbortSignal.timeout(10000) : undefined }); if (!r.ok) throw Error("HTTP " + r.status); return r.json(); }
@@ -206,14 +206,23 @@ dgp.forEach((g) => {
   }
 
   /* jl-1201: 日线未补目标行 + 中波段斐波(同持仓卡中波段条)落在缺口内=双向验证 */
+  /* 11-14 用户: 缺口沿(含±0.15%)压在持仓卡 S1/B1... 档价上 → 在 iv 后挂 =S1 / =B1 小白标 */
+  function tierTag(code, lo, hi) {
+    let T = null; try { T = window.jlTierPxJL ? window.jlTierPxJL(code) : null; } catch (e) { }
+    if (!T) return "";
+    const tol = (hi + lo) / 2 * 0.0015, hitI = (arr) => arr.findIndex((v) => v >= lo - tol && v <= hi + tol);
+    let k = hitI(T.S), nm = k >= 0 ? "S" + (k + 1) : "";
+    if (k < 0) { k = hitI(T.B); nm = k >= 0 ? "B" + (k + 1) : ""; }
+    return nm ? ' <i class="tgT">=' + nm + "</i>" : "";
+  }
   function tgtHtml(R) {
     if (!R.tgt) return "";
     let F = null; try { F = window.jlFibLvJL ? window.jlFibLvJL(R.code) : null; } catch (e) { }
     const it = (g, up) => {
-      if (!g) return '<span class="tgI">' + (up ? "↑ 上方无" : "↓ 下方无") + "</span>";
+      if (!g) return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ iv 无" : "↓ iv 无") + "</span>";
       const z = Math.abs(g.hi - g.lo) / g.hi < 0.0015 ? f2((g.lo + g.hi) / 2) : f2(g.lo) + "–" + f2(g.hi);
       let fb = null; if (F && F.lv) F.lv.forEach((l) => { if (l.v >= g.lo * 0.997 && l.v <= g.hi * 1.003 && (!fb || Math.abs(l.v - (g.lo + g.hi) / 2) < Math.abs(fb.v - (g.lo + g.hi) / 2))) fb = l; });
-      return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ " : "↓ ") + z + " <b>" + (g.inZ ? "回补中" : sg(g.dist)) + "</b><i>" + g.d + "</i>" + (fb ? "<em>≈" + (fb.r === 0 || fb.r === 1 ? ((fb.r === 0) === (F.dir < 0) ? "段低" : "段高") : "斐波" + fb.r) + " " + f2(fb.v) + "</em>" : "") + "</span>";
+      return '<span class="tgI" style="color:' + gC(!up) + '">' + (up ? "↑ " : "↓ ") + z + tierTag(R.code, g.lo, g.hi) + " <b>" + (g.inZ ? "回补中" : sg(g.dist)) + "</b><i>" + g.d + "</i>" + (fb ? "<em>≈" + (fb.r === 0 || fb.r === 1 ? ((fb.r === 0) === (F.dir < 0) ? "段低" : "段高") : "斐波" + fb.r) + " " + f2(fb.v) + "</em>" : "") + "</span>";
     };
     return '<div class="tgL"><span class="tgH">日线未补</span>' + it(R.tgt.up, true) + it(R.tgt.dn, false) + "</div>";
   }
@@ -235,7 +244,7 @@ dgp.forEach((g) => {
     }
     const gapRow = (g) => {
       const z = (g.hi - g.lo) / g.mid < 0.0015 ? f2(g.mid) : f2(g.lo) + "–" + f2(g.hi);
-      return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>"
+      return '<div class="g' + (g.inG ? " in" : "") + '"><span class="ar" style="color:' + gC(g.bull) + '">' + (g.bull ? "↓" : "↑") + '</span><span><span class="z" style="color:' + gC(g.bull) + '">iv ' + z + "</span>" + tierTag(R.code, g.lo, g.hi)
         + (g.N >= 2 ? '<span class="tag tN">×' + g.N + "</span>" : "") + (g.inG ? '<span class="tag tIn">回补中·已回' + Math.round(g.prog * 100) + "%</span>" : (() => { const oh = Math.max(...g.mem.map((m) => m.hi)), ol = Math.min(...g.mem.map((m) => m.lo)), u = oh > ol ? (g.bull ? (oh - g.hi) : (g.lo - ol)) / (oh - ol) : 0; return u >= 0.05 ? '<span class="tag tIn">最深已回' + Math.round(u * 100) + "%</span>" : ""; })()) + "</span>"
         + '<span class="r">' + (g.vsOp != null ? "距开盘 <b>" + sg(g.vsOp) + "</b>" : "") + "<br>距现价 <b>" + sg(g.dist) + "</b></span>"
         + (g.rt ? '<span class="n"><span>' + g.rt + "</span>" + (R.t5 != null ? '<span class="t5">近5日' + (R.t5 >= 0 ? "涨" : "跌") + Math.abs(R.t5).toFixed(1) + "%</span>" : "") + "</span>" : "")
