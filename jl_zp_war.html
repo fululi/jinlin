@@ -856,8 +856,8 @@ function staticsLiveJL() {
       [0.5, 1, 2, 4, 5, 10, 20, 25, 50, 100, 200].some(function (q) { stP = q; return spanP / q <= 7; });
       for (var pp = Math.ceil((YLO / pc - 1) * 100 / stP) * stP; pp <= (YHI / pc - 1) * 100 + 1e-9; pp += stP) {
         var yP = Y(pc * (1 + pp / 100)); if (yP < PY0 + 6 || yP > PY0 + PH - 4) continue;
-        var tP = tx(PX0 + 1, yP + 3, (pp > 0 ? '+' : pp < 0 ? '−' : '') + Math.abs(pp).toFixed(stP < 1 ? 1 : 0) + '%', pp > 0 ? '#ff8f98' : pp < 0 ? '#6fffc2' : '#cfd8e6', 7.5, 'start', 400);
-        tP.setAttribute('stroke-width', 1); tP.setAttribute('opacity', .75); svg.appendChild(tP);
+        var tP = tx(PX0 + 12, yP + 3, (pp > 0 ? '+' : pp < 0 ? '−' : '') + Math.abs(pp).toFixed(stP < 1 ? 1 : 0) + '%', pp > 0 ? '#ff8f98' : pp < 0 ? '#6fffc2' : '#e8eef8', 8, 'start', 500);   /* 11-15 用户: 左刻度让开10px滑带(x1→x12), 字号8、加粗、去描边更亮 */
+        tP.removeAttribute('stroke'); tP.setAttribute('opacity', .95); svg.appendChild(tP);
       }
     }
   } catch (ePc) { }
@@ -887,11 +887,11 @@ function buildStatics() {
   /* 11-12 用户: 单独打开时的演示样例(卖线/缺口区/缺口沿/接回/上方磁铁)全部删掉, 一条都不留 */
   }
   svg.appendChild(el('line', { x1: xOfHmJL('1130'), y1: PY0, x2: xOfHmJL('1130'), y2: PY0 + PH, stroke: 'var(--line)' }));
-  svg.appendChild(tx(xOfHmJL('0930'), PY0 + PH + 16, '09:30', null, 10, 'middle'));   /* 11-13晚 用户「竞价要和时间对齐」: 最左是 9:15 竞价起点, 09:30 字放到真正 9:30 那格(原来写在最左, 9:25 反而跑到 09:30 右边) */
-  if (!(window.zpPerOf && zpPerOf() > 0)) { var t15 = tx(PX0, PY0 + PH + 16, '竞', '#ffd21f', 8, 'start', 400); t15.removeAttribute('stroke'); svg.appendChild(t15); }
+  svg.appendChild((function(){var t=tx(xOfHmJL('0930'), PY0 + PH + 16, '09:30', null, 10, 'middle');t.removeAttribute('stroke');return t;})());   /* 11-15 用户: 时间轴背景去底色(描边阴影) */   /* 11-13晚 用户「竞价要和时间对齐」: 最左是 9:15 竞价起点, 09:30 字放到真正 9:30 那格(原来写在最左, 9:25 反而跑到 09:30 右边) */
+  if (!(window.zpPerOf && zpPerOf() > 0)) { var xa915 = xOfHmJL('0915'); if (xa915 != null) { var t15 = tx(xa915 + 1, PY0 + 9, '竞', '#ffd21f', 8, 'start', 400); t15.removeAttribute('stroke'); svg.appendChild(t15); } }   /* 11-15 用户: 「竞」从09:30正下方时间轴挪回图内左上竞价起点 */
   try { if (!(window.zpPerOf && zpPerOf() > 0) && LIVE.auc) { var x25 = xOfHmJL('0925'); if (x25 != null) { svg.appendChild(el('line', { x1: x25, x2: x25, y1: PY0 + PH, y2: PY0 + PH + 4, stroke: '#ffd21f', 'stroke-width': .8 })); var t25 = tx(x25 + 2, PY0 + PH - 3, '9:25', '#ffd21f', 8, 'start', 400); t25.removeAttribute('stroke'); svg.appendChild(t25);   /* 去粗描边, 字不糊 */ } } } catch (e925) { }   /* 11-13: 竞价段标时间 */
-  svg.appendChild(tx(xOfHmJL('1130'), PY0 + PH + 16, '11:30/13:00', 'var(--dim)', 10, 'middle'));
-  svg.appendChild(tx(PX0 + PW, PY0 + PH + 16, '15:00', 'var(--dim)', 10, 'end'));
+  svg.appendChild((function(){var t=tx(xOfHmJL('1130'), PY0 + PH + 16, '11:30/13:00', 'var(--dim)', 10, 'middle');t.removeAttribute('stroke');return t;})());
+  svg.appendChild((function(){var t=tx(PX0 + PW, PY0 + PH + 16, '15:00', 'var(--dim)', 10, 'end');t.removeAttribute('stroke');return t;})());
   svg.appendChild(el('polyline', { id: 'pline', fill: 'none', stroke: 'var(--ink)', 'stroke-width': 1, 'stroke-linejoin': 'round' }));
   svg.appendChild(el('g', { id: 'mk' }));
   svg.appendChild(el('line', { id: 'cnow', x1: PX0, x2: LX - 6, stroke: 'var(--ink)', 'stroke-width': .7, 'stroke-dasharray': '1 3', opacity: .7 }));
@@ -5621,7 +5621,14 @@ body.injlin .chartbox>#zpSub{order:1}
       if (RPL || !FF.rows || !FF.rows.length || (LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate)) { legend(s, [[TT, TXT], [RPL ? '回放无资金数据' : '加载中', TXT]]); return; }
       var byHm = {}, KK = per > 0 && window.zpKeyOfHm, keyV = {};
       FF.rows.forEach(function (r) { byHm[hm4(r.hm)] = r; if (KK) { var kk = zpKeyOfHm(r.hm); if (kk) keyV[kk] = r; } });
-      P.forEach(function (p, i) { var r = KK ? keyV[p.hm] : byHm[p.hm]; if (r) { KS.forEach(function (k) { VV[k[0]][i] = r[k[0]] != null ? r[k[0]] : null; }); any = true; } });
+      /* 11-15 用户「主力意愿/资金线中间断了」: 查不到那分钟(午休/分钟对不齐)原来是 null 直接断段 → 累计值语义=没新数据就不变, 前向填充续上, 不再断 */
+      var lastVJL = {}; KS.forEach(function (k) { lastVJL[k[0]] = null; });
+      P.forEach(function (p, i) {
+        var r = KK ? keyV[p.hm] : byHm[p.hm];
+        if (r) KS.forEach(function (k) { if (r[k[0]] != null) lastVJL[k[0]] = r[k[0]]; });
+        KS.forEach(function (k) { VV[k[0]][i] = lastVJL[k[0]]; });
+        if (lastVJL[KS[0][0]] != null) any = true;
+      });
     }
     if (!any) { legend(s, [[TT, TXT], ['今天还没有数据', TXT]]); return; }
     var x0 = X0(), x1 = X1(), mn = 0, mx = 0;
@@ -5640,13 +5647,15 @@ body.injlin .chartbox>#zpSub{order:1}
       var styJL = STYJL[k[0]] || { w: 1, d: null };
       segs.forEach(function (a) { if (a.length < 2) return; var at = { points: a.join(' '), fill: 'none', stroke: k[2], 'stroke-width': sp ? styJL.w : 1.7, 'stroke-linejoin': 'round', opacity: isM ? .95 : .9 }; if (sp && styJL.d) at['stroke-dasharray'] = styJL.d; s.appendChild(E('polyline', at)); });
     });
-    /* 11-15: 分单模式左上角色卡图例(最后那条绿点线=小单) */
+    /* 11-15: 分单模式色卡图例放右上(左上y=10是十字线读数行, 原来图例压了主力/超大读数); 右上让开 min 角标(y≈17) */
     if (sp) {
-      var lgJL = x0 + 2, LBNJL = { main: '主力', x: '超大', l: '大单', m: '中单', s: '小单' };
+      var LBNJL = { main: '主力', x: '超大', l: '大单', m: '中单', s: '小单' }, WJL = { main: 30, x: 26, l: 26, m: 26, s: 26 }, totJL = 0;
+      YYS.forEach(function (k) { totJL += WJL[k[0]]; });
+      var lgJL = x1 - totJL, gyJL = 2.5;
       YYS.forEach(function (k) {
-        s.appendChild(E('line', { x1: lgJL, x2: lgJL + 8, y1: 7, y2: 7, stroke: k[2], 'stroke-width': 1.4 }));
-        s.appendChild(E('text', { x: lgJL + 10, y: 9.5, fill: k[2], 'font-size': 8, 'font-weight': 600 }, LBNJL[k[0]]));
-        lgJL += 10 + (k[0] === 'main' ? 20 : 14) + 8;
+        s.appendChild(E('line', { x1: lgJL, x2: lgJL + 8, y1: gyJL + 3.5, y2: gyJL + 3.5, stroke: k[2], 'stroke-width': 1.4 }));
+        s.appendChild(E('text', { x: lgJL + 10, y: gyJL + 6, fill: k[2], 'font-size': 8, 'font-weight': 600 }, LBNJL[k[0]]));
+        lgJL += WJL[k[0]];
       });
     }
     s.appendChild(E('text', { x: x1 - (sp ? 48 : 26), y: (top + 3).toFixed(1), fill: 'rgba(255,255,255,.55)', 'font-size': 8.5, 'text-anchor': 'end' }, fM(mx)));   /* 让开右上圆标 */
@@ -7719,8 +7728,8 @@ window.addEventListener('click', function (e) {
 <style>
 /* 11-05: 图区锁住触摸(拖动/十字线/缩放不再带着页面跑), 页面上下滑只在这条"滑动带"上做; 11-08 jl-zpyax: 滑动带从右边挪到左边, 右边让给价格轴拖动缩放 */
 #ch,#zpVol,#zpPane,#zpRso,#wkSvg{touch-action:none!important}
-#zpScr{position:absolute;z-index:5;left:0;width:26px;display:none;align-items:center;justify-content:center;touch-action:pan-y;border-radius:0 8px 8px 0;background:linear-gradient(270deg,rgba(122,184,255,0),rgba(122,184,255,.16));-webkit-user-select:none;user-select:none}
-#zpScr b{display:block;width:4px;height:44px;border-radius:2px;background:rgba(255,255,255,.4)}
+#zpScr{position:absolute;z-index:5;left:0;width:10px;display:none;align-items:center;justify-content:center;touch-action:pan-y;-webkit-user-select:none;user-select:none;background:transparent}   /* 11-15 用户: 滑带去掉色底收窄到10px, 不压左边0/-4%刻度 */
+#zpScr b{display:block;width:3px;height:32px;border-radius:1.5px;background:rgba(255,255,255,.22)}
 </style>
 <script>
 (function () {
