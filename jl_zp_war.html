@@ -217,7 +217,7 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 #duoJL .dr.on{outline:1px solid var(--c);border-radius:5px;padding:0 3px;margin:0 -4px}#duoJL .dr.now .ln{opacity:1;border-top-width:1.5px}#duoJL .dr.now b{background:#fff;color:#0d1730;border-radius:3px;padding:0 3px}
 #duoJL .df{font-size:9.5px;margin-top:2px;color:#fff;opacity:.85}
 body.injlin #hSub .hk.swg{display:none!important}
-body.injlin #metaLine.inAc{margin:0 10px 6px!important;padding:5px 8px!important;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(17,24,33,.30);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}   /* 11-15 用户: 挪到我的T上面, 独立一个框(不再和振幅卡拼上下) */
+body.injlin #metaLine.inAc{margin:0 auto 6px!important;width:fit-content;max-width:calc(100vw - 20px);padding:3px 6px!important;border:1px solid rgba(255,255,255,.09);border-radius:8px;background:rgba(17,24,33,.30);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}   /* 11-15 用户: 挪到我的T上面, 窄框只包内容, 居中 */
 body.injlin .chartbox>#metaLine{order:5}   /* 11-15 用户: 排在lad(5)和myT(6)之间 */
 body.injlin.hdFold .chartbox #metaLine.inAc{display:flex!important}
 #ampCardJL #acFdJL{position:absolute;right:4px;top:2px;width:20px;height:18px;padding:0;border:0;background:transparent;color:rgba(255,255,255,.75);font-size:11px;z-index:3;transition:transform .2s}
@@ -234,12 +234,12 @@ body.acFold #ampCardJL #acFdJL{transform:rotate(180deg)}
 #hSub .pbJL .ampBx b.av{font-size:14px;font-weight:800;color:#fff}#hSub .pbJL .ampBx b.av i{font-size:10px;opacity:1}
 #hSub .pbJL .ampBx b.w,#hSub .pbJL .ampBx b.ov{font-size:10.5px;font-weight:700}
 #hSub .hk.amp b.w{color:#ffe14d}#hSub .hk.amp b.ov{color:#ff9f43}
-/* 11-15 用户: B行字体小细明亮, gap收紧让「100股 钱」完整进框不被截断 */
-body #ampCardJL .acNx.acRow{display:grid;grid-template-columns:14px auto auto 1fr;gap:4px;align-items:baseline;white-space:nowrap}
-#ampCardJL .acRow .lg{font-size:11px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums}
+/* 11-15 用户: B行字体小细明亮, 首列/gap再收紧 —— 每轮1000股这类长数字也完整进框不截断 */
+body #ampCardJL .acNx.acRow{display:grid;grid-template-columns:11px auto auto 1fr;gap:3px;align-items:baseline;white-space:nowrap}
+#ampCardJL .acRow .lg{font-size:10.5px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:0}
 #ampCardJL .acRow .lg b{font-weight:500}#ampCardJL .acRow .lg.s b{color:#ff5459}#ampCardJL .acRow .lg.b b{color:#1fdc93}
-#ampCardJL .acRow .lg i{font-style:normal;font-weight:400;font-size:9.5px;color:#ffd66e}
-#ampCardJL .acRow .lg.ok{font-weight:400;font-size:10.5px}#ampCardJL .acRow .lg.ok.s{color:#ff8a8e}#ampCardJL .acRow .lg.ok.b{color:#5fe3b8}#ampCardJL .acRow .lg.ok i{color:#fff}
+#ampCardJL .acRow .lg i{font-style:normal;font-weight:400;font-size:9px;color:#ffd66e}
+#ampCardJL .acRow .lg.ok{font-weight:400;font-size:10px}#ampCardJL .acRow .lg.ok.s{color:#ff8a8e}#ampCardJL .acRow .lg.ok.b{color:#5fe3b8}#ampCardJL .acRow .lg.ok i{color:#fff}
 #ampCardJL .acRow .lg .nd{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:2px;background:currentColor}
 #ampCardJL .acRow .lg.s .nd{color:#ff5459}#ampCardJL .acRow .lg.b .nd{color:#1fdc93}
 #ampCardJL .acRow .lg.near{text-shadow:0 0 6px rgba(255,225,77,.55)}#ampCardJL .acRow .lg.near .nd{animation:acNdJL .8s ease-in-out infinite}
@@ -3578,6 +3578,8 @@ function ampCardJL() {
     else if (sgE) sgE.remove();
   } catch (eSg) { }
   acBind(c); rulerSwJL(c);
+  /* 11-15 用户: B行兜底 —— 渲染后若某行溢出卡片, 该行字号自动降一档(纯显示层, 只降字号不改内容/逻辑) */
+  setTimeout(function () { try { var w = c.clientWidth; c.querySelectorAll('.acNx.acRow').forEach(function (r) { if (r.scrollWidth > w - 2) r.style.fontSize = '9px'; else if (r.style.fontSize) r.style.fontSize = ''; }); } catch (eFt) { } }, 0);
   if (!c.__sw) { c.__sw = 1; var t0 = null;
     c.addEventListener('touchstart', function (e) { var t = e.touches[0]; t0 = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
     c.addEventListener('touchend', function (e) { var t = e.changedTouches[0]; if (!t0 || !t) return; var dx = t.clientX - t0.x, dy = t.clientY - t0.y; t0 = null; if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy) * 1.5 && window.zpRulerPg) { c.__noTap = Date.now(); window.zpRulerPg(1); } }, { passive: true });
@@ -4799,7 +4801,7 @@ body.injlin #zpSub,body.injlin #zpRsoW,body.injlin .chartbox svg{background:tran
 body.injlin .ns,body.injlin #myT,body.injlin #myT2,body.injlin .band,body.injlin .lad,body.injlin #resoCard,body.injlin #truleCard,body.injlin .sizecard{background:rgba(17,24,33,.30)!important;border-color:rgba(255,255,255,.09)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 body.injlin .ns.sell{background:rgba(255,84,89,.10)!important}body.injlin .ns.buy{background:rgba(47,227,155,.09)!important}
 body.injlin .ns.rest{display:none!important}
-body.injlin #ampCardJL{margin:0 10px 6px;padding:5px 8px;border-radius:10px;background:rgba(17,24,33,.30);border:1px solid rgba(255,255,255,.09);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:11px;line-height:1.55;font-variant-numeric:tabular-nums}
+body.injlin #ampCardJL{margin:0 10px 6px;padding:4px 6px;border-radius:10px;background:rgba(17,24,33,.30);border:1px solid rgba(255,255,255,.09);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:11px;line-height:1.55;font-variant-numeric:tabular-nums}   /* 11-15: 左右内边距再收, 给B行尾部让位 */
 #ampCardJL:empty{display:none}
 #ampCardJL .ac-h{font-weight:600;color:#fff;font-size:11px}#ampCardJL i{font-style:normal;font-weight:400;opacity:.75;font-size:10px}
 #ampCardJL .ac-r{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}#ampCardJL .ac-r b{font-weight:600;min-width:74px}
@@ -7822,11 +7824,11 @@ body.injlin .px{font-size:22px!important}body.injlin .pct{font-size:11px!importa
 body.injlin #hSub{gap:3px 4px!important;margin-top:3px!important;font-size:10.5px!important;line-height:1.25!important}
 body.injlin #hSub .hk{padding:1px 5px!important;border-radius:5px!important;gap:3px!important}
 body.injlin #hSub .hk i{font-size:9.5px!important}
-body.injlin #metaLine{margin-top:4px!important;gap:3px!important;font-size:10.5px!important}
-body.injlin #metaLine input,body.injlin #metaLine select{height:20px!important;font-size:10.5px!important;padding:0 3px!important}
-body.injlin #metaLine input{width:52px!important}
-body.injlin #metaLine select{width:46px!important}   /* 11-15 用户: 持仓·每轮·回落1.5 合成一行, 不折行不截字 */
-body.injlin #metaLine .thrw{flex:0 0 auto}
+body.injlin #metaLine{margin-top:4px!important;gap:2px!important;font-size:9px!important;color:#fff!important;font-weight:400!important}   /* 11-15 用户: 字小、框窄、亮白 */
+body.injlin #metaLine input,body.injlin #metaLine select{height:16px!important;font-size:9px!important;padding:0 2px!important;color:#fff!important;border-radius:4px!important}
+body.injlin #metaLine input{width:40px!important}
+body.injlin #metaLine select{width:36px!important}
+body.injlin #metaLine .thrw{flex:0 0 auto;color:#fff!important}
 </style>
 <script>
 (function () {   /* 11-10 用户: 回放/实盘 两个小透明图标放引擎图右上角(原来顶上的大按钮藏掉, 点图标=点原按钮) */
