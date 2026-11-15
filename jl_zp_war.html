@@ -227,7 +227,7 @@ body.acFold #ampCardJL #acFdJL{transform:rotate(180deg)}
 #hTmJL{margin-left:8px;font-size:11px;color:#fff;white-space:nowrap;font-variant-numeric:tabular-nums}#hTmJL b{margin-left:4px;padding:0 6px;border:1px solid rgba(255,255,255,.4);border-radius:999px;font-size:10px;font-weight:600}
 #hSub .pbJL .pbSv text{font-family:"SF Mono",Menlo,monospace}
 .zd-bar .zd-tg{touch-action:none;cursor:grab}
-.zr-h .rsoTg{display:flex;gap:6px;margin:0 auto 0 6px;font-size:9.5px;font-weight:400;letter-spacing:.2px}.zr-h .rsoTg i{font-style:normal;color:#fff}.zr-h .rsoTg i.hi{color:#ff7b85}.zr-h .rsoTg i.lo{color:#4dffb4}   /* 11-13: RSO 5/15/日 小标签 */
+.zr-h .rsoTg{display:flex;gap:6px;margin:0 auto 0 6px;font-size:8.5px;font-weight:400;letter-spacing:.2px}.zr-h .rsoTg i{font-style:normal;color:#fff}.zr-h .rsoTg i.hi{color:#ff7b85}.zr-h .rsoTg i.lo{color:#4dffb4}   /* 11-13: RSO 5/15/日 小标签 */
 #hSub .pbDg{flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;font-weight:800;line-height:1.1}
 #hSub.pbOn>.hk:not(.hkA),#hSub .hk.hl{display:none!important}
 #hSub .pbJL .ampBx{flex:none;display:flex!important;flex-direction:column;align-items:flex-end;gap:0;padding:2px 7px!important;border-radius:9px!important;border-width:1.5px!important;line-height:1.2}
@@ -1423,7 +1423,8 @@ if (ext && SP[ext.ix]) {
         shS = fine.map(function (m) { return { p: m.p, h: m.h, x: xOfHmJL(m.hm), k: m.hm }; }).filter(function (m) { return m.x != null; });
         shQ = LIVE.pts.map(function (q) { return { p: q.p, x: xOfHmJL(q.hm), k: q.hm }; }).filter(function (q) { return q.x != null && q.p > 0; });
       }
-      window.__ZPPAT = ZpShapes.draw(svg, shList || ZpShapes.scan(shS, shQ), { Y: Y, xEnd: LX - 6, clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline'), hist: localStorage.getItem('zp_pat_hist_v1') !== '0' });
+      var patOnJL = localStorage.getItem('zp_pat_hist_v1') !== '0';   /* 11-15 用户: PAT关 = 历史+实时全不画(原来实时形态常显, 点隐藏还有) */
+      window.__ZPPAT = ZpShapes.draw(svg, patOnJL ? (shList || ZpShapes.scan(shS, shQ)) : [], { Y: Y, xEnd: LX - 6, clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline'), hist: patOnJL });
     }
   } catch (e) { }
 try { if (window.MacdFS && LIVE.pts && LIVE.pts.length) MacdFS.draw(svg, LIVE.pts, {
@@ -2705,7 +2706,7 @@ function dayGradeJL() {
     /* 15分结构: 最近四根 低点是否抬高 / 高点是否抬高 */
     var H15 = (LIVE.hist.m15 || []).filter(function (b) { return b.c > 0 && b.l > 0; }).slice(-4), upLo = 0, upHi = 0;
     for (var i = 1; i < H15.length; i++) { if (H15[i].l > H15[i - 1].l) upLo++; if (H15[i].h > H15[i - 1].h) upHi++; }
-    var strT = H15.length >= 3 ? (upLo >= 2 ? '抬低' : upLo === 0 ? '破低' : '低点平') : '';
+    var strT = H15.length >= 3 ? (upLo >= 2 ? '抬低' : upLo === 0 ? '破低' : '低平') : '';   /* 11-15 用户「绕口」: 低点平→低平, 和抬低/破低两字对齐 */
     var gt = g === 1 ? '<b class="o">强</b>' : g === -1 ? '<b class="w">弱</b>' : g === 0 ? '<b class="m">平</b>' : '<b class="m">待10:00</b>';
     var rt = arr !== 0 && Math.abs(dist) >= 5 ? ' <b class="o">离MA5 ' + (dist >= 0 ? '+' : '') + dist.toFixed(1) + '%</b>' : '';
     /* 11-12 用户: 只写"可做/少做"太玄 —— 每个词后面直接给一句人话做法 */
@@ -2718,7 +2719,7 @@ function dayGradeJL() {
       + '10:00 档 = 开盘后60分钟涨跌 ÷ 日均振幅 ' + avd.toFixed(1) + '%' + (ratio == null ? '（还没到10:00）' : ' = ' + ratio.toFixed(2) + '，|x|≥0.35 算强/弱') + '\n'
       + '15分最近四根：低点抬高 ' + upLo + '/3 次\n'
       + '可做 = 今天适合来回做T；少做 = 方向太猛，来回做容易卖飞或接飞刀';
-    return '<span class="hk hkA dg" title="' + tip.replace(/"/g, '') + '"><i>定档</i>' + arrT + rt + ' · ' + gt + (strT ? ' · ' + strT : '') + hot + '</span>';
+    return '<span class="hk hkA dg" title="' + tip.replace(/"/g, '') + '"><i>定档</i>' + arrT + rt + ' · ' + gt + (strT ? ' · ' + strT : '') + '<b style="opacity:.35;font-weight:400">｜</b>' + hot + '</span>';   /* 11-15: 状态词和结论之间加竖线, 不再连读 */
   } catch (e) { return ''; }
 }
 /* 11-12 用户: "a股跟着大盘走, 盘中的流入流出要有提前预警" —— 顶部加一格大盘: 上证涨跌 + 两市主力占成交 + 本票所在板块涨跌/占成交.
@@ -4325,7 +4326,7 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
         var WS = swingsOfCandlesJL(WC, thrOfJL(CFG.per || 5)), WO = { Y: Yp, xEnd: X0 + W, clip: [X0, Y0, X0 + W, Y0 + H], before: null };
         if (WS.length >= 3 && window.Pitchfork) Pitchfork.drawSVG(s, WS, { X: function () { return null; }, Y: Yp, xEnd: X0 + W, clip: WO.clip });
         if (WS.length >= 4 && window.Elliott) Elliott.drawSVG(s, WS, { X: function () { return null; }, Y: Yp, xEnd: X0 + W, clip: WO.clip });
-        if (window.ZpShapes) { WO.hist = localStorage.getItem('zp_pat_hist_v1') !== '0'; ZpShapes.draw(s, ZpShapes.scan(WS, WC.map(function (k) { return { p: k.c, x: k.x, k: k.key }; })), WO); }
+        if (window.ZpShapes) { var wkPatOn = localStorage.getItem('zp_pat_hist_v1') !== '0'; WO.hist = wkPatOn; ZpShapes.draw(s, wkPatOn ? ZpShapes.scan(WS, WC.map(function (k) { return { p: k.c, x: k.x, k: k.key }; })) : [], WO); }   /* 11-15: 周视图 PAT 关=全不画, 和主图同口径 */
       } catch (eWP) { }
       try { wkHL(s, WC, WS, Yp, X0, X0 + W, Y0, Y0 + H); } catch (eHL) { }
       wkLiq(s, WK.cdl, Yp, X0, X0 + W, Y0, Y0 + H);   /* 11-05 用户: 周图要有 Buyside/Sellside liquidity, 不要密密麻麻的圈 */
@@ -5634,8 +5635,20 @@ body.injlin .chartbox>#zpSub{order:1}
       P.forEach(function (p, i) { if (V[i] == null || p.vis === false || !(p.x >= x0 - 1 && p.x <= x1 + 1)) { if (pts.length) segs.push(pts); pts = []; return; } pts.push(p.x.toFixed(1) + ',' + Yv(V[i]).toFixed(1)); });
       if (pts.length) segs.push(pts);
       var isM = k[0] === 'main';
-      segs.forEach(function (a) { if (a.length < 2) return; var at = { points: a.join(' '), fill: 'none', stroke: k[2], 'stroke-width': isM ? 1.3 : 1, 'stroke-linejoin': 'round', opacity: isM ? .95 : .9 }; if (sp && isM) at['stroke-dasharray'] = '3 2'; s.appendChild(E('polyline', at)); });
+      /* 11-15 用户「分单五条线看不出区别」: 主力加粗实线, 超大长虚线, 大单细实线, 中单中虚线, 小单点线 */
+      var STYJL = { main: { w: 1.7, d: null }, x: { w: 1.1, d: '5 2' }, l: { w: 1, d: null }, m: { w: 0.9, d: '3 2' }, s: { w: 0.9, d: '1.5 2' } };
+      var styJL = STYJL[k[0]] || { w: 1, d: null };
+      segs.forEach(function (a) { if (a.length < 2) return; var at = { points: a.join(' '), fill: 'none', stroke: k[2], 'stroke-width': sp ? styJL.w : 1.7, 'stroke-linejoin': 'round', opacity: isM ? .95 : .9 }; if (sp && styJL.d) at['stroke-dasharray'] = styJL.d; s.appendChild(E('polyline', at)); });
     });
+    /* 11-15: 分单模式左上角色卡图例(最后那条绿点线=小单) */
+    if (sp) {
+      var lgJL = x0 + 2, LBNJL = { main: '主力', x: '超大', l: '大单', m: '中单', s: '小单' };
+      YYS.forEach(function (k) {
+        s.appendChild(E('line', { x1: lgJL, x2: lgJL + 8, y1: 7, y2: 7, stroke: k[2], 'stroke-width': 1.4 }));
+        s.appendChild(E('text', { x: lgJL + 10, y: 9.5, fill: k[2], 'font-size': 8, 'font-weight': 600 }, LBNJL[k[0]]));
+        lgJL += 10 + (k[0] === 'main' ? 20 : 14) + 8;
+      });
+    }
     s.appendChild(E('text', { x: x1 - (sp ? 48 : 26), y: (top + 3).toFixed(1), fill: 'rgba(255,255,255,.55)', 'font-size': 8.5, 'text-anchor': 'end' }, fM(mx)));   /* 让开右上圆标 */
     s.appendChild(E('text', { x: x1, y: (bot - 1).toFixed(1), fill: 'rgba(255,255,255,.55)', 'font-size': 8.5, 'text-anchor': 'end' }, fM(mn)));
     var tl = function (q) { var h = String(q.e || q.hm); return q.d && q.d !== LIVE.sessDate && per === 101 ? q.d.slice(4, 6) + '-' + q.d.slice(6) : h.slice(-4, -2) + ':' + h.slice(-2); };
@@ -6874,7 +6887,7 @@ setRange = function (lo, hi) {
   function seg() {
     var hd = $('wkSeg'); if (!hd || hd.querySelector('.zp-per')) return;
     var box = document.createElement('div'); box.className = 'zp-per'; box.setAttribute('role', 'tablist');
-    box.innerHTML = '<button type="button" data-p="0">分时</button><button type="button" data-p="1">1分</button><button type="button" data-p="5">5分</button><button type="button" data-p="15">15分</button><button type="button" data-p="101" title="日线(240根)">日</button><button type="button" class="zp-liq" title="流动性 Buyside/Sellside">LIQ</button><button type="button" class="zp-pat" title="历史形态 显示/隐藏(实时形态不受影响)">PAT</button><button type="button" class="zp-hl" title="高低圈(红圈/蓝圈) 显示/隐藏">HL</button>';
+    box.innerHTML = '<button type="button" data-p="0">分时</button><button type="button" data-p="1">1分</button><button type="button" data-p="5">5分</button><button type="button" data-p="15">15分</button><button type="button" data-p="101" title="日线(240根)">日</button><button type="button" class="zp-liq" title="流动性 Buyside/Sellside">LIQ</button><button type="button" class="zp-pat" title="形态 显示/隐藏(历史+实时一起)">PAT</button><button type="button" class="zp-hl" title="高低圈(红圈/蓝圈) 显示/隐藏">HL</button>';
     var s0 = hd.querySelector('.seg'); if (s0 && s0.nextSibling) hd.insertBefore(box, s0.nextSibling); else hd.appendChild(box);
     box.addEventListener('click', function (ev) {
       ev.stopPropagation();
@@ -7407,8 +7420,8 @@ window.addEventListener('click', function (e) {
     } catch (e) { return null; }
   };
   var st = document.createElement('style');
-  st.textContent = '#zpRsoW{position:relative;margin-top:0}.zr-h{display:flex;align-items:center;gap:3px;padding:0 4px;min-height:16px;line-height:16px}.zr-h .zr-t{font-size:10px;font-weight:400;color:#fff;letter-spacing:.2px;margin-right:auto}' +   /* 11-14 用户: 标题行细·亮白·少占位 */
-    '.zr-h button{height:16px;min-width:18px;padding:0 3px;border:1px solid rgba(255,255,255,.22);border-radius:5px;background:transparent;color:#fff;font:400 9.5px inherit;line-height:14px;cursor:pointer}' +
+  st.textContent = '#zpRsoW{position:relative;margin-top:0}.zr-h{display:flex;align-items:center;gap:3px;padding:0 4px;min-height:16px;line-height:16px}.zr-h .zr-t{font-size:8.5px;font-weight:400;color:#fff;letter-spacing:.2px;margin-right:auto}' +   /* 11-14 用户: 标题行细·亮白·少占位 */
+    '.zr-h button{height:14px;min-width:16px;padding:0 3px;border:1px solid rgba(255,255,255,.22);border-radius:5px;background:transparent;color:#fff;font:400 8.5px inherit;line-height:12px;cursor:pointer}' +   /* 11-15 用户: 幅图标题行整体缩一档 */
     '.zr-h button.on{background:rgba(255,214,110,.22);color:#ffd66e;border-color:rgba(255,214,110,.5)}' +
     '.zr-p{position:absolute;right:4px;top:28px;z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;padding:10px;border-radius:10px;background:rgba(18,26,36,.97);border:1px solid rgba(255,255,255,.14);font-size:11px;color:#fff;width:min(300px,92%)}' +
     '.zr-p label{display:flex;flex-direction:column;gap:2px;color:#aab4c2}.zr-p input,.zr-p select{height:26px;border-radius:6px;border:1px solid rgba(255,255,255,.18);background:#0d141c;color:#fff;padding:0 6px;font-size:12px}' +
