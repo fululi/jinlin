@@ -209,13 +209,14 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 #duoJL .duoF{flex:none;width:20px;height:18px;padding:0;border:0;background:transparent;color:rgba(255,255,255,.75);font-size:11px;line-height:18px;transition:transform .2s}
 #duoJL .duo.fold .duoF{transform:rotate(180deg)}#duoJL .duo.fold .duoC,#duoJL .duo.fold .duoW{display:none!important}
 #duoJL .duoW{display:none}#duoJL #resoCard.wide .duoW{display:block;zoom:.85}#duoJL #resoCard.wide .duoC{display:none}
-#duoJL .dr{display:flex;align-items:center;gap:4px;height:19px;font-size:10.5px;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap}
-#duoJL .dr .t{color:var(--c);font-weight:700;min-width:26px}#duoJL .dr .ln{flex:1;min-width:4px;border-top:1px solid var(--c);opacity:.4}
-#duoJL .dr .x{color:#ffe14d;font-weight:700;font-size:9.5px}#duoJL .dr b{color:var(--c);font-weight:700}#duoJL .dr .pc{min-width:34px;text-align:right;font-size:9.5px}
-#duoJL .dr .tg{font-size:9px;opacity:.9;overflow:hidden;text-overflow:ellipsis;max-width:62px}
-#duoJL .duo:not(.wide) .dr .tg{display:none}#duoJL .duo.wide .dr{font-size:12px;height:22px}#duoJL .duo.wide .dr .tg{max-width:none;font-size:10.5px}
-#duoJL .dr.on{outline:1px solid var(--c);border-radius:5px;padding:0 3px;margin:0 -4px}#duoJL .dr.now .ln{opacity:1;border-top-width:1.5px}#duoJL .dr.now b{background:#fff;color:#0d1730;border-radius:3px;padding:0 3px}
-#duoJL .df{font-size:9.5px;margin-top:2px;color:#fff;opacity:.85}
+#duoJL .duoC{min-width:0;overflow:visible}
+#duoJL .dr{display:flex;align-items:center;gap:2px;height:18px;min-height:18px;box-sizing:border-box;font-size:9.5px;line-height:1;color:#fff;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:visible}
+#duoJL .dr .t{color:var(--c);font-weight:600;flex:0 0 24px;min-width:0}#duoJL .dr .ln{flex:1;min-width:2px;border-top:1px solid var(--c);opacity:.45}
+#duoJL .dr .x{color:#ffe968;font-weight:600;font-size:8.5px;flex:none}#duoJL .dr b{color:var(--c);font-weight:700;font-size:10px;line-height:1;flex:none;font-variant-numeric:tabular-nums}#duoJL .dr .pc{flex:0 0 31px;min-width:0;text-align:right;font-size:8.5px;color:#fff}
+#duoJL .dr .tg{font-size:8.5px;color:#fff;opacity:1;overflow:hidden;text-overflow:ellipsis;max-width:62px}
+#duoJL .duo:not(.wide) .dr .tg{display:none}#duoJL .duo.wide .dr{font-size:11px;height:20px;min-height:20px}#duoJL .duo.wide .dr .tg{max-width:none;font-size:9.5px}
+#duoJL .dr.on{outline:1px solid var(--c);border-radius:4px;padding:0 2px;margin:0 -3px}#duoJL .dr.now .ln{opacity:1;border-top-width:1px}#duoJL .dr.now b{background:#fff;color:#0d1730;border-radius:3px;padding:2px 3px;line-height:1}
+#duoJL .df{font-size:8.5px;line-height:1.35;margin-top:2px;color:#fff;opacity:1}
 body.injlin #hSub .hk.swg{display:none!important}
 body.injlin #metaLine.inAc{margin:0 10px 6px!important;width:auto;max-width:calc(100vw - 20px);padding:4px 7px!important;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(17,24,33,.30);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}   /* 11-15 用户: 与我的T行同宽对齐(0 10px), 字号回到10px */
 body.injlin .chartbox>#metaLine{order:5}   /* 11-15 用户: 排在lad(5)和myT(6)之间 */
@@ -1453,15 +1454,16 @@ if (g && !(window.zpPerOf && zpPerOf() > 0)) {
       var xFill = LX - 6;
       for (var qf = 0; qf < (LIVE.pts || []).length; qf++) { var Qf = LIVE.pts[qf]; if (!(Qf.p > 0) || +Qf.hm < 930) continue; if (gUp ? (Qf.l || Qf.p) <= pcA : (Qf.h || Qf.p) >= pcA) { var xq = xOfHmJL(Qf.hm); if (xq != null) xFill = xq; break; } }
       var gDone = xFill < LX - 6;
-      if (!gDone && gy2 - gy1 > 0.5) {   /* 11-13晚 用户: 补了就藏起来 */
-        g.appendChild(el('rect', { x: xa25, y: gy1, width: Math.max(2, xFill - xa25), height: gy2 - gy1, fill: gc, opacity: gDone ? .07 : .14 }));
-        [pcA, opA].forEach(function (pv) { if (pv >= YLO && pv <= YHI) g.appendChild(el('line', { x1: xa25, y1: Y(pv), x2: xFill, y2: Y(pv), stroke: gc, 'stroke-width': .75, opacity: gDone ? .3 : .55 })); });   /* 同持仓卡: 线 .75、淡 */
+      /* 回补只停止缺口带向右延伸，不再抹掉开盘证据：昨收/今开两条锚线至少保留到 09:30。 */
+      if (gy2 - gy1 > 0.5) {
+        g.appendChild(el('rect', { x: xa25, y: gy1, width: Math.max(2, xFill - xa25), height: gy2 - gy1, fill: gc, opacity: gDone ? .07 : .14, 'data-gap-open': '1' }));
+        [pcA, opA].forEach(function (pv) { if (pv >= YLO && pv <= YHI) g.appendChild(el('line', { x1: xa25, y1: Y(pv), x2: Math.max(xFill, xa30), y2: Y(pv), stroke: gc, 'stroke-width': .75, opacity: gDone ? .55 : .7, 'data-gap-line': '1' })); });
       }
-      var gpc = (opA / pcA - 1) * 100, gs = (gAbove ? '↑' : '↓') + ' ' + Math.min(pcA, opA).toFixed(2) + '–' + Math.max(pcA, opA).toFixed(2),   /* 11-13晚 用户「不要写缺口俩字」: 同 iv 写法 ↓ 价–价 */ gw = gs.length * 4.6, gx = Math.max(xa30 + 3, PX0 + 28), gyy = null;
+      var gpc = (opA / pcA - 1) * 100, gdp = opA - pcA, gs = (gUp ? '高开 ' : '低开 ') + (gpc >= 0 ? '+' : '') + gpc.toFixed(2) + '% ' + (gdp >= 0 ? '+' : '') + gdp.toFixed(2), gw = wOfJL(gs) + 4, gx = Math.max(xa30 + 3, PX0 + 28), gyy = null;
       /* 11-06 用户: 不能和开盘那个高/低点的字叠 → 依次试 缺口外侧/内侧/图顶, 撞了高低点标签框就换位置, 都撞就不写 */
       var LBg = (typeof LB !== 'undefined' && LB) || [], gHit = function (y0) { return y0 < PY0 + 7 || y0 > PY0 + PH || LBg.some(function (b) { return gx < b.x1 + 2 && gx + gw > b.x0 - 2 && y0 - 7 < b.y1 + 1 && y0 + 1 > b.y0 - 1; }); };
       [gUp ? gy1 - 3 : gy2 + 9, gUp ? gy2 + 9 : gy1 - 3, Y(opA) + (gUp ? -12 : 14), PY0 + 18].some(function (y0) { if (!gHit(y0)) { gyy = y0; return true; } return false; });
-      var gt = gyy == null || gDone ? null : tx(gx, gyy, gs, gc, 8, 'start', 400);
+      var gt = gyy == null ? null : tx(gx, gyy, gs, gc, 8, 'start', 400);
       if (gt) LBg.push({ x0: gx, x1: gx + gw, y0: gyy - 7, y1: gyy + 1 });
       if (gt) { gt.setAttribute('stroke', 'rgba(5,10,16,.85)'); gt.setAttribute('stroke-width', 1); gt.setAttribute('opacity', .9); g.appendChild(gt); }   /* 同持仓卡 iv 字: 8号细体 */
     }
@@ -2487,14 +2489,28 @@ function livePoll() {
       LIVE.lastOk = Date.now(); LIVE.m5At = LIVE.lastOk; LIVE.err = null; ok = true; m5ok = true;
     }
     /* 分时 + 竞价段 */
-    if (got.pts && got.pts.date && LIVE.sessDate && got.pts.date !== LIVE.sessDate) { LIVE.pts = []; LIVE.auc = null; got.pts = null; }   /* jl-zp4: 分时不是本交易日的(盘前接口还挂着昨天) → 不用 */
-    var ptsFresh = false;   /* 11-14: 本轮分时有没有真拿到; 没拿到不能悄悄停在上一轮 */
+    if (got.pts && got.pts.date && LIVE.sessDate && got.pts.date !== LIVE.sessDate) {
+      /* 盘前普通K仍停在上一交易日，而 trends2 已返回今日竞价：只允许“日期更新 + 有竞价 + 无普通分时”通过；
+         清掉上一交易日的日内显示状态，昨收 LIVE.pc 保留，绝不能把昨日分钟点接到今日竞价后面。 */
+      var aucNextJL = got.pts.date > LIVE.sessDate && got.pts.auc && !(got.pts.pts && got.pts.pts.length);
+      if (aucNextJL) {
+        LIVE.sessDate = got.pts.date; LIVE.pts = []; LIVE.auc = null; LIVE.bars = []; LIVE.m1sess = [];
+        LIVE.open = 0; LIVE.last = 0; LIVE.hi = 0; LIVE.lo = 0; LIVE.dhi = 0; LIVE.dlo = 0; LIVE.eng = null;
+        ZCACHE = {}; LIVE.keys = {}; LIVE.latch = {};
+      } else { LIVE.pts = []; LIVE.auc = null; got.pts = null; }   /* 旧交易日分时一律不用 */
+    }
+    var ptsFresh = false;   /* 本轮普通分时有没有真拿到；竞价段单独计数 */
     if (got.pts && got.pts.pts && got.pts.pts.length) {
       LIVE.srcs.pts = got.pts.src;
       LIVE.pts = got.pts.pts;
       LIVE.auc = got.pts.auc;
       ok = true; ptsFresh = true;
-    } else if (got.pts && got.pts.auc && !(LIVE.pts && LIVE.pts.length)) { LIVE.auc = got.pts.auc; LIVE.srcs.pts = got.pts.src; }   /* 11-14 用户「竞价是否能在9:30前出现」: 9:15–9:29 只有竞价段, 也写进来 */
+    } else if (got.pts && got.pts.auc && !(LIVE.pts && LIVE.pts.length)) {
+      LIVE.auc = got.pts.auc; LIVE.srcs.pts = got.pts.src; ok = true;
+      /* 只有 09:25 的集中撮合价才能补正式开盘价；09:15–09:24 指导价可撤单，不当今开。 */
+      var ap25JL = (LIVE.auc.pts || []).filter(function (q) { return q.hm === '0925' && q.p > 0; }).pop();
+      if (ap25JL) { LIVE.open = ap25JL.p; LIVE.last = ap25JL.p; LIVE.hi = ap25JL.p; LIVE.lo = ap25JL.p; }
+    }
     /* 1分K */
     if (got.m1 && got.m1.rows && got.m1.rows.length) {
       LIVE.srcs.m1 = got.m1.src;
@@ -4025,6 +4041,8 @@ function liveRender(fromRpl) {
   setRange(lo, hi);
   if (INJL) buildStatics();   /* 台账/IV区每轮可能变, 底图每次重画 */
   renderAll();
+  /* 主图与 VOL/资金副图必须同一轮刷新；09:25 只有竞价量时也要立刻画出黄柱。 */
+  try { if (window.zpSubRender) window.zpSubRender(); } catch (eSubLive) { }
 }
 
 /* ── jl-zp4: 嵌入态回放 = 拿当日(休市时=上一交易日)真实5分K, 逐根重跑同一套盘中引擎(runEngine) ──
