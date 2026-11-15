@@ -889,7 +889,6 @@ function buildStatics() {
   }
   svg.appendChild(el('line', { x1: xOfHmJL('1130'), y1: PY0, x2: xOfHmJL('1130'), y2: PY0 + PH, stroke: 'var(--line)' }));
   svg.appendChild((function(){var t=tx(xOfHmJL('0930'), PY0 + PH + 16, '09:30', null, 10, 'middle');t.removeAttribute('stroke');return t;})());   /* 11-15 用户: 时间轴背景去底色(描边阴影) */   /* 11-13晚 用户「竞价要和时间对齐」: 最左是 9:15 竞价起点, 09:30 字放到真正 9:30 那格(原来写在最左, 9:25 反而跑到 09:30 右边) */
-  if (!(window.zpPerOf && zpPerOf() > 0)) { var xa915 = xOfHmJL('0915'); if (xa915 != null) { var t15 = tx(xa915 + 1, PY0 + 9, '竞', '#ffd21f', 8, 'start', 400); t15.removeAttribute('stroke'); svg.appendChild(t15); } }   /* 11-15 用户: 「竞」从09:30正下方时间轴挪回图内左上竞价起点 */
   try { if (!(window.zpPerOf && zpPerOf() > 0) && LIVE.auc) { var x25 = xOfHmJL('0925'); if (x25 != null) { svg.appendChild(el('line', { x1: x25, x2: x25, y1: PY0 + PH, y2: PY0 + PH + 4, stroke: '#ffd21f', 'stroke-width': .8 })); var t25 = tx(x25 + 2, PY0 + PH - 3, '9:25', '#ffd21f', 8, 'start', 400); t25.removeAttribute('stroke'); svg.appendChild(t25);   /* 去粗描边, 字不糊 */ } } } catch (e925) { }   /* 11-13: 竞价段标时间 */
   svg.appendChild((function(){var t=tx(xOfHmJL('1130'), PY0 + PH + 16, '11:30/13:00', 'var(--dim)', 10, 'middle');t.removeAttribute('stroke');return t;})());
   svg.appendChild((function(){var t=tx(PX0 + PW, PY0 + PH + 16, '15:00', 'var(--dim)', 10, 'end');t.removeAttribute('stroke');return t;})());
@@ -1436,7 +1435,10 @@ try { if (window.MacdFS && LIVE.pts && LIVE.pts.length) MacdFS.draw(svg, LIVE.pt
 /* 11-06 用户: 竞价段照同花顺 —— 9:15-9:25 撮合价连成黄线; 昨收→开盘的跳空在 9:25-9:30 画成缺口块(低开绿/高开红) + 小字「缺口 -2.0%」; 只分时页 */
 if (g && !(window.zpPerOf && zpPerOf() > 0)) {
   try {
-    var pcA = LIVE.pc || 0, opA = LIVE.open || 0, xa0 = xOfHmJL('0915'), xa25 = xOfHmJL('0925'), xa30 = xOfHmJL('0930');
+    var pcA = LIVE.pc || 0, xa0 = xOfHmJL('0915'), xa25 = xOfHmJL('0925'), xa30 = xOfHmJL('0930');
+    /* 跳空字只认 09:25 正式撮合价；普通分时出来后沿用正式今开。09:15–09:24 指导价不提前写高/低开。 */
+    var ao25JL = LIVE.auc && (LIVE.auc.pts || []).filter(function (q) { return q.hm === '0925' && q.p > 0; }).pop();
+    var opA = ao25JL ? ao25JL.p : ((LIVE.pts || []).length ? LIVE.open || 0 : 0);
     var AP = LIVE.auc && LIVE.auc.pts ? LIVE.auc.pts.filter(function (q) { return q.p >= YLO && q.p <= YHI; }) : [];
     if (AP.length) {
       var apts = AP.map(function (q) { return xOfHmJL(q.hm).toFixed(1) + ',' + Y(q.p).toFixed(1); });
