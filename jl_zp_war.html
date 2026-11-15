@@ -204,8 +204,8 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 #duoJL{display:flex;flex-wrap:wrap;gap:6px;margin:0 10px 6px}
 #duoJL>.card.duo{flex:1 1 0;min-width:0;margin:0!important;padding:6px 7px!important;zoom:1!important;cursor:pointer}
 #duoJL>.card.duo.wide{flex:1 1 100%;order:-1}
-#duoJL .duoH{display:flex;align-items:center;gap:5px;font-size:11px;color:#fff;margin-bottom:2px}
-#duoJL .duoH b{font-size:11.5px}#duoJL .duoT{margin-left:auto;font-size:10px;white-space:nowrap}#duoJL .duoT b.u{color:#ff5459}#duoJL .duoT b.d{color:#1fdc93}
+#duoJL .duoH{display:flex;align-items:center;gap:5px;font-size:10px;color:#fff;margin-bottom:2px}
+#duoJL .duoH b{font-size:10px;font-weight:400;color:#fff}#duoJL .duoT{margin-left:auto;font-size:10px;white-space:nowrap}#duoJL .duoT b.u{color:#ff5459}#duoJL .duoT b.d{color:#1fdc93}
 #duoJL .duoF{flex:none;width:20px;height:18px;padding:0;border:0;background:transparent;color:rgba(255,255,255,.75);font-size:11px;line-height:18px;transition:transform .2s}
 #duoJL .duo.fold .duoF{transform:rotate(180deg)}#duoJL .duo.fold .duoC,#duoJL .duo.fold .duoW{display:none!important}
 #duoJL .duoW{display:none}#duoJL #resoCard.wide .duoW{display:block;zoom:.85}#duoJL #resoCard.wide .duoC{display:none}
@@ -234,15 +234,16 @@ body.acFold #ampCardJL #acFdJL{transform:rotate(180deg)}
 #hSub .pbJL .ampBx b.av{font-size:14px;font-weight:800;color:#fff}#hSub .pbJL .ampBx b.av i{font-size:10px;opacity:1}
 #hSub .pbJL .ampBx b.w,#hSub .pbJL .ampBx b.ov{font-size:10.5px;font-weight:700}
 #hSub .hk.amp b.w{color:#ffe14d}#hSub .hk.amp b.ov{color:#ff9f43}
-body #ampCardJL .acNx.acRow{display:grid;grid-template-columns:14px auto auto 1fr;gap:10px;align-items:baseline;white-space:nowrap}
-#ampCardJL .acRow .lg{font-size:13.5px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
-#ampCardJL .acRow .lg b{font-weight:800}#ampCardJL .acRow .lg.s b{color:#ff5459}#ampCardJL .acRow .lg.b b{color:#1fdc93}
-#ampCardJL .acRow .lg i{font-style:normal;font-weight:600;font-size:11.5px;color:#ffd66e}
-#ampCardJL .acRow .lg.ok{font-weight:600;font-size:12px}#ampCardJL .acRow .lg.ok.s{color:#ff8a8e}#ampCardJL .acRow .lg.ok.b{color:#5fe3b8}#ampCardJL .acRow .lg.ok i{color:#fff}
+/* 11-15 用户: B行字体小细明亮, gap收紧让「100股 钱」完整进框不被截断 */
+body #ampCardJL .acNx.acRow{display:grid;grid-template-columns:14px auto auto 1fr;gap:4px;align-items:baseline;white-space:nowrap}
+#ampCardJL .acRow .lg{font-size:11px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums}
+#ampCardJL .acRow .lg b{font-weight:500}#ampCardJL .acRow .lg.s b{color:#ff5459}#ampCardJL .acRow .lg.b b{color:#1fdc93}
+#ampCardJL .acRow .lg i{font-style:normal;font-weight:400;font-size:9.5px;color:#ffd66e}
+#ampCardJL .acRow .lg.ok{font-weight:400;font-size:10.5px}#ampCardJL .acRow .lg.ok.s{color:#ff8a8e}#ampCardJL .acRow .lg.ok.b{color:#5fe3b8}#ampCardJL .acRow .lg.ok i{color:#fff}
 #ampCardJL .acRow .lg .nd{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:2px;background:currentColor}
 #ampCardJL .acRow .lg.s .nd{color:#ff5459}#ampCardJL .acRow .lg.b .nd{color:#1fdc93}
 #ampCardJL .acRow .lg.near{text-shadow:0 0 6px rgba(255,225,77,.55)}#ampCardJL .acRow .lg.near .nd{animation:acNdJL .8s ease-in-out infinite}
-#ampCardJL .acRow .lq{justify-self:end;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}#ampCardJL .acRow .lq b.u{color:#ff5459}#ampCardJL .acRow .lq b.d{color:#1fdc93}
+#ampCardJL .acRow .lq{justify-self:end;font-size:10.5px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums}#ampCardJL .acRow .lq b.u{color:#ff5459}#ampCardJL .acRow .lq b.d{color:#1fdc93}
 #ampCardJL .acRow .lw{grid-column:2/-1;font-size:10.5px;color:#ffd66e;margin-top:-2px}
 </style>
 </head>
@@ -4756,10 +4757,13 @@ body.injlin.hdFold #hSub,body.injlin.hdFold #zpSearch,body.injlin.hdFold #metaLi
 /* 日/周 + 分时/1/5/15/LIQ/PAT/HL/RSO: 一条小的磨砂条, 可收成一个小钮 */
 #wkSeg{display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 0!important;margin:0!important;min-height:0}
 #wkSeg::-webkit-scrollbar{display:none}
-#wkSeg .seg{padding:2px!important;border-radius:999px;background:rgba(18,26,36,.38)!important;border:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#wkSeg .seg{flex:none;padding:2px!important;border-radius:999px;background:rgba(18,26,36,.38)!important;border:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 #wkSeg .seg .tab{height:20px!important;min-width:0!important;padding:0 8px!important;font-size:11px!important;line-height:20px}
-.zp-per{margin-left:0!important;background:rgba(18,26,36,.38)!important;border:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.zp-per button{height:20px!important;padding:0 6px!important;font-size:10.5px!important}
+.zp-per{margin-left:0!important;background:rgba(18,26,36,.38)!important;border:1px solid rgba(255,255,255,.10)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);flex:none}
+.zp-per button{height:20px!important;padding:0 5px!important;font-size:10.5px!important;line-height:20px;white-space:nowrap!important;flex:none!important}
+/* 11-15 用户: 分时/1分/5分/15分/日 字小些+亮白清晰, 不换行不出框 */
+.zp-per button[data-p]{font-size:9.5px!important;color:#fff!important;opacity:1!important;font-weight:500!important}
+.zp-per button[data-p].on{background:rgba(122,184,255,.30)!important;color:#fff!important;opacity:1!important}
 #tbFoldJL{flex:none;height:22px;width:22px;padding:0;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(18,26,36,.38);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#cfd6df;font-size:11px;cursor:pointer}
 body.tbFold #wkSeg .seg,body.tbFold .zp-per{display:none!important}
 /* 副图/成交量/RSO 底透明 */
@@ -4991,7 +4995,9 @@ body.injlin .band.calm:has(#bMain:empty){display:none}
 body,button,input,select{font-family:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,-apple-system,sans-serif!important}
 </style>
 </body><style>
-#myT summary{padding:8px 12px;cursor:pointer;font-weight:700;list-style:none;display:flex;justify-content:space-between}
+/* 11-15 用户: 我的T栏字体小细亮白, 顶部留距不压副图 */
+#myT{margin-top:8px!important}
+#myT summary{padding:8px 12px;cursor:pointer;font-weight:400;font-size:11px;color:#fff;list-style:none;display:flex;justify-content:space-between}
 #myT summary::-webkit-details-marker{display:none}
 #myT .mt-b{padding:0 10px 10px}
 #myT .mt-r{display:flex;align-items:center;gap:4px;margin-top:8px;flex-wrap:wrap}
@@ -5172,7 +5178,7 @@ var anchor=document.getElementById('myT2')||document.getElementById('myT');
 if(!anchor||!anchor.parentNode)return;
 var wrap=document.createElement('div');
 wrap.style.cssText='order:8;margin:0 10px 8px;display:flex;gap:8px;align-items:center;font-size:12px';
-wrap.innerHTML='<button type="button" id="btxBtn" style="border:1px solid var(--line);border-radius:10px;background:var(--sub);color:inherit;padding:7px 12px;font:inherit;font-weight:700">⤓ 导出回测</button><span id="btxMsg" style="color:var(--dim)"></span>';
+wrap.innerHTML='<button type="button" id="btxBtn" style="border:1px solid var(--line);border-radius:10px;background:var(--sub);color:inherit;padding:7px 12px;font:inherit;font-weight:400;font-size:11px">⤓ 导出回测</button><span id="btxMsg" style="color:var(--dim)"></span>';   /* 11-15 用户: 字细小 */
 anchor.parentNode.insertBefore(wrap,anchor.nextSibling);
 var KEYS=['pc','sessDate','open','last','hi','lo','dhi','dlo','pts','bars','ebars','auc','m1sess','ts','eng'];
 function f2(v){return v==null||v===''||!isFinite(v)?'':(+v).toFixed(2)}
@@ -5443,9 +5449,10 @@ body.injlin .chartbox>#zpSub{order:1}
 #zpSub #zpYyB{border-bottom:1px solid rgba(255,255,255,.08)}#zpSub #zpYy{margin-top:4px;border-top:1px solid rgba(255,255,255,.08)}#hSub .hk.yyJL{cursor:pointer}#hSub .hk.yyJL.on{border-color:rgba(255,71,87,.6)}
 #ch,#zpVol{touch-action:pan-y}   /* 11-04: 捏合/横滑交给图自己处理(否则手机浏览器抢走手势→pointercancel 缩放卡住), 竖滑照旧滚页面 */
 #zpSub .zb-seg{display:flex;gap:4px;margin:6px 6px 2px}
-#zpSub .zb-seg button{height:24px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--sub);color:#fff;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+/* 11-15 用户: 幅图名称 黑底→透明, 字小细亮白清晰 */
+#zpSub .zb-seg button{height:22px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:transparent;color:#fff;font:inherit;font-size:10px;font-weight:400;cursor:pointer}
 #zpSub .zb-seg button.zt{margin-left:auto;padding:0 8px;color:#e9a6ff}#zpSub .zb-seg button.zt.on{background:rgba(224,90,224,.18);border-color:#e05ae0;color:#ff9bff}#zpSub .zb-seg button[data-t=yyb],#zpSub .zb-seg button[data-t=yys]{margin-left:6px}
-#zpSub .zb-seg button.on{background:rgba(122,184,255,.18);border-color:var(--blue);color:var(--blue)}
+#zpSub .zb-seg button.on{background:rgba(122,184,255,.22);border-color:rgba(122,184,255,.75);color:#fff}
 </style>
 <script>
 /* jl-zpsub (11-04): 作战屏副图——成交量常驻在主图正下方 + MACD/控盘/实时主力 三选一切换(记住选择);
@@ -5631,7 +5638,7 @@ body.injlin .chartbox>#zpSub{order:1}
   function barW(P) { if (P.length && P[0].w) return P[0].w; var d = []; for (var i = 1; i < P.length; i++) { var g = P[i].x - P[i - 1].x; if (g > 0) d.push(g); } d.sort(function (a, b) { return a - b; }); var g0 = d.length ? d[d.length >> 1] : 1.3; return Math.max(0.55, g0 * 0.78); }
   function legend(svg, parts) {   /* parts=[[文字,颜色],...] 左上一行 */
     var old = svg.querySelector('.zb-lg'); if (old) old.remove();
-    var t = E('text', { class: 'zb-lg', x: X0() + 1, y: 10, 'font-size': 9.5, 'font-weight': 600 });
+    var t = E('text', { class: 'zb-lg', x: X0() + 1, y: 10, 'font-size': 9, 'font-weight': 400 });   /* 11-15 用户: 幅图读数字细小, 标题亮白 */
     parts.forEach(function (p, i) { t.appendChild(E('tspan', { fill: p[1] || TXT, dx: i ? 7 : 0 }, p[0])); });
     svg.appendChild(t);
   }
@@ -7760,8 +7767,8 @@ body.injlin .top>.seg{display:none!important}
 /* 11-14 用户第二次: 不放工具条里, 放K线图右上角(工具条/RSO 下面), 小一点清楚一点 */
 /* 11-14 用户: RSO 上方两张卡(顶部格子/振幅卡) 字不要粗, 亮白清楚; 振幅圆环里的字不动 */
 body.injlin #hSub .hk,body.injlin #hSub .hk b{font-weight:500!important}body.injlin #hSub .hk i{color:#fff!important;opacity:1!important}body.injlin #hSub .hk.dg b{font-weight:500!important}
-#ampCardJL .acRow .lg{font-weight:500}#ampCardJL .acRow .lg b{font-weight:600}#ampCardJL .acRow .lg i{font-weight:400}#ampCardJL .acRow .lg.ok{font-weight:500}
-#ampCardJL .acRow .lq{font-weight:500;color:#fff}#ampCardJL .acRow .lq b{font-weight:500}
+#ampCardJL .acRow .lg{font-weight:400}#ampCardJL .acRow .lg b{font-weight:500}#ampCardJL .acRow .lg i{font-weight:400}#ampCardJL .acRow .lg.ok{font-weight:400}
+#ampCardJL .acRow .lq{font-weight:400;color:#fff}#ampCardJL .acRow .lq b{font-weight:500}
 #ampCardJL .acNx .np{font-weight:500}#ampCardJL .acNx .ns,#ampCardJL .acNx .ns.past{font-weight:500}
 #ampCardJL .acSeg,#ampCardJL .acSeg.s2,#ampCardJL .acSeg.s3{font-weight:500}
 #ampCardJL svg.acW text{text-rendering:geometricPrecision}
