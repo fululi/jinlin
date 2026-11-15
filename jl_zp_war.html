@@ -243,7 +243,7 @@ body #ampCardJL .acNx.acRow{display:grid;grid-template-columns:11px auto auto 1f
 #ampCardJL .acRow .lg .nd{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:2px;background:currentColor}
 #ampCardJL .acRow .lg.s .nd{color:#ff5459}#ampCardJL .acRow .lg.b .nd{color:#1fdc93}
 #ampCardJL .acRow .lg.near{text-shadow:0 0 6px rgba(255,225,77,.55)}#ampCardJL .acRow .lg.near .nd{animation:acNdJL .8s ease-in-out infinite}
-#ampCardJL .acRow .lq{justify-self:end;font-size:10.5px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums}#ampCardJL .acRow .lq b.u{color:#ff5459}#ampCardJL .acRow .lq b.d{color:#1fdc93}
+#ampCardJL .acRow .lq{justify-self:end;font-size:9px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums}#ampCardJL .acRow .lq b.u{color:#ff5459}#ampCardJL .acRow .lq b.d{color:#1fdc93}   /* 11-15 用户: 1000股+金额列再小一号, 保证不出框 */
 #ampCardJL .acRow .lw{grid-column:2/-1;font-size:10.5px;color:#ffd66e;margin-top:-2px}
 </style>
 </head>
@@ -3578,8 +3578,8 @@ function ampCardJL() {
     else if (sgE) sgE.remove();
   } catch (eSg) { }
   acBind(c); rulerSwJL(c);
-  /* 11-15 用户: B行兜底 —— 渲染后若某行溢出卡片, 该行字号自动降一档(纯显示层, 只降字号不改内容/逻辑) */
-  setTimeout(function () { try { var w = c.clientWidth; c.querySelectorAll('.acNx.acRow').forEach(function (r) { if (r.scrollWidth > w - 2) r.style.fontSize = '9px'; else if (r.style.fontSize) r.style.fontSize = ''; }); } catch (eFt) { } }, 0);
+  /* 11-15 用户: B行兜底 —— 渲染后余量<10px即整行降字号(纯显示层, 只降字号不改内容/逻辑) */
+  setTimeout(function () { try { var w = c.clientWidth; c.querySelectorAll('.acNx.acRow').forEach(function (r) { if (r.scrollWidth > w - 10) r.style.fontSize = '8.5px'; else if (r.style.fontSize) r.style.fontSize = ''; }); } catch (eFt) { } }, 0);
   if (!c.__sw) { c.__sw = 1; var t0 = null;
     c.addEventListener('touchstart', function (e) { var t = e.touches[0]; t0 = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
     c.addEventListener('touchend', function (e) { var t = e.changedTouches[0]; if (!t0 || !t) return; var dx = t.clientX - t0.x, dy = t.clientY - t0.y; t0 = null; if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy) * 1.5 && window.zpRulerPg) { c.__noTap = Date.now(); window.zpRulerPg(1); } }, { passive: true });
