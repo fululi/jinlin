@@ -63,7 +63,7 @@
 
   function touched(p, hi, lo, atr) { return lo <= p + TOUCH * atr && hi >= p - TOUCH * atr; }
 
-  function build(code, upTo) { /* upTo='YYYY-MM-DD': 只用该日(含)及之前的日K, 给 jl_trule 盘后生成次日计划用; 不传=原行为(今天之前) */
+  function build(code, upTo, nxt) { /* upTo='YYYY-MM-DD': 只用该日(含)及之前的日K, 给 jl_trule 盘后生成次日计划用; 不传=原行为(今天之前) */
     var inp = window.jlResoInputJL && window.jlResoInputJL(code);
     if (!inp || !inp.bars) return null;
     var t = upTo || today(), bars = inp.bars.filter(function (b) { return upTo ? day(b.t) <= upTo : day(b.t) < t; });
@@ -73,7 +73,7 @@
     var lastAll = day(inp.bars[inp.bars.length - 1].t), hist = !!upTo && lastAll > upTo; /* hist=过去某天的截面: 斐波/缺口/ATR带只有当前值, 不能当历史真值, 一律不用 */
     var ck = inp.prev > 0 && !hist && day(last.t) < today(); /* 今日报价反推的昨收只能核对"今天之前最后一根" */
     var c = [];
-    var band = (!hist && inp.atrBand) || { up: last.c + atr, dn: last.c - atr };
+    var band = (!hist && !nxt && inp.atrBand) || { up: last.c + atr, dn: last.c - atr };   /* 11-16: 算明日时不用今天的台账带 */
     c.push({ p: band.up, src: 'atr' }, { p: band.dn, src: 'atr' });
     c.push({ p: last.h, src: 'prevHL' }, { p: last.l, src: 'prevHL' });
     var w = bars.slice(-5, -1); /* 昨天之前4日: 否则昨天恰是五日高时会自己凑出"两重" */
@@ -99,6 +99,18 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
     };
   }
 
+  /* 11-16 用户「收盘就该给明天的」: 今天收完(15:00 后, 或周末/节假日) 且日K最后一根 = 最近交易日、收盘≈现价 → 用含这一天的日K算「明日共振」.
+     只显示: 不进台账(jl_reso_log_v1 照旧记当天的碰没碰到), 不发 jlreso:near 提醒 */
+  function next(code) {
+    try {
+      var inp = window.jlResoInputJL && window.jlResoInputJL(code); if (!inp || !inp.bars || !inp.bars.length) return null;
+      var d = new Date(), hm = d.getHours() * 100 + d.getMinutes(), wd = d.getDay(), t = today(), lb = inp.bars[inp.bars.length - 1], ld = day(lb.t);
+      var done = ld === t ? hm >= 1500 : ld < t && (wd === 0 || wd === 6 || hm >= 1500 || hm < 915);
+      if (!done || !(lb.c > 0) || (inp.cur > 0 && Math.abs(lb.c / inp.cur - 1) > 0.003)) return null;
+      var e = build(code, ld, 1); if (!e) return null;
+      e.next = 1; e.chk = 1; e.stale = ''; return e;
+    } catch (er) { return null; }
+  }
   function ensure(code) {
     var d = new Date().getDay();
     if (d === 0 || d === 6) return null;
@@ -159,11 +171,11 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
     if (!document.getElementById('jlResoCss')) {
       var st = document.createElement('style'); st.id = 'jlResoCss'; st.textContent = CSS; document.head.appendChild(st);
     }
-    var e = ensure(code) && settle(code);
+    var e = ensure(code) && settle(code), nx = next(code); if (nx) e = nx;   /* 11-16: 收盘后显示明日 */
     var inp = window.jlResoInputJL && window.jlResoInputJL(code);
     var cur = inp && Number(inp.cur) || 0;
     if (!e || !e.levels.length) {
-      host.innerHTML = '<div class="jlReso"><h4>今日共振位</h4><div class="ft">' + (e ? '今天没有两种以上来源重合的价位' : '数据不足或休市') + '</div></div>';
+      host.innerHTML = '<div class="jlReso"><h4>' + (nx ? '明日共振位' : '今日共振位') + '</h4><div class="ft">' + (e ? '今天没有两种以上来源重合的价位' : '数据不足或休市') + '</div></div>';
       return;
     }
     var up = e.levels.filter(function (x) { return x.p > cur; }).slice(0, 3).reverse();
@@ -171,7 +183,7 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
     var t = today();
     function row(x) {
       var near = cur > 0 && Math.abs(cur - x.p) / x.p < NEAR;
-      if (near) {
+      if (near && !nx) {
         var k = t + code + x.p;
         if (!alerted[k]) {
           alerted[k] = 1;
@@ -181,12 +193,12 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
       return '<div class="rw' + (x.n >= 3 ? ' s' : '') + (x.hit ? ' hit' : '') + (near ? ' near' : '') + '"><b>' + f2(x.p) + ' ×' + x.n + '</b><small>' +
         x.srcs.map(function (s) { return NAME[s]; }).join('·') + (x.hit ? ' · 已碰' : '') + '</small></div>';
     }
-    host.innerHTML = '<div class="jlReso"><h4>今日共振位</h4>' + up.map(row).join('') +
+    host.innerHTML = '<div class="jlReso"><h4>' + (nx ? '明日共振位 <small style="opacity:.7;font-weight:400">按 ' + e.pd.slice(5) + ' 收盘</small>' : '今日共振位') + '</h4>' + up.map(row).join('') +
       '<div class="cur"><i></i><span></span><b>' + (cur ? f2(cur) : '—') + '</b></div>' + dn.map(row).join('') +
       '<div class="ft">昨收 ' + f2(e.pc) + ' · ATR5 ' + f2(e.atr) + ' · ' + e.at + ' 算' + (e.stale ? '<br><span style="color:#ff9f43">⚠ 过时：' + e.stale + '，等日K更新后自动重算，不进台账统计</span>' : '') + '</div></div>';
   }
 
-  window.JLReso = { compute: build, ensure: ensure, settle: settle, render: render, stats: stats, _load: load };
+  window.JLReso = { compute: build, next: next, ensure: ensure, settle: settle, render: render, stats: stats, _load: load };
 })();
 
 /* 独立卡片: 持仓页底部"今日共振位", 每只持仓一个折叠块, 30秒刷新 */

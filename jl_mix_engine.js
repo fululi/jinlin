@@ -1,4 +1,5 @@
-/* 11-09夜 混合做T 共用计算(作战屏振幅卡 jl_zp_war.html 和 振幅复盘 jl_amp_review.html 都调这一份, 改规则只改这里)
+/* 11-09夜 混合做T 计算 —— 只有振幅复盘 jl_amp_review.html 调这一份; 作战屏 jl_zp_war.html 用自己的 ampRoundsJL/ampBallJL(11-16 更正: 不是共用).
+   改规则两边都要改, 并用 jl_amp_h_*.js 历史比对 0 差异
    高开(≥1%) → 尺子一二三轮 JLMIX.r3;  平开/低开 → 阈值小球+振幅 JLMIX.ball
    输入 P = 当天到现在为止的分钟 [{h,l,p,hm}], 只用当时已知的高低; 成交价 = 规则价(不按分钟开盘价改)
    参数 小球"振幅走到几成"(ba) / "卖接至少差"(bm) 两边共用 localStorage jl_mix_p_v1; 小球确认阈值 = 作战屏顶部"回落" */
