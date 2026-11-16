@@ -246,6 +246,13 @@ body #ampCardJL .acNx.acRow{display:grid;grid-template-columns:11px auto auto 1f
 #ampCardJL .acRow .lg.near{text-shadow:0 0 6px rgba(255,225,77,.55)}#ampCardJL .acRow .lg.near .nd{animation:acNdJL .8s ease-in-out infinite}
 #ampCardJL .acRow .lq{justify-self:end;font-size:9px;font-weight:400;color:#fff;font-variant-numeric:tabular-nums}#ampCardJL .acRow .lq b.u{color:#ff5459}#ampCardJL .acRow .lq b.d{color:#1fdc93}   /* 11-15 用户: 1000股+金额列再小一号, 保证不出框 */
 #ampCardJL .acRow .lw{grid-column:2/-1;font-size:10.5px;color:#ffd66e;margin-top:-2px}
+/* 11-16 用户「苹果手机 振幅球下面 股数后面的价格还是出框」: 原兜底只改行字号, 子元素写死px不跟 → 兜底无效。
+   改: 末列 minmax(0,1fr) 允许收缩 + 行内不出框; 兜底按 t1/t2/t3 三档逐级缩子元素字号, 内容不删, 纯显示 */
+body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);max-width:100%;overflow:hidden}
+#ampCardJL .acRow .lq{min-width:0;overflow:hidden;text-overflow:clip;text-align:right}
+#ampCardJL .acRow.t1 .lg{font-size:9.5px}#ampCardJL .acRow.t1 .lq{font-size:8.5px}#ampCardJL .acRow.t1 .lg i{font-size:8.5px}
+#ampCardJL .acRow.t2 .lg{font-size:9px}#ampCardJL .acRow.t2 .lq{font-size:8px}#ampCardJL .acRow.t2{gap:2px}#ampCardJL .acRow.t2 .lg i{font-size:8px}
+#ampCardJL .acRow.t3 .lg{font-size:8.5px}#ampCardJL .acRow.t3 .lq{font-size:7.5px}#ampCardJL .acRow.t3{gap:1px}#ampCardJL .acRow.t3 .lg i{font-size:7.5px}#ampCardJL .acRow.t3 .lg b{letter-spacing:-.3px}
 </style>
 </head>
 <body class="plan">
@@ -3641,7 +3648,9 @@ function ampCardJL() {
   } catch (eSg) { }
   acBind(c); rulerSwJL(c);
   /* 11-15 用户: B行兜底 —— 渲染后余量<10px即整行降字号(纯显示层, 只降字号不改内容/逻辑) */
-  setTimeout(function () { try { var w = c.clientWidth; c.querySelectorAll('.acNx.acRow').forEach(function (r) { if (r.scrollWidth > w - 10) r.style.fontSize = '8.5px'; else if (r.style.fontSize) r.style.fontSize = ''; }); } catch (eFt) { } }, 0);
+  /* 11-16: 兜底逐级缩(t1→t2→t3), 看行自己 scrollWidth>clientWidth; iOS 字体晚到再测一次 */
+  var fitAcJL = function () { try { c.querySelectorAll('.acNx.acRow').forEach(function (r) { r.classList.remove('t1', 't2', 't3'); r.style.fontSize = ''; for (var k = 1; k <= 3 && r.scrollWidth > r.clientWidth + 1; k++) { r.classList.remove('t' + (k - 1)); r.classList.add('t' + k); } }); } catch (eFt) { } };
+  setTimeout(fitAcJL, 0); setTimeout(fitAcJL, 300);
   if (!c.__sw) { c.__sw = 1; var t0 = null;
     c.addEventListener('touchstart', function (e) { var t = e.touches[0]; t0 = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
     c.addEventListener('touchend', function (e) { var t = e.changedTouches[0]; if (!t0 || !t) return; var dx = t.clientX - t0.x, dy = t.clientY - t0.y; t0 = null; if (Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy) * 1.5 && window.zpRulerPg) { c.__noTap = Date.now(); window.zpRulerPg(1); } }, { passive: true });
@@ -4761,14 +4770,14 @@ $('szR').oninput = calcSize; calcSize();/* ═══ jl-date1: 日期回放 ═�
         clearTimeout(hideT); fx = ev.clientX; fy = ev.clientY;
         if (!raf) raf = requestAnimationFrame(function () { raf = 0; try { update(); } catch (e) { } });
       }
-      function hide() { if (G && G.parentNode) G.parentNode.removeChild(G); G = null; act = false; s.style.touchAction = 'pan-y'; try { window.zpWkLegend && zpWkLegend(null); } catch (e) { } }
+      function hide() { if (G && G.parentNode) G.parentNode.removeChild(G); G = null; act = false; s.style.touchAction = 'pan-y'; if (window.__xhOwnJL) delete window.__xhOwnJL.wk; try { window.zpWkLegend && zpWkLegend(null); } catch (e) { } }
       function later() { clearTimeout(hideT); hideT = setTimeout(hide, 3000); }
       s.addEventListener('pointerdown', function (ev) {
         stop();
         if (ev.pointerType === 'mouse') { act = true; go(ev); return; }
         sx = ev.clientX; sy = ev.clientY; clearTimeout(tm);
         if (act) { go(ev); return; }
-        tm = setTimeout(function () { act = true; s.style.touchAction = 'none'; go({ clientX: sx, clientY: sy }); try { navigator.vibrate && navigator.vibrate(8); } catch (_) { } }, 200);   /* 手机长按出十字线, 不挡页面上下滑 */
+        tm = setTimeout(function () { act = true; s.style.touchAction = 'none'; (window.__xhOwnJL = window.__xhOwnJL || {}).wk = 1; go({ clientX: sx, clientY: sy }); try { navigator.vibrate && navigator.vibrate(8); } catch (_) { } }, 200);   /* 手机长按出十字线, 不挡页面上下滑 */
       });
       s.addEventListener('pointermove', function (ev) {
         if (ev.pointerType === 'mouse') { go(ev); return; }
@@ -5074,6 +5083,16 @@ body.injlin .band.calm:has(#bMain:empty){display:none}
 <style>/* 11-08夜2 用户: 字体圆润(数字/字母用苹果圆体 SF Rounded; 中文 iPhone 没自带圆体, 仍是苹方) */
 body,button,input,select{font-family:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,-apple-system,sans-serif!important}
 </style>
+<script>
+/* 11-16 iPhone: 长按出十字线后拖动, 页面跟着滚(背景跟着跑)。原因: iOS 只在 touchstart 那一刻读 touch-action, 长按200ms后再改成 none 不生效。
+   改: 手指从图里按下 且 任一十字线已打开(__xhOwnJL: main/sub/rso/wk) → touchmove preventDefault。只拦图内起手的手势, 页面别处照常滚。 */
+(function () {
+  var inChart = false;
+  document.addEventListener('touchstart', function (e) { var t = e.target; inChart = !!(t && t.closest && t.closest('#ch,#zpSub svg,#zpRso,#wkSvg,#zpVol,#zpPane,#zpYyB')); }, { passive: true, capture: true });
+  document.addEventListener('touchmove', function (e) { if (!inChart || !e.cancelable) return; var o = window.__xhOwnJL; if (o && Object.keys(o).length) e.preventDefault(); }, { passive: false, capture: true });
+  document.addEventListener('touchend', function () { inChart = false; }, { passive: true, capture: true });
+})();
+</script>
 </body><style>
 /* 11-15 用户: 我的T栏字体小细亮白, 顶部留距不压副图 */
 #myT{margin-top:8px!important}
@@ -5320,7 +5339,7 @@ svgEl.style.touchAction='pan-y';
 function inSvg(t){if(window.zpDrawOn||window.zpDrawBusy)return false;if(t&&t.closest&&t.closest('#zpGoNew'))return false;return t===svgEl||(t&&svgEl.contains(t))}   /* 画线/测量态让出手势 */
 function hide(){
   var g=document.getElementById('xh');if(g&&g.parentNode)g.parentNode.removeChild(g);
-  active=false;pend=false;clearTimeout(timer);clearTimeout(hideT);svgEl.style.touchAction='pan-y';
+  active=false;pend=false;clearTimeout(timer);clearTimeout(hideT);svgEl.style.touchAction='pan-y';if(window.__xhOwnJL)delete window.__xhOwnJL.main;
   try{window.zpSubXH&&window.zpSubXH(null)}catch(_){}   /* 副图十字线一起收 */
   try{window.zpGhostJL&&zpGhostJL(null)}catch(_){}
 }
@@ -5373,7 +5392,7 @@ function draw(cx,cy){
     if(near.auc&&!snap){var av=hm==='0925'&&LIVE.auc.v>0?LIVE.auc.v:0;top=hm.slice(0,2)+':'+hm.slice(2)+(hm==='0925'?'  竞价成交 ':'  竞价撮合 ')+price.toFixed(2)+(pp==null?'':'  '+(pp>=0?'+':'')+pp.toFixed(2)+'%')+(av?'  '+(av>=1e4?(av/1e4).toFixed(av>=1e5?0:1)+'万手':Math.round(av)+'手'):'');}
     var w=top.length*5.6+10,x0=Math.max(PX0,Math.min(LX-6-w,x-w/2));   /* 11-06f 用户: 顶部信息条跟着竖线居中, 不再一下跳左一下跳右 */
     /* 11-13 用户「黑色背景重复多次」: 顶部信息条去掉黑底, 只留透明底+细描边字 */   /* jl-zpliq: 挪到图框上沿外, 不被画线工具条盖住 */
-    var t1=el('text',{x:x0+5,y:9.6,fill:'#fff','font-size':9.5,'font-weight':500,stroke:'rgba(5,10,16,.85)','stroke-width':1.2,'paint-order':'stroke','stroke-linejoin':'round'});t1.textContent=top;g.appendChild(t1);
+    var t1=el('text',{x:x0+5,y:9.6,fill:'#fff','font-size':9.5,'font-weight':400,stroke:'rgba(5,10,16,.9)','stroke-width':.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);
     var ps=price.toFixed(2),pw=ps.length*6.4+10,px0=LX-8-pw,py=Math.max(PY0+16,Math.min(PY0+PH-2,y));xhPctJL(g,price,py);
     var t2=el('text',{x:px0+5,y:py-1,fill:snap?'#ffd66e':'#fff','font-size':9,'font-weight':400});t2.textContent=ps;g.appendChild(t2);   /* 11-05 用户: 价格字底透明、不加粗 */
     svgEl.appendChild(g);
@@ -5401,7 +5420,7 @@ function kDraw(K,x,y){
   var f=function(h){return h.slice(0,2)+':'+h.slice(2)},d2=function(v){return v.toFixed(2)};
   var old=document.getElementById('xh');if(old&&old.parentNode)old.parentNode.removeChild(old);
   var g=el('g',{id:'xh'});
-  g.appendChild(el('rect',{x:k.cx-k.w/2-1,y:PY0,width:k.w+2,height:PH,fill:'rgba(255,255,255,.07)'}));   /* 这根蜡烛整段时间的底色 */
+  /* 11-16 用户「十字线移动背景跟着跑」: 撤掉跟着十字线走的整根蜡烛底色带(同TradingView只留虚线) */
   g.appendChild(el('line',{x1:x,y1:PY0,x2:x,y2:PY0+PH,stroke:'#fff','stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
   g.appendChild(el('line',{x1:PX0,y1:y,x2:LX-6,y2:y,stroke:'#fff','stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
   g.appendChild(el('circle',{cx:x,cy:y,r:snap?5:3.5,fill:snap?'rgba(255,214,110,.25)':'rgba(255,255,255,.18)',stroke:snap?'var(--gold)':'#fff','stroke-width':1.3}));
@@ -5411,7 +5430,7 @@ function kDraw(K,x,y){
   var w=0;for(var i=0;i<top.length;i++)w+=/[一-鿿]/.test(top[i])?9.5:5.4;w+=10;
   var x0=Math.max(PX0,Math.min(LX-6-w,x-w/2));   /* 放在图框上沿外(y 0~13), 不被左上角画线工具条盖住 */
   g.appendChild(el('rect',{x:x0,y:-1,width:w,height:14,rx:4,fill:'none',stroke:'none'}));
-  var t1=el('text',{x:x0+5,y:9.6,fill:'#fff','font-size':9.5,'font-weight':600,stroke:'#08101f','stroke-width':2.2,'paint-order':'stroke'});t1.textContent=top;g.appendChild(t1);
+  var t1=el('text',{x:x0+5,y:9.6,fill:'#fff','font-size':9.5,'font-weight':400,stroke:'rgba(5,10,16,.9)','stroke-width':.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);   /* 11-16 用户: 十字线读数 细+亮白+清晰(原600粗+2.2描边在iPhone上发胖) */
   var ps=d2(price),pw=0;   /* 11-05 用户: 右侧价签只写价格(开高低收在顶部那条里, 同TradingView), 不写"低/收"大字压字 */
   for(var j=0;j<ps.length;j++)pw+=/[一-鿿]/.test(ps[j])?10.5:6.4;pw+=10;
   var px0=LX-8-pw,py=Math.max(PY0+14,Math.min(PY0+PH-2,y));xhPctJL(g,price,py);   /* 右=价格, 左=涨跌% */
@@ -5424,7 +5443,7 @@ function kDraw(K,x,y){
 function sched(cx,cy){lx=cx;ly=cy;if(raf)return;raf=requestAnimationFrame(function(){raf=0;draw(lx,ly)})}
  window.zpMainXH={draw:function(cx,cy){active=true;sched(cx,cy)},hide:function(){hide()},isOn:function(){return !!active}};
 /* 副图拖动时反过来驱动主图十字线(走同一帧调度, 后到的坐标生效) */
-function on(){active=true;pend=false;svgEl.style.touchAction='none'}
+function on(){active=true;pend=false;svgEl.style.touchAction='none';(window.__xhOwnJL=window.__xhOwnJL||{}).main=1}
 ['pointerleave','pointercancel'].forEach(function(n){
   window.addEventListener(n,function(e){
     if(!inSvg(e.target))return;
@@ -6157,8 +6176,8 @@ body.injlin .chartbox>#zpSub{order:1}
       var pt = ch.createSVGPoint(); pt.x = best.x; pt.y = Y(best.p); pt = pt.matrixTransform(m);
       window.zpMainXH.draw(pt.x, pt.y);
     }
-    function on() { act = true; drv = true; box.querySelectorAll('svg').forEach(function (s) { s.style.touchAction = 'none'; }); }
-    function off() { act = false; drv = false; ptr = null; curWh = ''; try { legends(); } catch (_) { } clearTimeout(tm); box.querySelectorAll('svg').forEach(function (s) { s.style.touchAction = 'pan-y'; }); }
+    function on() { act = true; drv = true; (window.__xhOwnJL = window.__xhOwnJL || {}).sub = 1; box.querySelectorAll('svg').forEach(function (s) { s.style.touchAction = 'none'; }); }
+    function off() { act = false; drv = false; ptr = null; curWh = ''; if (window.__xhOwnJL) delete window.__xhOwnJL.sub; try { legends(); } catch (_) { } clearTimeout(tm); box.querySelectorAll('svg').forEach(function (s) { s.style.touchAction = 'pan-y'; }); }
     var inS = function (t) { return !window.zpDrawOn && !window.zpDrawBusy && t && t.closest && t.closest('#zpSub svg'); };
     box.addEventListener('pointerdown', function (e) {
       if (!inS(e.target) || (window.zpDrawHit && window.zpDrawHit(e))) return;
@@ -7146,7 +7165,9 @@ document.addEventListener('touchmove', function (e) {
 (function () {
   var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_pat_v1', GOLD = '#ffd66e';
   var C_TRI = { ln: '#b2b5be', fill: 'rgba(242,54,69,.14)' }, C_XAB = { ln: '#089981', fill: 'rgba(8,153,129,.2)' };
-  var NEED = { tri: 4, xab: 5 }, LAB = { tri: ['A', 'B', 'C', 'D'], xab: ['X', 'A', 'B', 'C', 'D'] };
+  var NEED = { tri: 4, xab: 5, tr3: 3, hs: 7 }, LAB = { tri: ['A', 'B', 'C', 'D'], xab: ['X', 'A', 'B', 'C', 'D'], tr3: [], hs: [] };
+  /* 11-16 用户「三角形/头肩 要和 TradingView 一样」: tr3=TV「三角形」(3点, 实线+半透明填充, 无字); hs=TV「头肩」(7点: 起点-左肩-颈1-头-颈2-右肩-终点, 颈线延长, 肩/头标签) */
+  var C_TR3 = { ln: '#f57c00', fill: 'rgba(245,124,0,.16)' }, C_HS = { ln: '#2962ff', fill: 'rgba(41,98,255,.16)' };
   var myTool = '', cur = -1, sel = -1, drag = null, hover = null, cache = null, cacheKey = '', bar = null, lastSig = '';
   var IC = {
     tri: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 3L6 13L11 4L9 10"/><path d="M2 3L14 8M6 13L14 8" opacity=".6" stroke-dasharray="1.5 1.5"/></svg>',
@@ -7220,9 +7241,9 @@ document.addEventListener('touchmove', function (e) {
   function ln(g, a, b, c, w, dash, op) { var at = { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: c, 'stroke-width': w, 'stroke-linecap': 'round' }; if (dash) at['stroke-dasharray'] = dash; if (op) at.opacity = op; g.appendChild(E('line', at)); }
   function poly(g, pts, fill) { g.appendChild(E('polygon', { points: pts.map(function (q) { return q.x.toFixed(1) + ',' + q.y.toFixed(1); }).join(' '), fill: fill, stroke: 'none' })); }
   function tag(g, t, cx, cy, bg, fg, stroke, fs) {
-    fs = fs || 8; var w = Math.max(12, t.length * fs * 0.62 + 6), h = fs + 4; cy = clamp(cy, PY0 + h / 2, PY0 + PH - h / 2);
+    fs = fs || 8; var w = Math.max(12, t.length * fs * (/[\u4e00-\u9fff]/.test(t) ? 1.05 : 0.62) + 6), h = fs + 4; cy = clamp(cy, PY0 + h / 2, PY0 + PH - h / 2); cx = clamp(cx, PX0 + w / 2, LX - 6 - w / 2);
     g.appendChild(E('rect', { x: (cx - w / 2).toFixed(1), y: (cy - h / 2).toFixed(1), width: w, height: h, rx: 2.5, fill: bg, stroke: stroke || 'none', 'stroke-width': .6 }));
-    g.appendChild(E('text', { x: cx.toFixed(1), y: (cy + fs * 0.35).toFixed(1), fill: fg, 'font-size': fs, 'font-weight': 700, 'text-anchor': 'middle' }, t));
+    g.appendChild(E('text', { x: cx.toFixed(1), y: (cy + fs * 0.35).toFixed(1), fill: fg, 'font-size': fs, 'font-weight': 500, 'text-anchor': 'middle' }, t));   /* 11-16 用户: 字细, 700→500 */
   }
   function isHigh(P, i) { var a = i > 0 ? P[i - 1].y : null, b = i < P.length - 1 ? P[i + 1].y : null; if (a != null && b != null) return P[i].y <= Math.min(a, b); if (a != null) return P[i].y < a; if (b != null) return P[i].y < b; return true; }
   function mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
@@ -7250,12 +7271,21 @@ document.addEventListener('touchmove', function (e) {
     if (n >= 4) rb2(A, C, r.bc);
     if (n >= 5) { rb2(B, D, r.cd); rb2(X, D, r.ad); var nm = nameOf(r); if (nm) { var top = Math.min.apply(null, P.map(function (q) { return q.y; })); tag(g, nm, (X.x + D.x) / 2, top - 22, c, '#fff', 'none', 9); } }
   }
+  function drawTr3(g, P, col, c) { if (P.length >= 3) { poly(g, P.slice(0, 3), col.fill); ln(g, P[2], P[0], c, 1.5); } }
+  function drawHs(g, P, col, c) {
+    var n = P.length; if (n < 5) return;
+    var a = P[2], b = P[4], k = Math.abs(b.x - a.x) > 1e-6 ? (b.y - a.y) / (b.x - a.x) : 0, ny = function (x) { return a.y + k * (x - a.x); };
+    var xs = P[0].x, xe = (n >= 7 ? P[6] : P[n - 1]).x, top = P[3].y < ny(P[3].x);
+    poly(g, [{ x: xs, y: ny(xs) }].concat(P.slice(1, Math.min(n, 6))).concat(n >= 6 ? [{ x: xe, y: ny(xe) }] : []), col.fill);
+    ln(g, { x: xs, y: ny(xs) }, { x: xe, y: ny(xe) }, c, 1.1, '4 3', .95);   /* 颈线(两颈点连线, 延长到首尾点) */
+    [[1, '左肩'], [3, '头'], [5, '右肩']].forEach(function (z) { var q = P[z[0]]; if (!q) return; tag(g, z[1], q.x, q.y + (top ? -11 : 11), col.ln, '#fff', 'none', 7.5); });
+  }
   function drawPat(g, p, P, on, i) {
-    var T = p.t, col = T === 'tri' ? C_TRI : C_XAB, c = on ? GOLD : col.ln, n = P.length;
-    if (T === 'tri') drawTri(g, P, col, c); else drawXab(g, P, col, c);
+    var T = p.t, col = T === 'tri' ? C_TRI : T === 'tr3' ? C_TR3 : T === 'hs' ? C_HS : C_XAB, c = on ? GOLD : col.ln, n = P.length;
+    if (T === 'tri') drawTri(g, P, col, c); else if (T === 'tr3') drawTr3(g, P, col, c); else if (T === 'hs') drawHs(g, P, col, c); else drawXab(g, P, col, c);
     for (var j = 0; j < n - 1; j++) ln(g, P[j], P[j + 1], c, on ? 1.8 : 1.5);
     if (i === cur && hover && n < NEED[T]) ln(g, P[n - 1], hover, c, 1, '3 3');
-    P.forEach(function (q, j) { var up = isHigh(P, j); tag(g, LAB[T][j], q.x, q.y + (up ? -12 : 12), 'rgba(120,123,134,.92)', '#fff', 'none', 8); });
+    P.forEach(function (q, j) { if (!LAB[T][j]) return; var up = isHigh(P, j); tag(g, LAB[T][j], q.x, q.y + (up ? -11 : 11), 'rgba(120,123,134,.85)', '#fff', 'none', 7); });
     if (on) P.forEach(function (q) { g.appendChild(E('circle', { cx: q.x, cy: q.y, r: 3.6, fill: '#0a0e13', stroke: c, 'stroke-width': 1.3 })); });
   }
   function paint() {
@@ -7281,7 +7311,7 @@ document.addEventListener('touchmove', function (e) {
     var k = order.indexOf(sel); if (k > 0) { order.splice(k, 1); order.unshift(sel); }
     var Ps = {};
     for (k = 0; k < order.length; k++) { i = order[k]; var P = decAll(L[i], K); if (!P) continue; Ps[i] = P; for (j = 0; j < P.length; j++) if (Math.hypot(q.x - P[j].x, q.y - P[j].y) <= R) return { i: i, j: j, q: q, svg: svg, P: P }; }
-    for (k = 0; k < order.length; k++) { i = order[k]; var P2 = Ps[i]; if (!P2) continue; for (j = 0; j < P2.length - 1; j++) if (dSeg(q.x, q.y, P2[j].x, P2[j].y, P2[j + 1].x, P2[j + 1].y) <= RB) return { i: i, j: -1, q: q, svg: svg, P: P2 }; }
+    for (k = 0; k < order.length; k++) { i = order[k]; var P2 = Ps[i]; if (!P2) continue; for (j = 0; j < P2.length - 1; j++) if (dSeg(q.x, q.y, P2[j].x, P2[j].y, P2[j + 1].x, P2[j + 1].y) <= RB) return { i: i, j: -1, q: q, svg: svg, P: P2 }; if (L[i].t === 'tr3' && P2.length === 3 && dSeg(q.x, q.y, P2[2].x, P2[2].y, P2[0].x, P2[0].y) <= RB) return { i: i, j: -1, q: q, svg: svg, P: P2 }; }
     return null;
   }
   var zh0 = window.zpDrawHit;
@@ -7363,9 +7393,11 @@ function mountBar() {
     b.addEventListener('click', function (ev) { ev.stopPropagation(); setTool(myTool === q ? '' : q); });
     return b;
   }
-  var b1 = mk('tri', '三角形态'), b2 = mk('xab', 'XABCD形态'), anchor = tb.querySelector('[data-t="meas"]');
-  if (anchor && anchor.parentNode) { anchor.parentNode.insertBefore(b1, anchor.nextSibling); anchor.parentNode.insertBefore(b2, b1.nextSibling); }
-  else { tb.appendChild(b1); tb.appendChild(b2); }
+  IC.tr3 = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 13L8 3L13 11Z"/></svg>';
+  IC.hs = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 12L3.5 7L5.5 10L8 3L10.5 10L12.5 7L15 12"/><path d="M2 10H14" opacity=".6" stroke-dasharray="1.5 1.5"/></svg>';
+  var b1 = mk('tri', '三角形态'), b2 = mk('xab', 'XABCD形态'), b3 = mk('tr3', '三角形'), b4 = mk('hs', '头肩'), anchor = tb.querySelector('[data-t="meas"]');
+  if (anchor && anchor.parentNode) { anchor.parentNode.insertBefore(b1, anchor.nextSibling); anchor.parentNode.insertBefore(b2, b1.nextSibling); anchor.parentNode.insertBefore(b3, b2.nextSibling); anchor.parentNode.insertBefore(b4, b3.nextSibling); }
+  else { tb.appendChild(b1); tb.appendChild(b2); tb.appendChild(b3); tb.appendChild(b4); }
 }
 function syncBar() {
   document.querySelectorAll('.zd-bar button[data-q]').forEach(function (b) { b.className = b.getAttribute('data-q') === myTool ? 'on' : ''; });
@@ -7748,8 +7780,8 @@ window.addEventListener('click', function (e) {
       var ch = document.getElementById('ch'), m = ch && ch.getScreenCTM(); if (!best || !m) return;
       var pt = ch.createSVGPoint(); pt.x = best.x; pt.y = Y(best.c); pt = pt.matrixTransform(m); window.zpMainXH.draw(pt.x, pt.y);
     }
-    function on() { act = true; svg._rsoDrv = 1; svg.style.touchAction = 'none'; }
-    function off() { act = false; clearTimeout(tm); svg.style.touchAction = 'pan-y'; ptrY = null; ptrTag = ''; svg._rsoDrv = 0; try { paintXH(); } catch (_) { } }
+    function on() { act = true; svg._rsoDrv = 1; svg.style.touchAction = 'none'; (window.__xhOwnJL = window.__xhOwnJL || {}).rso = 1; }
+    function off() { act = false; clearTimeout(tm); svg.style.touchAction = 'pan-y'; if (window.__xhOwnJL) delete window.__xhOwnJL.rso; ptrY = null; ptrTag = ''; svg._rsoDrv = 0; try { paintXH(); } catch (_) { } }
     var busyNow = function (e) { return window.zpDrawOn || window.zpDrawBusy || (window.zpDrawHit && window.zpDrawHit(e)); };
     function bind() {
       if (!svg || svg._xhBound) return; svg._xhBound = 1;

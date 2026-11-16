@@ -831,8 +831,8 @@ function aggKlJL(kl, keyOf) { // ks-p3-11: 按周期键把K线合并(开=首根�
   return out;
 }
 var PERIODS = [["TS", "分时"], ["1", "1"], ["5", "5"], ["15", "15"], ["30", "30"], ["60", "60分钟"], ["120", "120分钟"], ["101", "日"], ["102", "周"], ["103", "月"], ["Q", "季"], ["Y", "年"]];
-var TOOLS = [["trend", "趋势线", 2], ["hline", "水平线", 1], ["ray", "射线", 2], ["rect", "矩形", 2], ["fib", "斐波那契", 2], ["pct", "测幅%", 2], ["tri", "三角形", 3], ["xabcd", "蝴蝶XABCD", 5], ["freedraw", "画笔", 2], ["poly", "折线", 999], ["lrchan", "画回归", 2], ["buy", "买点线", 1], ["priceline", "价线", 0]];
-var TICON = { trend: "╱", hline: "─", ray: "↗", rect: "▭", fib: "φ", pct: "⇅", tri: "△", xabcd: "✕", freedraw: "✎", poly: "⦚", lrchan: "∥", buy: "Ⓑ", priceline: "¥" }; // ks-0906-19: TV风图标按钮(名字在title/提示里)
+var TOOLS = [["trend", "趋势线", 2], ["hline", "水平线", 1], ["ray", "射线", 2], ["rect", "矩形", 2], ["fib", "斐波那契", 2], ["pct", "测幅%", 2], ["tri", "三角形", 3], ["hs", "头肩", 7], ["xabcd", "蝴蝶XABCD", 5], ["freedraw", "画笔", 2], ["poly", "折线", 999], ["lrchan", "画回归", 2], ["buy", "买点线", 1], ["priceline", "价线", 0]];
+var TICON = { trend: "╱", hline: "─", ray: "↗", rect: "▭", fib: "φ", pct: "⇅", tri: "△", hs: "肩", xabcd: "✕", freedraw: "✎", poly: "⦚", lrchan: "∥", buy: "Ⓑ", priceline: "¥" }; // ks-0906-19: TV风图标按钮(名字在title/提示里)
 /* ks-1012: 画线 8 色板(用户定稿)——抽屉选色管"新画的线", 单图形设置面板可对任一已画图形单独改色 */
 var DCOLORS = ["#ffd21f", "#ff5459", "#1fdc93", "#2f9dff", "#f2f5f3", "#b48ee8", "#ff9a5c", "#3ddc97"];
 // ks-0906-26: 默认名单不再硬编码(公开仓库不挂用户底牌)——优先读同域名 hq-mobile 的 portfolio_v2 持仓, 读不到就空列表自己加
@@ -894,7 +894,7 @@ function undoJL(redo) {
 }
 // ks-p3-12: 磁吸——落锚/拖单个锚点时, 离该K线开高低收 12px 内就吸过去(只主图)
 function magnetJL(v, a) {
-  if (!S.magnet || !a || a.pane || a.p == null) return a;
+  if (!S.magnet || !a || a.pane || a.p == null || a.o) return a; // 未来区锚点不吸附
   var im = idxMap(v), i = im[a.d]; if (i == null) return a;
   var k = S.kl[i], y = v.Y(a.p), best = null, bd = 12;
   [k[1], k[2], k[3], k[4]].forEach(function (pv) { var d = Math.abs(v.Y(pv) - y); if (d < bd) { bd = d; best = pv; } });
@@ -1430,6 +1430,7 @@ function yOfPane(v, pane, pv) {
 function anchorXY(v, im, a) {
   var i = im[a.d];
   if (i == null) return null;
+  if (a.o && !a.pane) return { x: v.X(i + a.o), y: yOfPane(v, a.pane, a.p), i: i }; // 11-16 用户「三角画不到右边」: a.o=最后一根K线右侧空白第几根(未来区), 只主图价格锚
   if (a.pr != null && a.pane) { // ks-0906-16: 副图比例锚(0~1相对行高)
     var rc = paneRectOf(v, a.pane);
     if (!rc) return null;
@@ -1482,7 +1483,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
   ctx.font = "10px -apple-system, sans-serif";
   ctx.textAlign = "left"; ctx.textBaseline = "middle";
   var t = dg.type;
-  var MINP = { trend: 2, hline: 1, ray: 2, rect: 2, fib: 2, pct: 2, tri: 3, xabcd: 5, freedraw: 2, lrchan: 2, buy: 1, poly: 999 };
+  var MINP = { trend: 2, hline: 1, ray: 2, rect: 2, fib: 2, pct: 2, tri: 3, hs: 7, xabcd: 5, freedraw: 2, lrchan: 2, buy: 1, poly: 999 };
   if (pts.length < (MINP[t] || 2)) {
     // 进行中的多点画线：只画已落锚点之间的预览连线和点
     ctx.strokeStyle = (OC || "#e6b43c");
@@ -1647,8 +1648,24 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y); ctx.lineTo(pts[1].x, pts[1].y); ctx.lineTo(pts[2].x, pts[2].y);
     ctx.closePath(); ctx.stroke();
-    ctx.fillStyle = sel ? "rgba(255,210,31,0.08)" : (OC ? OC + "0f" : "rgba(230,180,60,0.06)"); // ks-1012
+    ctx.fillStyle = sel ? "rgba(255,210,31,0.14)" : (OC ? OC + "29" : "rgba(245,124,0,0.16)"); // ks-1012; 11-16 用户: 同TradingView三角形半透明填充(原6%看不出)
     ctx.fill();
+  }
+  else if (t === "hs") { // 11-16 用户「头肩要和TradingView一样」: 7点 起点-左肩-颈1-头-颈2-右肩-终点; 颈线=颈1颈2连线延长到首尾; 肩/头标签
+    var hsC = OC || "#2962ff", nA = pts[2], nB = pts[4], nk = Math.abs(nB.x - nA.x) > 1e-6 ? (nB.y - nA.y) / (nB.x - nA.x) : 0;
+    var nY = function (x) { return nA.y + nk * (x - nA.x); }, hTop = pts[3].y < nY(pts[3].x);
+    ctx.fillStyle = sel ? "rgba(41,98,255,0.22)" : "rgba(41,98,255,0.16)";
+    ctx.beginPath(); ctx.moveTo(pts[0].x, nY(pts[0].x)); for (var hq = 1; hq <= 5; hq++) ctx.lineTo(pts[hq].x, pts[hq].y); ctx.lineTo(pts[6].x, nY(pts[6].x)); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = hsC; ctx.lineWidth = sel ? 1.6 : 1.2; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y); for (var hp = 1; hp < 7; hp++) ctx.lineTo(pts[hp].x, pts[hp].y); ctx.stroke();
+    ctx.setLineDash([5, 4]); ctx.lineWidth = 1; drawSeg(ctx, { x: pts[0].x, y: nY(pts[0].x) }, { x: pts[6].x, y: nY(pts[6].x) }); ctx.setLineDash([]);
+    ctx.font = "500 10px -apple-system, 'PingFang SC', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    [[1, "左肩"], [3, "头"], [5, "右肩"]].forEach(function (z) {
+      var q = pts[z[0]], tw = ctx.measureText(z[1]).width + 8, ty = q.y + (hTop ? -12 : 12);
+      ctx.fillStyle = hsC; ctx.fillRect(q.x - tw / 2, ty - 7, tw, 14);
+      ctx.fillStyle = "#ffffff"; ctx.fillText(z[1], q.x, ty);
+    });
+    ctx.textAlign = "left";
   }
   else if (t === "xabcd") {
     /* ks-1011c: 配色方案改「蓝线·黄比例·白价格」——线由默认暗金→艳蓝, 只覆盖本分支; ks-1012: 设过色优先 */
@@ -2932,6 +2949,7 @@ function hitTest(pt, soft) { // soft=true 时锁定对象也可命中(点选弹�
     else if (t === "tri") {
       d = Math.min(distSeg(pt.x, pt.y, pts[0], pts[1]), distSeg(pt.x, pt.y, pts[1], pts[2]), distSeg(pt.x, pt.y, pts[2], pts[0]));
     }
+    else if (t === "hs") { for (var hz = 0; hz < 6; hz++) d = Math.min(d, distSeg(pt.x, pt.y, pts[hz], pts[hz + 1])); }
     else if (t === "xabcd") {
       d = Math.min(distSeg(pt.x, pt.y, pts[0], pts[1]), distSeg(pt.x, pt.y, pts[1], pts[2]),
         distSeg(pt.x, pt.y, pts[2], pts[3]), distSeg(pt.x, pt.y, pts[3], pts[4]),
@@ -2967,6 +2985,10 @@ function anchorAt(pt) {
     if (rc2) return { d: S.kl[i][0], pr: Math.round(Math.max(0, Math.min(1, (pt.y - rc2.y) / rc2.h)) * 1000) / 1000, pane: pn2 };
   }
   var y = Math.max(v.pTop, Math.min(v.pTop + v.priceH, pt.y));
+  if (!v.ts && v.step > 0) { // 11-16: 手指落在最后一根右边的空白区 → 存"最后一根+o根"(同TradingView可画到未来区), 不再被夹回最后一根
+    var xR = Math.min(pt.x, v.w - v.padR - 2), ri = Math.round(v.i0 + (xR - v.padL) / v.step - 0.5), nL = S.kl.length - 1;
+    if (ri > nL) return { d: S.kl[nL][0], o: Math.min(300, ri - nL), p: v.P(y) };
+  }
   return magnetJL(v, { d: S.kl[i][0], p: v.P(y) });
 }
 function placeAnchor(pt) {
@@ -3011,8 +3033,9 @@ function dragBy(Tx, pt) {
   function moveA(a) {
     var i2 = im[a.d];
     if (i2 == null) return;
-    var ni = Math.max(0, Math.min(n - 1, i2 + di));
+    var ti = i2 + (a.pane ? 0 : (a.o || 0)) + di, ni = Math.max(0, Math.min(n - 1, ti));
     a.d = S.kl[ni][0];
+    if (!a.pane && !v.ts && ti > n - 1) a.o = Math.min(300, ti - (n - 1)); else delete a.o; // 11-16: 拖进/拖出右侧未来区
     if (a.pr != null) a.pr = Math.max(0, Math.min(1, a.pr + dp));
     else a.p = _isT ? Math.max(0, Math.min(100, a.p + dp)) : Math.max(0.0001, a.p + dp);
   }
