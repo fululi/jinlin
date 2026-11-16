@@ -3095,13 +3095,33 @@ document.addEventListener('click', function (e) {
   var best = 0, bd = 16; ps.forEach(function (p) { var d = Math.abs(g[0] + (p - g[2]) / (g[3] - g[2]) * (g[1] - g[0]) - q.x); if (d < bd) { bd = d; best = p; } });
   if (best) zpHiLineJL(best);
 });
+/* 11-16 修复"指数一直在低位却常挂SELL": 大盘格数据只读首页 jlLinkInputJL(), 首页标签页后台被节流/缓存冻结在早盘高位时, 这边一直拿旧数算 rp → SELL 卡死不翻.
+   改: 本页自己每30秒拉一次上证(sh000001, 和右下自选同一个腾讯JSONP接口, 不加新域名), 2分钟内的自拉报价优先, 首页数据只做兜底 */
+var IDX_Q = { t: 0, v: null };
+function idxFetchJL() {
+  if (Date.now() - IDX_Q.t < 30000) return;
+  IDX_Q.t = Date.now();
+  try {
+    var sc = document.createElement('script');
+    sc.onload = sc.onerror = function () {
+      sc.remove();
+      var v = window.v_sh000001;
+      if (typeof v === 'string') { var a = v.split('~'); if (a.length > 34) IDX_Q.v = { pct: +a[32], hi: +a[33], lo: +a[34], pc: +a[4], t: Date.now() }; }
+    };
+    sc.src = 'https://qt.gtimg.cn/q=sh000001&_=' + Date.now(); document.head.appendChild(sc);
+  } catch (e) { }
+}
 function envChipJL() {
   var P = window.parent; window.__shChipJL = '';
+  if (INJL) idxFetchJL();
   if (!INJL || !P || P === window || !P.jlLinkInputJL) return '';
   var d = null;
   try { if (Date.now() - ENV_C.t > 20000) { ENV_C.v = P.jlLinkInputJL(); ENV_C.t = Date.now(); } d = ENV_C.v; } catch (e) { return ''; }
   if (!d) return '';
-  var s = '', sh = d.sh, mf = d.mf;
+  var s = '', mf = d.mf;
+  /* 11-16: 上证格数据源 —— 本页自拉的报价(2分钟内算新)优先, 首页冻结/节流时不再跟着卡死 */
+  var IQ = IDX_Q.v && Date.now() - IDX_Q.v.t < 120000 ? IDX_Q.v : null;
+  var sh = IQ ? { name: (d.sh && d.sh.name) || '上证', pct: IQ.pct, hi: IQ.hi, lo: IQ.lo, pc: IQ.pc } : d.sh;
   var ok = function (v) { return Number.isFinite(+v); }, sg = function (v, n) { return (v >= 0 ? '+' : '') + (+v).toFixed(n == null ? 2 : n) + '%'; };
   var cl = function (v) { return v >= 0 ? 'u' : 'd'; };
   /* 11-13 用户: 大盘格只留 指数+涨跌, 到日内高位标 SELL(高抛)、低位标 BUY(低吸) —— 位置 = 现在在今天高低区间的哪儿(≥80% SELL / ≤20% BUY, 当天振幅<0.6% 不标).
@@ -5001,7 +5021,10 @@ body.injlin .band.calm:has(#bMain:empty){display:none}
       var ps = null;
       var applyPos = function (l, t) { b.style.left = Math.round(l) + 'px'; b.style.top = Math.round(t) + 'px'; b.style.right = 'auto'; b.style.bottom = 'auto'; };
       var sv = null; try { sv = JSON.parse(localStorage.getItem('jl_wlbtn_v1') || 'null'); } catch (e) { }
-      if (sv && isFinite(sv[0]) && isFinite(sv[1])) applyPos(sv[0], sv[1]);
+      /* 11-16 修复"找不到小表格": 位置记忆没做边界校验, 拖出屏/换屏幕/窗口变小后按钮跑到视野外; 恢复和窗口变化时都强制拉回屏幕内 */
+      var clampPos = function (l, t) { return [Math.max(4, Math.min(window.innerWidth - 44, l)), Math.max(4, Math.min(window.innerHeight - 40, t))]; };
+      if (sv && isFinite(sv[0]) && isFinite(sv[1])) { var cp = clampPos(sv[0], sv[1]); applyPos(cp[0], cp[1]); }
+      window.addEventListener('resize', function () { if (!b.style.left) return; var cc = clampPos(parseInt(b.style.left) || 0, parseInt(b.style.top) || 0); applyPos(cc[0], cc[1]); try { localStorage.setItem('jl_wlbtn_v1', JSON.stringify([cc[0], cc[1]])); } catch (e) { } });
       b.addEventListener('pointerdown', function (e) { if (e.button && e.button !== 0) return; try { b.setPointerCapture(e.pointerId); } catch (e2) { } ps = { x: e.clientX, y: e.clientY, l: b.offsetLeft, t: b.offsetTop, mv: 0 }; });
       b.addEventListener('pointermove', function (e) { if (!ps) return; var dx = e.clientX - ps.x, dy = e.clientY - ps.y; if (Math.abs(dx) + Math.abs(dy) > 5) ps.mv = 1; if (!ps.mv) return; e.preventDefault(); applyPos(Math.max(4, Math.min(window.innerWidth - 44, ps.l + dx)), Math.max(4, Math.min(window.innerHeight - 40, ps.t + dy))); });
       var upJL = function () { if (!ps) return; if (ps.mv) { b.__mvJL = 1; try { localStorage.setItem('jl_wlbtn_v1', JSON.stringify([parseInt(b.style.left), parseInt(b.style.top)])); } catch (e) { } } ps = null; };
