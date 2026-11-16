@@ -1,18 +1,19 @@
-/* jl_card5d.js v1 (2026-10-27, 本地稿未推送) —— 持仓页五日图, 由验收页 ~/jinlin-accept/5day.html 定稿生成
-   (生成脚本 ~/jinlin-accept/tools/build_card5d.py, 画法/手势/斐波与验收页一字不差, 只换外壳; 验收用的核对表不带)。
-   数据: 腾讯五日分时 day/query, 只画 09:30–15:00。交易时段每 30 秒刷新, 不在看/正在拖/在画斐波时跳过。
-   挂载: JLCard5D.show(code, name) —— 首次调用时把卡片插到持仓页小K线那块(#holdingChart 所在 section)前面并把那块藏起来;
-   回滚: index.html 删 jl_card5d.js 引用即恢复原小K线, 其代码一行没删。 */
+/* jl_card5d.js —— 持仓页五日分时图 JLCard5D.show(code, name)。本文件就是正本: 原生成脚本 ~/jinlin-accept 已不存在, 直接改这里。
+   数据: 腾讯五日分时 day/query(四域名轮询, 5 秒超时) → 拿不到走东财 trends2; 只画 09:30–15:00。交易时段每 30 秒刷新, 不在看/正在拖/在画斐波时跳过。
+   只读别人的 localStorage(不写): jinlin_tier_memo_v1 = 首页 computeTierJL 梯子 → 画 S1/S2/B1/B2; jl_wave_v1 = 作战屏 dayReduceJL 日线波段 → 画波段低/高/①②(不是当天算的标日期)。
+   自己的键: jl5d_fib_<code> 斐波画线 / jl5d_auto 自动尺开关 / jl5d_mk 标注开关。15/30分 BOLL 走 ifzq.gtimg.cn mkline(单域名, 没有备份)。
+   挂载: 首次调用时插到持仓页小K线(#holdingChart 所在 section)前面, 原小K线保留显示; 折叠按钮 .c5TogJL 由 index.html 加进 .hd。
+   回滚: index.html 删 jl_card5d.js 引用即可。 */
 (function () {
   "use strict";
-  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:14px;font-weight:500;letter-spacing:.3px;color:#fff}#c5JL .hd .px{font:400 20px -apple-system,"SF Pro Display","PingFang SC",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;margin-left:auto}#c5JL .hd .pc{font:500 13px -apple-system,"SF Pro Text",sans-serif;font-variant-numeric:tabular-nums}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:none}#c5JL .hd .mono{font-weight:400;font-size:12px;color:#fff;opacity:1}#c5JL .info{text-shadow:none}#c5JL .info{height:18px;margin:6px 3px 2px;font:400 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:4px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:500 12px inherit;white-space:nowrap}#c5JL .hd .px{font-size:28px!important}#c5JL .bad{color:#ff7a85}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}#c5JL .hd .c5TogJL{pointer-events:auto!important;cursor:pointer}#c5JL .htabsJL button{font-weight:500!important;font-size:12px!important;color:#fff!important;padding:4px 10px!important;text-shadow:none!important}#c5JL .htabsJL button small{opacity:1!important;font-weight:400!important;color:#fff!important}#c5JL .htabsJL button.on{background:#ffe45c!important;border-color:#ffe45c!important;color:#000!important;font-weight:600!important}#c5JL .htabsJL button.on small{color:#000!important}#c5JL .box:not([style*="height"]){margin-top:0}';
+  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:14px;font-weight:500;letter-spacing:.3px;color:#fff}#c5JL .hd .px{font:400 28px -apple-system,"SF Pro Display","PingFang SC",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;margin-left:auto}#c5JL .hd .pc{font:500 13px -apple-system,"SF Pro Text",sans-serif;font-variant-numeric:tabular-nums}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:none}#c5JL .hd .mono{font-weight:400;font-size:12px;color:#fff;opacity:1}#c5JL .info{text-shadow:none}#c5JL .info{height:18px;margin:6px 3px 2px;font:400 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:4px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:500 12px inherit;white-space:nowrap}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}#c5JL .hd .c5TogJL{pointer-events:auto!important;cursor:pointer}#c5JL .box:not([style*="height"]){margin-top:0}#c5JL .seq{margin:8px 3px 0;border-top:1px solid rgba(255,255,255,.18);padding-top:6px}#c5JL .sqh{display:flex;align-items:baseline;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none}#c5JL .sqh b{font-size:13px;font-weight:500;color:#fff}#c5JL .sqh span{margin-left:auto;font-size:11.5px;color:#fff;font-variant-numeric:tabular-nums}#c5JL .sqh i{font-style:normal;font-size:13px;color:#fff;width:18px;text-align:center}#c5JL .sqt{display:flex;gap:4px;margin:6px 0 2px}#c5JL .sqt button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 10px;font:500 12px inherit}#c5JL .sqt button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .sqr{display:grid;grid-template-columns:18px 30px minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.1);font-variant-numeric:tabular-nums}#c5JL .sqr .n{font-size:12px;color:#fff;text-align:center}#c5JL .sqr .a{font-size:12.5px;font-weight:600;border-radius:7px;text-align:center;padding:1px 0}#c5JL .sqr .a.s{background:rgba(255,84,89,.25);color:#ff7a7e}#c5JL .sqr .a.b{background:rgba(31,220,147,.22);color:#3fe6ab}#c5JL .sqr .v{font:400 16px -apple-system,"SF Pro Display",sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#c5JL .sqr .v em{font-style:normal;font-size:10.5px;padding:0 5px;border-radius:6px;background:rgba(255,216,74,.22);color:#ffd84a;margin-left:4px}#c5JL .sqr .v small{font-size:10.5px;margin-left:5px;color:#fff}#c5JL .sqr .p{font-size:12px;text-align:right;white-space:nowrap}#c5JL .sqn{font-size:11px;color:#fff;margin:4px 0 0}';
   let ROOT = null, api = null, timer = 0;
   function mount() {
     if (ROOT) return true;
     const hc = document.getElementById("holdingChart"), sec = hc && hc.closest("section");
     if (!sec) return false;
     if (!document.getElementById("c5CssJL")) { const s = document.createElement("style"); s.id = "c5CssJL"; s.textContent = CSS; document.head.appendChild(s); }
-    ROOT = document.createElement("section"); ROOT.id = "c5JL"; ROOT.className = "card"; ROOT.innerHTML = '<div class="hd"><b data-c5="nm">—</b><span class="mono" data-c5="cd"></span><span class="px" data-c5="px">—</span><span class="pc" data-c5="pc"></span></div><div class="info" data-c5="info"></div><div class="box" data-c5="box"><canvas data-c5="base"></canvas><canvas data-c5="ov"></canvas></div><div class="tools"><span class="tb"><button type="button" data-c5="auto">自动尺</button><button type="button" data-c5="mk">标注</button><button type="button" data-c5="fib">斐波</button><button type="button" data-c5="del">删除</button><button type="button" data-c5="clr">清空</button></span><button type="button" data-c5="rst">看全5天</button></div>';
+    ROOT = document.createElement("section"); ROOT.id = "c5JL"; ROOT.className = "card"; ROOT.innerHTML = '<div class="hd"><b data-c5="nm">—</b><span class="mono" data-c5="cd"></span><span class="px" data-c5="px">—</span><span class="pc" data-c5="pc"></span></div><div class="info" data-c5="info"></div><div class="box" data-c5="box"><canvas data-c5="base"></canvas><canvas data-c5="ov"></canvas></div><div class="tools"><span class="tb"><button type="button" data-c5="auto">自动尺</button><button type="button" data-c5="mk">标注</button><button type="button" data-c5="fib">斐波</button><button type="button" data-c5="del">删除</button><button type="button" data-c5="clr">清空</button></span><button type="button" data-c5="rst">看全5天</button></div><div class="seq" data-c5="seq"></div>';
     sec.parentNode.insertBefore(ROOT, sec);   /* 10-27 用户要求: 原小K线(分时实时走势+周期按钮)保留显示, 不再隐藏 */
     api = boot(ROOT);
     timer = setInterval(() => {
@@ -26,7 +27,7 @@
   }
   function boot(ROOT) {
     const $ = (k) => ROOT.querySelector('[data-c5="' + k + '"]');
-    /* 数据: 腾讯五日分时 day/query(每天 prec=昨收) + 日K fqkline 做核对。只画 09:30–15:00, 15:00 后盘后固定价不画。 */
+    /* 数据: 腾讯五日分时 day/query(每天 prec=昨收)。只画 09:30–15:00, 15:00 后盘后固定价不画。 */
     let code = "", NAME = "";
     const pf = (c) => (/^[569]/.test(c) ? "sh" : "sz") + c;
     const f2 = (x) => (+x).toFixed(2), sg = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
@@ -67,17 +68,17 @@
 
     async function load(keep) {
       const c = pf(code);
-      const [d5, dkr] = await Promise.all([TX("/appstock/app/day/query?code=" + c).then((j) => { if (!j || !j.data || !j.data[c] || !j.data[c].data || !j.data[c].data.length) throw Error("腾讯无五日分时"); return j; }).catch(() => em5(c)), TX("/appstock/app/fqkline/get?param=" + c + ",day,,,10,qfq").catch(() => emDayK(c, 10)).catch(() => null)]);   /* 11-14: 腾讯日K fqkline 各域名都 501 时五日图整张"取不到" → 日K只是核对用, 拿不到就不要它, 五日分时照画 */
-      const raw = d5.data[c].data.slice().reverse(), dk = ((dkr && dkr.data && dkr.data[c] && (dkr.data[c].qfqday || dkr.data[c].day)) || []).map((r) => ({ t: r[0].replace(/-/g, ""), o: +r[1], c: +r[2], h: +r[3], l: +r[4], v: +r[5] }));
+      const d5 = await TX("/appstock/app/day/query?code=" + c).then((j) => { if (!j || !j.data || !j.data[c] || !j.data[c].data || !j.data[c].data.length) throw Error("腾讯无五日分时"); return j; }).catch(() => em5(c));   /* 11-17: 原来并行取的日K(fqkline)全文件没人读, 删掉 */
+      const raw = d5.data[c].data.slice().reverse();
       const days = [], P = [];
       raw.forEach((d, di) => {
-        let pv = 0, pa = 0, tot = 0; const pts = [];
+        let pv = 0; const pts = [];
         d.data.forEach((s) => {
-          const a = s.split(" "); if (a[0] > "1500") return; tot = Math.max(tot, +a[2]);   /* 15:00 后是盘后数据, 日K不含 */
-          const cv = +a[1 + 1], ca = +a[3], v = cv - pv; pv = cv; pa = ca;
+          const a = s.split(" "); if (a[0] > "1500") return;   /* 15:00 后是盘后数据, 不画 */
+          const cv = +a[2], ca = +a[3], v = cv - pv; pv = cv;
           pts.push({ di, k: idx(a[0]), t: a[0], p: +a[1], v: Math.max(0, v), avg: cv > 0 ? ca / cv / 100 : +a[1] });
         });
-        days.push({ date: d.date, prec: +d.prec, pts, open: pts.length ? pts[0].p : null, av: pts.length ? pts[0].v : 0, tot });
+        days.push({ date: d.date, prec: +d.prec, pts, open: pts.length ? pts[0].p : null });
         pts.forEach((p) => { p.g = P.length; P.push(p); });
       });
       /* 开盘跳空(昨收→今开): 往后找第一次碰到昨收的那一分钟 = 补回; 没碰到 = 未补, 一直往右 */
@@ -89,15 +90,15 @@
         gaps.push({ di, up, lo: Math.min(d.prec, d.open), hi: Math.max(d.prec, d.open), st, fi, pct: (d.open / d.prec - 1) * 100 });
       });
       const LD = days[days.length - 1]; if (LD) LD._auto = LD.pts.length ? autoCalc(LD.pts.map((p) => p.p)) : null;   /* 自动尺: 首点 09:30 = 开盘竞价价 */
-      if (autoOn) bollGet(c);
+      bollGet(c);   /* 11-17: 重合价顺序也要 BOLL, 自动尺关着也取(60 秒内不重取) */
       const old = S, oldN = old ? old.P.length : 0;
-      S = { days, P, gaps, dk, qt: d5.data[c].qt && d5.data[c].qt[c], code: c };
+      S = { days, P, gaps, code: c };
       /* 定时刷新: 同一只票保持当前缩放; 原来贴着最右(看最新)就继续贴着最右 */
       if (keep && old && old.code === c && view.b > view.a) { const n = view.b - view.a; view = view.b >= oldN ? { a: Math.max(0, P.length - n), b: P.length } : { a: Math.min(view.a, Math.max(0, P.length - n)), b: Math.min(view.b, P.length) }; }
       else { view = { a: 0, b: P.length }; fibLoad(); }
       fibRemap();   /* 11-14 用户: 过一天斐波锚点左偏一天 → 每次取数按「日期+分钟」找回所在位置 */
       head._k = "";
-      head(); size(); drawBase(); drawOv();
+      head(); size(); drawBase(); drawOv(); seqRender();
     }
 
     function head() {
@@ -253,20 +254,21 @@
       });
       x.restore(); x.lineWidth = 1;
     }
-    let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;   /* 11-13晚: 上次加 drawWave 时这行被误删 → 五日图整张加载不出来, 恢复 */
+    let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;   /* 这行别删: 删了五日图整张出不来 */
     /* 11-13 用户: 持仓卡五日分时把日线波段高低也画出来 —— 细线、价格清楚; 数据=作战屏日线波段(jl_wave_v1, 打开过作战屏的票才有) */
     function drawWave(x, s, xL, xR) {
       let W = null; try { W = JSON.parse(localStorage.getItem("jl_wave_v1") || "{}")[code]; } catch (e) { }
       if (!W || !(W.lo > 0)) return;
+      const LD = S.days[S.days.length - 1], wd = String(W.d || "").replace(/\D/g, ""), dt = !wd ? "(日期不明)" : LD && wd < LD.date ? "(" + wd.slice(4, 6) + "-" + wd.slice(6, 8) + ")" : "";   /* 11-17 用户: 不是当天算的波段照画, 但标上是哪天算的, 不偷偷不画 */
       const Ls = [["波段低", W.lo, "#4ff0ff"], ["波段高", W.hi, "#ffb84d"]];
       if (W.b1 > 0) Ls.push(["①接回", W.b1, "#1fdc93"]); else if (!W.s1 && W.z1 > 0) Ls.push(["①减+15%", W.z1, "#ff9a3c"]);
       if (W.b2 > 0) Ls.push(["②接回", W.b2, "#1fdc93"]); else if (W.s1 && !W.s2 && W.z2 > 0) Ls.push(["②减+35%", W.z2, "#ff9a3c"]);
       x.save(); x.font = "400 9.5px ui-monospace,Menlo"; x.lineWidth = 0.7;
       let upN = 0, dnN = 0;
       Ls.forEach((z) => {
-        if (!(z[1] > 0)) return; const y0 = s.Y(z[1]), t = z[0] + " " + f2(z[1]);
-        if (y0 < G.t) { put(x, "↑" + t, xL + 4 + (upN++) * 92, G.t + 9, "left", z[2]); return; }      /* 超出视窗: 顶/底边给箭头价签 */
-        if (y0 > G.mainB) { put(x, "↓" + t, xL + 4 + (dnN++) * 92, G.mainB - 3, "left", z[2]); return; }
+        if (!(z[1] > 0)) return; const y0 = s.Y(z[1]), t = z[0] + dt + " " + f2(z[1]);
+        if (y0 < G.t) { put(x, "↑" + t, xL + 4 + (upN++) * (dt ? 132 : 92), G.t + 9, "left", z[2]); return; }      /* 超出视窗: 顶/底边给箭头价签 */
+        if (y0 > G.mainB) { put(x, "↓" + t, xL + 4 + (dnN++) * (dt ? 132 : 92), G.mainB - 3, "left", z[2]); return; }
         const y = Math.round(y0) + 0.5;
         x.strokeStyle = z[2]; x.globalAlpha = 0.7; x.setLineDash([1.5, 2.5]); line(x, xL, y, xR, y); x.setLineDash([]); x.globalAlpha = 1;
         put(x, t, xL + 4, y - 2, "left", z[2]);   /* 价签放左边, 不和右边 S1/B1 撞 */
@@ -306,7 +308,7 @@
       [f.a, f.b].forEach((p) => { x.fillStyle = "#fff"; x.strokeStyle = "#2962ff"; x.lineWidth = 2; x.beginPath(); x.arc(s.X(p.g), s.Y(p.v), sel ? 4.5 : 3.5, 0, 7); x.fill(); x.stroke(); });
       x.restore(); x.lineWidth = 1;
     }
-    /* ===== 自动尺(10-27 用户确认): 分时口径, 规则同 jl_fibchain.js tsCompute, 只给最后一个交易日放 =====
+    /* ===== 自动尺(10-27 用户确认): 分时口径, 规则来自 jl_fibchain.js tsCompute(该文件已不在仓库, 以这里为准), 只给最后一个交易日放 =====
        尺A: 1 = 当天到目前最高(开盘价起算, 冲过开盘 0.4% 以上才换新高); 最高之后的最低比最高之前的低 → 0 = 最高之后的最低(看反弹),
             否则 0 = 最高之前的最低(看回撤); 1、0 相差不到 0.4% 不放。
        尺B: 0 = 当天最低, 1 = 最低之后第一个小高点(高出最低 0.3% 以上、比前后都高、之后回落 0.15% 前没被突破), 往上推 1.272~4.618。
@@ -357,7 +359,7 @@
       const o = BC[c] || (BC[c] = { at: 0, fly: 0 }); if (o.fly || Date.now() - o.at < 6e4) return;
       o.fly = 1;
       Promise.all(["m15", "m30"].map((k) => J("https://ifzq.gtimg.cn/appstock/app/kline/mkline?param=" + c + "," + k + ",,40").then((j) => { o[k] = bb((j.data[c][k] || []).map((r) => +r[2])); }).catch(() => { })))
-        .then(() => { o.fly = 0; o.at = Date.now(); if (S && S.code === c && autoOn) reqB(); });
+        .then(() => { o.fly = 0; o.at = Date.now(); if (S && S.code === c) { if (autoOn) reqB(); seqRender(); } });
     }
     function drawAuto(x, s) {
       if (!autoOn || !S) return;
@@ -490,6 +492,58 @@
       if (!S || !SC) return;
       if (!(e.metaKey || e.ctrlKey) && Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 1) { e.preventDefault(); const n = view.b - view.a, sh = Math.round(e.deltaX / G.pw * n) || (e.deltaX > 0 ? 1 : -1); setView(view.a + sh, view.b + sh); return; }   /* 11-14 用户「电脑左右滑放大不行」: 触控板左右滑=平移 */
       if (!(e.metaKey || e.ctrlKey)) return;   /* 触控板双指捏合浏览器给的是 ctrlKey, 原来只认 metaKey 所以捏不动 */ /* 10-27: 普通滚动放行给页面, 只有 Ctrl/Cmd+滚轮或触控板捏合才缩放 */ e.preventDefault(); zoomTo(view.a, view.b, e.deltaY > 0 ? 1.15 : 1 / 1.15, loc(e).x); }, { passive: false });
+
+    /* ===== 11-17 用户: 五日图下面「重合价顺序」(口径表 Q1, 没回测; 只显示, 不进算法、不提醒) =====
+       把屏上已有几套价位(梯子 S/B、日S1/日B1、首页共振、自动尺斐波、15/30分 BOLL)放一起, 相邻 ≤0.2% 连成一簇, 重合分=各来源权重相加(共振按它自己的 ×n);
+       先卖: 从现价起, 每步在上一价 ±0.75×ATR 内、离上一价 ≥1.5%(第一步 ≥0.3%) 挑分最高的(同分取近), 分≥2 才出, 卖价逐步抬高; 先接 = 反过来, 接价逐步降低。最多 5 步 */
+    let seqMode = localStorage.getItem("jl5d_seq_mode") === "b" ? "b" : "s", seqOpen = localStorage.getItem("jl5d_seq_open") !== "0", seqSig = "";
+    function seqLevels() {
+      if (!S || !S.days.length) return null;
+      const L = S.days[S.days.length - 1], P = L.pts.length ? L.pts[L.pts.length - 1].p : 0; if (!(P > 0)) return null;
+      const now = new Date(), td = now.getFullYear() + String(now.getMonth() + 1).padStart(2, "0") + String(now.getDate()).padStart(2, "0"), done = L.date < td || now.getHours() * 100 + now.getMinutes() >= 1500;   /* 收完了 → 算明天(中心=收盘) */
+      const lv = [], add = (v, t, src, w) => { if (v > 0 && isFinite(v)) lv.push({ v: +v, t, src, w: w || 1 }); };
+      let atr = 0;
+      try { const all = JSON.parse(localStorage.getItem("jinlin_tier_memo_v1") || "{}"), m = all[code], dk = m ? String(m.dk || all.d || "").replace(/\D/g, "") : "";
+        if (m && m.r && !(dk && dk < L.date)) { atr = +m.r.atr || 0; (m.r.sells || []).forEach((v, i) => add(+v, "S" + (i + 1), "梯")); (m.r.buys || []).forEach((v, i) => add(+v, "B" + (i + 1), "梯")); } } catch (e) { }
+      if (atr > 0) { const c0 = done ? P : L.prec; [[1, "日S2"], [0.5, "日S1"], [-0.5, "日B1"], [-1, "日B2"]].forEach((z) => add(c0 + z[0] * atr, z[1], "日")); }   /* 口径表 D1: 中心±0.5/1×ATR14 */
+      try { const J5 = window.JLReso, R = J5 && ((done && J5.next && J5.next(code)) || J5.compute(code)); ((R && R.allLevels) || []).forEach((z) => add(+z.p, "共振" + (z.n >= 2 ? "×" + z.n : ""), "振", z.n || 1)); } catch (e) { }
+      const r = L._auto; if (r) { AR.forEach((q) => add(r.A.at(q), "斐波" + q, "A")); if (r.B) AB.forEach((q) => add(r.B.at(q), "小" + q, "B")); if (r.D) AD.forEach((q) => add(r.D.at(q), "↓" + q, "D")); }
+      const bc = BC[S.code] || {}; [["m15", "15分"], ["m30", "30分"]].forEach((z) => { const b = bc[z[0]]; if (b) { add(b.up, z[1] + "上沿", z[0]); add(b.dn, z[1] + "下沿", z[0]); } });
+      lv.sort((a, b) => a.v - b.v);
+      const Z = []; lv.forEach((l) => { const z = Z[Z.length - 1]; if (z && l.v <= z.last * 1.002 && l.v <= z.v0 * 1.005) { z.m.push(l); z.last = l.v; } else Z.push({ v0: l.v, last: l.v, m: [l] }); });
+      const cl = Z.map((z) => { const ws = {}; z.m.forEach((m) => { ws[m.src] = Math.max(ws[m.src] || 0, m.w); }); return { v: z.m.reduce((a, b) => a + b.v, 0) / z.m.length, sc: Object.keys(ws).reduce((a, k) => a + ws[k], 0), lab: z.m.map((m) => m.t).join("·") }; });
+      return { P, done, atr: atr || P * 0.05, cl };
+    }
+    function seqPath(Q, mode) {
+      const W = 0.75 * Q.atr, out = []; let ref = Q.P, side = mode, hiS = -Infinity, loB = Infinity;
+      for (let k = 0; k < 5; k++) {
+        const g = k ? 0.015 : 0.003, c = Q.cl.filter((c) => c.sc >= 2 && (side === "s" ? c.v >= ref * (1 + g) && c.v <= ref + W && (mode !== "s" || c.v > hiS) : c.v <= ref * (1 - g) && c.v >= ref - W && (mode !== "b" || c.v < loB)))
+          .sort((a, b) => b.sc - a.sc || Math.abs(a.v - ref) - Math.abs(b.v - ref))[0];
+        if (!c) break;
+        out.push({ side, v: c.v, sc: c.sc, lab: c.lab, pc: (c.v / ref - 1) * 100 });
+        if (side === "s") hiS = c.v; else loB = c.v;
+        ref = c.v; side = side === "s" ? "b" : "s";
+      }
+      return out;
+    }
+    function seqRender() {
+      const el = $("seq"); if (!el) return;
+      let Q = null; try { Q = seqLevels(); } catch (e) { }
+      const path = Q ? seqPath(Q, seqMode) : [], NO = "①②③④⑤";
+      let h = '<div class="sqh" data-sq="tog"><b>' + (Q && Q.done ? "明日" : "今日") + '重合价顺序</b><span>' + (Q ? (Q.done ? "收 " : "现 ") + f2(Q.P) : "") + "</span><i>" + (seqOpen ? "▾" : "▸") + "</i></div>";
+      if (seqOpen) {   /* 「先卖/先接」= 路线切换按钮, 依据 口径表 Q1(没回测) */
+        h += '<div class="sqt"><button type="button" data-sq="s"' + (seqMode === "s" ? ' class="on"' : "") + '>先卖</button><button type="button" data-sq="b"' + (seqMode === "b" ? ' class="on"' : "") + ">先接</button></div>";
+        if (!path.length) h += '<div class="sqn">附近没有 ≥2 重合的价</div>';
+        path.forEach((p, i) => { h += '<div class="sqr"><span class="n">' + NO[i] + '</span><span class="a ' + p.side + '">' + (p.side === "s" ? "卖" : "接") + '</span><span class="v">' + f2(p.v) + "<em>×" + p.sc + "</em><small>" + p.lab + '</small></span><span class="p ' + (p.pc >= 0 ? "up" : "dn") + '">' + (i ? "离" + NO[i - 1] + (path[i - 1].side === "s" ? "卖价 " : "接价 ") : "离现价 ") + sg(p.pc) + "</span></div>"; });
+        h += '<div class="sqn">×几 = 几种算法落在同一价(0.2%内), 不是概率, 没回测; 斐波按当天高低画, 出新高/新低会变</div>';
+      }
+      if (h !== seqSig) { seqSig = h; el.innerHTML = h; }
+    }
+    $("seq").addEventListener("click", (e) => {
+      const b = e.target.closest && e.target.closest("[data-sq]"); if (!b) return; const k = b.getAttribute("data-sq");
+      try { if (k === "tog") { seqOpen = !seqOpen; localStorage.setItem("jl5d_seq_open", seqOpen ? "1" : "0"); } else { seqMode = k; localStorage.setItem("jl5d_seq_mode", k); } } catch (er) { }
+      seqSig = ""; seqRender();
+    });
     function setFib(on) { fibMode = on; $("fib").classList.toggle("on", on); }
     $("fib").onclick = () => setFib(!fibMode);
     $("auto").classList.toggle("on", autoOn);
@@ -503,7 +557,7 @@
     $("rst").onclick = () => { if (S) { view = { a: 0, b: S.P.length }; reqB(); } };
     addEventListener("resize", () => { if (S && ROOT.offsetParent) { size(); drawBase(); drawOv(); } });
     return {
-      set(c, n) { if (c === code) { if (n) { NAME = n; head._k = ""; head(); } if (S && JSON.stringify(tierSB()) !== sbSig) reqB(); return; } code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; setFib(false); $("info").innerHTML = "<span>五日分时加载中…</span>"; load().catch((e) => { $("info").innerHTML = "<span>五日分时取不到：" + (e && e.message || "网络") + "</span>"; }); },
+      set(c, n) { if (c === code) { if (n) { NAME = n; head._k = ""; head(); } if (S && JSON.stringify(tierSB()) !== sbSig) { reqB(); seqRender(); } return; } code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; setFib(false); $("info").innerHTML = "<span>五日分时加载中…</span>"; load().catch((e) => { $("info").innerHTML = "<span>五日分时取不到：" + (e && e.message || "网络") + "</span>"; }); },
       tick() { if (!code || pd || fibMode || fibDraft) return; load(true).catch(() => { }); }
     };
   }
