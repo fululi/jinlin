@@ -99,7 +99,7 @@
       var p = L.last > 0 ? f2(L.last) : '', RM = L.roundsMax || 3;
       if (L.err) return { b: '断链', t: '已停算', p: '', k: 'warn' };   /* jl-zp4: 任何取数异常都停算(原来只认"断链/滞后"字样, "行情接口无数据"时球还显示旧状态) */
       var d = new Date(), ds = '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
-      var today = L.sessDate === ds, e = L.eng, pre = today ? '' : '自检·';
+      var today = L.sessDate === ds, pre = today ? '' : '自检·';
       if (!L.bars || !L.bars.length) return { b: '未触发', t: today ? '待开盘' : '拉数据', p: p, k: 'idle' };
       /* 11-13晚 用户: 浮球状态跟现行 尺子/小球(作战屏「下一步」那排 __RDJL.mk), 不再读旧引擎 LIVE.eng */
       try {
@@ -114,17 +114,7 @@
           return { b: '已接', t: pre + (nxs ? '等' + nxs : '等卖'), p: '', k: 'done' };
         }
       } catch (eR) { }
-      if (e) {
-        if (e.sp !== null) return { b: '已触发', t: pre + '等买回', p: p, k: 'trig' };            /* 已卖出, 等回落买回 */
-        /* 收工跟作战屏引擎同一口径: 做满轮次 / 14:55 尾盘兜底买回后 / 15:00 收盘后 */
-        var done = false;
-        /* 11-13晚 用户「浮球收工时间总是提前」: 原来读旧引擎 e.rounds 做满3轮就收工(现行是尺子/小球, 旧引擎早早做满) → 只按收盘 15:00 收工 */
-        try { var lb = L.bars[L.bars.length - 1], hm = lb ? +String(lb.t).slice(-4) : 0; done = hm >= 1500; } catch (eD) { }
-        if (done) return { b: '收工', t: pre + '今日收工', p: p, k: 'done' };
-        if (e.rounds && e.rounds.length) return { b: '已买回', t: pre + '等再冲高', p: p, k: 'done' };
-        if (today && e.lowOpen) return { b: '已触发', t: '低开卖', p: p, k: 'trig' };
-        return { b: '未触发', t: pre + '盯盘中', p: p, k: 'idle' };
-      }
+      /* 11-17 旧引擎删: 原 if (e) {...} 读 LIVE.eng 的分支去掉 */
       return { b: '未触发', t: pre + '盯盘中', p: p, k: 'idle' };
     } catch (er) { return { b: '做T', t: '—', p: '', k: 'idle' }; }
   }
@@ -168,7 +158,7 @@
   function kindOf(id, L) {
     if (/^(sell|stouch)/.test(id)) return 'sell';
     if (/^(buy|touch|eod)/.test(id)) return 'buy';
-    if (id === 'open') return L.eng && L.eng.lowOpen ? 'sell' : null;
+    if (id === 'open') return null;   /* 11-17 旧引擎删, 开盘条只记不闪 */
     return null;
   }
   /* ---------- 11-16 今日提醒: 记 + 合并 + 只闪要动手的 ---------- */

@@ -88,7 +88,7 @@
     var th = I.th || 0.015, a = I.a || 0.8, m = I.m || 0.25, av = avg / 100 * pc, Z = 0.5, MR = 2;
     var st = 'N', dl = o0, dh = o0, rh = o0, rl = o0, p = 0, pi = 0, n = 0, done = [], T = [], mk = [], seen = 0;
     /* 11-14 同作战屏 ampBallJL: 永鼎 10:00 前实时强档不先卖(I.code; P[i].hm 有才判) */
-    var nsOn = I.code === '600105', gG = 0, blk = 0;
+    var nsOn = true, gG = 0, blk = 0;   /* 11-17 用户拍板: 全部票(原来只永鼎), 同作战屏 ampBallJL */
     for (var i = 0; i < P.length; i++) {
       var h = P[i].h || P[i].p, l = P[i].l || P[i].p; dh = Math.max(dh, h); dl = Math.min(dl, l); rh = Math.max(rh, h); rl = Math.min(rl, l); var amp = dh - dl;
       if (nsOn && P[i].hm) { var pp = P[i].c || P[i].p, gNow = (dh >= o0 + 0.35 * av || dl <= o0 - 0.35 * av) ? (pp >= o0 + 0.1 * av ? 1 : pp <= o0 - 0.1 * av ? -1 : (gG || (pp >= o0 ? 1 : -1))) : ((o0 / pc - 1) * 100 <= -2 ? -1 : 0); gG = gNow; blk = +String(P[i].hm).replace(':', '') < 1000 && gNow === 1 ? 1 : 0; }
