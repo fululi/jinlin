@@ -6162,7 +6162,7 @@ body.injlin .chartbox>#zpSub{order:1}
    存储: 主图按 横坐标(固定时间轴)+价格, 副图按图内坐标; 按 股票+交易日 存 localStorage zp_draw_v1, 只留当天。 */
 (function () {
   var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_draw_v1', UK = 'zp_draw_ui_v1';
-  var tool = '', sel = -1, drag = null, meas = null, bar = null, hid = false, mini = false, lock = false, selH = -1, pendF = -1;   /* 11-08 pendF: 斐波点了起点、等点终点 */
+  var tool = '', sel = -1, drag = null, meas = null, bar = null, hid = false, mini = false, lock = false, selH = -1, pendF = -1, pnlEl = null;   /* 11-08 pendF: 斐波点了起点、等点终点; 11-18 pnlEl: 多头仓位参数面板 */
   /* jl-zphl (11-04): 水平线标记——按股票存(不分日, 第二天还在) zp_hline_v1 {代码:[{p:价, lk:锁}]}; 点线左侧价签 = 单条锁/解锁, 锁住的线拖不动、也不挡十字线 */
   var HK = 'zp_hline_v1', HLX = PX0 + 34;
   function loadH() { try { var m = JSON.parse(localStorage.getItem(HK) || '{}'), c = (window.STK && STK.code) || ''; return Array.isArray(m[c]) ? m[c] : []; } catch (e) { return []; } }
@@ -6280,22 +6280,44 @@ body.injlin .chartbox>#zpSub{order:1}
     if (pn === 'ch' && meas) paintMeas(g);
     svg.appendChild(g);
   }
-  /* 11-17晚 多头仓位(照 TradingView Long Position): 白线=开仓 ay, 绿框=到目标 by, 红框=到止损 sp; 三个签: 目标/止损(差价 涨跌% 金额 盈亏) + 中间「开仓 盈亏」按现价; 股数=卡片每轮股数(没填用持仓). 四个蓝角: 左上下=开仓/右上=目标/右下=止损. 只画图, 不进任何算法 */
+  /* 11-18 多头仓位升级(TradingView Long Position 可交互版): 每个仓位独立参数 qty(股)/entry(=ay)/target(=by)/stop(=sp)/side='long'/cur='CNY', 存进画线对象 ln 走原 load/save; 旧数据无 qty → 兼容回退 每轮股数→持仓→100. 白线=开仓, 绿框=到目标, 红框=到止损, 三个签全部按 ¥ 人民币显示. 四个蓝角: 左=开仓/右上=目标/右下=止损, 拖动照旧; 点仓位本体弹出参数面板(编辑价格/股数, 拖动同步). 只画图, 不进任何算法 */
   function longSp(ln) { return ln.sp > 0 ? ln.sp : +(ln.ay - (ln.by - ln.ay) * 0.5).toFixed(3); }
+  function qtyOf(ln) { return ln && ln.qty > 0 ? Math.round(ln.qty) : (LIVE.sh > 0 ? LIVE.sh : (STK && STK.qty > 0 ? STK.qty : 100)); }   /* 11-18 股数独立: 仓位自带 qty, 旧的没存才回退 */
+  function qtyDef() { return LIVE.sh > 0 ? LIVE.sh : (STK && STK.qty > 0 ? STK.qty : 100); }   /* 新仓位默认股数: 每轮→持仓→100 */
   function paintLong(g, ln, on) {
     var xa = Math.min(ln.ax, ln.bx), xb = Math.max(ln.ax, ln.bx); if (xb - xa < 6) xb = xa + 6;
-    var e = ln.ay, tg = ln.by, sp = longSp(ln), ye = Y(e), yt = Y(tg), ys = Y(sp), sh = (LIVE.sh > 0 ? LIVE.sh : (STK && STK.qty) || 100), cur = LIVE.last > 0 ? LIVE.last : e;
+    var e = ln.ay, tg = ln.by, sp = longSp(ln), ye = Y(e), yt = Y(tg), ys = Y(sp), sh = qtyOf(ln), cur = LIVE.last > 0 ? LIVE.last : e;
     g.appendChild(E('rect', { x: xa, y: Math.min(ye, yt), width: xb - xa, height: Math.max(.5, Math.abs(yt - ye)), fill: '#089981', opacity: .30 }));
     g.appendChild(E('rect', { x: xa, y: Math.min(ye, ys), width: xb - xa, height: Math.max(.5, Math.abs(ys - ye)), fill: '#f23645', opacity: .30 }));
     g.appendChild(E('line', { x1: xa, x2: xb, y1: ye, y2: ye, stroke: '#ffffff', 'stroke-width': 1 }));
-    var am = function (v) { return Math.round(v); }, pc = function (a, b) { return (Math.abs(b / a - 1) * 100).toFixed(3) + '%'; };
+    var am = function (v) { return '¥' + Math.round(Math.abs(v)).toLocaleString('en-US'); }, pc = function (a, b) { return (Math.abs(b / a - 1) * 100).toFixed(2) + '%'; };   /* 11-18 金额统一 ¥ 人民币, 涨跌幅两位小数 */
     var pill = function (yb, t, c, up) { var w = t.length * 4.05 + 8, xm = (xa + xb) / 2, x0 = Math.max(PX0, Math.min(LX - 6 - w, xm - w / 2)), y0 = up ? yb - 12 : yb + 1;
       g.appendChild(E('rect', { x: x0, y: y0, width: w, height: 11, rx: 2.5, fill: c })); g.appendChild(E('text', { x: x0 + w / 2, y: y0 + 8, fill: '#fff', 'font-size': 7, 'font-weight': 400, 'text-anchor': 'middle', 'data-fix': '1' }, t)); };
-    var dT = tg - e, dS = e - sp, upT = yt < ye;
-    pill(upT ? Math.min(yt, ye) : Math.max(yt, ye), '目标: ' + Math.abs(dT).toFixed(2) + ' (' + pc(e, tg) + '), 金额: ' + am(tg * sh) + ', PnL: ' + (dT * sh >= 0 ? '' : '−') + Math.abs(dT * sh).toFixed(2), '#089981', upT);
-    pill(upT ? Math.max(ys, ye) : Math.min(ys, ye), (dS >= 0 ? '' : '−') + pc(e, sp) + ' ' + Math.round(Math.abs(dS) * 100) + ', 金额: ' + am(sp * sh) + ', PnL: −' + Math.abs(dS * sh).toFixed(2), '#f23645', !upT);
-    var pn0 = (cur - e) * sh; pill(ye - 2, '开仓 PnL: ' + (pn0 >= 0 ? '' : '−') + Math.abs(pn0).toFixed(2), pn0 >= 0 ? '#089981' : '#f23645', true);
+    var dT = tg - e, dS = e - sp, upT = yt < ye, tP = dT * sh, sP = dS * sh;
+    pill(upT ? Math.min(yt, ye) : Math.max(yt, ye), '目标 ' + Math.abs(dT).toFixed(2) + ' (' + pc(e, tg) + ') ' + (tP >= 0 ? '+' : '−') + am(tP), '#089981', upT);
+    pill(upT ? Math.max(ys, ye) : Math.min(ys, ye), pc(e, sp) + ' ' + (sP >= 0 ? '+' : '−') + am(sP), '#f23645', !upT);
+    var pn0 = (cur - e) * sh; pill(ye - 2, '开仓 ' + e.toFixed(2) + ' · ' + sh + '股 · ' + (pn0 >= 0 ? '浮盈 +' : '浮亏 −') + am(pn0), pn0 >= 0 ? '#089981' : '#f23645', true);
     if (on || tool === 'long') [[xa, ye], [xb, yt], [xb, ys], [xa, ye]].slice(0, 3).forEach(function (q) { g.appendChild(E('rect', { x: q[0] - 3.5, y: q[1] - 3.5, width: 7, height: 7, rx: 1.6, fill: 'rgba(10,14,19,.6)', stroke: '#2962ff', 'stroke-width': 1.3 })); });
+  }
+  /* 11-18 参数面板同步: sel 指向可见的多头仓位时显示/刷新面板; 拖动控制点也走 paint → 这里回写数值(焦点内的输入框不动, 不打断输入) */
+  function lposSync(L) {
+    if (!pnlEl) return;
+    var ln = sel >= 0 && L[sel] && L[sel].k === 'long' && !L[sel]._h && !hid ? L[sel] : null;
+    if (!ln) { pnlEl.style.display = 'none'; return; }
+    pnlEl.style.display = 'block';
+    var set = function (id, v, dec) { var el = pnlEl.querySelector('#' + id), s = (+v).toFixed(dec || 2); if (el && document.activeElement !== el && el.value !== s) el.value = s; };
+    set('zle', ln.ay); set('zlt', ln.by); set('zls', ln.sp > 0 ? ln.sp : longSp(ln)); set('zlq', qtyOf(ln), 0);
+    var sh = qtyOf(ln), e = ln.ay, tg = ln.by, sp = longSp(ln), cur = LIVE.last > 0 ? LIVE.last : e;
+    var g = (tg - e) * sh, l = (sp - e) * sh, f = (cur - e) * sh, sz = e * sh;
+    var fy = function (v) { return '¥' + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 0 }); };
+    var sg = function (v, s) { return (v >= 0 ? '+' : '−') + fy(v); };
+    var rr = g > 0 && l < 0 ? '1 : ' + (g / -l).toFixed(2) : '—';
+    pnlEl.querySelector('#zlinfo').innerHTML =
+      '仓位金额 <b>' + fy(sz) + '</b><br>' +
+      '目标盈利 <b class="' + (g >= 0 ? 'up' : 'dn') + '">' + sg(g) + '</b> (' + (tg >= e ? '+' : '−') + (Math.abs(tg / e - 1) * 100).toFixed(2) + '%)<br>' +
+      '止损亏损 <b class="' + (l >= 0 ? 'up' : 'dn') + '">' + (l >= 0 ? '+' : '−') + fy(l) + '</b> (' + (sp >= e ? '+' : '−') + (Math.abs(sp / e - 1) * 100).toFixed(2) + '%)<br>' +
+      '盈亏比 <b>' + rr + '</b><br>' +
+      '现价浮动 <b class="' + (f >= 0 ? 'up' : 'dn') + '">' + sg(f) + '</b> (现价 ' + cur.toFixed(2) + ')';
   }
   function paintH(g, pn, svg) {
     loadH().forEach(function (h, i) {
@@ -6329,7 +6351,7 @@ body.injlin .chartbox>#zpSub{order:1}
     g.appendChild(E('text', { x: lx + w / 2, y: ly + 12.5, fill: '#fff', 'font-size': 10.5, 'font-weight': 800, 'text-anchor': 'middle' }, l1));
     g.appendChild(E('text', { x: lx + w / 2, y: ly + 25, fill: '#fff', 'font-size': 9.5, 'font-weight': 600, 'text-anchor': 'middle' }, l2));
   }
-  function paint() { var L = load(); svgs().forEach(function (x) { try { paintLines(x[0], x[1], L); } catch (e) { } }); paintBar(L); }
+  function paint() { var L = load(); svgs().forEach(function (x) { try { paintLines(x[0], x[1], L); } catch (e) { } }); paintBar(L); try { lposSync(L); } catch (eP) { } }   /* 11-18: 面板跟选中的多头仓位同步(拖动/改价都经 paint 刷新) */
   window.zpDrawPaint = paint;
   window.zpHlApi = {
     mainLines: function () { return loadH().filter(function (h) { return (!h.pn || h.pn === 'ch') && h.p > 0; }); },   /* 11-12: 主图水平价格线(触碰提醒用) */
@@ -6382,12 +6404,53 @@ body.injlin .chartbox>#zpSub{order:1}
     if (bar && bar.isConnected) return;
     var ch = $('ch'); if (!ch) return;
     var old = document.querySelector('.zd-bar'); if (old) old.remove();
+    /* 11-18 多头仓位参数面板: 选中仓位弹出, 直接改 开仓/止盈/止损/股数, 实时算 仓位金额/目标盈利/止损亏损/盈亏比/浮动盈亏(¥);
+       面板 pointerdown/click 全部 stopPropagation → 不触发图表拖动/缩放/十字线; 点面板外(图表空白处)取消选中即收起, 不会误删 */
+    if (!document.getElementById('zlposCss')) {
+      var st = document.createElement('style'); st.id = 'zlposCss';
+      st.textContent = '.zlpos{position:absolute;top:6px;right:6px;z-index:30;width:176px;padding:8px 9px;border-radius:10px;background:rgba(10,14,19,.94);border:1px solid rgba(122,184,255,.4);box-shadow:0 6px 18px rgba(0,0,0,.55);font:11px/1.55 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#dfe7ee;touch-action:manipulation;-webkit-user-select:none;user-select:none}' +
+        '.zlpos .zlp-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}' +
+        '.zlpos .zlp-hd b{color:#7ab8ff;font-size:11.5px}' +
+        '.zlpos .zlp-x{background:none;border:0;color:#9fb2c0;font-size:14px;line-height:1;cursor:pointer;padding:0 2px}' +
+        '.zlpos label{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:3px 0;color:#b9c6d2}' +
+        '.zlpos input{width:92px;min-width:0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:6px;color:#fff;font:inherit;padding:2px 5px;text-align:right;outline:none}' +
+        '.zlpos input:focus{border-color:#2962ff;background:rgba(41,98,255,.12)}' +
+        '.zlpos .zlp-i{margin-top:5px;border-top:1px dashed rgba(255,255,255,.16);padding-top:4px;font-size:10.5px;line-height:1.7;color:#b9c6d2}' +
+        '.zlpos .zlp-i b{color:#fff;font-weight:600}' +
+        '.zlpos .up{color:#4ade80}.zlpos .dn{color:#ff7b7b}';
+      document.head.appendChild(st);
+    }
+    var pnl = document.createElement('div'); pnl.className = 'zlpos'; pnl.style.display = 'none';
+    pnl.innerHTML = '<div class="zlp-hd"><b>LONG · CNY</b><button type="button" class="zlp-x" aria-label="收起面板">✕</button></div>' +
+      '<label>开仓 <input id="zle" type="number" inputmode="decimal" step="0.01" min="0" aria-label="开仓价格"></label>' +
+      '<label>止盈 <input id="zlt" type="number" inputmode="decimal" step="0.01" min="0" aria-label="止盈价格"></label>' +
+      '<label>止损 <input id="zls" type="number" inputmode="decimal" step="0.01" min="0" aria-label="止损价格"></label>' +
+      '<label>股数 <input id="zlq" type="number" inputmode="numeric" step="100" min="100" aria-label="股数"></label>' +
+      '<div class="zlp-i" id="zlinfo"></div>';
+    ch.parentNode.appendChild(pnl);
+    pnlEl = pnl;
+    pnl.addEventListener('pointerdown', function (e) { e.stopPropagation(); });   /* 不让图表接走手势 */
+    pnl.addEventListener('click', function (e) { e.stopPropagation(); if (e.target.classList && e.target.classList.contains('zlp-x')) { sel = -1; paint(); } });
+    function zlSet(k, isQty) {   /* 输入 → 更新 ln → 存 → 重画(面板经 lposSync 回显, 焦点内的输入框不被覆盖) */
+      return function () {
+        var L = load(), ln = sel >= 0 ? L[sel] : null; if (!ln || ln.k !== 'long') return;
+        var v = parseFloat(this.value); if (!isFinite(v) || v <= 0) return;
+        if (isQty) { v = Math.max(100, Math.round(v / 100) * 100); this.value = v; }   /* A 股 100 股整数倍 */
+        else v = +v.toFixed(3);
+        ln[k] = v; ln.side = 'long'; ln.cur = 'CNY';
+        save(L); paint();
+      };
+    }
+    pnl.querySelector('#zle').addEventListener('input', zlSet('ay'));
+    pnl.querySelector('#zlt').addEventListener('input', zlSet('by'));
+    pnl.querySelector('#zls').addEventListener('input', zlSet('sp'));
+    pnl.querySelector('#zlq').addEventListener('change', zlSet('qty', true));   /* 股数在 blur/回车时生效并规整为 100 整数倍, 边打字边改会没法输入 */
     bar = document.createElement('div'); bar.className = 'zd-bar';
     bar.innerHTML = '<button type="button" data-t="line" title="画线" aria-label="画线">' + IC.line + '</button>' +
       '<button type="button" data-t="hl" title="水平线(点一下放一条, 点价签锁住)" aria-label="水平线">' + IC.hl + '</button>' +
       '<button type="button" data-t="fib" title="斐波" aria-label="斐波">' + IC.fib + '</button>' +
       '<button type="button" data-t="meas" title="测量" aria-label="测量">' + IC.meas + '</button>' +
-      '<button type="button" data-t="long" title="多头仓位(拖出: 起点=开仓, 终点=目标; 下面红框=止损, 拖蓝角改)" aria-label="多头仓位"><svg viewBox="0 0 16 16"><rect x="3" y="2.5" width="10" height="6" fill="#089981" opacity=".85"/><rect x="3" y="8.5" width="10" height="4.5" fill="#f23645" opacity=".85"/><line x1="3" y1="8.5" x2="13" y2="8.5" stroke="#fff" stroke-width="1"/></svg></button>' +   /* 11-17晚 用户「多头仓位画图也要一比一复制(TradingView)」 */
+      '<button type="button" data-t="long" title="多头仓位(拖出: 起点=开仓, 终点=目标; 下面红框=止损, 拖蓝角改; 点画好的仓位弹出参数面板, 可改价格/股数)" aria-label="多头仓位"><svg viewBox="0 0 16 16"><rect x="3" y="2.5" width="10" height="6" fill="#089981" opacity=".85"/><rect x="3" y="8.5" width="10" height="4.5" fill="#f23645" opacity=".85"/><line x1="3" y1="8.5" x2="13" y2="8.5" stroke="#fff" stroke-width="1"/></svg></button>' +   /* 11-18 可交互仓位工具: 独立参数面板 + 独立股数 */
       '<button type="button" class="zd-eye" title="隐藏/显示画线" aria-label="隐藏或显示画线">' + IC.eye + '</button>' +
       '<button type="button" class="zd-lk" aria-label="锁定或解锁画线"></button>' +
       '<button type="button" class="zd-del" aria-label="删除">' + IC.del + '</button>' +
@@ -6484,7 +6547,7 @@ body.injlin .chartbox>#zpSub{order:1}
     if (hit) { sel = hit.i; drag = { k: hit.k, i: hit.i, pn: pn, svg: svg, sx: q.x, sy: q.y, o: hit, moved: false }; window.zpDrawBusy = true; paint(); return; }
     sel = -1; dropPend(); L = load();
     var sp0 = tool === 'fib' && pn === 'ch' ? fibSnap(svg, q.x, q.y) : null;   /* 11-08: 斐波起点吸附高低点 */
-    var it = { pn: pn, ax: sp0 ? sp0.x : +q.x.toFixed(1), ay: sp0 ? sp0.p : enc(pn, q.y), bx: sp0 ? sp0.x : +q.x.toFixed(1), by: sp0 ? sp0.p : enc(pn, q.y) }; if (tool === 'fib') it.k = 'fib'; if (tool === 'long') it.k = 'long';
+    var it = { pn: pn, ax: sp0 ? sp0.x : +q.x.toFixed(1), ay: sp0 ? sp0.p : enc(pn, q.y), bx: sp0 ? sp0.x : +q.x.toFixed(1), by: sp0 ? sp0.p : enc(pn, q.y) }; if (tool === 'fib') it.k = 'fib'; if (tool === 'long') { it.k = 'long'; it.qty = qtyDef(); it.side = 'long'; it.cur = 'CNY'; }   /* 11-18 多头仓位: 独立股数(每轮→持仓→100), 固定 LONG/CNY, 存进 ln */
     L.push(it); save(L); drag = { k: 'new', i: L.length - 1, pn: pn, svg: svg, sx: q.x, sy: q.y, moved: false }; window.zpDrawBusy = true; paint();
   }
   function move(e) {
@@ -6506,7 +6569,7 @@ body.injlin .chartbox>#zpSub{order:1}
   }
   function up() {
     if (!drag) return;
-    try { if (drag.k === 'new' && drag.moved) { var Lq = load(), lq = Lq[drag.i]; if (lq && lq.k === 'long' && !(lq.sp > 0)) { lq.sp = longSp(lq); save(Lq); } } } catch (eLq) { }
+    try { if (drag.k === 'new' && drag.moved) { var Lq = load(), lq = Lq[drag.i]; if (lq && lq.k === 'long') { if (!(lq.sp > 0)) { lq.sp = longSp(lq); save(Lq); } sel = drag.i; } } } catch (eLq) { }   /* 11-18: 画完多头仓位自动选中 → 参数面板跟着弹出 */
     if (drag.k === 'h' && tool === 'hl') tool = '';   /* 放好一条就退出水平线工具, 回到十字线 */
     if (drag.k === 'new' && !drag.moved) { var L = load(); if (L[drag.i] && L[drag.i].k === 'fib') { L[drag.i].bx = L[drag.i].ax; L[drag.i].by = L[drag.i].ay; save(L); pendF = drag.i; sel = -1; } else { L.splice(drag.i, 1); save(L); } }   /* 只点一下没拖 → 不留; 11-08 斐波例外: 当起点, 等第二下 */
     drag = null; window.zpDrawBusy = false; paint();
