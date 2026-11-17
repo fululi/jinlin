@@ -722,6 +722,46 @@ var X = function (i) { return PX0 + i * (PW / 47); };
 var YRES = 0;   /* 11-13 用户: 量柱退回独立VOL格, 主图不再给量带留底(原52) */ //   /* 11-13g 用户: 量柱嵌在主图底部看不清 → 价格只画到 PH-YRES, 最下面 YRES 留给量柱带, 不再重叠 */
 var Y = function (p) { return PY0 + (YHI - p) / (YHI - YLO) * (PH - YRES); };
 var NS = 'http://www.w3.org/2000/svg';
+/* 11-17 用户「卖接连线 可以 也多一个显示隐藏按钮」(效果图 outputs/效果图_复盘卖接连线.html v2): 分时图上把小球/尺子已成交的卖、接连成线 —— 卖橙点/接青点, 一轮扣费后赚=红线亏=绿线, 没接回/没卖出=虚线连到现价; 字避让; 右上「连」圆标开关(zp_trl_v1). 只读 ampPlanJL 结果, 不进算法; 无 ▲▼ */
+function trLinesJL(g) {
+  if (localStorage.getItem('zp_trl_v1') === '0') return;
+  var R = window.__RDJL; if (!R || !STK || R.code !== STK.code) return;
+  var M = (R.mk || []).filter(function (m) { return m.ok && m.p > 0 && (m.t === 's' || m.t === 'b'); }); if (!M.length) return;
+  var P = (LIVE.pts || []).filter(function (q) { return +q.hm >= 930 && q.p > 0; }); if (!P.length) return;
+  var j = 0, pos = [];
+  M.forEach(function (m) {
+    var k = -1;
+    if (m.hm) { for (var a = j; a < P.length; a++) if (P[a].hm >= String(m.hm)) { k = a; break; } }
+    if (k < 0) for (var b = j; b < P.length; b++) { var h = P[b].h || P[b].p, l = P[b].l || P[b].p; if (m.t === 's' ? h >= m.p - 1e-9 : l <= m.p + 1e-9) { k = b; break; } }
+    if (k < 0) k = P.length - 1; j = k; var x = xOfHmJL(P[k].hm); if (x != null) pos.push({ n: m.n, t: m.t, p: m.p, x: x });
+  });
+  var FEE = 0.0013, cur = LIVE.last > 0 ? LIVE.last : P[P.length - 1].p, xe = xOfHmJL(P[P.length - 1].hm), LBt = (typeof LB !== 'undefined' && LB) || [], gr = el('g', { 'data-trl': '1' }), T2 = [];
+  var fmt = function (v) { return (v >= 0 ? '+' : '') + (v * 100).toFixed(2) + '%'; };
+  var put = function (x0, y0, t, c, anc, cd) {
+    var w = wOfJL(t) + 2;
+    for (var i = 0; i < cd.length; i++) { var xx = x0 + cd[i][0], yy = y0 + cd[i][1], l = anc === 'end' ? xx - w : anc === 'middle' ? xx - w / 2 : xx;
+      if (yy < PY0 + 8 || yy > PY0 + PH) continue;
+      if (!LBt.some(function (b) { return l < b.x1 && l + w > b.x0 && yy - 7 < b.y1 && yy + 1 > b.y0; })) { LBt.push({ x0: l, x1: l + w, y0: yy - 7, y1: yy + 1 }); var e = tx(xx, yy, t, c, 8, anc, 400); e.setAttribute('stroke', 'rgba(5,10,16,.85)'); e.setAttribute('stroke-width', .9); e.setAttribute('paint-order', 'stroke'); T2.push(e); return; } }
+  };
+  for (var a = 0; a < pos.length; a++) {
+    var m = pos[a], q = pos[a + 1];
+    if (q && q.n === m.n && q.t !== m.t) {
+      var r = (m.t === 's' ? m.p / q.p : q.p / m.p) - 1 - 2 * FEE, c = r >= 0 ? '#ff4d4f' : '#22c55e';
+      gr.appendChild(el('line', { x1: m.x, y1: Y(m.p), x2: q.x, y2: Y(q.p), stroke: c, 'stroke-width': 1.4 }));
+      put((m.x + q.x) / 2, (Y(m.p) + Y(q.p)) / 2, m.n + ' ' + fmt(r), c, 'middle', [[0, -10], [0, 16], [0, -20], [0, 26]]); a++;
+    } else if (xe != null) {
+      var r2 = (m.t === 's' ? m.p / cur : cur / m.p) - 1 - 2 * FEE, c2 = r2 >= 0 ? '#ff4d4f' : '#22c55e';
+      gr.appendChild(el('line', { x1: m.x, y1: Y(m.p), x2: xe, y2: Y(cur), stroke: c2, 'stroke-width': 1.2, 'stroke-dasharray': '4 3' }));
+      put(xe, Y(cur), m.n + ' ' + (m.t === 's' ? '没接回' : '没卖出') + ' ' + fmt(r2), c2, 'end', [[-2, -12], [-2, 18], [-2, -24], [-2, 30]]);
+    }
+  }
+  var D2 = [];
+  pos.forEach(function (m) {
+    D2.push(el('circle', { cx: m.x, cy: Y(m.p), r: 3, fill: m.t === 's' ? '#ffb020' : '#3fd0ff', stroke: '#05080d', 'stroke-width': .8 }));
+    put(m.x, Y(m.p), (m.t === 's' ? '卖' : '接') + m.p.toFixed(2), '#fff', 'end', m.t === 's' ? [[-5, -6], [-5, 14], [44, -8]] : [[-5, 14], [-5, -6], [44, 16]]);
+  });
+  D2.forEach(function (e) { gr.appendChild(e); }); T2.forEach(function (e) { gr.appendChild(e); }); g.appendChild(gr);
+}
 function el(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
 function tx(x, y, s, fill, size, anchor, w) {
   var t = el('text', { x: x, y: y, fill: fill || 'var(--dim)', 'font-size': size || 10, 'text-anchor': anchor || 'start', 'font-weight': w || 400, stroke: 'var(--card)', 'stroke-width': 3, 'paint-order': 'stroke', 'stroke-linejoin': 'round' });
@@ -869,7 +909,7 @@ function staticsLiveJL() {
   var LVON = localStorage.getItem('zp_lv_v1') !== '0';   /* 11-13 用户: 昨收/S·B/▼ 这些水平线像 TradingView 一样可隐藏(右上 ═ 小圆标) */
   if (LVON && pc > 0 && inR(pc)) {
     svg.appendChild(el('line', { x1: (window.zpPerOf && zpPerOf() > 0) ? Math.max(PX0, LX - 96) : PX0, y1: Y(pc), x2: LX - 6, y2: Y(pc), stroke: '#cfd8e6', 'stroke-width': .6, opacity: .6 }));   /* 11-13 用户: 直线 */   /* 11-05 用户: K线页昨收线太长 → 只在价签旁画一小段 */
-    labs.push({ y: Y(pc), t: '昨收 ' + pc.toFixed(2), c: '#cfd8e6' });
+    labs.push({ y: Y(pc), t: '昨收 ' + pc.toFixed(2), c: '#cfd8e6', sm: 1 });   /* 11-17 用户「昨收字体小一点」: 8.3→7 */
   }
   var DH = LIVE.dhi > 0 ? LIVE.dhi : LIVE.hi, DL = LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : LIVE.lo;
   /* jl-hl2: 日高/日低线字删 */
@@ -905,7 +945,7 @@ function labColJL(g, labs) {
       var tb = el('text', { x: x2 - wb / 2, y: y - 0.6, fill: '#fff', 'font-size': 7.4, 'text-anchor': 'middle', 'font-weight': 500, 'letter-spacing': '.3' }); tb.textContent = L.t; g.appendChild(tb); return;
     }
     g.appendChild(el('rect', { x: x2 - w, y: y - 11, width: w, height: 14, rx: 4, fill: 'none' }));   /* 11-04 用户: 线上价格字底透明不带色, 别挡蜡烛 */
-    var t = el('text', { x: x2 - 4, y: y, fill: L.c, 'font-size': 8.3, 'text-anchor': 'end', 'font-weight': L.b ? 600 : 400, stroke: 'rgba(5,10,16,.85)', 'stroke-width': 1, 'paint-order': 'stroke', 'stroke-linejoin': 'round', 'letter-spacing': '.2' }); t.textContent = L.t; g.appendChild(t);   /* 11-13 用户: S/B/▼/昨收 价签小一点、细、清楚 */
+    var t = el('text', { x: x2 - 4, y: y, fill: L.c, 'font-size': L.sm ? 7 : 8.3, 'text-anchor': 'end', 'font-weight': L.b ? 600 : 400, stroke: 'rgba(5,10,16,.85)', 'stroke-width': 1, 'paint-order': 'stroke', 'stroke-linejoin': 'round', 'letter-spacing': '.2' }); t.textContent = L.t; g.appendChild(t);   /* 11-13 用户: S/B/▼/昨收 价签小一点、细、清楚 */
   });
 }
 function buildStatics() {
@@ -1430,6 +1470,7 @@ if (g && !(window.zpPerOf && zpPerOf() > 0)) {
     }
     if ((LIVE.auc || AP.length) && !((typeof LB !== 'undefined' && LB) || []).some(function (b) { return xa0 + 1 < b.x1 && xa0 + 9 > b.x0 && PY0 + 2 < b.y1 && PY0 + 10 > b.y0; })) g.appendChild(tx(xa0 + 1, PY0 + 9, '竞', '#ffd21f', 7.5, 'start', 400));
   } catch (eAuc) { }
+  try { trLinesJL(g); } catch (eTr) { }
 }
     return;
   }
@@ -3504,6 +3545,7 @@ function ampCardJL() {
     var sh2 = LIVE.sh > 0 ? LIVE.sh : 0, q2 = sh2 > 0 ? '<span class="dim">' + sh2 + '股 卖' + jlAmtJL(upTo * sh2) + ' · 接' + jlAmtJL(dnTo * sh2) + '</span>' : '';
     /* 11-09晚 用户: 这行原来还是旧口径(最低+0.9倍卖 / 最高回落2.7%接), 和尺子对不上 → 改成尺子正在等的价 + 股数金额 */
     var RD1 = null; try { RD1 = ampPlanJL(A); } catch (eR1) { }
+    window.__RDJL = RD1 && STK ? { code: STK.code, mk: RD1.mk || [] } : null;   /* 11-17 用户: 分时图卖接连线(trLinesJL)只读这份 */
     try { touchOkJL(RD1); } catch (eT) { }   /* 11-12夜: 作战球按下一步那排闪 */
     try { if (RD1 && !(RD1.rh > 0)) { var o9 = LIVE.open > 0 ? LIVE.open : A.op, K9 = ampKJL(), av9 = A.avg / 100 * A.pc; if (o9 > 0) { RD1.rh = Math.ceil(Math.round((o9 + K9.ku * av9) * 1e6) / 1e4) / 100; RD1.rl = Math.floor(Math.round((o9 - K9.kd * av9) * 1e6) / 1e4) / 100; } } } catch (eRf) { }   /* 11-10 用户: 平开/低开(小球)也要 ▼最高/最低 参考 */
     if (RD1) {
@@ -7771,13 +7813,15 @@ body.injlin #metaLine .thrw{flex:0 0 auto;color:#fff!important}
   function mk() {
     var ch = document.getElementById('ch'), rp = document.getElementById('tabRep'), lv = document.getElementById('tabLive'); if (!ch || !rp || !lv) return;
     var b = document.getElementById('zpModeJL');
-    if (!b) { b = document.createElement('div'); b.id = 'zpModeJL'; b.innerHTML = '<div class="mi"><button type="button" class="rp" title="回放" aria-label="回放">↺</button><button type="button" class="lv" title="实盘" aria-label="实盘">●</button><button type="button" class="ln" title="昨收/S·B/▼/高低位区 显示/隐藏" aria-label="水平线">═</button></div>';
+    if (!b) { b = document.createElement('div'); b.id = 'zpModeJL'; b.innerHTML = '<div class="mi"><button type="button" class="rp" title="回放" aria-label="回放">↺</button><button type="button" class="lv" title="实盘" aria-label="实盘">●</button><button type="button" class="ln" title="昨收/S·B/▼/高低位区 显示/隐藏" aria-label="水平线">═</button><button type="button" class="trl" title="卖接连线 显示/隐藏" aria-label="卖接连线">连</button></div>';
+      b.querySelector('.trl').onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_trl_v1', localStorage.getItem('zp_trl_v1') === '0' ? '1' : '0'); } catch (e2) { } try { buildStatics(); if (MODE === 'live') liveRender(); } catch (e3) { } };   /* 11-17 用户: 卖接连线开关 */
       b.querySelector('.ln').onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_lv_v1', localStorage.getItem('zp_lv_v1') === '0' ? '1' : '0'); } catch (e2) { } try { buildStatics(); if (MODE === 'live') liveRender(); } catch (e3) { } };
       b.querySelector('.rp').onclick = function (e) { e.stopPropagation(); rp.click(); }; b.querySelector('.lv').onclick = function (e) { e.stopPropagation(); lv.click(); }; }
     if (b.nextElementSibling !== ch) ch.parentNode.insertBefore(b, ch);
     try { b.style.order = getComputedStyle(ch).order; } catch (e) { }
     b.style.display = ch.style.display === 'none' ? 'none' : '';   /* 周视图藏 */
     b.querySelector('.ln').classList.toggle('on', localStorage.getItem('zp_lv_v1') !== '0');
+    var tB = b.querySelector('.trl'); if (tB) tB.classList.toggle('on', localStorage.getItem('zp_trl_v1') !== '0');
     b.querySelector('.rp').classList.toggle('on', /\bon\b/.test(rp.className)); b.querySelector('.lv').classList.toggle('on', /\bon\b/.test(lv.className));
   }
   mk(); setInterval(mk, 800);
