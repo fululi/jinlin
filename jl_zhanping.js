@@ -171,10 +171,11 @@
     return /^振幅/.test(lbl) ? '振幅' : /^日级/.test(lbl) ? '日级' : /^共振位/.test(lbl) ? '共振位' : /^共振/.test(lbl) ? '共振' : /^RSO/.test(lbl) ? 'RSO' : /资金/.test(lbl) ? '资金' : /^画线/.test(lbl) ? '画线' : '其他';
   }
   function tdLoad() { try { var o = JSON.parse(localStorage.getItem(TK) || 'null'); if (o && o.d === dsNow() && o.L) return o; } catch (e) { } return { d: dsNow(), L: [] }; }
-  function tdAdd(cat, lbl, txt, nm, side) {
+  function tdAdd(cat, lbl, txt, nm, side, at) {   /* 11-17: at=信号真正发生的时刻(战屏 LIVE.keys[k].t); 手机锁屏冻住、解锁才补收的, 记原时刻不记补收时刻 */
     try {
       var o = tdLoad(); txt = String(txt || ''); if (nm && txt.indexOf(nm) === 0) txt = txt.slice(nm.length).replace(/^ · /, '');
-      o.L.push({ t: hmNow(), ms: Date.now(), c: cat, l: lbl || cat, x: txt, nm: nm || '', s: side || '' }); if (o.L.length > 500) o.L = o.L.slice(-500);
+      var dA = at > 0 ? new Date(at) : new Date();
+      o.L.push({ t: String(dA.getHours()).padStart(2, '0') + ':' + String(dA.getMinutes()).padStart(2, '0'), ms: dA.getTime(), c: cat, l: lbl || cat, x: txt, nm: nm || '', s: side || '' }); if (o.L.length > 500) o.L = o.L.slice(-500);
       localStorage.setItem(TK, JSON.stringify(o)); tdBtn(); if (st.tdOpen && st.tdTab !== 's') tdPaint();
     } catch (e) { }
   }
@@ -253,8 +254,12 @@
             var px = w.LIVE.last > 0 ? f2(w.LIVE.last) : '', nmS = (w.STK && (w.STK.name || w.STK.code)) || '';
             for (i = 0; i < fresh.length; i++) {
               var kv = ks[fresh[i]] || {}; kd = kindOf(fresh[i], w.LIVE);
+              /* 11-17 用户截图: 15:24 冒出 09:31/09:32 的旧提醒(还挂当前的①卖价). 手机锁屏页面冻住, 战屏已生成的信号浮球没来得及收, 解锁才补收并照闪.
+                 超过3分钟的旧信号: 照记进今日提醒(用原时刻), 不闪不弹 */
+              var stale = kv.t > 0 && Date.now() - kv.t > 180000;
               var isSig = fresh[i].indexOf('rso|') === 0 || fresh[i].indexOf('sig|') === 0, cat = catOf(kv.lbl, kd);
-              if (kd || isSig) tdAdd(cat, kd ? (kd === 'sell' ? '卖出' : '买回') : (kv.lbl || 'RSO'), kv.txt || px, nmS, kd === 'buy' ? 'b' : '');   /* 11-16: 每条都记进今日提醒 */
+              if (kd || isSig) tdAdd(cat, kd ? (kd === 'sell' ? '卖出' : '买回') : (kv.lbl || 'RSO'), kv.txt || px, nmS, kd === 'buy' ? 'b' : '', kv.t);
+              if (stale) continue;   /* 11-16: 每条都记进今日提醒 */
               if (kd && flOn('买卖')) { last = kd; tdTxt = kv.txt || ''; var lastId = fresh[i]; } else if (isSig && kv.txt && flOn(cat)) { rsoTxt = kv.txt; rsoLbl = kv.lbl || 'RSO'; }
             }
             /* 11-13 用户: 球的买卖提醒要说哪只票 → 「永鼎股份 · 卖出!」+「②卖 24.01」 */

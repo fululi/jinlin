@@ -1,4 +1,4 @@
-/* jl_ledger.js v1 (2026-11-13) —— 信号台账: 作战屏每弹一次提醒自动记 时间·价格·信号, 之后按当天1分钟价补「30分内先走0.8%算对 / 30分后 / 收盘」.
+/* jl_ledger.js v3 (2026-11-13; 11-17 成绩去重/方向纠错/导出每分钟资金) —— 信号台账: 作战屏每弹一次提醒自动记 时间·价格·信号, 之后按当天1分钟价补「30分内先走0.8%算对 / 30分后 / 收盘」.
    另存每天1分钟主力净额(东财 f52 当日累计), 攒样本测资金掉头.
    存 IndexedDB(库 jl_ledger_v1, 和 localStorage 分开, 不会挤爆首页缓存); 台账留 400 天、资金留 160 天, 超了自动删最旧.
    只记录, 不碰买卖算法和提醒本身. 作战屏(jl_zp_war.html)写, 复盘页(jl_amp_review.html)「台账」页签读. */
@@ -23,8 +23,14 @@
   function mins(h) { h = hm4(h); return +h.slice(0, 2) * 60 + +h.slice(2); }
   function tmin(h) { var m = mins(h); return m >= 780 ? m - 90 : m; }   /* 交易分钟(午休压掉), 30分钟窗口跨午休照算 */
   /* 方向: 卖/向下类 -1, 买/向上类 +1, 其它 0(只记不判对错) */
+  /* 11-17 查出: 作战屏给每条提醒尾巴挂「· ①卖20.54」(下一步价), 台账原来连尾巴一起判方向 → 只要尾巴是「卖」, 真拉/吸筹/转净流入都被当成卖信号判(11-17 10:18 真拉 −1.5% 却打✓).
+     判方向/归类前先去掉这条尾巴; 旧记录在 render 时按新方向纠正 */
+  function core(txt) { return String(txt || "").replace(/ · [^·]{0,8}?[卖买][≥≤]?\d+(\.\d+)?\s*$/, ""); }
   function dirOf(lbl, txt) {
+    txt = core(txt);
     var s = (lbl || "") + " " + (txt || "");
+    if (/转净流入/.test(s)) return 1;   /* 11-17: 「由净流出转净流入」原来先撞上「流出」被判成卖 */
+    if (/转净流出/.test(s)) return -1;
     if (/^同在高位/.test(lbl || "")) return -1;   /* 11-13晚: 多指标合成提醒 */
     if (/^同在低位/.test(lbl || "")) return 1;
     if (/RSO/.test(s) && /高位/.test(s)) return -1;   /* 11-13: RSO 到高位 = 看回落; 到低位 = 看反弹 */
@@ -35,6 +41,7 @@
   }
   /* 归类: 台账「成绩」按这个分组 */
   function kindOf(lbl, txt) {
+    txt = core(txt);
     var s = (lbl || "") + " " + (txt || "");
     if (/^同在(高|低)位/.test(lbl || "")) return lbl;   /* 「同在高位 15分」按周期分组 */
     if (/^资金验证/.test(lbl || "")) { var mk = (txt || "").match(/真拉|虚拉|吸筹|真跌/), pd = (lbl || "").replace("资金验证", "").trim(); return "资金验证" + (pd ? " " + pd : " 15分") + " " + (mk ? mk[0] : ""); }   /* 15分/日/周 分开统计 */   /* 11-13: 真拉/虚拉/吸筹/真跌 分组 */
@@ -111,30 +118,49 @@
     tab = tab || "s";
     all("sig").then(function (L) {
       L = L.filter(function (r) { return !code || r.code === code; }).sort(function (a, b) { return a.date === b.date ? (a.hm < b.hm ? -1 : 1) : a.date < b.date ? -1 : 1; });
+      /* 11-17 用户截图: 同一信号被反复弹(重开页面/两个页面各报一次; 11-17「资金验证 日 真跌」进了9次), 成绩被重复样本拉偏.
+         成绩只算第一次: 同票同天同信号, 离上一次算数的不到30分钟 → 标 dup, 不进成绩; 今天/逐条照列但灰掉. 原始记录不删 */
+      /* 11-17: 旧记录按去尾巴后的方向纠正(方向反了 → 对错正好反过来; 新方向是0 → 不判) */
+      L.forEach(function (r) { var nd2 = dirOf(r.lbl, r.txt); r.kind = kindOf(r.lbl, r.txt); if (nd2 === r.dir) return; if (nd2 === 0) r.ok = null; else if (r.dir !== 0 && r.ok) r.ok = -r.ok; else if (r.dir === 0) r.ok = null; r.dir = nd2; });
+      var lastAt = {}, nDup = 0; L.forEach(function (r) { var k = r.code + "|" + r.date + "|" + r.kind, t = tmin(r.hm); r.dup = lastAt[k] != null && t - lastAt[k] < WIN; if (r.dup) nDup++; else lastAt[k] = t; });
       var days = {}; L.forEach(function (r) { days[r.date] = 1; });
       var nd = Object.keys(days).length, td = new Date().toLocaleDateString("sv-SE").replace(/-/g, ""), lastD = Object.keys(days).sort().pop() || td;
       var h = '<div class="ldW"><div class="ldSeg">' + [["s", "成绩"], ["t", "今天"], ["a", "逐条"]].map(function (x) { return '<button data-ldt="' + x[0] + '"' + (tab === x[0] ? ' class="on"' : "") + ">" + x[1] + "</button>"; }).join("") + "</div>";
       if (!L.length) h += '<div class="ldN">还没有记录。作战屏开着、盘中有提醒弹出时会自动记。</div>';
       else if (tab === "s") {
-        var G = {}; L.forEach(function (r) { var g = G[r.kind] || (G[r.kind] = { n: 0, ok: 0, j: 0, s30: 0, n30: 0, sc: 0, nc: 0, dir: r.dir }); g.n++; if (r.ok != null) { g.j++; if (r.ok === 1) g.ok++; } if (r.r30 != null) { g.s30 += r.r30; g.n30++; } if (r.rc != null) { g.sc += r.rc; g.nc++; } });
+        var G = {}; L.forEach(function (r) { if (r.dup) return; var g = G[r.kind] || (G[r.kind] = { n: 0, ok: 0, j: 0, s30: 0, n30: 0, sc: 0, nc: 0, dir: r.dir }); g.n++; if (r.ok != null) { g.j++; if (r.ok === 1) g.ok++; } if (r.r30 != null) { g.s30 += r.r30; g.n30++; } if (r.rc != null) { g.sc += r.rc; g.nc++; } });
         var ks = Object.keys(G).sort(function (a, b) { return G[b].n - G[a].n; });
         h += '<table class="ldT"><tr><th>信号</th><th>次数</th><th>对了</th><th>30分后</th><th>收盘</th></tr>' + ks.map(function (k) {
           var g = G[k], rt = g.j ? g.ok / g.j : null, col = rt == null ? "#ffffff40" : rt >= 0.6 ? "#1fdc93" : rt >= 0.45 ? "#ffd21f" : "#ff5459", a30 = g.n30 ? g.s30 / g.n30 : null, ac = g.nc ? g.sc / g.nc : null;
           return '<tr' + (g.n < 10 ? ' class="mu"' : "") + "><td>" + k + "</td><td>" + g.n + "</td><td>" + (g.j ? g.ok + "/" + g.j + '<span class="ldB"><i style="width:' + Math.round(rt * 100) + "%;background:" + col + '"></i></span>' : "—") + '</td><td class="' + cls(a30) + '">' + pc(a30) + '</td><td class="' + cls(ac) + '">' + pc(ac) + "</td></tr>";
         }).join("") + "</table>";
-        h += '<div class="ldN">共 ' + nd + " 天 · 对 = 30分钟内先往信号方向走 " + (TH * 100).toFixed(1) + "% · 不到10次的行灰着，样本少只看不信</div>";
+        h += '<div class="ldN">共 ' + nd + " 天 · 对 = 30分钟内先往信号方向走 " + (TH * 100).toFixed(1) + "% · 同一信号30分钟内重复的只算第一次" + (nDup ? "(去掉 " + nDup + " 条)" : "") + " · 不到10次的行灰着，样本少只看不信</div>";
       } else {
         var R = tab === "t" ? L.filter(function (r) { return r.date === lastD; }) : L.slice().reverse();
         h += '<table class="ldT"><tr><th>时间</th><th>信号</th><th>当时价</th><th>30分后</th><th>收盘</th></tr>' + R.slice(0, 300).map(function (r) {
           var m30 = r.r30 == null ? '<span class="ldPd">等</span>' : '<span class="' + cls(r.r30) + '">' + pc(r.r30) + "</span>" + (r.ok === 1 ? " ✓" : r.ok === -1 ? " ✗" : r.ok === 0 ? " ·" : "");
           var mc = r.rc == null ? '<span class="ldPd">' + (r.date === td ? "等收盘" : "无数据") + "</span>" : '<span class="' + cls(r.rc) + '">' + pc(r.rc) + "</span>";
-          return "<tr><td>" + (tab === "a" ? r.date.slice(4, 6) + "-" + r.date.slice(6) + " " : "") + r.hm.slice(0, 2) + ":" + r.hm.slice(2) + "</td><td style=\"text-align:left;font-family:-apple-system\">" + r.kind + "</td><td>" + r.p.toFixed(2) + "</td><td>" + m30 + "</td><td>" + mc + "</td></tr>";
+          return "<tr" + (r.dup ? ' class="mu"' : "") + "><td>" + (tab === "a" ? r.date.slice(4, 6) + "-" + r.date.slice(6) + " " : "") + r.hm.slice(0, 2) + ":" + r.hm.slice(2) + "</td><td style=\"text-align:left;font-family:-apple-system\">" + r.kind + "</td><td>" + r.p.toFixed(2) + "</td><td>" + m30 + "</td><td>" + mc + "</td></tr>";
         }).join("") + "</table>";
-        if (tab === "t") h += '<div class="ldN">' + lastD.slice(4, 6) + "-" + lastD.slice(6) + " · " + R.length + " 条 · ✓对 ✗反向 ·没走够</div>";
+        if (tab === "t") h += '<div class="ldN">' + lastD.slice(4, 6) + "-" + lastD.slice(6) + " · " + R.length + " 条" + (R.filter(function (r) { return r.dup; }).length ? "(灰的 " + R.filter(function (r) { return r.dup; }).length + " 条是30分钟内重复, 不进成绩)" : "") + " · ✓对 ✗反向 ·没走够</div>";
       }
+      /* 11-17 用户: 每分钟主力资金(作战屏每天收盘存的 ff 表)导出成 CSV, 拿去测资金转折点. 本机文件里没有这份历史, 只有这里有 */
+      if (tab === "s") h += '<button type="button" data-ldff style="margin-top:8px;width:100%;min-height:36px;border:1px solid #ffffff26;border-radius:9px;background:transparent;color:#fff;font-size:11.5px">导出每分钟主力资金（CSV）</button>';
       el.innerHTML = h + "</div>";
+      var bf = el.querySelector("[data-ldff]"); if (bf) bf.onclick = exportFF;
       Array.prototype.forEach.call(el.querySelectorAll("[data-ldt]"), function (b) { b.onclick = function () { render(el, code, b.getAttribute("data-ldt")); }; });
     }).catch(function () { el.innerHTML = '<div class="ldN">这个浏览器打不开本机台账(IndexedDB 不可用)</div>'; });
   }
-  window.JLLedger = { add: add, evalDay: evalDay, saveFF: saveFF, render: render, all: function () { return all("sig"); }, ff: function () { return all("ff"); }, dirOf: dirOf, kindOf: kindOf };
+  function exportFF() {
+    all("ff").then(function (A) {
+      A.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+      var L = ["\ufeffcode,date,hm,main,xl,l,m,s"], n = 0;
+      A.forEach(function (r) { (r.rows || []).forEach(function (v) { L.push([r.code, r.date].concat(v).join(",")); n++; }); });
+      if (!n) { alert("还没有存下的每分钟资金(作战屏开着、下午收盘后才会存当天)"); return; }
+      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([L.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+      a.download = "金粼_每分钟主力资金_" + A.length + "票日_" + new Date().toLocaleDateString("sv-SE").replace(/-/g, "") + ".csv";
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }).catch(function () { alert("读不到本机台账(IndexedDB)"); });
+  }
+  window.JLLedger = { add: add, evalDay: evalDay, saveFF: saveFF, render: render, all: function () { return all("sig"); }, ff: function () { return all("ff"); }, exportFF: exportFF, dirOf: dirOf, kindOf: kindOf };
 })();

@@ -518,7 +518,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
   g.Elliott = { swingsFrom: swingsFrom, detect: detect, drawSVG: drawSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
-<script src="jl_zp_shapes.js?v=12"></script><script src="jl_ledger.js?v=1"></script>
+<script src="jl_zp_shapes.js?v=12"></script><script src="jl_ledger.js?v=3"></script>
 <script>/* jl_macd.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
 /*! jl_macd.js — 分时 MACD 副图（MACDFS 12,26,9），仿同花顺：红绿柱 + DIF(白) + DEA(橙)
  * 做成独立的一块 SVG，插在走势图下面，不画在图上，所以不会压住任何字。
@@ -1396,6 +1396,8 @@ if (g && !(window.zpPerOf && zpPerOf() > 0)) {
     /* 跳空字只认 09:25 正式撮合价；普通分时出来后沿用正式今开。09:15–09:24 指导价不提前写高/低开。 */
     var ao25JL = LIVE.auc && (LIVE.auc.pts || []).filter(function (q) { return q.hm === '0925' && q.p > 0; }).pop();
     var opA = ao25JL ? ao25JL.p : ((LIVE.pts || []).length ? LIVE.open || 0 : 0);
+    /* 11-17 用户「从竞价开始的时候竞价的区分缺口就能看出来」选A: 9:25 撮合前用最新竞价价当临时开盘, 缺口带从 9:15 起画、跟着竞价变, 字写「竞价」; 9:25 后定格成正式开盘缺口 */
+    var aucNowJL = !opA && LIVE.auc && (LIVE.auc.pts || []).filter(function (q) { return q.p > 0; }).pop(); if (aucNowJL) opA = aucNowJL.p; if (xa0 == null) xa0 = xa25;
     var AP = LIVE.auc && LIVE.auc.pts ? LIVE.auc.pts.filter(function (q) { return q.p >= YLO && q.p <= YHI; }) : [];
     if (AP.length) {
       var apts = AP.map(function (q) { return xOfHmJL(q.hm).toFixed(1) + ',' + Y(q.p).toFixed(1); });
@@ -1415,10 +1417,10 @@ if (g && !(window.zpPerOf && zpPerOf() > 0)) {
       var gDone = xFill < LX - 6;
       /* 回补只停止缺口带向右延伸，不再抹掉开盘证据：昨收/今开两条锚线至少保留到 09:30。 */
       if (gy2 - gy1 > 0.5) {
-        g.appendChild(el('rect', { x: xa25, y: gy1, width: Math.max(2, xFill - xa25), height: gy2 - gy1, fill: gc, opacity: gDone ? .07 : .14, 'data-gap-open': '1' }));
-        [pcA, opA].forEach(function (pv) { if (pv >= YLO && pv <= YHI) g.appendChild(el('line', { x1: xa25, y1: Y(pv), x2: Math.max(xFill, xa30), y2: Y(pv), stroke: gc, 'stroke-width': .75, opacity: gDone ? .55 : .7, 'data-gap-line': '1' })); });
+        g.appendChild(el('rect', { x: xa0, y: gy1, width: Math.max(2, xFill - xa0), height: gy2 - gy1, fill: gc, opacity: gDone ? .07 : .14, 'data-gap-open': '1' }));
+        [pcA, opA].forEach(function (pv) { if (pv >= YLO && pv <= YHI) g.appendChild(el('line', { x1: xa0, y1: Y(pv), x2: Math.max(xFill, xa30), y2: Y(pv), stroke: gc, 'stroke-width': .75, opacity: gDone ? .55 : .7, 'data-gap-line': '1' })); });
       }
-      var gpc = (opA / pcA - 1) * 100, gdp = opA - pcA, gs = (gUp ? '高开 ' : '低开 ') + (gpc >= 0 ? '+' : '') + gpc.toFixed(2) + '% ' + (gdp >= 0 ? '+' : '') + gdp.toFixed(2), gw = wOfJL(gs) + 4, gx = Math.max(xa30 + 3, PX0 + 28), gyy = null;
+      var gpc = (opA / pcA - 1) * 100, gdp = opA - pcA, gs = (aucNowJL ? '竞价 ' : gUp ? '高开 ' : '低开 ') + (gpc >= 0 ? '+' : '') + gpc.toFixed(2) + '% ' + (gdp >= 0 ? '+' : '') + gdp.toFixed(2), gw = wOfJL(gs) + 4, gx = Math.max(xa30 + 3, PX0 + 28), gyy = null;
       /* 11-06 用户: 不能和开盘那个高/低点的字叠 → 依次试 缺口外侧/内侧/图顶, 撞了高低点标签框就换位置, 都撞就不写 */
       var LBg = (typeof LB !== 'undefined' && LB) || [], gHit = function (y0) { return y0 < PY0 + 7 || y0 > PY0 + PH || LBg.some(function (b) { return gx < b.x1 + 2 && gx + gw > b.x0 - 2 && y0 - 7 < b.y1 + 1 && y0 + 1 > b.y0 - 1; }); };
       [gUp ? gy1 - 3 : gy2 + 9, gUp ? gy2 + 9 : gy1 - 3, Y(opA) + (gUp ? -12 : 14), PY0 + 18].some(function (y0) { if (!gHit(y0)) { gyy = y0; return true; } return false; });
@@ -2170,6 +2172,11 @@ function comboJL(pk, dir, src) {
     jlSigPush(w + ' ' + pk, sig + ' ' + w + ct, 'combo|' + k + '|' + sig);
   } catch (e) { }
 }
+/* 11-17 用户截图: 「资金验证 日 真跌」注释写每天只报一次, 实际一天进台账9次 —— 原来的防重标记只在页面内存里, 重开作战屏/两个页面各开一份就清零重报.
+   改存 localStorage(同源各页面共用、重开不丢): ttl=0 → 这个 key 当天只报一次(key 里带日期); ttl>0 → 这段毫秒内不重报. 只管提醒发不发, 不碰买卖算法 */
+function jlSigOnceJL(k, ttl) {
+  try { var S = JSON.parse(localStorage.getItem('jl_sigonce_v1') || '{}') || {}, now = Date.now(); if (S[k] && (!ttl || now - S[k] < ttl)) return false; S[k] = now; Object.keys(S).forEach(function (x) { if (now - S[x] > 2 * 864e5) delete S[x]; }); localStorage.setItem('jl_sigonce_v1', JSON.stringify(S)); return true; } catch (e) { return true; }
+}
 function jlSigLatch(k, v) { var L = (window.__jlSigLatch = window.__jlSigLatch || {}), o = L[k]; L[k] = v; return o; }
 function jlSigCum(lastRow, fM) { try { if (!lastRow || !(Math.abs(lastRow.cum) >= 0.05)) return; var f = lastRow.cum >= 0 ? 1 : 0, o = jlSigLatch((RPL ? 'rp|' : '') + 'cum|' + ((window.STK && STK.code) || ''), f); if (o != null && o !== f) { var F9 = window.__FFCUMJL, d9 = F9 && F9.code === STK.code && F9.d ? ' · 近15分 ' + fM(F9.d) : ''; jlSigPush('主力资金', String(lastRow.hm).padStart(4, '0').replace(/(\d\d)(\d\d)/, '$1:$2') + ' 当日累计由' + (f ? '净流出转净流入 ' : '净流入转净流出 ') + fM(lastRow.cum) + d9, 'cum' + f + '|' + lastRow.hm); }   /* 11-13 用户: 资金提醒讲清楚(几点·谁转谁·多少·近15分) */ } catch (e) { } }
 function liveKeys() {
@@ -2179,7 +2186,7 @@ function liveKeys() {
     /* 11-13晚 用户「都要写哪个股票、买卖价格」: 每条提醒尾巴统一挂 现价 + 下一步(尺子/小球还没做的那腿 卖≥/买≤ 价) */
     var _px2 = '', _R2 = window.__RDJL, _nx2 = '';   /* 11-13晚 用户嫌字多: 不写现价, 只挂下一步价 */
     try { if (_R2 && _R2.code === STK.code) { var _m2 = _R2.mk.filter(function (m) { return !m.ok && !m.proj && m.p > 0; })[0]; if (_m2) _nx2 = ' · ' + (_m2.n || '') + (_m2.t === 's' ? '卖' : '买') + _m2.p.toFixed(2); } } catch (eN2) { }
-    (window.__jlSigKeys || []).splice(0).forEach(function (ev) { ev = { id: ev.id, lbl: ev.lbl, sub: ev.sub, txt: ev.txt + _px2 + _nx2 }; if (!RPL) jlLedgerAdd(ev.lbl, ev.txt); ks.push({ id: 'sig|' + ev.id, k: 'rso', main: _nm2 + ' · ' + ev.lbl + ' ' + _rp2 + ev.txt, sub: ev.sub || '信号提醒', lbl: ev.lbl, txt: _nm2 + ' · ' + _rp2 + ev.txt }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道; 11-13 用户: 资金/控盘/共振等提醒都带票名 */
+    (window.__jlSigKeys || []).splice(0).forEach(function (ev) { if (!RPL) jlLedgerAdd(ev.lbl, ev.txt); ev = { id: ev.id, lbl: ev.lbl, sub: ev.sub, txt: ev.txt + _px2 + _nx2 };   /* 11-17: 台账记原句, 不带「①卖」尾巴(原来尾巴把方向带歪) */ ks.push({ id: 'sig|' + ev.id, k: 'rso', main: _nm2 + ' · ' + ev.lbl + ' ' + _rp2 + ev.txt, sub: ev.sub || '信号提醒', lbl: ev.lbl, txt: _nm2 + ' · ' + _rp2 + ev.txt }); }); } catch (er) { }   /* 11-12: RSO穿越提醒接入主通道; 11-13 用户: 资金/控盘/共振等提醒都带票名 */
   if (ot && LIVE.ts.slice(8, 12) >= '0925') {
     ks.push({
       id: 'open', k: ot.lo ? 'sellOpen' : 'buyOpen',
@@ -2738,6 +2745,33 @@ function ctrlSerJL(B) {
    价格近15分钟 涨≥0.5% 且 (RSO 5分或15分在高位 或 振幅已走≥0.8倍日均) → 看近15分钟主力净额(东财f52):
      净流入 ≥ 这15分钟成交额的3% → 真拉;  净流出 ≥ 3% → 虚拉(诱多)·可高抛;  不到3% 不报
    跌的一边对称: 净流入≥3% → 吸筹·可低吸; 净流出≥3% → 真跌. 同一结论10分钟内不重复; 进台账自动判对错 */
+/* 11-17 用户「资金副图高低点都对上了, 进台账也要有提醒」: 主力资金页签红/绿转折点(drawFlow 同口径: 金线=当日1分钟主力净额累计,
+   从最高回落 / 从最低回升 ≥ 截至当时累计成交额 0.3% 才确认) —— 确认的那一分钟弹一次提醒并进台账(记的是确认时的现价, 30分后判对错).
+   点画在高/低点上是事后的; 这里测的是「确认那一刻再动手」准不准. 不管副图选哪个页签都算(用后台常拉的 1 分钟资金). 只提醒, 不进买卖算法. 没回测 */
+/* 1分钟资金转折点(drawFlow 同口径): 返回 [{hm 极值分钟, tp 1=由出转入(低点) −1=由入转出(高点), cum 极值时累计, ci 确认在第几分钟, n 总分钟}] —— 提醒和主图小点共用这一份 */
+function ffTurnPtsJL(rows) {
+  var CA = {}, caS = 0; (LIVE.pts || []).forEach(function (q) { if (q.p > 0) { caS += q.a > 0 ? q.a : (q.v || 0) * 100 * q.p; CA[String(q.hm).replace(/\D/g, '').padStart(4, '0').slice(-4)] = caS; } });
+  var R = [], caL = 0; (rows || []).forEach(function (r) { var h = String(r.hm).padStart(4, '0'); if (CA[h] > 0) caL = CA[h]; R.push({ hm: h, cum: +r.main || 0, ca: caL }); });
+  var dir = 0, hiI = 0, loI = 0, out = [];
+  for (var i = 1; i < R.length; i++) {
+    var tv = R[i].cum, th = 0.003 * R[i].ca; if (!(th > 0)) continue;
+    if (dir >= 0 && tv > R[hiI].cum) hiI = i; if (dir <= 0 && tv < R[loI].cum) loI = i;
+    if (dir >= 0 && R[hiI].cum - tv >= th) { out.push({ hm: R[hiI].hm, tp: -1, cum: R[hiI].cum, ci: i, n: R.length, now: R[R.length - 1].cum }); dir = -1; loI = i; }
+    else if (dir <= 0 && tv - R[loI].cum >= th) { out.push({ hm: R[loI].hm, tp: 1, cum: R[loI].cum, ci: i, n: R.length, now: R[R.length - 1].cum }); dir = 1; hiI = i; }
+  }
+  return out;
+}
+window.ffTurnPtsJL = ffTurnPtsJL;
+function ffTurnAlertJL(rows) {
+  if (RPL || LIVE.idx || !LIVE.sessDate || !liveToday() || !rows || rows.length < 6) return;
+  var T = ffTurnPtsJL(rows), e = T[T.length - 1];
+  if (!e || e.ci < e.n - 3) return;   /* 只报刚确认的(最新三分钟内; 后台60秒拉一次), 开页面时早就确认过的不补报 */
+  var hmT = e.hm.slice(0, 2) + ':' + e.hm.slice(2);
+  if (!jlSigOnceJL('fftp|' + STK.code + '|' + LIVE.sessDate + '|' + e.hm + '|' + e.tp, 0)) return;
+  var fM = function (x) { return (x >= 0 ? '+' : '−') + (Math.abs(x) >= 1e8 ? (Math.abs(x) / 1e8).toFixed(2) + '亿' : Math.round(Math.abs(x) / 1e4) + '万'); };
+  jlSigPush('主力资金转折', (e.tp < 0 ? '由入转出(流出) · 高点 ' : '由出转入(流入) · 低点 ') + hmT + ' ' + fM(e.cum) + ' → 现 ' + fM(e.now), 'fftp' + e.tp + '|' + e.hm + '|' + LIVE.sessDate);
+}
+window.ffTurnAlertJL = ffTurnAlertJL;
 function pullCheckJL(M) {
   if (RPL || LIVE.idx || !LIVE.sessDate || !liveToday()) return;
   var F = window.__FFCUMJL; if (!F || F.code !== STK.code || !F.rows || F.rows.length < 16 || Date.now() - F.t > 180000) return;
@@ -2749,8 +2783,7 @@ function pullCheckJL(M) {
   var up = r15 >= 0.005 && (M0[5] === 'hi' || M0[15] === 'hi' || ampOk), dn = r15 <= -0.005 && (M0[5] === 'lo' || M0[15] === 'lo' || ampOk);
   if (!up && !dn) return;
   var k = null; if (fr >= 0.03) k = up ? 'zl' : 'xc'; else if (fr <= -0.03) k = up ? 'xl' : 'zd'; if (!k) return;
-  var L = window.__pullJL || (window.__pullJL = {}), key = STK.code + '|' + LIVE.sessDate, o = L[key];
-  if (o && o.k === k && Date.now() - o.t < 600000) return; L[key] = { k: k, t: Date.now() };
+  if (!jlSigOnceJL('pull15|' + STK.code + '|' + LIVE.sessDate + '|' + k, 600000)) return;   /* 11-17: 同一结论10分钟内不重复, 改存 localStorage(原 window.__pullJL 重开页面就丢) */
   comboJL('15分', up ? 'hi' : 'lo', '资金');
   var fm = function (x) { return (x >= 0 ? '+' : '−') + (Math.abs(x) >= 1e8 ? (Math.abs(x) / 1e8).toFixed(2) + '亿' : Math.round(Math.abs(x) / 1e4) + '万'); };
   var why = [M0[5] === (up ? 'hi' : 'lo') ? 'RSO5分' + (up ? '高' : '低') : '', M0[15] === (up ? 'hi' : 'lo') ? 'RSO15分' + (up ? '高' : '低') : '', ampOk ? '振幅' + A.amp.toFixed(1) + '/' + A.avg.toFixed(1) : ''].filter(Boolean).join(' ');
@@ -2775,7 +2808,7 @@ function pullDayWeekJL(M) {
     prevDays.forEach(function (b) { var d8 = dg(b.t).slice(0, 8); if (mOf[d8] == null) miss++; net += mOf[d8] || 0; amt += (b.v || 0) * 100 * b.c; });
     if (miss || !(amt > 0)) return;
     var fr = net / amt, up = chg > 0, k = null; if (fr >= 0.03) k = up ? 'zl' : 'xc'; else if (fr <= -0.03) k = up ? 'xl' : 'zd'; if (!k) return;
-    var o = jlSigLatch('pullDW|' + STK.code + '|' + sd + '|' + cf[2], k); if (o === k) return;
+    if (!jlSigOnceJL('pullDW|' + STK.code + '|' + sd + '|' + cf[2] + '|' + k, 0)) return;   /* 11-17: 每周期每天同一结论只报一次, 存 localStorage(原内存标记重开页面就丢, 11-17 日真跌报了9次) */
     var T = { zl: '资金流入 · 真拉', xl: '资金流出 · 虚拉(诱多) · 可高抛', xc: '资金流入 · 吸筹 · 可低吸', zd: '资金流出 · 真跌' }[k];
     var rso = M && M[101] === (up ? 'hi' : 'lo') ? ' · RSO日' + (up ? '高' : '低') : '';
     jlSigPush('资金验证 ' + cf[2], (up ? '近' + N + '日涨+' : '近' + N + '日跌−') + Math.abs(chg * 100).toFixed(1) + '% · ' + T + ' ' + fm(net) + '(' + (fr * 100).toFixed(1) + '%)' + rso, 'pullDW' + cf[2] + k + '|' + sd);
@@ -5296,7 +5329,7 @@ body.injlin .chartbox>#zpSub{order:1}
 #zpSub svg{display:block;width:100%;touch-action:pan-y}
 #zpSub .zpIw{position:relative}#zpSub .zpIc{position:absolute;top:3px;right:4px;display:flex;gap:4px;z-index:2}#zpSub .zpIcP{top:4px}
 #zpSub .zpIc button{width:18px;height:18px;padding:0;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(18,26,36,.38);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:rgba(207,214,223,.55);font-size:9px;line-height:16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#zpSub .zpIc button.on{border-color:rgba(255,255,255,.38);color:#fff}#zpSub .zpIc button[data-yi=zz].on{color:#e05ae0;border-color:rgba(224,90,224,.55)}
+#zpSub .zpIc button.on{border-color:rgba(255,255,255,.38);color:#fff}#zpSub .zpIc button[data-yi=zz].on{color:#e05ae0;border-color:rgba(224,90,224,.55)}#zpSub .zpIc button[data-yi=ff].on{color:#ff4d5e;border-color:rgba(255,77,94,.55)}
 #zpSub #zpYyB.fold{height:16px}
 #zpSub #zpYyB{border-bottom:1px solid rgba(255,255,255,.08)}#zpSub #zpYy{margin-top:4px;border-top:1px solid rgba(255,255,255,.08)}#hSub .hk.yyJL{cursor:pointer}#hSub .hk.yyJL.on{border-color:rgba(255,71,87,.6)}
 #ch,#zpVol{touch-action:pan-y}   /* 11-04: 捏合/横滑交给图自己处理(否则手机浏览器抢走手势→pointercancel 缩放卡住), 竖滑照旧滚页面 */
@@ -5336,7 +5369,7 @@ body.injlin .chartbox>#zpSub{order:1}
     box.innerHTML = '<div class="zpIw"><svg id="zpYyB" viewBox="0 0 360 ' + YH + '" aria-label="主力"></svg><div class="zpIc"><button type="button" data-yi="split" title="主力一条线 / 超大·大·中·小">≋</button><button type="button" data-yi="eye" title="显示 / 隐藏">◉</button></div></div>' +   /* 11-13 用户: 开关=格内右上小透明圆标(效果图定稿) */   /* 11-13 用户圈的位置: 主图时间轴正下方、VOL 上面 */
       '<svg id="zpVol" viewBox="0 0 360 ' + VH + '" aria-label="成交量"></svg>' +
       '<div class="zb-seg" role="tablist"><button data-m="zz">共振</button><button data-m="ctrl">控盘</button><button data-m="flow">主力资金</button><button data-m="mix">控盘+资金</button></div>' +
-      '<div class="zpIw"><svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg><div class="zpIc zpIcP"><button type="button" data-yi="zz" title="主图紫点 显示 / 隐藏">●</button></div></div>';   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
+      '<div class="zpIw"><svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg><div class="zpIc zpIcP"><button type="button" data-yi="ff" title="主图资金转折点 显示 / 隐藏">●</button><button type="button" data-yi="zz" title="主图紫点 显示 / 隐藏">●</button></div></div>';   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
     ch.parentNode.insertBefore(box, ch.nextSibling);
     vSvg = box.querySelector('#zpVol'); pSvg = box.querySelector('#zpPane'); ySvg = box.querySelector('#zpYyB');
     box.querySelector('.zb-seg').onclick = function (ev) {
@@ -5354,6 +5387,7 @@ body.injlin .chartbox>#zpSub{order:1}
         if (k === 'eye') localStorage.setItem('zp_yy_v1', yyOn() ? '0' : '1');
         else if (k === 'split') { localStorage.setItem('zp_yys_v1', yySplit() ? '0' : '1'); if (!yyOn()) localStorage.setItem('zp_yy_v1', '1'); }
         else if (k === 'zz') { ZMK = !ZMK; localStorage.setItem('zp_zzmk_v1', ZMK ? '1' : '0'); }
+        else if (k === 'ff') { FTM = !FTM; localStorage.setItem('zp_fftp_v1', FTM ? '1' : '0'); }
       } catch (e) { }
       render();
     });
@@ -5375,7 +5409,7 @@ body.injlin .chartbox>#zpSub{order:1}
     return true;
   }
   function icPaint() {
-    if (!box) return; var st = { eye: yyOn(), split: yyOn() && yySplit(), zz: ZMK };
+    if (!box) return; var st = { eye: yyOn(), split: yyOn() && yySplit(), zz: ZMK, ff: FTM };
     box.querySelectorAll('[data-yi]').forEach(function (b) { var k = b.getAttribute('data-yi'); b.classList.toggle('on', !!st[k]); if (k === 'split') b.style.display = yyOn() ? '' : 'none'; });
   }
   function segPaint() { try { icPaint(); } catch (eI) { } if (!box) return; box.querySelectorAll('.zb-seg button').forEach(function (b) { if (b.classList.contains('fl')) return;   /* 11-15: 折叠小图标不动 */ b.className = b.getAttribute('data-t') === 'yys' ? (yyOn() && yySplit() ? 'on zt' : 'zt') : b.getAttribute('data-t') === 'yyb' ? (yyOn() ? 'on zt' : 'zt') : b.getAttribute('data-t') === 'zzmk' ? (ZMK ? 'on zt' : 'zt') : b.getAttribute('data-m') === mode ? 'on' : ''; }); }
@@ -5550,6 +5584,29 @@ body.injlin .chartbox>#zpSub{order:1}
     /* 11-13f: ▲▼ 提醒改由 zalCheck 按副图菜单勾选(默认勾到顶▼/见底▲) */
     if (n) ch.appendChild(g);
   }
+  /* 11-17 用户选效果图 A: 主力资金转折点叠到主图高/低点上(像 TradingView 高低点). 红=由出转入, 画在那根最低价下方; 绿=由入转出, 画在最高价上方.
+     点小(r1.9)、亮色、细描边; 副图「●」旁小圆标「资」开关(zp_fftp_v1). 只有当天1分钟资金, 历史天不画. 只显示, 不进算法 */
+  var FTM = true; try { FTM = localStorage.getItem('zp_fftp_v1') !== '0'; } catch (e) { }
+  function ffMarks(P) {
+    var ch = $('ch'); if (!ch) return; var old = ch.querySelector('#ffMkJL'); if (old) old.remove();
+    if (!FTM || !FF.rows || ch.style.display === 'none' || typeof Y !== 'function' || !P.length) return;
+    if (LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate) return;
+    var T = window.ffTurnPtsJL ? ffTurnPtsJL(FF.rows) : []; if (!T.length) return;
+    var KK = window.zpKeyOfHm && window.zpPerAll && zpPerAll(), ix = {}; P.forEach(function (q, k) { ix[q.hm] = k; });
+    var g = E('g', { id: 'ffMkJL', 'pointer-events': 'none' }), x1 = X1(), yT = PY0 + 4, yB = PY0 + PH - YRES - 3, n = 0, used = {};
+    /* 11-17 用户「位置不对」: 资金的高/低那一分钟, 价格常在半山腰(10:04 资金高时价 20.60, 价格高点在 10:1x). 改成落到这段资金波里价格真正的高/低点:
+       段 = 上一个点之后 ~ 这次确认那一分钟; 由入转出(绿) → 段内最高价那根, 由出转入(红) → 段内最低价那根. 自查图 tools/bt/ffmarks_view_1117.py */
+    var kOf = function (hm) { var key = KK ? (zpKeyOfHm(hm) || hm) : hm; return ix[key]; }, ciHm = function (t) { return FF.rows[t.ci] ? String(FF.rows[t.ci].hm).padStart(4, '0') : t.hm; }, k0 = 0;
+    T.forEach(function (t) {
+      var ke = kOf(t.hm), kc = kOf(ciHm(t)); if (ke == null) return; if (kc == null || kc < ke) kc = ke;
+      var a0 = Math.min(k0, kc), k = a0; for (var j = a0; j <= kc; j++) { var qj = P[j], qk = P[k]; if (!qj) continue; if (t.tp < 0 ? (qj.h != null ? qj.h : qj.p) > (qk.h != null ? qk.h : qk.p) : (qj.l != null ? qj.l : qj.p) < (qk.l != null ? qk.l : qk.p)) k = j; }
+      k0 = k + 1; var q = P[k];   /* 下一段从这个点之后找, 红绿点不会前后颠倒 */ if (!q || q.vis === false) return;
+      var x = q.x; if (!(x >= X0() && x <= x1)) return; var uk = k + '|' + t.tp; if (used[uk]) return; used[uk] = 1;
+      var y = t.tp < 0 ? Math.max(Y(q.h != null ? q.h : q.p) - 5, yT) : Math.min(Y(q.l != null ? q.l : q.p) + 5, yB);
+      g.appendChild(E('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 1.9, fill: t.tp > 0 ? '#ff4d5e' : '#22f0a0', stroke: 'rgba(0,0,0,.6)', 'stroke-width': .5 })); n++;
+    });
+    if (n) ch.appendChild(g);
+  }
   function ptsNow() {
     var K = window.zpPerAll ? zpPerAll() : null;   /* jl-zpliq: K线模式 = 一根蜡烛一根量柱(量按周期加总), MACD/控盘也按这根蜡烛的收/高/低算; 含历史天, 和主图同一视窗(hm=日期+时刻 唯一键) */
     if (K && K.length) return K.map(function (k) { return { hm: k.key, s: k.s, e: k.hm, d: k.d, x: k.cx, vis: k.vis, p: k.c, o: k.o, h: k.h, l: k.l, v: k.v, w: k.w }; });
@@ -5704,7 +5761,7 @@ body.injlin .chartbox>#zpSub{order:1}
       .catch(function () { return emJ('https://push2his.eastmoney.com/api/qt/stock/fflow/kline/get?' + q).then(parse); })
       .then(function (r) { if (FF.sym !== sym) return; FF.rows = r.rows; FF.d = r.d; FF.t = Date.now(); FF.err = '';
           /* 11-12 HANDOFF①: 主力资金后台常拉——不管副图选哪个都写 __FFCUMJL(顶部「本票主力」格+定档圆标加粗用), 累计翻红翻绿提醒也照走 */
-          try { var rr = r.rows, nL = rr.length; if (nL && !RPL && (!LIVE.sessDate || r.d === LIVE.sessDate)) { var lc = rr[nL - 1].main; window.__FFCUMJL = { code: STK.code, v: lc, d: nL > 15 ? lc - rr[nL - 16].main : 0, t: Date.now(), rows: rr }; if (mode !== 'flow') jlSigCum({ cum: lc, hm: rr[nL - 1].hm }, fM); } } catch (eBg) { } },
+          try { var rr = r.rows, nL = rr.length; if (nL && !RPL && (!LIVE.sessDate || r.d === LIVE.sessDate)) { var lc = rr[nL - 1].main; window.__FFCUMJL = { code: STK.code, v: lc, d: nL > 15 ? lc - rr[nL - 16].main : 0, t: Date.now(), rows: rr }; if (mode !== 'flow') jlSigCum({ cum: lc, hm: rr[nL - 1].hm }, fM); try { window.ffTurnAlertJL && window.ffTurnAlertJL(rr); } catch (eT) { } } } catch (eBg) { } },
         function (e) { if (FF.sym !== sym) return; FF.err = '主力资金接口没连上'; FF.t = Date.now(); })
       .then(function () { FF.busy = false; if (mode === 'flow' || mode === 'mix' || yyOn()) render(); });
   }
@@ -5912,6 +5969,7 @@ body.injlin .chartbox>#zpSub{order:1}
       var P = ptsNow(); D.vol = null; D.pane = null; D.yy = null;
       var Zz = null; try { Zz = zzOf(P); } catch (eZ) { }
       try { zzMarks(P, Zz); } catch (eM) { }
+      try { ffMarks(P); } catch (eF) { }
       try { if (Zz && Zz.al) zalCheck(Zz.al.P, Zz.al.Z, '5分'); else zalCheck(P, Zz); } catch (eA) { }   /* 11-17: 分时/1分页共振按5分 → 提醒也按收完的5分K */
       try { ctalCheck(P); } catch (eCt) { }
       drawVol(P);
