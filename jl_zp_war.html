@@ -342,11 +342,12 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
   try{
     var LS=localStorage,full=false;
     try{LS.setItem('jl_lsprobe',new Array(4097).join('x'));LS.removeItem('jl_lsprobe')}catch(e){full=true}
-    if(!full&&LS.getItem('jl_purge_1111')==='1')return;
+    var _pd=new Date(),PK='jl_purge_day_'+_pd.getFullYear()+('0'+(_pd.getMonth()+1)).slice(-2)+('0'+_pd.getDate()).slice(-2);
+    if(!full&&LS.getItem(PK)==='1')return;
     var rm=[];for(var i=0;i<LS.length;i++){var k=LS.key(i);if(/^(jl_dk_|jl_cyq2_|jl_atr5_)/.test(k))rm.push(k)}
     rm.forEach(function(k){try{LS.removeItem(k)}catch(e){}});
     try{for(var j=0;j<sessionStorage.length;j++){var s=sessionStorage.key(j);if(/^jl_myT_v1_/.test(s)){var v=sessionStorage.getItem(s);if(v&&v!=='[]'&&!(LS.getItem(s)&&LS.getItem(s)!=='[]'))LS.setItem(s,v)}}}catch(e){}
-    LS.setItem('jl_purge_1111','1');
+    LS.setItem(PK,'1');
   }catch(e){}
 })();
 </script>
@@ -728,9 +729,24 @@ function trLinesJL(g) {
   /* 11-17晚 用户「连线的点了没反应」: 原来只读 ampCardJL 存的 __RDJL(比画线晚一拍, 收盘后不再刷就一直空) → 画线时自己现算一次 ampPlanJL(只读, 不改算法); 算不出/没成交就在图右上说一声 */
   var hintT = function (t) { var e = tx(LX - 8, PY0 + 22, t, '#9fb3c8', 7.5, 'end', 400); e.removeAttribute('stroke'); e.setAttribute('data-trl', '1'); g.appendChild(e); };
   var R = null, RPth = 0; try { var A0 = window.__AMPJL; if (A0 && STK && A0.code === STK.code && A0.avg > 0) { var RP = ampPlanJL(A0); if (RP && RP.mk) { R = { code: STK.code, mk: RP.mk }; RPth = RP.th > 0 ? RP.th : 0; } } } catch (eRp) { }
-  if (!R) R = window.__RDJL; if (!R || !STK || R.code !== STK.code) { hintT('连线: 卖接价还没算出来'); return; }
-  var M = (R.mk || []).filter(function (m) { return m.ok && m.p > 0 && (m.t === 's' || m.t === 'b'); }); if (!M.length) { hintT('连线: 今天还没成交的卖/接'); return; }
-  var P = (LIVE.pts || []).filter(function (q) { return +q.hm >= 930 && q.p > 0; }); if (!P.length) return;
+  var P = (LIVE.pts || []).filter(function (q) { return +q.hm >= 930 && q.p > 0; });
+  if (!R) R = window.__RDJL;
+  var M = R && STK && R.code === STK.code ? (R.mk || []).filter(function (m) { return m.ok && m.p > 0 && (m.t === 's' || m.t === 'b'); }) : [];
+  /* 11-18 用户「买卖T输入了点击没出现」: 原来只画引擎模拟成交, 「我的T」手填的卖/接价根本不进数据源 → 现在手填记录也连上:
+     卖=今天第一次升破该价的那分钟, 接=第一次跌破的那分钟(没到价=右上角提示); 圈带白描边+前缀「我」区分引擎; 只画线不进算法 */
+  var MYT = [], MYMISS = [];
+  try {
+    var mkT = 'jl_myT_v1_' + ((STK && STK.code) || '') + '_' + (LIVE.sessDate || ''), jT = null;
+    try { jT = JSON.parse(localStorage.getItem(mkT) || 'null'); } catch (eL1) { }
+    if (!(jT && jT.length)) { try { jT = JSON.parse(sessionStorage.getItem(mkT) || 'null'); } catch (eL2) { } }
+    (Array.isArray(jT) ? jT : []).forEach(function (t, i) {
+      var s = +t.s || 0, b = +t.b || 0;
+      if (s > 0) MYT.push({ n: '我T' + (i + 1), t: 's', p: s });
+      if (b > 0) MYT.push({ n: '我T' + (i + 1), t: 'b', p: b });
+    });
+  } catch (eT1) { }
+  if (!M.length && !MYT.length) { hintT(!R || !STK || R.code !== STK.code ? '连线: 卖接价还没算出来' : '连线: 今天还没成交的卖/接'); return; }
+  if (!P.length) { hintT('连线: 今天还没有分时点'); return; }
   var j = 0, pos = [];
   M.forEach(function (m) {
     var k = -1;
@@ -740,6 +756,28 @@ function trLinesJL(g) {
     if (k < 0) for (var b = j; b < P.length; b++) { var h = P[b].h || P[b].p, l = P[b].l || P[b].p; if (m.t === 's' ? h >= m.p - 1e-9 : l <= m.p + 1e-9) { k = b; break; } }
     if (k < 0) k = P.length - 1; j = k; var x = xOfHmJL(P[k].hm); if (x != null) pos.push({ n: m.n, t: m.t, p: m.p, x: x });
   });
+  /* 11-18 手工「我的T」摆点: 每笔卖/接在分时里找第一次碰到价的那分钟; K线模式 xOfHmJL 已被蜡烛层接管(zpKeyOfHm), 两边坐标都正确 */
+  var myPos = [];
+  try {
+    var byE = {};
+    MYT.forEach(function (m) { (byE[m.n] = byE[m.n] || []).push(m); });
+    Object.keys(byE).forEach(function (n) {
+      var legs = [];
+      byE[n].forEach(function (m) {
+        var hit = -1;
+        for (var a = 0; a < P.length; a++) { var h = P[a].h || P[a].p, l = P[a].l || P[a].p;   /* 首选: 这分钟的区间正好包住该价 = 价格真的到过这里 */
+          if (l <= m.p + 1e-9 && h >= m.p - 1e-9) { hit = a; break; } }
+        if (hit < 0) for (var a2 = 0; a2 < P.length; a2++) { var h2 = P[a2].h || P[a2].p, l2 = P[a2].l || P[a2].p;   /* 兜底: 卖=价格落到该价及以下, 接=价格升到该价及以上 */
+          if (m.t === 's' ? l2 <= m.p + 1e-9 : h2 >= m.p - 1e-9) { hit = a2; break; } }
+        if (hit >= 0) { var x2 = xOfHmJL(P[hit].hm); if (x2 != null) legs.push({ n: n, t: m.t, p: m.p, x: x2, mine: true }); return; }
+        MYMISS.push(n + (m.t === 's' ? ' 卖' + m.p.toFixed(2) + '没到' : ' 接' + m.p.toFixed(2) + '没到'));
+      });
+      legs.sort(function (u, v) { return u.x - v.x; });   /* 同一笔内按先后相邻, 卖→接才能配上对 */
+      myPos = myPos.concat(legs);
+    });
+  } catch (eT2) { }
+  var allPos = pos.concat(myPos);
+  if (!M.length && !myPos.length && MYMISS.length) { hintT('连线: ' + MYMISS.slice(0, 2).join(' · ')); return; }
   var FEE = 0.0013, cur = LIVE.last > 0 ? LIVE.last : P[P.length - 1].p, xe = xOfHmJL(P[P.length - 1].hm), LBt = (typeof LB !== 'undefined' && LB) || [], gr = el('g', { 'data-trl': '1' }), T2 = [];
   var fmt = function (v) { return (v >= 0 ? '+' : '') + (v * 100).toFixed(2) + '%'; };
   var put = function (x0, y0, t, c, anc, cd) {
@@ -748,8 +786,8 @@ function trLinesJL(g) {
       if (yy < PY0 + 8 || yy > PY0 + PH) continue;
       if (!LBt.some(function (b) { return l < b.x1 && l + w > b.x0 && yy - 7 < b.y1 && yy + 1 > b.y0; })) { LBt.push({ x0: l, x1: l + w, y0: yy - 7, y1: yy + 1 }); var e = tx(xx, yy, t, c, 8, anc, 400); e.setAttribute('stroke', 'rgba(5,10,16,.85)'); e.setAttribute('stroke-width', .9); e.setAttribute('paint-order', 'stroke'); T2.push(e); return; } }
   };
-  for (var a = 0; a < pos.length; a++) {
-    var m = pos[a], q = pos[a + 1];
+  for (var a = 0; a < allPos.length; a++) {
+    var m = allPos[a], q = allPos[a + 1];
     if (q && q.n === m.n && q.t !== m.t) {
       var r = (m.t === 's' ? m.p / q.p : q.p / m.p) - 1 - 2 * FEE, c = r >= 0 ? '#ff4d4f' : '#22c55e';
       gr.appendChild(el('line', { x1: m.x, y1: Y(m.p), x2: q.x, y2: Y(q.p), stroke: c, 'stroke-width': 1.4 }));
@@ -761,9 +799,9 @@ function trLinesJL(g) {
     }
   }
   var D2 = [];
-  pos.forEach(function (m) {
-    D2.push(el('circle', { cx: m.x, cy: Y(m.p), r: 3, fill: m.t === 's' ? '#ffb020' : '#3fd0ff', stroke: '#05080d', 'stroke-width': .8 }));
-    put(m.x, Y(m.p), (m.t === 's' ? '卖' : '接') + m.p.toFixed(2), '#fff', 'end', m.t === 's' ? [[-5, -6], [-5, 14], [44, -8]] : [[-5, 14], [-5, -6], [44, 16]]);
+  allPos.forEach(function (m) {
+    D2.push(el('circle', { cx: m.x, cy: Y(m.p), r: m.mine ? 3.6 : 3, fill: m.t === 's' ? '#ffb020' : '#3fd0ff', stroke: m.mine ? '#ffffff' : '#05080d', 'stroke-width': m.mine ? 1.3 : .8 }));
+    put(m.x, Y(m.p), (m.mine ? '我' : '') + (m.t === 's' ? '卖' : '接') + m.p.toFixed(2), '#fff', 'end', m.t === 's' ? [[-5, -6], [-5, 14], [44, -8]] : [[-5, 14], [-5, -6], [44, 16]]);
   });
   D2.forEach(function (e) { gr.appendChild(e); }); T2.forEach(function (e) { gr.appendChild(e); }); g.appendChild(gr);
 }
@@ -2538,6 +2576,20 @@ function livePoll() {
     liveSchedule();
   });
 }
+/* 11-18 微信修复: 微信切后台会冻结定时器和在途请求, 回前台后轮询链可能停在半路(fetching卡死/链上异常没排下一轮) → 今天最低停在几小时前。
+   独立看门狗: 每30秒查一次"距上一次真拿到行情多久", 盘中超75秒就掐掉重拉; 回前台立刻补一轮。Safari/桌面本来就是活的, 看门狗空转无副作用 */
+function liveKickJL() {
+  try {
+    if (!LIVE.on || window.RPL || !LIVE.okAtJL && !LIVE.fetching) return;
+    if (!liveToday()) return;
+    if (document.hidden && Date.now() - LIVE.okAtJL < 120000) return;   /* 后台不空转; 陈旧超过2分钟才后台补 */
+    if (LIVE.fetching && Date.now() - LIVE.okAtJL > 15000) LIVE.fetching = false;   /* 在途请求卡住15秒 → 掐掉放行下一轮 */
+    if (Date.now() - LIVE.okAtJL > 75000) { clearTimeout(LIVE.pollT); livePoll(); }
+  } catch (eK) { }
+}
+setInterval(liveKickJL, 30000);
+document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(liveKickJL, 1200); });
+window.addEventListener('pageshow', function (e) { if (e && e.persisted) setTimeout(liveKickJL, 1200); });
 LIVE.start = function () {
   if (LIVE.on) return;
   LIVE.on = true; LIVE.keys = {}; LIVE.latch = {}; LIVE.base = true; LIVE.slowN = 0;
@@ -2623,6 +2675,11 @@ function ampChipsJL() {
 }
 /* 11-09夜 用户: 日线波段提示(只提示, 不改买卖): 收盘价比持有以来最高收盘跌够12% → 次日开盘清仓; 空仓后比最低收盘涨够12% → 次日开盘买回.
    回测 4/1~11/6 15只: 平均 +14.9%(一直拿 +2.1%), 永鼎躲过 7月/10月. 盘中用现价预估, 以收盘为准; 阈值跟复盘"日线波段"(jlamp_sw, 没开=12%) */
+/* 11-18 修复「复盘里点了关闭、作战屏还显示空仓」: 复盘页 SWV() 的语义是 >0=开(8%/12%)、<=0=关; 作战屏原来 +(v)||0.12 把 0(关闭) 读成 12% → 开关形同虚设.
+   现在: 键没设过(从没进过复盘) = 老默认 12%; 设了但 <=0/空/'关闭' = 真的关(顶部胶带+日线波段卡都不出、不提醒); 0.08/0.12 = 正常开 */
+function jlSwThJL() {
+  try { var v = localStorage.getItem('jlamp_sw'); if (v == null) return 0.12; var f = +v; return f > 0 ? f : 0; } catch (e) { return 0.12; }
+}
 function daySwingJL() {
   /* 11-16 用户「收盘后出」: 这个交易日收完(15:00 后 / 已是以后的日子)且日K里有这一天完整一根、收盘≈现价 → 把今天收盘算进去, 线(最高收盘/清仓/买回/减仓)收盘后就是明天要用的;
      今天收盘正好触发清仓/买回 → 写「今天收盘已触发 · 明天开盘清仓/买回」. 判断规则(12%)不变, 只是提前到收盘算 (同 atrBandJL 的 done) */
@@ -2632,7 +2689,9 @@ function daySwingJL() {
   var D = A0.filter(function (b) { var d8 = dg(b.t).slice(0, 8); return done ? d8 <= sd : d8 < sd; });
   if (D.length < 20) return '';
   var posB = null;
-  var th = +(localStorage.getItem('jlamp_sw') || 0) || 0.12, pos = 1, hi = D[0].c, lo = 0, ref = D[0].c, k0 = 0, hiT = D[0].t, loT = '', refT = D[0].t;
+  var th = jlSwThJL();
+  if (!(th > 0)) { window.__JLWV = null; return ''; }   /* 11-18: 复盘里点了「关闭」→ 作战屏顶部胶带/提醒/卡片全部真的关掉, 不再显示空仓 */
+  var pos = 1, hi = D[0].c, lo = 0, ref = D[0].c, k0 = 0, hiT = D[0].t, loT = '', refT = D[0].t;
   D.forEach(function (b, k) { if (done && k === D.length - 1) posB = pos; var c = b.c; if (pos) { if (c > hi) hiT = b.t; hi = Math.max(hi, c); if (c <= hi * (1 - th)) { pos = 0; lo = c; loT = b.t; } } else { if (c < lo) loT = b.t; lo = Math.min(lo, c); if (c >= lo * (1 + th)) { pos = 1; hi = c; hiT = b.t; ref = lo; refT = loT; k0 = k; } } });
   try { window.__JLWV = { code: STK.code, pos: pos, th: th, hiC: hi, hiT: hiT, lo: lo, loT: loT, ref: ref, refT: refT, trig: done && posB !== null && posB !== pos ? (posB ? 'cl' : 'bk') : '', next: done ? 1 : 0, cl: Math.floor(Math.round(hi * (1 - th) * 1e6) / 1e4) / 100, bk: Math.ceil(Math.round(lo * (1 + th) * 1e6) / 1e4) / 100 }; } catch (eWv) { }
   var cur = LIVE.last || 0; if (!(cur > 0)) return '';
@@ -2988,6 +3047,7 @@ function resoMiniJL(P) {
 function waveMiniJL() {
   duoBindJL();
   var h = $('waveMiniJL'), tt = $('waveTJL'), W = window.__JLWV; if (!h) return;
+  try { if (!(jlSwThJL() > 0) && !LIVE.idx) { h.innerHTML = '<div class="dr"><span class="t">已关闭 · 复盘「日线波段」</span></div>'; if (tt) tt.textContent = ''; return; } } catch (eSwT) { }   /* 11-18: 复盘点了关闭 → 这张卡也不再显示空仓/买回, 明说"已关闭" */
   if (LIVE.idx || !W || W.code !== STK.code) { h.innerHTML = '<div class="dr"><span class="t">—</span></div>'; if (tt) tt.textContent = ''; return; }
   var cur = LIVE.last || 0, R = '', f = function (v) { return v > 0 ? v.toFixed(2) : '—'; }, G = '#1fdc93', Rd = '#ff5459';
   if (W.pos) {
@@ -5003,7 +5063,12 @@ function load(){
 function save(L){
   RAM=L;RAMK=key();
   var s=JSON.stringify(L);LSOK=true;
-  try{localStorage.setItem(RAMK,s)}catch(e){LSOK=false}
+  try{localStorage.setItem(RAMK,s)}catch(e){
+    LSOK=false;
+    /* 11-18 微信修复: 微信里存储满后,「我的T」从早上第一次写失败起一整天都报⚠存储满(原来只有页面加载时清一次) → 现在写失败当场清三类可重建缓存再重试一次, 不用重开页面 */
+    try{for(var i=localStorage.length-1;i>=0;i--){var kk=localStorage.key(i);if(/^(jl_dk_|jl_cyq2_|jl_atr5_)/.test(kk))localStorage.removeItem(kk)}}catch(e2){}
+    try{localStorage.setItem(RAMK,s);LSOK=true}catch(e3){}
+  }
   if(!LSOK){try{sessionStorage.setItem(RAMK,s)}catch(e2){}}
 }
 function G(){try{return LIVE}catch(e){return {}}}
