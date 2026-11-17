@@ -2500,7 +2500,6 @@ function ampChipsJL() {
   try { var dg1 = dayGradeJL(); if (dg1) h += dg1; } catch (eDg) { }
   try { var ev1 = envChipJL(); if (ev1) h += ev1; } catch (eEv) { }
   try { var rs1 = rsoChipJL(); if (rs1) h += rs1; } catch (eRs) { }   /* 现在只剩「本票主力」格 */
-  try { if (window.__shChipJL) h += window.__shChipJL; } catch (eSh2) { }
   /* 11-13 用户: 顶部「意愿」格撤掉(开关在意愿格右上 ◉/≋); RSO 1/5/15/日 四格+结论格撤掉, 改放到 RSO 副图标题旁(rsoTagsJL) + 到高/低位弹提醒 */
   if (A.seg && 0) h += '<span class="hk hkA seg ' + (A.seg.up ? 'su' : 'sd') + ' s' + A.seg.lv + (A.seg.fl ? ' fl' : '') + '">' + A.seg.t.replace(/[<>&]/g, '') + '</span>';
   hs.insertAdjacentHTML('beforeend', h);
@@ -2953,48 +2952,16 @@ document.addEventListener('click', function (e) {
   var best = 0, bd = 16; ps.forEach(function (p) { var d = Math.abs(g[0] + (p - g[2]) / (g[3] - g[2]) * (g[1] - g[0]) - q.x); if (d < bd) { bd = d; best = p; } });
   if (best) zpHiLineJL(best);
 });
-/* 11-16 修复"指数一直在低位却常挂SELL": 大盘格数据只读首页 jlLinkInputJL(), 首页标签页后台被节流/缓存冻结在早盘高位时, 这边一直拿旧数算 rp → SELL 卡死不翻.
-   改: 本页自己每30秒拉一次上证(sh000001, 和右下自选同一个腾讯JSONP接口, 不加新域名), 2分钟内的自拉报价优先, 首页数据只做兜底 */
-var IDX_Q = { t: 0, v: null };
-function idxFetchJL() {
-  if (Date.now() - IDX_Q.t < 30000) return;
-  IDX_Q.t = Date.now();
-  try {
-    var sc = document.createElement('script');
-    sc.onload = sc.onerror = function () {
-      sc.remove();
-      var v = window.v_sh000001;
-      if (typeof v === 'string') { var a = v.split('~'); if (a.length > 34) IDX_Q.v = { pct: +a[32], hi: +a[33], lo: +a[34], pc: +a[4], t: Date.now() }; }
-    };
-    sc.src = 'https://qt.gtimg.cn/q=sh000001&_=' + Date.now(); document.head.appendChild(sc);
-  } catch (e) { }
-}
+/* 11-17 用户「上证这边的网不太好，就先去掉，把上证这个价格先去掉」: 删 idxFetchJL(每30秒自拉 sh000001) 和顶部上证格(含 SELL/BUY) */
 function envChipJL() {
   var P = window.parent; window.__shChipJL = '';
-  if (INJL) idxFetchJL();
   if (!INJL || !P || P === window || !P.jlLinkInputJL) return '';
   var d = null;
   try { if (Date.now() - ENV_C.t > 20000) { ENV_C.v = P.jlLinkInputJL(); ENV_C.t = Date.now(); } d = ENV_C.v; } catch (e) { return ''; }
   if (!d) return '';
   var s = '', mf = d.mf;
-  /* 11-16: 上证格数据源 —— 本页自拉的报价(2分钟内算新)优先, 首页冻结/节流时不再跟着卡死 */
-  var IQ = IDX_Q.v && Date.now() - IDX_Q.v.t < 120000 ? IDX_Q.v : null;
-  var sh = IQ ? { name: (d.sh && d.sh.name) || '上证', pct: IQ.pct, hi: IQ.hi, lo: IQ.lo, pc: IQ.pc } : d.sh;
   var ok = function (v) { return Number.isFinite(+v); }, sg = function (v, n) { return (v >= 0 ? '+' : '') + (+v).toFixed(n == null ? 2 : n) + '%'; };
   var cl = function (v) { return v >= 0 ? 'u' : 'd'; };
-  /* 11-13 用户: 大盘格只留 指数+涨跌, 到日内高位标 SELL(高抛)、低位标 BUY(低吸) —— 位置 = 现在在今天高低区间的哪儿(≥80% SELL / ≤20% BUY, 当天振幅<0.6% 不标).
-     有指数高低价就用; 没有就记本页看到过的涨跌幅最高/最低(按日存本机, 开得越早越准). 只显示 */
-  var shTag = '';
-  try {
-    if (sh && ok(sh.pct)) {
-      var pH, pL, pN = +sh.pct;
-      if (ok(sh.hi) && ok(sh.lo) && ok(sh.pc) && +sh.pc > 0) { pH = (sh.hi / sh.pc - 1) * 100; pL = (sh.lo / sh.pc - 1) * 100; }
-      else { var kS = 'jl_shrng_v1', R0 = JSON.parse(localStorage.getItem(kS) || '{}'), dS = LIVE.sessDate || ''; if (R0.d !== dS) R0 = { d: dS, h: pN, l: pN }; R0.h = Math.max(R0.h, pN); R0.l = Math.min(R0.l, pN); localStorage.setItem(kS, JSON.stringify(R0)); pH = R0.h; pL = R0.l; }
-      if (pH - pL >= 0.6) { var rp = (pN - pL) / (pH - pL); if (rp >= 0.8) shTag = ' <b class="u shT">SELL</b>'; else if (rp <= 0.2) shTag = ' <b class="d shT">BUY</b>'; }
-    }
-  } catch (eSh) { }
-  window.__shChipJL = '';   /* 11-14 用户: 上证放后面(本票主力之后), 由调用处补在最后 */
-  if (sh && ok(sh.pct)) window.__shChipJL = '<span class="hk hkA"><i>' + String(sh.name || '大盘').replace('指数', '') + '</i><b class="' + cl(sh.pct) + '">' + sg(sh.pct) + '</b>' + shTag + '</span>';
   if (mf && ok(mf.ratio)) s += '<span class="hk hkA" title="两市(上证+深综)主力净额 ÷ 两市成交额; 正=主力净流入">' + '<i>两市主力</i><b class="' + cl(mf.ratio) + '">' + sg(mf.ratio) + '</b></span>';
   try {
     var h = (d.holds || []).filter(function (x) { return String(x.code || '').replace(/\D/g, '') === STK.code; })[0];

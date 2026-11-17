@@ -5,6 +5,7 @@
  * 提醒(阈值均为初值, 未回测): 上证距预判高/低≤0.3%或冲出; 持仓板块10分钟内涨幅变化≥1个百分点; 共振位临近(jlreso:near); 大盘快拉/快跳水(jlv2)
  * 提醒落 jl_link_alert_v1(按日, 留60天) 供复盘
  * 回滚: 删 index.html 里引用本文件的一行 + jlLinkInputJL
+ * 11-17 球面字条: 来提醒时球边弹一条字(20秒, 盘中才弹), 点字条开面板; 回滚=删 tipShow/tipPlace 和 alert1、place、tick 里各一行调用
  */
 (function () {
   var POS = 'jl_lkball_pos', AK = 'jl_link_alert_v1', NEAR = 0.003, SURGE = 1.0, SWIN = 10, KEEP = 60;
@@ -42,6 +43,34 @@
     var b = $('jlLkBall'); if (b) { b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); }
     try { navigator.vibrate && navigator.vibrate([90, 70, 90]); } catch (e) { }
     try { if (window.Notification && Notification.permission === 'granted') new Notification('联动提醒', { body: txt }); } catch (e) { }
+    tipShow(txt, kind);
+  }
+  /* 11-17 用户「提醒能在联动浮动球上显示出来」: 球边弹字条20秒(上证近预判高低/持仓近共振位/资金异常…, 同面板颜色), 只弹最新一条, 点字条=开面板; 盘中才弹 */
+  var TIPMS = 20000;
+  function tipShow(txt, kind) {
+    if (!inSess() || !$('jlLkBall')) return;
+    var t = $('jlLkTip');
+    if (!t) {
+      t = document.createElement('div'); t.id = 'jlLkTip'; document.body.appendChild(t);
+      t.addEventListener('click', function () { st.open = true; st.unread = 0; t.hidden = true; tick(); });
+    }
+    var s = String(txt || ''), main = s, sub = '', k = s.indexOf('（'), k2 = s.indexOf(' —— ');
+    if (k2 > 0) { main = s.slice(0, k2); sub = s.slice(k2 + 4); }
+    else if (k > 0) { main = s.slice(0, k); sub = s.slice(k + 1).replace(/）$/, ''); }
+    var c = kind === 'hi' ? '#ffb0a8' : kind === 'lo' ? '#9fd0ff' : '#ffd21f';
+    t.innerHTML = '<b style="color:' + c + '">' + esc(main) + '</b><small>' + hm() + (sub ? ' · ' + esc(sub) : '') + '</small>';
+    t.hidden = false; st.tipUntil = Date.now() + TIPMS;
+    clearTimeout(st.tipT); st.tipT = setTimeout(function () { var x = $('jlLkTip'); if (x) x.hidden = true; }, TIPMS);
+    tipPlace();
+  }
+  function tipPlace() {
+    var t = $('jlLkTip'), b = $('jlLkBall'); if (!t || !b || t.hidden) return;
+    if (b.style.display === 'none' || st.open) { t.hidden = true; return; }
+    var r = b.getBoundingClientRect(), P = phone(), pr = P ? P.getBoundingClientRect() : { left: 0, width: window.innerWidth };
+    var right = r.left + r.width / 2 < pr.left + pr.width / 2;   /* 球在左半边 → 字条放右边, 反之放左边 */
+    t.style.top = (r.top + r.height / 2) + 'px';
+    if (right) { t.style.left = (r.right + 6) + 'px'; t.style.right = ''; }
+    else { t.style.right = (window.innerWidth - r.left + 6) + 'px'; t.style.left = ''; }
   }
 
   function checkAlerts(D) {
@@ -127,6 +156,7 @@
     '#jlLkBall .bt b{font-size:12px}#jlLkBall .bt span{font-size:8.5px;color:#dfe7f2}' +
     '#jlLkBall i{position:absolute;right:1px;top:1px;min-width:13px;height:13px;border-radius:7px;border:2px solid #0f1828;font:700 8px/9px -apple-system,sans-serif;color:#10202a;text-align:center;font-style:normal}' +
     '#jlLkBall.ring{animation:jlLkRing 1s ease-in-out 3!important}   /* 11-12 用户: 全局animation:none省电规则误杀联动球提醒环 → 白名单 */@keyframes jlLkRing{50%{box-shadow:0 0 0 7px rgba(232,195,122,.45),0 4px 18px rgba(0,0,0,.45)}}' +
+    '#jlLkTip{position:fixed;z-index:57;transform:translateY(-50%);max-width:230px;padding:5px 9px;border-radius:9px;background:rgba(15,24,40,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);box-shadow:0 4px 14px rgba(0,0,0,.4);font:11.5px/1.4 -apple-system,"PingFang SC",sans-serif;color:#fff;cursor:pointer}#jlLkTip[hidden]{display:none}#jlLkTip b{font-weight:500}#jlLkTip small{display:block;font-size:9.5px;color:#dfe7f2;opacity:.85}' +
     '#jlLkSheet{position:fixed;z-index:70;max-height:74vh;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;background:rgba(10,17,30,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);' +
     'border:1px solid #2a3a55;border-radius:16px;padding:10px 10px 12px;color:#e9eef5;font:12px/1.4 -apple-system,"PingFang SC",sans-serif}' +
     '#jlLkSheet[hidden]{display:none}#jlLkSheet .sh{display:flex;align-items:center;gap:8px;margin-bottom:4px}#jlLkSheet .sh b{color:' + GOLD + ';font-size:13px;flex:1}' +
@@ -340,6 +370,7 @@
     if (!st.pos || st.pos.t < 50 || st.pos.t > r.height - 120 || st.pos.l > r.width - 54) st.pos = { l: st.pos && st.pos.l <= r.width - 54 ? st.pos.l : 6, t: Math.round(r.height * 0.52) };
     b.style.left = (r.left + st.pos.l) + 'px'; b.style.top = (r.top + st.pos.t) + 'px';
     sh.style.left = (r.left + 8) + 'px'; sh.style.width = (r.width - 16) + 'px'; sh.style.bottom = (window.innerHeight - r.bottom + 66) + 'px';
+    tipPlace();   /* 11-17 字条跟球走 */
   }
   function tick() {
     if (!mount()) return;
