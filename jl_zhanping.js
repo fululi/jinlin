@@ -255,15 +255,27 @@
               var kv = ks[fresh[i]] || {}; kd = kindOf(fresh[i], w.LIVE);
               var isSig = fresh[i].indexOf('rso|') === 0 || fresh[i].indexOf('sig|') === 0, cat = catOf(kv.lbl, kd);
               if (kd || isSig) tdAdd(cat, kd ? (kd === 'sell' ? '卖出' : '买回') : (kv.lbl || 'RSO'), kv.txt || px, nmS, kd === 'buy' ? 'b' : '');   /* 11-16: 每条都记进今日提醒 */
-              if (kd && flOn('买卖')) { last = kd; tdTxt = kv.txt || ''; } else if (isSig && kv.txt && flOn(cat)) { rsoTxt = kv.txt; rsoLbl = kv.lbl || 'RSO'; }
+              if (kd && flOn('买卖')) { last = kd; tdTxt = kv.txt || ''; var lastId = fresh[i]; } else if (isSig && kv.txt && flOn(cat)) { rsoTxt = kv.txt; rsoLbl = kv.lbl || 'RSO'; }
             }
             /* 11-13 用户: 球的买卖提醒要说哪只票 → 「永鼎股份 · 卖出!」+「②卖 24.01」 */
             if (last === 'sell') flash('sell', '卖出!', tdTxt || px, nmS);
             else if (last === 'buy') flash('buy', '买回!', tdTxt || px, nmS);
+            if ((last === 'sell' || last === 'buy') && st.flash) { st.flash.id = lastId; var dT = new Date(); st.flash.t = (st.flash.t || '') + ' · ' + String(dT.getHours()).padStart(2, '0') + ':' + String(dT.getMinutes()).padStart(2, '0'); }
             else if (rsoTxt) flash('reso', rsoLbl, rsoTxt.indexOf(nmS) === 0 ? rsoTxt.slice(nmS.length).replace(/^ · /, '') : rsoTxt, nmS);   /* 11-12: RSO信号金环闪字, 不冒充卖/买指令; 票名放第一行 */
             /* 11-16: 只记不闪的类 → 只加角标, 不响 */
           }
         }
+        /* 11-17 用户「浮动球一直让我 20.53 卖, 现价比它高」: 卖出!/买回! 原来一直亮到点开浮球. 加两条自动收起(收起后球回到正常状态, 角标还在):
+           ① 振幅卡现在算出来的计划里已经没有这个价了(重算后变了) ② 现价离这个价超过 0.5% */
+        try {
+          var FL = st.flash;
+          if (FL && FL.id && FL.until === Infinity) {
+            var pa = FL.id.split('|'), fp = +pa[pa.length - 1], ft = /^stouch/.test(FL.id) ? 's' : 'b', RJ = w.__RDJL, lp = +w.LIVE.last || 0;
+            var gone = RJ && RJ.mk && w.STK && RJ.code === w.STK.code && !RJ.mk.some(function (m) { return m.ok && m.t === ft && Math.abs(m.p - fp) < 0.005; });
+            var far = fp > 0 && lp > 0 && Math.abs(lp / fp - 1) > 0.005;
+            if (gone || far) { st.flash = null; }
+          }
+        } catch (eFl) { }
         st.keysN = Object.keys(ks).length;
       } else if (!fr || !fr.contentWindow) { st.err = 'x'; }
       var sh = $('jlZpSheetJL'); if (sh) sh.removeAttribute('data-err');
@@ -281,7 +293,7 @@
     var b = document.createElement('div'); b.id = 'jlZpBallJL';
     var sh = document.createElement('div'); sh.id = 'jlZpSheetJL'; sh.hidden = true;
     try {
-      sh.innerHTML = '<span class="zx" id="jlZpXJL">✕</span><span class="zz" data-z="1" style="right:38px" title="放大(双击复原)">+</span><span class="zz" data-z="-1" style="right:64px" title="缩小(双击复原)">−</span><span class="zzT" style="right:92px"></span><span class="tdB" id="jlZpTdBJL" title="今日提醒">提醒</span><div id="jlZpTdJL" hidden></div><iframe id="jlZpFrameJL" src="' + SRC + '" referrerpolicy="no-referrer"></iframe>';
+      sh.innerHTML = '<span class="zx" id="jlZpXJL">✕</span><span class="zz" data-z="1" style="right:38px" title="图上字放大(双击复原)">+</span><span class="zz" data-z="-1" style="right:64px" title="缩小(双击复原)">−</span><span class="zzT" style="right:92px"></span><span class="tdB" id="jlZpTdBJL" title="今日提醒">提醒</span><div id="jlZpTdJL" hidden></div><iframe id="jlZpFrameJL" src="' + SRC + '" referrerpolicy="no-referrer"></iframe>';
     } catch (e) { }
     document.body.appendChild(sh); document.body.appendChild(b);
     st.ball = b; st.attnT = Date.now() + 8000; /* 首次出现脉冲8秒引人注意 */
@@ -301,16 +313,14 @@
     try { console.log('[JLZp v4] 浮球已挂载'); } catch (e) { }
     /* ②b 11-13夜 放大缩小: 面板按比例变大, iframe 内部仍按 430 宽排版, 用 transform 整体放大(矢量重绘, 清楚); 存 jl_zp_zoom_v1 */
     try {
-      var ZS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2], zk = 'jl_zp_zoom_v1', zt = 0;
+      var ZS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6], zk = 'jl_zp_zoom_v1', zt = 0;
       var zNow = function () { var v = +localStorage.getItem(zk); return ZS.indexOf(v) >= 0 ? v : 1; };
       var zApply = function (z, say) {
         var fr = $('jlZpFrameJL'); if (!fr) return;
-        if (z === 1) { sh.style.width = sh.style.height = ''; fr.style.width = fr.style.height = fr.style.transform = ''; }
-        else {
-          var W = Math.min((window.innerWidth || 400) * 0.96, 430 * z), H = Math.min((window.innerHeight || 700) - 60, Math.min((window.innerHeight || 700) * 0.86, 720) * z);
-          sh.style.width = W + 'px'; sh.style.height = H + 'px';
-          fr.style.width = (W / z) + 'px'; fr.style.height = (H / z) + 'px'; fr.style.transform = 'scale(' + z + ')';
-        }
+        /* 11-17 用户截图(走势线竖排/持仓每轮挤出/自选名字没了/温度计变小实价变大): 原来 transform 整页放大, 手机上面板已占满屏宽, 排版宽度只剩 屏宽÷倍数.
+           改: 面板大小和排版不动, 只叫作战屏把图上的字按倍数放大(jl_zp_war.html zpFontZoomJL) */
+        sh.style.width = sh.style.height = ''; fr.style.width = fr.style.height = fr.style.transform = '';
+        try { fr.contentWindow && fr.contentWindow.zpFontZoomJL && fr.contentWindow.zpFontZoomJL(z); } catch (eF) { }
         if (say) { var T = sh.querySelector('.zzT'); if (T) { T.textContent = Math.round(z * 100) + '%'; T.classList.add('on'); clearTimeout(zt); zt = setTimeout(function () { T.classList.remove('on'); }, 1200); } }
         try { fr.contentWindow && fr.contentWindow.dispatchEvent(new Event('resize')); } catch (eR) { }
       };

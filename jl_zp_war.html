@@ -1076,7 +1076,7 @@ var SGJL = segAvgJL(thr), THJL = null;
 var SEGUPJL = SGJL.up || 0, SEGDNJL = SGJL.dn || 0, SEGAVJL = SEGUPJL;
 var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行价后面带「相对昨收%」(只今天的点); pend: 11-07 待确认点 → 淡色+虚线框+「待」 */
   var d = ref > 0 ? (p / ref - 1) * 100 : 0, up = d >= 0, ad = Math.abs(d);
-  var l1 = ad >= 0.1 ? (up ? '▲' : '▼') + ad.toFixed(1) + '%/' + Math.round(Math.abs(p - ref) * 100) : '', l2 = p.toFixed(2) + (pend ? ' 待' : '');
+  var l1 = ad >= 0.1 ? (up ? '▲' : '▼') + ad.toFixed(1) + '%/' + Math.round(Math.abs(p - ref) * 100) : '', l2 = p.toFixed(2);   /* 11-17 用户「也不用写个待, 颜色太淡」: 去掉「待」, 虚线框照旧表示没确认 */
   var vpc = null, l3 = '';   /* 11-13 用户: 高低点旁的 +x%/-x%(相对昨收) 撤掉 → 看左侧%刻度 / 十字线左边%(十字线逻辑不动) */
   /* 11-13 用户「看持仓卡分时: 一行就不挤」: 改成一行「▲3.7%/85 23.78」(同持仓卡), 字 8.6 细体 */
   var nl = 1, tw = 14 + (l1 ? l1.length * 5 + 4 : 0) + l2.length * 5, bh = 11;
@@ -1097,7 +1097,7 @@ var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行�
   LB.push({ x0: x0c, x1: x1c, y0: by0, y1: by1, px: x, h: isH ? 1 : 0 });
   if (pend) {   /* 待确认: 小方块改成虚线空框, 整个标签半透明; 反向走够阈值后这一点进入确认列表, 自动换成实心那套 */
     gh.appendChild(el('rect', { x: x0c, y: by0 + 1, width: 10, height: 10, rx: 2.5, fill: 'none', stroke: isH ? '#ff5fb0' : '#4f9dff', 'stroke-width': .9, 'stroke-dasharray': '1.5 1.2' }));
-    var tq = tx(x0c + 5, by0 + 8.8, isH ? '高' : '低', isH ? '#ff9fd0' : '#a0ccff', 7.5, 'middle', 400); tq.removeAttribute('stroke'); tq.setAttribute('opacity', 0.75); gh.appendChild(tq);
+    var tq = tx(x0c + 5, by0 + 8.8, isH ? '高' : '低', isH ? '#ff9fd0' : '#a0ccff', 7.5, 'middle', 400); tq.removeAttribute('stroke'); tq.setAttribute('opacity', 0.95); gh.appendChild(tq);
   } else {
   /* 11-13 用户: 高=粉底白字, 低=蓝底白字, 细、清楚 (tx 自带3px深色描边会把小方块糊成黑底 → 这里去掉描边) */
   gh.appendChild(el('rect', { x: x0c, y: by0 + 1, width: 10, height: 10, rx: 2.5, fill: isH ? '#ff4fa8' : '#2f86ff' }));
@@ -1106,8 +1106,8 @@ var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行�
   /* 11-13 用户「压字了, 字细一些亮一些要清晰」: 去掉粗描边(字发糊), 改成字后面一块半透明深底(压着线/iv带也看得清), 字细、颜色提亮 */
   /* 11-13 用户「不要黑色背景重复多次」: 撤掉每个标签后面的深底; 改成很细的深色描边(0.9), 字细不糊 */
   var t = el('text', { x: x0c + 13, y: by0 + 9, 'font-size': 8.6, 'font-weight': 400, stroke: 'rgba(5,10,16,.85)', 'stroke-width': 0.9, 'paint-order': 'stroke', 'stroke-linejoin': 'round' });
-  if (pend) t.setAttribute('opacity', 0.55);
-  var add = function (s, c, dy) { var sp = el('tspan', { fill: c, dx: dy ? 4 : 0 }); sp.textContent = s; t.appendChild(sp); };   /* 同一行 */
+  if (pend) t.setAttribute('opacity', 0.9);
+  var add = function (s, c, dy) { var sp = el('tspan', { fill: c, dx: dy ? 2 : 0 });   /* 11-17 用户「数字空间不用这么宽」4→2 */ sp.textContent = s; t.appendChild(sp); };   /* 同一行 */
   if (l1) add(l1, up ? '#ffc080' : '#9ffaff', 0);
   add(l2, '#ffffff', l1 ? 1 : 0);
   if (l3) add(l3, vpc >= 0 ? '#ff8f98' : '#6fffc2', null);   /* 相对昨收: 红涨绿跌 */
@@ -1219,7 +1219,7 @@ if (ext && SP[ext.ix]) {
         'stroke-dasharray': '2 2',
         opacity: stJL.o
       }));
-      if (txtJL) THJL = { x: cx, y: cy, h: 1, s: txtJL, c: stJL.c };   /* 11-06b: 字延后画, 贴到同一点的高/低标签旁 */
+      if (txtJL) THJL = { x: cx, y: cy, h: 1, s: txtJL, c: stJL.c, p: tgJL };   /* 11-06b: 字延后画, 贴到同一点的高/低标签旁 */
     } else if (dirH === -1) {
       gh.appendChild(el('circle', {
         cx: cx, cy: cy + 4, r: 3.6,
@@ -1229,7 +1229,7 @@ if (ext && SP[ext.ix]) {
         'stroke-dasharray': '2 2',
         opacity: stJL.o
       }));
-      if (txtJL) THJL = { x: cx, y: cy, h: 0, s: txtJL, c: stJL.c };
+      if (txtJL) THJL = { x: cx, y: cy, h: 0, s: txtJL, c: stJL.c, p: tgJL };
     }
   }
 }
@@ -1327,13 +1327,21 @@ if (ext && SP[ext.ix]) {
       }
       try { if (THJL) {   /* 11-06b: 阈值字细体; 同一点有高/低标签 → 贴在标签右边(放不下贴左边), 没有就放圈上/下, 撞字上下挪 */
         var tw2 = THJL.s.length * 4.6, hit = null, ty2, tx2, an2 = 'start';
-        LB.forEach(function (b) { if (b.h === THJL.h && Math.abs(b.px - THJL.x) <= 10) hit = b; });
-        if (hit) { ty2 = hit.y0 + 7.5; if (hit.x1 + 3 + tw2 <= LX - 4) tx2 = hit.x1 + 3; else { tx2 = hit.x0 - 3; an2 = 'end'; } }
+        /* 11-17 用户「↑1.3/1.5 20.36 是往上的确认价, 却放在最低; 分时实时最起码对齐」: 字放到 现价那一点右边、确认价那个高度, 虚线连到现价点; 放不下才走原来贴高/低标签的老位置 */
+        var lqJL = SP[SP.length - 1], lxJL = lqJL ? xSPJL(lqJL) : null, tyP = THJL.p >= YLO && THJL.p <= YHI ? Y(THJL.p) : null;
+        if (lxJL != null && lxJL > PX0 && lxJL < LX && tyP != null) {
+          tw2 = THJL.s.length * 5.2; tx2 = Math.min(lxJL + 8, LX - 4 - tw2); ty2 = tyP + 3;
+          for (var tg3 = 0; tg3 < 4; tg3++) { var bd3 = LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 7 < b.y1 && ty2 + 1 > b.y0; }); if (!bd3) break; ty2 += THJL.h ? 9 : -9; }
+          if (tx2 - lxJL > 3) gh.appendChild(el('line', { x1: lxJL, y1: tyP, x2: tx2 - 2, y2: tyP, stroke: THJL.c, 'stroke-width': 0.8, 'stroke-dasharray': '2 2', opacity: 0.9 }));
+          hit = 'now';
+        } else LB.forEach(function (b) { if (b.h === THJL.h && Math.abs(b.px - THJL.x) <= 10) hit = b; });
+        if (hit === 'now') { }
+        else if (hit) { ty2 = hit.y0 + 7.5; if (hit.x1 + 3 + tw2 <= LX - 4) tx2 = hit.x1 + 3; else { tx2 = hit.x0 - 3; an2 = 'end'; } }
         else {
           tx2 = Math.max(PX0 + 2, Math.min(THJL.x - tw2 / 2, LX - 4 - tw2)); ty2 = THJL.h ? THJL.y - 14 : THJL.y + 17;
           for (var tg2 = 0; tg2 < 4; tg2++) { var bad = LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 7 < b.y1 && ty2 + 1 > b.y0; }); if (!bad) break; ty2 += THJL.h ? -9 : 9; }
         }
-        var tth = tx(tx2, ty2, THJL.s, THJL.c, 7.5, an2, 400); tth.setAttribute('stroke', 'rgba(5,10,16,.85)'); tth.setAttribute('stroke-width', 0.9); gh.appendChild(tth);   /* 去3px粗描边 */
+        var tth = tx(tx2, ty2, THJL.s, THJL.c, hit === 'now' ? 8.6 : 7.5, an2, 400); tth.setAttribute('stroke', 'rgba(5,10,16,.85)'); tth.setAttribute('stroke-width', 0.9); gh.appendChild(tth);   /* 去3px粗描边 */
       } } catch (eTh) { }
       if (g) g.appendChild(gh);
       try { if (window.Pitchfork && window.__SWJL) window.__PF = Pitchfork.drawSVG(svg, (perNowJL() > 0 && window.__SWX) ? window.__SWX : window.__SWJL, {
@@ -2399,6 +2407,14 @@ function livePoll() {
       LIVE.m1sess = LIVE.hist.m1.filter(sameDay);
       ok = true;
     }
+    /* 11-17 用户「浮动球一会儿①卖20.59、一会儿20.82」: tools/bt/ball_alert_replay_1117.js 用当天东财分钟重放 —— 带分钟高低(东财分时)+1.5% → ①卖20.59(10:27);
+       只有收盘价(东财分时取不到、走腾讯分时兜底)+1.5% → ①卖20.82(11:17). 同一天两条路. 改: 走腾讯分时时, 每分钟高/低用同一分钟的1分K补上
+       (小球/阈值圈按分钟高低算, 回测 ball_parity_check 用的也是带高低的1分钟数据); 1分K里没有那一分钟就照旧只用收盘价 */
+    if (ptsFresh && LIVE.srcs.pts === 'tx' && LIVE.m1sess && LIVE.m1sess.length) {
+      var m1hlJL = {}; LIVE.m1sess.forEach(function (b) { m1hlJL[String(hmOf(b.t)).padStart(4, '0')] = b; });
+      var nHlJL = 0; LIVE.pts.forEach(function (q) { var b = m1hlJL[q.hm]; if (b && b.h > 0 && b.l > 0) { q.h = Math.max(b.h, q.p); q.l = Math.min(b.l, q.p); nHlJL++; } });
+      if (nHlJL) LIVE.srcs.pts = '腾讯+1分K高低';
+    }
     if (!qtOk && LIVE.sessDate) {   /* jl-zp5: 本轮没拿到腾讯快照 → 昨收取日K里会话日前一根收盘(东财分时的 prePrice 休市时会给成当天收盘, 曾把 23.63 错成 21.75, 引擎把低开读成高开) */
       var dcl = (LIVE.hist.day || []).filter(function (b) { return dg(b.t).slice(0, 8) < LIVE.sessDate; });
       if (dcl.length) LIVE.pc = dcl[dcl.length - 1].c;
@@ -3330,7 +3346,7 @@ function ampNextHtmlJL(RD, A) {
 function touchOkJL(RD) {
   if (RD && RD.mk) window.__RDJL = { code: STK && STK.code, mk: RD.mk };   /* 11-13晚: 给提醒通道取「下一步 卖/买 价」 */
   if (!RD || !RD.mk || RPL || !LIVE.ts || !liveToday() || !STK || !STK.code) return;
-  var ph = phaseNow(), live = ph === 'am' || ph === 'pm', ck = STK.code + '|' + (LIVE.sessDate || ''), S0 = window.__touchSeenJL;
+  var ph = phaseNow(), live = ph === 'am' || ph === 'pm', ck = STK.code + '|' + (LIVE.sessDate || '') + '|' + (thrOfJL() || 0).toFixed(4), S0 = window.__touchSeenJL;   /* 11-17: 14:19「①卖20.53」= 切到回落1.8%的周期后整天重算出来的10:33旧单(ball_alert_replay_1117.js), 不是新发生的 → 阈值变了就重新定基线, 只记不响 */
   if (!S0 || S0.ck !== ck) S0 = window.__touchSeenJL = { ck: ck, k: {}, seeded: false };
   RD.mk.forEach(function (m) {
     if (!m.ok || m.proj || !(m.p > 0)) return;
@@ -7674,6 +7690,35 @@ body.injlin #metaLine .thrw{flex:0 0 auto;color:#fff!important}
     b.querySelector('.rp').classList.toggle('on', /\bon\b/.test(rp.className)); b.querySelector('.lv').classList.toggle('on', /\bon\b/.test(lv.className));
   }
   mk(); setInterval(mk, 800);
+})();
+</script>
+<style id="fix1117JL">
+/* 11-17 用户截图(微信/App内浏览器字突然变大): 关掉浏览器自动放大字号 */
+html,body{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!important}
+/* 11-17 用户「温度计开收高低看不见、实价贼大、不要圆胖字」: 温度计单独占一整行(圆标+振幅框在上一行), 粗体 800→600/500 */
+#hSub .pbJL{flex-wrap:wrap;row-gap:0}
+#hSub .pbJL .pbSv{flex:1 1 100%;order:3;max-height:none}
+#hSub .pbJL .ampBx{margin-left:auto}
+#hSub .pbDg{font-weight:600}
+#hSub .pbJL .ampBx b.av{font-weight:600}
+#hSub .pbJL .ampBx b.w,#hSub .pbJL .ampBx b.ov{font-weight:500}
+body.injlin .px{font-weight:500!important}
+/* 11-17 用户「持仓/每轮/回落 缩到最右看不到」: 放不下就折到第二行 */
+#metaLine{flex-wrap:wrap!important;row-gap:4px}
+#metaLine input{width:56px}
+/* 11-17 用户「自选列表股票名字一会儿看不到」: 名字至少留 4 个字宽 */
+#wlPanJL .wr .n{flex:1 1 4.5em;min-width:4.5em}
+</style>
+<script>
+/* 11-17 用户「放大作战屏要像持仓页分时高低那么清楚」: 浮球 −/+ 不再整页 transform(会把排版宽度压到 屏宽÷倍数 → 走势线竖排/持仓每轮挤出/自选名字没了),
+   改成排版不动, 只把图上的字按倍数放大(原 font-size 存 data-fs0). 倍数存 jl_zp_zoom_v1(浮球写, 这里读). 标签防叠还是按原字号算, 1.4 以上可能会挤 */
+(function () {
+  var Z = 1, SEL = '#ch,#wkSvg,#zpRso,#zpVol,#zpPane,#zpSub svg';
+  function fix(t) { var f0 = t.getAttribute('data-fs0'); if (f0 == null) { f0 = t.getAttribute('font-size'); if (!f0) return; t.setAttribute('data-fs0', f0); } var v = parseFloat(f0); if (v > 0) t.setAttribute('font-size', Z === 1 ? f0 : String(Math.round(v * Z * 10) / 10)); }
+  function scan(r) { if (!r || r.nodeType !== 1) return; if (r.tagName === 'text') fix(r); if (r.querySelectorAll) r.querySelectorAll('text[font-size]').forEach(fix); }
+  window.zpFontZoomJL = function (z) { z = +z; if (!(z >= 0.8 && z <= 2)) z = 1; Z = z; document.querySelectorAll(SEL).forEach(scan); };
+  try { new MutationObserver(function (ms) { if (Z === 1) return; ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1 && n.closest && n.closest(SEL)) scan(n); }); }); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
+  try { var z0 = +localStorage.getItem('jl_zp_zoom_v1'); if (z0 > 0 && z0 !== 1) window.zpFontZoomJL(z0); } catch (e) { }
 })();
 </script>
 </html>
