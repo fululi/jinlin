@@ -1,4 +1,4 @@
-/* jl_reso.js v1 — 今日共振位
+/* jl_reso.js v1 — 今日共振位 (?v=5: 11-17 共振位提醒只盘中发+防重存本机)
  * 来源(按"种类"数, 同种类多个价位只算一种): atr=ATR带上下沿 / prevHL=昨高低 / hl5=昨天之前4日高低 / gap=未补缺口边 / fib=斐波档
  * 合并: 相差<=0.2×ATR 并成一簇, 取均价; 只显示>=2种来源, >=3种=强共振
  * 台账: localStorage jl_reso_log_v1, 每天每票一条, 含同数量随机对照组; 留60天
@@ -185,8 +185,14 @@ var levels = cluster(c, atr, 2);   // 原共振位：保持两来源门槛不变
       var near = cur > 0 && Math.abs(cur - x.p) / x.p < NEAR;
       if (near && !nx) {
         var k = t + code + x.p;
-        if (!alerted[k]) {
-          alerted[k] = 1;
+        /* 11-17 用户截图「这个bug 怎么还是这样」: 19:15 已收盘还弹「共振位 20.31×2」, 16:29 又一次 —— 原防重 alerted 只在页面内存, 重开/刷新就清零重报; 也没看是不是盘中.
+           改: 只在交易时段(工作日 9:30–11:30 / 13:00–15:00)发; 防重存 localStorage(jl_reso_near_v1, 同源各页共用, 重开不丢), 每位每天一次. 只管提醒发不发, 共振价算法不动 */
+        var hm = (function () { var d = new Date(); return d.getDay() % 6 ? d.getHours() * 100 + d.getMinutes() : 0; })();
+        var inSess = (hm >= 930 && hm <= 1130) || (hm >= 1300 && hm <= 1500);
+        var sent = {}; try { sent = JSON.parse(localStorage.getItem('jl_reso_near_v1') || '{}') || {}; } catch (e0) { }
+        if (inSess && !alerted[k] && !sent[k]) {
+          alerted[k] = 1; sent[k] = t;
+          try { Object.keys(sent).forEach(function (z) { if (sent[z] !== t) delete sent[z]; }); localStorage.setItem('jl_reso_near_v1', JSON.stringify(sent)); } catch (e1) { }
           try { window.dispatchEvent(new CustomEvent('jlreso:near', { detail: { code: code, p: x.p, n: x.n, srcs: x.srcs } })); } catch (er) { }
         }
       }
