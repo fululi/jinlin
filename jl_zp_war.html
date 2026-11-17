@@ -954,15 +954,22 @@ function perNowJL() { try { var p = window.zpPerOf ? +window.zpPerOf() : 0, ch =
 function thrKeyJL(p) { var c = (STK && STK.code) || '_'; p = p == null ? perNowJL() : p; return p > 0 ? c + '@' + p : c; }
 /* 11-16 用户「图上阈值圈的确认价和小球对齐」: 照 ampBallJL 的高低点跟踪原样算一遍(分钟最高/最低, 同一阈值), 只给图上待确认圈/标签用, 不进算法.
    rh/rl = 上一个转折以来的分钟最高/最低; cs = 卖确认价 dn(rh×(1−th)), cb = 接确认价 up(rl×(1+th)) —— 和振幅卡「下一步」小球同口径 */
-function ballExtJL(th) {
+/* 11-17 用户「候选方案先试试看; 永鼎保持」(口径表 T2b): 实时强档(小球里的 gG===1)那几分钟, 回落/反弹确认阈值至少 2.5%; 永鼎不加.
+   依据 tools/bt/strong_thr_check_1117.js(平/低开, 扣费0.13%, 没接回按收盘): 14只 前半 +23.4→+34.5 / 后半 −78.9→−43.3 两半都变好;
+   永鼎 2.5% +19.0→+6.6 / +2.7→−2.3、1.8% +14.9 / +1.1 都变差 → 永鼎不加. 作战屏 ampBallJL / ballExtJL 和复盘页 jl_mix_engine ball 三处同口径 */
+function strongThJL(code) { return code === '600105' ? 0 : 0.025; }
+function ballExtJL(th) {   /* 11-17 用户「作战屏和持仓页本来就不一样, 不要搞一样的算法」: 作战屏这份自己算(分钟高低 + 口径表 T2b), 不引 jl_thrball.js */
   var o0 = LIVE.open > 0 ? LIVE.open : 0; if (!(o0 > 0) || !(th > 0)) return null;
   var up = function (v) { return Math.ceil(Math.round(v * 1e6) / 1e4) / 100; }, dn = function (v) { return Math.floor(Math.round(v * 1e6) / 1e4) / 100; };
   var P = (LIVE.pts || []).filter(function (q) { return +q.hm >= 930 && q.p > 0; }), rh = o0, rl = o0;
+  var A9 = window.__AMPJL, TSX = strongThJL(STK && STK.code), av = A9 && A9.code === (STK && STK.code) && A9.avg > 0 && LIVE.pc > 0 ? A9.avg / 100 * LIVE.pc : 0, pc = LIVE.pc, dh = o0, dl = o0, gG = 0, thx = th;
   for (var i = 0; i < P.length; i++) {
-    var h = P[i].h || P[i].p, l = P[i].l || P[i].p; rh = Math.max(rh, h); rl = Math.min(rl, l);
-    if (l <= rh * (1 - th)) { rl = rh = dn(rh * (1 - th)); } else if (h >= rl * (1 + th)) { rh = rl = up(rl * (1 + th)); }
+    var h = P[i].h || P[i].p, l = P[i].l || P[i].p; rh = Math.max(rh, h); rl = Math.min(rl, l); dh = Math.max(dh, h); dl = Math.min(dl, l);
+    if (av > 0 && TSX) { var pp = P[i].p; gG = (dh >= o0 + 0.35 * av || dl <= o0 - 0.35 * av) ? (pp >= o0 + 0.1 * av ? 1 : pp <= o0 - 0.1 * av ? -1 : (gG || (pp >= o0 ? 1 : -1))) : ((o0 / pc - 1) * 100 <= -2 ? -1 : 0); }   /* 同 ampBallJL gNow */
+    thx = gG === 1 && TSX ? Math.max(th, TSX) : th;
+    if (l <= rh * (1 - thx)) { rl = rh = dn(rh * (1 - thx)); } else if (h >= rl * (1 + thx)) { rh = rl = up(rl * (1 + thx)); }
   }
-  return { rh: rh, rl: rl, cs: dn(rh * (1 - th)), cb: up(rl * (1 + th)) };
+  return { rh: rh, rl: rl, cs: dn(rh * (1 - thx)), cb: up(rl * (1 + thx)), th: thx };
 }
 function thrOfJL(p) {
   p = p == null ? perNowJL() : p;
@@ -1076,7 +1083,7 @@ var SGJL = segAvgJL(thr), THJL = null;
 var SEGUPJL = SGJL.up || 0, SEGDNJL = SGJL.dn || 0, SEGAVJL = SEGUPJL;
 var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行价后面带「相对昨收%」(只今天的点); pend: 11-07 待确认点 → 淡色+虚线框+「待」 */
   var d = ref > 0 ? (p / ref - 1) * 100 : 0, up = d >= 0, ad = Math.abs(d);
-  var l1 = ad >= 0.1 ? (up ? '▲' : '▼') + ad.toFixed(1) + '%/' + Math.round(Math.abs(p - ref) * 100) : '', l2 = p.toFixed(2);   /* 11-17 用户「也不用写个待, 颜色太淡」: 去掉「待」, 虚线框照旧表示没确认 */
+  var l1 = ad >= 0.1 ? ad.toFixed(1) + '%/'   /* 11-17 用户「上涨棕黄、下跌青蓝已经分得清, 前面箭头取消」 */ + '' + Math.round(Math.abs(p - ref) * 100) : '', l2 = p.toFixed(2);   /* 11-17 用户「也不用写个待, 颜色太淡」: 去掉「待」, 虚线框照旧表示没确认 */
   var vpc = null, l3 = '';   /* 11-13 用户: 高低点旁的 +x%/-x%(相对昨收) 撤掉 → 看左侧%刻度 / 十字线左边%(十字线逻辑不动) */
   /* 11-13 用户「看持仓卡分时: 一行就不挤」: 改成一行「▲3.7%/85 23.78」(同持仓卡), 字 8.6 细体 */
   var nl = 1, tw = 14 + (l1 ? l1.length * 5 + 4 : 0) + l2.length * 5, bh = 11;
@@ -1195,14 +1202,15 @@ if (ext && SP[ext.ix]) {
 
     var rtJL = dirH === 1 ? Math.max(0, (ext.p - lpJL) / ext.p) : Math.max(0, (lpJL - ext.p) / ext.p), prJL = thr > 0 ? rtJL / thr : 0;
     var BXJL = null; try { if (!(perJL > 1)) BXJL = ballExtJL(thr); } catch (eBx) { }   /* 11-16: 分时/1分页 进度和确认价跟小球同口径(分钟高低) */
-    if (BXJL) { var bpJL = dirH === 1 ? BXJL.rh : BXJL.rl; rtJL = dirH === 1 ? Math.max(0, (bpJL - lpJL) / bpJL) : Math.max(0, (lpJL - bpJL) / bpJL); prJL = thr > 0 ? rtJL / thr : 0; }
+    var thJL = BXJL && BXJL.th > 0 ? BXJL.th : thr;   /* 11-17 强档分钟阈值可能是 2.5%(口径表 T2b) */
+    if (BXJL) { var bpJL = dirH === 1 ? BXJL.rh : BXJL.rl; rtJL = dirH === 1 ? Math.max(0, (bpJL - lpJL) / bpJL) : Math.max(0, (lpJL - bpJL) / bpJL); prJL = thJL > 0 ? rtJL / thJL : 0; }
     /* 虚线圈按"离确认多近"换色: <40% 淡粉 / 40~80% 黄 / >=80% 橙红加粗; 三档都写 回落|反弹 x/阈值 */
     var stJL = prJL >= 0.8 ? { c: '#ff8a3e', w: 1.4, o: 1 } : prJL >= 0.4 ? { c: '#ffe07a', w: 1.2, o: 1 } : { c: '#ffc4c4', w: 1.1, o: 1 };   /* 11-13: 待确认圈提亮 */   /* 11-06b 用户: 圈细点 */
     /* 触发价=与上面确认同一判断(分时页=分时收盘价, K线页=蜡烛收盘价): 高点后 价<高×(1-阈值) 才确认 → 取严格低于它的第一个分; 低点后 价>低×(1+阈值) → 取严格高于它的第一个分 */
     var tgJL = Math.round(ext.p * (dirH === 1 ? 1 - thr : 1 + thr) * 1e6) / 1e4;
     tgJL = dirH === 1 ? (Math.ceil(tgJL) - 1) / 100 : (Math.floor(tgJL) + 1) / 100;
     if (BXJL) tgJL = dirH === 1 ? BXJL.cs : BXJL.cb;
-    var txtJL = (dirH === 1 ? '↓' : '↑') + (rtJL * 100).toFixed(1) + '/' + (thr * 100).toFixed(1) + ' ' + tgJL.toFixed(2);
+    var txtJL = (dirH === 1 ? '↓' : '↑') + (rtJL * 100).toFixed(1) + '/' + (thJL * 100).toFixed(1) + ' ' + tgJL.toFixed(2);
     /* 橙红档(>=80%)外圈光晕闪, 提醒快到卖/买点; 确认后变实心红圈, 这里就不画了 */
     if (prJL >= 0.8 && zpFlashOkJL()) {
       var glJL = el('circle', { cx: cx, cy: dirH === 1 ? cy - 4 : cy + 4, r: 6, fill: 'none', stroke: '#ff7a2e', 'stroke-width': 1.8, opacity: 0.85 });
@@ -2434,6 +2442,7 @@ function livePoll() {
       var cur = Math.floor(nm / 100) * 60 + nm % 100, lm = Math.floor(lb / 100) * 60 + lb % 100;
       return ((p === 'am' && nm >= 945) || (p === 'pm' && nm >= 1315)) && cur - lm > 15;
     })()) { LIVE.err = '行情滞后(末根5分K距现在>15分钟) · 已暂停计算'; m5ok = false; }
+    if (qtOk || (got.m5 && got.m5.rows && got.m5.rows.length)) LIVE.okAtJL = Date.now();   /* 11-17 用户「行情状态有必要」: 现价这轮真拿到了(腾讯快照或5分K) → 给状态小点计时 */
     LIVE.qtOkLast = qtOk; LIVE.m5okLast = ok && m5ok;
     var dayWait = !(LIVE.hist.day && LIVE.hist.day.length) && LIVE.slowBusy;   /* 11-14: 开机第一轮日K还在路上 → 先画不算, 日K到了 liveSlowAfter 再算(免得基线少日K) */
     if (ok && m5ok && !dayWait) { liveCompute(); ledgerFeedJL(); }
@@ -2609,6 +2618,20 @@ function dayGradeJL() {
     if (A9 && A9.code === STK.code && A9.gr != null) gN = A9.gr;
     else if (op > 0 && avd > 0 && pcv9 > 0) gN = dayGrNowJL(op, avd, LIVE.dhi > 0 ? LIVE.dhi : op, LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : op, cur, pcv9);
     var gp9 = op > 0 && pcv9 > 0 ? (op / pcv9 - 1) * 100 : 0, P9 = LIVE.pts || [], hm9 = P9.length ? +P9[P9.length - 1].hm : 0;
+    /* 11-17 用户选A「今日档旁写换档价」(口径表 G2, 只显示不进算法; 同 dayGrNowJL 的线): 震荡 → ↑开+0.35×日均 强 / ↓开−0.35×日均 弱(看当天最高/最低碰没碰到);
+       已定档且碰过线 → 跌破/站上 开∓0.1×日均 翻档; 高/低开≥2%定的档还没碰线 → 跌破/站上 开∓0.35×日均 翻档 */
+    var gLn = '';
+    try {
+      var gOp = A9 && A9.code === STK.code && A9.gr != null ? A9.op : op, gAv = A9 && A9.code === STK.code && A9.gr != null ? A9.avg : avd, gPc = A9 && A9.code === STK.code && A9.pc > 0 ? A9.pc : pcv9;
+      var gHi = A9 && A9.code === STK.code && A9.hi > 0 ? A9.hi : LIVE.dhi, gLo = A9 && A9.code === STK.code && A9.lo > 0 ? A9.lo : LIVE.dlo;
+      if (gN != null && gOp > 0 && gAv > 0 && gPc > 0) {
+        var gD = 0.35 * gAv / 100 * gPc, gM = 0.1 * gAv / 100 * gPc, gT = (gHi > 0 && gHi >= gOp + gD) || (gLo > 0 && gLo < 1e8 && gLo <= gOp - gD);
+        if (gN === 0) gLn = '↑' + (gOp + gD).toFixed(2) + '强 ↓' + (gOp - gD).toFixed(2) + '弱';
+        else if (gN === 1) gLn = '跌破' + (gT ? gOp - gM : gOp - gD).toFixed(2) + '转弱';
+        else if (gN === -1) gLn = '站上' + (gT ? gOp + gM : gOp + gD).toFixed(2) + '转强';
+        if (gLn) gLn = '<b style="font-weight:400;opacity:.9;margin-left:3px;padding-left:4px;border-left:1px solid rgba(255,255,255,.18)">' + gLn + '</b>';
+      }
+    } catch (eGl) { gLn = ''; }
     var gTx = gN === 1 ? '<b class="o">强涨</b>' : gN === -1 ? '<b class="w">弱跌</b>' : gN === 0 ? '<b class="m">震荡</b>' : '<b class="m">待开盘</b>', hot;
     /* 口径表 G2 */
     if (gN === 1) hot = gp9 < 1 && hm9 < 1000 ? '<b class="r">10点前不先卖</b>' : '<b class="s">正常做T</b>';   /* 11-17 全部票同永鼎(口径表 T2/G2) */
@@ -2619,7 +2642,7 @@ function dayGradeJL() {
       + '回测(15只): 强档时先卖 −165%、先接 +44%; 弱/震 先卖先接都赚; 永鼎强档先卖也赚, 只在10点前(平/低开)不先卖\n'
       + '参考: 日线 ' + arrT + '（MA5 ' + m5.toFixed(2) + ' / MA10 ' + m10.toFixed(2) + ' / MA20 ' + m20.toFixed(2) + '，离MA5 ' + (dist >= 0 ? '+' : '') + dist.toFixed(1) + '%; 15只多头日做T偏亏）\n'
       + '15分最近四根 ' + (strT || '—');
-    return '<span class="hk hkA dg" title="' + tip.replace(/"/g, '') + '"><i>今日</i>' + gTx + (hot ? '<b style="opacity:.35;font-weight:400">｜</b>' + hot : '') + '</span>';
+    return '<span class="hk hkA dg" title="' + tip.replace(/"/g, '') + '"><i>今日</i>' + gTx + gLn + (hot ? '<b style="opacity:.35;font-weight:400">｜</b>' + hot : '') + '</span>';
   } catch (e) { return ''; }
 }
 /* 11-12 用户: "a股跟着大盘走, 盘中的流入流出要有提前预警" —— 顶部加一格大盘: 上证涨跌 + 两市主力占成交 + 本票所在板块涨跌/占成交.
@@ -2887,6 +2910,9 @@ function priceBarJL(A) {
   var RW = [], vbH = 72, wq = function (t, fs) { var w = 0; String(t).replace(/<[^>]+>/g, '').split('').forEach(function (ch) { w += /[\u4e00-\u9fff]/.test(ch) ? fs : fs * 0.62; }); return w; };
   var T = function (px, y, t, c, an, fs, nb) {
     var f9 = (fs || 9.5) + 1.5;
+    /* 11-17 用户圈「.48 被截掉」: 竞价区间字是贴在竞价低点左边(右对齐), 低点靠左时整段字跑到图外, 只剩「.48」. 出界就往里挪 */
+    var wA = wq(t, f9), aA = an || 'middle', lA = aA === 'start' ? +px : aA === 'end' ? px - wA : px - wA / 2;
+    if (lA < 1) px = (+px + 1 - lA).toFixed(1); else if (lA + wA > 279) px = (+px - (lA + wA - 279)).toFixed(1);
     if (!nb) { var w = wq(t, f9), a = an || 'middle', x0 = a === 'start' ? +px : a === 'end' ? px - w : px - w / 2, x1 = x0 + w, yy = y;
       for (var g = 0; g < 4 && RW.some(function (r) { return x0 < r[1] + 6 && x1 > r[0] - 6 && Math.abs(r[2] - yy) < f9; }); g++) yy += 13;
       RW.push([x0, x1, yy]); y = yy; if (y + 4 > vbH) vbH = y + 4; }
@@ -3248,25 +3274,26 @@ function ampBallJL(A) {
   /* 11-14 用户拍板(回测 outputs/bt_strong): 永鼎 10:00 前实时强档(到过开+0.35×日均 且 现价≥开+0.1×日均, 同 dayGrNowJL) → 小球不先卖, 先接照做.
      15票 1572 平/低开日: 强档10点前先卖 99天 81笔接不回; 永鼎 +25.3% → +40.4%. 只对 NOSELL_STRONG 里的票 */
   /* 11-17 用户拍板「好用就用到每个股票上」: 从永鼎推广到全部票. tools/bt/nosell_window_check.js 14只 前半 +1.2→+23.4 / 后半 −117.1→−78.9 两半都变好(口径表 T2); 复盘页 jl_mix_engine 同步改 */
-  var nsOn = true, gG = 0, gD = 0.35 * av, gM = 0.1 * av, blk = 0;
+  var nsOn = true, gG = 0, gD = 0.35 * av, gM = 0.1 * av, blk = 0, TSX = strongThJL(STK && STK.code);   /* 口径表 T2b: 实时强档分钟 回落/反弹阈值 ≥2.5%(永鼎除外) */
   for (var i = 0; i < P.length; i++) {
     var h = P[i].h || P[i].p, l = P[i].l || P[i].p; dh = Math.max(dh, h); dl = Math.min(dl, l); rh = Math.max(rh, h); rl = Math.min(rl, l); var amp = dh - dl;
     if (nsOn) { var pp = P[i].p, gNow = (dh >= o0 + gD || dl <= o0 - gD) ? (pp >= o0 + gM ? 1 : pp <= o0 - gM ? -1 : (gG || (pp >= o0 ? 1 : -1))) : ((o0 / pc - 1) * 100 <= -2 ? -1 : 0); gG = gNow; blk = +P[i].hm < 1000 && gNow === 1 ? 1 : 0; }
-    if (l <= rh * (1 - th)) { var px = dn(rh * (1 - th));
+    var thx = gG === 1 && TSX ? Math.max(th, TSX) : th; if (l <= rh * (1 - thx)) { var px = dn(rh * (1 - thx));
       if (st === 'N' && n < MR) { if (amp >= a * av && px - dl >= Z * amp && !blk) { p = px; phm = P[i].hm; st = 'S'; } }
       else if (st === 'B' && px >= p + m * av) { done.push({ n: CN[n], b: p, s: px, f: 'b' }); n++; st = 'N'; }
       rl = px; rh = px;
-    } else if (h >= rl * (1 + th)) { var py = up(rl * (1 + th));
+    } else if (h >= rl * (1 + thx)) { var py = up(rl * (1 + thx));
       if (st === 'N' && n < MR) { if (amp >= a * av && dh - py >= Z * amp) { p = py; phm = P[i].hm; st = 'B'; } }
       else if (st === 'S' && py <= p - m * av) { done.push({ n: CN[n], s: p, b: py, f: 's' }); n++; st = 'N'; }
       rh = py; rl = py;
     }
   }
+  var thE = gG === 1 && TSX ? Math.max(th, TSX) : th;   /* 下一步 确认价/文字 按现在这一分钟的有效阈值 */
   done.forEach(function (d) { mk.push({ n: d.n, t: 's', p: d.s, ok: 1 }); mk.push({ n: d.n, t: 'b', p: d.b, ok: 1 }); });
-  var cur = LIVE.last || P.length && P[P.length - 1].p || o0, ampN = dh - dl, need = a * av, ok = ampN >= need, cs = dn(rh * (1 - th)), cb = up(rl * (1 + th)), nx = null;
+  var cur = LIVE.last || P.length && P[P.length - 1].p || o0, ampN = dh - dl, need = a * av, ok = ampN >= need, cs = dn(rh * (1 - thE)), cb = up(rl * (1 + thE)), nx = null;
   var gap = o0 / pc - 1, ty = gap >= 0.01 ? 'hi' : gap <= -0.01 ? 'lo' : 'fl', lab = { hi: '高开', fl: '平开', lo: '低开' }[ty];
-  if (st === 'S') { var tb = dn(p - m * av); mk.push({ n: CN[n], t: 's', p: p, ok: 1 }); mk.push({ n: CN[n], t: 'b', p: tb, wait: 1, l: '接≤' }); nx = { n: CN[n], t: 'b', p: tb, le: '≤', sub: '低点反弹' + (th * 100).toFixed(1) + '%确认 · 现' + Math.min(cb, cur).toFixed(2), pos: p }; }
-  else if (st === 'B') { var ts = up(p + m * av); mk.push({ n: CN[n], t: 'b', p: p, ok: 1 }); mk.push({ n: CN[n], t: 's', p: ts, wait: 1, l: '卖≥' }); nx = { n: CN[n], t: 's', p: ts, le: '≥', sub: '高点回落' + (th * 100).toFixed(1) + '%确认 · 现' + Math.max(cs, cur).toFixed(2), pos: p }; }
+  if (st === 'S') { var tb = dn(p - m * av); mk.push({ n: CN[n], t: 's', p: p, ok: 1 }); mk.push({ n: CN[n], t: 'b', p: tb, wait: 1, l: '接≤' }); nx = { n: CN[n], t: 'b', p: tb, le: '≤', sub: '低点反弹' + (thE * 100).toFixed(1) + '%确认 · 现' + Math.min(cb, cur).toFixed(2), pos: p }; }
+  else if (st === 'B') { var ts = up(p + m * av); mk.push({ n: CN[n], t: 'b', p: p, ok: 1 }); mk.push({ n: CN[n], t: 's', p: ts, wait: 1, l: '卖≥' }); nx = { n: CN[n], t: 's', p: ts, le: '≥', sub: '高点回落' + (thE * 100).toFixed(1) + '%确认 · 现' + Math.max(cs, cur).toFixed(2), pos: p }; }
   else if (n < MR) {
     var hiZ = cur - dl >= Z * ampN;
     /* 11-11 用户: "尺子让我高买低卖(22.84卖/23.25接)" —— 原来把"先卖"和"先接"两个备选价并排写成 卖/接, 看着像一对. 只改显示(算法不动):
@@ -3274,7 +3301,7 @@ function ampBallJL(A) {
     var pb = hiZ ? dn(cs - m * av) : cb, ps2 = hiZ ? cs : up(cb + m * av);
     mk.push({ n: CN[n], t: 's', p: ps2, f: !(ok && hiZ) || !!(blk && hiZ), wait: ok && hiZ && !blk ? 1 : 0, l: hiZ ? (blk ? '强·先不卖' : '确认卖') : '再卖≥' });
     mk.push({ n: CN[n], t: 'b', p: pb, f: !(ok && !hiZ), wait: ok && !hiZ ? 1 : 0, l: hiZ ? '再接≤' : '确认接' });
-    nx = ok && blk && hiZ ? { n: CN[n], idle: 1, need: 0, cs: ps2, cb: pb, hiZ: hiZ, strong: 1 } : ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (th * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: ps2, cb: pb, hiZ: hiZ };
+    nx = ok && blk && hiZ ? { n: CN[n], idle: 1, need: 0, cs: ps2, cb: pb, hiZ: hiZ, strong: 1 } : ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (thE * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: ps2, cb: pb, hiZ: hiZ };
   }
   /* 11-12 用户: "尺子写着等确认, 可价早就超了" —— 原来三种情况都写「等确认/等卖/等接」, 不说是等哪个价、要等多少.
      改成把"在等什么价的什么动作"写全: 已越过就直接说按现价做, 没越过就写等哪个价 */
@@ -3288,7 +3315,7 @@ function ampBallJL(A) {
     ? (cur >= cs - 1e-9 ? ' 已回落够 · 按现价卖' : ' 等回落到 ' + cs.toFixed(2) + ' 确认卖')
     : (cur <= cb + 1e-9 ? ' 已反弹够 · 按现价接' : ' 等反弹到 ' + cb.toFixed(2) + ' 确认接'));
   var tr = '小球 · ' + lab + ' · ' + stTxt;
-  return { mode: 'ball', ty: ty, mk: mk, tr: tr, R: n, nx: nx, done: done, need: need / pc * 100, th: th };
+  return { mode: 'ball', ty: ty, mk: mk, tr: tr, R: n, nx: nx, done: done, need: need / pc * 100, th: thE };
 }
 function ampPlanJL(A) {   /* 混合: 高开(≥1%) 尺子一二三轮, 平开/低开 小球 */
   if (LIVE.idx) return null;   /* 11-12 用户: 指数只看行情, 不给尺子/小球的买卖价 */
@@ -3373,7 +3400,8 @@ function ampRowJL(RD, A, q, cur, net, near) {
     return '<span class="lq">' + qq + '股' + (v == null ? '' : ' <b class="' + (v >= 0 ? 'u' : 'd') + '">' + sg(v) + '</b>') + '</span>'; };
   /* 11-17 用户选A「强档价格照放, 买卖我定; 强用效果图那个橘色, 顶部和卡要同步」: 行首橙色「强」= 顶部今日格/圆标/温度计同一个实时档(__AMPJL.gr, 同一轮渲染算出), 只显示 */
   var gS = (function () { var A9 = window.__AMPJL; return !!(A9 && A9.code === STK.code && A9.gr === 1); })();
-  var row = function (n, a, b, m) { return '<div class="acNx acRow"><span class="nn">' + (n || '') + '</span>' + (gS ? '<b class="grS">强</b>' : '') + a + (b || '') + (m || '') + '</div>'; };
+  /* 11-17 用户截图「被截掉的是什么」: 行首加了「强」字后一行变 5 格, 4 列网格把最后一格(每轮股数+做T差价)挤到第二行 11px 宽那列, 只剩「04」. 有「强」时多一列(.gs) */
+  var row = function (n, a, b, m) { return '<div class="acNx acRow' + (gS ? ' gs' : '') + '"><span class="nn">' + (n || '') + '</span>' + (gS ? '<b class="grS">强</b>' : '') + a + (b || '') + (m || '') + '</div>'; };
   if (RD.mode === 'ball') {
     var x = RD.nx;
     if (!x) return row('', '<span class="lg">两轮做完</span>', '', '');
@@ -7708,6 +7736,7 @@ body.injlin .px{font-weight:500!important}
 #metaLine input{width:56px}
 /* 11-17 用户「自选列表股票名字一会儿看不到」: 名字至少留 4 个字宽 */
 #wlPanJL .wr .n{flex:1 1 4.5em;min-width:4.5em}
+#ampCardJL .acNx.acRow.gs{grid-template-columns:11px auto auto auto minmax(0,1fr)}
 </style>
 <script>
 /* 11-17 用户「放大作战屏要像持仓页分时高低那么清楚」: 浮球 −/+ 不再整页 transform(会把排版宽度压到 屏宽÷倍数 → 走势线竖排/持仓每轮挤出/自选名字没了),
@@ -7719,6 +7748,51 @@ body.injlin .px{font-weight:500!important}
   window.zpFontZoomJL = function (z) { z = +z; if (!(z >= 0.8 && z <= 2)) z = 1; Z = z; document.querySelectorAll(SEL).forEach(scan); };
   try { new MutationObserver(function (ms) { if (Z === 1) return; ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1 && n.closest && n.closest(SEL)) scan(n); }); }); }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
   try { var z0 = +localStorage.getItem('jl_zp_zoom_v1'); if (z0 > 0 && z0 !== 1) window.zpFontZoomJL(z0); } catch (e) { }
+})();
+</script>
+<style id="feedJL">
+#hPct{display:inline-block}
+#hFeedJL{display:inline-flex;align-items:center;gap:3px;margin-left:6px;vertical-align:2px;font-size:10.5px;font-weight:400;line-height:1;padding:2px 6px;border-radius:9px;background:rgba(127,127,127,.10);border:1px solid rgba(127,127,127,.25);white-space:nowrap}
+#hFeedJL::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--fc,#7d8794)}
+#hFeedJL[hidden],#hFeedWJL[hidden]{display:none}
+#hFeedWJL{font-size:11px;font-weight:400;color:#ff8a8a;margin-top:2px;line-height:1.35}
+#hPx.feedOldJL,#hPct.feedOldJL{opacity:.55}
+</style>
+<script>
+/* 11-17 用户「对这个行情状态有必要」(效果图_今日档差多少_行情状态点.html): 现价旁小点 —— 只显示, 不进算法
+   绿=正常(距上次真拿到现价几秒) / 超30秒黄 / 超90秒红+现价变淡+一行⚠ / 非交易时段或今天休市 灰; 计时点 = livePoll 里 LIVE.okAtJL */
+(function () {
+  var Y = 30, R = 90;
+  function el() {
+    var pc = document.getElementById('hPct'); if (!pc) return null;
+    var d = document.getElementById('hFeedJL');
+    if (!d) { d = document.createElement('span'); d.id = 'hFeedJL'; d.hidden = true; pc.parentNode.insertBefore(d, pc.nextSibling); }
+    var w = document.getElementById('hFeedWJL');
+    if (!w) { w = document.createElement('div'); w.id = 'hFeedWJL'; w.hidden = true; var sb = document.getElementById('hSub'); (sb || d).parentNode.insertBefore(w, sb ? sb.nextSibling : d.nextSibling); }
+    return { d: d, w: w, px: document.getElementById('hPx'), pc: pc };
+  }
+  function tick() {
+    try {
+      var E = el(); if (!E) return;
+      var live = typeof MODE !== 'undefined' && MODE === 'live' && !(typeof RPL !== 'undefined' && RPL) && typeof LIVE !== 'undefined' && LIVE.on !== false;
+      var old = false, txt = '', c = '', warn = '';
+      if (live) {
+        var ph = typeof phaseNow === 'function' ? phaseNow() : 'am', trade = ph === 'auction' || ph === 'preOpen' || ph === 'am' || ph === 'lunch' || ph === 'pm';
+        var today = typeof liveToday === 'function' ? liveToday() : true;
+        if (!trade || (LIVE.okAtJL && !today)) { txt = ph === 'pre' ? '未开盘' : (trade ? '休市' : '收盘'); c = '#7d8794'; }
+        else if (!LIVE.okAtJL) { txt = '连接中'; c = '#ffd84d'; }
+        else {
+          var s = Math.max(0, Math.round((Date.now() - LIVE.okAtJL) / 1000));
+          if (s > R) { var mi = Math.floor(s / 60); txt = '断流 ' + (mi >= 1 ? mi + '分' : s + '秒'); c = '#ff5b5b'; old = true; warn = '⚠ 行情断了 ' + (mi >= 1 ? mi + ' 分钟' : s + ' 秒') + '，屏上的价和提醒先别信（腾讯/东财都没取到）'; }
+          else { txt = s + '秒'; c = s > Y ? '#ffd84d' : '#4dffb4'; }
+        }
+      }
+      E.d.hidden = !txt; if (txt) { if (E.d.textContent !== txt) E.d.textContent = txt; E.d.style.setProperty('--fc', c); E.d.title = '行情状态: 距上次真拿到现价的秒数. 超' + Y + '秒黄 / 超' + R + '秒红'; }
+      E.w.hidden = !warn; if (warn && E.w.textContent !== warn) E.w.textContent = warn;
+      if (E.px) E.px.classList.toggle('feedOldJL', old); E.pc.classList.toggle('feedOldJL', old);
+    } catch (e) { }
+  }
+  setInterval(tick, 1000); setTimeout(tick, 500);
 })();
 </script>
 </html>

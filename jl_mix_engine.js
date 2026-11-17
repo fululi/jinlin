@@ -88,33 +88,34 @@
     var th = I.th || 0.015, a = I.a || 0.8, m = I.m || 0.25, av = avg / 100 * pc, Z = 0.5, MR = 2;
     var st = 'N', dl = o0, dh = o0, rh = o0, rl = o0, p = 0, pi = 0, n = 0, done = [], T = [], mk = [], seen = 0;
     /* 11-14 同作战屏 ampBallJL: 永鼎 10:00 前实时强档不先卖(I.code; P[i].hm 有才判) */
-    var nsOn = true, gG = 0, blk = 0;   /* 11-17 用户拍板: 全部票(原来只永鼎), 同作战屏 ampBallJL */
+    var nsOn = true, gG = 0, blk = 0, TSX = I.code === '600105' ? 0 : 0.025;   /* 11-17 口径表 T2b: 实时强档分钟阈值 ≥2.5%(永鼎除外), 同作战屏 strongThJL */   /* 11-17 用户拍板: 全部票(原来只永鼎), 同作战屏 ampBallJL */
     for (var i = 0; i < P.length; i++) {
       var h = P[i].h || P[i].p, l = P[i].l || P[i].p; dh = Math.max(dh, h); dl = Math.min(dl, l); rh = Math.max(rh, h); rl = Math.min(rl, l); var amp = dh - dl;
       if (nsOn && P[i].hm) { var pp = P[i].c || P[i].p, gNow = (dh >= o0 + 0.35 * av || dl <= o0 - 0.35 * av) ? (pp >= o0 + 0.1 * av ? 1 : pp <= o0 - 0.1 * av ? -1 : (gG || (pp >= o0 ? 1 : -1))) : ((o0 / pc - 1) * 100 <= -2 ? -1 : 0); gG = gNow; blk = +String(P[i].hm).replace(':', '') < 1000 && gNow === 1 ? 1 : 0; }
-      if (l <= rh * (1 - th)) { var px = dn(rh * (1 - th));
+      var thx = gG === 1 && TSX ? Math.max(th, TSX) : th; if (l <= rh * (1 - thx)) { var px = dn(rh * (1 - thx));
         if (st === 'N' && n < MR) { if (amp >= a * av) { seen = 1; if (px - dl >= Z * amp && !blk) { p = px; pi = i; st = 'S'; } } }
         else if (st === 'B' && px >= p + m * av) { done.push({ n: CN[n], b: p, s: px, f: 'b' }); T.push({ n: CN[n], why: CN[n] + '先接', si: i, s: px, bi: pi, b: p }); n++; st = 'N'; }
         rl = px; rh = px;
-      } else if (h >= rl * (1 + th)) { var py = up(rl * (1 + th));
+      } else if (h >= rl * (1 + thx)) { var py = up(rl * (1 + thx));
         if (st === 'N' && n < MR) { if (amp >= a * av) { seen = 1; if (dh - py >= Z * amp) { p = py; pi = i; st = 'B'; } } }
         else if (st === 'S' && py <= p - m * av) { done.push({ n: CN[n], s: p, b: py, f: 's' }); T.push({ n: CN[n], why: CN[n] + '卖', si: pi, s: p, bi: i, b: py }); n++; st = 'N'; }
         rh = py; rl = py;
       }
     }
     done.forEach(function (d) { mk.push({ n: d.n, t: 's', p: d.s, ok: 1 }); mk.push({ n: d.n, t: 'b', p: d.b, ok: 1 }); });
-    var cur = I.cur || (P.length && P[P.length - 1].p) || o0, ampN = dh - dl, need = a * av, ok = ampN >= need, cs = dn(rh * (1 - th)), cb = up(rl * (1 + th)), nx = null, open = null;
+    /* 口径表 T2b: 下一步确认价/文字按这一分钟的有效阈值(强档分钟 ≥2.5%, 永鼎除外); 依据 tools/bt/strong_thr_check_1117.js */
+    var thE = gG === 1 && TSX ? Math.max(th, TSX) : th, cur = I.cur || (P.length && P[P.length - 1].p) || o0, ampN = dh - dl, need = a * av, ok = ampN >= need, cs = dn(rh * (1 - thE)), cb = up(rl * (1 + thE)), nx = null, open = null;
     var gap = o0 / pc - 1, ty = gap >= 0.01 ? 'hi' : gap <= -0.01 ? 'lo' : 'fl', lab = { hi: '高开', fl: '平开', lo: '低开' }[ty];
-    if (st === 'S') { var tb = dn(p - m * av); mk.push({ n: CN[n], t: 's', p: p, ok: 1 }); mk.push({ n: CN[n], t: 'b', p: tb, wait: 1, l: '接≤' }); nx = { n: CN[n], t: 'b', p: tb, le: '≤', sub: '低点反弹' + (th * 100).toFixed(1) + '%确认 · 现' + Math.min(cb, cur).toFixed(2), pos: p }; open = { t: 'B', n: CN[n], why: CN[n] + '卖', si: pi, s: p }; }
-    else if (st === 'B') { var ts = up(p + m * av); mk.push({ n: CN[n], t: 'b', p: p, ok: 1 }); mk.push({ n: CN[n], t: 's', p: ts, wait: 1, l: '卖≥' }); nx = { n: CN[n], t: 's', p: ts, le: '≥', sub: '高点回落' + (th * 100).toFixed(1) + '%确认 · 现' + Math.max(cs, cur).toFixed(2), pos: p }; open = { t: 'S', n: CN[n], why: CN[n] + '先接', bi: pi, b: p }; }
+    if (st === 'S') { var tb = dn(p - m * av); mk.push({ n: CN[n], t: 's', p: p, ok: 1 }); mk.push({ n: CN[n], t: 'b', p: tb, wait: 1, l: '接≤' }); nx = { n: CN[n], t: 'b', p: tb, le: '≤', sub: '低点反弹' + (thE * 100).toFixed(1) + '%确认 · 现' + Math.min(cb, cur).toFixed(2), pos: p }; open = { t: 'B', n: CN[n], why: CN[n] + '卖', si: pi, s: p }; }
+    else if (st === 'B') { var ts = up(p + m * av); mk.push({ n: CN[n], t: 'b', p: p, ok: 1 }); mk.push({ n: CN[n], t: 's', p: ts, wait: 1, l: '卖≥' }); nx = { n: CN[n], t: 's', p: ts, le: '≥', sub: '高点回落' + (thE * 100).toFixed(1) + '%确认 · 现' + Math.max(cs, cur).toFixed(2), pos: p }; open = { t: 'S', n: CN[n], why: CN[n] + '先接', bi: pi, b: p }; }
     else if (n < MR) {
       var hiZ = cur - dl >= Z * ampN;
       mk.push({ n: CN[n], t: 's', p: cs, f: !(ok && hiZ), wait: ok && hiZ ? 1 : 0, l: '确认卖' });
       mk.push({ n: CN[n], t: 'b', p: cb, f: !(ok && !hiZ), wait: ok && !hiZ ? 1 : 0, l: '确认接' });
-      nx = ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (th * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: cs, cb: cb };
+      nx = ok ? { n: CN[n], t: hiZ ? 's' : 'b', p: hiZ ? cs : cb, sub: (hiZ ? '最高' + rh.toFixed(2) + '回落' : '最低' + rl.toFixed(2) + '反弹') + (thE * 100).toFixed(1) + '%' } : { n: CN[n], idle: 1, need: (need - ampN) / pc * 100, cs: cs, cb: cb };
     }
     var tr = '小球 · ' + lab + ' · ' + (n >= MR && st === 'N' ? '两轮做完' : (CN[n] || '') + (st === 'S' ? ' 等接' : st === 'B' ? ' 等卖' : ok ? ' 等确认' : ' 等振幅'));
-    return { mode: 'ball', ty: ty, mk: mk, tr: tr, R: n, nx: nx, done: done, need: need / pc * 100, th: th, trades: T, open: open, seen: seen, amp: ampN / pc * 100 };
+    return { mode: 'ball', ty: ty, mk: mk, tr: tr, R: n, nx: nx, done: done, need: need / pc * 100, th: thE, trades: T, open: open, seen: seen, amp: ampN / pc * 100 };
   }
   W.JLMIX = { r3: r3, ball: ball, par: par, setPar: setPar, up: up, dn: dn };
 })(window);
