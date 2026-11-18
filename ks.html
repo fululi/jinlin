@@ -340,6 +340,8 @@
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
 <script src="jl_absorb.js?v=3"></script>
+<script src="jl_chart_cache.js?v=1"></script>
+<script src="jl_markets.js?v=7"></script>
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 
@@ -392,8 +394,9 @@ function isUS(code) { return /^us/i.test(code); }
 function typeOf(code) { for (var ti = 0; ti < S.codes.length; ti++) if (S.codes[ti][0] === code) return S.codes[ti][2] || ""; return ""; }
 function isIndex(code) { return typeOf(code) === "ZS"; }
 function isETF(code) { return /^(sh51|sh56|sh58|sz15|sz16)/.test(code); } // ks-0909-38: ETF代码段(东财无资金流数据),0909审计B11
-function noFund(code) { return isUS(code) || isIndex(code) || isETF(code); }
-function secidOf(code) { var b = code.replace(/^(sh|sz)/, ""); return /^[569]/.test(b) ? "1." + b : "0." + b; }
+function marketJL(code) { return window.JLMarkets && JLMarkets.resolve(code); }
+function noFund(code) { return !!marketJL(code) || isUS(code) || isIndex(code) || isETF(code); }
+function secidOf(code) { if(marketJL(code))return code; var b = code.replace(/^(sh|sz)/, ""); return /^[569]/.test(b) ? "1." + b : "0." + b; }
 function jsonp(url, cb, ms) {
   var name = "emcb_" + Date.now() + "_" + Math.round(Math.random() * 1e9);
   var s = document.createElement("script");
@@ -489,6 +492,12 @@ function fetchKlineEM(code, klt, cb) {
   });
 }
 function fetchKline(code, klt, cb) {
+  var market=marketJL(code);
+  if(market){
+    JLMarkets.fetchBars(code,normalizeKlt(klt)).then(function(data){
+      cb(null,data.rows.map(function(b){return [b.time,b.open,b.high,b.low,b.close,b.volume];}),market.name,data);
+    },function(e){cb(e);});return;
+  }
   if (klt === "Q" || klt === "Y") { fetchKlineBaseJL(code, "103", function (e, kl, nm) { cb(e, kl && kl.length ? aggKlJL(kl, function (r) { return pkJL(klt, r[0]); }) : kl, nm); }); return; }
   if (klt === "120") { fetchKlineBaseJL(code, "60", function (e, kl, nm) { cb(e, kl && kl.length ? aggKlJL(kl, function (r) { var ds = String(r[0]); return ds.slice(0, 10) + (ds.slice(11, 16) <= "11:30" ? "am" : "pm"); }) : kl, nm); }); return; }
   fetchKlineBaseJL(code, klt, cb);
@@ -513,6 +522,7 @@ function fetchKlineBaseJL(code, klt, cb) {
 }
 var KS_HIST_MAX = 3000, KS_COUNT_MAX = 1000;
 function fetchKlineOlderJL(code, klt, firstDate, cb) {
+  if(marketJL(code)){cb(null,[]);return;}
   klt = normalizeKlt(klt);
   var prefix = txPrefix(code);
   function rowsOf(d, k) {
@@ -3608,6 +3618,17 @@ function delCode(code) {
   } else { store(); buildTabs(); }
   hint("已删除 " + code + " 及其画线 · 长按标签可删除");
 }
+window.jlSwitchChart = function(code,name){
+  if(S.pane!=null)return false;
+  klCachePutJL();
+  S.active=code;S.name=name||code;S.quote=null;
+  S.kl=[];S.end=0;S.rpad=null;S.count=0;S.pending=[];S.selected=-1;S.tool=null;S.yZoom=1;S.yOff=0;S.rtflow=[];S.rng=null;S.rngMode=false;
+  if(marketJL(code)){S.klt="101";S.ts.on=false;}
+  if(!S.codes.some(function(c){return c[0]===code;}))S.codes.push([code,S.name]);
+  var url=new URL(location.href);url.searchParams.set('code',code);url.searchParams.set('name',S.name);history.replaceState(null,'',url);
+  document.querySelector('[data-px]').textContent='—';document.querySelector('[data-pct]').textContent='';
+  store();buildTabs();buildPeriods();syncTools();loadAll(true);draw();return true;
+};
 function buildTabs() {
   var el = document.querySelector("[data-tabs]");
   el.innerHTML = "";
@@ -4177,16 +4198,29 @@ function setFresh(ok) {
   el.textContent = (ok ? "已更新 " : "失败 ") + t;
   el.className = "fresh" + (ok ? "" : " bad");
 }
+function loadCachedKlineJL(code,klt,cb){
+  var key='native|'+code+'|'+normalizeKlt(klt)+'|'+(S.ts.on?'ts':'k');
+  var cache=window.JLChartCache, hit=cache&&cache.peek(key);
+  if(hit)cb(null,hit.rows,hit.name,hit);
+  if(hit&&!hit.stale)return;
+  var loader=function(){return new Promise(function(resolve,reject){
+    tsFetchJL(code,klt,function(err,rows,name,meta){
+      if(err||!rows||!rows.length){reject(err||new Error('无K线数据'));return;}
+      resolve({rows:rows,name:name,source:meta&&meta.source||'行情源'});
+    });
+  });};
+  (cache?cache.refresh(key,loader):loader()).then(function(data){cb(null,data.rows,data.name,data);},function(err){cb(err,null,null,{cached:!!hit});});
+}
 function loadAll(reset) {
   ksCloseOverlays();
   hint("加载K线数据…");
   var _lkCode = S.active, _lkKlt = normalizeKlt(S.klt);
-  tsFetchJL(_lkCode, S.klt, function (err, kl, name) {
+  loadCachedKlineJL(_lkCode, S.klt, function (err, kl, name, meta) {
     if (_lkCode !== S.active || _lkKlt !== normalizeKlt(S.klt)) return;
-    if (err) { setFresh(false); hint("K线加载失败：" + err.message + " · 点「刷新」重试 <span class=dim>（检查网络）</span>"); draw(); return; }
+    if (err) { setFresh(false); hint((meta && meta.cached ? "更新暂不可用，保留缓存K线：" : "K线加载失败：") + err.message + " · 点「刷新」重试 <span class=dim>（检查网络）</span>"); draw(); return; }
     var atEnd = !S.kl.length || S.end >= S.kl.length;
     var _kc = KL_CACHE[klCacheKeyJL()], _kb = S.kl.length ? S.kl : (_kc ? _kc.kl : null);
-    S.kl = S.ts.on ? kl : mergeTailJL(_kb, kl);
+    S.kl = S.ts.on || marketJL(_lkCode) ? kl : mergeTailJL(_kb, kl);
     S._klKey = klKeyJL(); liveKeepJL();
     if (!S._hist || S._hist.key !== klCacheKeyJL()) S._hist = { key: klCacheKeyJL(), busy: false, done: !!(_kc && _kc.done && S.kl.length > kl.length), end: !!(_kc && _kc.end && S.kl.length > kl.length), failAt: 0, fails: 0 };
     else if (S.kl.length <= kl.length || !S._hist.end) { S._hist.done = false; S._hist.fails = 0; S._hist.failAt = 0; } // 手动刷新=允许再试拉更早(真到头的不重拉)
@@ -4219,9 +4253,15 @@ function loadAll(reset) {
     }
     hint("");
     setFresh(true);
+    if(marketJL(_lkCode)){
+      var last=kl[kl.length-1],prev=kl.length>1?kl[kl.length-2][4]:last[4];
+      S.quote={price:last[4],prev:prev,pct:prev?(last[4]/prev-1)*100:0,name:name,time:last[0],d:last[0].slice(0,10).replace(/-/g,'')};
+      try{if(parent.jlMarketQuote)parent.jlMarketQuote(_lkCode,{base:last[4],pct:S.quote.pct,quoteReady:true});}catch(e){}
+    }
+    if(meta){var badge=document.querySelector('[data-fresh]');if(badge){badge.textContent=(meta.cached?'缓存':'已更新')+' · 截至 '+kl[kl.length-1][0]+(meta.stale?' · 更新中':'');badge.title=meta.source||'';}}
     syncTop(); draw();
   });
-  fetchQuote(_lkCode, function (err, q) {
+  if(!marketJL(_lkCode)) fetchQuote(_lkCode, function (err, q) {
     if (_lkCode !== S.active) return;
     if (!err && q) {
       S.quote = q;
@@ -4530,7 +4570,7 @@ document.querySelector("[data-collapse]").addEventListener("click", function () 
 // 自动刷新：报价盘中 5 秒一次（纯公开接口，不耗 token），报价时刻 30 秒没变(午休/停牌/节假日)降到 30 秒，非交易时段 5 分钟；K线/资金流盘中 60 秒、盘后 5 分钟
 var _qBusy = 0, _qAt = 0, _qTradeAt = 0, _qSame = 0, _qTm = "";
 function quoteTickJL(force) {
-  if (document.hidden) return;
+  if (document.hidden || marketJL(S.active)) return;
   var now = Date.now(), gap = !inSessionFor(S.active, true) ? 300000 : (_qSame >= 6 ? 30000 : 5000);
   if (_qBusy && now - _qBusy < 25000) return;
   if (!force && now - _qAt < gap - 500) return;
@@ -6228,7 +6268,7 @@ function tsQuoteUpdateJL(Sref, price) { /* K12: 30s报价→引擎末点(updateL
   if (!(Sref && Sref.ts && Sref.ts.on) || !(price > 0)) return;
   if (Sref._tsEngine) Sref._tsEngine.updateLast(price, null);
 }
-function tsFetchJL(code, klt, cb) { /* K8/D2: 仅TS档东财优先(真成交额f57→真均价, index ensureM1JL同序), 失败回退原fetchKline双通道; 旧档零改动直达fetchKline */
+function tsFetchJL(code, klt, cb) { if(marketJL(code)){fetchKline(code,klt,cb);return;} /* K8/D2: 仅TS档东财优先(真成交额f57→真均价, index ensureM1JL同序), 失败回退原fetchKline双通道; 旧档零改动直达fetchKline */
   if (!(S.ts && S.ts.on) || normalizeKlt(klt) !== "1") { fetchKline(code, klt, cb); return; }
   fetchKlineEM(code, klt, function (err, kl, name) {
     if (!err && kl && kl.length) { cb(null, kl, name); return; }
@@ -8854,6 +8894,7 @@ function applyUrl() {
       }
       if (!found) S.codes.push([code, q.get("name") || code]);
       S.active = code;
+      if(marketJL(code)){S.klt="101";S.ts.on=false;}
       S.kl = []; S.end = 0; S.rpad = null; S.count = 0; S.pending = []; S.selected = -1; S.tool = null; S.yZoom = 1; S.yOff = 0; S.rtflow = []; S.rng = null; S.rngMode = false;
     }
     var lines = q.get("lines");
@@ -8929,6 +8970,7 @@ restore();
 /* 11-18 审计: 删一次性迁移(ks_rtfon_v2/rtfoff_v3/maoff_v1-3/fvgoff_v1-2/dsupoff_v1/sroff_v1/macdoff_v3), 各项已是S.ind默认值 */
 paneInitJL();
 applyUrl();
+JLMarkets.saved().forEach(function(r){if(!S.codes.some(function(c){return c[0]===r.id;}))S.codes.push([r.id,r.name]);});
 try { S.ind.absorb = localStorage.getItem("ks_absorb_on_v1") === "1"; } catch (e) {}
 ffInitJL();
 try { if (!S.simple && !localStorage.getItem("ks_toolsoff_v1")) { S.toolsOff = true; localStorage.setItem("ks_toolsoff_v1", "1"); store(); } } catch (e) {} // 画线/指标两行默认收进"工具▾"(点一下展开),股票/周期常驻——顶栏从四排瘦成两排
