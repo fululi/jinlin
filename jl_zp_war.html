@@ -1019,6 +1019,7 @@ buildStatics();
 function setRange(lo, hi) {
   if (Math.abs(lo - YLO) < 1e-9 && Math.abs(hi - YHI) < 1e-9) return;
   YLO = lo; YHI = hi; buildStatics();
+  return true; // Report the rebuild so callers do not clear/recreate the SVG twice.
 }
 function renderMarkers() {
   var g = $('mk'); while (g.firstChild) g.removeChild(g.firstChild);
@@ -1692,11 +1693,11 @@ function renderHead() {
   else if (MODE === 'live' && LIVE.auc && LIVE.auc.pts && LIVE.auc.pts.length) { var xa = xOfHmJL(LIVE.auc.pts[LIVE.auc.pts.length - 1].hm); if (xa != null) cdx = xa; }   /* 11-14: 9:30 前圆点在竞价段 */
   cd.setAttribute('cx', cdx); cd.setAttribute('cy', Y(p));
   /* jl-zpnow (11-16 用户「K线引擎没有东财那种实时的价格线」): K线模式(1/5/15分/日) 现价线照东财 ——
-     横贯虚线按涨跌着色(昨收上=红 #ff4757 / 下=绿 #1ee3a0), 右轴彩色价签(白字现价), 线尾圆点照旧; 只显示不进引擎 */
+     横贯虚线按涨跌着色(昨收上=红 #ff4757 / 下=绿 #1ee3a0), 右轴无底色细字现价, 线尾圆点照旧; 只显示不进引擎 */
   try {
     var oldLn = document.getElementById('zpNowLn'), oldTg = document.getElementById('zpNowTg');
     if (oldLn) oldLn.remove(); if (oldTg) oldTg.remove();
-    /* 11-18 用户「分时实时没有那个价格线…数字价格不要很大很粗, 背景透明 但是字要清楚亮白」: 分时也出现价线+右轴价签; 价签改 透明底+细彩框+亮白400字(iOS 规则: 400字重/描边0.9) */
+    /* 11-18 用户「分时实时没有那个价格线…数字价格不要很大很粗, 背景透明 但是字要清楚亮白」: 分时也出现价线+右轴价签; 价签为无底框、无描边的亮白400字；保留相邻价位 */
     if (MODE === 'live' && p > 0) {
       var pcN = LIVE.pc || 0, upN = pcN > 0 ? p >= pcN : true, cN = upN ? '#ff4757' : '#1ee3a0';
       var clN = $('cnow'); if (clN) { clN.setAttribute('stroke', cN); clN.setAttribute('opacity', .85); clN.setAttribute('stroke-width', .8); clN.setAttribute('stroke-dasharray', '4 3'); }
@@ -1706,12 +1707,11 @@ function renderHead() {
       var yN = Y(p);
       svg.appendChild(el('line', { id: 'zpNowLn', x1: xL, y1: yN, x2: LX - 6, y2: yN, stroke: cN, 'stroke-width': .8, 'stroke-dasharray': '4 3', opacity: .9, 'pointer-events': 'none' }));
       var tyN = Math.max(PY0 + 8, Math.min(PY0 + PH - YRES + 3, yN));
-      /* 东财习惯: 现价签优先, 右轴一列里和现价同高(±9px)的旧价签先让开 */
-      var mkG = $('mk');
-      if (mkG) Array.prototype.slice.call(mkG.querySelectorAll('text')).forEach(function (tN) { var yv = +tN.getAttribute('y'); if (isFinite(yv) && Math.abs(yv - tyN) < 9) tN.parentNode.removeChild(tN); });
-      var wN = p.toFixed(2).length * 5.8 + 9, tgN = el('g', { id: 'zpNowTg', 'pointer-events': 'none' });
-      tgN.appendChild(el('rect', { x: LX - wN - 2, y: tyN - 6.5, width: wN, height: 13, rx: 2.5, fill: 'rgba(8,14,28,.35)', stroke: cN, 'stroke-width': .8 }));
-      var ttN = tx(LX - 6, tyN + 3, p.toFixed(2), '#ffffff', 8.6, 'end', 400); ttN.setAttribute('stroke', 'rgba(5,10,16,.85)'); ttN.setAttribute('stroke-width', .9); tgN.appendChild(ttN);
+      // Plain current price: no badge, outline, halo, or removal of neighbouring prices.
+      var tgN = el('g', { id: 'zpNowTg', 'pointer-events': 'none' });
+      var ttN = tx(LX - 6, tyN + 3, p.toFixed(2), '#ffffff', 8.2, 'end', 400);
+      ttN.setAttribute('stroke', 'none'); ttN.setAttribute('stroke-width', 0);
+      tgN.appendChild(ttN);
       svg.appendChild(tgN);
     }
   } catch (eNow) { }
@@ -3964,8 +3964,8 @@ function liveRender(fromRpl) {
   if (!(hi > lo)) { lo = 0; hi = 1; }
   /* 11-13晚 用户「竞价的高、振幅要放在最高线上面」(同持仓卡): 日高上方留出一行标签的高度(≈24px), 日低下方同样留, 标签就不用挤到点下面去 */
   try { var kT = 24 / (PH - YRES), kB = 24 / (PH - YRES);   /* 11-17晚: 量柱带不在价格区里, 上下各留 24px 就够(原 kB 多算了 YRES, 底下空一大截) */ if (DH > 0 && DH <= hi) hi = Math.max(hi, (DH - kT * lo) / (1 - kT)); if (DL > 0 && DL >= lo) lo = Math.min(lo, (DL - kB * hi) / (1 - kB)); } catch (eHr) { }
-  setRange(lo, hi);
-  if (INJL) buildStatics();   /* 台账/IV区每轮可能变, 底图每次重画 */
+  var rangeRebuilt = setRange(lo, hi);
+  if (INJL && !rangeRebuilt) buildStatics();   /* 台账/IV区每轮可能变, 底图每次重画 */
   renderAll();
   /* 主图与 VOL/资金副图必须同一轮刷新；09:25 只有竞价量时也要立刻画出黄柱。 */
   try { if (window.zpSubRender) window.zpSubRender(); } catch (eSubLive) { }
@@ -7038,7 +7038,7 @@ setRange = function (lo, hi) {
     try { if (typeof liveRender === 'function' && window.INJL && !window.RPL) liveRender(); else { if (typeof buildStatics === 'function') buildStatics(); window.zpSubRender && zpSubRender(); } } catch (e) { paint(); }
   }
   /* 11-05 照K线表: 手势中只轻量重画(重算纵轴+蜡烛/成交量/副图/RSO), 松手再整套重画一次 */
-  function redrawLight() { try { setRange(YLO, YHI); buildStatics(); renderLine(); renderMarkers(); } catch (e) { redraw(); } }   /* 11-05 用户: 拖动时IV线/昨收等静态层也要跟着走, 不然松手才一下跳过去 → 每帧重建静态层 */
+  function redrawLight() { try { if (!setRange(YLO, YHI)) buildStatics(); renderLine(); renderMarkers(); } catch (e) { redraw(); } }   /* 11-05 用户: 拖动时IV线/昨收等静态层也要跟着走, 不然松手才一下跳过去 → 每帧重建静态层 */
   var rq = 0; function redrawSoon() { if (rq) return; rq = requestAnimationFrame(function () { rq = 0; if (window.zpPanning) redrawLight(); else redraw(); }); }
   window.zpRedrawSoon = redrawSoon; window.zpRedrawFull = redraw;   /* jl-zpyax 用 */
   function seg() {

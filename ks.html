@@ -296,6 +296,16 @@
   html.theme-la .pstrip button.on { color: #8a6d1f; background: rgba(217,180,92,0.16); }
   html.theme-la .tpan button { background: rgba(255,255,255,.75); color: #5d7065; border-color: #d3ded6; }
   html.theme-la .up { color: #e5453c; } html.theme-la .down { color: #1f9d66; } html.theme-la .flat { color: #7c8d83; }
+
+  html.ksAppearance, html.ksAppearance body, html.ksAppearance body.embed, html.ksAppearance #chartwrap { background: var(--ks-chart-bg) !important; }
+  #ksLookJL { position: fixed; z-index: 1000; top: 42px; right: 10px; width: min(300px, calc(100vw - 20px)); max-height: calc(100dvh - 60px); overflow: auto; box-sizing: border-box; padding: 16px; border: 1px solid #363c46; border-radius: 12px; background: #14171d; color: #edf0f5; box-shadow: 0 12px 40px #0009; font: 13px -apple-system, "PingFang SC", sans-serif; }
+  #ksLookJL .lookHead { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 600; }
+  #ksLookJL button { padding: 7px 12px; border: 1px solid #414752; border-radius: 6px; background: #222730; color: #f5f7fa; cursor: pointer; }
+  #ksLookJL .lookPresets { display: flex; gap: 8px; margin-top: 14px; }
+  #ksLookJL label { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 40px; }
+  #ksLookJL input[type=color] { width: 44px; height: 28px; padding: 0; border: 0; background: none; }
+  #ksLookJL input[type=range] { width: 100px; }
+  #ksLookJL p { color: #aeb7c6; font-size: 11px; line-height: 1.6; }
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
 </head>
@@ -373,25 +383,27 @@ function txPrefix(code, stripSuffix) {
   if (/^(sh|sz)/.test(code)) return code;
   return (/^[569]/.test(code) ? "sh" : (/^[03]/.test(code) ? "sz" : "sh")) + code;
 }
-function fetchJSON(url, cb) {
-  var done = false;
-  var to = setTimeout(function () { if (!done) { done = true; cb(new Error("请求超时")); } }, 10000);
-  fetch(url).then(function (r) { return r.json(); }).then(function (d) {
-    if (!done) { done = true; clearTimeout(to); cb(null, d); }
-  }).catch(function (e) { if (!done) { done = true; clearTimeout(to); cb(e); } });
+function fetchJSON(url, cb, timeoutMs) {
+  var done = false, controller = new AbortController();
+  function finish(err, data) { if (done) return; done = true; clearTimeout(to); cb(err, data); }
+  var to = setTimeout(function () { controller.abort(); finish(new Error("请求超时")); }, timeoutMs || 10000);
+  fetch(url, { signal: controller.signal }).then(function (r) {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(function (d) { finish(null, d); }).catch(function (e) { finish(e); });
 }
 var TXK_BASES = ["https://web.ifzq.gtimg.cn", "https://ifzq.gtimg.cn", "https://proxy.finance.qq.com/ifzqgtimg"];
 var txkBi = 0;
 function fetchJSONK(path, cb) {
-  var n = 0;
+  var n = 0, startBi = txkBi, deadline = Date.now() + 12000;
   function attempt() {
-    var bi = (txkBi + n) % TXK_BASES.length;
+    var remaining = deadline - Date.now();
+    if (remaining <= 0 || n >= TXK_BASES.length) { cb(new Error("腾讯通道超时或不可用")); return; }
+    var bi = (startBi + n++) % TXK_BASES.length;
     fetchJSON(TXK_BASES[bi] + path, function (err, d) {
       if (!err && d) { txkBi = bi; cb(null, d); return; }
-      n++;
-      if (n < TXK_BASES.length * 2) { attempt(); return; }
-      cb(err || new Error("腾讯三通道全失败"));
-    });
+      attempt();
+    }, Math.min(4000, remaining));
   }
   attempt();
 }
@@ -455,7 +467,7 @@ function fetchKlineBaseJL(code, klt, cb) {
     fetchKlineTX(code, klt, function (err, kl, name) {
       if (!err && kl && kl.length) { cb(null, kl, name); return; }
       att++;
-      if (att === 1) { setTimeout(tryTX, 700); return; }
+      // Each Tencent host has already been tried within the shared 12-second budget.
       if (isUS(code)) { cb(err || new Error("无K线数据")); return; }
       fetchKlineEM(code, klt, function (e2, k2, n2) {
         if (!e2 && k2 && k2.length) { cb(null, k2, n2); return; }
@@ -903,8 +915,27 @@ function restore() {
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
-function saveZoom() { try { var m = JSON.parse(localStorage.getItem("ks_zoom_v1") || "{}"); m[(TVL ? "tv:" : "") + dkey()] = S.count; localStorage.setItem("ks_zoom_v1", JSON.stringify(m)); } catch (e) {} }
-function loadZoom() { try { return JSON.parse(localStorage.getItem("ks_zoom_v1") || "{}")[(TVL ? "tv:" : "") + dkey()] || 0; /* 11-18 TV风格缩放另存一份, 新默认根数第一次就看得到 */ } catch (e) { return 0; } }
+var zoomPendingJL = Object.create(null), zoomTimerJL = 0;
+function zoomKeyJL() { return (TVL ? "tv:" : "") + dkey(); }
+function flushZoomJL() {
+  clearTimeout(zoomTimerJL); zoomTimerJL = 0;
+  try {
+    var m = JSON.parse(localStorage.getItem("ks_zoom_v1") || "{}");
+    Object.keys(zoomPendingJL).forEach(function (key) { m[key] = zoomPendingJL[key]; });
+    localStorage.setItem("ks_zoom_v1", JSON.stringify(m));
+    zoomPendingJL = Object.create(null);
+  } catch (e) {}
+}
+function saveZoom(deferred) {
+  if (!(S.count > 0)) return;
+  zoomPendingJL[zoomKeyJL()] = S.count;
+  clearTimeout(zoomTimerJL);
+  if (deferred) zoomTimerJL = setTimeout(flushZoomJL, 400);
+  else flushZoomJL();
+}
+window.addEventListener("pagehide", flushZoomJL);
+document.addEventListener("visibilitychange", function () { if (document.hidden) flushZoomJL(); });
+function loadZoom() { try { return zoomPendingJL[zoomKeyJL()] || JSON.parse(localStorage.getItem("ks_zoom_v1") || "{}")[zoomKeyJL()] || 0; /* 11-18 TV风格缩放另存一份, 新默认根数第一次就看得到 */ } catch (e) { return 0; } }
 function dlist() { var k = dkey(); if (!DRAW[k]) DRAW[k] = []; return DRAW[k]; }
 // 只合并主图价位线;趋势线/蝴蝶等日期锚线仍按周期各存各的。同标签同价去重,防多周期重复推线叠画。
 function visList() {
@@ -956,9 +987,75 @@ function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFix
 var TVL = (function () { try { var q = new URLSearchParams(location.search).get("tv"); if (q === "0" || q === "1") return q === "1"; return localStorage.getItem("ks_tvlook_v1") !== "0"; } catch (e) { return true; } })(); /* 11-18 用户「按你说的试试」: 看盘工作区整理(TV风格)总开关, ?tv=0 看旧版 */
 try { if (TVL) document.documentElement.classList.add("tvlook"); } catch (e) {}
 var UP = TVL ? "#f23645" : "#ff6f66", DN = TVL ? "#089981" : "#35d99a", /* 11-18 用户「蜡烛红不够正」: TV风格用 TradingView 同款正红/正绿 */ DIM = "#eef3f0", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f";
-// 金粼0913晚: embed网格细化(0.5px Tiffany青调)——只动网格线, 字/标注颜色一律跟随部署版(字颜色全抄K-STATION)
+// Chart appearance is independent of indicators and drawings.
+var LOOK_KEY_JL = "ks_appearance_v1";
+function lookPresetJL(original) {
+  return { bg: original ? (TVL ? "#080a0e" : "#0a0e0b") : "#000000", grid: original ? "#191d24" : "#141414", text: "#eef3f0", up: TVL ? "#f23645" : "#ff6f66", down: TVL ? "#089981" : "#35d99a", gridOn: true, fontScale: 1 };
+}
+function cleanLookJL(raw) {
+  var out = lookPresetJL(!TVL); raw = raw || {};
+  ["bg", "grid", "text", "up", "down"].forEach(function (k) { if (/^#[0-9a-f]{6}$/i.test(raw[k])) out[k] = raw[k]; });
+  if (typeof raw.gridOn === "boolean") out.gridOn = raw.gridOn;
+  if (Number.isFinite(+raw.fontScale)) out.fontScale = Math.max(1, Math.min(1.3, +raw.fontScale));
+  return out;
+}
+function readLookJL() { try { return cleanLookJL(JSON.parse(localStorage.getItem(LOOK_KEY_JL))); } catch (e) { return cleanLookJL(); } }
+var LOOK_JL = readLookJL();
+function applyLookJL(save) {
+  UP = LOOK_JL.up; DN = LOOK_JL.down; DIM = LOOK_JL.text;
+  var root = document.documentElement;
+  root.style.setProperty("--ks-chart-bg", LOOK_JL.bg);
+  root.classList.add("ksAppearance");
+  S._xhBase = null;
+  if (save) { try { localStorage.setItem(LOOK_KEY_JL, JSON.stringify(LOOK_JL)); } catch (e) { hint("外观已应用，但浏览器未允许保存"); } }
+}
+applyLookJL(false);
+window.addEventListener("storage", function (e) {
+  if (e.key !== LOOK_KEY_JL && e.key !== null) return;
+  LOOK_JL = readLookJL(); applyLookJL(false); draw();
+  var panel = document.getElementById("ksLookJL"); if (panel) { panel.remove(); lookPanelJL(); }
+});
 function _embMode() { return typeof document !== "undefined" && document.body && document.body.classList.contains("embed"); }
-function gridSt(ctx) { if (TVL) { ctx.strokeStyle = "#191d24"; ctx.lineWidth = 1; return; } /* 11-18 TV风格网格 */ if (_embMode()) { ctx.strokeStyle = "rgba(135,183,196,0.10)"; ctx.lineWidth = 0.5; } else { ctx.strokeStyle = GRID; ctx.lineWidth = 1; } }
+function gridSt(ctx) { ctx.strokeStyle = LOOK_JL.gridOn ? LOOK_JL.grid : "rgba(0,0,0,0)"; ctx.lineWidth = 1; }
+function installLookFontJL(ctx) {
+  if (ctx.__lookTextJL) return; ctx.__lookTextJL = true;
+  ["fillText", "strokeText", "measureText"].forEach(function (name) {
+    var native = ctx[name];
+    ctx[name] = function () {
+      var font = this.font, soft = this.__soft; this.save(); this.__soft = false;
+      this.font = font.replace(/(\d+(?:\.\d+)?)px/, function (_, size) { return (+size * LOOK_JL.fontScale) + "px"; });
+      this.__soft = soft;
+      try { return native.apply(this, arguments); } finally { this.restore(); }
+    };
+  });
+}
+function lookPanelJL() {
+  var old = document.getElementById("ksLookJL"); if (old) { old.remove(); return; }
+  var d = document.createElement("section"); d.id = "ksLookJL";
+  d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "图表外观");
+  d.innerHTML = '<div class="lookHead">图表外观<button type="button" data-close aria-label="关闭外观设置">✕</button></div><div class="lookPresets"><button type="button" data-clear>清晰黑底</button><button type="button" data-original>原版</button></div><p>即时预览 · 自动保存 · 双图同步</p>';
+  [["bg", "背景"], ["grid", "网格线"], ["text", "刻度与图例文字"], ["up", "上涨蜡烛"], ["down", "下跌蜡烛"]].forEach(function (row) {
+    var label = document.createElement("label"); label.textContent = row[1];
+    var input = document.createElement("input"); input.type = "color"; input.value = LOOK_JL[row[0]]; input.dataset.look = row[0]; input.setAttribute("aria-label", row[1]); label.appendChild(input); d.appendChild(label);
+  });
+  var controls = document.createElement("div");
+  controls.innerHTML = '<label>显示网格线<input type="checkbox" data-look="gridOn"></label><label>文字大小 <output></output><input aria-label="文字大小" type="range" min="1" max="1.3" step="0.05" data-look="fontScale"></label><p>文字大小调整刻度和图例；颜色标记仍保留涨跌含义。</p>';
+  d.appendChild(controls);
+  function sync() { d.querySelectorAll("[data-look]").forEach(function (x) { if (x.type === "checkbox") x.checked = LOOK_JL[x.dataset.look]; else x.value = LOOK_JL[x.dataset.look]; }); d.querySelector("output").textContent = Math.round(LOOK_JL.fontScale * 100) + "%"; }
+  function update(e) {
+    var x = e.target, k = x.dataset.look; if (!k) return;
+    LOOK_JL[k] = x.type === "checkbox" ? x.checked : x.type === "range" ? +x.value : x.value;
+    LOOK_JL = cleanLookJL(LOOK_JL); applyLookJL(e.type === "change"); sync(); drawRafJL();
+  }
+  d.addEventListener("input", update); d.addEventListener("change", update);
+  d.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
+  function close() { applyLookJL(true); d.remove(); }
+  d.querySelector("[data-close]").onclick = close;
+  d.addEventListener("keydown", function (e) { e.stopPropagation(); if (e.key === "Escape") close(); });
+  d.querySelector("[data-clear]").onclick = function () { LOOK_JL = lookPresetJL(false); applyLookJL(true); sync(); draw(); };
+  d.querySelector("[data-original]").onclick = function () { LOOK_JL = lookPresetJL(true); applyLookJL(true); sync(); draw(); };
+  sync(); document.body.appendChild(d); d.querySelector("[data-close]").focus();
+}
 function legIdxJL(v) {
   var i = S.cross ? v.I(S.cross.x) : v.i1 - 1;
   return Math.max(v.i0, Math.min(v.i1 - 1, i));
@@ -2358,6 +2455,7 @@ function drawReal() {
   var w = cv.clientWidth, hh = cv.clientHeight;
   if (!w || !hh) return;
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(hh * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(hh * dpr); }
+  installLookFontJL(ctx);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, hh);
   if (TVL && !ctx.__tvFont && typeof CanvasRenderingContext2D !== "undefined") { /* 11-18 用户「字体不好看」: TV风格把画布上 Menlo 等宽字统一换系统字(苹方/SF), 粗体降到500 */
@@ -2401,7 +2499,7 @@ function drawReal() {
     var gy = v.Y(tk.p);
     gridSt(ctx);
     ctx.beginPath(); ctx.moveTo(v.padL, gy); ctx.lineTo(v.padL + v.plotW, gy); ctx.stroke();
-    ctx.fillStyle = "#f2fbfd"; /* 11-18 用户: 价格要亮白 */
+    ctx.fillStyle = LOOK_JL.text; /* 可调价格轴文字 */
     ctx.fillText(tk.t, v.padL + v.plotW + 4, gy);
   });
   ctx.font = "11px Menlo, monospace";
@@ -2410,7 +2508,7 @@ function drawReal() {
     gridSt(ctx);
     ctx.beginPath(); ctx.moveTo(t.x, v.pTop); ctx.lineTo(t.x, v.bottom); ctx.stroke();
     ctx.font = TVL ? ((t.bold ? "600 " : "400 ") + "10px -apple-system, Helvetica, sans-serif") : ((t.bold ? "bold " : "") + "11px Menlo, monospace"); /* 11-18 TV风格: 时间轴轻字 */
-    ctx.fillStyle = t.fut ? "#aab6af" : "#f2f6f4"; // 提亮: 五日/分钟级时间原来太暗看不清; 未来日期压暗一档
+    ctx.fillStyle = t.fut ? "#aab6af" : LOOK_JL.text; // 提亮: 五日/分钟级时间原来太暗看不清; 未来日期压暗一档
     ctx.fillText(t.lb, t.x, v.hh - 9);
   });
   ctx.font = "11px Menlo, monospace";
@@ -3435,7 +3533,7 @@ cv.addEventListener("wheel", function (e) {
   var _wc = Math.round(S.count * Math.exp(Math.max(-0.25, Math.min(0.25, e.deltaY * 0.0025))));
   if (_wc === S.count) _wc += e.deltaY > 0 ? 1 : -1;
   S.count = Math.max(15, Math.min(KS_COUNT_MAX, _wc));
-  if (S._zsT) clearTimeout(S._zsT); S._zsT = setTimeout(function () { S._zsT = 0; saveZoom(); }, 400); /* 11-18 滚轮停手再存缩放 */
+  saveZoom(true); // Capture this chart key/count now; batch disk writes only.
   drawRafJL();
 }, { passive: false });
 cv.addEventListener("dblclick", function (e) {
@@ -8251,6 +8349,7 @@ function buildInds() {
   pmb.className = "btn tabbtn"; pmb.type = "button"; pmb.textContent = "⚙参数";
   pmb.addEventListener("click", function () { prmPanelJL(); });
   el.appendChild(pmb);
+  var lookButton = document.createElement("button"); lookButton.className = "btn tabbtn"; lookButton.type = "button"; lookButton.textContent = "外观"; lookButton.onclick = lookPanelJL; el.appendChild(lookButton);
   buildFavs(); // 收藏栏里的指标按钮同步亮灭
 }
 var CTYPES = [["candle", "蜡烛"], ["hollow", "空心K"], ["bar", "美国线"], ["ha", "平均K"], ["area", "面积"]];
@@ -8386,6 +8485,7 @@ function applyUrl() {
           S.linesHidden = !S.linesHidden; this.classList.toggle("on", S.linesHidden);
           draw(); hint(S.linesHidden ? "画线已隐藏 · 再点恢复" : "画线已恢复显示");
         }, "隐藏/显示全部画线(只影响显示)");
+        mk("外观", lookPanelJL, "背景、网格、文字和蜡烛颜色");
         var ctb = mk("K型▾", function () { ctypePopJL(this); }, "图表类型: 蜡烛/空心/美国线/平均K/面积");
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)");
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
