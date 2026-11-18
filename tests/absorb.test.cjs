@@ -60,7 +60,7 @@ test('day-20 expiry keeps close reference and known closed round survives later 
 });
 test('signals confirm at China 15:05, independent of host time zone; future candles are excluded',()=>{
  const {b,f}=fixture(62);const d=b[61].d;let r=A.compute(b,f,{now:Date.parse(d+'T15:04:59+08:00')});assert.equal(r.last.d,b[60].d);assert.equal(r.rows[61].signal,false);
- r=A.compute(b,f,{now:Date.parse(d+'T15:05:00+08:00')});assert.equal(r.rows[61].signal,true);assert.equal(A.eventOf(r).kind,'吸筹候选');
+ r=A.compute(b,f,{now:Date.parse(d+'T15:05:00+08:00')});assert.equal(r.rows[61].signal,true);assert.equal(A.eventOf(r).kind,'波段候选');
  assert.equal(A.compute(b,f,{now:Date.parse(b[58].d+'T16:00:00+08:00')}).rows.length,59);
  assert.equal(A.closed('2026-11-21',Date.parse('2026-11-21T16:00:00+08:00')),false);
 });
@@ -107,7 +107,7 @@ test('Tencent loader uses JSON fetch; concurrent callers retain newly arrived ba
 test('close reminders wait for same-day confirmed funding and deduplicate across reloaded contexts',async()=>{
  const {b,f}=fixture(62),end=Date.parse('2026-11-19T00:00:00Z');for(let i=0;i<b.length;i++){b[i].d=new Date(end-(b.length-1-i)*86400000).toISOString().slice(0,10);f[i].d=b[i].d;}
  const x=networkBrowser(b,f),list=[{code:'600105',name:'永鼎'}],alerts=[],now=Date.parse('2026-11-19T15:05:00+08:00');x.c.Date=class extends Date {static now(){return now;}};let r=await x.A.checkClose(list,a=>alerts.push(a),Date.parse('2026-11-19T15:04:59+08:00'));assert.equal(r.length,0);assert.equal(x.requests(),0);
- r=await x.A.checkClose(list,a=>alerts.push(a),Date.parse('2026-11-19T15:05:00+08:00'));assert.equal(r.length,1);assert.equal(r[0].kind,'吸筹候选');assert.equal(alerts.length,1);
+ r=await x.A.checkClose(list,a=>alerts.push(a),Date.parse('2026-11-19T15:05:00+08:00'));assert.equal(r.length,1);assert.equal(r[0].kind,'波段候选');assert.equal(alerts.length,1);
  assert.equal((await x.A.checkClose(list,a=>alerts.push(a),Date.parse('2026-11-19T16:00:00+08:00'))).length,0);
  const reload=networkBrowser(b,f);reload.c.Date=x.c.Date;Object.assign(reload.saved,x.saved);assert.equal((await reload.A.checkClose(list,a=>alerts.push(a),Date.parse('2026-11-19T16:00:00+08:00'))).length,0);assert.equal(alerts.length,1);
 });
@@ -117,7 +117,7 @@ test('close alerts reject intraday cache after a funding or price fetch failure,
  const head=x.c.document.head;x.c.document.head={appendChild(s){queueMicrotask(()=>s.onerror());}};now=Date.parse('2026-11-19T15:05:00+08:00');assert.equal((await x.A.checkClose(list,a=>alerts.push(a),now)).length,0);assert.equal(alerts.length,0);
  x.c.document.head=head;const todayFund=f.pop();assert.equal((await x.A.checkClose(list,a=>alerts.push(a),now)).length,0);assert.equal(alerts.length,0);f.push(todayFund);
  const y=networkBrowser(b,f);y.c.Date=x.c.Date;now=Date.parse('2026-11-19T14:59:00+08:00');await y.A.load('600105');const fetch=y.c.fetch;y.c.fetch=async()=>{throw Error('offline price feed');};now=Date.parse('2026-11-19T15:05:00+08:00');assert.equal((await y.A.checkClose(list,a=>alerts.push(a),now)).length,0);assert.equal(alerts.length,0);
- y.c.fetch=fetch;assert.equal((await y.A.checkClose(list,a=>alerts.push(a),now)).length,1);assert.equal(alerts.length,1);assert.equal(alerts[0].kind,'吸筹候选');
+ y.c.fetch=fetch;assert.equal((await y.A.checkClose(list,a=>alerts.push(a),now)).length,1);assert.equal(alerts.length,1);assert.equal(alerts[0].kind,'波段候选');
 });
 test('home favorites share v6 list, open selected stock, synchronize history, and destroy prior views',()=>{
  const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),start=html.indexOf('  function renderAbsorbFavoritesJL()'),end=html.indexOf("  window.addEventListener('jlabsorb:favorites'",start);

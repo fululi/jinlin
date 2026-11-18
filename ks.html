@@ -339,7 +339,7 @@
   #ksLookJL p { color: #aeb7c6; font-size: 11px; line-height: 1.6; }
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
-<script src="jl_absorb.js?v=2"></script>
+<script src="jl_absorb.js?v=3"></script>
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 
@@ -8010,6 +8010,8 @@ function renderCtrl(ctx, v) {
   paneLegendJL(ctx, v, y2, "主力控盘" + (S.fflowStale ? "·缓存" : ""), cLeg);
   return;
 }
+/* 11-19 用户「成交额按量×收盘价估不对」: 东财K线 f57 带真实成交额(kl[6]), 有就用真的, 缺了才用 量(手)×100×收盘 估, 并在来源里标「估」 */
+function ddxAmtJL(k, st) { var a = k.length > 6 ? +k[6] : NaN; if (isFinite(a) && a > 0) return a; if (st) st.est = true; return k[5] * 100 * k[4]; }
 function renderDdxPane(ctx, v) {
   if (!S.ind.ddx || !v.ddxH || noFund(S.active)) return;
   var kl = S.kl, n = kl.length;
@@ -8032,7 +8034,7 @@ function renderDdxPane(ctx, v) {
         var _bv2 = _fmb[kl[_bj][0]];
         if (_bv2 == null) continue;
         var _bh = Math.abs(_bv2) / _bMx * (h2 - 16) / 2;
-        ctx.fillStyle = _bv2 >= 0 ? "rgba(244,101,95,0.26)" : "rgba(46,189,127,0.26)";
+        ctx.fillStyle = _bv2 >= 0 ? "rgba(255,69,82,0.75)" : "rgba(18,184,154,0.75)";   /* 11-19 用户: 主力净额柱要看得清 */
         var _bx = v.X(_bj) - _bw / 2;
         ctx.fillRect(_bx, _bv2 >= 0 ? _zy - _bh : _zy, _bw, Math.max(1, _bh));
       }
@@ -8045,7 +8047,7 @@ function renderDdxPane(ctx, v) {
     var fm2 = {}, fp2 = {}, ff2 = S.fflow;
     ff2.forEach(function (r) { fm2[r.d] = parseFloat(r.main) || 0; fp2[r.d] = (r.mainPct == null || !isFinite(+r.mainPct)) ? null : +r.mainPct; });
     var ddx = new Array(n).fill(null);
-    var _ddxVia = "";
+    var _ddxVia = "", _ddxAm = { est: false };
     for (i2 = 59; i2 < n; i2++) {
       var ms = 0, as = 0, ps = 0, pc = 0, ok2 = true;
       for (var j2 = i2 - 59; j2 <= i2; j2++) {
@@ -8054,14 +8056,14 @@ function renderDdxPane(ctx, v) {
         if (mv2 == null) { ok2 = false; break; }
         var pv2 = fp2[_k2];
         if (pv2 != null) { ps += pv2; pc++; }
-        ms += mv2; as += kl[j2][5] * 100 * kl[j2][4];
+        ms += mv2; as += ddxAmtJL(kl[j2], _ddxAm);
       }
       if (ok2) { if (pc === 60) { ddx[i2] = ps / 60; _ddxVia = "pct"; } else if (as > 0) { ddx[i2] = ms / as * 100; if (!_ddxVia) _ddxVia = "est"; } }
     }
     var _dl1 = drawDdxLine(ctx, v, ddx, Math.max(59, v.i0), v.i1, base, h2, y2, right, "", "DDX");
     if (_dl1) {
       _ddxOk = true; _ddxLeg = _dl1;
-      if (S.klt === "101") _ddxSrc = "日线DDX60·" + (_ddxVia === "pct" ? "官方净占比" : "估算成交额") + "·截至" + S.fflow[S.fflow.length - 1].d.slice(5) + (S.fflowStale ? "·缓存" : "");
+      if (S.klt === "101") _ddxSrc = "日线DDX60·" + (_ddxVia === "pct" ? "官方净占比" : _ddxAm.est ? "成交额(估)" : "真实成交额") + "·截至" + S.fflow[S.fflow.length - 1].d.slice(5) + (S.fflowStale ? "·缓存" : "");
     }
   }
   // 20bar≈5分线100分钟/15分线5小时窗口, 与日线DDX60同族不同周期
@@ -8076,20 +8078,20 @@ function renderDdxPane(ctx, v) {
         var _day = rd[ri].t.slice(0, 10);
         bm[rd[ri].t.slice(0, 16)] = ri > 0 && rd[ri - 1].t.slice(0, 10) === _day ? rd[ri].main - rd[ri - 1].main : rd[ri].main;
       }
-      var W20 = 20, ddxm = new Array(n).fill(null);
+      var W20 = 20, ddxm = new Array(n).fill(null), _ddxAm2 = { est: false };
       for (i2 = W20 - 1; i2 < n; i2++) {
         var ms3 = 0, as3 = 0, ok3 = true;
         for (var j4 = i2 - W20 + 1; j4 <= i2; j4++) {
           var bv = bm[String(kl[j4][0]).slice(0, 16)];
           if (bv == null) { ok3 = false; break; }
-          ms3 += bv; as3 += kl[j4][5] * 100 * kl[j4][4];
+          ms3 += bv; as3 += ddxAmtJL(kl[j4], _ddxAm2);
         }
         if (ok3 && as3 > 0) ddxm[i2] = ms3 / as3 * 100;
       }
       var _dl2 = drawDdxLine(ctx, v, ddxm, Math.max(W20 - 1, v.i0), v.i1, base, h2, y2, right, "20", "DDX");
       if (_dl2) {
         _ddxOk = true; _ddxLeg = _dl2;
-        _ddxSrc = MIN_LB[S.klt] + "DDX·" + rd[rd.length - 1].t.slice(11, 16);
+        _ddxSrc = MIN_LB[S.klt] + "DDX·" + (_ddxAm2.est ? "成交额(估)·" : "") + rd[rd.length - 1].t.slice(11, 16);
       }
     }
     // 分钟fflow取不到就如实说原因(下方_dst), 不拿日级数据冒充分钟DDX
@@ -8122,7 +8124,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   for (i = Math.max(0, i0); i < i1; i++) { var x = ddx[i]; if (x != null) { if (x < dLo) dLo = x; if (x > dHi) dHi = x; } }
   if (!(dHi > -1e17 && dHi > dLo)) return false;
   var DY = function (x) { return base - (x - dLo) / (dHi - dLo) * (h2 - 16); };
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1;
   var ma = new Array(ddx.length).fill(null);
   for (i = 0; i < ddx.length; i++) {
     if (ddx[i] == null) continue;
@@ -8134,8 +8136,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   for (i = Math.max(0, i0); i < i1; i++) {
     if (ddx[i] == null) continue;
     if (pi >= 0) {
-      var above = (ma[i] != null && ma[pi] != null) ? (ddx[i] + ddx[pi]) / 2 >= (ma[i] + ma[pi]) / 2 : ddx[i] >= ddx[pi];
-      ctx.strokeStyle = above ? "#f4655f" : "#2ebd7f";
+      ctx.strokeStyle = ddx[i] >= ddx[pi] ? "#ffb3cf" : "#2ee6d6";   /* 11-19 用户: 涨淡粉/跌青绿, 和红绿资金柱分开 */
       ctx.beginPath(); ctx.moveTo(v.X(pi), DY(ddx[pi])); ctx.lineTo(v.X(i), DY(ddx[i])); ctx.stroke();
     }
     pi = i;
@@ -8144,9 +8145,11 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   for (i = Math.min(ma.length - 1, i1 - 1); i >= Math.max(0, i0); i--) if (ma[i] != null) { maLast = ma[i]; break; }
   if (maLast != null) {
     var my = DY(maLast);
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.6;
-    ctx.beginPath(); ctx.moveTo(v.padL, my); ctx.lineTo(right, my); ctx.stroke();
-    ctx.fillStyle = "#ffffff"; ctx.font = "bold 9px Menlo,monospace"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+    /* 11-19 用户「高低总有个平均, 一条平的-2.3不对」: MA10 画成跟着走的细线, 半透明白, 不抢DDX线 */
+    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 0.7; ctx.beginPath();
+    var _mp = false; for (i = Math.max(0, i0); i < i1; i++) { if (ma[i] == null) { _mp = false; continue; } if (_mp) ctx.lineTo(v.X(i), DY(ma[i])); else { ctx.moveTo(v.X(i), DY(ma[i])); _mp = true; } }
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff"; ctx.font = "9px Menlo,monospace"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
     var _mly = Math.max(my - 2, y2 + 22);
     if (_mly > y2 + h2 - 13) _mly = my - 13;
     ctx.fillText("MA" + (tag || "10") + " " + maLast.toFixed(1), right - 4, _mly);
@@ -8157,7 +8160,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   var d5 = null;
   for (var j3 = di - 5; j3 >= Math.max(0, i0); j3--) if (ddx[j3] != null) { d5 = ddx[j3]; break; }
   var dir = d5 != null ? (ddx[di] > d5 ? "↑" : (ddx[di] < d5 ? "↓" : "")) : "";
-  var leg = [{ t: "DDX" + tag + (ddx[di] >= 0 ? "+" : "") + ddx[di].toFixed(1) + dir, c: (ma[di] != null) ? (ddx[di] >= ma[di] ? "#f4655f" : "#2ebd7f") : "#ffd21f", b: true }];
+  var leg = [{ t: "DDX" + tag + (ddx[di] >= 0 ? "+" : "") + ddx[di].toFixed(1) + dir, c: d5 == null ? "#ffffff" : ddx[di] >= d5 ? "#ffb3cf" : "#2ee6d6", b: true }];
   if (ma[di] != null) leg.push({ t: "MA" + (tag || "10") + " " + ma[di].toFixed(1), c: "#ffffff" });
   return leg;
 }
@@ -8549,7 +8552,7 @@ var JITU_KS = (function () {
   return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
 })();
 /* ================= 指标开关行 ================= */
-var INDS = [["absorb", "筹码·资金观察"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
   if (kd === "tool") return toolName(ky);
@@ -8906,7 +8909,7 @@ function syncAbsorbKSJL() {
   if (!window.JLAbsorb || !cv) return;
   var on = !!S.ind.absorb;
   if (on && !absorbKSJL) {
-    var el = document.createElement('section'); el.id = 'absorbKSJL'; el.setAttribute('aria-label','筹码资金日级指标');
+    var el = document.createElement('section'); el.id = 'absorbKSJL'; el.setAttribute('aria-label','波段走势(日级)');
     document.getElementById('chartwrap').appendChild(el);
     absorbKSJL = JLAbsorb.mount(el, {onClose:function(){S.ind.absorb=false;store();buildInds();draw();}});
   }

@@ -244,7 +244,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
 #ampCardJL .acRow.t2 .lg{font-size:9px}#ampCardJL .acRow.t2 .lq{font-size:8px}#ampCardJL .acRow.t2{gap:2px}#ampCardJL .acRow.t2 .lg i{font-size:8px}
 #ampCardJL .acRow.t3 .lg{font-size:8.5px}#ampCardJL .acRow.t3 .lq{font-size:7.5px}#ampCardJL .acRow.t3{gap:1px}#ampCardJL .acRow.t3 .lg i{font-size:7.5px}#ampCardJL .acRow.t3 .lg b{letter-spacing:-.3px}
 </style>
-<script src="jl_absorb.js?v=2"></script>
+<script src="jl_absorb.js?v=3"></script>
 </head>
 <body class="plan">
 
@@ -4985,8 +4985,8 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
   window.zpAbsSetJL=set;window.zpAbsToggleJL=function(){set(!on);};
   function sync(){
     if(!window.JLAbsorb)return;var ch=document.getElementById('ch'),mi=document.querySelector('#zpModeJL .mi'),per=document.querySelector('.zp-per'),stk=currentStock();
-    if(mi&&!mi.querySelector('.ab')){var b=document.createElement('button');b.type='button';b.className='ab';b.title='资金观察图 / 返回引擎图';b.setAttribute('aria-label','切换当前股票资金观察图');b.innerHTML='<span style="color:#ffe16b">▲</span><span style="color:#54d9ee">▼</span>';b.onclick=function(e){e.stopPropagation();set(!on);};mi.appendChild(b);}
-    if(per&&!per.querySelector('.zp-abs')){var p=document.createElement('button');p.type='button';p.className='zp-abs';p.textContent='筹码';p.title='东财日级筹码／资金观察';per.insertBefore(p,per.querySelector('.zp-liq'));}
+    if(mi&&!mi.querySelector('.ab')){var b=document.createElement('button');b.type='button';b.className='ab';b.title='波段走势图 / 返回引擎图';b.setAttribute('aria-label','切换当前股票波段走势图');b.innerHTML='<span style="color:#ffe16b">▲</span><span style="color:#54d9ee">▼</span>';b.onclick=function(e){e.stopPropagation();set(!on);};mi.appendChild(b);}
+    if(per&&!per.querySelector('.zp-abs')){var p=document.createElement('button');p.type='button';p.className='zp-abs';p.textContent='波段';p.title='波段走势(东财日级资金)';per.insertBefore(p,per.querySelector('.zp-liq'));}
     var title=document.getElementById('stkNm');
     if(title&&!document.getElementById('zpStockFavJL')){var f=document.createElement('button');f.type='button';f.id='zpStockFavJL';f.onclick=function(e){e.stopPropagation();var x=currentStock();if(x)JLAbsorb.toggleFavorite(x.code,x.name);sync();};title.parentNode.insertBefore(f,title.nextSibling);}
     var fav=document.getElementById('zpStockFavJL');if(fav&&stk)fav.textContent=(JLAbsorb.isFavorite(stk.code)?'★':'☆')+'收藏';
@@ -5600,15 +5600,15 @@ function zpDdxTurnsJL(rows) {
   return out;
 }
 /* 零轴对称、至少±25%，5个百分点分档并留20%空间；不裁切真实极值。 */
-function zpDdxScaleJL(rows) {
-  var peak=0;(rows || []).forEach(function(r){if(r.v!=null && isFinite(r.v)) peak=Math.max(peak,Math.abs(r.v));});
-  return Math.max(25,Math.ceil(peak*1.2/5)*5);
+function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开盘不满20分钟的预热值不进刻度(一分钟就能冲±50%把全天压扁); 至少±10% */
+  var peak=0;(rows || []).forEach(function(r){if(r.v!=null && isFinite(r.v) && !(r.n>0 && r.n<20)) peak=Math.max(peak,Math.abs(r.v));});
+  return Math.max(10,Math.ceil(peak*1.15/5)*5);
 }
 /* jl-zpsub (11-04): 作战屏副图——成交量常驻在主图正下方 + MACD/控盘/实时主力 三选一切换(记住选择);
    与主图同一横轴(xOfHmJL), 十字线双向联动: 主图拖 → 副图同一时刻竖线+读数; 副图上长按拖 → 主图十字线跟着走。
    控盘 = 价格公式(B1–B6, 35根高低位+SMA, 与K线表 ctrlCalc 同式), 不含资金数据; 主力 = 东财1分钟资金流(f52 主力净额, 当日累计). */
 (function () {
-  var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_sub_v1', VH = 62, PH2 = 104, YH = 74;   /* 11-13 用户: VOL 越改越小 → 退回独立一格 h62(同线上v382); 主力意愿在最底下单独一格 YH */
+  var NS = 'http://www.w3.org/2000/svg', KEY = 'zp_sub_v1', VH = 62, PH2 = 104, PH2D = 104, YH = 74; try { var _ph = +localStorage.getItem('zp_ph2_v1'); if (_ph >= 70 && _ph <= 320) PH2 = Math.round(_ph); } catch (_eP) { }   /* 11-19 用户: 副图拖下沿拉高拉矮, 双击复原 104 */   /* 11-13 用户: VOL 越改越小 → 退回独立一格 h62(同线上v382); 主力意愿在最底下单独一格 YH */
   var UP = '#ff4552', DN = '#12b89a', TXT = '#ffffff';
   var mode = 'zz';   /* 11-12 用户: MACD 换成共振追涨(与K线表 ks.html zzArr 同式) */
   try { var m0 = localStorage.getItem(KEY); if (m0 === 'macd') { m0 = 'zz'; localStorage.setItem(KEY, 'zz'); } if (/^(zz|ctrl|flow|mix|ddx)$/.test(m0)) mode = m0; } catch (e) { }
@@ -6205,28 +6205,29 @@ function zpDdxScaleJL(rows) {
       s.appendChild(E('text',{x:X0()+2,y:y+(v===mv2 ? 8 : -2),fill:TXT,opacity:1,'font-size':7},(v>0 ? '+' : '')+v+'%'));
     });
     var moneyMax=0;R.forEach(function(r){if(r.d!=null) moneyMax=Math.max(moneyMax,Math.abs(r.d));});
-    var bars=E('g',{'data-series':'main-net','shape-rendering':'crispEdges',opacity:.35});
+    var bars=E('g',{'data-series':'main-net','shape-rendering':'crispEdges',opacity:.9});   /* 11-19 用户: 资金柱是真实主力进出, 要实心看得清; 柱高压到半格的0.6 不盖线 */
     var bw=Math.max(.55,barW(R)*.8);
-    R.forEach(function(r){if(r.d==null || !moneyMax) return;var y=mid-r.d/moneyMax*half;
+    R.forEach(function(r){if(r.d==null || !moneyMax) return;var y=mid-r.d/moneyMax*half*.6;
       bars.appendChild(E('rect',{x:r.x-bw/2,y:Math.min(mid,y),width:bw,height:Math.abs(y-mid),fill:r.d>=0 ? UP : DN}));});
     s.appendChild(bars);
     var last=R[R.length-1], ref=last.ma;
-    if(ref!=null){var yr=YV(ref);s.appendChild(E('line',{'data-series':'ma10-reference',x1:X0(),x2:X1(),y1:yr,y2:yr,stroke:'#ffffff','stroke-width':.75}));
-      s.appendChild(E('text',{x:X1()-2,y:yr-3,fill:'#f4f7fc','font-size':8,'text-anchor':'end'},'MA10 '+ref.toFixed(2)+'%'));}
-    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7.5},fundingStatusJL()+' · 15秒轮询 · 白线=最新MA10'));
+    /* 11-19 用户「高低总有个平均, 一条平的2.3不对」: MA10 画成跟着走的细线(白, 半透明, 不抢DDX线) */
+    var mp='';R.forEach(function(r){if(r.ma==null || r.n<20){if(mp && mp.slice(-1)!=='|') mp+='|';return;}mp+=(mp && mp.slice(-1)!=='|' ? 'L' : 'M')+r.x.toFixed(1)+' '+YV(r.ma).toFixed(1);});
+    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'rgba(255,255,255,.6)','stroke-width':.6,'stroke-linejoin':'round'}));
+    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 粉=上行 青=下行 · 白细线=MA10'+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
     s.appendChild(E('title',{},'自算净额比20=近20分钟东财主力净额/同分钟真实成交额；非东财原版DDX。淡柱为周期主力净额，独立金额轴；成交量VOL在主图底部。'));
     /* 与截图同类：仅一条连续走势，每段按两端净额比相对各自MA10的均值染红/绿。 */
-    var curve=E('g',{'data-series':'ratio20',fill:'none','stroke-width':.9,'stroke-linecap':'round','stroke-linejoin':'round'});
+    /* 11-19 用户: 线细但清楚; 涨的一段淡粉、跌的一段青绿, 和红绿资金柱分开; 开盘不满20分钟不画 */
+    var curve=E('g',{'data-series':'ratio20',fill:'none','stroke-width':1,'stroke-linecap':'round','stroke-linejoin':'round'});
     for(var ci=1;ci<R.length;ci++){
-      var p=R[ci-1], r=R[ci];if(p.v==null || r.v==null) continue;
-      var above=p.ma!=null && r.ma!=null ? p.v+r.v>=p.ma+r.ma : r.v>=p.v;
-      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:above ? '#ff6b6b' : '#24dfa6'}));
+      var p=R[ci-1], r=R[ci];if(p.v==null || r.v==null || r.n<20 || p.n<20) continue;
+      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:r.v>=p.v ? '#ffb3cf' : '#2ee6d6'}));
     }s.appendChild(curve);
     var f1 = function (v) { return (v >= 0 ? '+' : '') + v.toFixed(1); };
     var lg = function (k) {
       var r = R[k], o = [[r.n < 20 ? '净额比 ' + r.n + '/20预热' : '净额比20(自算)', TXT]];
       if (r.v == null) o.push(['缺同分钟真实成交额/资金', TXT]);
-      else { var pv = null; for (var q = k - 1; q >= 0; q--) if (R[q].v != null) { pv = R[q].v; break; } o.push([f1(r.v) + '%' + (pv == null ? '' : r.v > pv ? '↑' : r.v < pv ? '↓' : '→'), r.ma!=null ? (r.v>=r.ma ? '#ff6b6b' : '#24dfa6') : TXT]); }
+      else { var pv = null; for (var q = k - 1; q >= 0; q--) if (R[q].v != null) { pv = R[q].v; break; } o.push([f1(r.v) + '%' + (pv == null ? '' : r.v > pv ? '↑' : r.v < pv ? '↓' : '→'), pv == null ? TXT : r.v >= pv ? '#ffb3cf' : '#2ee6d6']); if (r.ma != null) o.push(['MA10 ' + f1(r.ma) + '%', TXT]); }
       if(r.d!=null) o.push(['净额 '+fM(r.d),r.d>=0 ? UP : DN]);
       return o;
     };
@@ -6296,6 +6297,14 @@ function zpDdxScaleJL(rows) {
     if (D.pane) { var k2 = curHm == null ? null : atHm(D.pane.P, curHm); legend(pSvg, k2 == null ? D.pane.base : D.pane.lg(k2)); }
     xhLine(vSvg, VH - 2); xhLine(pSvg, PH2 - 2);
     [['vol', vSvg, VH], ['pane', pSvg, PH2]].forEach(function (z) { var o = z[1].querySelector('.zb-ptr'); if (o) o.remove(); });
+    var oH = pSvg && pSvg.querySelector('.zb-xhh'); if (oH) oH.remove();
+    if (!ptr && curHm != null && D.pane && D.pane.snaps && pSvg) {   /* 11-19 用户「十字线要完整」: 主图拖十字线时副图也出横线, 贴在这一分钟的值上, 右边读数 */
+      try { var kH = atHm(D.pane.P, curHm), cH = kH == null ? null : D.pane.snaps(kH)[0];
+        if (cH && cH[1] != null && isFinite(cH[2])) { var gH = E('g', { class: 'zb-xhh', 'pointer-events': 'none' }), lbH = D.pane.fmt(cH[1]) + (mode === 'ddx' ? '%' : ''), wH = lbH.length * 5.6 + 8, yH = Math.max(15, Math.min(PH2 - 3, cH[2]));
+          gH.appendChild(E('line', { x1: X0(), x2: X1(), y1: cH[2], y2: cH[2], stroke: '#fff', 'stroke-width': .7, 'stroke-dasharray': '3 3', opacity: .9 }));
+          gH.appendChild(E('rect', { x: X1() - wH, y: yH - 7, width: wH, height: 12, rx: 2, fill: 'rgba(20,28,42,.92)' }));
+          gH.appendChild(E('text', { x: X1() - wH / 2, y: yH + 2.5, fill: '#fff', 'font-size': 8.5, 'font-weight': 400, 'text-anchor': 'middle' }, lbH)); pSvg.appendChild(gH); } } catch (eH) { }
+    }
     if (ptr) {   /* 副图自己的横线 + 本图的值(量/DIF/DEA/柱/控盘/主力), 靠近关键点会吸上去 */
       var zz = ptr.which === 'vol' ? [vSvg, VH] : [pSvg, PH2], sr = ptr.which === 'vol' ? D.vol : D.pane;
       if (sr && ptr.y != null) {
@@ -6413,9 +6422,41 @@ function zpDdxScaleJL(rows) {
       try { drawYy(P); } catch (eY) { }
       try { if (mode === 'ctrl') drawCtrl(P); else if (mode === 'flow') drawFlow(P); else if (mode === 'mix') drawMix(P); else if (mode === 'ddx') drawDdx(P); else drawZz(P, Zz); } catch (eP) { if (P.length) throw eP; }   /* 11-14: 9:30 前没分时点, 副图画不了也别挡 VOL 竞价量读数 */
       legends();
+      try { paneGrip(); } catch (eG) { }
       try { window.zpDrawPaint && window.zpDrawPaint(); } catch (e2) { }
     } catch (e) { }
   }
+  /* 11-19 用户「副图拖下沿拉高拉矮, 和主图量柱带一样, 双击复原」: 高度存 zp_ph2_v1(70–320, 默认104) */
+  var pgSt = null, pgTap = 0;
+  function paneSize(h) { PH2 = Math.max(70, Math.min(320, Math.round(h))); if (pSvg) pSvg.setAttribute('viewBox', '0 0 360 ' + PH2); }
+  function paneGrip() {
+    if (!pSvg) return; var o = pSvg.querySelector('#zpPaneGrip'); if (o) o.remove();
+    var g = E('g', { id: 'zpPaneGrip' }), cx = (X0() + X1()) / 2;
+    g.appendChild(E('title', {}, '上下拖动调整副图高度；双击复原'));
+    g.appendChild(E('rect', { x: cx - 12, y: PH2 - 2.6, width: 24, height: 2.2, rx: 1.1, fill: 'rgba(255,255,255,.45)', 'pointer-events': 'none' }));
+    g.appendChild(E('rect', { 'data-zppgrip': '1', x: cx - 60, y: PH2 - 12, width: 120, height: 12, fill: 'transparent', 'pointer-events': 'all', style: 'cursor:ns-resize;touch-action:none' }));
+    pSvg.appendChild(g);
+  }
+  function pgOwn(on) { var o = window.__xhOwnJL = window.__xhOwnJL || {}; if (on) o.pg = 1; else delete o.pg; }
+  function pgBegin(e) {
+    var t = e.target && e.target.closest && e.target.closest('[data-zppgrip]'); if (!t || pgSt) return;
+    if (e.cancelable) e.preventDefault(); e.stopImmediatePropagation();
+    var q = e.touches ? e.touches[0] : e, now = Date.now();
+    if (pgTap && now - pgTap < 320) { pgTap = 0; paneSize(PH2D); try { localStorage.removeItem('zp_ph2_v1'); } catch (eS) { } render(); return; }
+    var m = pSvg.getScreenCTM(); pgSt = { y: q.clientY, h: PH2, k: m && m.d > 0 ? m.d : 1, moved: false }; pgOwn(true);
+  }
+  function pgMove(e) {
+    if (!pgSt) return; if (e.cancelable) e.preventDefault(); e.stopImmediatePropagation();
+    var q = e.touches ? e.touches[0] : e; if (Math.abs(q.clientY - pgSt.y) > 3) pgSt.moved = true;
+    var h = Math.max(70, Math.min(320, Math.round(pgSt.h + (q.clientY - pgSt.y) / pgSt.k))); if (h !== PH2) { paneSize(h); render(); }
+  }
+  function pgEnd(e) {
+    if (!pgSt) return; e.stopImmediatePropagation(); pgTap = pgSt.moved ? 0 : Date.now();
+    var mv = pgSt.moved; pgSt = null; pgOwn(false); if (mv) try { localStorage.setItem('zp_ph2_v1', String(PH2)); } catch (eS) { }
+  }
+  window.addEventListener('touchstart', pgBegin, { capture: true, passive: false }); window.addEventListener('mousedown', pgBegin, true);
+  window.addEventListener('touchmove', pgMove, { capture: true, passive: false }); window.addEventListener('mousemove', pgMove, true);
+  window.addEventListener('touchend', pgEnd, true); window.addEventListener('touchcancel', pgEnd, true); window.addEventListener('mouseup', pgEnd, true);
   window.zpCtrlOf = ctrlOf;   /* 周视图副图用同一个控盘公式 */
   window.zpSubXH = function (hm) { curHm = hm == null ? null : hm4(hm); if (!drv) ptr = null; try { legends(); } catch (e) { } };
   window.zpSubRender = render;
