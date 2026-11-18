@@ -79,10 +79,11 @@ body{font-size:12.5px}.wrap{padding:4px 8px 14px}
 <div class="card"><div class="nav"><button id="pt" class="tx">« 有交易</button><button id="pv" class="ar">‹</button><span class="dt" id="dt"></span><button id="nx" class="ar">›</button><button id="nt" class="tx">有交易 »</button></div>
 <div id="dinfo"></div>
 <div class="cw"><canvas id="mk" height="300"></canvas><canvas id="mkO" class="ov"></canvas></div>
+<div class="cw" id="mkFW"><canvas id="mkF" height="46"></canvas><canvas id="mkFO" class="ov"></canvas></div>
 <div id="tl"></div>
 <div class="tbar"><div class="mini"><label>确认<select id="m_bth"></select></label><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><span style="flex:1"></span><div class="chips" id="mvc"></div><div class="chips" id="szc"></div></div></div>
 <div class="tip" id="tip"></div></div>
-<script src="jl_mix_engine.js?v=11172"></script><script src="jl_ledger.js?v=4"></script>
+<script src="jl_mix_engine.js?v=11172"></script><script src="jl_ledger.js?v=5"></script>
 <script>/* 11-13 用户: 复盘页加「台账」页签(信号台账, 只读) */
 (function () { var sg = document.getElementById('rvSeg'); if (!sg) return; var cd = new URLSearchParams(location.search).get('code') || '600105';
   sg.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; var l = b.getAttribute('data-rv') === 'l'; document.body.classList.toggle('ldOn', l); sg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); if (l && window.JLLedger) JLLedger.render(document.getElementById('ldBox'), cd); };
@@ -268,6 +269,29 @@ function candle(c,xc,bw,yo,yh,yl,yc,up){const col=up?'#ff5459':'#1fdc93';let ww=
  const bx=Math.round(xc-ww/2),xs=bx+Math.floor(ww/2)+.5,t=Math.round(Math.min(yo,yc)),bb=Math.max(t+1,Math.round(Math.max(yo,yc)));
  c.lineWidth=1;c.strokeStyle=col;c.fillStyle=col;c.beginPath();c.moveTo(xs,Math.round(yh));c.lineTo(xs,t);c.moveTo(xs,bb);c.lineTo(xs,Math.round(yl));c.stroke();
  if(up&&ww>=4)c.strokeRect(bx+.5,t+.5,ww-1,Math.max(1,bb-t-1));else c.fillRect(bx,t,ww,bb-t)}
+/* 11-19 用户「把价格、资金变化和信号位置放在同一条时间线上」: 时间线复盘, 只读叠加, 不进买卖算法、不改振幅复盘的卖/接.
+   台账(jl_ledger 本机库)里这只票这天真弹过的提醒 → 分时图空心圈(红=卖向 绿=买向 白=只记); 图下主力细格 = 台账存的东财每分钟主力当日累计(黄线, 灰线=0);
+   按住读数多几行: 这分钟主力累计/这分钟变化 + 前后2分钟内的提醒. 缺资金/台账读不到就在细格里写一行. 台账从11-13起才有, 更早的日子是空的 */
+let LGJL={ok:0,sig:{},ff:{}};
+const lgIdxJL=(TA,hm)=>{const s=hm.slice(0,2)+':'+hm.slice(2,4);let i=TA.indexOf(s);if(i<0){i=TA.findIndex(t=>t>s);if(i<0)i=TA.length-1}return i};
+function lgLoadJL(){if(!window.JLLedger){LGJL.err='台账没加载';return Promise.resolve()}
+ return Promise.all([JLLedger.all(),JLLedger.ff()]).then(A=>{const S={},F={};A[0].forEach(r=>{if(r.code!==CODE||!(r.p>0))return;const d=iso(r.date);(S[d]=S[d]||[]).push(r)});A[1].forEach(r=>{if(r.code===CODE&&r.rows&&r.rows.length)F[iso(r.date)]=r.rows});LGJL={ok:1,sig:S,ff:F}}).catch(()=>{LGJL={ok:0,sig:{},ff:{},err:'台账读不到'}})}
+function lgDotsJL(c,d,TA,X,y,B0,B1){const out=[];(LGJL.sig[d]||[]).forEach(r=>{const i=lgIdxJL(TA,r.hm);if(i<B0||i>B1)return;const dr=window.JLLedger&&JLLedger.dirOf?JLLedger.dirOf(r.lbl,r.txt):r.dir,col=dr<0?'#ff5459':dr>0?'#1fdc93':'rgba(255,255,255,.8)',xx=X(i),yy=y(r.p);
+  c.strokeStyle=col;c.lineWidth=1.2;c.beginPath();c.arc(xx,yy,3.6,0,7);c.stroke();c.lineWidth=1;out.push({i,r,col})});return out}
+const lgAmtJL=v=>(v<0?'−':'')+(Math.abs(v)>=1e8?(Math.abs(v)/1e8).toFixed(2)+'亿':(Math.abs(v)/1e4).toFixed(0)+'万');
+function lgFFJL(d,TA,pl,pr,bw,B0,B1){const cv=document.getElementById('mkF');if(!cv)return;const [c,W,H]=prep(cv),R=LGJL.ff[d],sg=(LGJL.sig[d]||[]).length;c.font=FT(400,10);
+ c.fillStyle='rgba(255,255,255,.55)';c.fillText('主力',pl+2,11);
+ if(!R){c.fillText(LGJL.err?('⚠ '+LGJL.err):('这天没存资金'+(sg?'':' · 台账也没这天提醒')+'（作战屏开着过午后才存）'),pl+30,11);return}
+ const A=R.map(q=>[lgIdxJL(TA,q[0]),q[1]]).filter(q=>q[0]>=B0-1&&q[0]<=B1+1);if(A.length<2)return;
+ let mx=Math.max(...A.map(q=>q[1]),0),mn=Math.min(...A.map(q=>q[1]),0);if(mx===mn)mx=mn+1;const pt=14,pb=3,Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb),XX=i=>pl+(i-B0)*bw+bw/2;
+ c.strokeStyle='rgba(255,255,255,.22)';c.beginPath();c.moveTo(pl,Math.round(Y(0))+.5);c.lineTo(W-pr,Math.round(Y(0))+.5);c.stroke();
+ c.save();c.beginPath();c.rect(pl,0,W-pl-pr,H);c.clip();c.strokeStyle='#ffd84d';c.lineWidth=1;c.beginPath();A.forEach((q,k)=>k?c.lineTo(XX(q[0]),Y(q[1])):c.moveTo(XX(q[0]),Y(q[1])));c.stroke();
+ (MK.lg||[]).forEach(o=>{c.strokeStyle=o.col;c.globalAlpha=.45;c.beginPath();c.moveTo(Math.round(XX(o.i))+.5,pt);c.lineTo(Math.round(XX(o.i))+.5,H-pb);c.stroke();c.globalAlpha=1});c.restore();
+ const last=A[A.length-1][1];c.fillStyle='#fff';c.fillText(lgAmtJL(last),W-pr+4,Math.min(H-3,Math.max(10,Y(last)+3.5)))}
+function lgInfoJL(i,x){let s='';try{const d=MK.d,TA=MK.TA,R=LGJL.ff[d];
+ const o=document.getElementById('mkFO');if(o){const r=devicePixelRatio||1,c=o.getContext('2d');c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,o.width,o.height);c.strokeStyle='rgba(255,255,255,.6)';c.beginPath();c.moveTo(Math.round(x)+.5,0);c.lineTo(Math.round(x)+.5,o.height/r);c.stroke()}
+ if(R){const hm=(TA[i]||'').replace(':',''),k=R.findIndex(q=>q[0]===hm);if(k>=0)s+='\n主力 '+lgAmtJL(R[k][1])+(k?'（这分钟 '+(R[k][1]>=R[k-1][1]?'+':'')+lgAmtJL(R[k][1]-R[k-1][1])+'）':'')}
+ const nb=(MK.lg||[]).filter(z=>Math.abs(z.i-i)<=2).map(z=>z.r.hm.slice(0,2)+':'+z.r.hm.slice(2)+' '+(z.r.lbl||'')+' '+String(z.r.txt||'').slice(0,18)+' '+(+z.r.p).toFixed(2));if(nb.length)s+='\n提醒 '+nb.slice(0,3).join('\n　　 ')}catch(e){}return s}
 function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.info[d],TA=DATA.tm[d]||[];const cv=document.getElementById('mk'),[c,W,H]=prep(cv);
  const pl=4,pr=44,pt=14,pb=18,n=bars.length,B0=ZV.mk?Math.max(0,Math.min(ZV.mk[0],n-1)):0,B1=ZV.mk?Math.min(n-1,ZV.mk[1]):n-1,bw=(W-pl-pr)/(B1-B0+1),VB=bars.slice(B0,B1+1);
  const M=[];TR.forEach(t=>{if(t[0]===d)M.push({S:1,i:t[1],p:t[2],t});if(t[3]===d)M.push({S:0,i:t[4],p:t[5],t})});const MV=M.filter(m=>m.i>=B0&&m.i<=B1);
@@ -293,8 +317,9 @@ function drawMK(){const d=sel,bars=DATA.bars[d].map(b=>b.map(x=>x/100)),f=DATA.i
  if(LBS.length>BUD)LBS=LBS.slice().sort((a,b)=>Math.abs(b.leg)-Math.abs(a.leg)).slice(0,BUD).sort((a,b)=>a.i2-b.i2);
  LBS.forEach(q=>{const x=X(q.i2),yy=y(q.p),up=q.h===1,col=up?'#ff9a3c':'#4ff0ff';c.fillStyle=col;c.beginPath();c.arc(x,yy,2.2,0,7);c.fill();
   c.font=FT(500,9.5);const l1=(up?'▲':'▼')+Math.abs(q.leg).toFixed(1)+'%',w=c.measureText(l1).width+4,XX=Math.max(pl,Math.min(x-w/2,W-pr-w)),Y0=place(XX,up?yy-17:yy+5,w,12,up?-1:1,1);if(Y0==null)return;otx(c,l1,XX+2,Y0+9.5)});
+ const LGD=lgDotsJL(c,d,TA,X,y,B0,B1);
  c.restore();
- MK={pl,pr,bw,bars,hit,W,H,B0,N:n,yv:v=>hi-(v-pt)/(H-pt-pb)*(hi-lo),sws:SWS};
+ MK={pl,pr,bw,bars,hit,W,H,B0,N:n,yv:v=>hi-(v-pt)/(H-pt-pb)*(hi-lo),sws:SWS,lg:LGD,TA,d};lgFFJL(d,TA,pl,pr,bw,B0,B1);
  document.getElementById('dt').textContent=d+' '+'日一二三四五六'[new Date(d).getDay()];
  const dh=Math.max(...bars.map(b=>b[1])),dl=Math.min(...bars.map(b=>b[2]));
  document.getElementById('dinfo').innerHTML='<i style="background:'+CC[f.cat]+'"></i><b style="color:'+CC[f.cat]+'">'+f.cat+' '+pf(f.gap)+'%</b> · 振幅 今 <b>'+((dh-dl)/f.pc*100).toFixed(1)+'%</b> / 均 '+f.amp.toFixed(1)+'% · '+(f.ma10?'10日线上':'10日线下')+(phaseOf(d)?' · '+phaseOf(d):'');
@@ -312,9 +337,10 @@ function mkMove(ev){const r=document.getElementById('mk').getBoundingClientRect(
  const i=Math.max(0,Math.min(MK.bars.length-1,MK.B0+Math.floor((x0-MK.pl)/MK.bw))),b=MK.bars[i],x=MK.pl+(i-MK.B0)*MK.bw+MK.bw/2;
  const h=MK.hit.find(z=>Math.abs(z.x-x0)<9&&Math.abs(z.y-yy)<10);let info=tm(i,sel)+' 开'+b[0]+' 高'+b[1]+' 低'+b[2]+' 收'+b[3]+' 距昨收'+((b[3]/DATA.info[sel].pc-1)*100).toFixed(1)+'%';
  if(h){const t=h.m.t;info+='\n'+(h.m.S?t[6]:'接回 · '+t[7])+' '+h.m.p.toFixed(2)+' · 这轮差价 '+fmt(t[8])}
+ info+=lgInfoJL(i,x);
  const pv=MK.yv(yy),pcz=DATA.info[sel].pc,pp=(pv/pcz-1)*100;cross('mk',x,yy,MK.W,MK.H,MK.pl,MK.pr,pv.toFixed(2),tm(i,sel),info,(pp>=0?'+':'')+pp.toFixed(2)+'%')}
 document.getElementById('mk').addEventListener('mousemove',mkMove);document.getElementById('mk').addEventListener('touchmove',mkMove,{passive:true});
-document.getElementById('mk').addEventListener('mouseleave',()=>ovClear('mk'));
+document.getElementById('mk').addEventListener('mouseleave',()=>{ovClear('mk');ovClear('mkF')});
 
 /* 缩放/平移(同作战屏K线引擎手感): 双指捏合=横向缩放, 双指一起挪=平移; 电脑 Ctrl+滚轮(触控板捏合)=缩放, 横向滚=平移, 按住拖=平移;
    分时图右边价格轴上下拖=纵向放大缩小; 双击/双点=复原. 单指照旧出十字线 */
@@ -408,5 +434,5 @@ function syncQ(){try{if(!PW||!PW.LIVE)return;const s=document.getElementById('p_
 if(PW&&PW.LIVE&&PW.LIVE.sh>0){const s=document.getElementById('p_q'),q=Math.max(100,Math.floor(PW.LIVE.sh/100)*100);if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q}   /* 打开复盘时带上作战屏的每轮股数 */
 setInterval(()=>{try{if(!PW||!PW.LIVE||!(PW.LIVE.sh>0))return;const q=Math.floor(PW.LIVE.sh/100)*100;if(q===QSYNC)return;QSYNC=q;const s=document.getElementById('p_q');if(+s.value===q)return;if(![...s.options].some(o=>+o.value===q)){const o=document.createElement('option');o.value=q;o.textContent=q;s.appendChild(o)}s.value=q;load();ui();selDay(sel)}catch(e){}},2000);   /* 作战屏改了每轮, 这里跟着重算 */
 loadH().then(()=>{SRC=buildSrc();if(SRC.days.length<3){document.querySelector('.wrap').innerHTML='<div class="card">'+(NAME||CODE)+'：分钟数据还不够（'+SRC.days.length+'天），等行情加载后再右滑。</div>';return}
- load();document.querySelectorAll('.ps select').forEach(s=>s.onchange=()=>{syncQ();load();ui();selDay(sel)});ui();selDay(sel)});let LW=0;addEventListener('resize',()=>{const w=document.querySelector('.cw').clientWidth;if(Math.abs(w-LW)<2)return;LW=w;drawDK();drawMK()});LW=document.querySelector('.cw').clientWidth;
+ lgLoadJL().then(()=>{try{if(sel)drawMK()}catch(e){}});load();document.querySelectorAll('.ps select').forEach(s=>s.onchange=()=>{syncQ();load();ui();selDay(sel)});ui();selDay(sel)});let LW=0;addEventListener('resize',()=>{const w=document.querySelector('.cw').clientWidth;if(Math.abs(w-LW)<2)return;LW=w;drawDK();drawMK()});LW=document.querySelector('.cw').clientWidth;
 </script></body></html>

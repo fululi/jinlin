@@ -1,4 +1,4 @@
-/* jl_ledger.js v4 (2026-11-13; 11-17 成绩去重/方向纠错/导出每分钟资金; 11-18 导出提醒CSV) —— 信号台账: 作战屏每弹一次提醒自动记 时间·价格·信号, 之后按当天1分钟价补「30分内先走0.8%算对 / 30分后 / 收盘」.
+/* jl_ledger.js v5 (2026-11-13; 11-19 顺带存每分钟价(时间线复盘用, ff库里 id=px|代码|日期, 不升库版本); 11-17 成绩去重/方向纠错/导出每分钟资金; 11-18 导出提醒CSV) —— 信号台账: 作战屏每弹一次提醒自动记 时间·价格·信号, 之后按当天1分钟价补「30分内先走0.8%算对 / 30分后 / 收盘」.
    另存每天1分钟主力净额(东财 f52 当日累计), 攒样本测资金掉头.
    存 IndexedDB(库 jl_ledger_v1, 和 localStorage 分开, 不会挤爆首页缓存); 台账留 400 天、资金留 160 天, 超了自动删最旧.
    只记录, 不碰买卖算法和提醒本身. 作战屏(jl_zp_war.html)写, 复盘页(jl_amp_review.html)「台账」页签读. */
@@ -68,6 +68,8 @@
     if (!code || !date || !pts || pts.length < 2) return Promise.resolve(0);
     var P = pts.filter(function (q) { return q && q.p > 0; }).map(function (q) { return { t: tmin(q.hm), p: +q.p }; }).filter(function (q) { return q.t >= 570 && q.t <= 810; });
     if (!P.length) return Promise.resolve(0);
+    /* 11-19 用户「价格、资金变化和信号放同一条时间线」: 每分钟价顺带存一份(复盘页时间线用), 只记录不进算法 */
+    if (P.length >= 2) tx("ff", "readwrite", function (s) { s.put({ id: "px|" + code + "|" + date, px: 1, code: code, date: date, n: P.length, rows: pts.filter(function (q) { return q && q.p > 0; }).map(function (q) { return [hm4(q.hm), +q.p]; }), at: Date.now() }); }).catch(function () { });
     var lastT = P[P.length - 1].t, close = P[P.length - 1].p;
     return all("sig").then(function (L) {
       var ch = L.filter(function (r) { return r.code === code && r.date === date && !r.done; });
@@ -156,6 +158,7 @@
   }
   function exportFF() {
     all("ff").then(function (A) {
+      A = A.filter(function (r) { return !r.px; });   /* 11-19: 价格记录不进资金CSV */
       A.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
       var L = ["\ufeffcode,date,hm,main,xl,l,m,s"], n = 0;
       A.forEach(function (r) { (r.rows || []).forEach(function (v) { L.push([r.code, r.date].concat(v).join(",")); n++; }); });
@@ -178,5 +181,5 @@
       document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
     }).catch(function () { alert("读不到本机台账(IndexedDB)"); });
   }
-  window.JLLedger = { add: add, evalDay: evalDay, saveFF: saveFF, render: render, all: function () { return all("sig"); }, ff: function () { return all("ff"); }, exportFF: exportFF, exportSig: exportSig, dirOf: dirOf, kindOf: kindOf };
+  window.JLLedger = { add: add, evalDay: evalDay, saveFF: saveFF, render: render, all: function () { return all("sig"); }, ff: function () { return all("ff").then(function (A) { return A.filter(function (r) { return !r.px; }); }); }, px: function () { return all("ff").then(function (A) { return A.filter(function (r) { return r.px; }); }); }, exportFF: exportFF, exportSig: exportSig, dirOf: dirOf, kindOf: kindOf };
 })();

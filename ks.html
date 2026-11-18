@@ -4164,6 +4164,9 @@ function ffSaveJL() {   /* 11-19c 用户「点了没反应」: 在这次点击�
   try { if (navigator.canShare && navigator.canShare({ files: files }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { navigator.share({ files: files, title: files[0].name }).catch(function (e) { if (e && e.name !== "AbortError") { window.__ffFiles = files; ffBtnJL("⇩存CSV", 1); hint("⚠ 分享没打开(" + (e.name || "") + "), 再点「⇩存CSV」"); } }); return; } } catch (e) {}
   files.forEach(function (f, i) { setTimeout(function () { var a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000); }, i * 600); });
 }
+/* 11-19f 用户「怎么又从新开始」: 切底栏/锁屏/刷新会把 K线页重载, 拉了一半全丢 → 每拉到一只就存进本机 IndexedDB(ks_ffexp), 当天再点只补没拉到的 */
+function ffDbJL(cb) { try { var rq = indexedDB.open("ks_ffexp", 1); rq.onupgradeneeded = function () { rq.result.createObjectStore("r"); }; rq.onsuccess = function () { cb(rq.result); }; rq.onerror = function () { cb(null); }; } catch (e) { cb(null); } }
+function ffDayJL() { var d = new Date(), pm = d.getHours() * 60 + d.getMinutes() >= 15 * 60 + 5; return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + (pm ? "盘后" : "盘中"); }   /* 11-19h 盘中拉的今天那行不完整: 收盘后(15:05)再点要重拉, 所以缓存按 日期+盘中/盘后 分开 */
 function ffBatchJL() {   /* 11-19d 用户「一直准备、表出不来」: 板块名单等不到就不开工 → 个股立刻开拉, 板块名单并行拉到再追加; 每个先 daykline(带占比), 不通换 fflow/kline, 再换 push2delay; 前 30 个全失败=东财连不上就停; 拉的中途再点按钮=停下并存已拉到的 */
   if (window.__ffRun) { window.__ffStop = 1; return; }
   window.__ffRun = 1; window.__ffStop = 0; ffBtnJL("⇩准备…", 1);
@@ -4173,14 +4176,17 @@ function ffBatchJL() {   /* 11-19d 用户「一直准备、表出不来」: 板�
   try { (S.codes || []).forEach(function (c) { var b = String(c[0]).replace(/^(sh|sz)/, ""); if (/^\d{6}$/.test(b)) stk[b] = c[1] || ""; }); } catch (e) {}
   try { var cf = JSON.parse(localStorage.getItem("ks_ff_v1") || "{}"); Object.keys(cf).forEach(function (k) { var b = k.replace(/^(sh|sz)/, ""); if (/^\d{6}$/.test(b) && !(b in stk)) stk[b] = ""; }); } catch (e) {}
   var ffL = ["代码,名称,日期,主力净额,小单,中单,大单,超大单,主力净占比"], kL = ["代码,名称,日期,开,收,高,低,成交量,成交额"], nOk = 0, nBad = 0, lastD = "";
-  var retry = [], again = 0; window.__ffGap = 0;
+  var retry = [], again = 0, ready = 0, cache = {}, db = null, nCache = 0; window.__ffGap = 0;
   var jobs = [], k = 0, done = 0, live = 0, bkWait = 2, seenBK = {}, ended = 0;
   Object.keys(stk).sort().forEach(function (c) { jobs.push([c, stk[c], (/^[569]/.test(c) ? "1." : "0.") + c, 0]); });
-  function get(urls, cb) { var t = 0; (function go() { if (t >= urls.length) return cb(null); jsonp(urls[t++], function (err, d) { if (!err && d && d.data && (d.data.klines ? d.data.klines.length : d.data.diff)) return cb(d.data); go(); }, 6000); })(); }
+  var dayOk = 0, dayBad = 0;   /* 11-19g 手机上 fflow/daykline 一直不通(66个全是 kline 回来的, 没占比), 每只白等 6 秒 → 连败 5 次且没成过就先走 kline */
+  function get(urls, cb) { var t = 0; (function go() { if (t >= urls.length) return cb(null); var u = urls[t++]; jsonp(u, function (err, d) { var okD = !err && d && d.data && d.data.klines && d.data.klines.length; if (/fflow\/daykline/.test(u)) okD ? dayOk++ : dayBad++; if (!err && d && d.data && (d.data.klines ? d.data.klines.length : d.data.diff)) return cb(d.data); go(); }, 6000); })(); }
   var H2 = ["push2his.eastmoney.com", "push2delay.eastmoney.com"];
   function ffUrls(sec) {
     var q = "secid=" + sec + "&ut=" + UT + "&fields1=f1,f2,f3,f7";
-    return [H2[0] + "/api/qt/stock/fflow/daykline/get?" + q + "&lmt=320&end=20500101&fields2=f51,f52,f53,f54,f55,f56,f57", H2[0] + "/api/qt/stock/fflow/kline/get?" + q + "&klt=101&lmt=320&fields2=f51,f52,f53,f54,f55,f56", H2[1] + "/api/qt/stock/fflow/daykline/get?" + q + "&lmt=320&end=20500101&fields2=f51,f52,f53,f54,f55,f56,f57"].map(function (u) { return "https://" + u; });
+    var a = [H2[0] + "/api/qt/stock/fflow/daykline/get?" + q + "&lmt=320&end=20500101&fields2=f51,f52,f53,f54,f55,f56,f57", H2[0] + "/api/qt/stock/fflow/kline/get?" + q + "&klt=101&lmt=320&fields2=f51,f52,f53,f54,f55,f56", H2[1] + "/api/qt/stock/fflow/daykline/get?" + q + "&lmt=320&end=20500101&fields2=f51,f52,f53,f54,f55,f56,f57"].map(function (u) { return "https://" + u; });
+    if (dayBad >= 5 && !dayOk) a = [a[1], a[2], a[0]];
+    return a;
   }
   ["m:90+t:2", "m:90+t:3"].forEach(function (fs) {
     var q = "/api/qt/clist/get?pn=1&pz=2000&po=1&np=1&fltt=2&invt=2&fid=f12&fs=" + fs + "&fields=f12,f14&ut=" + UT;
@@ -4191,25 +4197,37 @@ function ffBatchJL() {   /* 11-19d 用户「一直准备、表出不来」: 板�
   });
   function show() { if (ended) return; ffBtnJL("⇩" + done + "/" + jobs.length + (bkWait ? "+" : "") + (nBad ? " ✗" + nBad : ""), 1); }
   function pump() {
-    if (ended) return;
+    if (ended || !ready) return;
     if (window.__ffStop || (done >= 30 && !nOk)) return out();
+    while (k < jobs.length && cache[jobs[k][0]]) { k++; done++; }
     if (live < 3 && k < jobs.length && !window.__ffGap) { window.__ffGap = 1; one(jobs[k++]); setTimeout(function () { window.__ffGap = 0; pump(); }, 150); }
     if (!live && k >= jobs.length && !bkWait) { if (retry.length && !again) { again = 1; jobs = jobs.concat(retry); nBad -= retry.length; done -= retry.length; retry = []; return pump(); } out(); }
   }
   function one(j) {
-    live++; var left = j[3] ? 2 : 1, ok = 0;
-    function fin() { if (--left) return; live--; if (ok) nOk++; else { nBad++; if (!again) retry.push(j); } done++; show(); pump(); }
+    if (cache[j[0]]) { done++; show(); return; }   /* 今天已拉过, 行已从本机放进表 */
+    live++; var left = j[3] ? 2 : 1, ok = 0, myF = [], myK = [];   /* 每只自己的行, 别用 ffL.slice(并发时会混进别的票) */
+    function fin() { if (--left) return; live--; if (ok) { nOk++; cache[j[0]] = 1; Array.prototype.push.apply(ffL, myF); Array.prototype.push.apply(kL, myK); if (db) try { db.transaction("r", "readwrite").objectStore("r").put({ day: ffDayJL(), ff: myF, k: myK }, j[0]); } catch (e) {} } else { nBad++; if (!again) retry.push(j); } done++; show(); pump(); }
     get(ffUrls(j[2]), function (d) {
-      if (d && d.klines) { ok = 1; d.klines.forEach(function (r) { var p = r.split(","); ffL.push([j[0], j[1].replace(/,/g, " "), p[0].slice(0, 10), p[1], p[2], p[3], p[4], p[5], p[6] == null ? "" : p[6]].join(",")); if (p[0] > lastD) lastD = p[0].slice(0, 10); }); }
+      if (d && d.klines) { ok = 1; d.klines.forEach(function (r) { var p = r.split(","); myF.push([j[0], j[1].replace(/,/g, " "), p[0].slice(0, 10), p[1], p[2], p[3], p[4], p[5], p[6] == null ? "" : p[6]].join(",")); if (p[0] > lastD) lastD = p[0].slice(0, 10); }); }
       fin();
     });
     if (j[3]) { var kq = "/api/qt/stock/kline/get?secid=" + j[2] + "&klt=101&fqt=0&lmt=500&end=20500101&fields1=f1,f2,f3&fields2=f51,f52,f53,f54,f55,f56,f57&ut=" + UT;
       get(["https://" + H2[0] + kq, "https://" + H2[1] + kq], function (d) {
-        if (d && d.klines) d.klines.forEach(function (r) { var p = r.split(","); kL.push([j[0], j[1].replace(/,/g, " "), p[0], p[1], p[2], p[3], p[4], p[5], p[6]].join(",")); });
+        if (d && d.klines) d.klines.forEach(function (r) { var p = r.split(","); myK.push([j[0], j[1].replace(/,/g, " "), p[0], p[1], p[2], p[3], p[4], p[5], p[6]].join(",")); });
         fin();
       }); }
   }
-  show(); pump();
+  show();
+  ffDbJL(function (d0) {
+    db = d0; if (!db) { ready = 1; return pump(); }
+    try {
+      var st = db.transaction("r", "readwrite").objectStore("r"), cur = st.openCursor(), today = ffDayJL();
+      cur.onsuccess = function () { var c = cur.result; if (!c) { ready = 1; if (nCache) hint("⚠ 今天已拉过 " + nCache + " 个, 接着补剩下的"); return pump(); }
+        var v = c.value; if (v && v.day === today) { cache[c.key] = 1; nCache++; nOk++; Array.prototype.push.apply(ffL, v.ff || []); Array.prototype.push.apply(kL, v.k || []); (v.ff || []).forEach(function (r) { var d = r.split(",")[2]; if (d > lastD) lastD = d; }); } else c.delete();
+        c.continue(); };
+      cur.onerror = function () { ready = 1; pump(); };
+    } catch (e) { ready = 1; pump(); }
+  });
   function out() {
     ended = 1; window.__ffRun = 0; window.__ffStop = 0;
     if (ffL.length < 2) { ffBtnJL("⇩资金"); hint("⚠ 前 " + done + " 个一个都没拉到 = 东财连不上(手机网络被拦/开着VPN), 换 Wi-Fi 或关 VPN 再点"); return; }
