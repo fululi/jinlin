@@ -243,6 +243,7 @@
   body.embed.showbars .topbar, body.embed.showbars .row { display: flex; }
   body.embed.showbars .row[data-tabs] { display: none; } /* 内嵌单票: 股票切换行仍没意义 */
   /* === 金粼融合 0913晚(重打在部署版上): 藏青底 + 单行抽屉紧凑条 === */
+  html.tvlook, html.tvlook body, html.tvlook body.embed { background: #080a0e !important; } /* 11-18 TV风格: 画布纯黑底(原#0a0e0b偏绿) */
   body.embed { background: rgba(9,22,34,.78); color-scheme: dark; } /* =父级 .plots rgba(11,27,41,.933); transparent会被浏览器填白(0913已踩过) */
   body.embed .pstrip { background: rgba(6,13,21,.30); border-color: rgba(30,52,66,.55); top: 7px; } /* ks-1012c: 嵌入态淡化+微降7px(放大顶满后左上角不再突兀, 用户反馈); 独立版原样 */
   body.embed .yz button { background: rgba(8,18,26,.6); color: #81e6d9; border-color: #21404d; }
@@ -953,10 +954,11 @@ function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFix
   }
 
 var TVL = (function () { try { var q = new URLSearchParams(location.search).get("tv"); if (q === "0" || q === "1") return q === "1"; return localStorage.getItem("ks_tvlook_v1") !== "0"; } catch (e) { return true; } })(); /* 11-18 用户「按你说的试试」: 看盘工作区整理(TV风格)总开关, ?tv=0 看旧版 */
+try { if (TVL) document.documentElement.classList.add("tvlook"); } catch (e) {}
 var UP = TVL ? "#f23645" : "#ff6f66", DN = TVL ? "#089981" : "#35d99a", /* 11-18 用户「蜡烛红不够正」: TV风格用 TradingView 同款正红/正绿 */ DIM = "#eef3f0", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f";
 // 金粼0913晚: embed网格细化(0.5px Tiffany青调)——只动网格线, 字/标注颜色一律跟随部署版(字颜色全抄K-STATION)
 function _embMode() { return typeof document !== "undefined" && document.body && document.body.classList.contains("embed"); }
-function gridSt(ctx) { if (_embMode()) { ctx.strokeStyle = "rgba(135,183,196,0.10)"; ctx.lineWidth = 0.5; } else { ctx.strokeStyle = GRID; ctx.lineWidth = 1; } }
+function gridSt(ctx) { if (TVL) { ctx.strokeStyle = "#191d24"; ctx.lineWidth = 1; return; } /* 11-18 TV风格网格 */ if (_embMode()) { ctx.strokeStyle = "rgba(135,183,196,0.10)"; ctx.lineWidth = 0.5; } else { ctx.strokeStyle = GRID; ctx.lineWidth = 1; } }
 function legIdxJL(v) {
   var i = S.cross ? v.I(S.cross.x) : v.i1 - 1;
   return Math.max(v.i0, Math.min(v.i1 - 1, i));
@@ -2303,6 +2305,7 @@ function ksSyncBoxJL(mode) { // mode: "out" 导出 / "in" 导入
 // 现在: 尺寸没变不重设(不闪清屏); 渲染抛错→兜底画简版K线,图永不空白
 function drawRafJL() { if (S._rafP) return; S._rafP = requestAnimationFrame(function () { S._rafP = 0; draw(); }); }
 try { S.magnet = localStorage.getItem("ksm_magnet_v1") === "1"; } catch (e) {}
+try { S.xhHold = localStorage.getItem("ks_xhhold_v1") === "1"; } catch (e) {}
 document.addEventListener("keydown", function (e) {
   var tg = e.target && e.target.tagName; if (tg === "INPUT" || tg === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
   var mod = e.metaKey || e.ctrlKey, k = e.key;
@@ -2356,11 +2359,16 @@ function drawReal() {
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(hh * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(hh * dpr); }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, hh);
-  if (TVL && !ctx.__tvFont) { /* 11-18 用户「字体不好看」: TV风格把画布上 Menlo 等宽字统一换系统字(苹方/SF), 粗体降到500 */
+  if (TVL && !ctx.__tvFont && typeof CanvasRenderingContext2D !== "undefined") { /* 11-18 用户「字体不好看」: TV风格把画布上 Menlo 等宽字统一换系统字(苹方/SF), 粗体降到500 */
     var _fd = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "font");
     if (_fd && _fd.set) Object.defineProperty(ctx, "font", { configurable: true, get: function () { return _fd.get.call(this); }, set: function (f) {
       f = String(f); if (/Menlo|monospace/.test(f)) f = f.replace(/\bbold\b/, "500").replace(/Menlo,?\s*/g, "").replace(/monospace/, "-apple-system, \"PingFang SC\", Helvetica, sans-serif");
+      if (this.__soft) f = f.replace(/\bbold\b|\b[5-9]00\b/, "400").replace(/(\d+(?:\.\d+)?)px/, function (m0, n0) { return Math.max(9, +n0 - 1.5) + "px"; }); /* 11-18 用户「高标签/+7.2%太抢眼」: 标注层降一号、去粗 */
       _fd.set.call(this, f); } });
+    var _fs = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "fillStyle");
+    if (_fs && _fs.set) Object.defineProperty(ctx, "fillStyle", { configurable: true, get: function () { return _fs.get.call(this); }, set: function (c0) {
+      if (this.__soft && typeof c0 === "string") { if (/^#fff(fff)?$/i.test(c0)) c0 = "rgba(232,238,242,0.74)"; else if (/^#ffd94a$/i.test(c0)) c0 = "rgba(255,217,74,0.72)"; }
+      _fs.set.call(this, c0); } });
     ctx.__tvFont = 1;
   }
   S._xhPlus = null; /* 11-18 十字线右价签旁小「+」: 每帧重登记 */
@@ -2593,7 +2601,7 @@ function drawReal() {
   ctx.beginPath(); ctx.moveTo(v.padL, v0); ctx.lineTo(v.padL + v.plotW, v0); ctx.stroke();
   for (i = i0; i < i1; i++) {
     var kk = kl[i];
-    ctx.fillStyle = kk[4] >= kk[1] ? "rgba(255,111,102,0.75)" : "rgba(53,217,154,0.75)";
+    ctx.fillStyle = kk[4] >= kk[1] ? (TVL ? "rgba(242,54,69,0.5)" : "rgba(255,111,102,0.75)") : (TVL ? "rgba(8,153,129,0.5)" : "rgba(53,217,154,0.75)"); /* 11-18 TV风格: 量柱同色半透明, 主图蜡烛不透明 */
     var vh = kk[5] / v.vMax * (v.volH - 10);
     ctx.fillRect(v.X(i) - bw / 2, v0 + v.volH - vh, bw, vh);
     if (S.klt === "101" && pvdFlags(kl)[i]) {
@@ -2781,6 +2789,16 @@ function drawReal() {
     var maT = S.prm.ma.map(function (p5) { var mv = maOfJL(kl, p5)[ci]; return mv == null ? null : mv.toFixed(d2); });
     if (maT[0]) info.push((S.prm.maType === "sma" ? "MA " : "EMA ") + maT.filter(Boolean).join(" / "));
     if (S.klt === "101" && pvdFlags(kl)[ci]) info.push("量缩新高·锁仓或背离,结合DDX看");
+    if (TVL) { /* 11-18 用户「两个都要」A: 浮框改主图左上一行读数(TradingView式) */
+      ctx.save(); ctx.font = "400 11px -apple-system, \"PingFang SC\", sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      var _lx = v.padL + 4, _ly = v.pTop + 8, _cc = ck[4] >= ck[1] ? UP : DN;
+      var _seg = [[String(ck[0]).slice(0, 16) + "  ", "rgba(200,210,215,0.7)"], ["开", "rgba(200,210,215,0.7)"], [ck[1].toFixed(d2) + " ", _cc], ["高", "rgba(200,210,215,0.7)"], [ck[2].toFixed(d2) + " ", _cc], ["低", "rgba(200,210,215,0.7)"], [ck[3].toFixed(d2) + " ", _cc], ["收", "rgba(200,210,215,0.7)"], [ck[4].toFixed(d2) + " ", _cc], [(pct >= 0 ? "+" : "") + pct.toFixed(2) + "%", _cc]];
+      var _tw0 = 0; _seg.forEach(function (sg) { _tw0 += ctx.measureText(sg[0]).width + 2; });
+      ctx.fillStyle = "rgba(8,10,14,0.6)"; ctx.fillRect(_lx - 3, _ly - 8, _tw0 + 6, 16);
+      _seg.forEach(function (sg) { ctx.fillStyle = sg[1]; ctx.fillText(sg[0], _lx, _ly); _lx += ctx.measureText(sg[0]).width + 2; });
+      var _l2 = info.slice(4).join("   "); if (_l2) { ctx.fillStyle = "rgba(200,210,215,0.6)"; ctx.font = "400 10px -apple-system, \"PingFang SC\", sans-serif"; ctx.fillText(_l2, v.padL + 4, _ly + 15); }
+      ctx.restore();
+    } else {
     ctx.font = "11px -apple-system, sans-serif"; ctx.textAlign = "left";
     var bwMax = 0;
     info.forEach(function (t) { bwMax = Math.max(bwMax, ctx.measureText(t).width); });
@@ -2807,6 +2825,7 @@ function drawReal() {
       ctx.fillText(t, bx + 8, byy + 14 + ii * 16);
     });
     ctx.lineWidth = 1; ctx.lineJoin = "miter";
+    } /* TVL 浮框分支结束 */
     // 横线右缘数值标签：主图=价位，VOL=量，MACD=DIF/DEA，强弱T=位置值
     if (curP) {
       var lab = null;
@@ -3288,6 +3307,7 @@ cv.addEventListener("mousemove", function (e) {
   var pt = posT(e);
   if (S.tool) { S.ghost = anchorAt(pt); drawRafJL(); return; }
   if (!M) {
+    if (S.xhHold) return; /* 11-18 用户「两个都要」B: 十字线「按住才出」——悬停不出, 鼠标按住不动约半秒出(原长按逻辑) */
     // 悬停即出十字线+金额（不用按住），移出画布消失
     S.cross = { x: pt.x, y: pt.y, hover: true };
     drawRafJL();
@@ -5911,6 +5931,10 @@ function renderPHVLJL(ctx, v) { /* 区带·底层(画在ICT/昨高低之下) */
   } catch (ePHZ) {  }
 }
 function renderPHVLMarksJL(ctx, v) { /* 高低点标记·顶层(K线之上) */
+  if (TVL) { ctx.__soft = 1; try { return renderPHVLMarksCoreJL(ctx, v); } finally { ctx.__soft = 0; } } /* 11-18 TV风格: 标注比K线低一层 */
+  return renderPHVLMarksCoreJL(ctx, v);
+}
+function renderPHVLMarksCoreJL(ctx, v) {
   try {
     if (!S.ind.phvl || !v || S.kl.length < 3) return;
     var H = [], L = [], i;
@@ -5925,7 +5949,7 @@ function renderPHVLMarksJL(ctx, v) { /* 高低点标记·顶层(K线之上) */
         x: function (ix) { return v.X(v.i0 + ix); }, y: v.Y,
         left: v.padL, right: v.w - v.padR, top: v.pTop + 2, bottom: v.pTop + v.priceH - 2,
         mode: "card", stamps: true, amp: true, noPerc: true, decimals: 2, series: _se,
-        textColor: "#eef6f9", hiColor: "#ff4fa3", loColor: "#e5484d"
+        textColor: TVL ? "rgba(232,238,242,0.74)" : "#eef6f9", hiColor: TVL ? "rgba(214,120,160,0.55)" : "#ff4fa3", loColor: TVL ? "rgba(210,96,100,0.55)" : "#e5484d"
       });
       return;
     }
@@ -5935,7 +5959,7 @@ function renderPHVLMarksJL(ctx, v) { /* 高低点标记·顶层(K线之上) */
       x: function (ix) { return v.X(v.i0 + ix); }, y: v.Y,
       left: v.padL, right: v.w - v.padR, top: v.pTop + 2, bottom: v.pTop + v.priceH - 2,
       mode: "full", decimals: 2,
-      textColor: "#eef6f9", hiColor: "#f5a623", loColor: "#e5484d"
+      textColor: TVL ? "rgba(232,238,242,0.74)" : "#eef6f9", hiColor: TVL ? "rgba(214,160,90,0.55)" : "#f5a623", loColor: TVL ? "rgba(210,96,100,0.55)" : "#e5484d"
     });
   } catch (ePHM) { }
 }
@@ -8206,6 +8230,9 @@ function ctypePopJL(anchor) {
     b.addEventListener("click", function (e) { e.stopPropagation(); S.ctype = c[0]; S.lineMode = false; if (S.klt === "5D") S._k5d = true; try { localStorage.setItem("ksm_ctype_v1", S.ctype); } catch (e2) {} d.remove(); draw(); hint("图表类型: " + c[1]); });
     d.appendChild(b);
   });
+  var xb = document.createElement("button"); xb.type = "button"; xb.className = "ksMnI al"; xb.textContent = S.xhHold ? "十字线：按住才出 ✓ (点改跟随鼠标)" : "十字线：跟随鼠标 ✓ (点改按住才出)"; /* 11-18 B */
+  xb.addEventListener("click", function (e) { e.stopPropagation(); S.xhHold = !S.xhHold; try { localStorage.setItem("ks_xhhold_v1", S.xhHold ? "1" : "0"); } catch (e2) {} if (S.xhHold && S.cross && S.cross.hover) S.cross = null; d.remove(); draw(); hint(S.xhHold ? "十字线改为按住才出(电脑: 按住不动约半秒; 手机本来就是长按)" : "十字线跟随鼠标"); });
+  d.appendChild(xb);
   document.body.appendChild(d);
   var r = anchor.getBoundingClientRect(); d.style.left = Math.max(4, Math.min(innerWidth - d.offsetWidth - 4, r.left)) + "px"; d.style.top = (r.bottom + 4) + "px";
   setTimeout(function () { document.addEventListener("pointerdown", function cl(e) { if (!d.contains(e.target)) { d.remove(); document.removeEventListener("pointerdown", cl); } }); }, 0);
