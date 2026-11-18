@@ -4158,9 +4158,15 @@ document.querySelector("[data-shot]").addEventListener("click", function () { //
 /* 11-19b 一键批量导出东财日级(口径表 F-EXP1): 回测股池309只(名单截至2026-11-19) + 本机K线列表 + 看过的票 + 东财行业/概念全部板块。
    资金=fflow/daykline 原样; 板块另出日K。同时 6 路, 每个 8 秒超时重试 1 次。电脑双击 金粼量化工具/脚本/导入东财资金.command 合并(只增不删)。 */
 var FFPOOL_D = "2026-11-19", FFPOOL = "000001 000002 000063 000069 000100 000157 000166 000301 000333 000338 000408 000425 000538 000568 000596 000617 000625 000651 000661 000708 000725 000733 000768 000776 000786 000792 000800 000858 000876 000877 000892 000895 000938 000963 000977 000983 000999 001289 001979 002001 002007 002027 002049 002050 002074 002129 002142 002172 002179 002180 002202 002230 002236 002241 002252 002271 002304 002311 002343 002352 002371 002410 002415 002459 002460 002466 002475 002493 002555 002594 002601 002603 002648 002709 002714 002716 002736 002812 002821 002841 002916 002920 002938 003816 300014 300015 300033 300059 300122 300124 300142 300223 300274 300308 300316 300347 300408 300413 300433 300450 300454 300496 300498 300628 300661 300750 300751 300759 300760 300763 300782 300896 300919 300957 300979 300999 301269 600000 600009 600010 600011 600015 600016 600018 600019 600023 600025 600028 600029 600030 600031 600036 600039 600048 600050 600061 600085 600089 600104 600105 600111 600115 600127 600132 600150 600176 600183 600188 600196 600219 600233 600276 600309 600332 600346 600362 600371 600372 600406 600426 600436 600438 600460 600489 600515 600519 600547 600570 600584 600585 600588 600600 600606 600660 600674 600690 600732 600741 600745 600754 600760 600795 600803 600809 600837 600845 600875 600886 600887 600893 600900 600905 600916 600918 600919 600926 600938 600941 600958 600989 600999 601006 601009 601012 601021 601059 601066 601088 601100 601111 601117 601138 601155 601166 601169 601186 601211 601225 601229 601236 601238 601288 601318 601319 601328 601336 601360 601377 601390 601398 601600 601601 601607 601615 601618 601628 601633 601658 601668 601669 601688 601689 601698 601699 601728 601766 601788 601799 601800 601808 601816 601818 601838 601857 601865 601868 601872 601877 601878 601881 601888 601898 601899 601901 601916 601919 601939 601985 601988 601989 601995 601998 603019 603195 603259 603260 603288 603290 603369 603392 603486 603501 603659 603799 603806 603833 603899 603986 603993 605117 605499 605577 688008 688012 688036 688041 688065 688111 688126 688187 688223 688256 688271 688303 688363 688396 688561 688599 688981".split(" ");
+function ffBtnJL(t, on) { var b = window.__ffBtn; if (b) { b.textContent = t; b.classList.toggle("on", !!on); } }
+function ffSaveJL() {   /* 11-19c 用户「点了没反应」: 在这次点击里调分享 */
+  var files = window.__ffFiles; window.__ffFiles = null; ffBtnJL("⇩资金");
+  try { if (navigator.canShare && navigator.canShare({ files: files }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { navigator.share({ files: files, title: files[0].name }).catch(function (e) { if (e && e.name !== "AbortError") { window.__ffFiles = files; ffBtnJL("⇩存CSV", 1); hint("⚠ 分享没打开(" + (e.name || "") + "), 再点「⇩存CSV」"); } }); return; } } catch (e) {}
+  files.forEach(function (f, i) { setTimeout(function () { var a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000); }, i * 600); });
+}
 function ffBatchJL() {
-  if (window.__ffRun) { hint("正在导出, 稍等…"); return; }
-  window.__ffRun = 1;
+  if (window.__ffRun) return;
+  window.__ffRun = 1; ffBtnJL("⇩准备…", 1);
   if ((Date.now() - new Date(FFPOOL_D).getTime()) / 864e5 > 120) hint("⚠ 股池名单是 " + FFPOOL_D + " 的, 已超 120 天, 找 Claude 更新");
   var stk = {};
   FFPOOL.forEach(function (c) { stk[c] = ""; });
@@ -4178,7 +4184,7 @@ function ffBatchJL() {
     var k = 0, done = 0, N = jobs.length;
     function one() {
       if (k >= N) return; var j = jobs[k++], left = j[3] ? 2 : 1, ok = 0;
-      function fin() { if (--left) return; ok ? nOk++ : nBad++; done++; if (done % 20 === 0 || done === N) hint("导出中 " + done + "/" + N + (nBad ? " · 失败 " + nBad : "")); if (done === N) out(); else one(); }
+      function fin() { if (--left) return; ok ? nOk++ : nBad++; done++; ffBtnJL("⇩" + done + "/" + N, 1); if (done === N) out(); else one(); }
       get("https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?secid=" + j[2] + "&lmt=320&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57&ut=" + UT, function (d) {
         if (d && d.klines && d.klines.length) { ok = 1; d.klines.forEach(function (r) { var p = r.split(","); ffL.push([j[0], j[1].replace(/,/g, " "), p[0], p[1], p[2], p[3], p[4], p[5], p[6]].join(",")); if (p[0] > lastD) lastD = p[0]; }); }
         fin();
@@ -4189,19 +4195,17 @@ function ffBatchJL() {
       });
     }
     if (!N) { window.__ffRun = 0; return; }
-    hint("导出中 0/" + N + " · 股票 " + Object.keys(stk).length + " 只 + 板块 " + bks.length + " 个" + (bks.length ? "" : "(板块名单没拉到)"));
+    ffBtnJL("⇩0/" + N, 1); if (!bks.length) hint("⚠ 板块名单没拉到, 先只导个股");
     for (var w = 0; w < 6; w++) one();
   }
   function out() {
     window.__ffRun = 0;
-    if (ffL.length < 2) { hint("⚠ 一只都没拉到(东财连不上), 换个网络再点"); return; }
+    if (ffL.length < 2) { ffBtnJL("⇩资金"); hint("⚠ 一只都没拉到(东财连不上), 换个网络再点"); return; }
     var tag = lastD.replace(/-/g, ""), f1 = "东财资金_日_" + tag + "_" + nOk + "个.csv", f2 = "东财板块K线_日_" + tag + ".csv";
     var files = [new File(["\ufeff" + ffL.join("\n")], f1, { type: "text/csv" })];
     if (kL.length > 1) files.push(new File(["\ufeff" + kL.join("\n")], f2, { type: "text/csv" }));
-    var msg = "导出 " + nOk + " 个" + (nBad ? "(失败 " + nBad + ")" : "") + " · 选「存储到文件」或隔空投送到电脑";
-    try { if (navigator.canShare && navigator.canShare({ files: files }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) { navigator.share({ files: files, title: f1 }).catch(function () {}); hint(msg); return; } } catch (e) {}
-    files.forEach(function (f, i) { setTimeout(function () { var a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 3000); }, i * 600); });
-    hint(msg.replace(" · 选「存储到文件」或隔空投送到电脑", " → 下载文件夹"));
+    window.__ffFiles = files; ffBtnJL("⇩存CSV", 1);
+    hint("⚠ 拉完 " + nOk + " 个" + (nBad ? "(失败 " + nBad + ")" : "") + " · 再点一下「⇩存CSV」→ 存储到文件/隔空投送");
   }
 }
 document.querySelectorAll("[data-sc]").forEach(function (b) {
@@ -8539,7 +8543,7 @@ function applyUrl() {
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)");
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         var zlb = mk("共振线", function () { S.ind.zzl = !S.ind.zzl; this.classList.toggle("on", !!S.ind.zzl); try { store(); buildInds(); } catch (eZ) { } draw(); hint(S.ind.zzl ? "共振线已显示(红=DEMA在线上方, 绿=在下方)" : "共振线已隐藏"); }, "主图共振线 VAR6: 显示/隐藏"); zlb.classList.toggle("on", !!S.ind.zzl);
-        mk("⇩资金", function () { ffBatchJL(); }, "一键导出: 股池+自选+看过的票+全部板块 的东财日级资金, 板块另带日K");
+        mk("⇩资金", function () { window.__ffBtn = this; if (window.__ffFiles) ffSaveJL(); else ffBatchJL(); }, "一键导出: 股池+自选+看过的票+全部板块 的东财日级资金, 板块另带日K");
         document.body.insertBefore(bar, document.body.firstChild);
       }
     }
