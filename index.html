@@ -923,7 +923,7 @@ body:not(.day) #jlsectBody .jlsc .jf {color:#dce7f5;}
 #jlsectBody .jlsc .jf {line-height:1.6;}
 body:not(.day) #jlsectBody .jlsc>.jlscT u {color:#a8d1ff;}
 </style>
-<script src="jl_absorb.js?v=1"></script>
+<script src="jl_absorb.js?v=2"></script>
 </head>
   <!-- v0.82.5 0929深夜: ①P0热修——v0.82.4c 把 /* 报价未就绪不亮硬编码兜底值 */ 块注释写进持仓卡模板字符串(4142行), JS 不生效直接当文字渲染上屏(截图实证: 卡面飘"绪不亮硬编码兜底值(别家复查坐实) */"), 摘出模板外 ②K线六信号层(借鉴同花顺"量化AI掘金"六信号思路的自研口径: 转=跌势转折/仓=机构重仓/加=回踩加仓/顶=高位分歧/清=反弹清仓/离=二次离场, 日线形态+量能+资金流本地算零新增接口, ks 指标条[六信号]默认开, 戳0930c, sw v101; 45只年回测: 转/加正超额 清/离后走弱 顶=高抛等回踩警示; 定位=提醒非指令) -->
 <body>
@@ -9384,20 +9384,17 @@ function activeLegJL(swSt, liveP, dayHi) {
     } catch (e) { return null; }
   };
   /* 收藏独立于持仓/原自选；跨同源 iframe 共用一份股票收藏。 */
-  let absorbFavoriteViewJL=null, absorbFavoriteRequestJL=0, absorbHomeViewJL=null, absorbHomeCodeJL='', absorbCloseBusyJL=false;
+  let absorbFavoriteViewJL=null, absorbFavoriteListJL=null, absorbFavoriteRequestJL=0, absorbHomeViewJL=null, absorbHomeCodeJL='', absorbCloseBusyJL=false;
   function renderAbsorbFavoritesJL() {
     if(!window.JLAbsorb)return;JLAbsorb.css();
-    const request=++absorbFavoriteRequestJL,list=JLAbsorb.favorites(),host=$('watchList');if(absorbFavoriteViewJL){absorbFavoriteViewJL.destroy();absorbFavoriteViewJL=null;}host.__h=null;host.replaceChildren();const jobs=[];
-    const note=document.createElement('div');note.style.cssText='padding:8px;font-size:11px;color:#eefaff';note.textContent='资：近5日主力 · 线：20日线；收盘确认 · 灰灯表示缺数据';host.appendChild(note);
-    if(!list.length){note.textContent='在 K 线页或做 T 作战屏点 ☆收藏，股票会放在这里。';return;}
-    list.forEach(x=>{const row=document.createElement('button');row.type='button';row.className='jlAbsRow';const name=document.createElement('strong');name.textContent=x.name+' '+x.code.slice(-6);const lamps=document.createElement('span');lamps.innerHTML=JLAbsorb.lamps(JLAbsorb.result(x.code));row.append(name,lamps);row.onclick=()=>openAbsorbFavoriteJL(x);host.appendChild(row);
-      jobs.push(async()=>{await JLAbsorb.load(x.code,{bars:dailyBarsOf(x.code)});if(row.isConnected)lamps.innerHTML=JLAbsorb.lamps(JLAbsorb.result(x.code));});
-    });
-    async function worker(){while(jobs.length&&request===absorbFavoriteRequestJL&&watchMode==='favorites'){try{await jobs.shift()();}catch(e){}}}worker();worker();
+    ++absorbFavoriteRequestJL;const list=JLAbsorb.favorites(),host=$('watchList');if(absorbFavoriteViewJL){absorbFavoriteViewJL.destroy();absorbFavoriteViewJL=null;}if(absorbFavoriteListJL){absorbFavoriteListJL.destroy();absorbFavoriteListJL=null;}host.__h=null;host.replaceChildren();
+    const listHost=document.createElement('section');host.appendChild(listHost);
+    absorbFavoriteListJL=JLAbsorb.mountList(listHost,{bars:dailyBarsOf,onOpen:openAbsorbFavoriteJL});
     const logs=document.createElement('div');logs.style.cssText='padding:8px;font-size:11px;color:#eefaff';
     try{const a=JSON.parse(localStorage.getItem('jl_absorb_alerts_v1')||'[]').slice(-8).reverse();logs.textContent=a.length?'收盘提醒：'+a.map(x=>x.d+' '+x.name+' '+x.kind+(x.estimated?'（含估算）':'')).join(' · '):'收盘提醒：页面开启时在15:05后检查持仓和收藏；未取得当日完整资金时等待补数。';}catch(e){}
     host.appendChild(logs);
-    const chart=document.createElement('section');chart.id='absorbFavoriteChartJL';chart.hidden=true;host.appendChild(chart);absorbFavoriteViewJL=JLAbsorb.mount(chart,{onClose:()=>{chart.hidden=true;}});
+    const chart=document.createElement('section');chart.id='absorbFavoriteChartJL';chart.hidden=true;host.appendChild(chart);absorbFavoriteViewJL=JLAbsorb.mount(chart,{onClose:()=>{chart.hidden=true;if(absorbFavoriteListJL)absorbFavoriteListJL.setDate(null);},onDate:d=>{if(absorbFavoriteListJL)absorbFavoriteListJL.setDate(d);}});
+    absorbFavoriteListJL.update(list);
   }
   function openAbsorbFavoriteJL(x){const v=absorbFavoriteViewJL;if(!v)return;v.host.hidden=false;v.show(x.code,x.name,{bars:dailyBarsOf(x.code)});}
   window.addEventListener('jlabsorb:favorites',()=>{if(watchMode==='favorites')renderAbsorbFavoritesJL();});

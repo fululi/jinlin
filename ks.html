@@ -339,7 +339,7 @@
   #ksLookJL p { color: #aeb7c6; font-size: 11px; line-height: 1.6; }
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
-<script src="jl_absorb.js?v=1"></script>
+<script src="jl_absorb.js?v=2"></script>
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 
@@ -8921,7 +8921,7 @@ function syncAbsorbKSJL() {
   }
 }
 var absorbStyleJL=document.createElement('style');
-absorbStyleJL.textContent='body.absorbKSOnJL #chartwrap>[data-chart]{height:calc(100% - min(278px,55%))!important}#absorbKSJL{position:absolute;left:0;right:0;bottom:0;height:min(278px,55%);min-height:0;z-index:6}#absorbKSJL canvas{height:clamp(50px,calc(100% - 110px),164px)!important}#absorbKSJL .jlAbsRead{font-size:9px;line-height:1.2}#absorbKSJL .jlAbsFacts{min-height:0}#ffProgressJL[hidden],#ffToggleJL[hidden]{display:none!important}';document.head.appendChild(absorbStyleJL);
+absorbStyleJL.textContent='body.absorbKSOnJL #chartwrap>[data-chart]{height:calc(100% - min(540px,65%))!important}#absorbKSJL{position:absolute;left:0;right:0;bottom:0;height:min(540px,65%);min-height:0;z-index:6;overflow-y:auto;overscroll-behavior-y:contain}#absorbKSJL canvas{height:270px!important}#ffProgressJL[hidden],#ffToggleJL[hidden]{display:none!important}';document.head.appendChild(absorbStyleJL);
 restore();
 /* 11-18 审计: 删一次性迁移(ks_rtfon_v2/rtfoff_v3/maoff_v1-3/fvgoff_v1-2/dsupoff_v1/sroff_v1/macdoff_v3), 各项已是S.ind默认值 */
 paneInitJL();

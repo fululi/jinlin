@@ -43,6 +43,21 @@ test('E7 requires both weaknesses; missing funding never triggers an E7 exit',()
 test('20-day tracking expiry uses day-20 close, and does not invent a day-21 open exit',()=>{
  const {b,f}=fixture(84),r=A.compute(b,f),t=r.trades[0];assert.equal(t.entry,62);assert.equal(t.expiry,81);assert.equal(t.exit,81);assert.equal(t.exitSignal,null);assert.equal(r.rows[81].exit[0].at,'close');assert.equal(r.rows[81].exit[0].price,b[81].c);assert.equal(r.rows[82].exit.length,0);
 });
+test('historical status and reference PnL never disclose future entry or exit prices',()=>{
+ const {b,f}=fixture(70);for(let i=63;i<b.length;i++){b[i]={...b[i],o:9,c:9,h:9.1,l:8.9};f[i].mainPct=-10;}
+ const full=A.compute(b,f);for(const i of [60,61,62,63,64,69]){const s=A.at(full,i),p=A.at(A.compute(b.slice(0,i+1),f.slice(0,i+1)));for(const k of ['key','bi','ex','ei','entry','exit','pnl'])assert.equal(s[k],p[k]);assert.deepEqual(s.trade,p.trade);}
+ assert.equal(A.at(full,61).entry,null);assert.equal(A.at(full,63).exit,null);const closed=A.at(full,69);assert.equal(closed.label,'已退场');assert.ok(closed.pnl<0);assert.equal(closed.entry,b[62].o);assert.equal(closed.exit,b[64].o);
+});
+test('diagnostics expose blocked conditions and unknown funding without relaxing the original rule',()=>{
+ const {b,f}=fixture(90);b.forEach(x=>x.v=100);const r=A.compute(b,f),s=A.at(r);assert.equal(r.trades.length,0);assert.equal(s.label,'未触发');assert.equal(s.criteria.find(x=>x.key==='volume').ok,false);assert.match(s.reason,/成交量/);
+ const missing=A.at(A.compute(b,[]));assert.equal(missing.label,'资金暂缺');assert.equal(missing.criteria.find(x=>x.key==='fund').ok,null);assert.match(missing.reason,/资金未齐/);assert.equal(missing.main5,null);
+});
+test('day-20 expiry keeps close reference and known closed round survives later missing funding',()=>{
+ const {b,f}=fixture(81);const r=A.compute(b,f); // First round has not expired yet.
+ assert.equal(A.at(r).bi,62);assert.equal(A.at(r).ei,null);assert.ok(['tracking','watch'].includes(A.at(r).key));
+ const longer=fixture(84);longer.b[81].v=100; // Prevent the new round at this boundary.
+ longer.f[83].mainPct=null;const e=A.at(A.compute(longer.b,longer.f));assert.equal(e.key,'expired');assert.equal(e.exit,longer.b[81].c);assert.equal(e.ei,81);
+});
 test('signals confirm at China 15:05, independent of host time zone; future candles are excluded',()=>{
  const {b,f}=fixture(62);const d=b[61].d;let r=A.compute(b,f,{now:Date.parse(d+'T15:04:59+08:00')});assert.equal(r.last.d,b[60].d);assert.equal(r.rows[61].signal,false);
  r=A.compute(b,f,{now:Date.parse(d+'T15:05:00+08:00')});assert.equal(r.rows[61].signal,true);assert.equal(A.eventOf(r).kind,'吸筹候选');
@@ -68,6 +83,23 @@ function networkBrowser(b,f){const x=browser(),c=x.c;let requests=0;
  c.fetch=async(url)=>{requests++;assert.match(url,/gtimg|qq\.com/);assert.doesNotMatch(url,/callback=/);return {ok:true,json:async()=>({data:{sh600105:{qfqday:b.map(r=>[r.d,r.o,r.c,r.h,r.l,r.v])}}})};};
  c.document.createElement=()=>({remove(){}});c.document.head={appendChild(s){const url=new URL(s.src),cb=url.searchParams.get('cb');queueMicrotask(()=>c[cb]({data:{klines:f.map(r=>[r.d,100,0,0,0,0,url.pathname.includes('daykline')?r.mainPct:''].join(','))}}));}};
  return {...x,requests:()=>requests};}
+test('price segments are red up and green down; dated entry and exit labels occupy separate rows above the plot',async()=>{
+ const {b,f}=fixture(68);for(let i=63;i<b.length;i++){b[i]={...b[i],o:9,c:9,h:9.1,l:8.9};f[i].mainPct=-10;}
+ const x=networkBrowser(b,f),labels=[],segments=[];
+ const ctx=new Proxy({clearRect(){labels.length=0;segments.length=0;},fillText(text,a,y){labels.push({text,x:a,y,font:this.font,color:this.fillStyle});},stroke(){if(this.lineWidth===1)segments.push(this.strokeStyle);}}, {get:(o,k)=>k in o?o[k]:()=>{},set:(o,k,v)=>(o[k]=v,true)});
+ const nodes={};function node(){return {textContent:'',innerHTML:'',classList:{add(){},toggle(){}},setAttribute(){}};}
+ const host={classList:{add(){}},querySelector(s){return nodes[s]||(nodes[s]=s==='canvas'?{...node(),clientWidth:296,width:296,height:270,getContext:()=>ctx}:node());}};
+ x.c.document.getElementById=()=>true;
+ const view=x.A.mount(host);await view.show('600105','测试');
+ const marks=labels.filter(l=>/^[▲▼]/.test(l.text));assert.equal(marks.length,2);
+ assert.equal(marks[0].text,'▲进 '+b[62].d+' · 开盘 '+b[62].o.toFixed(2)+'元');
+ assert.equal(marks[1].text,'▼出 '+b[64].d+' · 开盘 9.00元');
+ assert.equal(marks[0].color,'#ffe16b');assert.equal(marks[1].color,'#54d9ee');
+ assert.ok(marks[0].y<marks[1].y&&marks[1].y<43);marks.forEach(l=>assert.match(l.font,/10px/));
+ assert.deepEqual(segments,b.slice(1).map((r,i)=>r.c>b[i].c?'#ff666e':r.c<b[i].c?'#38d5a3':'#ffffff'));
+ assert.match(nodes['.jlAbsRead'].textContent,/价格红涨绿跌/);
+ view.select(61);assert.ok(!labels.some(l=>/^[▲▼]/.test(l.text)));view.destroy();
+});
 test('Tencent loader uses JSON fetch; concurrent callers retain newly arrived bars/funds and prefer official pct',async()=>{
  const {b,f}=fixture(100),x=networkBrowser(b,f);const first=x.A.load('600105');const newer={...b[99],d:'2025-04-11'};const second=x.A.load('sh600105',{bars:[newer],funds:[{d:b[99].d,mainPct:99,estimated:true}]});await first;const data=await second;assert.equal(x.requests(),1);assert.equal(data.bars.at(-1).d,newer.d);assert.equal(data.funds.at(-1).mainPct,1);assert.equal(data.funds.at(-1).estimated,false);
  const changed={...newer,c:newer.c+.001,h:newer.h+.001};const cached=await x.A.load('600105',{bars:[changed]});assert.equal(cached.bars.at(-1).c,changed.c);assert.equal(x.requests(),1);
@@ -87,10 +119,11 @@ test('close alerts reject intraday cache after a funding or price fetch failure,
  const y=networkBrowser(b,f);y.c.Date=x.c.Date;now=Date.parse('2026-11-19T14:59:00+08:00');await y.A.load('600105');const fetch=y.c.fetch;y.c.fetch=async()=>{throw Error('offline price feed');};now=Date.parse('2026-11-19T15:05:00+08:00');assert.equal((await y.A.checkClose(list,a=>alerts.push(a),now)).length,0);assert.equal(alerts.length,0);
  y.c.fetch=fetch;assert.equal((await y.A.checkClose(list,a=>alerts.push(a),now)).length,1);assert.equal(alerts.length,1);assert.equal(alerts[0].kind,'吸筹候选');
 });
-test('home favorites render one stock per row, open its own chart, and cap parallel loads at two',async()=>{
- const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),start=html.indexOf('  function renderAbsorbFavoritesJL()'),end=html.indexOf('  window.addEventListener(\'jlabsorb:favorites\'',start);
- function el(){return {children:[],style:{},isConnected:true,appendChild(x){this.children.push(x);},append(...a){this.children.push(...a);},replaceChildren(){this.children=[];}};}
- const host=el(),pending=[];let active=0,max=0,destroyed=0,opened='';const c={absorbFavoriteViewJL:{destroy(){destroyed++;}},absorbFavoriteRequestJL:0,watchMode:'favorites',window:{JLAbsorb:true},document:{createElement:el},$:()=>host,localStorage:{getItem:()=>null},dailyBarsOf:()=>[],JLAbsorb:{css(){},favorites:()=>[{code:'sh600105',name:'永鼎'},{code:'sz000001',name:'平安'},{code:'sh600000',name:'浦发'}],lamps:()=>'<span>资／线</span>',result:()=>null,load(){active++;max=Math.max(max,active);return new Promise(r=>pending.push(()=>{active--;r();}));},mount:(chart)=>({host:chart,show:(code)=>opened=code})}};vm.createContext(c);vm.runInContext(html.slice(start,end),c);c.renderAbsorbFavoritesJL();assert.equal(destroyed,1);assert.equal(max,2);assert.equal(host.children.filter(x=>x.className==='jlAbsRow').length,3);host.children[1].onclick();assert.equal(opened,'sh600105');assert.equal(c.absorbFavoriteViewJL.host.hidden,false);while(pending.length){pending.shift()();await new Promise(r=>setImmediate(r));}assert.equal(max,2);
+test('home favorites share v6 list, open selected stock, synchronize history, and destroy prior views',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),start=html.indexOf('  function renderAbsorbFavoritesJL()'),end=html.indexOf("  window.addEventListener('jlabsorb:favorites'",start);
+ const host={children:[],replaceChildren(){this.children=[];},appendChild(x){this.children.push(x);}}, list=[{code:'sh600105',name:'永鼎'}];let listOptions,chartOptions,updated,shown,chart,oldDestroyed=0,listDestroyed=0,synced;
+ const c={absorbFavoriteViewJL:{destroy(){oldDestroyed++;}},absorbFavoriteListJL:{destroy(){listDestroyed++;}},absorbFavoriteRequestJL:0,window:{JLAbsorb:true},document:{createElement:()=>({style:{}})},$:()=>host,localStorage:{getItem:()=>null},dailyBarsOf:()=>[],JLAbsorb:{css(){},favorites:()=>list,mountList(h,o){listOptions=o;return {update:a=>updated=a,setDate:d=>synced=d,destroy(){}};},mount(h,o){chart=h;chartOptions=o;return {host:h,show:(...args)=>shown=args,destroy(){}};}}};
+ vm.runInNewContext(html.slice(start,end),c);c.renderAbsorbFavoritesJL();assert.equal(oldDestroyed,1);assert.equal(listDestroyed,1);assert.equal(updated,list);listOptions.onOpen(list[0]);assert.equal(shown[0],'sh600105');assert.equal(chart.hidden,false);chartOptions.onDate('2026-11-02');assert.equal(synced,'2026-11-02');chartOptions.onClose();assert.equal(chart.hidden,true);assert.equal(synced,null);
 });
 test('home market observation follows the selected index and closes without changing its period',()=>{
  const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),start=html.indexOf("  (function(){\n    const tools=document.querySelector('.homeToolsJL')"),end=html.indexOf('  window.jlDailyBarsJL',start);let button,panel,interval,shown=[];

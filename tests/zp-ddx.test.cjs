@@ -25,13 +25,23 @@ test('missing flow minutes do not become one-minute flow; late first cumulative 
   const r=ctx.zpDdxCalcJL(x.rows,x.pts);assert.equal(r[1].d,null);assert.equal(r[1].v,null);
   assert.equal(ctx.zpDdxCalcJL([{hm:'1000',main:999}],[{hm:'1000',a:1000}])[0].v,null);
 });
-test('DDX extrema keep their exact minute, confirm on reversal, reset at missing values',()=>{
-  const rows=[1,3,3,2,1,2,null,7,6].map((v,i)=>({hm:String(930+i).padStart(4,'0'),v,n:i+1}));
+test('DDX ignores minute noise and confirms sustained reversals at the original extreme minute',()=>{
+  const rows=[0,3,4,4,3.8,4,1,0,1,0,0,-1,-4,-4.2,-4,-1,0,-1].map((v,i)=>({hm:String(1000+i),v,n:20}));
   const t=ctx.zpDdxTurnsJL(rows);
   assert.deepEqual(JSON.parse(JSON.stringify(t)),[
-    {hm:'0932',v:3,h:true,n:3,confirmedHm:'0933'},
-    {hm:'0934',v:1,h:false,n:5,confirmedHm:'0935'}
+    {hm:'1005',v:4,h:true,n:20,confirmedHm:'1008'},
+    {hm:'1013',v:-4.2,h:false,n:20,confirmedHm:'1017'}
   ]);
+  for(let k=1;k<rows.length;k++) assert.deepEqual(JSON.parse(JSON.stringify(ctx.zpDdxTurnsJL(rows.slice(0,k)))),JSON.parse(JSON.stringify(t.filter(x=>x.confirmedHm<rows[k].hm))));
+});
+test('DDX warmup and missing data cannot create turning points across a gap',()=>{
+  const rows=[0,20,0,-20,0,20,null,0,3,0,0,0].map((v,i)=>({hm:String(1000+i),v,n:i<6?i+1:20}));
+  assert.equal(ctx.zpDdxTurnsJL(rows).length,0);
+});
+test('DDX scale keeps small moves readable without stretching them and leaves room for real extremes',()=>{
+  assert.equal(ctx.zpDdxScaleJL([{v:.5},{v:-1},{v:null}]),25);
+  assert.equal(ctx.zpDdxScaleJL([{v:18.06},{v:-23.35}]),30);
+  assert.ok(ctx.zpDdxScaleJL([{v:70}])>70);
 });
 test('5-minute main markers and the pane use the same last-minute samples, without hidden intrabar extrema',()=>{
   const rows=[1,9,1,5,4,2,3,6].map((v,i)=>({hm:String(930+i).padStart(4,'0'),v,d:10,n:i+1}));
@@ -40,15 +50,32 @@ test('5-minute main markers and the pane use the same last-minute samples, witho
   assert.deepEqual(Array.from(series,r=>r.d),[30,30,20]);
   assert.equal(ctx.zpDdxTurnsJL(series).length,0);
 });
-test('main chart DDX markers use the exact matching candle and existing icon preference',()=>{
-  const x=sample([10,30,-40,40,-60]);x.pts.forEach(p=>p.a=100);
+test('main chart DDX markers use the exact confirmed extreme candle and existing icon preference',()=>{
+  const x=sample(Array(30).fill(0));
   function E(type,attrs={},text){return {type,attrs,text,children:[],appendChild(n){this.children.push(n);}};}
   const ch=E('svg');ch.style={};ch.querySelector=()=>null;
-  const c={...ctx,$:()=>ch,mode:'ddx',localStorage:{getItem:()=>null},FF:{rows:x.rows,d:'20261118'},LIVE:{pts:x.pts,sessDate:'20261118'},window:{},E,X0:()=>0,X1:()=>100,PY0:0,PH:200,YRES:20,Y:p=>p};
+  const c={...ctx,$:()=>ch,mode:'ddx',localStorage:{getItem:()=>null},FF:{sym:'sh600105',rows:x.rows,d:'20261118'},LIVE:{sym:'sh600105',pts:x.pts,sessDate:'20261118'},window:{},E,X0:()=>0,X1:()=>100,PY0:0,PH:200,YRES:20,Y:p=>p};
+  c.zpDdxCalcJL=()=>[0,3,4,4,3.8,4,1,0,1].map((v,i)=>({hm:String(1000+i),v,n:20}));
   vm.createContext(c);const start=html.indexOf('  function ddxMarks(P)');vm.runInContext(html.slice(start,html.indexOf('  function ptsNow()',start)),c);
-  const points=x.pts.map((p,i)=>({hm:p.hm,x:10+i*10,p:40,h:50+i,l:30+i}));
-  c.ddxMarks(points);const circles=ch.children[0].children.filter(n=>n.type==='circle');
-  assert.deepEqual(circles.map(n=>n.attrs.cx),[20,30,40]);
-  assert.deepEqual(circles.map(n=>n.attrs.cy),[44,39,46]);
+  const points=Array.from({length:9},(_,i)=>({hm:String(1000+i),x:10+i*10,p:40,h:50+i,l:30+i}));
+  c.ddxMarks(points);const triangles=ch.children[0].children.filter(n=>n.type==='path');
+  assert.equal(triangles.length,1);assert.equal(triangles[0].attrs.d,'M57.8,46.3 L62.2,46.3 L60,50 Z');
+  assert.equal(ch.children[0].children.some(n=>n.type==='circle'),false);
   c.localStorage.getItem=()=> '0';ch.children=[];c.ddxMarks(points);assert.equal(ch.children.length,0);
+});
+test('DDX pane renders one data curve plus a horizontal mean and independent net-amount bars, correct units and reversible alert coordinates',()=>{
+  function E(type,attrs={},text){return {type,attrs,text,children:[],appendChild(n){this.children.push(n);}};}
+  const x=sample(Array.from({length:25},(_,i)=>i%2?-20:100)),s=E('svg');
+  const c={...ctx,pSvg:s,loadFF(){},legend(){},FF:{sym:'sh600105',rows:x.rows,d:'20261118'},LIVE:{sym:'sh600105',pts:x.pts,sessDate:'20261118'},window:{},D:{},E,PH2:104,TXT:'#fff',UP:'red',DN:'green',X0:()=>0,X1:()=>360,xOfHmJL:h=>(+h-930)*10,barW:()=>1,fM:v=>v+'元',fundingStatusJL:()=> '东财 09:54',ddxLines:()=>[5]};
+  vm.createContext(c);const start=html.indexOf('  function drawDdx(P)');vm.runInContext(html.slice(start,html.indexOf('  /* ── jl-zpmix',start)),c);c.drawDdx([]);
+  const curves=s.children.filter(n=>n.attrs['data-series']==='ratio20');assert.equal(curves.length,1);
+  assert.equal(curves[0].children.length,24);assert.ok(curves[0].children.every(n=>['#ff6b6b','#24dfa6'].includes(n.attrs.stroke)));
+  assert.equal(s.children.some(n=>n.type==='polyline'),false);
+  const bars=s.children.find(n=>n.attrs['data-series']==='main-net');assert.equal(bars.children.length,25);
+  const ref=s.children.find(n=>n.attrs['data-series']==='ma10-reference');assert.equal(ref.attrs.y1,ref.attrs.y2);
+  const snap=c.D.pane.snaps(24);assert.equal(snap.length,1);assert.equal(snap[0][0],'净额比20');assert.ok(Math.abs(c.D.pane.vy(snap[0][2])-4)<1e-9);
+  assert.ok(s.children.some(n=>n.type==='text' && /^MA10 /.test(n.text)));
+  assert.ok(c.D.pane.lg(24).some(x=>x[0].includes('自算')));
+  assert.ok(c.D.pane.lg(24).some(x=>x[0].includes('净额')));
+  assert.deepEqual(s.children.filter(n=>n.type==='text' && /%$/.test(n.text) && !n.attrs['data-ddx-line'] && !/^MA10/.test(n.text)).map(n=>n.text),['+25%','0%','-25%']);
 });
