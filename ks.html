@@ -4169,7 +4169,7 @@ function ffDbJL(cb) { try { var rq = indexedDB.open("ks_ffexp", 1); rq.onupgrade
 function ffDayJL() { var d = new Date(), pm = d.getHours() * 60 + d.getMinutes() >= 15 * 60 + 5; return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + (pm ? "盘后" : "盘中"); }   /* 11-19h 盘中拉的今天那行不完整: 收盘后(15:05)再点要重拉, 所以缓存按 日期+盘中/盘后 分开 */
 function ffBatchJL() {   /* 11-19d 用户「一直准备、表出不来」: 板块名单等不到就不开工 → 个股立刻开拉, 板块名单并行拉到再追加; 每个先 daykline(带占比), 不通换 fflow/kline, 再换 push2delay; 前 30 个全失败=东财连不上就停; 拉的中途再点按钮=停下并存已拉到的 */
   if (window.__ffRun) { window.__ffStop = 1; return; }
-  window.__ffRun = 1; window.__ffStop = 0; ffBtnJL("⇩准备…", 1);
+  window.__ffRun = 1; window.__ffStop = 0; ffBtnJL("⇩准备…", 1); try { localStorage.setItem("ks_ffexp_run", ffDayJL()); } catch (e) {}
   if ((Date.now() - new Date(FFPOOL_D).getTime()) / 864e5 > 120) hint("⚠ 股池名单是 " + FFPOOL_D + " 的, 已超 120 天, 找 Claude 更新");
   var stk = {};
   FFPOOL.forEach(function (c) { stk[c] = ""; });
@@ -4229,7 +4229,7 @@ function ffBatchJL() {   /* 11-19d 用户「一直准备、表出不来」: 板�
     } catch (e) { ready = 1; pump(); }
   });
   function out() {
-    ended = 1; window.__ffRun = 0; window.__ffStop = 0;
+    ended = 1; window.__ffRun = 0; window.__ffStop = 0; try { localStorage.removeItem("ks_ffexp_run"); } catch (e) {}
     if (ffL.length < 2) { ffBtnJL("⇩资金"); hint("⚠ 前 " + done + " 个一个都没拉到 = 东财连不上(手机网络被拦/开着VPN), 换 Wi-Fi 或关 VPN 再点"); return; }
     var tag = lastD.replace(/-/g, ""), f1 = "东财资金_日_" + tag + "_" + nOk + "个.csv", f2 = "东财板块K线_日_" + tag + ".csv";
     var files = [new File(["﻿" + ffL.join("\n")], f1, { type: "text/csv" })];
@@ -8573,8 +8573,14 @@ function applyUrl() {
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)");
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         var zlb = mk("共振线", function () { S.ind.zzl = !S.ind.zzl; this.classList.toggle("on", !!S.ind.zzl); try { store(); buildInds(); } catch (eZ) { } draw(); hint(S.ind.zzl ? "共振线已显示(红=DEMA在线上方, 绿=在下方)" : "共振线已隐藏"); }, "主图共振线 VAR6: 显示/隐藏"); zlb.classList.toggle("on", !!S.ind.zzl);
-        mk("⇩资金", function () { window.__ffBtn = this; if (window.__ffFiles) ffSaveJL(); else ffBatchJL(); }, "一键导出: 股池+自选+看过的票+全部板块 的东财日级资金, 板块另带日K");
+        window.__ffBtn = mk("⇩资金", function () { window.__ffBtn = this; if (window.__ffFiles) ffSaveJL(); else ffBatchJL(); }, "一键导出: 股池+自选+看过的票+全部板块 的东财日级资金, 板块另带日K");
         document.body.insertBefore(bar, document.body.firstChild);
+        /* 11-19j 用户「开着也断了好几次, 每次都从头」: 页面一重载按钮就回到「⇩资金」看不出续没续 → 按钮直接显示本机已存几个(⇩续N); 上次没跑完就自动接着拉 */
+        ffDbJL(function (db) { if (!db) return; try { var n = 0, today = ffDayJL(), cur = db.transaction("r").objectStore("r").openCursor();
+          cur.onsuccess = function () { var c = cur.result; if (c) { if (c.value && c.value.day === today) n++; return c.continue(); }
+            if (n && !window.__ffRun) ffBtnJL("⇩续" + n);
+            var run = ""; try { run = localStorage.getItem("ks_ffexp_run") || ""; } catch (e) {}
+            if (run === today && !window.__ffRun) setTimeout(function () { if (!window.__ffRun && !window.__ffFiles) { hint("⚠ 上次没拉完(页面被重载), 自动接着拉 · 已有 " + n + " 个"); ffBatchJL(); } }, 1500); }; } catch (e) {} });
       }
     }
     var code = q.get("code");
