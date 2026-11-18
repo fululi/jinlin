@@ -267,6 +267,37 @@
   /* jl-1162: 工具条去底色/下边线(透明), 内边距收窄; 不浮动——浮在图上会盖住图自带的周期行(分时 1 5 15…) */
   body.embed #ksBarJL { background: transparent; border-bottom: 0; padding: 1px 6px; }
   body.embed #ksBarJL button { text-shadow: 0 1px 2px rgba(0,0,0,.85); }
+  /* 11-19 验收: 工具与指标分组, 面板不再模糊背后的蜡烛。 */
+  .row.ksUiPanel { flex-direction: column; flex-wrap: nowrap; gap: 14px; padding: 12px; color: #eef3fa; }
+  body.embed .row.ksUiPanel { left: 8px; right: auto; width: min(520px, calc(100% - 16px)); top: calc(var(--ksDrwTop, 30px) + 6px); max-height: min(72vh, 600px); padding: 12px; gap: 14px; background: #11161e; border: 1px solid #303a48; border-radius: 12px; box-shadow: 0 12px 36px #0009; backdrop-filter: none; -webkit-backdrop-filter: none; overscroll-behavior: contain; scrollbar-width: thin; }
+  .ksUiHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ksUiHead strong { display: block; font-size: 14px; font-weight: 600; line-height: 1.5; color: #f4f7fc; }
+  .ksUiHead p { margin-top: 2px; font-size: 11px; line-height: 1.5; color: #aab6c7; }
+  .ksUiClose { flex: none; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; color: #b7c4d6; border: 1px solid #334050; border-radius: 8px; background: #1b2430; cursor: pointer; }
+  .ksUiIcon { display: inline-block; width: 17px; height: 17px; flex: none; vertical-align: middle; }
+  .ksUiGroup { flex: none; min-width: 0; }
+  .ksUiGroupTitle { margin-bottom: 7px; font-size: 10.5px; font-weight: 500; color: #aab6c7; line-height: 1.4; }
+  .ksUiGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .row.ksUiPanel .ksUiGrid .btn { display: flex; align-items: center; justify-content: flex-start; gap: 7px; min-width: 0; min-height: 36px; padding: 7px 8px; font-size: 11px; font-weight: 500; line-height: 1.35; text-align: left; color: #e7edf6; background: #1a222e; border: 1px solid #303c4c; border-radius: 7px; text-shadow: none; cursor: pointer; }
+  .row.ksUiPanel .ksUiGrid .btn span { overflow: hidden; text-overflow: ellipsis; }
+  .row.ksUiPanel .ksUiGrid .btn:hover { background: #243043; border-color: #526781; }
+  .row.ksUiPanel .ksUiGrid .btn.on { background: #123b3b; border-color: #4bcdc3; color: #a1fff1; }
+  .row.ksUiPanel .ksUiGrid .btn.warn { color: #ffb3b5; }
+  .row.ksUiPanel .ksUiGrid .btn:focus-visible, .ksUiClose:focus-visible { outline: 2px solid #8cebe0; outline-offset: 2px; }
+  .row.ksUiPanel .ksUiGrid .btn[data-ind]::after { content: ''; width: 6px; height: 6px; border: 1px solid #758499; border-radius: 50%; margin-left: auto; flex: none; }
+  .row.ksUiPanel .ksUiGrid .btn[data-ind].on::after { background: #8cebe0; border-color: #8cebe0; box-shadow: 0 0 0 2px #8cebe014; }
+  .row.ksUiPanel .ksLkRow { margin: 0; padding: 9px; gap: 8px; border: 1px solid #303c4c; border-radius: 8px; background: #171f2a; }
+  .row.ksUiPanel .ksLkRow .btn { display: flex; align-items: center; gap: 8px; min-height: 30px; padding: 4px 2px; border: 0; background: transparent; color: #e7edf6; font-size: 11px; cursor: pointer; }
+  .row.ksUiPanel .ksLkRow .btn.on { color: #93f1de; }
+  .row.ksUiPanel .ksLkRow .btn:disabled { color: #aab6c7; cursor: default; }
+  .ksLkHelp { margin-left: auto; font-size: 10px; color: #aab6c7; }
+  .row.ksUiPanel .ksAlSec { flex: none; border-top-color: #303c4c; margin: 0; padding-top: 9px; }
+  .row.ksUiPanel .ksAlSec .hd { color: #aab6c7; font-size: 10px; line-height: 1.5; }
+  .ksMnI .ksUiIcon { width: 14px; height: 14px; margin-right: 4px; }
+  #ksDgPanel.ksDgBar, .ksAlMenu { background: #17212d; backdrop-filter: none; -webkit-backdrop-filter: none; border-color: #3a485a; }
+  @media (max-width: 560px) { .ksUiGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 359px) { .ksUiGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ksLkHelp { flex-basis: 100%; margin-left: 0; } }
+
   /* ks-0906-22: 主题三态挂html根元素(body背景会穿透到页面画布层,filter管不着=字变板不变的根因); invert(1)全量反色不灰蒙蒙, hue-rotate(180)保红涨绿跌; 纯黑(默认)/外黑内白(只反画布)/纯白(整页反色) */
   html.theme-lc [data-chart] { filter: invert(1) hue-rotate(180deg); }
   /* ks-0907-22: 纯白主题不再整页invert(根因:滤镜让按钮/弹层颜色全反+破坏fixed定位); 只反画布, UI给真浅色 */
@@ -869,11 +900,11 @@ function undoJL(redo) {
   hint((redo ? "已重做" : "已撤销") + " · 还可" + (redo ? "重做 " + st.r.length : "撤销 " + st.u.length) + " 步");
 }
 function magnetJL(v, a) {
-  if (!S.magnet || !a || a.pane || a.p == null || a.o) return a; // 未来区锚点不吸附
+  if (!S.magnet || !a || a.pane || a.p == null) return a; // 未来区锚点不吸附
   var im = idxMap(v), i = im[a.d]; if (i == null) return a;
   var k = S.kl[i], y = v.Y(a.p), best = null, bd = 12;
   [k[1], k[2], k[3], k[4]].forEach(function (pv) { var d = Math.abs(v.Y(pv) - y); if (d < bd) { bd = d; best = pv; } });
-  if (best != null) a.p = best;
+  if (best != null && Math.abs((a.o || 0) * v.step) <= 12) { a.p = best; delete a.o; }
   return a;
 }
 function store() { undoTrackJL();
@@ -986,15 +1017,20 @@ function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFix
 
 var TVL = (function () { try { var q = new URLSearchParams(location.search).get("tv"); if (q === "0" || q === "1") return q === "1"; return localStorage.getItem("ks_tvlook_v1") !== "0"; } catch (e) { return true; } })(); /* 11-18 用户「按你说的试试」: 看盘工作区整理(TV风格)总开关, ?tv=0 看旧版 */
 try { if (TVL) document.documentElement.classList.add("tvlook"); } catch (e) {}
-var UP = TVL ? "#f23645" : "#ff6f66", DN = TVL ? "#089981" : "#35d99a", /* 11-18 用户「蜡烛红不够正」: TV风格用 TradingView 同款正红/正绿 */ DIM = "#eef3f0", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f";
+var UP = TVL ? "#ff4552" : "#ff6f66", DN = TVL ? "#12b89a" : "#35d99a", /* 11-19 亮度验收: 默认红绿提亮, 不改K线比例 */ DIM = "#eef3f0", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f";
 // Chart appearance is independent of indicators and drawings.
 var LOOK_KEY_JL = "ks_appearance_v1";
 function lookPresetJL(original) {
-  return { bg: original ? (TVL ? "#080a0e" : "#0a0e0b") : "#000000", grid: original ? "#191d24" : "#141414", text: "#eef3f0", up: TVL ? "#f23645" : "#ff6f66", down: TVL ? "#089981" : "#35d99a", gridOn: true, fontScale: 1 };
+  return { bg: original ? (TVL ? "#080a0e" : "#0a0e0b") : "#000000", grid: original ? "#191d24" : "#141414", text: "#eef3f0", up: TVL ? (original ? "#f23645" : "#ff4552") : "#ff6f66", down: TVL ? (original ? "#089981" : "#12b89a") : "#35d99a", gridOn: true, fontScale: 1, brightVersion: 1 };
 }
 function cleanLookJL(raw) {
   var out = lookPresetJL(!TVL); raw = raw || {};
   ["bg", "grid", "text", "up", "down"].forEach(function (k) { if (/^#[0-9a-f]{6}$/i.test(raw[k])) out[k] = raw[k]; });
+  // 仅升级旧默认配色; 自选色保留。标记版本后「原版」也能跨刷新保留。
+  if (TVL && raw.brightVersion !== 1) {
+    if (out.up.toLowerCase() === "#f23645") out.up = "#ff4552";
+    if (out.down.toLowerCase() === "#089981") out.down = "#12b89a";
+  }
   if (typeof raw.gridOn === "boolean") out.gridOn = raw.gridOn;
   if (Number.isFinite(+raw.fontScale)) out.fontScale = Math.max(1, Math.min(1.3, +raw.fontScale));
   return out;
@@ -1056,22 +1092,29 @@ function lookPanelJL() {
   d.querySelector("[data-original]").onclick = function () { LOOK_JL = lookPresetJL(true); applyLookJL(true); sync(); draw(); };
   sync(); document.body.appendChild(d); d.querySelector("[data-close]").focus();
 }
+function volColorJL(up, alpha) {
+  var hex = (up ? UP : DN).slice(1);
+  return "rgba(" + parseInt(hex.slice(0, 2), 16) + "," + parseInt(hex.slice(2, 4), 16) + "," + parseInt(hex.slice(4, 6), 16) + "," + alpha + ")";
+}
 function legIdxJL(v) {
   var i = S.cross ? v.I(S.cross.x) : v.i1 - 1;
   return Math.max(v.i0, Math.min(v.i1 - 1, i));
 }
-function paneLegendJL(ctx, v, y, name, items) {
-  var x = v.padL + 4, xMax = v.padL + (v.ts ? 240 * v.step : v.plotW) - 4, by = y + 9; // 分时plotW只到最后一根, 图例按全天宽度排
+function paneLegendJL(ctx, v, y, name, items, transparent) {
+  var x = v.padL + 4, xMax = v.padL + (v.ts ? 240 * v.step : v.plotW) - 4, by = y + (TVL ? 10 : 9); // 分时plotW只到最后一根, 图例按全天宽度排
   var segs = [{ t: name, c: DIM }].concat(items || []).filter(function (sg) { return sg && sg.t != null && sg.t !== ""; });
   ctx.save();
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   var tot = -6;
-  segs.forEach(function (sg) { ctx.font = (sg.b ? "bold " : "") + "9px Menlo, monospace"; sg.w = ctx.measureText(String(sg.t)).width; tot += sg.w + 6; });
-  ctx.fillStyle = "rgba(10,14,11,0.5)"; // 淡底: 副图线穿过图例时数字仍看得清
-  ctx.fillRect(x - 2, y + 1, Math.min(tot, xMax - x) + 4, 11);
+  function font(sg) { return TVL ? (sg.b ? "600 " : "500 ") + "10px -apple-system, Helvetica, sans-serif" : (sg.b ? "bold " : "") + "9px Menlo, monospace"; }
+  segs.forEach(function (sg) { ctx.font = font(sg); sg.w = ctx.measureText(String(sg.t)).width; tot += sg.w + 6; });
+  if (!transparent) {
+    ctx.fillStyle = "rgba(10,14,11,0.5)"; // 淡底: 副图线穿过图例时数字仍看得清
+    ctx.fillRect(x - 2, y + 1, Math.min(tot, xMax - x) + 4, TVL ? 12 : 11);
+  }
   for (var k = 0; k < segs.length; k++) {
     var sg = segs[k], t = String(sg.t);
-    ctx.font = (sg.b ? "bold " : "") + "9px Menlo, monospace"; ctx.fillStyle = sg.c || DIM;
+    ctx.font = font(sg); ctx.fillStyle = sg.c || DIM;
     if (x + sg.w > xMax) {
       while (t.length > 1 && x + ctx.measureText(t + "…").width > xMax) t = t.slice(0, -1);
       if (x + ctx.measureText(t + "…").width <= xMax) ctx.fillText(t + "…", x, by);
@@ -1239,7 +1282,7 @@ function tsVolJL(ctx, v) {
     for (var oi = i0; oi < i1; oi++) {
       var ok = kl[oi]; if (!ok) continue;
       var ox = v.X(oi); if (ox < v.padL - 2) continue;
-      ctx.fillStyle = ok[4] >= ok[1] ? "rgba(255,111,102,0.28)" : "rgba(53,217,154,0.28)";
+      ctx.fillStyle = volColorJL(ok[4] >= ok[1], TVL ? 0.48 : 0.28);
       var ovh = ok[5] / v.vMax * ovH;
       ctx.fillRect(ox - bw / 2, ovBase - ovh, bw, Math.max(1, ovh));
     }
@@ -1253,11 +1296,11 @@ function tsVolJL(ctx, v) {
     var k = kl[i]; if (!k) continue;
     var x = v.X(i); if (x < v.padL - 2) continue;
     var ht = v.vMax > 0 ? (k[5] / v.vMax) * (v.volH - 4) : 0;
-    ctx.fillStyle = k[4] >= k[1] ? "rgba(255,111,102,0.75)" : "rgba(53,217,154,0.75)";
+    ctx.fillStyle = volColorJL(k[4] >= k[1], TVL ? 0.9 : 0.75);
     ctx.fillRect(x - bw / 2, v0 + v.volH - ht, bw, Math.max(1, ht));
   }
   ctx.restore();
-  paneLegendJL(ctx, v, v0, "VOL·分钟", volLegJL(kl, legIdxJL(v)));
+  paneLegendJL(ctx, v, v0, "VOL·分钟", volLegJL(kl, legIdxJL(v)), true);
 }
 function tsViewJL(g, lay) {
   var kl = S.kl, dayStart = S.ts.dayStart, n = kl.length;
@@ -1368,10 +1411,11 @@ function view() {
     else S.count = Math.max(16, Math.round(240 / (+S.klt || 5)));
   }
   S.count = Math.max(15, Math.min(KS_COUNT_MAX, S.count));
-  var i1 = Math.max(Math.min(S.end || n, n), Math.min(S.count, n));
-  var rb = i1 >= n ? rbJL() : 0;
-  var i0 = Math.max(0, i1 - Math.max(1, Math.min(S.count - rb, n)));
-  S.end = i1;
+  var end = Math.max(Math.min(S.end || n, n), Math.min(S.count, n));
+  var rb = end >= n ? rbJL() : 0;
+  var slots = Math.min(S.count, n + rb), left = Math.max(0, end + rb - slots);
+  var i0 = Math.max(0, Math.floor(left)), i1 = Math.min(n, Math.ceil(end));
+  S.end = end; // 数组范围取整, 横轴保留小数根位移, 5/15分拖动跟手
   var hi = -1e18, lo = 1e18, vMax = 1;
   for (var i = i0; i < i1; i++) {
     if (S.kl[i][2] > hi) hi = S.kl[i][2];
@@ -1386,7 +1430,7 @@ function view() {
   }
   // 价格纵向平移（按住K线区上下拖，图随手走）
   if (S.yOff) { hi += S.yOff; lo += S.yOff; }
-  var step = plotW / (i1 - i0 + rb);
+  var step = plotW / slots;
   var sc = S.scale || "lin", isLog = sc === "log";
   if (isLog && lo <= hi * 0.02) lo = hi * 0.02;
   var lf = isLog ? Math.log(lo) : 0, hf = isLog ? Math.log(hi) : 0;
@@ -1404,8 +1448,8 @@ function view() {
     priceH: priceH, pTop: pTop, volY: volY, volH: volH, macdY: macdY, macdH: macdH, zzY: zzY, zzH: zzH, vMax: vMax,
     rtY: rtY, rtH: rtH,
     ddxY: ddxY, ddxH: ddxH, zlyyY: zlyyY, zlyyH: zlyyH, ctrlY: ctrlY, ctrlH: ctrlH, tqsY: tqsY, tqsH: tqsH, bottom: bottom,
-    X: function (i) { return padL + (i - i0 + 0.5) * step; },
-    I: function (x) { return Math.max(0, Math.min(n - 1, Math.round(i0 + (x - padL) / step - 0.5))); },
+    X: function (i) { return padL + (i - left + 0.5) * step; },
+    I: function (x) { return Math.max(0, Math.min(n - 1, Math.round(left + (x - padL) / step - 0.5))); },
     Y: isLog ? function (p) { return pTop + (hf - Math.log(Math.max(p, 1e-9))) / (hf - lf) * priceH; } : function (p) { return pTop + (hi - p) / (hi - lo) * priceH; },
     P: isLog ? function (y) { return Math.exp(hf - (y - pTop) / priceH * (hf - lf)); } : function (y) { return hi - (y - pTop) / priceH * (hi - lo); },
     hi: hi, lo: lo, scale: sc, base: S.kl[i0][4]
@@ -1597,7 +1641,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
         });
         _next9 = _bt9 === dg;
       }
-      if (_tch9) ctx.globalAlpha = 0.25;
+      if (_tch9) ctx.globalAlpha = 0.5;
       if (_next9) { ctx.strokeStyle = _isS9 ? "#ff8a80" : "#5cffb0"; ctx.setLineDash([]); ctx.lineWidth = sel ? 1.3 : 1.5; }
       else { ctx.setLineDash([6, 4]); ctx.lineWidth = sel ? 0.9 : 0.65; }
     }
@@ -1662,7 +1706,7 @@ function renderOneDrawing(ctx, v, im, dg, sel) {
       if (yy - fLastY < 11) return; fLastY = yy;
       var lbF = FLV[k1] + " (" + fwp(p1 + (p2 - p1) * FLV[k1]) + ")", twF = ctx.measureText(lbF).width;
       var inF = fxa - twF - 5 < v.padL, lxF = inF ? fxa + 4 : fxa - twF - 5; // 左端放不下就挪进区间内, 并抬到线上方(不被线穿过)
-      ksHaloTextJL(ctx, lbF, lxF, inF ? yy - 6 : yy, FOC || ksFibColorJL(FLV[k1]));
+      ksHaloTextJL(ctx, lbF, lxF, yy - 6, FOC || ksFibColorJL(FLV[k1]));
     });
     ctx.restore();
   }
@@ -1890,7 +1934,7 @@ function closeDgPanel() {
 }
 function dgFill(el, dg) {
   el.querySelectorAll(".ksMnC").forEach(function (b) { b.classList.toggle("on", !!dg.color && b.getAttribute("data-c") === dg.color); });
-  var lk = el.querySelector(".dgLk"); if (lk) { lk.textContent = dg.locked ? "🔒" : "🔓"; lk.classList.toggle("on", !!dg.locked); }
+  var lk = el.querySelector(".dgLk"); if (lk) ksLockButtonJL(lk, dg.locked, dg.locked ? "已锁定" : "未锁定");
   var sp = el.querySelector(".dgSp"); if (sp) sp.classList.toggle("on", !!dg.spark);
   var ds = el.querySelector(".dgDs"); if (ds) ds.classList.toggle("on", !!dg.dash);
   var isF = dg.type === "fib";
@@ -1940,7 +1984,7 @@ function openDgPanel(idx) {
     bar.appendChild(ibx("┅", "虚线/实线(原抽屉「线型」)", "dgDs", function (dg2) { dg2.dash = !dg2.dash; store(); draw(); dgFill(el, dg2); }));
     bar.appendChild(ibx("档", "斐波档位: 自己勾 0~4.618", "dgFl", function (dg2, b) { fibLvPopJL(el, dg2); }));
     bar.appendChild(ibx("→", "档位线向右延伸到最新K线", "dgEx", function (dg2) { dg2.ext = !dg2.ext; store(); draw(); dgFill(el, dg2); }));
-    bar.appendChild(ibx("🔓", "锁定/解锁(只这一个)", "dgLk", function (dg2) { dg2.locked = !dg2.locked; store(); draw(); dgFill(el, dg2); }));
+    bar.appendChild(ibx("", "锁定/解锁(只这一个)", "dgLk", function (dg2) { dg2.locked = !dg2.locked; store(); draw(); dgFill(el, dg2); }));
     bar.appendChild(ibx("⚡", "到价提示(线右端亮标记)", "dgSp", function (dg2) { dg2.spark = !dg2.spark; store(); draw(); dgFill(el, dg2); }));
     bar.appendChild(ibx("🔔", "对这条线设提醒", "dgAl", function (dg2) { var v2 = view(); var lv2 = v2 ? lineLevelNow(v2, idxMap(v2), dg2) : null; if (lv2) addKsAlert(lv2, dg2); else hint("这种图形不能挂价位提醒"); }));
     bar.appendChild(ibx("🗑", "删除这条", "del", function (dg2) { if (dg2.locked) { hint("已锁定 · 先点🔒解开再删"); return; } delDrawingJL(S.dgPanel); }));
@@ -2056,7 +2100,8 @@ function openAlMenu(pt, cx, cy) { // pt=画布内坐标; cx/cy=屏幕坐标(菜�
       b.addEventListener("click", function (e2) { e2.stopPropagation(); dg.color = c; dg.colorSet = true; store(); draw(); bar.querySelectorAll(".ksMnC").forEach(function (x) { x.classList.toggle("on", x === b); }); });
       bar.appendChild(b);
     });
-    bar.appendChild(ib(dg.locked ? "🔒" : "🔓", "点一下锁/解锁", dg.locked ? "on" : "", function (b) { dg.locked = !dg.locked; store(); draw(); b.textContent = dg.locked ? "🔒" : "🔓"; b.classList.toggle("on", !!dg.locked); hint(dg.locked ? "已锁定" : "已解锁"); }));
+    var oneLock = ib("", "点一下锁/解锁", "", function (b) { dg.locked = !dg.locked; store(); draw(); ksLockButtonJL(b, dg.locked, dg.locked ? "已锁定" : "未锁定"); hint(dg.locked ? "已锁定" : "已解锁"); });
+    ksLockButtonJL(oneLock, dg.locked, dg.locked ? "已锁定" : "未锁定"); bar.appendChild(oneLock);
     bar.appendChild(ib("🗑", "删除这条", "del", function () { if (dg.locked) { hint("已锁定 · 先点🔒解开再删"); return; } closeAlMenu(); delDrawingJL(hi); }));
   } else if (indK) {
     bar.appendChild(ib("🗑", "关掉这个副图(指标▾里可再打开)", "del", function () { closeAlMenu(); closeIndJL(indK); }));
@@ -2466,7 +2511,7 @@ function drawReal() {
       _fd.set.call(this, f); } });
     var _fs = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "fillStyle");
     if (_fs && _fs.set) Object.defineProperty(ctx, "fillStyle", { configurable: true, get: function () { return _fs.get.call(this); }, set: function (c0) {
-      if (this.__soft && typeof c0 === "string") { if (/^#fff(fff)?$/i.test(c0)) c0 = "rgba(232,238,242,0.74)"; else if (/^#ffd94a$/i.test(c0)) c0 = "rgba(255,217,74,0.72)"; }
+      if (this.__soft && typeof c0 === "string") { if (/^#fff(fff)?$/i.test(c0)) c0 = "rgba(232,238,242,0.9)"; else if (/^#ffd94a$/i.test(c0)) c0 = "rgba(255,217,74,0.88)"; }
       _fs.set.call(this, c0); } });
     ctx.__tvFont = 1;
   }
@@ -2488,7 +2533,7 @@ function drawReal() {
   var kl = S.kl, i0 = v.i0, i1 = v.i1;
   var d2 = dec();
   // 网格 + 右侧价格轴（自适应整数刻度：1/2/2.5/5 步进，约 6-9 条）
-  ctx.font = TVL ? "400 10px -apple-system, Helvetica, sans-serif" : "8px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  ctx.font = TVL ? "500 10px -apple-system, Helvetica, sans-serif" : "8px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
   var range = v.hi - v.lo;
   var raw = range / (TVL ? Math.max(4, Math.round(v.priceH / 52)) : 12); /* 11-18 TV风格: 刻度按高度≈52px一档 */ // hq-mobile请求: 刻度加密, 价位看得准
   var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
@@ -2507,24 +2552,26 @@ function drawReal() {
   timeTicksJL(ctx, v, kl).forEach(function (t) {
     gridSt(ctx);
     ctx.beginPath(); ctx.moveTo(t.x, v.pTop); ctx.lineTo(t.x, v.bottom); ctx.stroke();
-    ctx.font = TVL ? ((t.bold ? "600 " : "400 ") + "10px -apple-system, Helvetica, sans-serif") : ((t.bold ? "bold " : "") + "11px Menlo, monospace"); /* 11-18 TV风格: 时间轴轻字 */
+    ctx.font = TVL ? ((t.bold ? "600 " : "500 ") + "10px -apple-system, Helvetica, sans-serif") : ((t.bold ? "bold " : "") + "11px Menlo, monospace"); /* 11-18 TV风格: 时间轴轻字 */
     ctx.fillStyle = t.fut ? "#aab6af" : LOOK_JL.text; // 提亮: 五日/分钟级时间原来太暗看不清; 未来日期压暗一档
     ctx.fillText(t.lb, t.x, v.hh - 9);
   });
   ctx.font = "11px Menlo, monospace";
-  // K线（线图模式：收盘价折线 + 淡色面积）——主图区裁切，防止竖直拖动时穿进副图
+  // 成交量透明叠层: 蜡烛下拖时可进入量柱区, 到其余指标副图前截止。
+  var candleBottom = v.pTop + v.priceH;
+  if (v.volH && v.volY >= candleBottom) candleBottom = v.volY + v.volH;
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
+  ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, candleBottom - v.pTop + 4); ctx.clip();
   var bw = Math.max(1.5, v.step * 0.62);
   if (S.ind.volMain && !v.volH && v.vMax > 0) {
     var ovH = Math.round(v.priceH * 0.18), ovBase = v.pTop + v.priceH;
     for (var oi = i0; oi < i1; oi++) {
       var ok = kl[oi];
-      ctx.fillStyle = ok[4] >= ok[1] ? "rgba(255,111,102,0.34)" : "rgba(53,217,154,0.34)";
+      ctx.fillStyle = volColorJL(ok[4] >= ok[1], TVL ? 0.48 : 0.34);
       var ovh = ok[5] / v.vMax * ovH;
       ctx.fillRect(v.X(oi) - bw / 2, ovBase - ovh, bw, ovh);
     }
-    paneLegendJL(ctx, v, ovBase - ovH - 11, "VOL", volLegJL(kl, legIdxJL(v)));
+    paneLegendJL(ctx, v, ovBase - ovH - 11, "VOL", volLegJL(kl, legIdxJL(v)), true);
   }
   var ct = S.ctype || "candle";
   if (lineOnJL() || ct === "area") {
@@ -2573,6 +2620,9 @@ function drawReal() {
     ctx.fillStyle = up ? UP : DN;
     ctx.fillRect(x - bw / 2, bt0, bw, bh0);
   } }
+  // 蜡烛可透进量柱区; 主图指标仍按原价格区裁切。
+  ctx.restore(); ctx.save();
+  ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, v.priceH + 4); ctx.clip();
   // v2: 我的买卖点(今日做T记录) —— 绿▲买 红▼卖, 东财同款直观
   renderVP(ctx, v);
   renderCYQ(ctx, v);
@@ -2701,7 +2751,7 @@ function drawReal() {
   ctx.beginPath(); ctx.moveTo(v.padL, v0); ctx.lineTo(v.padL + v.plotW, v0); ctx.stroke();
   for (i = i0; i < i1; i++) {
     var kk = kl[i];
-    ctx.fillStyle = kk[4] >= kk[1] ? (TVL ? "rgba(242,54,69,0.5)" : "rgba(255,111,102,0.75)") : (TVL ? "rgba(8,153,129,0.5)" : "rgba(53,217,154,0.75)"); /* 11-18 TV风格: 量柱同色半透明, 主图蜡烛不透明 */
+    ctx.fillStyle = volColorJL(kk[4] >= kk[1], TVL ? 0.9 : 0.75); /* 11-19 亮度验收: 量柱跟随蜡烛配色, 从半透明提亮 */
     var vh = kk[5] / v.vMax * (v.volH - 10);
     ctx.fillRect(v.X(i) - bw / 2, v0 + v.volH - vh, bw, vh);
     if (S.klt === "101" && pvdFlags(kl)[i]) {
@@ -2721,7 +2771,7 @@ function drawReal() {
     }
     ctx.stroke();
   }
-  paneLegendJL(ctx, v, v0, "VOL", volLegJL(kl, legIdxJL(v)));
+  paneLegendJL(ctx, v, v0, "VOL", volLegJL(kl, legIdxJL(v)), true);
   (v._yInv = v._yInv || {}).vol = function (yy) { return (v0 + v.volH - yy) / (v.volH - 10) * v.vMax; };
   } // if (v.volH) 收尾 —— VOL叠加主图时此副图不画
   // MACD 副图
@@ -3095,8 +3145,10 @@ function anchorAt(pt) {
   }
   var y = Math.max(v.pTop, Math.min(v.pTop + v.priceH, pt.y));
   if (!v.ts && v.step > 0) {
-    var xR = Math.min(pt.x, v.w - v.padR - 2), ri = Math.round(v.i0 + (xR - v.padL) / v.step - 0.5), nL = S.kl.length - 1;
-    if (ri > nL) return { d: S.kl[nL][0], o: Math.min(300, ri - nL), p: v.P(y) };
+    var xR = Math.max(v.padL, Math.min(pt.x, v.w - v.padR - 2));
+    var ri = i + (xR - v.X(i)) / v.step, nL = S.kl.length - 1;
+    if (ri > nL + 0.5) return { d: S.kl[nL][0], o: Math.min(300, ri - nL), p: v.P(y) };
+    return magnetJL(v, { d: S.kl[i][0], o: ri - i, p: v.P(y) });
   }
   return magnetJL(v, { d: S.kl[i][0], p: v.P(y) });
 }
@@ -3122,35 +3174,36 @@ function pickAnchor(idx, pt) {
   var v = view(); if (!v) return -1;
   var pts = ptsOf(v, idxMap(v), dlist()[idx].pts);
   if (!pts) return -1;
+  var nearest = -1, best = 18 * 18;
   for (var i = 0; i < pts.length; i++) {
-    var dx = pts[i].x - pt.x, dy = pts[i].y - pt.y;
-    if (dx * dx + dy * dy < 26 * 26) return i;
+    var dx = pts[i].x - pt.x, dy = pts[i].y - pt.y, ds = dx * dx + dy * dy;
+    if (ds < best) { best = ds; nearest = i; }
   }
-  return -1;
+  return nearest;
 }
 function dragBy(Tx, pt) {
   var v = view(); if (!v) return;
   var dg = dlist()[Tx.idx]; if (!dg) return;
-  var di = Math.round((pt.x - Tx.lx) / v.step);
+  var di = (pt.x - Tx.lx) / v.step;
   var _pn = dg.pts && dg.pts[0] && dg.pts[0].pane;
   var _isT = _pn === "tqs";
   var _rc = (!_isT && _pn) ? paneRectOf(v, _pn) : null;
   var dp = _isT && v.tqsH ? (-(pt.y - Tx.ly) / (v.tqsH - 14) * 100) : (_rc ? (pt.y - Tx.ly) / _rc.h : (v.P(pt.y) - v.P(Tx.ly)));
-  if (!di && Math.abs(dp) < (_isT ? 1.2 : (_rc ? 0.02 : (v.hi - v.lo) / v.priceH * 1.5))) return;
+  if (!di && !dp) return;
   var im = idxMap(v);
   var n = S.kl.length;
   function moveA(a) {
     var i2 = im[a.d];
     if (i2 == null) return;
-    var ti = i2 + (a.pane ? 0 : (a.o || 0)) + di, ni = Math.max(0, Math.min(n - 1, ti));
+    var ti = Math.max(0, i2 + (a.o || 0) + di), ni = Math.max(0, Math.min(n - 1, Math.round(ti)));
     a.d = S.kl[ni][0];
-    if (!a.pane && !v.ts && ti > n - 1) a.o = Math.min(300, ti - (n - 1)); else delete a.o;
+    if (!a.pane && !v.ts) a.o = Math.min(300, ti - ni); else delete a.o;
     if (a.pr != null) a.pr = Math.max(0, Math.min(1, a.pr + dp));
     else a.p = _isT ? Math.max(0, Math.min(100, a.p + dp)) : Math.max(0.0001, a.p + dp);
   }
-  if (Tx.ai >= 0) { var _ma = dg.pts[Tx.ai]; if (S.magnet && !_ma.pane) { _ma.p = v.P(pt.y); moveA(_ma); _ma.p = v.P(pt.y); magnetJL(v, _ma); } else moveA(_ma); } // 磁吸开着: 锚点跟手指的真实位置再吸附(不累加偏移, 否则吸住后挪不开)
+  if (Tx.ai >= 0) { var _ma = dg.pts[Tx.ai]; if (!_ma.pane) { var _at = anchorAt(pt); if (_at && !_at.pane) dg.pts[Tx.ai] = _at; } else moveA(_ma); } // 磁吸开着: 锚点跟手指的真实位置再吸附(不累加偏移, 否则吸住后挪不开)
   else for (var q = 0; q < dg.pts.length; q++) moveA(dg.pts[q]);
-  Tx.lx += di * v.step; Tx.ly = pt.y;
+  Tx.lx = pt.x; Tx.ly = pt.y;
   Tx.moved = true;
   drawRafJL();
 }
@@ -3296,11 +3349,8 @@ cv.addEventListener("touchmove", function (e) {
   if (T.mode === "pan") {
     var v = view(); if (!v) return;
     if (T.axis !== "v") {
-      var shift = Math.round((pt.x - T.lx) / v.step);
-      if (shift) {
-        panEndJL(-shift);
-        T.lx = pt.x;
-      }
+      panEndJL(-(pt.x - T.lx) / v.step);
+      T.lx = pt.x;
     }
     var dyy = T.ly - pt.y;
     if (T.axis !== "h" && Math.abs(dyy) > 1.5) {
@@ -3469,13 +3519,11 @@ cv.addEventListener("mousemove", function (e) {
   }
   if (M.moved) {
     var v = view(); if (!v) return;
-    var shift = Math.round((pt.x - M.lx) / v.step);
-    if (shift) {
-      panEndJL(-shift);
-      M.lx = pt.x;
-    }
+    if (!M.axis) M.axis = Math.abs(pt.x - M.x0) >= Math.abs(pt.y - M.y0) ? "h" : "v";
+    if (M.axis === "h") panEndJL(-(pt.x - M.lx) / v.step);
+    M.lx = pt.x;
     var dyy = M.ly - pt.y;
-    if (Math.abs(dyy) > 1.5) {
+    if (M.axis === "v" && Math.abs(dyy) > 1.5) {
       S.yOff -= dyy / v.priceH * (v.hi - v.lo);
       M.ly = pt.y;
     }
@@ -3783,6 +3831,61 @@ function buildPStrip() {
     else location.href = "https://fululi.github.io/hq-mobile/";
   });
 })();
+function ksUiIconJL(name) {
+  var paths = {
+    trend: '<path d="M4 20 20 4M4 17v3h3M17 4h3v3"/>', hline: '<path d="M3 12h18"/><circle cx="7" cy="12" r="2"/>',
+    ray: '<path d="m4 20 16-16M13 4h7v7"/>', rect: '<rect x="4" y="6" width="16" height="12" rx="1"/>',
+    fib: '<path d="M3 5h18M3 10h18M3 15h18M3 20h18M5 20 19 5"/>', pct: '<path d="M7 3v18m-3-3 3 3 3-3M17 21V3m-3 3 3-3 3 3"/>',
+    tri: '<path d="m12 4 9 16H3Z"/>', hs: '<path d="m2 17 4-7 3 5 3-12 3 12 3-5 4 7M3 19h18"/>',
+    xabcd: '<path d="m3 17 4-12 5 14 5-14 4 12M3 17h18M7 5l10 0"/>', freedraw: '<path d="m4 16 12-12 4 4L8 20H4ZM14 6l4 4"/>',
+    poly: '<path d="m3 17 5-10 6 8 7-12"/><circle cx="8" cy="7" r="1"/><circle cx="14" cy="15" r="1"/>',
+    lrchan: '<path d="m3 14 18-9M3 19l18-9M3 9l18-9"/>', buy: '<path d="M4 18h16M12 16V4m-5 5 5-5 5 5"/>',
+    priceline: '<path d="M3 12h18M16 4v16M13 7l3-3 3 3"/>', range: '<path d="M3 8V4h4m10 0h4v4M3 16v4h4m10 0h4v-4M7 12h10"/>',
+    undo: '<path d="m8 4-5 5 5 5M3 9h10a7 7 0 0 1 7 7v4"/>', redo: '<path d="m16 4 5 5-5 5m5-5H11a7 7 0 0 0-7 7v4"/>',
+    trash: '<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/>', point: '<path d="m9 4-5 5 5 5M4 9h10a5 5 0 0 1 0 10"/>',
+    magnet: '<path d="M5 4v9a7 7 0 0 0 14 0V4h-5v9a2 2 0 0 1-4 0V4ZM5 8h5m4 0h5"/>',
+    lock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
+    unlock: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2M12 14v3"/>', close: '<path d="m6 6 12 12M6 18 18 6"/>'
+  };
+  return '<svg class="ksUiIcon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + (paths[name] || paths.trend) + '</svg>';
+}
+function ksLockButtonJL(button, on, label) {
+  button.innerHTML = ksUiIconJL(on ? "lock" : "unlock") + '<span>' + label + '</span>';
+  button.classList.toggle("on", !!on); button.setAttribute("aria-pressed", on ? "true" : "false"); button.setAttribute("aria-label", label);
+}
+function closeDrawerJL() {
+  document.body.classList.remove("drw-periods", "drw-tools", "drw-inds", "drw-favs");
+  document.querySelectorAll("#ksBarJL [data-drawer]").forEach(function (b) { b.classList.remove("on"); b.setAttribute("aria-expanded", "false"); });
+}
+function ksUiHeadJL(el, title, subtitle) {
+  el.classList.add("ksUiPanel"); el.setAttribute("role", "region"); el.setAttribute("aria-label", title);
+  var head = document.createElement("div"); head.className = "ksUiHead";
+  var copy = document.createElement("div"), name = document.createElement("strong"), sub = document.createElement("p"); name.textContent = title; sub.textContent = subtitle; copy.appendChild(name); copy.appendChild(sub); head.appendChild(copy);
+  var close = document.createElement("button"); close.type = "button"; close.className = "ksUiClose"; close.innerHTML = ksUiIconJL("close"); close.setAttribute("aria-label", "收起" + title); close.onclick = function () { closeDrawerJL(); var b = document.querySelector('#ksBarJL [data-drawer="' + (el.hasAttribute("data-tools") ? "tools" : "inds") + '"]'); if (b) b.focus(); }; head.appendChild(close); el.appendChild(head);
+}
+function ksUiSectionJL(el, title, buttons) {
+  if (!buttons.length) return;
+  var sec = document.createElement("section"), hd = document.createElement("h3"), grid = document.createElement("div"); sec.className = "ksUiGroup"; hd.className = "ksUiGroupTitle"; hd.textContent = title; grid.className = "ksUiGrid";
+  buttons.forEach(function (b) { grid.appendChild(b); }); sec.appendChild(hd); sec.appendChild(grid); el.appendChild(sec);
+}
+function organizeToolsJL(el) {
+  if (!_embMode()) return;
+  var tools = Array.from(el.querySelectorAll("[data-tool]")), actions = Array.from(el.querySelectorAll("[data-action]")), alerts = el.querySelector(".ksAlSec"), lock = el.querySelector(".ksLkRow");
+  el.replaceChildren(); ksUiHeadJL(el, "画线工具", "选好工具，再在图表上落点");
+  [["常用画线", ["trend", "hline", "ray", "rect", "freedraw", "poly"]], ["测量与形态", ["fib", "pct", "lrchan", "tri", "hs", "xabcd"]], ["价格标记", ["buy", "priceline"]]].forEach(function (g) { ksUiSectionJL(el, g[0], tools.filter(function (b) { return g[1].indexOf(b.dataset.tool) >= 0; })); });
+  ksUiSectionJL(el, "编辑与辅助", actions);
+  if (lock) { var help = document.createElement("span"); help.className = "ksLkHelp"; help.textContent = "防止误拖与误删"; lock.appendChild(help); el.appendChild(lock); }
+  if (alerts) el.appendChild(alerts);
+}
+function organizeIndsJL(el) {
+  if (!_embMode()) return;
+  var buttons = Array.from(el.querySelectorAll("button")); el.replaceChildren(); ksUiHeadJL(el, "图表指标", "亮色圆点表示已开启 · 点选切换");
+  [["主图趋势", ["ma", "hma", "boll", "tsline", "lr", "zzl"]], ["价格与区间", ["pdhl", "phvl", "tdhl", "cost", "amp", "rlm"]], ["资金与动能", ["tqs", "rtflow", "ctrl", "zlyy", "ddx", "macd", "zz"]], ["结构与信号", ["sixsig", "jitu", "fvg", "vi", "liq", "ms", "ob", "atri", "vp", "cyq", "monitor"]], ["布局与设置", ["volMain", "paneTop", "parameters", "appearance"]]].forEach(function (g) {
+    var selected = buttons.filter(function (b) { return g[1].indexOf(b.dataset.ind) >= 0; });
+    selected.forEach(function (b) { buttons.splice(buttons.indexOf(b), 1); }); ksUiSectionJL(el, g[0], selected);
+  });
+  ksUiSectionJL(el, "其他", buttons);
+}
 function buildTools() {
   var el = document.querySelector("[data-tools]");
   el.innerHTML = "";
@@ -3825,7 +3928,9 @@ function buildTools() {
   ["↷", function () { undoJL(true); }],
   ["🧲磁吸", function () { S.magnet = !S.magnet; try { localStorage.setItem("ksm_magnet_v1", S.magnet ? "1" : "0"); } catch (e) {} buildTools(); hint(S.magnet ? "磁吸开 · 落点/拖锚点 12px 内吸到K线开高低收" : "磁吸关"); }]].forEach(function (op) {
     var b = document.createElement("button");
-    b.className = "btn warn"; b.type = "button"; b.textContent = op[0];
+    b.className = "btn" + (op[0] === "删选" || op[0] === "清空" ? " warn" : ""); b.type = "button"; b.dataset.action = op[0];
+    var actionUI = { "区间": ["range", "区间统计"], "撤点": ["point", "撤回落点"], "删选": ["trash", "删除所选"], "清空": ["trash", "清空画线"], "↶": ["undo", "撤销"], "↷": ["redo", "重做"], "🧲磁吸": ["magnet", "磁吸"] }, ui = actionUI[op[0]];
+    b.innerHTML = ksUiIconJL(ui[0]) + '<span>' + ui[1] + '</span>'; b.setAttribute("aria-label", ui[1]);
     if (op[0] === "区间") b.setAttribute("data-rng", "1");
     if (op[0] === "↶") b.title = "撤销 (⌘Z)"; if (op[0] === "↷") b.title = "重做 (⇧⌘Z)";
     if (op[0] === "🧲磁吸" && S.magnet) b.classList.add("on");
@@ -3836,7 +3941,8 @@ function buildTools() {
   TOOLS.forEach(function (t) {
     var b = document.createElement("button");
     b.className = "btn"; b.type = "button";
-    b.textContent = (S.favPick ? (S.favs.indexOf("tool:" + t[0]) >= 0 ? "★" : "☆") : "") + (TICON[t[0]] || t[1]);
+    var toolLabel = (S.favPick ? (S.favs.indexOf("tool:" + t[0]) >= 0 ? "★" : "☆") : "") + t[1];
+    b.innerHTML = ksUiIconJL(t[0]) + '<span>' + toolLabel + '</span>'; b.setAttribute("aria-label", t[1]);
     b.title = t[1]; // 图标按钮悬停/长按看名字
     b.setAttribute("data-tool", t[0]);
     b.addEventListener("click", function () {
@@ -3858,6 +3964,7 @@ function buildTools() {
         hint("「" + t[1] + "」已激活 · 依次点 " + t[2] + " 个点（主图/副图都能落点）· 锁定的图形不挡落锚");
       }
       syncTools(); draw();
+      if (!S.favPick) closeDrawerJL();
     });
     el.appendChild(b);
   });
@@ -3869,7 +3976,7 @@ function buildTools() {
   var lkBtn = document.createElement("button");
   lkBtn.type = "button"; lkBtn.className = "btn"; lkBtn.id = "ksLkAll";
   var lkAllOn = function () { var l9 = visList(); return l9.length > 0 && l9.every(function (d) { return d.locked; }); };
-  window.refreshLkAllJL = function () { var on = lkAllOn(); lkBtn.textContent = on ? "🔒" : "🔓"; lkBtn.title = on ? "屏上画线已全部锁定 · 点一下全部解锁" : "点一下把屏上所有画线全部锁定(已锁定的保持)"; lkBtn.classList.toggle("on", on); };
+  window.refreshLkAllJL = function () { var list = visList(), on = lkAllOn(); ksLockButtonJL(lkBtn, on, on ? "全部已锁定" : "锁定全部画线"); lkBtn.disabled = !list.length; lkBtn.title = !list.length ? "暂无画线可锁定" : (on ? "点一下全部解锁" : "锁定屏上所有画线，防止误拖与误删"); };
   lkBtn.addEventListener("click", function () {
     var dl9 = visList(), lockTo = !lkAllOn(), n9 = 0;
     dl9.forEach(function (d) { if (!!d.locked !== lockTo) { d.locked = lockTo; n9++; } });
@@ -3881,6 +3988,7 @@ function buildTools() {
   window.refreshLkAllJL();
   el.appendChild(lkRow);
   refreshAlSec();
+  organizeToolsJL(el);
   syncTools();
 }
 function syncPal() { // 色板当前色高亮(选中圈)
@@ -4667,7 +4775,7 @@ function renderAutoTri(ctx, v) {
   var right2 = v.padL + v.plotW;
   var futBars = Math.ceil(v.padR / v.step);
   var iEnd = (v.i1 - 1) + futBars;
-  var xEnd = v.padL + (iEnd - v.i0 + 0.5) * v.step;
+  var xEnd = v.X(iEnd);
   var last2 = n - 1, pc2 = kl[last2][4];
   var bigK = ["15", "30", "60", "120", "101", "102", "103", "Q", "Y"].indexOf(String(S.klt)) >= 0;
   var s60b = Math.max(0, n - 60), hi60 = -1e18, lo60 = 1e18;
@@ -4973,11 +5081,11 @@ function renderAmpJL(ctx, v) {
   var P = ampParJL(), up = Math.ceil((A.lo + P.xa * A.avg / 100 * A.pc) * 100) / 100, dn = Math.floor(A.hi * (1 - P.rb) * 100) / 100, left = A.avg - A.amp, d2 = dec();
   var right = v.padL + v.plotW, pt = v.pTop, pb = v.pTop + v.priceH, n = kl0.length;
   var x0 = S.klt === "101" ? Math.max(v.padL, v.X(n - 1) - 30) : Math.max(v.padL, v.X(A.first));
-  ctx.save(); ctx.lineWidth = 1; ctx.setLineDash([5, 3]); ctx.font = "400 9px -apple-system, 'Helvetica Neue', sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic";
-  [[up, "#ffc15e", "卖", A.hi >= up], [dn, "#62dcff", "接", A.last <= dn]].forEach(function (L) {
+  ctx.save(); ctx.lineWidth = 1; ctx.setLineDash([5, 3]); ctx.font = "500 10px -apple-system, 'Helvetica Neue', sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic";
+  [[up, "#ffd071", "卖", A.hi >= up], [dn, "#7de7ff", "接", A.last <= dn]].forEach(function (L) {
     var y = v.Y(L[0]); if (y < pt || y > pb) return;
     ctx.strokeStyle = L[1]; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.moveTo(x0, y + 0.5); ctx.lineTo(right - 4, y + 0.5); ctx.stroke();
-    ctx.fillStyle = L[1]; ctx.globalAlpha = 1; ctx.fillText(L[2] + " " + L[0].toFixed(d2) + (L[3] ? " ✓" : ""), right - 6, y - 2);
+    ctx.globalAlpha = 1; ksHaloTextJL(ctx, L[2] + " " + L[0].toFixed(d2) + (L[3] ? " ✓" : ""), right - 6, y - 2, L[1]);
   });
   ctx.setLineDash([]);
   var rc = A.amp >= A.avg * 1.4 ? "#ff8a3d" : A.amp >= A.avg ? "#ffe14d" : "#d8e6ff";
@@ -8192,9 +8300,9 @@ function renderSixSigJL(ctx, v) {
     var x = v.X(i), y;
     if (mk.s === "B") y = Math.min(v.Y(kl[i][3]) + 15, v.pTop + v.priceH - 6);
     else y = Math.max(v.Y(kl[i][2]) - 14, v.pTop + 5);
-    ctx.font = "bold 7px -apple-system, sans-serif";
+    ctx.font = "500 9px -apple-system, sans-serif";
     ctx.fillStyle = SIXSIG_COL[mk.t] || "#81e6d9";
-    ctx.beginPath(); ctx.arc(x, y, 4.8, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill();
     ctx.strokeStyle = "rgba(8,12,10,0.85)"; ctx.lineWidth = 0.8; ctx.stroke();
     ctx.fillStyle = "#0a0e0b"; ctx.fillText(mk.t, x, y + 0.5);
   }
@@ -8478,7 +8586,7 @@ function buildInds() {
   var pb = document.createElement("button");
   var plb = { day: "高低·日", week: "高低·周", off: "昨高低" };
   pb.className = "btn tabbtn" + (S.pdhlMode !== "off" ? " on" : "");
-  pb.type = "button"; pb.textContent = plb[S.pdhlMode] || "昨高低";
+  pb.type = "button"; pb.dataset.ind = "pdhl"; pb.textContent = plb[S.pdhlMode] || "昨高低";
   pb.addEventListener("click", function () {
     S.pdhlMode = S.pdhlMode === "day" ? "week" : (S.pdhlMode === "week" ? "off" : "day");
     store(); buildInds(); draw();
@@ -8488,7 +8596,7 @@ function buildInds() {
   INDS.forEach(function (t) {
     var b = document.createElement("button");
     b.className = "btn tabbtn" + (S.ind[t[0]] ? " on" : "");
-    b.type = "button";
+    b.type = "button"; b.dataset.ind = t[0]; b.setAttribute("aria-pressed", S.ind[t[0]] ? "true" : "false");
     var _fp = S.favPick ? (S.favs.indexOf("ind:" + t[0]) >= 0 ? "★" : "☆") : "";
     b.textContent = _fp + t[1];
     if (t[0] === "sixsig") {
@@ -8553,14 +8661,15 @@ function buildInds() {
     el.appendChild(b);
   });
   var ptb = document.createElement("button");
-  ptb.className = "btn tabbtn" + (S.ind.paneTop ? " on" : ""); ptb.type = "button"; ptb.textContent = "副图上置";
+  ptb.className = "btn tabbtn" + (S.ind.paneTop ? " on" : ""); ptb.type = "button"; ptb.dataset.ind = "paneTop"; ptb.textContent = "副图上置";
   ptb.addEventListener("click", function () { S.ind.paneTop = !S.ind.paneTop; store(); buildInds(); draw(); hint(S.ind.paneTop ? "副图已上置到主图上方" : "副图已回主图下方"); });
   el.appendChild(ptb);
   var pmb = document.createElement("button");
-  pmb.className = "btn tabbtn"; pmb.type = "button"; pmb.textContent = "⚙参数";
+  pmb.className = "btn tabbtn"; pmb.type = "button"; pmb.dataset.ind = "parameters"; pmb.textContent = "参数设置";
   pmb.addEventListener("click", function () { prmPanelJL(); });
   el.appendChild(pmb);
-  var lookButton = document.createElement("button"); lookButton.className = "btn tabbtn"; lookButton.type = "button"; lookButton.textContent = "外观"; lookButton.onclick = lookPanelJL; el.appendChild(lookButton);
+  var lookButton = document.createElement("button"); lookButton.className = "btn tabbtn"; lookButton.type = "button"; lookButton.textContent = "外观"; lookButton.dataset.ind = "appearance"; lookButton.onclick = lookPanelJL; el.appendChild(lookButton);
+  organizeIndsJL(el);
   buildFavs(); // 收藏栏里的指标按钮同步亮灭
 }
 var CTYPES = [["candle", "蜡烛"], ["hollow", "空心K"], ["bar", "美国线"], ["ha", "平均K"], ["area", "面积"]];
@@ -8676,13 +8785,13 @@ function applyUrl() {
         var bar = document.createElement("div"); bar.id = "ksBarJL";
         var mk = function (label, fn, title) { var b = document.createElement("button"); b.type = "button"; b.textContent = label; if (title) b.title = title; b.addEventListener("click", fn); bar.appendChild(b); return b; };
         [["周期", "periods"], ["画线", "tools"], ["指标", "inds"]].forEach(function (dd) {
-          mk(dd[0] + "▾", function () {
+          var drawerButton = mk(dd[0] + "▾", function () {
             var cls = "drw-" + dd[1], had = document.body.classList.contains(cls);
-            document.body.classList.remove("drw-periods", "drw-tools", "drw-inds", "drw-favs");
-            bar.querySelectorAll("button").forEach(function (x) { x.classList.remove("on"); });
-            if (!had) { document.body.classList.add(cls); this.classList.add("on"); document.body.style.setProperty("--ksDrwTop", Math.round(bar.getBoundingClientRect().bottom) + "px"); }
+            closeDrawerJL();
+            if (!had) { document.body.classList.add(cls); this.classList.add("on"); this.setAttribute("aria-expanded", "true"); document.body.style.setProperty("--ksDrwTop", Math.round(bar.getBoundingClientRect().bottom) + "px"); }
             draw();
           }, dd[0] + "抽屉: 点开/收起");
+          drawerButton.dataset.drawer = dd[1]; drawerButton.setAttribute("aria-expanded", "false");
         });
         var sep = document.createElement("i"); sep.className = "sep"; bar.appendChild(sep);
         var proxy = function (rowSel, text) {
