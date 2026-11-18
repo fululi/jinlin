@@ -2303,7 +2303,8 @@ function ksSyncBoxJL(mode) { // mode: "out" 导出 / "in" 导入
 
 /* ---- 主绘制 ---- */
 // 现在: 尺寸没变不重设(不闪清屏); 渲染抛错→兜底画简版K线,图永不空白
-function drawRafJL() { if (S._rafP) return; S._rafP = requestAnimationFrame(function () { S._rafP = 0; draw(); }); }
+function drawRafJL() { S._xhFast = 0; if (S._rafP) return; S._rafP = requestAnimationFrame(function () { S._rafP = 0; S._xhNow = S._xhFast; S._xhFast = 0; try { draw(); } finally { S._xhNow = 0; } }); }
+function drawXhJL() { if (S._rafP) return; drawRafJL(); S._xhFast = 1; } /* 11-18 只动十字线: 这一帧可以贴底图快照+只重画十字线层(同一帧还有别的重画请求就整图画) */
 try { S.magnet = localStorage.getItem("ksm_magnet_v1") === "1"; } catch (e) {}
 try { S.xhHold = localStorage.getItem("ks_xhhold_v1") === "1"; } catch (e) {}
 document.addEventListener("keydown", function (e) {
@@ -2372,6 +2373,7 @@ function drawReal() {
     ctx.__tvFont = 1;
   }
   S._xhPlus = null; /* 11-18 十字线右价签旁小「+」: 每帧重登记 */
+  if (S._xhNow && xhFastJL(ctx, w, hh, dpr)) return; /* 11-18 十字线层: 底图没变就不重画 */
   var _scl = document.querySelector("[data-scl]"); if (_scl) _scl.style.display = S.ts.on ? "none" : "";
   if (S.ts.on) { try { drawTSJL(ctx, w, hh); } catch (eTS) { if (window.console) console.error("[drawTS]", eTS); } return; }
   var v = view();
@@ -2751,6 +2753,36 @@ function drawReal() {
       rinfo.forEach(function (t, ii) { ctx.fillStyle = ii === 0 ? "#4a9eff" : "#f2f6f4"; ctx.fillText(t, rbx + 8, rby + 14 + ii * 16); });
     }
   }
+  xhSnapJL(ctx, v, kl, d2, w, hh, dpr); /* 11-18 底图(不含十字线)存快照 */
+  xhLayerJL(ctx, v, kl, d2, w);
+}
+
+/* 11-18 十字线层(GPT审计「十字线悬停整图重画」): 整图画完先把底图拷一份, 十字线只在本根K线内移动(竖移读价/同根内横移)时
+   贴底图+只画十字线读数. 换根/换视图/分时图 一律整图重画; 开着实时主力副图时横移也整图重画(副图图例跟着十字线那根走). 改前改后画布调用见 tools/bt/ks_xh_check.js */
+function xhKeyJL(v, kl, w, hh, dpr) {
+  if (!S.cross || S.ts.on || !v || !kl || !kl.length) return null;
+  var lk = kl[kl.length - 1];
+  return [w, hh, dpr, kl.length, lk[0], lk[4], lk[5], v.i0, v.i1, v.hi, v.lo, v.I(S.cross.x), !!S.cross.hover, !!S.cross.synced, S.selected, S.tool || "", S.pending ? S.pending.length : 0, S.active, S.klt, S.ind.rtflow ? Math.round(S.cross.x) : ""].join("|"); /* 实时主力副图按240分钟槽位跟十字线x走: 开着就按像素算 */
+}
+function xhSnapJL(ctx, v, kl, d2, w, hh, dpr) {
+  var k = xhKeyJL(v, kl, w, hh, dpr);
+  if (!k) { S._xhBase = null; return; }
+  try {
+    var B = S._xhBase || (S._xhBase = { c: document.createElement("canvas") });
+    if (B.c.width !== cv.width || B.c.height !== cv.height) { B.c.width = cv.width; B.c.height = cv.height; }
+    var bx = B.c.getContext("2d"); bx.setTransform(1, 0, 0, 1, 0, 0); bx.clearRect(0, 0, B.c.width, B.c.height); bx.drawImage(cv, 0, 0);
+    B.key = k; B.v = v; B.kl = kl; B.d2 = d2;
+  } catch (e) { S._xhBase = null; }
+}
+function xhFastJL(ctx, w, hh, dpr) {
+  var B = S._xhBase; if (!B || !B.key || B.kl !== S.kl) return false;
+  if (xhKeyJL(B.v, S.kl, w, hh, dpr) !== B.key) return false;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(B.c, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  xhLayerJL(ctx, B.v, S.kl, B.d2, w);
+  S._xhFastN = (S._xhFastN || 0) + 1;
+  return true;
+}
+function xhLayerJL(ctx, v, kl, d2, w) {
   // 十字线 + 信息卡
   if (S.cross) {
     var ci = v.I(S.cross.x);
@@ -3147,7 +3179,7 @@ cv.addEventListener("touchmove", function (e) {
   }
   if (T.mode === "cross") {
     S.cross = { x: pt.x, y: pt.y };
-    drawRafJL();
+    drawXhJL();
     return;
   }
   if (T.mode === "rng") {
@@ -3310,7 +3342,7 @@ cv.addEventListener("mousemove", function (e) {
     if (S.xhHold) return; /* 11-18 用户「两个都要」B: 十字线「按住才出」——悬停不出, 鼠标按住不动约半秒出(原长按逻辑) */
     // 悬停即出十字线+金额（不用按住），移出画布消失
     S.cross = { x: pt.x, y: pt.y, hover: true };
-    drawRafJL();
+    drawXhJL();
     return;
   }
   if (M.yzoom) {
@@ -3326,7 +3358,7 @@ cv.addEventListener("mousemove", function (e) {
     }
     return;
   }
-  if (M.cross) { S.cross = { x: pt.x, y: pt.y }; drawRafJL(); return; }
+  if (M.cross) { S.cross = { x: pt.x, y: pt.y }; drawXhJL(); return; }
   if (M.rng) {
     var _vr2 = view();
     if (_vr2) { var _ja = _vr2.I(M.x0), _jb = _vr2.I(pt.x); S.rng = { a: Math.min(_ja, _jb), b: Math.max(_ja, _jb) }; }
@@ -3397,13 +3429,14 @@ cv.addEventListener("wheel", function (e) {
     var _wv = view(); if (!_wv || !_wn) return;
     S._wpx = (S._wpx || 0) + e.deltaX;
     var _wsh = Math.trunc(S._wpx / _wv.step);
-    if (_wsh) { S._wpx -= _wsh * _wv.step; panEndJL(_wsh); draw(); }
+    if (_wsh) { S._wpx -= _wsh * _wv.step; panEndJL(_wsh); drawRafJL(); } /* 11-18 滚轮合帧 */
     return;
   }
   var _wc = Math.round(S.count * Math.exp(Math.max(-0.25, Math.min(0.25, e.deltaY * 0.0025))));
   if (_wc === S.count) _wc += e.deltaY > 0 ? 1 : -1;
-  S.count = Math.max(15, Math.min(KS_COUNT_MAX, _wc)); saveZoom();
-  draw();
+  S.count = Math.max(15, Math.min(KS_COUNT_MAX, _wc));
+  if (S._zsT) clearTimeout(S._zsT); S._zsT = setTimeout(function () { S._zsT = 0; saveZoom(); }, 400); /* 11-18 滚轮停手再存缩放 */
+  drawRafJL();
 }, { passive: false });
 cv.addEventListener("dblclick", function (e) {
   var pt = posT(e);
