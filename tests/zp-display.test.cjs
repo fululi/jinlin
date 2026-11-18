@@ -3,6 +3,13 @@ const html=fs.readFileSync(path.join(__dirname,'../jl_zp_war.html'),'utf8');
 function part(a,b){const i=html.indexOf(a),j=html.indexOf(b,i);assert.ok(i>=0&&j>i);return html.slice(i,j);}
 test('range update reports rebuild; repeated unchanged range does not rebuild',()=>{let builds=0;const c={YLO:0,YHI:1,buildStatics(){builds++;}};vm.runInNewContext(part('function setRange(lo, hi)', 'function renderMarkers()'),c);assert.equal(c.setRange(10,20),true);assert.equal(builds,1);assert.equal(c.setRange(10,20),undefined);assert.equal(builds,1);});
 test('drag redraw builds exactly once with either changed or unchanged range',()=>{for(const changed of [true,false]){let builds=0,lines=0,marks=0;const c={YLO:0,YHI:1,setRange(){if(changed){builds++;return true;}},buildStatics(){builds++;},renderLine(){lines++;},renderMarkers(){marks++;},redraw(){throw Error('unexpected fallback');}};vm.runInNewContext(part('  function redrawLight()', '  var rq = 0; function redrawSoon()'),c);c.redrawLight();assert.equal(builds,1);assert.equal(lines,1);assert.equal(marks,1);}});
+test('standalone live period changes recompute the price range immediately',()=>{
+  let livePaints=0,stalePaints=0;
+  const c={MODE:'live',window:{INJL:false,RPL:null},liveRender(){livePaints++;},buildStatics(){stalePaints++;},paint(){throw Error('unexpected fallback');}};
+  const i=html.indexOf('  function redraw() {',html.indexOf('  function cdTick()'));
+  vm.runInNewContext(html.slice(i,html.indexOf('  /* 11-05 照K线表:',i)),c);
+  c.redraw();assert.equal(livePaints,1);assert.equal(stalePaints,0);
+});
 test('current-price rendering preserves neighbouring marker text and has no backdrop or stroke',()=>{
 function el(type,attrs={}){return {type,attrs,children:[],setAttribute(k,v){this.attrs[k]=v;},appendChild(n){this.children.push(n);}};}
 const marker=el('text',{y:30});const mk=el('g');mk.children.push(marker);mk.querySelectorAll=()=>[marker];marker.parentNode=mk;mk.removeChild=()=>{throw Error('must not remove other prices');};const svg=el('svg');const c={document:{getElementById:()=>null},MODE:'live',p:20.67,LIVE:{pc:20},$:id=>id==='mk'?mk:el('line'),window:{},PX0:10,PY0:0,PH:100,YRES:0,LX:200,Y:()=>30,svg,el,tx:(x,y,s,fill,size,anchor,w)=>{const t=el('text',{'font-size':size,'font-weight':w,stroke:'old-halo'});t.textContent=s;return t;}};
