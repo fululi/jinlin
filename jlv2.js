@@ -302,30 +302,44 @@
     });
   }
   function fetchOneEtf(i, cb) {
+    /* ETF状态契约: asOf=净额所属交易日; fetchedAt=组内最早成功收到净额的时间(ms), 非绘制/量比完成时间。
+       quoteAt=实时补值时组内最早f124(ms); 日线源只有日期时为null, 不虚构收盘时刻。
+       flowSource=daykline/ulist; 字段随rows缓存, 旧缓存缺时间仍视为未知。
+       买入闸取300×4(510300/510310/510330/159919); 首页宽基另加510050/588000/159915。
+       买入闸盘中10分钟、午休冻结11:30有效值、盘后须15:00报价; 缺失/过期不计分且禁绿。
+       isToday仅兼容字段, 消费时应重新比较asOf; 日线单有日期不能证明盘后已收盘。 */
     /* jl-C: 第4项=多只合并(4只沪深300ETF按日期求和, 都有的日期才算); 日K盘中无今日行→9:30后用ulist实时f62(f124须为今天)补今日; 补不上则asOf=最后一行日期, 卡面标"截至" */
-    var e0 = CFG.etfs[i], sids = e0[3] || [e0[0]], got = [], left = sids.length, bad = null;
+    var e0 = CFG.etfs[i], sids = e0[3] || [e0[0]], got = [], received = [], left = sids.length, bad = null;
     sids.forEach(function (sid, j) {
       jsonp(P2H, "/api/qt/stock/fflow/daykline/get?secid=" + sid + "&lmt=25&end=20500101&fields1=f1,f2,f3,f7&fields2=f51,f52&ut=" + UT, function (e, d) {
-        if (e || !d || !d.data || !d.data.klines || !d.data.klines.length) bad = e || new Error("etf" + i); else got[j] = d.data.klines;
+        if (e || !d || !d.data || !d.data.klines || !d.data.klines.length) bad = e || new Error("etf" + i); else { got[j] = d.data.klines; received[j] = Date.now(); }
         if (--left > 0) return;
         if (bad) { cb(bad); return; }
         var m = {};
         got.forEach(function (kl) { kl.forEach(function (r) { var p = r.split(","), o = m[p[0]] || (m[p[0]] = { n: 0, v: 0 }); o.n++; o.v += +p[1]; }); });
         var arr = Object.keys(m).sort().filter(function (k) { return m[k].n === sids.length; }).map(function (k) { return { d: k, v: m[k].v }; });
         if (!arr.length) { cb(new Error("etf" + i)); return; }
+        var fetchedAt = Math.min.apply(null, received), quoteAt = null, flowSource = "daykline";
         var fin = function () {
           var last = arr[arr.length - 1], prev = arr.slice(-21, -1).filter(function (r) { return isFinite(r.v); });
           var avgAbs = prev.length ? prev.reduce(function (a, r) { return a + Math.abs(r.v); }, 0) / prev.length : NaN;
           var d5 = arr.slice(-5).reduce(function (a, b) { return a + b.v; }, 0);
-          var out = { secid: e0[0], name: e0[1], code: e0[2], today: last.v, asOf: last.d, isToday: last.d === today(), rel: isFinite(avgAbs) && avgAbs > 0 ? last.v / avgAbs : NaN, d5: d5, arr: arr };
+          var out = { secid: e0[0], name: e0[1], code: e0[2], today: last.v, asOf: last.d, fetchedAt: fetchedAt, quoteAt: quoteAt, flowSource: flowSource, isToday: last.d === today(), rel: isFinite(avgAbs) && avgAbs > 0 ? last.v / avgAbs : NaN, d5: d5, arr: arr };
           fetchVolRatio(sids, function (vr) { out.vr = vr; cb(null, out); }); /* jl-VR: 成交额量比, 同步性用 */
         };
-        var _wd = new Date().getDay(); if (arr[arr.length - 1].d === today() || _wd === 0 || _wd === 6 || nowMin() < 930) { fin(); return; } /* jl-B2-N2: 原!mktLive()在15:05后停补今日行→收盘后显示"截至昨天"而A卡显示今天; 改为工作日9:30后都补, f124须为今天才认(节假日f124=节前→自然不补) */
+        // 即使日线已有今日行也核对实时f124，防止把刚收到的旧日内累计当新报价/收盘值。
+        var _wd = new Date().getDay(); if (_wd === 0 || _wd === 6 || nowMin() < 930) { fin(); return; }
         jsonp(P2, "/api/qt/ulist.np/get?fltt=2&invt=2&fields=f12,f62,f124&secids=" + sids.join(",") + "&ut=" + UT, function (e2, d2) {
           try {
             var dl = d2 && d2.data && d2.data.diff ? (Array.isArray(d2.data.diff) ? d2.data.diff : Object.values(d2.data.diff)) : [];
             var ok = !e2 && dl.length === sids.length && dl.every(function (r) { return r.f124 && new Date(+r.f124 * 1e3).toLocaleDateString("sv-SE") === today() && isFinite(+r.f62); });
-            if (ok) arr.push({ d: today(), v: dl.reduce(function (a, r) { return a + +r.f62; }, 0) });
+            if (ok) {
+              if (arr[arr.length - 1].d === today()) arr.pop();
+              arr.push({ d: today(), v: dl.reduce(function (a, r) { return a + +r.f62; }, 0) });
+              fetchedAt = Date.now();
+              quoteAt = Math.min.apply(null, dl.map(function (r) { return +r.f124 * 1e3; }));
+              flowSource = "ulist";
+            }
           } catch (e3) {}
           fin();
         });
