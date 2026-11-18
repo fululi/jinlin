@@ -6213,8 +6213,8 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     var last=R[R.length-1], ref=last.ma;
     /* 11-19 用户「高低总有个平均, 一条平的2.3不对」: MA10 画成跟着走的细线(白, 半透明, 不抢DDX线) */
     var mp='';R.forEach(function(r){if(r.ma==null || r.n<20){if(mp && mp.slice(-1)!=='|') mp+='|';return;}mp+=(mp && mp.slice(-1)!=='|' ? 'L' : 'M')+r.x.toFixed(1)+' '+YV(r.ma).toFixed(1);});
-    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'rgba(255,255,255,.6)','stroke-width':.6,'stroke-linejoin':'round'}));
-    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 粉=上行 青=下行 · 白细线=MA10'+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
+    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'rgba(230,180,60,.9)','stroke-width':.9,'stroke-linejoin':'round'}));
+    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 粉=上行 青=下行 · 金线=MA10'+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
     s.appendChild(E('title',{},'自算净额比20=近20分钟东财主力净额/同分钟真实成交额；非东财原版DDX。淡柱为周期主力净额，独立金额轴；成交量VOL在主图底部。'));
     /* 与截图同类：仅一条连续走势，每段按两端净额比相对各自MA10的均值染红/绿。 */
     /* 11-19 用户: 线细但清楚; 涨的一段淡粉、跌的一段青绿, 和红绿资金柱分开; 开盘不满20分钟不画 */

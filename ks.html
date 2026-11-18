@@ -8146,7 +8146,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   if (maLast != null) {
     var my = DY(maLast);
     /* 11-19 用户「高低总有个平均, 一条平的-2.3不对」: MA10 画成跟着走的细线, 半透明白, 不抢DDX线 */
-    ctx.strokeStyle = "rgba(255,255,255,0.6)"; ctx.lineWidth = 0.7; ctx.beginPath();
+    ctx.strokeStyle = "rgba(230,180,60,0.9)"; ctx.lineWidth = 0.9; ctx.beginPath();
     var _mp = false; for (i = Math.max(0, i0); i < i1; i++) { if (ma[i] == null) { _mp = false; continue; } if (_mp) ctx.lineTo(v.X(i), DY(ma[i])); else { ctx.moveTo(v.X(i), DY(ma[i])); _mp = true; } }
     ctx.stroke();
     ctx.fillStyle = "#ffffff"; ctx.font = "9px Menlo,monospace"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
