@@ -1297,7 +1297,7 @@ try {
       } catch (ePj) { }
     }
     /* 11-17 删: AJ.pv 振幅价位(11-06 给旧引擎对照用), 全项目没有地方读 */
-    window.__AMPJL = AJ; try { ampChipsJL(); } catch (eAc) { }
+    window.__AMPJL = AJ; if (!window.__acSkipJL) { try { ampChipsJL(); } catch (eAc) { } }   /* 11-18: renderAll 里 renderHead 会再调一次, 那条路径跳过这里, 振幅卡每轮只算一次 */
   }
 } catch (eLegJL) {}
 if (ext && SP[ext.ix]) {
@@ -1700,16 +1700,16 @@ function renderHead() {
     /* 11-18 用户「分时实时没有那个价格线…数字价格不要很大很粗, 背景透明 但是字要清楚亮白」: 分时也出现价线+右轴价签; 价签为无底框、无描边的亮白400字；保留相邻价位 */
     if (MODE === 'live' && p > 0) {
       var pcN = LIVE.pc || 0, upN = pcN > 0 ? p >= pcN : true, cN = upN ? '#ff4757' : '#1ee3a0';
-      var clN = $('cnow'); if (clN) { clN.setAttribute('stroke', cN); clN.setAttribute('opacity', .85); clN.setAttribute('stroke-width', .8); clN.setAttribute('stroke-dasharray', '4 3'); }
+      var clN = $('cnow'); if (clN) { clN.setAttribute('stroke', cN); clN.setAttribute('opacity', .85); clN.setAttribute('stroke-width', .5); clN.setAttribute('stroke-dasharray', '4 3'); }
       var xL = PX0;
       var A2 = window.zpPerAll ? window.zpPerAll() : null;
       if (A2) for (var i2 = A2.length - 1; i2 >= 0; i2--) { if (A2[i2].vis && A2[i2].cx >= PX0 && A2[i2].cx <= LX) { xL = Math.max(PX0, A2[i2].cx); break; } }
       var yN = Y(p);
-      svg.appendChild(el('line', { id: 'zpNowLn', x1: xL, y1: yN, x2: LX - 6, y2: yN, stroke: cN, 'stroke-width': .8, 'stroke-dasharray': '4 3', opacity: .9, 'pointer-events': 'none' }));
+      svg.appendChild(el('line', { id: 'zpNowLn', x1: xL, y1: yN, x2: LX - 6, y2: yN, stroke: cN, 'stroke-width': .5, 'stroke-dasharray': '4 3', opacity: .9, 'pointer-events': 'none' }));
       var tyN = Math.max(PY0 + 8, Math.min(PY0 + PH - YRES + 3, yN));
       // Plain current price: no badge, outline, halo, or removal of neighbouring prices.
       var tgN = el('g', { id: 'zpNowTg', 'pointer-events': 'none' });
-      var ttN = tx(LX - 6, tyN + 3, p.toFixed(2), '#ffffff', 8.2, 'end', 400);
+      var ttN = tx(LX - 6, tyN - 3, p.toFixed(2), '#ffffff', 8.2, 'end', 400);
       ttN.setAttribute('stroke', 'none'); ttN.setAttribute('stroke-width', 0);
       tgN.appendChild(ttN);
       svg.appendChild(tgN);
@@ -1717,7 +1717,12 @@ function renderHead() {
   } catch (eNow) { }
   $('chTitle').textContent = MODE === 'live' ? (liveToday() ? '' : (LIVE.bars.length ? sessFmt() + ' 分时(休市)' : '等待开盘')) : '';
 }
-function renderAll() { renderLine(); renderMarkers(); renderBand(); renderRows(); renderRnds(); renderHead(); renderLadder(curPx()); }
+function renderAll() {
+  window.__acSkipJL = 1; window.__acDoneJL = 0;   /* 11-18: 振幅卡每轮只算一次 —— renderLine 里那次跳过, 交给 renderHead; renderHead 没走到时下面补一次 */
+  try { renderLine(); renderMarkers(); renderBand(); renderRows(); renderRnds(); renderHead(); } finally { window.__acSkipJL = 0; }
+  if (!window.__acDoneJL) { try { ampChipsJL(); } catch (eAc2) { } }
+  renderLadder(curPx());
+}
 
 /* ═══════════ 实盘接入模块（东财+腾讯 · 持仓页生产同链 · tdt2 引擎口径） ═══════════ */
 var LIVE = {
@@ -2644,6 +2649,7 @@ function ledgerGapsJL(cur) {
    原 状态/目标价·距现价 → 下一步卡; 原 日高/日低/IV缺口区 → 三格; 原 开盘行 → 底部一行; 原 价位梯 → 价位尺(并入台账缺口) */
 /* 11-06e 用户: 振幅那几样挪到顶部小块(图里不再画药丸, 不挡K线): 高/低(价+相对昨收%, 红涨绿跌) · 振幅今/均 · 段提示; 跳档那一下外圈光晕闪 */
 function ampChipsJL() {
+  window.__acDoneJL = 1;
   var hs = $('hSub'), A = window.__AMPJL; if (!hs) return;
   hs.querySelectorAll('.hkA').forEach(function (n) { n.remove(); });
   try { if (typeof zpHdrInitJL === 'function') zpHdrInitJL(); var chJ = $('zpChipsJL'); if (chJ) chJ.innerHTML = ''; } catch (eHi) { }   /* 11-17 顶部重排 */
@@ -7864,6 +7870,8 @@ window.addEventListener('click', function (e) {
 <style>
 /* 11-05: 图区锁住触摸(拖动/十字线/缩放不再带着页面跑), 页面上下滑只在这条"滑动带"上做; 11-08 jl-zpyax: 滑动带从右边挪到左边, 右边让给价格轴拖动缩放 */
 #ch,#zpVol,#zpPane,#zpRso,#wkSvg{touch-action:none!important}
+/* 11-18 用户「线再细点, 鼠标放上去才显示」: 现价虚线+右轴价签平时隐藏, 鼠标移到主图上才显示(红涨绿跌色不变) */
+#ch:not(:hover) #zpNowLn,#ch:not(:hover) #zpNowTg,#ch:not(:hover) #cnow{visibility:hidden}
 #zpScr{position:absolute;z-index:5;left:0;width:10px;display:none;align-items:center;justify-content:center;touch-action:pan-y;-webkit-user-select:none;user-select:none;background:transparent}   /* 11-15 用户: 滑带去掉色底收窄到10px, 不压左边0/-4%刻度 */
 #zpScr b{display:block;width:3px;height:32px;border-radius:1.5px;background:rgba(255,255,255,.22)}
 </style>
