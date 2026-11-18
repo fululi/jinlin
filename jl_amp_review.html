@@ -82,7 +82,7 @@ body{font-size:12.5px}.wrap{padding:4px 8px 14px}
 <div id="tl"></div>
 <div class="tbar"><div class="mini"><label>确认<select id="m_bth"></select></label><label>切段<select id="m_cut"></select></label><label>每次<select id="m_q"></select></label></div><span style="flex:1"></span><div class="chips" id="mvc"></div><div class="chips" id="szc"></div></div></div>
 <div class="tip" id="tip"></div></div>
-<script src="jl_mix_engine.js?v=11172"></script><script src="jl_ledger.js?v=3"></script>
+<script src="jl_mix_engine.js?v=11172"></script><script src="jl_ledger.js?v=4"></script>
 <script>/* 11-13 用户: 复盘页加「台账」页签(信号台账, 只读) */
 (function () { var sg = document.getElementById('rvSeg'); if (!sg) return; var cd = new URLSearchParams(location.search).get('code') || '600105';
   sg.onclick = function (e) { var b = e.target.closest('button'); if (!b) return; var l = b.getAttribute('data-rv') === 'l'; document.body.classList.toggle('ldOn', l); sg.querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); }); if (l && window.JLLedger) JLLedger.render(document.getElementById('ldBox'), cd); };

@@ -13,7 +13,8 @@
  * 回滚: 删 index.html 里引用本文件的一段 script + 删根目录 做T作战屏.html(即恢复原样)。
  */
 (function () {
-  var SRC = 'jl_zp_war.html';
+  /* 11-18 智谱审计建议(用户批): 作战屏 iframe 带上壳号 ?v=<data-sw数字>, 每次推送壳号自动+1 → 手机不用再等 10 分钟 HTTP 缓存; 拿不到壳号就退回不带参数 */
+  var SRC = 'jl_zp_war.html' + (function () { try { var v = document.getElementById('jlVerJL'), m = v && String(v.getAttribute('data-sw') || '').match(/(\d+)$/); return m ? '?v=' + m[1] : ''; } catch (e) { return ''; } })();
   /* 当前票: iframe 战屏切换后以其 window.STK 为准; 未加载时取持仓第一只(jlResoCodesJL 同源顺序) */
   function curStk() {
     try { var w = st.win; if (w && w.STK && w.STK.code) return w.STK; } catch (e) { }
@@ -163,7 +164,8 @@
   }
   /* ---------- 11-16 今日提醒: 记 + 合并 + 只闪要动手的 ---------- */
   var TK = 'jl_zp_today_v1', FK = 'jl_zp_flash_v1', CATS = ['买卖', '振幅', '日级', '共振位', '共振', 'RSO', '资金', '画线', '其他'];
-  var FDEF = { '买卖': 1, '振幅': 1, '日级': 1, '共振位': 1 };   /* 默认会闪的(11-16 用户: 小球买卖和振幅照旧要出); 其余只记数 */
+  /* 11-18 用户选A「改成全部类别默认都闪, 球面写出是什么提醒」: 原来只有 买卖/振幅/日级/共振位 默认闪, RSO/资金/共振/画线/其他 只加角标(用户看到的 1 2 3). 在「今日提醒」里手动关过的照旧按用户的 */
+  var FDEF = { '买卖': 1, '振幅': 1, '日级': 1, '共振位': 1, '共振': 1, 'RSO': 1, '资金': 1, '画线': 1, '其他': 1 };   /* 默认会闪的(11-16 用户: 小球买卖和振幅照旧要出); 其余只记数 */
   function dsNow() { var d = new Date(); return '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0'); }
   function hmNow() { var d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
   function catOf(lbl, kd) {

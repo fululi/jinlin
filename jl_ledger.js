@@ -1,4 +1,4 @@
-/* jl_ledger.js v3 (2026-11-13; 11-17 成绩去重/方向纠错/导出每分钟资金) —— 信号台账: 作战屏每弹一次提醒自动记 时间·价格·信号, 之后按当天1分钟价补「30分内先走0.8%算对 / 30分后 / 收盘」.
+/* jl_ledger.js v4 (2026-11-13; 11-17 成绩去重/方向纠错/导出每分钟资金; 11-18 导出提醒CSV) —— 信号台账: 作战屏每弹一次提醒自动记 时间·价格·信号, 之后按当天1分钟价补「30分内先走0.8%算对 / 30分后 / 收盘」.
    另存每天1分钟主力净额(东财 f52 当日累计), 攒样本测资金掉头.
    存 IndexedDB(库 jl_ledger_v1, 和 localStorage 分开, 不会挤爆首页缓存); 台账留 400 天、资金留 160 天, 超了自动删最旧.
    只记录, 不碰买卖算法和提醒本身. 作战屏(jl_zp_war.html)写, 复盘页(jl_amp_review.html)「台账」页签读. */
@@ -146,8 +146,11 @@
       }
       /* 11-17 用户: 每分钟主力资金(作战屏每天收盘存的 ff 表)导出成 CSV, 拿去测资金转折点. 本机文件里没有这份历史, 只有这里有 */
       if (tab === "s") h += '<button type="button" data-ldff style="margin-top:8px;width:100%;min-height:36px;border:1px solid #ffffff26;border-radius:9px;background:transparent;color:#fff;font-size:11.5px">导出每分钟主力资金（CSV）</button>';
+      /* 11-18 用户「汇总的提醒没有导出」→ 加「导出提醒(CSV)」: 台账全部天(时间/票/信号/价/30分后/收盘) + 浮球「今日提醒」全部类别(含振幅/共振/资金等不进台账的) */
+      if (tab === "s") h += '<button type="button" data-ldsg style="margin-top:6px;width:100%;min-height:36px;border:1px solid #ffffff26;border-radius:9px;background:transparent;color:#fff;font-size:11.5px">导出提醒（CSV）</button>';
       el.innerHTML = h + "</div>";
       var bf = el.querySelector("[data-ldff]"); if (bf) bf.onclick = exportFF;
+      var bs = el.querySelector("[data-ldsg]"); if (bs) bs.onclick = exportSig;
       Array.prototype.forEach.call(el.querySelectorAll("[data-ldt]"), function (b) { b.onclick = function () { render(el, code, b.getAttribute("data-ldt")); }; });
     }).catch(function () { el.innerHTML = '<div class="ldN">这个浏览器打不开本机台账(IndexedDB 不可用)</div>'; });
   }
@@ -162,5 +165,18 @@
       document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
     }).catch(function () { alert("读不到本机台账(IndexedDB)"); });
   }
-  window.JLLedger = { add: add, evalDay: evalDay, saveFF: saveFF, render: render, all: function () { return all("sig"); }, ff: function () { return all("ff"); }, exportFF: exportFF, dirOf: dirOf, kindOf: kindOf };
+  function exportSig() {   /* 11-18 */
+    var q = function (v) { v = v == null ? "" : String(v); return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    all("sig").then(function (A) {
+      A.sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+      var L = ["\ufeff来源,date,hm,code,name,类别,信号,内容,当时价,30分后%,收盘%,30分对错,重复"], n = 0;
+      A.forEach(function (r) { L.push(["台账", r.date, r.hm, r.code, r.name, r.kind, r.lbl, r.txt, r.p, r.r30 == null ? "" : (+r.r30).toFixed(2), r.rc == null ? "" : (+r.rc).toFixed(2), r.ok === 1 ? "对" : r.ok === -1 ? "错" : r.ok === 0 ? "平" : "", r.dup ? "是" : ""].map(q).join(",")); n++; });
+      try { var T = JSON.parse(localStorage.getItem("jl_zp_today_v1") || "null"); (T && T.L || []).forEach(function (r) { L.push(["今日提醒", T.d, String(r.t || "").replace(":", ""), "", r.nm, r.c, r.l, r.x, "", "", "", "", ""].map(q).join(",")); n++; }); } catch (eT) { }
+      if (!n) { alert("还没有存下的提醒"); return; }
+      var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([L.join("\r\n")], { type: "text/csv;charset=utf-8" }));
+      a.download = "金粼_提醒汇总_" + new Date().toLocaleDateString("sv-SE").replace(/-/g, "") + ".csv";
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    }).catch(function () { alert("读不到本机台账(IndexedDB)"); });
+  }
+  window.JLLedger = { add: add, evalDay: evalDay, saveFF: saveFF, render: render, all: function () { return all("sig"); }, ff: function () { return all("ff"); }, exportFF: exportFF, exportSig: exportSig, dirOf: dirOf, kindOf: kindOf };
 })();
