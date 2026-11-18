@@ -66,21 +66,27 @@
     let view = { a: 0, b: 0 };   /* 可见点区间 [a,b) */
     let cross = null;
 
+    let loadTicket = 0, loading = false, retryAt = 0;
     async function load(keep) {
-      const c = pf(code);
+      if (loading) return;
+      const ticket = ++loadTicket, c = pf(code);
+      loading = true;
+      try {
       const d5 = await TX("/appstock/app/day/query?code=" + c).then((j) => { if (!j || !j.data || !j.data[c] || !j.data[c].data || !j.data[c].data.length) throw Error("腾讯无五日分时"); return j; }).catch(() => em5(c));   /* 11-17: 原来并行取的日K(fqkline)全文件没人读, 删掉 */
-      const raw = d5.data[c].data.slice().reverse();
+      if (ticket !== loadTicket || c !== pf(code)) return;
+      const raw = d5.data[c].data.slice().reverse();   /* 11-18 退回原样: 靠接口顺序 reverse, 不按日期重排、不截5天 */
       const days = [], P = [];
       raw.forEach((d, di) => {
         let pv = 0; const pts = [];
         d.data.forEach((s) => {
-          const a = s.split(" "); if (a[0] > "1500") return;   /* 15:00 后是盘后数据, 不画 */
+          const a = s.split(" "); if (a[0] > "1500") return;   /* 15:00 后是盘后数据, 不画; 09:25 竞价/午休点照旧保留 */
           const cv = +a[2], ca = +a[3], v = cv - pv; pv = cv;
           pts.push({ di, k: idx(a[0]), t: a[0], p: +a[1], v: Math.max(0, v), avg: cv > 0 ? ca / cv / 100 : +a[1] });
         });
         days.push({ date: d.date, prec: +d.prec, pts, open: pts.length ? pts[0].p : null });
         pts.forEach((p) => { p.g = P.length; P.push(p); });
       });
+      if (!P.length) throw Error("没有有效交易时段数据");
       /* 开盘跳空(昨收→今开): 往后找第一次碰到昨收的那一分钟 = 补回; 没碰到 = 未补, 一直往右 */
       const gaps = [];
       days.forEach((d, di) => {
@@ -99,6 +105,13 @@
       fibRemap();   /* 11-14 用户: 过一天斐波锚点左偏一天 → 每次取数按「日期+分钟」找回所在位置 */
       head._k = "";
       head(); size(); drawBase(); drawOv(); seqRender();
+      retryAt = 0;
+      } catch (e) {
+        if (ticket === loadTicket) {
+          retryAt = Date.now() + 15000;
+          if (!keep) $("info").textContent = "五日分时取不到：" + (e.message || "网络") + " · 稍后可重试";
+        }
+      } finally { if (ticket === loadTicket) loading = false; }
     }
 
     function head() {
@@ -113,6 +126,7 @@
     /* 布局: 主图 + 量 + 日期轴; 右价格 左% */
     let G = {};
     function size() {
+      BR = null;
       const box = $("box"), W = box.clientWidth || 330, H = 362, dpr = Math.max(2, devicePixelRatio || 1);
       box.style.height = H + "px";
       ["base", "ov"].forEach((id) => { const c = $(id); c.width = W * dpr; c.height = H * dpr; c.style.height = H + "px"; c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0); });
@@ -164,6 +178,7 @@
       x.fillStyle = col; x.fillText(t, pick.L, pick.y); x.restore(); return true;
     }
     function drawBase() {
+      if (!S || !S.P.length) return;
       const x = $("base").getContext("2d"), s = SC = scale(), { a, b } = view;
       LB = [];
       x.clearRect(0, 0, G.W, G.H);
@@ -487,7 +502,7 @@
     box.addEventListener("pointerup", up); box.addEventListener("pointercancel", up);
     box.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse" && !pd) { cross = null; reqO(); } });
     box.addEventListener("pointerenter", () => { BR = box.getBoundingClientRect(); });
-    addEventListener("scroll", () => { BR = null; }, { passive: true });
+    addEventListener("scroll", () => { BR = null; }, { passive: true, capture: true });
     box.addEventListener("wheel", (e) => {
       if (!S || !SC) return;
       if (!(e.metaKey || e.ctrlKey) && Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 1) { e.preventDefault(); const n = view.b - view.a, sh = Math.round(e.deltaX / G.pw * n) || (e.deltaX > 0 ? 1 : -1); setView(view.a + sh, view.b + sh); return; }   /* 11-14 用户「电脑左右滑放大不行」: 触控板左右滑=平移 */
@@ -574,10 +589,27 @@
     function zoomTo(a, b, k, cx) { const n = b - a, m = Math.max(60, Math.min(S.P.length, Math.round(n * k))), f = Math.max(0, Math.min(1, (cx - G.l) / G.pw)), c = a + n * f; setView(Math.round(c - m * f), Math.round(c - m * f) + m); }
     function setView(a, b) { const n = b - a; if (a < 0) { a = 0; b = n; } if (b > S.P.length) { b = S.P.length; a = b - n; } if (a === view.a && b === view.b) return; view = { a: Math.max(0, a), b }; reqB(); }
     $("rst").onclick = () => { if (S) { view = { a: 0, b: S.P.length }; reqB(); } };
-    addEventListener("resize", () => { if (S && ROOT.offsetParent) { size(); drawBase(); drawOv(); } });
+    const resize = () => { BR = null; if (S && ROOT.offsetParent && $("box").clientWidth !== G.W) { size(); reqB(); } };
+    addEventListener("resize", resize);
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(resize).observe(box);
     return {
-      set(c, n) { if (c === code) { if (n) { NAME = n; head._k = ""; head(); } if (S && JSON.stringify(tierSB()) !== sbSig) { reqB(); seqRender(); } return; } code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; setFib(false); $("info").innerHTML = "<span>五日分时加载中…</span>"; load().catch((e) => { $("info").innerHTML = "<span>五日分时取不到：" + (e && e.message || "网络") + "</span>"; }); },
-      tick() { if (!code || pd || fibMode || fibDraft) return; load(true).catch(() => { }); }
+      set(c, n) {
+        if (c === code) {
+          if (n && n !== NAME) { NAME = n; head._k = ""; head(); }
+          resize();
+          if (!S && !loading && Date.now() >= retryAt) load();
+          if (S && JSON.stringify(tierSB()) !== sbSig) { reqB(); seqRender(); }
+          return;
+        }
+        ++loadTicket; loading = false; retryAt = 0;
+        code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; FIB = []; pd = null; pinch = null; pts.clear(); BR = null; setFib(false);
+        $("nm").textContent = NAME; $("cd").textContent = code; $("px").textContent = "—"; $("pc").textContent = "";
+        ["base", "ov"].forEach((id) => { const cv = $(id); cv.getContext("2d").clearRect(0, 0, cv.width, cv.height); });
+        $("seq").innerHTML = ""; seqSig = "";
+        $("info").textContent = "五日分时加载中…";
+        load();
+      },
+      tick() { if (!code || loading || pd || fibMode || fibDraft || Date.now() < retryAt) return; load(!!S); }
     };
   }
   window.JLCard5D = {
