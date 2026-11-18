@@ -1,22 +1,127 @@
 /* jl_card5d.js —— 持仓页五日分时图 JLCard5D.show(code, name)。本文件就是正本: 原生成脚本 ~/jinlin-accept 已不存在, 直接改这里。
-   数据: 腾讯五日分时 day/query(四域名轮询, 5 秒超时) → 拿不到走东财 trends2; 只画 09:30–15:00。交易时段每 30 秒刷新, 不在看/正在拖/在画斐波时跳过。
+   数据: 腾讯五日分时 day/query(四域名轮询, 5 秒超时) → 拿不到走东财 trends2; 保留原接口竞价/午休点，过滤 15:00 后数据。交易时段每 30 秒刷新, 不在看/正在拖/在画斐波时跳过。
    只读别人的 localStorage(不写): jinlin_tier_memo_v1 = 首页 computeTierJL 梯子 → 画 S1/S2/B1/B2; jl_wave_v1 = 作战屏 dayReduceJL 日线波段 → 画波段低/高/①②(不是当天算的标日期)。
-   自己的键: jl5d_fib_<code> 斐波画线 / jl5d_auto 自动尺开关 / jl5d_mk 标注开关。15/30分 BOLL 走 ifzq.gtimg.cn mkline(单域名, 没有备份)。
-   挂载: 首次调用时插到持仓页小K线(#holdingChart 所在 section)前面, 原小K线保留显示; 折叠按钮 .c5TogJL 由 index.html 加进 .hd。
+   自己的键: jl5d_fib_<code> 斐波画线 / jl5d_auto 自动尺开关 / jl5d_mk 标注开关 / jl5d_ddx 独立副图开关。15/30分 BOLL 走 ifzq.gtimg.cn mkline(单域名, 没有备份)。
+   挂载: 首次调用时插到 #holdingChart 所在 section 前面，原小K线由 index.html 隐藏; 折叠按钮 .c5TogJL 由 index.html 加进 .hd。
    回滚: index.html 删 jl_card5d.js 引用即可。 */
 (function () {
   "use strict";
-  const CSS = '#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}#c5JL .hd b{font-size:14px;font-weight:500;letter-spacing:.3px;color:#fff}#c5JL .hd .px{font:400 28px -apple-system,"SF Pro Display","PingFang SC",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;margin-left:auto}#c5JL .hd .pc{font:500 13px -apple-system,"SF Pro Text",sans-serif;font-variant-numeric:tabular-nums}#c5JL .up{color:#ff5459}#c5JL .dn{color:#1fdc93}#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}#c5JL .hd{text-shadow:none}#c5JL .hd .mono{font-weight:400;font-size:12px;color:#fff;opacity:1}#c5JL .info{text-shadow:none}#c5JL .info{height:18px;margin:6px 3px 2px;font:400 11.5px ui-monospace,Menlo,monospace;white-space:nowrap;overflow:hidden;display:flex;gap:8px}#c5JL .info span{opacity:1}#c5JL .box{margin-top:-62px;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px}#c5JL .tools .tb{display:flex;gap:4px}#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .tools button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:500 12px inherit;white-space:nowrap}#c5JL .mono{font-family:ui-monospace,Menlo,monospace}#c5JL .hd .c5TogJL{pointer-events:auto!important;cursor:pointer}#c5JL .box:not([style*="height"]){margin-top:0}#c5JL .seq{margin:8px 3px 0;border-top:1px solid rgba(255,255,255,.18);padding-top:6px}#c5JL .sqh{display:flex;align-items:baseline;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none}#c5JL .sqh b{font-size:13px;font-weight:500;color:#fff}#c5JL .sqh span{margin-left:auto;font-size:11.5px;color:#fff;font-variant-numeric:tabular-nums}#c5JL .sqh i{font-style:normal;font-size:13px;color:#fff;width:18px;text-align:center}#c5JL .sqt{display:flex;gap:4px;margin:6px 0 2px}#c5JL .sqt button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 10px;font:500 12px inherit}#c5JL .sqt button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}#c5JL .sqr{display:grid;grid-template-columns:18px 30px minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.1);font-variant-numeric:tabular-nums}#c5JL .sqr .n{font-size:12px;color:#fff;text-align:center}#c5JL .sqr .a{font-size:12.5px;font-weight:600;border-radius:7px;text-align:center;padding:1px 0}#c5JL .sqr .a.s{background:rgba(255,84,89,.25);color:#ff7a7e}#c5JL .sqr .a.b{background:rgba(31,220,147,.22);color:#3fe6ab}#c5JL .sqr .v{font:400 16px -apple-system,"SF Pro Display",sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#c5JL .sqr .v em{font-style:normal;font-size:10.5px;padding:0 5px;border-radius:6px;background:rgba(255,216,74,.22);color:#ffd84a;margin-left:4px}#c5JL .sqr .v small{font-size:10.5px;margin-left:5px;color:#fff}#c5JL .sqr .p{font-size:12px;text-align:right;white-space:nowrap}#c5JL .sqn{font-size:11px;color:#fff;margin:4px 0 0}#c5JL .sqr .v b.ok,#c5JL .sqo b.ok{font-weight:500;font-size:11px;color:#ffd84a;margin-left:3px}#c5JL .sqo{font-size:11.5px;color:#fff;margin:6px 0 0;line-height:1.6;font-variant-numeric:tabular-nums}#c5JL .sqo>b{font-weight:500;margin-right:4px}#c5JL .sqo span.s{color:#ff7a7e}#c5JL .sqo span.b{color:#3fe6ab}#c5JL .sqo i{font-style:normal;font-size:10.5px;color:#fff;opacity:.85;margin-left:3px}';
-  let ROOT = null, api = null, timer = 0;
+  const CSS = `#c5JL.card{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:10px 8px;margin-bottom:10px}
+#c5JL .hd{display:flex;align-items:baseline;gap:8px;padding:0 3px}
+#c5JL .hd b{font-size:14px;font-weight:500;letter-spacing:.3px;color:#fff}
+#c5JL .hd .px{font:400 25px -apple-system,"SF Pro Display","PingFang SC",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.2px;margin-left:auto}
+#c5JL .hd .pc{font:400 12px -apple-system,"SF Pro Text",sans-serif;font-variant-numeric:tabular-nums}
+#c5JL .up{color:#ff5459}
+#c5JL .dn{color:#1fdc93}
+#c5JL .hd,#c5JL .info{position:relative;z-index:2;pointer-events:none}
+#c5JL .hd{text-shadow:none}
+#c5JL .hd .mono{font-weight:400;font-size:12px;color:#fff;opacity:1}
+#c5JL .info{text-shadow:none}
+#c5JL .info{min-height:18px;margin:6px 3px 2px;flex-wrap:wrap;font:400 11.5px ui-monospace,Menlo,monospace;white-space:normal;display:flex;gap:2px 8px}
+#c5JL .info span{opacity:1}
+#c5JL .box{margin-top:0;z-index:1;position:relative;touch-action:none;user-select:none;-webkit-user-select:none}
+#c5JL .box canvas{position:absolute;left:0;top:0;width:100%}
+#c5JL .tools{display:flex;justify-content:space-between;align-items:center;margin:6px 3px 0;font-size:11.5px;gap:6px;flex-wrap:nowrap}
+#c5JL .tools .tb{display:flex;gap:3px;flex-wrap:wrap;flex:1;min-width:0}
+#c5JL .tools button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}
+#c5JL .tools button{min-width:30px;min-height:30px;display:inline-flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 8px;font:400 11px/1.3 -apple-system,"PingFang SC",sans-serif;white-space:nowrap}
+#c5JL .mono{font-family:ui-monospace,Menlo,monospace}
+#c5JL .hd .c5TogJL{pointer-events:auto!important;cursor:pointer}
+#c5JL .seq{margin:8px 3px 0;border-top:1px solid rgba(255,255,255,.18);padding-top:6px}
+#c5JL .sqh{display:flex;align-items:baseline;gap:8px;cursor:pointer;-webkit-user-select:none;user-select:none}
+#c5JL .sqh b{font-size:13px;font-weight:500;color:#fff}
+#c5JL .sqh span{margin-left:auto;font-size:11.5px;color:#fff;font-variant-numeric:tabular-nums}
+#c5JL .sqh i{font-style:normal;font-size:13px;color:#fff;width:18px;text-align:center}
+#c5JL .sqt{display:flex;gap:4px;margin:6px 0 2px}
+#c5JL .sqt button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:2px 10px;font:400 11px/1.3 -apple-system,"PingFang SC",sans-serif}
+#c5JL .sqt button.on{background:#ffd84a;color:#1a0508;border-color:#ffd84a}
+#c5JL .sqr{display:grid;grid-template-columns:18px 30px minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.1);font-variant-numeric:tabular-nums}
+#c5JL .sqr .n{font-size:12px;color:#fff;text-align:center}
+#c5JL .sqr .a{font-size:12.5px;font-weight:400;border-radius:7px;text-align:center;padding:1px 0}
+#c5JL .sqr .a.s{background:rgba(255,84,89,.25);color:#ff7a7e}
+#c5JL .sqr .a.b{background:rgba(31,220,147,.22);color:#3fe6ab}
+#c5JL .sqr .v{font:400 16px -apple-system,"SF Pro Display",sans-serif;color:#fff;white-space:nowrap;min-width:0}
+#c5JL .sqr .v em{font-style:normal;font-size:10.5px;padding:0 5px;border-radius:6px;background:rgba(255,216,74,.22);color:#ffd84a;margin-left:4px}
+#c5JL .sqr .v small{display:block;font:400 10.5px/1.55 -apple-system,"PingFang SC",sans-serif;margin:3px 0 0;color:#edf5ff;white-space:normal;overflow-wrap:anywhere}
+#c5JL .sqr .p{font-size:11px;text-align:right;white-space:normal;max-width:86px;line-height:1.5}
+#c5JL .sqn{font-size:10px;line-height:1.6;color:#edf5ff;margin:4px 0 0}
+#c5JL .sqr .v b.ok,#c5JL .sqo b.ok{font-weight:500;font-size:11px;color:#ffd84a;margin-left:3px}
+#c5JL .sqo{font-size:11.5px;color:#fff;margin:6px 0 0;line-height:1.6;font-variant-numeric:tabular-nums}
+#c5JL .sqo>b{font-weight:500;margin-right:4px}
+#c5JL .sqo span.s{color:#ff7a7e}
+#c5JL .sqo span.b{color:#3fe6ab}
+#c5JL .sqo i{font-style:normal;font-size:10.5px;color:#fff;opacity:.85;margin-left:3px}
+#c5JL .tools svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.4;fill:none;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#c5JL .tools button:focus-visible{outline:2px solid #81e6d9;outline-offset:2px}
+#c5JL .ddx{margin:7px 0 0;border-top:1px solid #ffffff26;padding-top:6px}
+#c5JL .ddxHead{padding:0 3px;display:flex;align-items:center;gap:8px;font:400 10px/1.5 -apple-system,"PingFang SC",sans-serif;color:#f4f8ff}
+#c5JL .ddxHead span{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}
+#c5JL .ddx canvas{display:block;width:100%;height:86px;touch-action:pan-y}
+#c5JL .ddx[hidden]{display:none}
+#c5JL .sqh{width:100%;padding:3px 0;background:transparent;border:0;text-align:left;font-family:inherit}
+#c5JL .sqn summary{cursor:pointer;color:#f4f8ff}
+#c5JL .hd .c5TogJL{font-weight:400;font-size:11px;min-width:24px;min-height:28px}
+@media(max-width:370px){#c5JL .hd{gap:5px;flex-wrap:wrap}
+#c5JL .hd .mono{font-size:10px}
+#c5JL .hd .px{font-size:23px}
+#c5JL .sqr{gap:4px;grid-template-columns:15px 25px minmax(0,1fr)}
+#c5JL .sqr .p{grid-column:3;max-width:none;text-align:left}}
+`;
+  let ROOT = null, api = null;
+  function card5DdxCalcJL(rows, pts) {
+  var am = {}, seen = {}, clean = [];
+  (pts || []).forEach(function (p) { var h = String(p.hm).padStart(4, '0'); if (p.a != null && p.a !== '' && isFinite(+p.a) && +p.a >= 0) am[h] = +p.a; });
+  (rows || []).forEach(function (r) { if (r.main != null && r.main !== '' && isFinite(+r.main)) seen[String(r.hm).padStart(4, '0')] = r; });
+  Object.keys(seen).sort().forEach(function (h) { if (h >= '0930' && h <= '1500') clean.push({hm:h, main:+seen[h].main}); });
+  function minute(h) { var n = +h.slice(0,2)*60 + +h.slice(2); return n >= 780 ? n - 90 : n; }
+  var prev = null, ca = 0, allOk = true;
+  var out = clean.map(function (r) {
+    var contiguous = prev ? minute(r.hm) - minute(prev.hm) === 1 : r.hm <= '0931';
+    var a = am[r.hm]; if (!prev && r.hm === '0931' && a != null && am['0930'] != null) a += am['0930'];
+    var d = contiguous ? r.main - (prev ? prev.main : 0) : null;
+    if (a == null || d == null) allOk = false; else ca += a;
+    prev = r; return {hm:r.hm, d:d, a:a == null ? null : a, cum:r.main, ca:allOk ? ca : null, v:null, ma:null, n:0};
+  });
+  out.forEach(function (r,i) {
+    var sm=0, sa=0, start=Math.max(0,i-19), ok=true;
+    for(var j=start;j<=i;j++){if(out[j].a == null || out[j].d == null){ok=false;break;} sm+=out[j].d;sa+=out[j].a;}
+    r.n=i-start+1; r.v=ok && sa>0 ? sm/sa*100 : null;
+    if(i>=9 && out.slice(i-9,i+1).every(function(x){return x.v != null;})) r.ma=out.slice(i-9,i+1).reduce(function(a,x){return a+x.v;},0)/10;
+  });
+  return out;
+}
+// 仅给副图读取真实累计成交额；原价格、均价、量和跳空的数据准备不变。
+function card5DdxAmounts(raw) {
+  const out = {}, minute = h => { const n = +h.slice(0,2)*60 + +h.slice(2); return n >= 780 ? n - 90 : n; };
+  raw.forEach(d => {
+    let prev = null, prevHm = null;
+    out[d.date] = d.data.filter(row => { const hm = String(row).split(" ")[0]; return hm >= "0930" && hm <= "1500"; }).map(row => {
+      const a = String(row).split(" "), hm = a[0], ca = a[3] != null && a[3] !== "" && Number.isFinite(+a[3]) && +a[3] >= 0 ? +a[3] : null;
+      const contiguous = prevHm ? minute(hm) - minute(prevHm) === 1 : hm <= "0931";
+      const amount = contiguous && ca != null && (prev != null || !prevHm) && ca >= (prev || 0) ? ca - (prev || 0) : null;
+      prev = ca; prevHm = hm;
+      return {hm, a:amount};
+    });
+  });
+  return out;
+}
+
+  function tool(k, label, path, text) {
+    return '<button type="button" data-c5="' + k + '" aria-label="' + label + '" title="' + label + '"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="' + path + '"></path></svg>' + (text || '') + '</button>';
+  }
   function mount() {
     if (ROOT) return true;
     const hc = document.getElementById("holdingChart"), sec = hc && hc.closest("section");
     if (!sec) return false;
     if (!document.getElementById("c5CssJL")) { const s = document.createElement("style"); s.id = "c5CssJL"; s.textContent = CSS; document.head.appendChild(s); }
-    ROOT = document.createElement("section"); ROOT.id = "c5JL"; ROOT.className = "card"; ROOT.innerHTML = '<div class="hd"><b data-c5="nm">—</b><span class="mono" data-c5="cd"></span><span class="px" data-c5="px">—</span><span class="pc" data-c5="pc"></span></div><div class="info" data-c5="info"></div><div class="box" data-c5="box"><canvas data-c5="base"></canvas><canvas data-c5="ov"></canvas></div><div class="tools"><span class="tb"><button type="button" data-c5="auto">自动尺</button><button type="button" data-c5="mk">标注</button><button type="button" data-c5="fib">斐波</button><button type="button" data-c5="del">删除</button><button type="button" data-c5="clr">清空</button></span><button type="button" data-c5="rst">看全5天</button></div><div class="seq" data-c5="seq"></div>';
-    sec.parentNode.insertBefore(ROOT, sec);   /* 10-27 用户要求: 原小K线(分时实时走势+周期按钮)保留显示, 不再隐藏 */
+    ROOT = document.createElement("section"); ROOT.id = "c5JL"; ROOT.className = "card";
+    ROOT.innerHTML = '<div class="hd"><b data-c5="nm">—</b><span class="mono" data-c5="cd"></span><span class="px" data-c5="px">—</span><span class="pc" data-c5="pc"></span></div><div class="info" data-c5="info"></div><div class="box" data-c5="box"><canvas data-c5="base"></canvas><canvas data-c5="ov"></canvas></div>' +
+      '<section class="ddx" data-c5="ddx"><div class="ddxHead"><b style="font-weight:400">DDX20 <i style="color:#ffe16b;font-style:normal">━</i> / MA10 ━</b><span data-c5="ddxRead">等待分时数据</span></div><canvas data-c5="ddxCv" aria-label="DDX20副图，与五日价格图共用时间轴"></canvas></section>' +
+      '<div class="tools"><span class="tb">' + tool('auto','切换自动尺','M3 15 15 3l3 3L6 18Zm4-4 2 2m1-5 2 2m1-5 2 2','自动尺') + tool('mk','切换跳空与竞价标注','M3 3h7l7 7-7 7-7-7Zm4 4h.01','标注') + tool('fib','绘制斐波那契','M3 16 16 3M3 6h14M3 10h14M3 14h14') + tool('del','删除选中画线','m4 7 3 9h10l-3-9Zm1-2 2-2h7M10 10l3 3m0-3-3 3') + tool('clr','清空本股票画线','M3 5h14M7 5V3h6v2M5 5l1 12h8l1-12M8 8v6m4-6v6') + tool('ddxTog','显示或收起DDX副图','M3 3v14h14M6 12l3-4 3 3 4-6','DDX') + '</span>' + tool('rst','复位查看全部五日','M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4') + '</div><div class="seq" data-c5="seq"></div>';
+
+    sec.parentNode.insertBefore(ROOT, sec);   /* 插到小K线节点前；小K线是否显示由宿主页面控制。 */
     api = boot(ROOT);
-    timer = setInterval(() => {
+    setInterval(() => {
       try {
         const d = new Date(), m = d.getHours() * 60 + d.getMinutes(), w = d.getDay();
         if (w === 0 || w === 6 || m < 565 || m > 905 || document.hidden || !ROOT.offsetParent) return;
@@ -27,7 +132,7 @@
   }
   function boot(ROOT) {
     const $ = (k) => ROOT.querySelector('[data-c5="' + k + '"]');
-    /* 数据: 腾讯五日分时 day/query(每天 prec=昨收)。只画 09:30–15:00, 15:00 后盘后固定价不画。 */
+    /* 数据: 腾讯五日分时 day/query(每天 prec=昨收)。保留原接口竞价/午休点, 15:00 后盘后固定价不画。 */
     let code = "", NAME = "";
     const pf = (c) => (/^[569]/.test(c) ? "sh" : "sz") + c;
     const f2 = (x) => (+x).toFixed(2), sg = (x) => (x >= 0 ? "+" : "") + x.toFixed(2) + "%";
@@ -98,13 +203,14 @@
       const LD = days[days.length - 1]; if (LD) LD._auto = LD.pts.length ? autoCalc(LD.pts.map((p) => p.p)) : null;   /* 自动尺: 首点 09:30 = 开盘竞价价 */
       bollGet(c);   /* 11-17: 重合价顺序也要 BOLL, 自动尺关着也取(60 秒内不重取) */
       const old = S, oldN = old ? old.P.length : 0;
-      S = { days, P, gaps, code: c };
+      S = { days, P, gaps, code: c, ddxPts: typeof card5DdxAmounts === "function" ? card5DdxAmounts(raw) : {} };
       /* 定时刷新: 同一只票保持当前缩放; 原来贴着最右(看最新)就继续贴着最右 */
       if (keep && old && old.code === c && view.b > view.a) { const n = view.b - view.a; view = view.b >= oldN ? { a: Math.max(0, P.length - n), b: P.length } : { a: Math.min(view.a, Math.max(0, P.length - n)), b: Math.min(view.b, P.length) }; }
       else { view = { a: 0, b: P.length }; fibLoad(); }
       fibRemap();   /* 11-14 用户: 过一天斐波锚点左偏一天 → 每次取数按「日期+分钟」找回所在位置 */
       head._k = "";
       head(); size(); drawBase(); drawOv(); seqRender();
+      if (typeof ddxUpdate === "function") ddxUpdate();
       retryAt = 0;
       } catch (e) {
         if (ticket === loadTicket) {
@@ -130,7 +236,7 @@
       const box = $("box"), W = box.clientWidth || 330, H = 362, dpr = Math.max(2, devicePixelRatio || 1);
       box.style.height = H + "px";
       ["base", "ov"].forEach((id) => { const c = $(id); c.width = W * dpr; c.height = H * dpr; c.style.height = H + "px"; c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0); });
-      G = { W, H, l: 2, r: 2, t: 68, mainB: 276, volT: 284, volB: 340, axB: 358 };   /* 顶上 62px 是透明标题层: 价格数据从 68 开始, 斐波超出数据范围的档位可以画到标题底下 */   /* 刻度放图内(左%右价, 半透明小底), 不占宽度 */
+      G = { W, H, l: 2, r: 2, t: 68, mainB: 276, volT: 284, volB: 340, axB: 358 };   /* 顶上 62px 是扩展价位区: 价格数据从 68 开始, 保留原线坐标，报价标题独立放在图外 */   /* 刻度放图内(左%右价, 半透明小底), 不占宽度 */
       G.pw = W - G.l - G.r;
     }
     function scale() {
@@ -269,7 +375,7 @@
       });
       x.restore(); x.lineWidth = 1;
     }
-    let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;   /* 这行别删: 删了五日图整张出不来 */
+    let FIB = [], fibMode = false, fibDraft = null, fibSel = -1;   /* 持久画线及当前手势状态。 */
     /* 11-13 用户: 持仓卡五日分时把日线波段高低也画出来 —— 细线、价格清楚; 数据=作战屏日线波段(jl_wave_v1, 打开过作战屏的票才有) */
     function drawWave(x, s, xL, xR) {
       let W = null; try { W = JSON.parse(localStorage.getItem("jl_wave_v1") || "{}")[code]; } catch (e) { }
@@ -406,7 +512,7 @@
     /* 屏幕点 → {g, v}; 靠近价格线 12px 内吸附到当分钟价格 */
     function toPt(p) {
       const s = SC, g = Math.max(view.a, Math.min(view.b - 1, Math.round(view.a + (p.x - G.l) / G.pw * s.n - 0.5)));
-      let v = s.hi - (p.y - G.t) / (G.mainB - G.t) * (s.hi - s.lo);   /* p.y 在标题层里(<G.t)时照样换算成高于数据范围的价格 */ const pv = S.P[g].p;
+      let v = s.hi - (p.y - G.t) / (G.mainB - G.t) * (s.hi - s.lo);   /* p.y 在扩展价位区(<G.t)时照样换算成高于数据范围的价格 */ const pv = S.P[g].p;
       if (Math.abs(s.Y(pv) - p.y) < 12) v = pv;
       return { g, v: +v.toFixed(3) };
     }
@@ -426,6 +532,7 @@
     }
     function drawOv() {
       if (!S || !SC) return;
+      ddxDraw();
       const x = $("ov").getContext("2d"); x.clearRect(0, 0, G.W, G.H);
       if (fibDraft && fibDraft.b) { drawFib(x, SC, fibDraft, true); }
       if (!cross || !SC) { head(); return; }
@@ -562,14 +669,14 @@
       const path = Q ? seqPath(Q, seqMode) : [], NO = "①②③④⑤";
       let LOG = []; try { LOG = seqLog(Q, path); } catch (e) { }
       const hitOf = (p) => { const x = LOG.find((z) => z.s === p.side && Math.abs(z.v - p.v) < 0.005); return x && x.hit ? x.hit : ""; };
-      let h = '<div class="sqh" data-sq="tog"><b>' + (Q && Q.done ? "明日" : "今日") + '重合价顺序</b><span>' + (Q ? (Q.done ? "收 " : "现 ") + f2(Q.P) : "") + "</span><i>" + (seqOpen ? "▾" : "▸") + "</i></div>";
+      let h = '<button type="button" class="sqh" data-sq="tog" aria-expanded="' + seqOpen + '"><b>' + (Q && Q.done ? "明日" : "今日") + '重合价顺序</b><span>' + (Q ? (Q.done ? "收 " : "现 ") + f2(Q.P) : "") + "</span><i>" + (seqOpen ? "▾" : "▸") + "</i></button>";
       if (seqOpen) {   /* 「先卖/先接」= 路线切换按钮, 依据 口径表 Q1(没回测) */
         h += '<div class="sqt"><button type="button" data-sq="s"' + (seqMode === "s" ? ' class="on"' : "") + '>先卖</button><button type="button" data-sq="b"' + (seqMode === "b" ? ' class="on"' : "") + ">先接</button></div>";
         if (!path.length) h += '<div class="sqn">附近没有 ≥2 重合的价</div>';
         path.forEach((p, i) => { h += '<div class="sqr"><span class="n">' + NO[i] + '</span><span class="a ' + p.side + '">' + (p.side === "s" ? "卖" : "接") + '</span><span class="v">' + f2(p.v) + (hitOf(p) ? ' <b class="ok">✓' + hmT(hitOf(p)) + "</b>" : "") + "<em>×" + p.sc + "</em><small>" + p.lab + '</small></span><span class="p ' + (p.pc >= 0 ? "up" : "dn") + '">' + (i ? "离" + NO[i - 1] + (path[i - 1].side === "s" ? "卖价 " : "接价 ") : "离现价 ") + sg(p.pc) + "</span></div>"; });
         const OLD = LOG.filter((x) => !path.some((p) => x.s === p.side && Math.abs(x.v - p.v) < 0.005));
         if (OLD.length) h += '<div class="sqo"><b>今天出现过</b> ' + OLD.slice(-8).map((x) => '<span class="' + x.s + '">' + (x.s === "s" ? "卖" : "接") + f2(x.v) + "</span>" + (x.hit ? '<b class="ok">✓' + hmT(x.hit) + "</b>" : '<i>没到</i>')).join(" · ") + "</div>";
-        h += '<div class="sqn">✓ = 今天分时收盘价到过这个价(卖≥/接≤)的时刻; ×几 = 几种算法落在同一价(0.2%内), 不是概率, 没回测; 斐波按当天高低画, 出新高/新低会变</div>';
+        h += '<details class="sqn"><summary>口径与到价记录</summary>✓ = 今天分时收盘价到过这个价(卖≥/接≤)的时刻; ×几 = 几种算法落在同一价(0.2%内), 不是概率, 没回测; 斐波按当天高低画, 出新高/新低会变</details>';
       }
       if (h !== seqSig) { seqSig = h; el.innerHTML = h; }
     }
@@ -578,12 +685,94 @@
       try { if (k === "tog") { seqOpen = !seqOpen; localStorage.setItem("jl5d_seq_open", seqOpen ? "1" : "0"); } else { seqMode = k; localStorage.setItem("jl5d_seq_mode", k); } } catch (er) { }
       seqSig = ""; seqRender();
     });
-    function setFib(on) { fibMode = on; $("fib").classList.toggle("on", on); }
+    /* 独立DDX副图：与作战屏的DDX20/MA10同式，仅使用日期匹配的分钟资金。
+       五日时间轴保留；接口只给一天，其他日期留空，不拿日级数据补分钟。 */
+    let ddxOn = localStorage.getItem("jl5d_ddx") !== "0";
+    let DD = {ticket:0, key:"", rows:[], series:[], at:0, busy:false, message:"等待分时数据"};
+    function ddxReset() { DD = {ticket:DD.ticket + 1, key:"", rows:[], series:[], at:0, busy:false, message:"等待分时数据"}; ddxDraw(); }
+    function ddxPrepare() {
+      if (!S) return;
+      const L = S.days[S.days.length - 1];
+      DD.series = card5DdxCalcJL(DD.rows, S.ddxPts[L.date] || []);
+    }
+    async function ddxUpdate() {
+      if (!ddxOn || !S) return;
+      const L = S.days[S.days.length - 1], key = S.code + "|" + L.date;
+      if (DD.key !== key) { ddxReset(); DD.key = key; }
+      if (DD.busy || Date.now() - DD.at < 30000) { ddxPrepare(); ddxDraw(); return; }
+      const ticket = ++DD.ticket;
+      DD.busy = true; DD.message = DD.rows.length ? "" : "分钟资金加载中…"; ddxDraw();
+      const q = "/api/qt/stock/fflow/kline/get?secid=" + emSec(S.code) + "&lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56" + EMUT;
+      const parse = data => {
+        const rows = data && data.data && data.data.klines;
+        if (!rows || !rows.length) throw Error("分钟资金暂缺");
+        const matched = rows.map(row => {
+          const a = String(row).split(","), date = a[0].slice(0,10).replace(/-/g,""), hm = a[0].slice(11,16).replace(":","");
+          return {date, hm, main:a[1] != null && a[1] !== "" && Number.isFinite(+a[1]) ? +a[1] : null};
+        }).filter(r => r.date === L.date);
+        if (!matched.length) throw Error("资金日期与主图不匹配");
+        return matched;
+      };
+      try {
+        const rows = await emJP("https://push2.eastmoney.com" + q).then(parse).catch(() => emJP("https://push2his.eastmoney.com" + q).then(parse));
+        if (ticket !== DD.ticket || DD.key !== key) return;
+        DD.rows = rows; DD.message = ""; ddxPrepare();
+      } catch(e) { if (ticket === DD.ticket) DD.message = DD.rows.length ? "更新未成功 · 保留上次数据" : e.message || "分钟资金暂缺"; }
+      finally { if (ticket === DD.ticket) { DD.busy = false; DD.at = Date.now(); ddxDraw(); } }
+    }
+    function ddxDraw() {
+      const cv = $("ddxCv"), read = $("ddxRead"); if (!cv) return;
+      $("ddx").hidden = !ddxOn;
+      if (!ddxOn) return;
+      const W = $("box").clientWidth || 330, H = 86, ratio = Math.max(2, devicePixelRatio || 1);
+      if (cv.width !== Math.round(W * ratio) || cv.height !== Math.round(H * ratio)) { cv.width = Math.round(W * ratio); cv.height = Math.round(H * ratio); }
+      const x = cv.getContext("2d"); x.setTransform(ratio,0,0,ratio,0,0); x.clearRect(0,0,W,H);
+      read.textContent = DD.message || "暂无可见分钟资金";
+      if (!S || !SC) return;
+      const L = S.days[S.days.length - 1], by = new Map(DD.series.map(r => [r.hm,r]));
+      const vis = S.P.slice(view.a,view.b).map(p => ({p,r:S.days[p.di].date === L.date ? by.get(p.t) : null}));
+      let max = 0.1, maxD = 1;
+      vis.forEach(({r}) => { if (r) { if (r.v != null) max = Math.max(max,Math.abs(r.v)); if (r.ma != null) max = Math.max(max,Math.abs(r.ma)); if (r.d != null) maxD = Math.max(maxD,Math.abs(r.d)); } });
+      const mid = 43, Y = v => mid - v / max * 34, bw = Math.max(0.6, Math.min(6,G.pw / SC.n * .75));
+      x.strokeStyle = "#ffffff38"; x.lineWidth = .6; x.setLineDash([2,3]); line(x, G.l, mid, G.l + G.pw, mid); x.setLineDash([]);
+      vis.forEach(({p,r}) => { if (!r || r.d == null) return; const h = r.d / maxD * 25; x.fillStyle = r.d >= 0 ? "#ff697055" : "#28e5a455"; x.fillRect(SC.X(p.g)-bw/2,mid-Math.max(0,h),bw,Math.abs(h)); });
+      [ ["v","#ffe16b"], ["ma","#f5faff"] ].forEach(([k,col]) => {
+        x.beginPath(); x.strokeStyle = col; x.lineWidth = 1; let prev = null;
+        vis.forEach(({p,r}) => { if (!r || r[k] == null) { prev = null; return; } const xx = SC.X(p.g), yy = Y(r[k]); if (prev && p.g === prev.g + 1 && idx(p.t) - idx(prev.t) <= 1) x.lineTo(xx,yy); else x.moveTo(xx,yy); prev = p; }); x.stroke();
+      });
+      x.font = "400 9px -apple-system,sans-serif"; x.fillStyle = "#f4f8ff"; x.textAlign = "right";
+      x.fillText("+" + max.toFixed(2) + "%",W-2,10); x.fillText("−" + max.toFixed(2) + "%",W-2,82);
+      let active = null;
+      if (cross) {
+        const g = Math.max(view.a,Math.min(view.b-1,Math.round(view.a+(cross.x-G.l)/G.pw*SC.n-.5)));
+        active = vis.find(q => q.p.g === g);
+        x.strokeStyle = "#ffffffb0"; x.setLineDash([3,3]); line(x,SC.X(g),0,SC.X(g),H); x.setLineDash([]);
+      } else active = vis.slice().reverse().find(q => q.r);
+      if (active && active.r) {
+        const r = active.r, val = v => v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(2) + "%";
+        read.textContent = L.date.slice(4,6) + "-" + L.date.slice(6) + " " + hmT(r.hm) + " · " + val(r.v) + " / " + val(r.ma) + (r.n < 20 ? " · " + r.n + "/20预热" : "") + (DD.message ? " · " + DD.message : "");
+        if (r.v == null && !DD.message) read.textContent += " · 成交额或分钟资金缺数";
+      }
+    }
+    $("ddxTog").classList.toggle("on",ddxOn); $("ddxTog").setAttribute("aria-pressed",String(ddxOn));
+    $("ddxTog").onclick = () => { ddxOn = !ddxOn; try { localStorage.setItem("jl5d_ddx",ddxOn ? "1" : "0"); } catch(e) {} $("ddxTog").classList.toggle("on",ddxOn); $("ddxTog").setAttribute("aria-pressed",String(ddxOn)); ddxDraw(); if (ddxOn) ddxUpdate(); };
+    const dc = $("ddxCv");
+    dc.addEventListener("pointermove",e => {
+      if (!S || !SC || (e.pointerType !== "mouse" && !e.buttons)) return;
+      const r = dc.getBoundingClientRect(), px = (e.clientX-r.left) * G.W/r.width;
+      const g = Math.max(view.a,Math.min(view.b-1,Math.round(view.a+(px-G.l)/G.pw*SC.n-.5)));
+      cross = {x:px,y:SC.Y(S.P[g].p)}; reqO();
+    });
+    ["pointerleave","pointerup","pointercancel"].forEach(t => dc.addEventListener(t,() => { cross = null; reqO(); }));
+
+    function setFib(on) { fibMode = on; $("fib").classList.toggle("on", on); $("fib").setAttribute("aria-pressed", String(on)); }
     $("fib").onclick = () => setFib(!fibMode);
     $("auto").classList.toggle("on", autoOn);
     $("mk").classList.toggle("on", mkOn);
-    $("mk").onclick = () => { mkOn = !mkOn; try { localStorage.setItem("jl5d_mk", mkOn ? "1" : "0"); } catch (e) { } $("mk").classList.toggle("on", mkOn); reqB(); };
-    $("auto").onclick = () => { autoOn = !autoOn; try { localStorage.setItem("jl5d_auto", autoOn ? "1" : "0"); } catch (e) { } $("auto").classList.toggle("on", autoOn); if (S) { if (autoOn) bollGet(S.code); head._k = ""; head(); reqB(); } };
+    function toolStates() { [ ["auto", autoOn], ["mk", mkOn] ].forEach(([k,v]) => $(k).setAttribute("aria-pressed", String(v))); }
+    toolStates();
+    $("mk").onclick = () => { mkOn = !mkOn; try { localStorage.setItem("jl5d_mk", mkOn ? "1" : "0"); } catch (e) { } $("mk").classList.toggle("on", mkOn); toolStates(); reqB(); };
+    $("auto").onclick = () => { autoOn = !autoOn; try { localStorage.setItem("jl5d_auto", autoOn ? "1" : "0"); } catch (e) { } $("auto").classList.toggle("on", autoOn); toolStates(); if (S) { if (autoOn) bollGet(S.code); head._k = ""; head(); reqB(); } };
     $("del").onclick = () => { if (!FIB.length) return; FIB.splice(fibSel >= 0 ? fibSel : FIB.length - 1, 1); fibSel = -1; fibSave(); reqB(); };
     $("clr").onclick = () => { if (!FIB.length || !confirm("清空这只股票的全部斐波画线？")) return; FIB = []; fibSel = -1; fibSave(); reqB(); };
     function zoomTo(a, b, k, cx) { const n = b - a, m = Math.max(60, Math.min(S.P.length, Math.round(n * k))), f = Math.max(0, Math.min(1, (cx - G.l) / G.pw)), c = a + n * f; setView(Math.round(c - m * f), Math.round(c - m * f) + m); }
@@ -602,6 +791,7 @@
           return;
         }
         ++loadTicket; loading = false; retryAt = 0;
+        ddxReset();
         code = c; NAME = n || c; S = null; SC = null; cross = null; fibDraft = null; FIB = []; pd = null; pinch = null; pts.clear(); BR = null; setFib(false);
         $("nm").textContent = NAME; $("cd").textContent = code; $("px").textContent = "—"; $("pc").textContent = "";
         ["base", "ov"].forEach((id) => { const cv = $(id); cv.getContext("2d").clearRect(0, 0, cv.width, cv.height); });

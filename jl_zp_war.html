@@ -244,6 +244,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
 #ampCardJL .acRow.t2 .lg{font-size:9px}#ampCardJL .acRow.t2 .lq{font-size:8px}#ampCardJL .acRow.t2{gap:2px}#ampCardJL .acRow.t2 .lg i{font-size:8px}
 #ampCardJL .acRow.t3 .lg{font-size:8.5px}#ampCardJL .acRow.t3 .lq{font-size:7.5px}#ampCardJL .acRow.t3{gap:1px}#ampCardJL .acRow.t3 .lg i{font-size:7.5px}#ampCardJL .acRow.t3 .lg b{letter-spacing:-.3px}
 </style>
+<script src="jl_absorb.js?v=1"></script>
 </head>
 <body class="plan">
 
@@ -4973,6 +4974,35 @@ body,button,input,select{font-family:ui-rounded,"SF Pro Rounded","PingFang SC",s
   document.addEventListener('touchend', function () { inChart = false; }, { passive: true, capture: true });
 })();
 </script>
+<style>
+body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height:280px}#zpAbsViewJL .jlAbsHead{padding-top:22px}#zpModeJL .ab span{font-size:7px;letter-spacing:-2px}#zpStockFavJL{background:transparent;color:#ffe16b;border:1px solid #ffe16b55;border-radius:7px;font:11px sans-serif;min-height:26px}
+</style><script>
+(function(){
+  var on=false,view=null,current='',timer=null;
+  try{on=localStorage.getItem('zp_absorb_on_v1')==='1';}catch(e){}
+  function currentStock(){return typeof STK!=='undefined'&&STK?STK:null;}
+  function set(value){on=!!value;try{localStorage.setItem('zp_absorb_on_v1',on?'1':'0');}catch(e){}sync();}
+  window.zpAbsSetJL=set;window.zpAbsToggleJL=function(){set(!on);};
+  function sync(){
+    if(!window.JLAbsorb)return;var ch=document.getElementById('ch'),mi=document.querySelector('#zpModeJL .mi'),per=document.querySelector('.zp-per'),stk=currentStock();
+    if(mi&&!mi.querySelector('.ab')){var b=document.createElement('button');b.type='button';b.className='ab';b.title='资金观察图 / 返回引擎图';b.setAttribute('aria-label','切换当前股票资金观察图');b.innerHTML='<span style="color:#ffe16b">▲</span><span style="color:#54d9ee">▼</span>';b.onclick=function(e){e.stopPropagation();set(!on);};mi.appendChild(b);}
+    if(per&&!per.querySelector('.zp-abs')){var p=document.createElement('button');p.type='button';p.className='zp-abs';p.textContent='筹码';p.title='东财日级筹码／资金观察';per.insertBefore(p,per.querySelector('.zp-liq'));}
+    var title=document.getElementById('stkNm');
+    if(title&&!document.getElementById('zpStockFavJL')){var f=document.createElement('button');f.type='button';f.id='zpStockFavJL';f.onclick=function(e){e.stopPropagation();var x=currentStock();if(x)JLAbsorb.toggleFavorite(x.code,x.name);sync();};title.parentNode.insertBefore(f,title.nextSibling);}
+    var fav=document.getElementById('zpStockFavJL');if(fav&&stk)fav.textContent=(JLAbsorb.isFavorite(stk.code)?'★':'☆')+'收藏';
+    document.body.classList.toggle('zpAbsOnJL',on);
+    document.querySelectorAll('#zpModeJL .ab,.zp-per .zp-abs').forEach(function(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');});
+    if(!ch||!stk)return;
+    if(on&&!view){var el=document.createElement('section');el.id='zpAbsViewJL';ch.parentNode.insertBefore(el,ch);view=JLAbsorb.mount(el,{onClose:function(){set(false);}});}
+    if(view)view.host.hidden=!on;
+    var dayBars=typeof LIVE!=='undefined'&&LIVE.hist?LIVE.hist.day:[],lastDay=dayBars&&dayBars[dayBars.length-1];
+    var key=stk.code+'|'+(lastDay?lastDay.t+':'+lastDay.c:'');
+    if(on&&view&&current!==key){current=key;view.show(stk.sym||stk.code,stk.name,{bars:typeof LIVE!=='undefined'&&LIVE.hist?JLAbsorb.bars(LIVE.hist.day):null});}
+    if(!on)current='';
+  }
+  sync();timer=setInterval(sync,1000);
+})();
+</script>
 </body><style>
 /* 11-15 用户: 我的T栏字体小细亮白, 顶部留距不压副图 */
 #myT{margin-top:8px!important}
@@ -7278,7 +7308,8 @@ setRange = function (lo, hi) {
       if (b.classList.contains('zp-hl')) { try { localStorage.setItem('zp_hl_v1', localStorage.getItem('zp_hl_v1') === '0' ? '1' : '0'); } catch (e) { } }
       else if (b.classList.contains('zp-pat')) { try { localStorage.setItem('zp_pat_hist_v1', localStorage.getItem('zp_pat_hist_v1') === '0' ? '1' : '0'); } catch (e) { } }
       else if (b.classList.contains('zp-liq')) { liqOn = !liqOn; try { localStorage.setItem(LK, liqOn ? '1' : '0'); } catch (e) { } }
-      else { per = +b.getAttribute('data-p'); window.zpYS = 0; window.zpYZ = 1; try { localStorage.setItem(KEY, String(per)); } catch (e) { } }
+      else if (b.classList.contains('zp-abs')) { window.zpAbsToggleJL && window.zpAbsToggleJL(); return; }
+      else { if (window.zpAbsSetJL) window.zpAbsSetJL(false); per = +b.getAttribute('data-p'); window.zpYS = 0; window.zpYZ = 1; try { localStorage.setItem(KEY, String(per)); } catch (e) { } }
       try { window.zpMainXH && window.zpMainXH.hide(); } catch (e) { }
       mark(); redraw();
     });
@@ -8229,7 +8260,7 @@ body.injlin #metaLine .thrw{flex:0 0 auto;color:#fff!important}
       b.querySelector('.trl').onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_trl_v1', localStorage.getItem('zp_trl_v1') === '0' ? '1' : '0'); } catch (e2) { } try { buildStatics(); if (MODE === 'live') liveRender(); } catch (e3) { } };   /* 11-17 用户: 卖接连线开关 */
       b.querySelector('.ln').onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_lv_v1', localStorage.getItem('zp_lv_v1') === '0' ? '1' : '0'); } catch (e2) { } try { buildStatics(); if (MODE === 'live') liveRender(); } catch (e3) { } };
       b.querySelector('.rp').onclick = function (e) { e.stopPropagation(); rp.click(); }; b.querySelector('.lv').onclick = function (e) { e.stopPropagation(); lv.click(); }; }
-    if (b.nextElementSibling !== ch) ch.parentNode.insertBefore(b, ch);
+    var anchor=document.getElementById('zpAbsViewJL')||ch;if (b.nextElementSibling !== anchor) ch.parentNode.insertBefore(b, anchor);
     try { b.style.order = getComputedStyle(ch).order; } catch (e) { }
     b.style.display = ch.style.display === 'none' ? 'none' : '';   /* 周视图藏 */
     b.querySelector('.ln').classList.toggle('on', localStorage.getItem('zp_lv_v1') !== '0');

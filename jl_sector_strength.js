@@ -1329,7 +1329,7 @@
       (zt ? '<span style="font-size:9px;font-weight:800;color:#10131a;background:#ffd21f;border-radius:5px;padding:0 4px">板</span>' : "") +
       '<b style="margin-left:auto;color:' + col + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(2) + "%</b>" +
       '<span style="flex:0 0 46px;text-align:right;font-size:10px;color:' + (x.f >= 0 ? "#ff5459" : "#2fd18b") + '">' + fmtFund(x.f) + "</span>" +
-      '<span data-jlstk="open"' + dat + ' style="' + b + '">看</span><span data-jlstk="watch"' + dat + ' style="' + b + '">+自选</span><span data-jlstk="hold"' + dat + ' style="' + b + ';border-color:#ffd21f;color:#ffd21f">+持仓</span></div>';
+      '<span data-jlstk="open"' + dat + ' style="' + b + '">看</span><span data-jlstk="watch"' + dat + ' style="' + b + '">+加入▾</span><span data-jlstk="hold"' + dat + ' style="' + b + ';border-color:#ffd21f;color:#ffd21f">+持仓</span></div>';
   }
   function stkList(sec) {
     var m = S.mem[sec];
@@ -1348,7 +1348,8 @@
     ev.stopPropagation();
     var c = t.getAttribute("data-c"), n = t.getAttribute("data-n"), p = +t.getAttribute("data-p") || 0, pc = +t.getAttribute("data-pc") || 0, a = t.getAttribute("data-jlstk");
     if (a === "open") { if (typeof window.ydOpenStockJL === "function") { if (POPS) POPS.classList.remove("on"); S.open = false; if (ROOT) ROOT.classList.remove("open"); window.ydOpenStockJL(c, n, pc); } }
-    else if (typeof window.jlSecAddStockJL === "function") window.jlSecAddStockJL(c, n, p, a === "watch" ? "watch" : "hold");
+    else if ((a === "watch" || a === "add") && typeof window.jlSecChooseStockJL === "function") window.jlSecChooseStockJL(c, n, p);
+    else if ((a === "watch" || a === "hold") && typeof window.jlSecAddStockJL === "function") window.jlSecAddStockJL(c, n, p, a);
     return true;
   }
   var POPS = null, POPS_T = 0;
@@ -1684,7 +1685,7 @@
         var role = role0 || lead && x.c === lead.c ? (lb[x.c] > 1 ? "老龙" : "领涨") : (lead && lead.p - x.p >= 2 ? "补涨" : "");
         return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-top:1px solid rgba(255,255,255,.1)">' + stkRingOf(x) + '<span data-jlstk="open"' + dat + ' style="font-size:14px;font-weight:800;color:#fff">' + esc(x.n) + '</span>' +
           (isZt ? '<span style="font-size:10px;font-weight:800;color:#10131a;background:#ffd21f;border-radius:6px;padding:1px 6px">' + (l || "涨停") + ' · 排队难买</span>' : (l ? '<span style="font-size:10px;font-weight:800;color:#ffd21f">' + l + "</span>" : "")) +
-          (rec ? '<span style="margin-left:auto;font-size:10px;font-weight:700;color:' + (rec.g >= 0 ? "#ff9a9d" : "#7ee0b8") + '">推荐后' + (rec.g >= 0 ? "+" : "") + rec.g.toFixed(1) + '%·第' + rec.d + '天</span>' : '') + '<b style="' + (rec ? "" : "margin-left:auto;") + 'font-size:14px;color:' + (x.p >= 0 ? "#ff5459" : "#2fd18b") + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(1) + '%</b><span data-jlstk="watch"' + dat + ' style="' + b + '">+自选</span></div>';
+          (rec ? '<span style="margin-left:auto;font-size:10px;font-weight:700;color:' + (rec.g >= 0 ? "#ff9a9d" : "#7ee0b8") + '">推荐后' + (rec.g >= 0 ? "+" : "") + rec.g.toFixed(1) + '%·第' + rec.d + '天</span>' : '') + '<b style="' + (rec ? "" : "margin-left:auto;") + 'font-size:14px;color:' + (x.p >= 0 ? "#ff5459" : "#2fd18b") + '">' + (x.p >= 0 ? "+" : "") + x.p.toFixed(1) + '%</b><span data-jlstk="watch"' + dat + ' style="' + b + '">+加入▾</span></div>';
       };
       cards += '<div data-jlrec="' + esc(o.k) + '" style="flex:0 0 84%;scroll-snap-align:start;box-sizing:border-box;padding:10px 12px;margin-right:8px;border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.25)">' +
         '<div style="display:flex;align-items:center;gap:6px">' + secRingOf(o.k) + '<span data-jlsec="' + esc(o.k) + '" style="font-size:16px;font-weight:800;color:#fff">' + esc(o.k) + '</span><span style="font-size:11px;font-weight:800;color:#ffd21f">' + esc(c.name) + '</span><span style="margin-left:auto;font-size:10.5px;font-weight:700;opacity:.8">' + esc(risk) + '</span></div>' +
