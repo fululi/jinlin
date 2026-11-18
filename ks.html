@@ -237,7 +237,7 @@
     pointer-events: none; text-align: right; line-height: 1.5;
   }
   .lnkb { font-size: 10px; color: #8fa398; white-space: nowrap; }
-  body.embed [data-name], body.embed [data-px], body.embed [data-pct], body.embed [data-lnk], body.embed [data-shot] { display: none; }
+  body.embed [data-name], body.embed [data-px], body.embed [data-pct], body.embed [data-lnk], body.embed [data-shot], body.embed [data-ffexp] { display: none; }
   /* ks-0907-01: 内嵌图顶栏+工具行全收(用户指定: 上面全隐藏图撑大), 浮动☰可唤回 */
   body.embed .topbar, body.embed .row { display: none; }
   body.embed.showbars .topbar, body.embed.showbars .row { display: flex; }
@@ -319,7 +319,7 @@
   <span class="spacer" data-page-node-id="AzwYJivdPVw6fwFX70Wnmf"></span>
   <span class="fresh" data-fresh data-page-node-id="aoHc4BpOKvjPbJpJ1rlmZe"></span>
   <button class="btn" data-back type="button" title="返回上一页(持仓App)">←</button><button class="btn" onclick="location.href='https://fululi.github.io/hq-mobile/'" type="button" data-page-node-id="3NtQOaQAAfFGJ3sf4xscbD">持仓</button>
-  <button class="btn" data-tooltog type="button" data-page-node-id="JwjND66Ks8BvBYwub38clk">工具▾</button><button class="btn" data-legend type="button" title="图例:图上标记都是啥">?</button><button class="btn" data-alerts type="button" title="提醒汇总:全部股票的高抛/低吸/破位,可跳转/单条删除">🔔</button><button class="btn" data-theme type="button" title="主题:纯黑→外黑内白→纯白">◐</button><button class="btn" data-shot type="button">截图</button><button class="btn" data-refresh type="button" data-page-node-id="38lK9Gj6883vpCuYZZsAFu">刷新</button>
+  <button class="btn" data-tooltog type="button" data-page-node-id="JwjND66Ks8BvBYwub38clk">工具▾</button><button class="btn" data-legend type="button" title="图例:图上标记都是啥">?</button><button class="btn" data-alerts type="button" title="提醒汇总:全部股票的高抛/低吸/破位,可跳转/单条删除">🔔</button><button class="btn" data-theme type="button" title="主题:纯黑→外黑内白→纯白">◐</button><button class="btn" data-shot type="button">截图</button><button class="btn" data-ffexp type="button" title="导出本机看过的票的东财日级资金(CSV)，传到电脑并进数据">导出资金</button><button class="btn" data-refresh type="button" data-page-node-id="38lK9Gj6883vpCuYZZsAFu">刷新</button>
   <button class="btn" data-collapse type="button" data-page-node-id="g1llVtg9wACH9BCLgTxvfT">收起▲</button>
 </div>
 <div class="row" data-tabs data-page-node-id="WGjvkr8JhFlofUsSfzBIK2"></div>
@@ -4154,6 +4154,35 @@ document.querySelector("[data-shot]").addEventListener("click", function () { //
       setTimeout(function () { URL.revokeObjectURL(a2.href); }, 3000);
     });
   } catch (e) {}
+});
+/* 11-19 导出资金: 本机缓存(ks_ff_v1, 最多40只看过的票) + 当前票 的东财日级资金 → CSV, 传电脑由 金粼量化工具/脚本/导入东财资金.command 并进 数据/日线/东财资金流_日/。原样导出, 不另算 */
+function ffExportJL() {
+  var all = {};
+  try { var cf = JSON.parse(localStorage.getItem("ks_ff_v1") || "{}"); Object.keys(cf).forEach(function (k) { if (cf[k] && cf[k].rows && cf[k].rows.length) all[k] = cf[k].rows; }); } catch (e) {}
+  if (S.fflow && S.fflow.length && S.fflowCode) all[S.fflowCode] = S.fflow;
+  var codes = Object.keys(all);
+  if (!codes.length) { hint("⚠ 本机还没有资金数据：先切到日线、打开「主力净额」，看过的票会自动攒下"); return; }
+  var f = function (v) { return v == null || !isFinite(v) ? "" : String(v); };
+  var lines = ["代码,日期,主力净额,小单,中单,大单,超大单,主力净占比"], n = 0, lastD = "";
+  codes.sort().forEach(function (c) {
+    all[c].forEach(function (r) { lines.push([c.replace(/^(sh|sz)/, ""), r.d, f(r.main), f(r.small), f(r.mid), f(r.big), f(r.sup), f(r.mainPct)].join(",")); n++; if (r.d > lastD) lastD = r.d; });
+  });
+  var name = "东财资金_日_" + lastD.replace(/-/g, "") + "_" + codes.length + "只.csv";
+  var blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  try {
+    var file = new File([blob], name, { type: "text/csv" });
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      navigator.share({ files: [file], title: name }).catch(function () {});
+      hint("导出 " + codes.length + " 只 · " + n + " 行 · 选「存储到文件」或隔空投送到电脑"); return;
+    }
+  } catch (e) {}
+  var a3 = document.createElement("a"); a3.href = URL.createObjectURL(blob); a3.download = name; document.body.appendChild(a3); a3.click();
+  setTimeout(function () { URL.revokeObjectURL(a3.href); a3.remove(); }, 3000);
+  hint("导出 " + codes.length + " 只 · " + n + " 行 → " + name);
+}
+document.querySelector("[data-ffexp]").addEventListener("click", function () {
+  if (S.klt === "101" && !noFund(S.active) && !(S.fflow && S.fflow.length && S.fflowCode === S.active)) { hint("先拉当前票资金…"); fetchFFlow(S.active, function () { ffExportJL(); }); return; }
+  ffExportJL();
 });
 document.querySelectorAll("[data-sc]").forEach(function (b) {
   b.addEventListener("click", function () { var m = b.getAttribute("data-sc"); S.scale = S.scale === m ? "lin" : m; try { localStorage.setItem("ksm_scale_v1", S.scale); } catch (e) {} syncSclJL(); draw(); hint(S.scale === "log" ? "对数坐标" : S.scale === "pct" ? "百分比坐标 · 相对可见区第一根收盘" : "普通坐标"); });
