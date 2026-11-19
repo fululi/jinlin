@@ -1716,6 +1716,9 @@ function renderHead() {
       ttN.setAttribute('stroke', 'none'); ttN.setAttribute('stroke-width', 0);
       tgN.appendChild(ttN);
       svg.appendChild(tgN);
+      /* 11-19 用户「实时盘中的实时价格线也要有…点了才出现我指的是盘后」: 今天 09:15–15:00 现价线+价签+线尾常显(内联 visibility 压过 :not(:hover) 隐藏); 收盘后/回放照旧鼠标移上/点了才显示 */
+      var hmN = new Date().getHours() * 100 + new Date().getMinutes(), onN = !RPL && liveToday() && hmN >= 915 && hmN < 1500;
+      ['zpNowLn', 'zpNowTg', 'cnow'].forEach(function (id) { var eN = document.getElementById(id); if (eN) eN.style.visibility = onN ? 'visible' : ''; });
     }
   } catch (eNow) { }
   $('chTitle').textContent = MODE === 'live' ? (liveToday() ? '' : (LIVE.bars.length ? sessFmt() + ' 分时(休市)' : '等待开盘')) : '';
@@ -3036,7 +3039,9 @@ function duoRowJL(t, p, c, x, pc, tag, on) {
 function duoPcJL(p) { var cur = LIVE.last || 0; if (!(cur > 0) || !(p > 0)) return ''; var d = (p / cur - 1) * 100; return (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + '%'; }
 function resoMiniJL(P) {
   duoBindJL();
-  var h = $('resoMiniJL'), tt = $('resoTJL'); if (!h || !P || !P.JLReso || !STK.rc) return;
+  var h = $('resoMiniJL'), tt = $('resoTJL'); if (!h) return;
+  /* 11-19 用户截图「共振 慢半拍」: 切到没持仓的票(没 rc)直接 return, 卡上还留着上一只(永鼎20.65)的档 → 清掉说一声 */
+  if (!P || !P.JLReso || !STK.rc) { h.innerHTML = '<div class="dr"><span class="t">' + (STK && STK.name ? STK.name + ' ' : '') + '没在持仓 · 不算共振</span></div>'; if (tt) tt.textContent = ''; return; }
   var e = null; try { e = P.JLReso.ensure(STK.rc); if (e && P.JLReso.settle) e = P.JLReso.settle(STK.rc) || e; } catch (e0) { }
   var nxR = null; try { nxR = P.JLReso.next ? P.JLReso.next(STK.rc) : null; } catch (eN) { } if (nxR) e = nxR;   /* 11-16: 收盘后 = 明日共振 */
   try { var hb = h.closest && h.closest('.duo'), hT = hb && hb.querySelector('.duoH b'); if (hT) hT.textContent = nxR ? '明日共振' : '今日共振'; } catch (eT) { }
@@ -3047,7 +3052,10 @@ function resoMiniJL(P) {
   /* 11-17 用户选方案B「先分开跑段时间」(口径表 Z3): 卡不合并; 共振价和日级(D1)价差 ≤0.3% → 行尾加「＋日S1」小标. 只显示, 没回测; 今日/明日要同一天才比 */
   var B9 = null; try { B9 = atrBandJL(); if (B9 && !!B9.next !== !!nxR) B9 = null; } catch (eB9) { }
   var d1Tag = function (p) { if (!B9) return ''; var nm = B9.next ? '明' : '日', hit = [['S2', B9.S2], ['S1', B9.S1], ['B1', B9.B1], ['B2', B9.B2]].filter(function (q) { return q[1] > 0 && Math.abs(q[1] / p - 1) <= 0.003; }); return hit.length ? '<span class="d1">＋' + nm + hit[0][0] + '</span>' : ''; };
-  var rw = function (x, i, side) { return duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (x.hit ? ' ✓' : ''), x.n >= 3).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); };
+  /* 11-19 用户「今天高20.95, 共振S1 20.92 已碰」: ✓原来只看首页日K今天那根(盘中常没更新) → 卡上再按作战屏今日最高/最低补 ✓; 只显示, 不写台账/不进命中统计 */
+  var hiT = !nxR && liveToday() && LIVE.dhi > 0 ? LIVE.dhi : 0, loT = !nxR && liveToday() && LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : 0;
+  var hitT = function (x) { return x.hit || (hiT && x.p <= hiT + 1e-6 && x.p >= (LIVE.open || 0)) || (loT && x.p >= loT - 1e-6 && x.p <= (LIVE.open || 1e9)); };
+  var rw = function (x, i, side) { return duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (hitT(x) ? ' ✓' : ''), x.n >= 3).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); };
   h.innerHTML = up.map(function (x, i) { return rw(x, up.length - 1 - i, 1); }).join('') + duoRowJL('现价', cur ? cur.toFixed(2) : '—', '#fff', '', '', '', 0).replace('class="dr', 'class="dr now') + dn.map(function (x, i) { return rw(x, i, 0); }).join('') +
     '<div class="df">ATR5 ' + (+e.atr).toFixed(2) + ' · 昨收 ' + (+e.pc).toFixed(2) + '</div>';
   if (tt) tt.textContent = (nxR ? '按' + String(e.pd || '').slice(5) + '收盘 ' : '') + (e.at || '') + (e.stale ? ' ⚠过时' : '');
