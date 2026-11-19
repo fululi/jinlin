@@ -1289,12 +1289,15 @@ try {
             gh.appendChild(el('line', { x1: pjX0, y1: yq, x2: PX0 + PW, y2: yq, stroke: pjC, 'stroke-width': 0.9, 'stroke-dasharray': q[1], opacity: q[2], 'pointer-events': 'none' }));
             if (q[3]) { var tq = tx(PX0 + PW - 2, yq + (pjU ? -2.5 : 8), q[0].toFixed(2), pjC, 8, 'end', 400); tq.setAttribute('opacity', q[2]); gh.appendChild(tq); }
           });
-          /* 现价还贴着这段极值(差≤0.3%)才套圈; 已经拐回去了 → 交给阈值小球自己的虚圈 */
-          if (srJL >= 0.8 && ext && ext.p > 0 && Math.abs(pjP / ext.p - 1) <= 0.003 && pjX != null && pjX >= PX0 && pjX <= PX0 + PW && pjP >= YLO && pjP <= YHI) {
-            var pyC = Y(pjP), pcC = el('circle', { cx: pjX, cy: pyC, r: 10, fill: 'none', stroke: pjC, 'stroke-width': 1.2, 'stroke-dasharray': '3 3', 'pointer-events': 'none' });
-            if (zpFlashOkJL()) pcC.appendChild(el('animate', { attributeName: 'opacity', values: '1;0.35;1', dur: '1.6s', repeatCount: 'indefinite' }));
+          /* 11-19晚3批 用户「振幅数字和小球要一直跟着实时线走, 快到顶才变橙闪」(用户看盘中不看均值, 小白友好优先):
+             圈+段振幅%标签全程挂在现价点(淡色小圈 r6.5 op0.4, 标签 ↑x.x% 橨 / ↓x.x% 青蓝);
+             srJL≥0.8倍 且 现价贴着这段极值(差≤0.3%) 才升级成 大圈r10+闪+「n倍?」(原 11-18 行为保留); 拐回去了退回淡圈, 标签继续跟 */
+          if (ext && ext.p > 0 && pjX != null && pjX >= PX0 && pjX <= PX0 + PW && pjP >= YLO && pjP <= YHI) {
+            var pjNear = srJL >= 0.8 && Math.abs(pjP / ext.p - 1) <= 0.003;
+            var pyC = Y(pjP), pcC = el('circle', { cx: pjX, cy: pyC, r: pjNear ? 10 : 6.5, fill: 'none', stroke: pjC, 'stroke-width': pjNear ? 1.2 : 0.8, 'stroke-dasharray': '3 3', opacity: pjNear ? 1 : 0.4, 'pointer-events': 'none' });
+            if (pjNear && zpFlashOkJL()) pcC.appendChild(el('animate', { attributeName: 'opacity', values: '1;0.35;1', dur: '1.6s', repeatCount: 'indefinite' }));
             gh.appendChild(pcC);
-            gh.appendChild(tx(pjX - 12, pyC + (pjU ? -13 : 20), srJL.toFixed(1) + '倍?', pjC, 8, 'end', 400));
+            gh.appendChild(tx(pjX - 12, pyC + (pjU ? -13 : 20), pjNear ? (srJL.toFixed(1) + '倍?') : ((dirH === 1 ? '↑' : '↓') + slJL.toFixed(1) + '%'), pjC, pjNear ? 8 : 7.5, 'end', pjNear ? 400 : 300));
           }
         }
       } catch (ePj) { }
@@ -3279,16 +3282,16 @@ function ampWidgetJL(D, G) {
   if (G) {
     /* 11-13 用户: 强=橙 / 弱=绿 / 震=原来橙上青下; 顶上小圆标写 强/震/弱 */
     var grC = G.gr === 1 ? '#ff9a3c' : G.gr === -1 ? '#2fe39b' : null, C1 = grC || C, C2 = grC || CD;
-    var cx = 14, mid = 40, k = Math.min(4.2, 26 / Math.max(G.up, G.dn, 1));
-    E('line', { x1: cx, x2: cx, y1: mid - G.up * k, y2: mid, stroke: C1, 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-opacity': G.gr === -1 ? 0.5 : 1 });
-    E('line', { x1: cx, x2: cx, y1: mid, y2: mid + G.dn * k, stroke: C2, 'stroke-width': 1.6, 'stroke-linecap': 'round', 'stroke-opacity': G.gr === 1 ? 0.5 : 1 });
-    E('rect', { x: cx - 4, y: mid - 1.5, width: 8, height: 3, rx: 1, fill: '#fff' });
+    var cx = 14, mid = 40, k = Math.min(5.0, 29 / Math.max(G.up, G.dn, 1));   /* 11-19晚3批 用户「温度计画大点一眼能看」: 行程26→29·上限4.2→5.0·线/点/字同步放大 */
+    E('line', { x1: cx, x2: cx, y1: mid - G.up * k, y2: mid, stroke: C1, 'stroke-width': 2.6, 'stroke-linecap': 'round', 'stroke-opacity': G.gr === -1 ? 0.5 : 1 });
+    E('line', { x1: cx, x2: cx, y1: mid, y2: mid + G.dn * k, stroke: C2, 'stroke-width': 2.6, 'stroke-linecap': 'round', 'stroke-opacity': G.gr === 1 ? 0.5 : 1 });
+    E('rect', { x: cx - 6, y: mid - 2, width: 12, height: 4, rx: 1.5, fill: '#fff' });
     /* 11-13 用户: 竖条上加一个跟现价走的小圆点(相对开盘涨跌%) —— 到上端=接近常见冲高, 到下端=接近常见探底; 超出两端就贴在端点外一点 */
     try { var opD = LIVE.open > 0 ? LIVE.open : 0, cuD = LIVE.last > 0 ? LIVE.last : 0;
       if (opD && cuD && !LIVE.idx) { var rD = (cuD / opD - 1) * 100, yD = mid - Math.max(-(G.dn * k + 5), Math.min(G.up * k + 5, rD * k));
-        E('circle', { cx: cx, cy: yD, r: 3, fill: rD >= 0 ? '#ff5459' : '#1fdc93', stroke: '#fff', 'stroke-width': 1 }); } } catch (eD) { }
-    E('text', { x: cx + 6, y: mid - G.up * k + 3, 'font-size': 7.5, fill: C1 }, G.up.toFixed(1));
-    E('text', { x: cx + 6, y: mid + G.dn * k + 3, 'font-size': 7.5, fill: C2 }, G.dn.toFixed(1));
+        E('circle', { cx: cx, cy: yD, r: 4.2, fill: rD >= 0 ? '#ff5459' : '#1fdc93', stroke: '#fff', 'stroke-width': 1 }); } } catch (eD) { }
+    E('text', { x: cx + 6, y: mid - G.up * k + 3, 'font-size': 9.5, fill: C1 }, G.up.toFixed(1));
+    E('text', { x: cx + 6, y: mid + G.dn * k + 3, 'font-size': 9.5, fill: C2 }, G.dn.toFixed(1));
     var gpT = (Math.abs(G.gp) < 1 ? '平' : G.gp < 0 ? '低' : '高') /* 11-09夜: 和混合做法同口径 ≥1% 算高/低开 */ + Math.abs(G.gp).toFixed(1);
     if (G.gr != null) {
       var grF = G.gr === 1 ? '#ff9a3c' : G.gr === -1 ? '#2fe39b' : '#cfe0ff';
