@@ -371,7 +371,7 @@
 <div class="lgpop" data-lgpop>
   <div class="hd">图例 · 点?关闭</div>
   <b class="g">吸</b>主力进散户出·只在60日区间下半部盖(回测唯一正超额) · 派/恐/洗已回测证伪下线<br>
-  主力控盘: <b class="r">红</b>≥100 <b class="o">橙</b>≥50 <b class="y">黄</b>低(量价) · <b class="y">[DDX]</b>指标▾里开=独立副图(日线淡柱=主力净额红进绿出+DDX60金线·升金降灰·白线MA10,回测+6.8% vs +0.9%;分钟=DDX20同源口径) · 关=不占屏<br>
+  主力控盘: <b class="r">红</b>≥100 <b class="o">橙</b>≥50 <b class="y">黄</b>低(量价) · <b class="y">[DDX]</b>指标▾里开=独立副图(日线淡柱=主力净额红进绿出+DDX60金线·升金降灰·白线MA10,回测+6.8% vs +0.9%;分钟=DDX20同源口径) · 关=不占屏; [RSO]副图=回归斜率摆动(白线=RSO·白虚线=信号线·白点=交叉), 与做T作战屏同源<br>
   <b class="y">★</b>冲进高位区≥80(过热) · <b class="g">★</b>跌进低位区≤20(超卖) · ●连排=单边延续<br>
   <b class="r">BOS↓</b>下破 · <b class="g">BOS↑</b>上破 · LIQ: 红虚线B=下方支撑参考 绿虚线S=上方压力参考, 触破自动消失<br>
   <b class="y">▲B/▼S</b>你的买卖画线 · <b class="o">⚠1.618</b>扩展到位别追<br>
@@ -609,12 +609,13 @@ function histMaybeJL() {
 }
 function fetchQuoteEM(code, cb) {
   var url = "https://push2.eastmoney.com/api/qt/stock/get?secid=" + secidOf(code) +
-    "&ut=" + UT + "&fltt=2&invt=2&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60,f86,f117,f168,f170";
+    "&ut=" + UT + "&fltt=2&invt=2&fields=f43,f44,f45,f46,f47,f48,f57,f58,f60,f84,f86,f117,f168,f170";
   jsonp(url, function (err, d) {
     if (err || !d || !d.data || !(d.data.f43 > 0)) { cb(err || new Error("无报价")); return; }
     var dd = d.data, tm = "";
     if (dd.f86 > 0) { var t8 = new Date(dd.f86 * 1000); tm = t8.getFullYear() + ("0" + (t8.getMonth() + 1)).slice(-2) + ("0" + t8.getDate()).slice(-2) + ("0" + t8.getHours()).slice(-2) + ("0" + t8.getMinutes()).slice(-2) + ("0" + t8.getSeconds()).slice(-2); }
-    cb(null, { code: code, price: dd.f43, name: dd.f58, prev: dd.f60, pct: dd.f170, floatMV: dd.f117 > 0 ? dd.f117 : 0,
+    try { if (dd.f84 > 0) { var _fsC = JSON.parse(localStorage.getItem("ks_float_v1") || "{}"); _fsC[code] = { n: dd.f84, d: (tm || "").slice(0, 8) }; localStorage.setItem("ks_float_v1", JSON.stringify(_fsC)); } } catch (_eF) { }   /* 11-19晚 方案A: 流通股本f84缓存, DDX官方口径用 */
+    cb(null, { code: code, price: dd.f43, name: dd.f58, prev: dd.f60, pct: dd.f170, floatMV: dd.f117 > 0 ? dd.f117 : 0, floatShares: dd.f84 > 0 ? dd.f84 : 0,
       open: dd.f46 > 0 ? dd.f46 : 0, high: dd.f44 > 0 ? dd.f44 : 0, low: dd.f45 > 0 ? dd.f45 : 0, vol: +dd.f47 || 0, amt: dd.f48 > 0 ? dd.f48 / 1e4 : 0, turn: +dd.f168 || 0, time: tm, d: tm.slice(0, 8), at: Date.now() });
   });
 }
@@ -875,7 +876,7 @@ var S = {
   kl: [], name: "", quote: null,
   end: 0, count: 0,
   tool: null, pending: [], selected: -1, cross: null, ghost: null,
-  ind: { amp: true, ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: false /* 11-18 审计: 原ks_macdoff_v3迁移并入默认 */, paneTop: false, cost: true, tqs: true, hma: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, zzl: true, rlm: false, sixsig: false, jitu: false, phvl: true },
+  ind: { amp: true, ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, rso: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: false /* 11-18 审计: 原ks_macdoff_v3迁移并入默认 */, paneTop: false, cost: true, tqs: true, hma: false, ctrl: false, volMain: false, vp: false, cyq: true, zz: true, zzl: true, rlm: false, sixsig: false, jitu: false, phvl: true },
   fflow: [], rtflow: [], floatMV: 0, fflowErr: false, fflowStale: false, fflowCode: "", rtflowCode: "",
   lineMode: true, drawColor: "#ffd21f", pdhlMode: "day", yZoom: 1, yOff: 0, monOpen: false, collapsed: false, simple: false,
   favs: ["ind:phvl"], favPick: false, favHide: false,
@@ -937,7 +938,7 @@ function restore() {
     if (o.active) S.active = o.active;
     if (o.klt) S.klt = (o.klt === "TS") ? "TS" : normalizeKlt(o.klt);
     S.ts.on = (S.klt === "TS");
-    if (o.ind) { S.ind = o.ind; if (S.ind.amp == null) S.ind.amp = true; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false;  if (S.ind.sixsig == null) S.ind.sixsig = true;  if (S.ind.jitu == null) S.ind.jitu = false;  if (S.ind.atri == null) S.ind.atri = true; S.ind.ddx = false;  if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; if (S.ind.zzl == null) S.ind.zzl = true;  } S.yZoom = 1; S.yOff = 0;
+    if (o.ind) { S.ind = o.ind; if (S.ind.amp == null) S.ind.amp = true; if (S.ind.ma == null) S.ind.ma = true; if (S.ind.tsline == null) S.ind.tsline = true; if (S.ind.lr == null || S.ind.lr === true) S.ind.lr = "view"; if (S.ind.solid == null) S.ind.solid = false; if (S.ind.rlm == null) S.ind.rlm = false;  if (S.ind.sixsig == null) S.ind.sixsig = true;  if (S.ind.jitu == null) S.ind.jitu = false;  if (S.ind.atri == null) S.ind.atri = true;if (S.ind.ddx == null) S.ind.ddx = false; if (S.ind.rso == null) S.ind.rso = false; if (S.ind.pdhl == null) S.ind.pdhl = true; if (S.ind.tdhl == null) S.ind.tdhl = true; if (S.ind.rtflow == null) S.ind.rtflow = false; if (S.ind.hma == null) S.ind.hma = true; if (S.ind.boll == null) S.ind.boll = true; if (S.ind.monitor == null) S.ind.monitor = true; if (S.ind.macd == null) S.ind.macd = true; if (S.ind.tqs == null) S.ind.tqs = true; if (S.ind.paneTop == null) S.ind.paneTop = false; if (S.ind.cost == null) S.ind.cost = true; if (S.ind.cyq == null) S.ind.cyq = true; if (S.ind.zz == null) S.ind.zz = true; if (S.ind.zzl == null) S.ind.zzl = true;  } S.yZoom = 1; S.yOff = 0;
     if (o.lineMode != null) S.lineMode = !!o.lineMode;
     if (o.lineColor) S.lineColor = o.lineColor;
     if (o.pdhlMode) S.pdhlMode = o.pdhlMode;
@@ -954,7 +955,7 @@ function restore() {
     if (o.favHide != null) S.favHide = !!o.favHide;
     if (o.theme) { S.theme = o.theme; applyTheme(); }
     if (window.KS_T) { S.theme = "d"; applyTheme(); }
-    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: false /* 11-18 审计: 原ks_macdoff_v3迁移并入默认 */, paneTop: false, cost: true, tqs: true, hma: false, zz: true, zzl: true, sixsig: false, jitu: false, phvl: true };
+    if (o.v !== 4) S.ind = { ma: false, tsline: false, lr: false, fvg: false, liq: false, ms: false, ob: false, ddx: false, zlyy: false, rso: false, pdhl: false, tdhl: true, rtflow: false, boll: false, monitor: true, solid: false, atri: true, macd: false /* 11-18 审计: 原ks_macdoff_v3迁移并入默认 */, paneTop: false, cost: true, tqs: true, hma: false, zz: true, zzl: true, sixsig: false, jitu: false, phvl: true };
   } catch (e) {}
 }
 function dkey() { return S.active + ":" + S.klt; }
@@ -1279,12 +1280,13 @@ function tsLayoutJL(hh) {
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0;
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0;
   var tqsH = S.ind.tqs ? Math.round(avail * 0.12) : 0;
-  var mainH = avail - volH - ddxH - zlyyH - ctrlH - rtH - tqsH - 6 * (1 + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0));
-  if (mainH < 120) { tqsH = 0; ctrlH = 0; zlyyH = 0; ddxH = 0; rtH = 0; mainH = avail - volH - 6; }
+  var rsoH = S.ind.rso ? Math.round(avail * 0.11) : 0;   /* 11-19晚2批: RSO副图 */
+  var mainH = avail - volH - ddxH - zlyyH - ctrlH - rtH - tqsH - rsoH - 6 * (1 + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0) + (rsoH ? 1 : 0));
+  if (mainH < 120) { rsoH = 0; tqsH = 0; ctrlH = 0; zlyyH = 0; ddxH = 0; rtH = 0; mainH = avail - volH - 6; }
   var engineH = Math.max(60, padT + mainH);
-  var volY = engineH + 6, ddxY = volY + volH + 6, rtY = ddxY + (ddxH ? ddxH + 6 : 0), zlyyY = rtY + (rtH ? rtH + 6 : 0), ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0), tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0);
-  var bottom = tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (rtH ? rtY + rtH : (ddxH ? ddxY + ddxH : volY + volH))));
-  return { engineH: engineH, mainH: mainH, volH: volH, volY: volY, ddxH: ddxH, ddxY: ddxY, rtH: rtH, rtY: rtY, zlyyH: zlyyH, zlyyY: zlyyY, ctrlH: ctrlH, ctrlY: ctrlY, tqsH: tqsH, tqsY: tqsY, bottom: bottom };
+  var volY = engineH + 6, ddxY = volY + volH + 6, rtY = ddxY + (ddxH ? ddxH + 6 : 0), zlyyY = rtY + (rtH ? rtH + 6 : 0), ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0), tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0), rsoY = tqsY + (tqsH ? tqsH + 6 : 0);
+  var bottom = rsoH ? rsoY + rsoH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (rtH ? rtY + rtH : (ddxH ? ddxY + ddxH : volY + volH)))));
+  return { engineH: engineH, mainH: mainH, volH: volH, volY: volY, ddxH: ddxH, ddxY: ddxY, rtH: rtH, rtY: rtY, zlyyH: zlyyH, zlyyY: zlyyY, ctrlH: ctrlH, ctrlY: ctrlY, tqsH: tqsH, tqsY: tqsY, rsoH: rsoH, rsoY: rsoY, bottom: bottom };
 }
 function tsVolJL(ctx, v) {
   var kl = S.kl, i0 = v.i0, i1 = v.i1, bw = Math.max(1, v.step * 0.62), v0 = v.volY;
@@ -1320,7 +1322,7 @@ function tsViewJL(g, lay) {
   var inset = (g.plotBottom < 70) ? 6 : 16, yT = inset, yB = g.plotBottom - inset;
   return { w: g.w, hh: g.h, ts: true, i0: dayStart, i1: n, n: n, step: (g.w - g.l - g.r) / 240, plotW: (n - dayStart) * (g.w - g.l - g.r) / 240, padL: g.l, padR: 48, padT: yT,
     priceH: yB - yT, pTop: yT, bottom: lay.bottom, vMax: 1,
-    volY: lay.volY, volH: lay.volH, macdY: 0, macdH: 0, zzY: 0, zzH: 0, rtY: lay.rtY, rtH: lay.rtH, ddxY: lay.ddxY, ddxH: lay.ddxH, zlyyY: lay.zlyyY, zlyyH: lay.zlyyH, ctrlY: lay.ctrlY, ctrlH: lay.ctrlH, tqsY: lay.tqsY, tqsH: lay.tqsH,
+    volY: lay.volY, volH: lay.volH, macdY: 0, macdH: 0, zzY: 0, zzH: 0, rtY: lay.rtY, rtH: lay.rtH, ddxY: lay.ddxY, ddxH: lay.ddxH, zlyyY: lay.zlyyY, zlyyH: lay.zlyyH, ctrlY: lay.ctrlY, ctrlH: lay.ctrlH, tqsY: lay.tqsY, tqsH: lay.tqsH, rsoY: lay.rsoY, rsoH: lay.rsoH,
     X: function (i) { return i >= dayStart ? g.xOfIdx(i - dayStart) : -1e4; },
     I: function (x) { var i = g.idxAtX(x) + dayStart; return Math.max(dayStart, Math.min(n - 1, i)); },
     Y: function (p) { return g.yOfPrice(p); }, P: function (y) { return g.priceAtY(y); },
@@ -1407,6 +1409,7 @@ function view() {
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0;
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0;
   var tqsH = S.ind.tqs ? Math.round(avail * 0.12) : 0; // 强弱T面板(零轴柱状,全周期可读)
+  var rsoH = S.ind.rso ? Math.round(avail * 0.11) : 0;   /* 11-19晚2批: RSO副图(回归斜率摆动, 算法与作战屏 jl-zprso 同源) */
   if (S.bigPane === "vol") volH = Math.round(avail * 0.32);
   else if (S.bigPane === "macd" && macdH) macdH = Math.round(avail * 0.32);
   else if (S.bigPane === "zz" && zzH) zzH = Math.round(avail * 0.32);
@@ -1415,8 +1418,9 @@ function view() {
   else if (S.bigPane === "ctrl" && ctrlH) ctrlH = Math.round(avail * 0.32);
   else if (S.bigPane === "rt" && rtH) rtH = Math.round(avail * 0.32);
   else if (S.bigPane === "tqs" && tqsH) tqsH = Math.round(avail * 0.32);
-  var subN = (volH ? 1 : 0) + (macdH ? 1 : 0) + (zzH ? 1 : 0) + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0);
-  var priceH = avail - volH - macdH - zzH - ddxH - zlyyH - ctrlH - rtH - tqsH - 6 * subN;
+  else if (S.bigPane === "rso" && rsoH) rsoH = Math.round(avail * 0.32);
+  var subN = (volH ? 1 : 0) + (macdH ? 1 : 0) + (zzH ? 1 : 0) + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0) + (rsoH ? 1 : 0);
+  var priceH = avail - volH - macdH - zzH - ddxH - zlyyH - ctrlH - rtH - tqsH - rsoH - 6 * subN;
   if (!S.count) S.count = loadZoom();
   if (!S.count) {
     if (S.klt === "101" || isMultiDayJL(S.klt)) S.count = Math.max(S.klt === "Y" ? 10 : 30, Math.round(plotW / (TVL ? 9 : 6.5))); /* 11-18 TV风格: 日线默认每根≈9px */
@@ -1455,12 +1459,13 @@ function view() {
   var zlyyY = ddxY + (ddxH ? ddxH + 6 : 0);
   var ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0);
   var tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0);
-  var bottom = S.ind.paneTop ? pTop + priceH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (ddxH ? ddxY + ddxH : (rtH ? rtY + rtH : (zzH ? zzY + zzH : (macdH ? macdY + macdH : (volH ? volY + volH : pTop + priceH))))))));
+  var rsoY = tqsY + (tqsH ? tqsH + 6 : 0);
+  var bottom = S.ind.paneTop ? pTop + priceH : (rsoH ? rsoY + rsoH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (ddxH ? ddxY + ddxH : (rtH ? rtY + rtH : (zzH ? zzY + zzH : (macdH ? macdY + macdH : (volH ? volY + volH : pTop + priceH)))))))));
   return {
     w: w, hh: hh, i0: i0, i1: i1, n: n, step: step, plotW: plotW, rb: rb, padL: padL, padR: padR, padT: padT,
     priceH: priceH, pTop: pTop, volY: volY, volH: volH, macdY: macdY, macdH: macdH, zzY: zzY, zzH: zzH, vMax: vMax,
     rtY: rtY, rtH: rtH,
-    ddxY: ddxY, ddxH: ddxH, zlyyY: zlyyY, zlyyH: zlyyH, ctrlY: ctrlY, ctrlH: ctrlH, tqsY: tqsY, tqsH: tqsH, bottom: bottom,
+    ddxY: ddxY, ddxH: ddxH, zlyyY: zlyyY, zlyyH: zlyyH, ctrlY: ctrlY, ctrlH: ctrlH, tqsY: tqsY, tqsH: tqsH, rsoY: rsoY, rsoH: rsoH, bottom: bottom,
     X: function (i) { return padL + (i - left + 0.5) * step; },
     I: function (x) { return Math.max(0, Math.min(n - 1, Math.round(left + (x - padL) / step - 0.5))); },
     Y: isLog ? function (p) { return pTop + (hf - Math.log(Math.max(p, 1e-9))) / (hf - lf) * priceH; } : function (p) { return pTop + (hi - p) / (hi - lo) * priceH; },
@@ -2879,6 +2884,7 @@ function drawReal() {
   ctx.restore();
   renderRtflow(ctx, v);
   renderDdxPane(ctx, v);
+  renderRsoPane(ctx, v);   /* 11-19晚2批: RSO副图 */
   renderCtrl(ctx, v);
   renderTqs(ctx, v);
   renderExtraPanes(ctx, v);
@@ -6408,6 +6414,7 @@ function drawTSJL(ctx, w, hh) {
   try { renderMonitor(ctx, v); } catch (e8) { if (window.console) console.warn("[ts.mon]", e8); }
   try { tsVolJL(ctx, v); } catch (e9) { if (window.console) console.warn("[ts.vol]", e9); }
   try { renderDdxPane(ctx, v); } catch (e10) { if (window.console) console.warn("[ts.ddx]", e10); }
+  try { renderRsoPane(ctx, v); } catch (e11) { if (window.console) console.warn("[ts.rso]", e11); }   /* 11-19晚2批: RSO副图 */
   try { renderCtrl(ctx, v); } catch (e11) { if (window.console) console.warn("[ts.ctrl]", e11); }
   try { renderTqs(ctx, v); } catch (e12) { if (window.console) console.warn("[ts.tqs]", e12); }
   try { renderRtflow(ctx, v); } catch (e13) { if (window.console) console.warn("[ts.rt]", e13); }
@@ -8070,6 +8077,78 @@ function renderCtrl(ctx, v) {
 }
 /* 11-19 用户「成交额按量×收盘价估不对」: 东财K线 f57 带真实成交额(kl[6]), 有就用真的, 缺了才用 量(手)×100×收盘 估, 并在来源里标「估」 */
 function ddxAmtJL(k, st) { var a = k.length > 6 ? +k[6] : NaN; if (isFinite(a) && a > 0) return a; if (st) st.est = true; return k[5] * 100 * k[4]; }
+/* ---- 11-19晚2批 jl-zprso→ks: RSO(回归斜率摆动)副图 ----
+   算法与作战屏 jl-zprso v2.1 同源: 多长度log收盘价线性回归斜率取均值(EFF周期换算: min10/step5/n6/sig7, m>=15时min=4/step>=2), 信号线=osc的SMA(sig);
+   白点=osc上/下穿信号线; 只显示不进算法, 无画线/无提醒(与作战屏全功能版差异), 默认参数固定。 */
+var _rsoC = { key: "", v: null };
+function rsoPminJL(klt) { return klt === "101" ? 101 : (klt === "TS" || klt === "1") ? 1 : klt === "5D" ? 5 : (+klt || 5); }
+function rsoCalcJL(kl, klt) {
+  var m = rsoPminJL(klt) || 1, k = 5 / m;
+  var mn = Math.max(m >= 15 ? 4 : 2, Math.round(10 * k)), sp = m >= 15 ? Math.max(2, Math.max(1, Math.round(5 * k))) : Math.max(1, Math.round(5 * k)), sg = Math.max(2, Math.round(7 * k)), N = 6;
+  var n = kl.length;
+  if (n < mn + sp * (N - 1) + sg + 3) return null;
+  var lp = [], i, s2;
+  for (i = 0; i < n; i++) { var c0 = kl[i][4]; lp.push(c0 > 0 ? Math.log(c0) : null); }
+  function slope(end, L) { var sy = 0, sx = 0, sxy = 0, sx2 = 0, cc = 0, j; for (j = end - L + 1; j <= end; j++) { if (lp[j] == null) return null; var x = j - (end - L + 1); sy += lp[j]; sx += x; sxy += x * lp[j]; sx2 += x * x; cc++; } var den = L * sx2 - sx * sx; return cc === L && den ? (L * sxy - sx * sy) / den : null; }
+  var osc = new Array(n).fill(null), sig = new Array(n).fill(null), up = new Array(n).fill(false), dn = new Array(n).fill(false);
+  var buf = [], pO = null, pS = null;
+  for (i = 0; i < n; i++) {
+    if (lp[i] == null) { buf = []; pO = pS = null; continue; }
+    if (i < mn + sp * (N - 1)) continue;
+    var acc = 0, c2 = 0;
+    for (s2 = 0; s2 < N; s2++) { var sv = slope(i, mn + sp * s2); if (sv == null) { c2 = -1; break; } acc += sv; c2++; }
+    if (c2 < N) continue;
+    osc[i] = acc / N;
+    buf.push(osc[i]); if (buf.length > sg) buf.shift();
+    if (buf.length === sg) sig[i] = buf.reduce(function (a, b) { return a + b; }, 0) / sg;
+    if (pO != null && pS != null && sig[i] != null && pS != null) { if (pO <= pS && osc[i] > sig[i]) up[i] = true; else if (pO >= pS && osc[i] < sig[i]) dn[i] = true; }
+    pO = osc[i]; pS = sig[i] != null ? sig[i] : pS;
+  }
+  return { osc: osc, sig: sig, up: up, dn: dn, n: n };
+}
+function rsoSeriesJL(kl, klt) {
+  var key = S.active + "|" + klt + "|" + kl.length + "|" + (kl.length ? kl[kl.length - 1][0] : "") + (kl.length ? kl[kl.length - 1][4] : "");
+  if (_rsoC.key === key && _rsoC.v) return _rsoC.v;
+  var v = null; try { v = rsoCalcJL(kl, klt); } catch (e0) { }
+  _rsoC.key = key; _rsoC.v = v; return v;
+}
+function renderRsoPane(ctx, v) {
+  if (!S.ind.rso || !v.rsoH) return;
+  var kl = S.kl, y2 = v.rsoY, h2 = v.rsoH, right = v.padL + v.plotW;
+  var R = rsoSeriesJL(kl, S.klt);
+  gridSt(ctx); ctx.beginPath(); ctx.moveTo(v.padL, y2); ctx.lineTo(right, y2); ctx.stroke();
+  if (!R) { paneLegendJL(ctx, v, y2, "RSO", [{ t: "数据不足(该周期需更多K线)", c: "rgba(238,243,240,0.9)" }]); return; }
+  var lo = 1e18, hi = -1e18, i, mx = -1, mn = -1;
+  for (i = Math.max(0, v.i0); i < v.i1; i++) {
+    if (R.osc[i] != null) { if (R.osc[i] < lo) lo = R.osc[i]; if (R.osc[i] > hi) hi = R.osc[i]; if (mx < 0 || R.osc[i] > R.osc[mx]) mx = i; if (mn < 0 || R.osc[i] < R.osc[mn]) mn = i; }
+    if (R.sig[i] != null) { if (R.sig[i] < lo) lo = R.sig[i]; if (R.sig[i] > hi) hi = R.sig[i]; }
+  }
+  if (!(hi > lo)) { paneLegendJL(ctx, v, y2, "RSO", [{ t: "数据不足", c: "rgba(238,243,240,0.9)" }]); return; }
+  var padv = (hi - lo) * 0.15 || 1e-9; lo -= padv; hi += padv;
+  var DY = function (x) { return y2 + 5 + (hi - x) / (hi - lo) * (h2 - 20); };
+  ctx.lineWidth = 1.3; ctx.strokeStyle = "#f2f5f3"; ctx.beginPath();
+  var _mp = false;
+  for (i = Math.max(0, v.i0); i < v.i1; i++) { if (R.osc[i] == null) { _mp = false; continue; } if (_mp) ctx.lineTo(v.X(i), DY(R.osc[i])); else { ctx.moveTo(v.X(i), DY(R.osc[i])); _mp = true; } }
+  ctx.stroke();
+  ctx.lineWidth = 0.55; ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.setLineDash([3, 2]); ctx.beginPath();   /* 11-19晚2批 用户「细但亮白清晰」与DDX的MA10同款 */
+  _mp = false;
+  for (i = Math.max(0, v.i0); i < v.i1; i++) { if (R.sig[i] == null) { _mp = false; continue; } if (_mp) ctx.lineTo(v.X(i), DY(R.sig[i])); else { ctx.moveTo(v.X(i), DY(R.sig[i])); _mp = true; } }
+  ctx.stroke(); ctx.setLineDash([]);
+  for (i = Math.max(0, v.i0); i < v.i1; i++) {
+    if (!R.up[i] && !R.dn[i]) continue;
+    ctx.fillStyle = "#e8e8e8"; ctx.beginPath(); ctx.arc(v.X(i), DY(R.osc[i]), 2.4, 0, 7); ctx.fill();
+    ctx.strokeStyle = "rgba(8,12,10,0.85)"; ctx.lineWidth = 0.6; ctx.stroke();
+  }
+  ctx.font = "8px Menlo,monospace"; ctx.textBaseline = "middle";
+  if (mx >= 0) { ctx.fillStyle = "#4dd0e1"; ctx.textAlign = "center"; ctx.fillText("高 " + R.osc[mx].toFixed(4), Math.max(v.padL + 24, Math.min(right - 30, v.X(mx))), Math.max(y2 + 7, DY(R.osc[mx]) - 6)); }
+  if (mn >= 0 && mn !== mx) { ctx.fillStyle = "#ffb74d"; ctx.textAlign = "center"; ctx.fillText("低 " + R.osc[mn].toFixed(4), Math.max(v.padL + 24, Math.min(right - 30, v.X(mn))), Math.min(y2 + h2 - 7, DY(R.osc[mn]) + 8)); }
+  ctx.textAlign = "left"; ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.fillText(hi.toFixed(4), v.padL + 2, y2 + 8); ctx.fillText(lo.toFixed(4), v.padL + 2, y2 + h2 - 8);
+  var di = -1;
+  for (i = Math.min(R.n - 1, legIdxJL(v)); i >= Math.max(0, v.i0); i--) if (R.osc[i] != null) { di = i; break; }
+  var leg = [];
+  if (di >= 0) { leg.push({ t: "RSO " + R.osc[di].toFixed(4), c: "#f2f5f3", b: true }); if (R.sig[di] != null) leg.push({ t: "信号 " + R.sig[di].toFixed(4), c: "#ffffff" }); }
+  paneLegendJL(ctx, v, y2, "RSO", leg);
+}
 function renderDdxPane(ctx, v) {
   if (!S.ind.ddx || !v.ddxH || noFund(S.active)) return;
   var kl = S.kl, n = kl.length;
@@ -8106,7 +8185,21 @@ function renderDdxPane(ctx, v) {
     ff2.forEach(function (r) { fm2[r.d] = parseFloat(r.main) || 0; fp2[r.d] = (r.mainPct == null || !isFinite(+r.mainPct)) ? null : +r.mainPct; });
     var ddx = new Array(n).fill(null);
     var _ddxVia = "", _ddxAm = { est: false };
-    for (i2 = 59; i2 < n; i2++) {
+    /* 11-19晚 方案A(官方口径): 当日DDX=(主力净额÷当日均价)÷流通股本×100, 线=SMA(DDX,60,1)平滑累加(=东财DDX1同式);
+       流通股本=行情f84(缓存ks_float_v1); 缺额日>10 或无流通股本时退回旧口径(pct净占比/est成交额加权) */
+    var _ddxFs = 0;
+    try { if (S.quote && S.quote.code === S.active && S.quote.floatShares > 0) _ddxFs = S.quote.floatShares; else { var _ddxFsC = JSON.parse(localStorage.getItem("ks_float_v1") || "{}"); if (_ddxFsC[S.active] && _ddxFsC[S.active].n > 0) _ddxFs = _ddxFsC[S.active].n; } } catch (_eFS) { }
+    if (_ddxFs > 0) {
+      var _ddxSer = [], _ddxOkD = 0;
+      for (i2 = 0; i2 < n; i2++) {
+        var _k3 = kl[i2], _m3 = fm2[_k3[0]];
+        var _a3 = _k3.length > 6 && _k3[6] > 0 ? _k3[6] : 0, _v3 = _k3[5] > 0 ? _k3[5] : 0, _ap3 = _a3 > 0 && _v3 > 0 ? _a3 / (_v3 * 100) : 0;
+        if (_m3 == null || !(_ap3 > 0)) { _ddxSer.push(null); continue; }
+        _ddxSer.push(_m3 / _ap3 / _ddxFs * 100); _ddxOkD++;
+      }
+      if (_ddxOkD >= n - 10) { var _ddxSm = null; for (i2 = 0; i2 < n; i2++) { if (_ddxSer[i2] != null) _ddxSm = _ddxSm == null ? _ddxSer[i2] : (_ddxSer[i2] + 59 * _ddxSm) / 60; ddx[i2] = _ddxSm; } _ddxVia = "off"; }
+    }
+    if (_ddxVia !== "off") for (i2 = 59; i2 < n; i2++) {
       var ms = 0, as = 0, ps = 0, pc = 0, ok2 = true;
       for (var j2 = i2 - 59; j2 <= i2; j2++) {
         var _k2 = kl[j2][0];
@@ -8121,7 +8214,7 @@ function renderDdxPane(ctx, v) {
     var _dl1 = drawDdxLine(ctx, v, ddx, Math.max(59, v.i0), v.i1, base, h2, y2, right, "", "DDX");
     if (_dl1) {
       _ddxOk = true; _ddxLeg = _dl1;
-      if (S.klt === "101") _ddxSrc = "日线DDX60·" + (_ddxVia === "pct" ? "官方净占比" : _ddxAm.est ? "成交额(估)" : "真实成交额") + "·截至" + S.fflow[S.fflow.length - 1].d.slice(5) + (S.fflowStale ? "·缓存" : "");
+      if (S.klt === "101") _ddxSrc = "日线DDX·" + (_ddxVia === "off" ? "官方公式·SMA60" : _ddxVia === "pct" ? "官方净占比" : _ddxAm.est ? "成交额(估)" : "真实成交额") + "·截至" + S.fflow[S.fflow.length - 1].d.slice(5) + (S.fflowStale ? "·缓存" : "");
     }
   }
   // 20bar≈5分线100分钟/15分线5小时窗口, 与日线DDX60同族不同周期
@@ -8204,9 +8297,9 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   if (maLast != null) {
     var my = DY(maLast);
     /* 11-19 用户「高低总有个平均, 一条平的-2.3不对」: MA10 画成跟着走的细线, 半透明白, 不抢DDX线 */
-    ctx.strokeStyle = "rgba(230,180,60,0.4)"; ctx.lineWidth = 0.8; ctx.beginPath();   /* 11-19晚 用户「均线淡点」: 0.9→0.4 */
+    ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 0.55; ctx.setLineDash([3, 2]); ctx.beginPath();   /* 11-19晚2批 用户「均线横的虚线细一点但是要亮白清晰」: 金半透0.4/0.8实线 → 亮白0.85/0.55细虚线 */
     var _mp = false; for (i = Math.max(0, i0); i < i1; i++) { if (ma[i] == null) { _mp = false; continue; } if (_mp) ctx.lineTo(v.X(i), DY(ma[i])); else { ctx.moveTo(v.X(i), DY(ma[i])); _mp = true; } }
-    ctx.stroke();
+    ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = "#ffffff"; ctx.font = "9px Menlo,monospace"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";
     var _mly = Math.max(my - 2, y2 + 22);
     if (_mly > y2 + h2 - 13) _mly = my - 13;
@@ -8610,7 +8703,7 @@ var JITU_KS = (function () {
   return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
 })();
 /* ================= 指标开关行 ================= */
-var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["macd", "MACD"], ["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["rso", "RSO"], ["macd", "MACD"],["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
   if (kd === "tool") return toolName(ky);
