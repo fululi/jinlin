@@ -1304,7 +1304,7 @@ try {
             if (dirH === 1) { if (pjP >= ext.p) { pjUpJL = true; pjAmpJL = sbJL > 0 ? (pjP / sbJL - 1) * 100 : 0; pjAncJL = sbJL; } else { pjUpJL = false; pjAmpJL = ext.p > 0 ? (1 - pjP / ext.p) * 100 : 0; pjAncJL = ext.p; } }
             else { if (pjP <= ext.p) { pjUpJL = false; pjAmpJL = sbJL > 0 ? (1 - pjP / sbJL) * 100 : 0; pjAncJL = sbJL; } else { pjUpJL = true; pjAmpJL = ext.p > 0 ? (pjP / ext.p - 1) * 100 : 0; pjAncJL = ext.p; } }
             var pjAvgJL = (window.__AMPJL && window.__AMPJL.avg > 0) ? window.__AMPJL.avg : SEGAVJL;   /* 11-19晚9批 拍板: 橙/青蓝门槛=圆环「均x.x%」(每股随时变), 兜底段均 */
-            var pjColJL = pjUpJL ? (Math.abs(pjAmpJL) >= pjAvgJL ? '#ff9a4e' : '#ffe9a6') : (Math.abs(pjAmpJL) > pjAvgJL * 0.9 ? '#ffe9a6' : '#5fd3ff');   /* 爬↑:<均黄/≥均橙; 回落:>均×0.9黄/≤均×0.9青蓝 — 用户1.7转橙·下到1.5青蓝 = 均×0.9 自洽 */
+            var pjColJL = pjUpJL ? (Math.abs(pjAmpJL) >= pjAvgJL ? '#ff9a4e' : '#ffe9a6') : (Math.abs(pjAmpJL) >= pjAvgJL * 0.9 ? '#5fd3ff' : '#ffe9a6');   /* 爬↑:<均黄/≥均橙; 回落:跌到均×0.9(1.7→1.53)起青蓝, 浅跌黄 — 用户口述: 下到1.5变青蓝/-2.7%青蓝 */
             var pjMonJL = Math.round(Math.abs(pjP - pjAncJL) * (LIVE.sh || STK.qty || 400));
             var pjLxJL = pjX - 12, pjAnJL = 'end'; if (pjLxJL < PX0 + 30) { pjLxJL = pjX + 8; pjAnJL = 'start'; }   /* 11-19晚9批 用户: 开盘贴左被截断 → 贴左改画点右侧 */
             gh.appendChild(tx(pjLxJL, pyC + (pjU ? -13 : 20), (pjUpJL ? '\u2191+' : '\u2193-') + Math.abs(pjAmpJL).toFixed(1) + '%' + (pjMonJL > 0 ? ' ' + pjMonJL : ''), pjColJL, pjNear ? 8 : 7.5, pjAnJL, pjNear ? 400 : 300));   /* 「n倍?」字按拍板隐藏(橙/青大圈闪保留) */
