@@ -3054,7 +3054,8 @@ function resoMiniJL(P) {
   var d1Tag = function (p) { if (!B9) return ''; var nm = B9.next ? '明' : '日', hit = [['S2', B9.S2], ['S1', B9.S1], ['B1', B9.B1], ['B2', B9.B2]].filter(function (q) { return q[1] > 0 && Math.abs(q[1] / p - 1) <= 0.003; }); return hit.length ? '<span class="d1">＋' + nm + hit[0][0] + '</span>' : ''; };
   /* 11-19 用户「今天高20.95, 共振S1 20.92 已碰」: ✓原来只看首页日K今天那根(盘中常没更新) → 卡上再按作战屏今日最高/最低补 ✓; 只显示, 不写台账/不进命中统计 */
   var hiT = !nxR && liveToday() && LIVE.dhi > 0 ? LIVE.dhi : 0, loT = !nxR && liveToday() && LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : 0;
-  var hitT = function (x) { return x.hit || (hiT && x.p <= hiT + 1e-6 && x.p >= (LIVE.open || 0)) || (loT && x.p >= loT - 1e-6 && x.p <= (LIVE.open || 1e9)); };
+  /* 11-19 用户「永鼎共振怎么还是21已碰」: x.hit 是 jl_reso 统计口径(日K高低 ±0.05×ATR5 算碰到, 高20.95 也算碰了21.0x) → 卡上今天改成严格: 今日最高≥价 或 最低≤价才 ✓; 统计口径不动 */
+  var hitT = function (x) { if (hiT || loT) return (hiT && x.p <= hiT + 1e-6 && x.p >= (LIVE.open || 0)) || (loT && x.p >= loT - 1e-6 && x.p <= (LIVE.open || 1e9)); return !!x.hit; };
   var rw = function (x, i, side) { return duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (hitT(x) ? ' ✓' : ''), x.n >= 3).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); };
   h.innerHTML = up.map(function (x, i) { return rw(x, up.length - 1 - i, 1); }).join('') + duoRowJL('现价', cur ? cur.toFixed(2) : '—', '#fff', '', '', '', 0).replace('class="dr', 'class="dr now') + dn.map(function (x, i) { return rw(x, i, 0); }).join('') +
     '<div class="df">ATR5 ' + (+e.atr).toFixed(2) + ' · 昨收 ' + (+e.pc).toFixed(2) + '</div>';
@@ -5288,7 +5289,7 @@ function xhPlusJL(g,px0,py,price){
     if(e.cancelable) e.preventDefault(); e.stopImmediatePropagation();
     var q=e.touches ? e.touches[0] : e, now=Date.now();
     if(lastTap && now-lastTap<320 && Math.abs(q.clientX-lastX)<24 && Math.abs(q.clientY-lastY)<24) {
-      lastTap=0;YRES=YRES<PH*.3 ? zpVolHeightJL(PH*.45) : 56;save();redraw(false);return;
+      lastTap=0;YRES=YRES!==56 ? 56 : zpVolHeightJL(PH*.45);save();redraw(false);return;   /* 11-19: 双击 = 不是默认高度就先回默认56, 是默认才放大 */
     }
     var m=t.ownerSVGElement && t.ownerSVGElement.getScreenCTM();
     st={y:q.clientY,x:q.clientX,r:YRES,k:m && m.d>0 ? m.d : 1,id:e.pointerId,moved:false};own(true);
@@ -5297,9 +5298,9 @@ function xhPlusJL(g,px0,py,price){
     if(!st || e.pointerId != null && st.id != null && e.pointerId !== st.id) return;
     if(e.cancelable) e.preventDefault();e.stopImmediatePropagation();
     var q=e.touches ? e.touches[0] : e;
-    if(Math.abs(q.clientY-st.y)>3 || Math.abs(q.clientX-st.x)>3) st.moved=true;
+    if(Math.abs(q.clientY-st.y)>8 || Math.abs(q.clientX-st.x)>8) st.moved=true;   /* 11-19 用户「放大了后无法缩小 不是双击吗」: 手机点一下手指会抖>3px 被当成拖动, 双击认不出 → 8px */
     var h=zpVolHeightJL(st.r-(q.clientY-st.y)/st.k);
-    if(h!==YRES) {YRES=h;redraw(true);}
+    if(st.moved && h!==YRES) {YRES=h;redraw(true);}   /* 11-19: 没拖过8px不改高度(点按不抖动高度) */
   }
   function end(e) {
     if(!st || e.pointerId != null && st.id != null && e.pointerId !== st.id) return;
@@ -5937,10 +5938,10 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     g.appendChild(lt);
     /* 11-19: 量柱带上沿=拖动条(上下拖改高度, 双击复原), 中间一小段淡横条提示能拖 */
     var gy = PY0 + PH - YRES, grip=E('g',{id:'zpVolGrip'});
-    grip.appendChild(E('title',{},'上下拖动调整成交量高度；双击放大/还原'));
+    grip.appendChild(E('title',{},'上下拖动调整成交量高度；双击还原/放大'));
     grip.appendChild(E('line', { x1: PX0, x2: LX - 6, y1: gy + .5, y2: gy + .5, stroke: 'rgba(255,255,255,.10)', 'stroke-width': .6 }));
     grip.appendChild(E('rect', { x: (PX0 + LX) / 2 - 12, y: gy - 1.2, width: 24, height: 2.4, rx: 1.2, fill: 'rgba(255,255,255,.35)' }));
-    grip.appendChild(E('rect', { 'data-zpvgrip': '1', x: PX0, y: gy - 8, width: LX - 6 - PX0, height: 16, fill: 'transparent', 'pointer-events': 'all', style: 'cursor:ns-resize;touch-action:none' }));
+    grip.appendChild(E('rect', { 'data-zpvgrip': '1', x: PX0, y: gy - 13, width: LX - 6 - PX0, height: 26, fill: 'transparent', 'pointer-events': 'all', style: 'cursor:ns-resize;touch-action:none' }));
     M.insertBefore(g, M.firstChild); M.appendChild(grip);
   };
   /* ── 成交量: 实心细柱, 红=收≥前一分钟, 绿=跌; 顶部读数 ── */
@@ -6221,16 +6222,16 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     var last=R[R.length-1], ref=last.ma;
     /* 11-19 用户「高低总有个平均, 一条平的2.3不对」: MA10 画成跟着走的细线(白, 半透明, 不抢DDX线) */
     var mp='';R.forEach(function(r){if(r.ma==null || r.n<20){if(mp && mp.slice(-1)!=='|') mp+='|';return;}mp+=(mp && mp.slice(-1)!=='|' ? 'L' : 'M')+r.x.toFixed(1)+' '+YV(r.ma).toFixed(1);});
-    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'rgba(230,180,60,.9)','stroke-width':.9,'stroke-linejoin':'round'}));
-    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 粉=上行 青=下行 · 金线=MA10'+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
+    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'#ffc83d','stroke-width':1.1,'stroke-dasharray':'3 2','stroke-linejoin':'round'}));   /* 11-19 用户「均线呢 ddx的」: 金线和白线贴太近看不出 → 亮金#ffc83d 1.1 短虚线, 和实心白线分得开 */
+    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 白线=净额比 · 金线=MA10'+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
     s.appendChild(E('title',{},'自算净额比20=近20分钟东财主力净额/同分钟真实成交额；非东财原版DDX。淡柱为周期主力净额，独立金额轴；成交量VOL在主图底部。'));
     /* 与截图同类：仅一条连续走势，每段按两端净额比相对各自MA10的均值染红/绿。 */
     /* 11-19 用户: 线细但清楚; 涨的一段淡粉、跌的一段青绿, 和红绿资金柱分开; 开盘不满20分钟不画 */
     var curve=E('g',{'data-series':'ratio20',fill:'none','stroke-width':1,'stroke-linecap':'round','stroke-linejoin':'round'});
     for(var ci=1;ci<R.length;ci++){
       var p=R[ci-1], r=R[ci];if(p.v==null || r.v==null || r.n<20 || p.n<20) continue;
-      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:r.v>=p.v ? '#ffb3cf' : '#2ee6d6'}));
-    }s.appendChild(curve);
+      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:'#ffffff'}));   /* 11-19 用户「原有ddx留一根线就行了 线要清晰明亮」: 粉/青分段 → 一种亮白, 1→1.4粗; 柱/MA10/刻度不动 */
+    }curve.setAttribute('stroke-width',1.4);s.appendChild(curve);
     var f1 = function (v) { return (v >= 0 ? '+' : '') + v.toFixed(1); };
     var lg = function (k) {
       var r = R[k], o = [[r.n < 20 ? '净额比 ' + r.n + '/20预热' : '净额比20(自算)', TXT]];
