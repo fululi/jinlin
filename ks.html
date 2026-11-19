@@ -1274,7 +1274,7 @@ function zzArr(kl) {
 function tsLayoutJL(hh) {
   var padT = 10, padB = 18, avail = Math.max(120, (hh || 300) - padT - padB);
   var volH = (S.ind.volMain && S.bigPane !== "vol") ? 0 : Math.round(avail * 0.085);
-  var ddxH = S.ind.ddx && !noFund(S.active) ? Math.round(avail * 0.12) : 0;
+  var ddxH = S.ind.ddx && !noFund(S.active) ? Math.round(avail * (S.ddxHf || 0.12)) : 0;   /* 11-19晚: 高度档位S.ddxHf(0.07-0.42), 副图+/−调 */
   var zlyyH = S.ind.zlyy && !noFund(S.active) ? Math.round(avail * 0.11) : 0;
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0;
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0;
@@ -1402,7 +1402,7 @@ function view() {
   var volH = (S.ind.volMain && S.bigPane !== "vol") ? 0 : Math.round(avail * 0.085);
   var macdH = S.ind.macd === false ? 0 : Math.round(avail * 0.13);
   var zzH = S.ind.zz ? Math.round(avail * 0.11) : 0;
-  var ddxH = S.ind.ddx && !noFund(S.active) ? Math.round(avail * 0.12) : 0;
+  var ddxH = S.ind.ddx && !noFund(S.active) ? Math.round(avail * (S.ddxHf || 0.12)) : 0;   /* 11-19晚: 高度档位S.ddxHf(0.07-0.42), 副图+/−调 */
   var zlyyH = S.ind.zlyy && !noFund(S.active) ? Math.round(avail * 0.11) : 0;
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0;
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0;
@@ -4439,7 +4439,12 @@ function ffInitJL() {
     if (!ok) return;
     if (!FFEXP.task && (ffCountJL() || FFEXP.legacyRun)) ffCreateJL(FFEXP.legacyDay);
     var t = FFEXP.task; ffRenderJL();
-    if (t && t.status !== "paused" && t.status !== "complete") ffBatchJL();
+    /* 11-19 定时窗: 打开页面不再无条件自动续跑——只在 KS_FF_WIN0–KS_FF_WIN1 点之间自动拉;
+       窗外一律落盘为暂停(进度保留), 点 ⇩资金 按钮随时可手动拉, 手动不受窗限制 */
+    if (t && t.status !== "paused" && t.status !== "complete") {
+      if (ksFfInWin()) { FFEXP.autoRun = 1; ffBatchJL(); }
+      else { t.status = "paused"; ffCommitJL(null, ffRenderJL); }
+    }
   });
 }
 function ffBatchJL() {
@@ -4494,7 +4499,7 @@ function ffAfterJL() {
     FFEXP.task.status = "paused"; FFEXP.busy = true;
     return ffCommitJL(null, function () { FFEXP.busy = false; ffRenderJL(); });
   }
-  ffRenderJL(); FFEXP.timer = setTimeout(ffPumpJL, 150);
+  ffRenderJL(); FFEXP.timer = setTimeout(ffPumpJL, 350);   /* 11-19 限速: 150→350ms, 全量约25-30分钟, 不易触发限流 */
 }
 function ffOneJL(j) {
   FFEXP.busy = true;
@@ -4538,6 +4543,16 @@ function ffBoardsJL(b) {
     ffCommitJL(null, ffAfterJL);
   });
 }
+/* 11-19 定时窗守护: 每分钟看一次时钟(不发任何请求); 窗内每天自动开一轮(断点续传),
+   窗外只暂停"自动启动"的任务; 手动启动的运行不受窗外暂停影响; 手动暂停后当天不再强启 */
+var KS_FF_WIN0 = 16, KS_FF_WIN1 = 17;   /* 自动拉取时段 16:00–17:00, 要改时段只动这两个数 */
+function ksFfInWin() { var d = new Date(); return d.getHours() >= KS_FF_WIN0 && d.getHours() < KS_FF_WIN1; }
+setInterval(function () {
+  var t = FFEXP.task; if (!t || t.status === "complete" || FFEXP.busy) return;
+  if (ksFfInWin()) {
+    if (!window.__ffRun && FFEXP.autoDay !== ffDayJL()) { FFEXP.autoDay = ffDayJL(); FFEXP.autoRun = 1; ffBatchJL(); }
+  } else if (window.__ffRun && FFEXP.autoRun) { FFEXP.autoRun = 0; ffBatchJL(); }
+}, 60000);
 window.addEventListener("online", function () { if (FFEXP.task && window.__ffRun && !FFEXP.busy) { FFEXP.task.retryAt = 0; ffPumpJL(); } });
 document.addEventListener("visibilitychange", function () { if (!document.hidden && FFEXP.task && window.__ffRun && !FFEXP.busy) { FFEXP.task.retryAt = 0; ffPumpJL(); } });
 document.querySelectorAll("[data-sc]").forEach(function (b) {
@@ -5283,6 +5298,7 @@ function renderRollers(ctx, v) {
   var ax = v.w - v.padR + 3, aw = v.padR - 10; // 右侧价格轴列: 上+ 下−
   btn("yI", ax, v.pTop + 2, aw, 15, "+");
   btn("yO", ax, v.bottom - 17, aw, 15, "−");
+  if (v.ddxH >= 22 && v.ddxY >= 0) { btn("dzI:ddx", ax, v.ddxY + 1, aw, 14, "+"); btn("dzO:ddx", ax, Math.min(Math.max(v.ddxY + 17, v.ddxY + v.ddxH - 15), v.bottom - 34), aw, 14, "−"); }   /* 11-19晚: DDX副图右侧轴列 +/− 调高度 */
   var rx = v.w - v.padR - 6;
   [["macd", "macdY", "macdH"], ["zz", "zzY", "zzH"], ["rt", "rtY", "rtH"], ["ddx", "ddxY", "ddxH"], ["zlyy", "zlyyY", "zlyyH"], ["ctrl", "ctrlY", "ctrlH"], ["tqs", "tqsY", "tqsH"]].forEach(function (pp) {
     var py = v[pp[1]], ph = v[pp[2]];
@@ -5312,6 +5328,8 @@ function rollerDo(id) {
   else if (id === "zmO") S.count = Math.min(KS_COUNT_MAX, Math.round(S.count * 1.33));
   else if (id === "yI") { S.yZoom = Math.min(6, (S.yZoom || 1) * 1.25); S.yOff = 0; }
   else if (id === "yO") { S.yZoom = Math.max(1, (S.yZoom || 1) / 1.25); if (S.yZoom === 1) S.yOff = 0; }
+  else if (id === "dzI:ddx") { S.ddxHf = Math.min(0.42, Math.round((S.ddxHf || 0.12) * 130) / 100); store(); }   /* 11-19晚: DDX副图放大 */
+  else if (id === "dzO:ddx") { S.ddxHf = Math.max(0.07, Math.round((S.ddxHf || 0.12) * 77) / 100); store(); }   /* 11-19晚: DDX副图缩小 */
   else return false;
   draw(); return true;
 }
@@ -8164,7 +8182,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   for (i = Math.max(0, i0); i < i1; i++) { var x = ddx[i]; if (x != null) { if (x < dLo) dLo = x; if (x > dHi) dHi = x; } }
   if (!(dHi > -1e17 && dHi > dLo)) return false;
   var DY = function (x) { return base - (x - dLo) / (dHi - dLo) * (h2 - 16); };
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.4;   /* 11-19晚: 1→1.4, 参考图那种一眼分高低 */
   var ma = new Array(ddx.length).fill(null);
   for (i = 0; i < ddx.length; i++) {
     if (ddx[i] == null) continue;
@@ -8176,7 +8194,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   for (i = Math.max(0, i0); i < i1; i++) {
     if (ddx[i] == null) continue;
     if (pi >= 0) {
-      ctx.strokeStyle = ddx[i] >= ddx[pi] ? "#ffb3cf" : "#2ee6d6";   /* 11-19 用户: 涨淡粉/跌青绿, 和红绿资金柱分开 */
+      ctx.strokeStyle = ddx[i] >= ddx[pi] ? "#ff4757" : "#1ee3a0";   /* 11-19晚 用户「蜡烛的颜色色号, dx的色太淡了」: 红涨#ff4757/绿跌#1ee3a0, 和做T作战屏蜡烛同色号 */
       ctx.beginPath(); ctx.moveTo(v.X(pi), DY(ddx[pi])); ctx.lineTo(v.X(i), DY(ddx[i])); ctx.stroke();
     }
     pi = i;
@@ -8186,7 +8204,7 @@ function drawDdxLine(ctx, v, ddx, i0, i1, base, h2, y2, right, tag, tT) {
   if (maLast != null) {
     var my = DY(maLast);
     /* 11-19 用户「高低总有个平均, 一条平的-2.3不对」: MA10 画成跟着走的细线, 半透明白, 不抢DDX线 */
-    ctx.strokeStyle = "rgba(230,180,60,0.9)"; ctx.lineWidth = 0.9; ctx.beginPath();
+    ctx.strokeStyle = "rgba(230,180,60,0.4)"; ctx.lineWidth = 0.8; ctx.beginPath();   /* 11-19晚 用户「均线淡点」: 0.9→0.4 */
     var _mp = false; for (i = Math.max(0, i0); i < i1; i++) { if (ma[i] == null) { _mp = false; continue; } if (_mp) ctx.lineTo(v.X(i), DY(ma[i])); else { ctx.moveTo(v.X(i), DY(ma[i])); _mp = true; } }
     ctx.stroke();
     ctx.fillStyle = "#ffffff"; ctx.font = "9px Menlo,monospace"; ctx.textAlign = "right"; ctx.textBaseline = "bottom";

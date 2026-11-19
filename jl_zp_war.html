@@ -5635,7 +5635,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     box.innerHTML = '<div class="zpIw"><svg id="zpYyB" viewBox="0 0 360 ' + YH + '" aria-label="主力"></svg><div class="zpIc"><button type="button" data-yi="split" title="主力一条线 / 超大·大·中·小">≋</button><button type="button" data-yi="eye" title="显示 / 隐藏">◉</button></div></div>' +   /* 11-13 用户: 开关=格内右上小透明圆标(效果图定稿) */   /* 11-13 用户圈的位置: 主图时间轴正下方、VOL 上面 */
       '<svg id="zpVol" viewBox="0 0 360 ' + VH + '" aria-label="成交量"></svg>' +
       '<div class="zb-seg" role="tablist"><button data-m="zz">共振</button><button data-m="ctrl">控盘</button><button data-m="flow">主力资金</button><button data-m="mix">控盘+资金</button><button data-m="ddx" title="东财资金自算净额比20，非东财原版DDX">DDX·净额比</button></div>' +
-      '<div class="zpIw"><svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg><div class="zpIc zpIcP"><button type="button" data-yi="ddx" title="主图DDX转折三角 显示 / 隐藏">△</button><button type="button" data-yi="ff" title="主图资金转折点 显示 / 隐藏">●</button><button type="button" data-yi="zz" title="主图紫点 显示 / 隐藏">●</button></div></div>';   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
+      '<div class="zpIw"><svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg><div class="zpIc zpIcP"><button type="button" data-yi="ddx" title="主图DDX转折三角 显示 / 隐藏">△</button><button type="button" data-yi="ff" title="主图资金转折点 显示 / 隐藏">●</button><button type="button" data-yi="zz" title="主图紫点 显示 / 隐藏">●</button><button type="button" data-zm="out" title="DDX副图缩小(净额比线)">−</button><button type="button" data-zm="in" title="DDX副图放大(净额比线)">+</button></div></div>';   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
     ch.parentNode.insertBefore(box, ch.nextSibling);
     vSvg = box.querySelector('#zpVol'); pSvg = box.querySelector('#zpPane'); ySvg = box.querySelector('#zpYyB');
     box.querySelector('.zb-seg').onclick = function (ev) {
@@ -5647,6 +5647,8 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
       render();
     };
     box.addEventListener('click', function (ev) {
+      var zm = ev.target.closest ? ev.target.closest('[data-zm]') : null;
+      if (zm && box.contains(zm)) { ev.stopPropagation(); var zz0 = ddxZoomOf(); try { localStorage.setItem('zp_ddx_zoom_v1', zm.getAttribute('data-zm') === 'in' ? Math.min(5, zz0 * 1.3).toFixed(2) : Math.max(1, zz0 / 1.3).toFixed(2)); } catch (eZ) { } render(); return; }   /* 11-19晚: DDX副图 +/− 放大放小 */
       var b = ev.target.closest ? ev.target.closest('[data-yi]') : null; if (!b || !box.contains(b)) return;
       ev.stopPropagation(); var k = b.getAttribute('data-yi');
       try {
@@ -5682,6 +5684,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
       if(k==='split') b.style.display=yyOn() ? '' : 'none';
       if(k==='ddx') b.style.display=mode==='ddx' ? '' : 'none';
     });
+    box.querySelectorAll('[data-zm]').forEach(function (b) { b.style.display = mode === 'ddx' ? '' : 'none'; });   /* 11-19晚: 缩放钮只在DDX模式亮出 */
   }
   function segPaint() { try { icPaint(); } catch (eI) { } if (!box) return; box.querySelectorAll('.zb-seg button').forEach(function (b) { if (b.classList.contains('fl')) return;   /* 11-15: 折叠小图标不动 */ b.className = b.getAttribute('data-t') === 'yys' ? (yyOn() && yySplit() ? 'on zt' : 'zt') : b.getAttribute('data-t') === 'yyb' ? (yyOn() ? 'on zt' : 'zt') : b.getAttribute('data-t') === 'zzmk' ? (ZMK ? 'on zt' : 'zt') : b.getAttribute('data-m') === mode ? 'on' : ''; }); }
   var ZMK = true; try { ZMK = localStorage.getItem('zp_zzmk_v1') !== '0'; } catch (e) { }
@@ -6197,6 +6200,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
   window.addEventListener('pointermove', ddxDragMove, true);
   window.addEventListener('touchmove', ddxDragMove, { capture: true, passive: false });
   ['pointerup', 'pointercancel', 'touchend', 'touchcancel', 'blur'].forEach(function (t) { window.addEventListener(t, ddxDragEnd, true); });
+  function ddxZoomOf() { var z = 1; try { z = parseFloat(localStorage.getItem('zp_ddx_zoom_v1')) || 1; } catch (e) { } return Math.max(1, Math.min(5, z || 1)); }   /* 11-19晚: 净额比线纵向放大1-5倍(+/−钮), 只显示缩放, 算法/提醒/资金柱零触碰 */
   function drawDdx(P) {
     var s = pSvg; s.innerHTML = ''; loadFF();
     if (window.RPL || LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate) { legend(s, [['DDX', TXT], ['只有当天的分钟数据 · 回放/非当日不画', TXT]]); D.pane = null; return; }
@@ -6208,7 +6212,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     }).filter(function(r){return r.x != null && r.x > -900 && r.x < 9000;});
     if (!R.length) { legend(s, [['DDX', TXT], ['还没有数据', TXT]]); D.pane = null; return; }
     var top = 33, bot = PH2 - 7, mid = (top + bot) / 2, half = (bot - top) / 2 - 1, mv2 = zpDdxScaleJL(M1);
-    var YV = function (v) { return mid - v / mv2 * half; };
+    var ZVV = ddxZoomOf(), YV = function (v) { return mid - v / (mv2 / ZVV) * half; };   /* 11-19晚: +/−放大只动显示, 刻度数值语义不变 */
     [mv2,0,-mv2].forEach(function(v){var y=YV(v);
       s.appendChild(E('line',{x1:X0(),x2:X1(),y1:y,y2:y,stroke:v ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.3)','stroke-width':.6,'stroke-dasharray':'3 3'}));
       s.appendChild(E('text',{x:X0()+2,y:y+(v===mv2 ? 8 : -2),fill:TXT,opacity:1,'font-size':7},(v>0 ? '+' : '')+v+'%'));
@@ -6222,21 +6226,21 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     var last=R[R.length-1], ref=last.ma;
     /* 11-19 用户「高低总有个平均, 一条平的2.3不对」: MA10 画成跟着走的细线(白, 半透明, 不抢DDX线) */
     var mp='';R.forEach(function(r){if(r.ma==null || r.n<20){if(mp && mp.slice(-1)!=='|') mp+='|';return;}mp+=(mp && mp.slice(-1)!=='|' ? 'L' : 'M')+r.x.toFixed(1)+' '+YV(r.ma).toFixed(1);});
-    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'#ffc83d','stroke-width':1.1,'stroke-dasharray':'3 2','stroke-linejoin':'round'}));   /* 11-19 用户「均线呢 ddx的」: 金线和白线贴太近看不出 → 亮金#ffc83d 1.1 短虚线, 和实心白线分得开 */
-    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 白线=净额比 · 金线=MA10'+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
+    mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'#ffc83d','stroke-opacity':.4,'stroke-width':.9,'stroke-dasharray':'3 2','stroke-linejoin':'round'}));   /* 11-19晚 用户「均线淡点」: 亮金1.1 → 半透0.4/0.9细虚线, 不抢红绿主线 */
+    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 红涨绿跌=净额比 · 金虚线=MA10'+(ZVV>1 ? ' · 放大'+ZVV.toFixed(1)+'x' : '')+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
     s.appendChild(E('title',{},'自算净额比20=近20分钟东财主力净额/同分钟真实成交额；非东财原版DDX。淡柱为周期主力净额，独立金额轴；成交量VOL在主图底部。'));
     /* 与截图同类：仅一条连续走势，每段按两端净额比相对各自MA10的均值染红/绿。 */
     /* 11-19 用户: 线细但清楚; 涨的一段淡粉、跌的一段青绿, 和红绿资金柱分开; 开盘不满20分钟不画 */
     var curve=E('g',{'data-series':'ratio20',fill:'none','stroke-width':1,'stroke-linecap':'round','stroke-linejoin':'round'});
     for(var ci=1;ci<R.length;ci++){
       var p=R[ci-1], r=R[ci];if(p.v==null || r.v==null || r.n<20 || p.n<20) continue;
-      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:'#ffffff'}));   /* 11-19 用户「原有ddx留一根线就行了 线要清晰明亮」: 粉/青分段 → 一种亮白, 1→1.4粗; 柱/MA10/刻度不动 */
-    }curve.setAttribute('stroke-width',1.4);s.appendChild(curve);
+      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:r.v>=p.v ? UP : DN}));   /* 11-19晚 用户「红绿线和做T作战屏蜡烛一个色号, dx的色太淡了」: 亮白 → 每段涨红#ff4757/跌绿#1ee3a0(UP/DN同蜡烛), 高低一眼分; 算法/柱/刻度不动 */
+    }curve.setAttribute('stroke-width',1.6);s.appendChild(curve);
     var f1 = function (v) { return (v >= 0 ? '+' : '') + v.toFixed(1); };
     var lg = function (k) {
       var r = R[k], o = [[r.n < 20 ? '净额比 ' + r.n + '/20预热' : '净额比20(自算)', TXT]];
       if (r.v == null) o.push(['缺同分钟真实成交额/资金', TXT]);
-      else { var pv = null; for (var q = k - 1; q >= 0; q--) if (R[q].v != null) { pv = R[q].v; break; } o.push([f1(r.v) + '%' + (pv == null ? '' : r.v > pv ? '↑' : r.v < pv ? '↓' : '→'), pv == null ? TXT : r.v >= pv ? '#ffb3cf' : '#2ee6d6']); if (r.ma != null) o.push(['MA10 ' + f1(r.ma) + '%', TXT]); }
+      else { var pv = null; for (var q = k - 1; q >= 0; q--) if (R[q].v != null) { pv = R[q].v; break; } o.push([f1(r.v) + '%' + (pv == null ? '' : r.v > pv ? '↑' : r.v < pv ? '↓' : '→'), pv == null ? TXT : r.v >= pv ? UP : DN]); if (r.ma != null) o.push(['MA10 ' + f1(r.ma) + '%', TXT]); }
       if(r.d!=null) o.push(['净额 '+fM(r.d),r.d>=0 ? UP : DN]);
       return o;
     };
@@ -6247,7 +6251,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
       handle.appendChild(E('rect',{x:X1()-58,y:y-17,width:58,height:28,fill:'transparent'}));
       label.appendChild(E('title',{},'上下拖动调整DDX水平线；双击副图可删除或设置提醒'));handle.appendChild(label);s.appendChild(handle);
     });
-    D.pane = { vy: function (y) { return (mid - y) / half * mv2; }, fmt: function (v) { return f1(v); }, snaps: function (k) { return R[k].v == null ? [] : [['净额比20', R[k].v, YV(R[k].v)]]; }, P: R, lg: lg, base: lg(R.length - 1) };
+    D.pane = { vy: function (y) { return (mid - y) / half * (mv2 / ZVV); }, fmt: function (v) { return f1(v); }, snaps: function (k) { return R[k].v == null ? [] : [['净额比20', R[k].v, YV(R[k].v)]]; }, P: R, lg: lg, base: lg(R.length - 1) };
   }
 
   /* ── jl-zpmix (11-08): 控盘+主力资金 叠在一张图: 控盘红黄柱(半透明, 自下往上) + 主力净额累计黄线(居中零轴);
