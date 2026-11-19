@@ -273,7 +273,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
 
 <div class="card plancard">
   <div class="sech">周一盘前计划<small>固定价位 · 去券商挂条件单 · 点一行复制价格</small></div>
-  <div class="dep">依据 10-30 收盘 <b>21.75</b> · 头顶有未补缺口 <b>22.62–23.63</b> · 下方无支撑磁铁</div>
+  <!-- 11-19晚7批: 删写死的10-30演示依据行(盘前计划行已由实时数据生成, 这行是11-09前残留) -->
   <div id="rows"></div>
   <div class="rule">底仓不动 · 没现金，只做先卖后买 · 每轮 400 股</div>
 </div>
@@ -1297,11 +1297,12 @@ try {
             var pyC = Y(pjP), pcC = el('circle', { cx: pjX, cy: pyC, r: pjNear ? 10 : 6.5, fill: 'none', stroke: pjC, 'stroke-width': pjNear ? 1.2 : 0.8, 'stroke-dasharray': '3 3', opacity: pjNear ? 1 : 0.4, 'pointer-events': 'none' });
             if (pjNear && zpFlashOkJL()) pcC.appendChild(el('animate', { attributeName: 'opacity', values: '1;0.35;1', dur: '1.6s', repeatCount: 'indefinite' }));
             gh.appendChild(pcC);
-            var pjAmpJL = 0, pjUpJL = true;   /* 11-19晚5批 用户确认口径「跟着实时价格·锚定高低点·平均不动」: 顺段延伸=从段起点量(↑爬1.几→2.几); 从极值往回=从那个高/低点量(回撤↓跟着长大/反弹↑跟着长大); 20日均/段均不动 */
-            if (dirH === 1) { if (pjP >= ext.p) { pjUpJL = true; pjAmpJL = sbJL > 0 ? (pjP / sbJL - 1) * 100 : 0; } else { pjUpJL = false; pjAmpJL = ext.p > 0 ? (1 - pjP / ext.p) * 100 : 0; } }
-            else { if (pjP <= ext.p) { pjUpJL = false; pjAmpJL = sbJL > 0 ? (1 - pjP / sbJL) * 100 : 0; } else { pjUpJL = true; pjAmpJL = ext.p > 0 ? (pjP / ext.p - 1) * 100 : 0; } }
-            var pjAmpCJL = pjUpJL ? '#ff9f43' : '#5fd3ff';
-            gh.appendChild(tx(pjX - 12, pyC + (pjU ? -13 : 20), pjNear ? (srJL.toFixed(1) + '倍?') : ((pjUpJL ? '↑' : '↓') + Math.abs(pjAmpJL).toFixed(1) + '%'), pjNear ? pjC : pjAmpCJL, pjNear ? 8 : 7.5, 'end', pjNear ? 400 : 300));
+            var pjAmpJL = 0, pjUpJL = true, pjAncJL = sbJL;   /* 11-19晚8批 用户动图演示定稿: 色=爬↑黄#ffe9a6/临界橙#ff9a4e/转跌↓青蓝#5fd3ff; 金额按每轮股数(LIVE.sh滚动联动)不带「元/手」字样; 锚定高低点口径(晚5批)与20日均/段均不动 */
+            if (dirH === 1) { if (pjP >= ext.p) { pjUpJL = true; pjAmpJL = sbJL > 0 ? (pjP / sbJL - 1) * 100 : 0; pjAncJL = sbJL; } else { pjUpJL = false; pjAmpJL = ext.p > 0 ? (1 - pjP / ext.p) * 100 : 0; pjAncJL = ext.p; } }
+            else { if (pjP <= ext.p) { pjUpJL = false; pjAmpJL = sbJL > 0 ? (1 - pjP / sbJL) * 100 : 0; pjAncJL = sbJL; } else { pjUpJL = true; pjAmpJL = ext.p > 0 ? (pjP / ext.p - 1) * 100 : 0; pjAncJL = ext.p; } }
+            var pjAmpCJL = pjNear ? '#ff9a4e' : (pjUpJL ? '#ffe9a6' : '#5fd3ff');
+            var pjMonJL = Math.round(Math.abs(pjP - pjAncJL) * (LIVE.sh || STK.qty || 400));
+            gh.appendChild(tx(pjX - 12, pyC + (pjU ? -13 : 20), pjNear ? (srJL.toFixed(1) + '倍?') : ((pjUpJL ? '\u2191+' : '\u2193-') + Math.abs(pjAmpJL).toFixed(1) + '%' + (pjMonJL > 0 ? ' ' + pjMonJL : '')), pjNear ? pjC : pjAmpCJL, pjNear ? 8 : 7.5, 'end', pjNear ? 400 : 300));
           }
         }
       } catch (ePj) { }
@@ -1750,6 +1751,7 @@ var ZCACHE = {};
 /* ── jinlin 嵌入(jl-zp3): 持仓股参数化+切换; 独立打开=内置永鼎演示, 行为零变化 ── */
 var INJL = false, STK = { code: '600105', name: '永鼎股份', qty: 1900 };
 try { INJL = !!(window.parent && window.parent !== window && window.parent.jlResoCodesJL); } catch (e) { }
+if (!INJL) { var dmJL = function () { var b = document.createElement('div'); b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b3261e;color:#fff;font:600 12px/1.8 -apple-system,"PingFang SC",sans-serif;text-align:center;padding:4px 8px'; b.textContent = '\u26a0 独立打开（未嵌工作台）\u00b7 演示上下文：永鼎 1900 股 \u00b7 持仓与提醒不可信'; (document.body || document.documentElement).appendChild(b); }; document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', dmJL) : dmJL(); }   /* 11-19晚7批 用户批准: 删「静默假数据」——不再无声兜底, 独立打开挂醒目横幅(嵌入工作台不受影响) */
 function jlStocksJL() {
   var ls = [];
   if (INJL) try {
