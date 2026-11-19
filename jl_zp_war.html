@@ -1053,13 +1053,18 @@ function thrKeyJL(p) { var c = (STK && STK.code) || '_'; p = p == null ? perNowJ
    永鼎 2.5% +19.0→+6.6 / +2.7→−2.3、1.8% +14.9 / +1.1 都变差 → 永鼎不加. 作战屏 ampBallJL / ballExtJL 和复盘页 jl_mix_engine ball 三处同口径 */
 function strongThJL(code) { return code === '600105' ? 0 : 0.025; }
 function thrManualJL() { try { var m = JSON.parse(localStorage.getItem('zp_thr_manual_v1') || '{}'); return m.d === new Date().toDateString() && m.k === thrKeyJL(); } catch (eM) { return false; } }   /* 11-19晚9批 用户拍板: 今天+本周期手动调过「回落」阈值 = 手动优先于强档默认2.5 */
+function barHiLoJL(hm) {   /* 11-20 04:02 用户: 高低点标签价对齐分钟K真实高/低 */
+  try { var B = LIVE.bars || []; for (var i = B.length - 1; i >= 0; i--) { var b = B[i]; if (b && b.hm === hm && b.h > 0) return { h: b.h, l: b.l }; } } catch (e) { }
+  return null;
+}
 function ballExtJL(th) {   /* 11-17 用户「作战屏和持仓页本来就不一样, 不要搞一样的算法」: 作战屏这份自己算(分钟高低 + 口径表 T2b), 不引 jl_thrball.js */
   var o0 = LIVE.open > 0 ? LIVE.open : 0; if (!(o0 > 0) || !(th > 0)) return null;
   var up = function (v) { return Math.ceil(Math.round(v * 1e6) / 1e4) / 100; }, dn = function (v) { return Math.floor(Math.round(v * 1e6) / 1e4) / 100; };
   var P = (LIVE.pts || []).filter(function (q) { return +q.hm >= 930 && q.p > 0; }), rh = o0, rl = o0;
+  var BMJL = {}; (LIVE.bars || []).forEach(function (b) { if (b && b.h > 0 && b.hm) BMJL[b.hm] = b; });   /* 11-20 04:02 用户: 分钟K真实高/低(实盘26.93就26.93), 按当前已走分钟查, 不偷看未来 */
   var A9 = window.__AMPJL, TSX = strongThJL(STK && STK.code), av = A9 && A9.code === (STK && STK.code) && A9.avg > 0 && LIVE.pc > 0 ? A9.avg / 100 * LIVE.pc : 0, pc = LIVE.pc, dh = o0, dl = o0, gG = 0, thx = th;
   for (var i = 0; i < P.length; i++) {
-    var h = P[i].h || P[i].p, l = P[i].l || P[i].p; rh = Math.max(rh, h); rl = Math.min(rl, l); dh = Math.max(dh, h); dl = Math.min(dl, l);
+    var bB = BMJL[P[i].hm], h = bB ? bB.h : (P[i].h || P[i].p), l = bB ? bB.l : (P[i].l || P[i].p); rh = Math.max(rh, h); rl = Math.min(rl, l); dh = Math.max(dh, h); dl = Math.min(dl, l);   /* 11-20 04:02 用户: 高低用分钟K真实高/低, 收盘近似只兜底 */
     if (av > 0 && TSX) { var pp = P[i].p; gG = (dh >= o0 + 0.35 * av || dl <= o0 - 0.35 * av) ? (pp >= o0 + 0.1 * av ? 1 : pp <= o0 - 0.1 * av ? -1 : (gG || (pp >= o0 ? 1 : -1))) : ((o0 / pc - 1) * 100 <= -2 ? -1 : 0); }   /* 同 ampBallJL gNow */
     thx = (gG === 1 && TSX && !thrManualJL()) ? Math.max(th, TSX) : th;   /* 11-19晚9批 用户拍板: 强档先走2.5, 你手动切了就以你切的为准(切回2.5也行); 不隐藏不篡改 */
     if (l <= rh * (1 - thx)) { rl = rh = dn(rh * (1 - thx)); } else if (h >= rl * (1 + thx)) { rh = rl = up(rl * (1 + thx)); }
@@ -1320,7 +1325,7 @@ try {
               if (hitJL(b0JL)) {
                 var okJL = false, dJL = [-11, 11, -22, 22];
                 for (var di = 0; di < dJL.length; di++) { t1JL.setAttribute('y', yy0 + dJL[di]); var b2JL = t1JL.getBBox(); if (b2JL.x >= PX0 + 2 && !hitJL(b2JL)) { okJL = true; break; } }
-                if (!okJL) { if (t1JL.getAttribute('text-anchor') !== 'start') { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); t1JL.setAttribute('y', yy0 + (pjU ? 14 : -14)); var b3JL = t1JL.getBBox(); if (b3JL.x < PX0 + 2 || hitJL(b3JL)) t1JL.setAttribute('y', yy0); } else t1JL.setAttribute('y', yy0); }
+                if (!okJL) { if (t1JL.getAttribute('text-anchor') !== 'start' && pjX + 8 + b0JL.width < LX - 4) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); t1JL.setAttribute('y', yy0 + (pjU ? 14 : -14)); var b3JL = t1JL.getBBox(); if (b3JL.x < PX0 + 2 || hitJL(b3JL)) t1JL.setAttribute('y', yy0); } else t1JL.setAttribute('y', yy0); }   /* 11-20 04:02 用户: 右缘放不下就不换边, 不切字 */
               }
             } catch (eB1) { }   /* 11-20 02:37 用户: 防压不防爹 — 压着就小步挪开(一次一个字身位), 不离太远也不压线截断 */
           }
@@ -1423,7 +1428,8 @@ if (ext && SP[ext.ix]) {
           if (LBOK[si]) {   /* 11-06c 用户: 1分蜡烛页也标 ▲/▼幅度%/每手 + 价; 幅度=上一个转折→这个. 11-13晚 用户「5/15/日不是让都取消」: 也标, 但只标 SWV(按 thr×1.8/3/6 筛过的大转折), 不像1分那样堆 */
             var rfK = si > 0 ? SWV[si - 1].p : 0;
             if (!rfK) for (var rk = 0; rk <= m.ix; rk++) { var vk = m.h ? SP[rk].l : SP[rk].h; if (vk > 0 && (!rfK || (m.h ? vk < rfK : vk > rfK))) rfK = vk; }
-            legLabJL(x, m.h ? y - 2 : y + 2, !!m.h, m.p, rfK, q.today !== false);   /* 11-13晚: 原 ±6 再叠标签内 9 → 5分「高23.77」离点太远 */
+            var pB = barHiLoJL(q.hm), pE = pB ? (m.h ? Math.max(m.p, pB.h) : Math.min(m.p, pB.l)) : (m.h ? (q.h || m.p) : (q.l || m.p));   /* 11-20 04:02 用户: 标签价=真实高/低(26.93就写26.93); 判定/圈位不动 */
+            legLabJL(x, m.h ? y - 2 : y + 2, !!m.h, pE, rfK, q.today !== false);   /* 11-13晚: 原 ±6 再叠标签内 9 → 5分「高23.77」离点太远 */
           }
         }
       });
