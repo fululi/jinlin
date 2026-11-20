@@ -1647,6 +1647,7 @@ if (g && !(window.zpPerOf && zpPerOf() > 0)) {
   } catch (eAuc) { }
   try { trLinesJL(g); } catch (eTr) { }
 }
+try { if (MODE === 'live' && (LIVE.pts || []).length) { var dF = LIVE.pts[0], dL = LIVE.pts[LIVE.pts.length - 1]; console.log('[DRAW] 点数 ' + LIVE.pts.length + ' / x范围 ' + dF.hm + '–' + dL.hm + ' (x ' + xOfHmJL(dF.hm) + '–' + xOfHmJL(dL.hm) + ') / 画布宽 ' + (PX0 + PW) + '/360'); } } catch (eDL) { }   /* 11-20 Bug2: 画线验收日志 */
     return;
   }
   if (n < 0) { $('pline').setAttribute('points', ''); return; }
@@ -2334,6 +2335,36 @@ function parseQt(a) {
   LIVE.amt = +a[37] > 0 ? +a[37] * 1e4 : 0;   /* 11-12夜: 当日成交额(元, 腾讯[37]单位万元, 含集合竞价) */
 }
 
+/* 11-20 Bug2 修复: 分时白线滞后于最新价 —— 弹窗读 LIVE.last(腾讯qt, 每轮即新),
+   白线读 LIVE.pts(东财trends2, 约8秒全量替换+分钟收盘价), 两份不同源 → 无任何代码把最新价并入白线。
+   修法: 把"正在走的当分钟"合成一条实时尾点并入 LIVE.pts 末尾(同分钟原地更新/新分钟追加),
+   只在 实盘+分时页+非回放 时合并; 每轮轮询(2688前)和1秒心跳(2712)各调一次; 合并出变化才触发重绘 */
+function liveTailMergeJL() {
+  try {
+    if (MODE !== 'live' || RPL) return false;                 /* 回放模式不合并, 不污染回放数据 */
+    if (!LIVE.on || !(LIVE.last > 0)) return false;
+    if (!liveToday()) return false;                            /* 非今日会话(休市自检)不动 */
+    if (window.zpPerOf && zpPerOf() > 0) return false;         /* K线模式不合并(白线另有画法) */
+    var hmN = hmNow();
+    if (hmN < 930) return false;                               /* 09:30前是竞价段, 白线不并入 */
+    var hm = String(Math.min(hmN, 1500)).padStart(4, '0');     /* 15:00之后到达的尾包钉在15:00 → 最后一点画到右缘 */
+    if (hmN > 1129 && hmN < 1300) hm = '1130';                 /* 午休: 原地更新11:30尾点, 不在午休位置画点 */
+    var P = LIVE.pts || (LIVE.pts = []);
+    var lastP = P.length ? P[P.length - 1] : null, chg = false;
+    if (lastP && String(lastP.hm) === hm) {                    /* 同一分钟: 原地更新 p/h/l */
+      chg = lastP.p !== LIVE.last;
+      lastP.p = LIVE.last;                                     /* p = 弹窗同源的实时价 */
+      lastP.h = Math.max(lastP.h > 0 ? lastP.h : LIVE.last, LIVE.last);
+      lastP.l = lastP.l > 0 ? Math.min(lastP.l, LIVE.last) : LIVE.last;
+    } else if (!lastP || String(lastP.hm) < hm) {              /* 新分钟: 追加尾点(乱序旧包不追加) */
+      P.push({ hm: hm, p: LIVE.last, h: LIVE.last, l: LIVE.last, v: 0 });
+      chg = true;
+    }
+    if (chg) console.log('[TICK] 新价 ' + LIVE.last.toFixed(2) + ' / 末尾价 ' + P[P.length - 1].p.toFixed(2) + ' / 长度 ' + P.length);
+    return chg;
+  } catch (eTM) { return false; }
+}
+
 /* ---- 时钟/阶段 ---- */
 function pad2(n) { return String(n).padStart(2, '0'); }
 function localYMD() { var d = new Date(); return '' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()); }
@@ -2685,6 +2716,7 @@ function livePoll() {
     })()) { LIVE.err = '行情滞后(末根5分K距现在>15分钟) · 已暂停计算'; m5ok = false; }
     if (qtOk || (got.m5 && got.m5.rows && got.m5.rows.length)) LIVE.okAtJL = Date.now();   /* 11-17 用户「行情状态有必要」: 现价这轮真拿到了(腾讯快照或5分K) → 给状态小点计时 */
     LIVE.qtOkLast = qtOk; LIVE.m5okLast = ok && m5ok;
+    liveTailMergeJL();   /* 11-20 Bug2: 本轮 trends2 全量替换会把上一轮尾点冲掉 → 替换完立刻把实时价并回尾点 */
     var dayWait = !(LIVE.hist.day && LIVE.hist.day.length) && LIVE.slowBusy;   /* 11-14: 开机第一轮日K还在路上 → 先画不算, 日K到了 liveSlowAfter 再算(免得基线少日K) */
     if (ok && m5ok && !dayWait) { liveCompute(); ledgerFeedJL(); }
     if (MODE === 'live') liveRender();
@@ -2709,7 +2741,7 @@ LIVE.start = function () {
   if (LIVE.on) return;
   LIVE.on = true; LIVE.keys = {}; LIVE.latch = {}; LIVE.base = true; LIVE.slowN = 0;
   livePoll();
-  LIVE.tickT = setInterval(function () { if (MODE === 'live' && !RPL) { renderBandLive(); } }, 1000);
+  LIVE.tickT = setInterval(function () { if (MODE === 'live' && !RPL) { var mT = liveTailMergeJL(); renderBandLive(); if (mT) { clearTimeout(window.__zpTailRrT); window.__zpTailRrT = setTimeout(function () { liveRender(); }, 120); } } }, 1000);   /* 11-20 Bug2: 每秒把实时价并进白线尾点, 合并出变化才重绘(120ms 去抖, liveRender 4057) */
 };
 LIVE.stop = function () {
   LIVE.on = false;
