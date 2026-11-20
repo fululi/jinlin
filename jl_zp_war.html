@@ -1320,14 +1320,25 @@ try {
             try {
               var LBgJL = window.__LBLASTJL || [];
               var hitJL = function (b) { for (var qi = 0; qi < LBgJL.length; qi++) { var q = LBgJL[qi]; if (b.x < q.x1 - 3 && b.x + b.width > q.x0 + 3 && b.y < q.y1 - 2 && b.y + b.height > q.y0 + 2) return true; } return false; };   /* 3px净空: 不贴死也不夸张远离 */
-              var yy0 = pyC + (pjU ? -13 : 20), b0JL = t1JL.getBBox();
+              var yy0 = pyC + (pjU ? -13 : 20), yOpJL = pyC + (pjU ? 20 : -13), b0JL = t1JL.getBBox();
+              var inVJL = function (b) { return b.y >= PY0 + 1 && b.y + b.height <= PY0 + PH - 1; };   /* 11-20 12:53 用户: 不许被图缘切一半 */
               if (b0JL.x < PX0 + 2) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); }
               b0JL = t1JL.getBBox();
-              if (hitJL(b0JL)) {
-                var okJL = false, dJL = [-11, 11, -22, 22];
-                for (var di = 0; di < dJL.length; di++) { t1JL.setAttribute('y', yy0 + dJL[di]); var b2JL = t1JL.getBBox(); if (b2JL.x >= PX0 + 2 && !hitJL(b2JL)) { okJL = true; break; } }
-                if (!okJL) { if (t1JL.getAttribute('text-anchor') !== 'start' && pjX + 8 + b0JL.width < LX - 4) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); t1JL.setAttribute('y', yy0 + (pjU ? 14 : -14)); var b3JL = t1JL.getBBox(); if (b3JL.x < PX0 + 2 || hitJL(b3JL)) t1JL.setAttribute('y', yy0); } else t1JL.setAttribute('y', yy0); }   /* 11-20 04:02 用户: 右缘放不下就不换边, 不切字 */
+              if (hitJL(b0JL) || !inVJL(b0JL)) {
+                /* 11-20 12:53 用户定案: 收盘时振幅可放线上面或下面; 高低点▲▼标签离收盘近会压字 → 先放对面侧, 对面也不行再回原侧小步挪 */
+                var okOpJL = false;
+                t1JL.setAttribute('y', yOpJL); var bOpJL = t1JL.getBBox();
+                if (bOpJL.x >= PX0 + 2 && inVJL(bOpJL) && !hitJL(bOpJL)) okOpJL = true;
+                if (!okOpJL) {
+                  t1JL.setAttribute('y', yy0);
+                  var okJL = false, dJL = [-11, 11, -22, 22];
+                  for (var di = 0; di < dJL.length; di++) { t1JL.setAttribute('y', yy0 + dJL[di]); var b2JL = t1JL.getBBox(); if (b2JL.x >= PX0 + 2 && inVJL(b2JL) && !hitJL(b2JL)) { okJL = true; break; } }
+                  if (!okJL) { if (t1JL.getAttribute('text-anchor') !== 'start' && pjX + 8 + b0JL.width < LX - 4) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); t1JL.setAttribute('y', yy0 + (pjU ? 14 : -14)); var b3JL = t1JL.getBBox(); if (b3JL.x < PX0 + 2 || hitJL(b3JL)) t1JL.setAttribute('y', yy0); } else t1JL.setAttribute('y', yy0); }   /* 11-20 04:02 用户: 右缘放不下就不换边, 不切字 */
+                }
               }
+              var bFJL = t1JL.getBBox();   /* 兜底: 上下都不干净 → 垂直方向最小位移夹回图内, 保证不被切一半 */
+              if (bFJL.y < PY0 + 1) t1JL.setAttribute('y', +t1JL.getAttribute('y') + (PY0 + 1 - bFJL.y));
+              else if (bFJL.y + bFJL.height > PY0 + PH - 1) t1JL.setAttribute('y', +t1JL.getAttribute('y') - (bFJL.y + bFJL.height - (PY0 + PH - 1)));
             } catch (eB1) { }   /* 11-20 02:37 用户: 防压不防爹 — 压着就小步挪开(一次一个字身位), 不离太远也不压线截断 */
           }
         }
@@ -1349,16 +1360,17 @@ if (ext && SP[ext.ix]) {
     var BXJL = null; try { if (!(perJL > 1)) BXJL = ballExtJL(thr); } catch (eBx) { }   /* 11-16: 分时/1分页 进度和确认价跟小球同口径(分钟高低) */
     var thJL = BXJL && BXJL.th > 0 ? BXJL.th : thr;   /* 11-17 强档分钟阈值可能是 2.5%(口径表 T2b) */
     if (BXJL) { var bpJL = dirH === 1 ? BXJL.rh : BXJL.rl; rtJL = dirH === 1 ? Math.max(0, (bpJL - lpJL) / bpJL) : Math.max(0, (lpJL - bpJL) / bpJL); prJL = thJL > 0 ? rtJL / thJL : 0; }
-    /* 虚线圈按"离确认多近"换色: <40% 淡粉 / 40~80% 黄 / >=80% 橙红加粗; 三档都写 回落|反弹 x/阈值 */
+    /* 虚线圈按"离确认多近"换色: <40% 淡粉 / 40~80% 橘黄(11-20 12:53 用户: 黄#ffe07a改橘黄#ffb14e) / >=80% 橙红加粗; 三档都写 回落|反弹 x/阈值 */
     var stJL = dirH === 1
-      ? (prJL >= 0.8 ? { c: '#ff8a3e', w: 1.4, o: 1 } : prJL >= 0.4 ? { c: '#ffe07a', w: 1.2, o: 1 } : { c: '#ffc4c4', w: 1.1, o: 1 })
+      ? (prJL >= 0.8 ? { c: '#ff8a3e', w: 1.4, o: 1 } : prJL >= 0.4 ? { c: '#ffb14e', w: 1.2, o: 1 } : { c: '#ffc4c4', w: 1.1, o: 1 })
       : (prJL >= 0.8 ? { c: '#2fe0ff', w: 1.4, o: 1 } : prJL >= 0.4 ? { c: '#6fd6ff', w: 1.2, o: 1 } : { c: '#c4e4ff', w: 1.1, o: 1 });   /* 11-19晚9批 用户拍板: 高点侧粉→黄→橙红 / 低点侧淡蓝→青→亮青; 三档=离确认进度 */
     /* 触发价=与上面确认同一判断(分时页=分时收盘价, K线页=蜡烛收盘价): 高点后 价<高×(1-阈值) 才确认 → 取严格低于它的第一个分; 低点后 价>低×(1+阈值) → 取严格高于它的第一个分 */
     var tgJL = Math.round(ext.p * (dirH === 1 ? 1 - thr : 1 + thr) * 1e6) / 1e4;
     tgJL = dirH === 1 ? (Math.ceil(tgJL) - 1) / 100 : (Math.floor(tgJL) + 1) / 100;
     if (BXJL) tgJL = dirH === 1 ? BXJL.cs : BXJL.cb;
     window.__ballHotJL = { h: dirH === 1, p: ext.p, hot: prJL >= 0.8 };   /* 11-19晚9批: 橙红/亮青档时标记本段极值点, 高低点标签据此隐藏「高/低」字 */
-    var txtJL = (dirH === 1 ? '↓' : '↑') + (rtJL * 100).toFixed(1) + '/' + (thJL * 100).toFixed(1) + ' ' + (LIVE.last > 0 ? LIVE.last : tgJL).toFixed(2);   /* 11-19晚9批 用户拍板: 尾价=盘中现价(原写确认价→看着偏离很远); 确认价仍在尺子/下一步 */
+    var txtJL = (dirH === 1 ? '↓' : '↑') + (rtJL * 100).toFixed(1) + '/' + (thJL * 100).toFixed(1);   /* 11-20 12:53 用户: 球标签主字=进度/阈值(后面价格另拆一段小一号) */
+    var txtPJL = ' ' + (LIVE.last > 0 ? LIVE.last : tgJL).toFixed(2);   /* 11-19晚9批 用户拍板: 尾价=盘中现价(原写确认价→看着偏离很远); 确认价仍在尺子/下一步 */
     /* 橙红档(>=80%)外圈光晕闪, 提醒快到卖/买点; 确认后变实心红圈, 这里就不画了 */
     if (prJL >= 0.8 && zpFlashOkJL()) {
       var glJL = el('circle', { cx: cx, cy: dirH === 1 ? cy - 4 : cy + 4, r: 6, fill: 'none', stroke: '#ff7a2e', 'stroke-width': 1.8, opacity: 0.85 });
@@ -1375,7 +1387,7 @@ if (ext && SP[ext.ix]) {
         'stroke-dasharray': '2 2',
         opacity: stJL.o
       }));
-      if (txtJL) THJL = { x: cx, y: cy, h: 1, s: txtJL, c: stJL.c, p: tgJL };   /* 11-06b: 字延后画, 贴到同一点的高/低标签旁 */
+      if (txtJL) THJL = { x: cx, y: cy, h: 1, s: txtJL, sp: txtPJL, c: stJL.c, p: tgJL };   /* 11-20 12:53 用户: 价格另拆一段小一号 */   /* 11-06b: 字延后画, 贴到同一点的高/低标签旁 */
     } else if (dirH === -1) {
       gh.appendChild(el('circle', {
         cx: cx, cy: cy + 4, r: 3.6,
@@ -1385,7 +1397,7 @@ if (ext && SP[ext.ix]) {
         'stroke-dasharray': '2 2',
         opacity: stJL.o
       }));
-      if (txtJL) THJL = { x: cx, y: cy, h: 0, s: txtJL, c: stJL.c, p: tgJL };
+      if (txtJL) THJL = { x: cx, y: cy, h: 0, s: txtJL, sp: txtPJL, c: stJL.c, p: tgJL };   /* 11-20 12:53 用户: 价格另拆一段小一号 */
     }
   }
 }
@@ -1483,14 +1495,17 @@ if (ext && SP[ext.ix]) {
         } catch (ePdJL) { }
       }
       try { if (THJL) {   /* 11-20 用户「上涨振幅怎么搞成粉色阀值走法!」: 球标签回到球旁(钉高低点, 11-06b原位), 收回未批的"贴现价走"; 字内价格保留盘中现价(晚9批) */
-        var tw2 = THJL.s.length * 4.6, hit = null, ty2, tx2, an2 = 'start';
+        var tMainJL = THJL.s, tPriceJL = THJL.sp || '';   /* 11-20 12:53 用户定案: 主字7.5→11px(放大1.5倍, 不是很大, 清晰亮, 仍细体), 价格小一号9px */
+        var tw2 = (tMainJL.length + tPriceJL.length) * 6.7, hit = null, ty2, tx2, an2 = 'start';
         LB.forEach(function (b) { if (b.h === THJL.h && Math.abs(b.px - THJL.x) <= 10) hit = b; });
-        if (hit) { ty2 = hit.y0 + 7.5; if (hit.x1 + 3 + tw2 <= LX - 4) tx2 = hit.x1 + 3; else { tx2 = hit.x0 - 3; an2 = 'end'; } }
+        if (hit) { ty2 = hit.y0 + 10.5; if (hit.x1 + 3 + tw2 <= LX - 4) tx2 = hit.x1 + 3; else { tx2 = hit.x0 - 3; an2 = 'end'; } }
         else {
-          tx2 = Math.max(PX0 + 2, Math.min(THJL.x - tw2 / 2, LX - 4 - tw2)); ty2 = THJL.h ? THJL.y - 14 : THJL.y + 17;
-          for (var tg2 = 0; tg2 < 4; tg2++) { var bad = LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 7 < b.y1 && ty2 + 1 > b.y0; }); if (!bad) break; ty2 += THJL.h ? -9 : 9; }
+          tx2 = Math.max(PX0 + 2, Math.min(THJL.x - tw2 / 2, LX - 4 - tw2)); ty2 = THJL.h ? THJL.y - 19 : THJL.y + 22;
+          for (var tg2 = 0; tg2 < 4; tg2++) { var bad = LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 9 < b.y1 && ty2 + 2 > b.y0; }); if (!bad) break; ty2 += THJL.h ? -12 : 12; }
         }
-        var tth = tx(tx2, ty2, THJL.s, THJL.c, 7.5, an2, 400); tth.setAttribute('data-fix', '1'); tth.setAttribute('stroke', 'rgba(5,10,16,.85)'); tth.setAttribute('stroke-width', 0.9); gh.appendChild(tth);   /* 去3px粗描边 */
+        var tth = tx(tx2, ty2, tMainJL, THJL.c, 11, an2, 400); tth.setAttribute('data-fix', '1'); tth.setAttribute('stroke', 'rgba(5,10,16,.85)'); tth.setAttribute('stroke-width', 0.9);   /* 去3px粗描边 */
+        if (tPriceJL) { var tspJL = document.createElementNS('http://www.w3.org/2000/svg', 'tspan'); tspJL.textContent = tPriceJL; tspJL.setAttribute('font-size', 9); tth.appendChild(tspJL); }   /* 11-20 12:53 用户: 后面价格比前面小一号, 同档位色 */
+        gh.appendChild(tth);
       } } catch (eTh) { }
       if (g) g.appendChild(gh);
       var chOnJL = localStorage.getItem('zp_lv_v1') !== '0';   /* 11-17晚 用户「通道 隐藏的时候也能隐藏」: ═ 关时干草叉整套不画、浪的蓝通道线不画(浪折线/abc 照画) */
