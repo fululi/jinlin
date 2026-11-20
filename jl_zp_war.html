@@ -2328,6 +2328,13 @@ function jlSigPush(lbl, txt, id) {
   try {
     if (!RPL) { if (!LIVE.ts || !liveToday()) return; var p = phaseNow(); if (p !== 'am' && p !== 'pm') return; }   /* 回放中放行(演练), 文字自动带【回放】前缀 */
     (window.__jlSigKeys = window.__jlSigKeys || []).push({ id: id, lbl: lbl, txt: txt, sub: lbl + '信号' });
+    /* 11-20 13:31 用户定案: 「盘中出现的共振价不用非要盘后出」— 共振类提醒(同在高位/低位合成·共振紫·共振字样)触发那一刻, 把现价+时间记进今日共振卡新段「盘中共振」, 实时出现;
+       静态档位(开盘前算好的 S/B 阶梯)一数不动, 这条只加显示、不进任何算法, 两套逻辑互不干扰 */
+    if (/同在|共振/.test(lbl + ' ' + txt) && LIVE.last > 0) {
+      var DRL = window.__resoLiveJL || (window.__resoLiveJL = []), dk = ((STK && STK.code) || '') + '|' + (LIVE.sessDate || '');
+      if (DRL.k !== dk) { DRL.length = 0; DRL.k = dk; }
+      if (!DRL.some(function (q) { return q.id === id; })) DRL.push({ id: id, hm: clockHmJL(), p: LIVE.last, lbl: String(lbl).split(' ')[0], dir: /低位/.test(lbl + txt) ? -1 : 1 });
+    }
   } catch (e) { }
 }
 function jlSigLines(pp, np, ts) { try { if (!(pp > 0) || !(np > 0) || !window.zpHlApi) return; window.zpHlApi.mainLines().forEach(function (h) { if (pp < h.p && np >= h.p) jlSigPush('画线', '价格上穿你的线 ' + h.p.toFixed(2), 'hlU|' + h.p + '|' + ts); else if (pp > h.p && np <= h.p) jlSigPush('画线', '价格跌破你的线 ' + h.p.toFixed(2), 'hlD|' + h.p + '|' + ts); }); } catch (e) { } }
@@ -3090,11 +3097,13 @@ function resoMiniJL(P) {
   var d1Tag = function (p) { if (!B9) return ''; var nm = B9.next ? '明' : '日', hit = [['S2', B9.S2], ['S1', B9.S1], ['B1', B9.B1], ['B2', B9.B2]].filter(function (q) { return q[1] > 0 && Math.abs(q[1] / p - 1) <= 0.003; }); return hit.length ? '<span class="d1">＋' + nm + hit[0][0] + '</span>' : ''; };
   /* 11-19 用户「今天高20.95, 共振S1 20.92 已碰」: ✓原来只看首页日K今天那根(盘中常没更新) → 卡上再按作战屏今日最高/最低补 ✓; 只显示, 不写台账/不进命中统计 */
   var hiT = !nxR && liveToday() && LIVE.dhi > 0 ? LIVE.dhi : 0, loT = !nxR && liveToday() && LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : 0;
-  /* 11-19 用户「永鼎共振怎么还是21已碰」: x.hit 是 jl_reso 统计口径(日K高低 ±0.05×ATR5 算碰到, 高20.95 也算碰了21.0x) → 卡上今天改成严格: 今日最高≥价 或 最低≤价才 ✓; 统计口径不动 */
-  var hitT = function (x) { if (hiT || loT) return (hiT && x.p <= hiT + 1e-6 && x.p >= (LIVE.open || 0)) || (loT && x.p >= loT - 1e-6 && x.p <= (LIVE.open || 1e9)); return !!x.hit; };
-  var rw = function (x, i, side) { return duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (hitT(x) ? ' ✓' : ''), x.n >= 3).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); };
+  /* 11-20 13:31 用户拍板「放开」: 点开的大卡显示碰过、迷你卡显示没碰 = 两套口径打架 → 迷你卡换成和大卡统计口径同一把尺: S档=今日最高≥价−0.05×ATR5容差, B档=今日最低≤价+0.05×ATR5容差, 去掉"须在开盘价那一侧"的限制(暴跌穿过开盘后 S 档也能点亮✓); S看最高/B看最低, 不互相串 */
+  var hitT = function (x, sideJL) { var tolJL = (e && +e.atr > 0 ? +e.atr : 0) * 0.05; return sideJL ? !!(hiT && x.p <= hiT + tolJL + 1e-6) : !!(loT && x.p >= loT - tolJL - 1e-6); };
+  var rw = function (x, i, side) { return duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (hitT(x, side) ? ' ✓' : ''), x.n >= 3).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); };
+  var RLJL = []; try { var DRL = window.__resoLiveJL || []; if (DRL.k === ((STK && STK.code) || '') + '|' + (LIVE.sessDate || '')) RLJL = DRL.slice(-4).reverse(); } catch (eR2) { }   /* 11-20 13:31 用户: 盘中共振价=今天盘中触发共振类提醒那一刻的现价, 实时出现在卡上, 只取最近4条 */
+  var rlHtml = RLJL.length ? '<div class="df"><b style="color:#ffd21f;font-weight:400">盘中共振</b> ' + RLJL.map(function (q) { return '<span style="color:' + (q.dir < 0 ? '#6fe6ff' : '#ff9a4e') + '">' + q.hm + ' ' + q.p.toFixed(2) + ' ' + q.lbl + '</span>'; }).join(' · ') + '</div>' : '';
   h.innerHTML = up.map(function (x, i) { return rw(x, up.length - 1 - i, 1); }).join('') + duoRowJL('现价', cur ? cur.toFixed(2) : '—', '#fff', '', '', '', 0).replace('class="dr', 'class="dr now') + dn.map(function (x, i) { return rw(x, i, 0); }).join('') +
-    '<div class="df">ATR5 ' + (+e.atr).toFixed(2) + ' · 昨收 ' + (+e.pc).toFixed(2) + '</div>';
+    '<div class="df">ATR5 ' + (+e.atr).toFixed(2) + ' · 昨收 ' + (+e.pc).toFixed(2) + '</div>' + rlHtml;
   if (tt) tt.textContent = (nxR ? '按' + String(e.pd || '').slice(5) + '收盘 ' : '') + (e.at || '') + (e.stale ? ' ⚠过时' : '');
 }
 function waveMiniJL() {
