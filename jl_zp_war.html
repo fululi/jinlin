@@ -1167,6 +1167,7 @@ else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.pus
       /* 11-18 用户截图「虚线0.8倍为什么出现了俩个」: 分时页 gh 挪到 svg 顶层后(11-06), 每次重画旧的 #hlmk 没删 → 越叠越多(实测重画1次=2层, 2次=3层). 先删旧的 */
       try { Array.prototype.forEach.call(document.querySelectorAll('[id=hlmk]'), function (n) { n.remove(); }); } catch (eRm) { }
       var gh = el('g', { id: 'hlmk' }), LB = [], MKJL = [], MKSP = [];
+      try { svg.appendChild(gh); } catch (eGe) { }   /* 11-20 现象A: gh 创建即挂载, 本帧全部 getBBox 实测生效(游离子树测0, 右移被截根因); 1567/1603 重挂移动节点, 顶层z序不变 */
       /* 11-20 14:21 用户拍板方案A: 线尾实时活点 — 现在正在走的这根分时点"真实到过的高/低"(被收盘价连线吞掉的影线) + 最新快照现价, 每帧重画;
          14:32 用户抓到事故: 最后一根的 h 被脏数据污染(冒出昨收20.62当分钟高的怪线直冲图顶) → 影线一律以 1分K(LIVE.bars 同分钟)为准,
          并加 ±3% 硬闸: 单分钟高/低离收盘价超 3% 的数据当脏数据丢弃不画; 现价黄点同样设防; 只丢显示, 不动算法/判定; 分时页专属 */
@@ -1226,7 +1227,7 @@ var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行�
   } catch (eHY) { }
   var by1 = by0 + bh;
   /* 11-13晚 用户「22.45 的高和振幅要靠着这个点」: 原来右边硬留70px给价签, 靠右的点标签被推到左边很远. 改同持仓卡: 以点为中心, 只在图边夹住(右边最多到点右侧, 不离开点) */
-  var x0c = x - tw / 2; if (x0c + tw > LX - 2) x0c = Math.max(x - tw + 6, LX - 2 - tw); if (x0c < PX0) x0c = PX0; var x1c = x0c + tw;
+  var x0c = x - tw / 2; if (x0c + tw > LX - 2) x0c = LX - 2 - tw; if (x0c < PX0) x0c = PX0; var x1c = x0c + tw;   /* 11-20 现象A#1: 去掉"标签尾端伸到点右侧x+6"的放行分支, 估算框一律收在LX-2内 */
   /* 11-20 14:56 用户拍板「都和你说呀, 不要把振幅遮挡住, 现在根本看不到了」: 原来和其他标签相撞直接 return false 整条不画 = 标签静悄悄消失(这就是"看不到") → 改成先往离开点的方向挪(13px一步, 再对侧, 最多4步), 挪完还撞也照画(轻微相叠好过看不见); 球标签/跟随标签上一帧的位置也算障碍, 三方互相避让 */
   var lbHit2JL = function () { for (var q2 = 0; q2 < LB.length; q2++) if (x0c < LB[q2].x1 && x1c > LB[q2].x0 && by0 < LB[q2].y1 && by1 > LB[q2].y0) return true; var TB2 = window.__tailBoxesJL || []; for (var q3 = 0; q3 < TB2.length; q3++) if (x0c < TB2[q3].x1 && x1c > TB2[q3].x0 && by0 < TB2[q3].y1 && by1 > TB2[q3].y0) return true; return false; };
   if (lbHit2JL()) {
@@ -1255,6 +1256,7 @@ var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行�
   add(l2, '#ffffff', l1 ? 1 : 0);
   if (l3) add(l3, vpc >= 0 ? '#ff8f98' : '#6fffc2', null);   /* 相对昨收: 红涨绿跌 */
   gh.appendChild(t);
+  try { var tbJL = t.getBBox(); if (tbJL.x + tbJL.width > LX - 2) t.setAttribute('x', Math.max(PX0 + 2, LX - 6 - tbJL.width)); } catch (eTb2) { }   /* 11-20 现象A#1: 振幅标签实宽右缘硬夹(同1370/1557款), 估算宽收窄后仍有溢出就整行左移, 一个字不裁 */
   return true;
 };
 var flashJL = function (key, lv) {   /* 跳到更高一档 → 6秒内外圈光晕闪(每次重画都重新闪, 6秒后停, 只留常亮底色) */
@@ -1366,15 +1368,21 @@ try {
               if (bFJL.y < PY0 + 1) t1JL.setAttribute('y', +t1JL.getAttribute('y') + (PY0 + 1 - bFJL.y));
               else if (bFJL.y + bFJL.height > PY0 + PH - 1) t1JL.setAttribute('y', +t1JL.getAttribute('y') - (bFJL.y + bFJL.height - (PY0 + PH - 1)));
             } catch (eB1) { }   /* 11-20 02:37 用户: 防压不防爹 — 压着就小步挪开(一次一个字身位), 不离太远也不压线截断 */
-            try {   /* 11-20 15:17 用户「你确定是修好了?」右缘硬夹兜底: 不管前面哪条路把标签弄出去了, 只要右溢出就收回: 锚end贴pjX-12且夹在图内, 还撞就原侧上下小步挪, 绝不越右缘也不消失 */
+            try {   /* 11-20 现象A#2 带头标签放置策略: 头部贴右缘(现价点进右缘30px≈最后23分钟)或标签bbox超LX-2 → 放到带子(pj1/pj8双虚线通道)上方或下方(选空间大的一侧), 右端对齐带头pjX, getBBox双向硬夹一个字不裁; 不触发维持原位(1346-1367链路不动); 取代旧15:17右缘硬夹 */
               var bRJL = t1JL.getBBox();
-              if (bRJL.x + bRJL.width > LX - 2) {
+              if (bRJL.x + bRJL.width > LX - 2 || pjX >= PX0 + PW - 30) {
+                var yTJL = Math.max(PY0 + 1, Math.min(Y(pj1), Y(pj8))), yBJL = Math.min(PY0 + PH - 1, Math.max(Y(pj1), Y(pj8)));
+                var spUJL = yTJL - PY0, spDJL = PY0 + PH - yBJL, abJL = spUJL >= spDJL;   /* 带子上方空间 vs 下方空间, 取大的一侧 */
                 t1JL.setAttribute('text-anchor', 'end');
-                var xrJL = Math.min(pjX - 12, LX - 6); if (xrJL - bRJL.width < PX0 + 2) xrJL = PX0 + 2 + bRJL.width;
-                t1JL.setAttribute('x', xrJL);
-                for (var rq = 0; rq < 3; rq++) { var br2JL = t1JL.getBBox(); if (br2JL.x >= PX0 + 2 && br2JL.y >= PY0 + 1 && br2JL.y + br2JL.height <= PY0 + PH - 1 && !hitJL(br2JL)) break; t1JL.setAttribute('y', +t1JL.getAttribute('y') + (pjU ? -13 : 13)); }
-                var br3JL = t1JL.getBBox();
-                if (br3JL.y < PY0 + 1) t1JL.setAttribute('y', PY0 + 11); else if (br3JL.y + br3JL.height > PY0 + PH - 1) t1JL.setAttribute('y', PY0 + PH - 11);
+                t1JL.setAttribute('x', Math.min(pjX, LX - 6));   /* 右端对齐带子头(预夹在右缘内) */
+                t1JL.setAttribute('y', abJL ? yTJL - 4 : yBJL + 11);
+                try { var bB1JL = t1JL.getBBox(); if (abJL && bB1JL.y + bB1JL.height > yTJL - 3) t1JL.setAttribute('y', +t1JL.getAttribute('y') + ((yTJL - 3) - (bB1JL.y + bB1JL.height))); else if (!abJL && bB1JL.y < yBJL + 3) t1JL.setAttribute('y', +t1JL.getAttribute('y') + ((yBJL + 3) - bB1JL.y)); } catch (eBx) { }   /* 紧贴带沿留3px净空, 字不压带线 */
+                var bB2JL = t1JL.getBBox();
+                if (bB2JL.y < PY0 + 1) t1JL.setAttribute('y', PY0 + 11); else if (bB2JL.y + bB2JL.height > PY0 + PH - 1) t1JL.setAttribute('y', PY0 + PH - 11);   /* 垂直夹回图内 */
+                var bB3JL = t1JL.getBBox();
+                if (bB3JL.x < PX0 + 2) t1JL.setAttribute('x', Math.min(pjX + (PX0 + 2 - bB3JL.x), LX - 2 - bB3JL.width));   /* 左溢出右移补足 */
+                var bB4JL = t1JL.getBBox();
+                if (bB4JL.x + bB4JL.width > LX - 2) t1JL.setAttribute('x', Math.max(PX0 + 2, LX - 2 - bB4JL.width));   /* 右缘终极硬夹: 一个字不裁 */
               }
             } catch (eRJ) { }
             try { var bf2JL = t1JL.getBBox(), fk2 = ((STK && STK.code) || '') + '|' + (LIVE.sessDate || ''); var FA = window.__tailBoxesJL || (window.__tailBoxesJL = []); for (var fi = FA.length - 1; fi >= 0; fi--) if (FA[fi].who === 'follow' || FA[fi].k !== fk2) FA.splice(fi, 1); FA.push({ who: 'follow', k: fk2, x0: bf2JL.x, x1: bf2JL.x + bf2JL.width, y0: bf2JL.y, y1: bf2JL.y + bf2JL.height }); } catch (eFb) { }   /* 11-20 14:56 用户: 跟随标签入共享避让箱, 高低/球标签主动避开它 */
