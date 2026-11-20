@@ -1118,10 +1118,12 @@ function renderLine() {
     /* 分时线(分钟级, 东财trends2优先/腾讯minute兜底) + 左缘竞价段刻度(9:15-9:25撮合指导价高低) */
     var pts = [];   /* jl-zp4: 原来按"每分钟=1/5格"再乘一次, 整条分时线被压在左边五分之一 → 改为按成交时间铺满 09:30–15:00 */
     /* 11-17晚 用户「最低19.75 线没画上去, 振幅价格却出现了」: 分时线是每分钟收盘价, 全天最低/最高那一分钟的影线价(如 9:30 那分钟低到 19.75)线上看不到 → 只在那一分钟把高/低点也连进线里(只改画线, 振幅/小球不变) */
-    var dLoP = LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : 0, dHiP = LIVE.dhi > 0 ? LIVE.dhi : 0, gotL = false, gotH = false;
+    /* 11-20 现象B(b) 批复: 折线只画收盘价(删"当日极值插进折线"的直上直下尖刺=天线杆); 真实价位改走极值影线层(1171前新块):
+       同源口径=分钟高/低的当日最大/最小者(不再跨源匹配腾讯qt日高日低, 0.006 容差时灵时不灵的根因), ±3%闸+1分K校验, 0.8px细线 */
+    var exHJL = null, exLJL = null;
     LIVE.pts.forEach(function (q) { var x = xOfHmJL(q.hm); if (x == null) return;
-      if (!gotL && dLoP > 0 && q.l > 0 && q.l < q.p - 0.004 && Math.abs(q.l - dLoP) < 0.006) { pts.push(x.toFixed(1) + ',' + Y(q.l).toFixed(1)); gotL = true; }
-      if (!gotH && dHiP > 0 && q.h > q.p + 0.004 && Math.abs(q.h - dHiP) < 0.006) { pts.push(x.toFixed(1) + ',' + Y(q.h).toFixed(1)); gotH = true; }
+      if (q.h > 0 && q.h > q.p + 0.004 && Math.abs(q.h / q.p - 1) <= 0.03 && (!exHJL || q.h > exHJL.v)) exHJL = { hm: q.hm, p: q.p, v: q.h };
+      if (q.l > 0 && q.l < q.p - 0.004 && Math.abs(q.l / q.p - 1) <= 0.03 && (!exLJL || q.l < exLJL.v)) exLJL = { hm: q.hm, p: q.p, v: q.l };
       pts.push(x.toFixed(1) + ',' + Y(q.p).toFixed(1)); });
     if (LIVE.open > 0) pts.unshift(xOfHmJL('0930').toFixed(1) + ',' + Y(LIVE.open).toFixed(1));   /* 线头=竞价开盘价 */
     if (!pts.length) { $('pline').setAttribute('points', ''); if (!LIVE.auc) return; }
@@ -1168,6 +1170,24 @@ else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.pus
       try { Array.prototype.forEach.call(document.querySelectorAll('[id=hlmk]'), function (n) { n.remove(); }); } catch (eRm) { }
       var gh = el('g', { id: 'hlmk' }), LB = [], MKJL = [], MKSP = [];
       try { svg.appendChild(gh); } catch (eGe) { }   /* 11-20 现象A: gh 创建即挂载, 本帧全部 getBBox 实测生效(游离子树测0, 右移被截根因); 1567/1603 重挂移动节点, 顶层z序不变 */
+      /* 11-20 现象B(b) 极值影线层: 当日最高/最低分钟在该分钟收盘→真实高/低 画 0.8px 细影线, 替代原"插进折线"的直上直下尖刺;
+         ±3%闸(分钟收盘基准)+1分K同分钟为准 与线尾影线同款; 回放照画(用户 19:51 批复: 回放数据为完整分钟K, 影线可信, 与盘中观感一致), 1175 线尾影线不加 !RPL */
+      try {
+        if (perNowJL() === 0 && gh) {
+          [[exHJL, 1], [exLJL, 0]].forEach(function (obJL) {
+            var eJL = obJL[0]; if (!eJL || !(eJL.p > 0)) return;
+            var xEJL = xOfHmJL(eJL.hm); if (xEJL == null || xEJL < PX0 || xEJL > LX) return;
+            var vJL = eJL.v;
+            var bEJL = null; (LIVE.bars || []).forEach(function (b) { if (b && b.hm === eJL.hm && b.h > 0 && b.l > 0) bEJL = b; });
+            if (bEJL) vJL = obJL[1] ? bEJL.h : bEJL.l;   /* 1分K 同分钟为准(与线尾影线 04:02 口径一致) */
+            if (!(vJL > 0) || Math.abs(vJL / eJL.p - 1) > 0.03) return;   /* ±3% 硬闸(该分钟收盘基准), 脏数据不画 */
+            var yEJL = Y(Math.max(YLO, Math.min(YHI, eJL.p))), yTJL2 = Y(Math.max(YLO, Math.min(YHI, vJL)));
+            if (Math.abs(yTJL2 - yEJL) < 1) return;   /* 影线短于1px 不画 */
+            gh.appendChild(el('line', { x1: xEJL, y1: yEJL, x2: xEJL, y2: yTJL2, stroke: '#ffffff', 'stroke-width': 0.8, opacity: 0.8, 'pointer-events': 'none' }));
+            gh.appendChild(el('circle', { cx: xEJL, cy: yTJL2, r: 2, fill: '#ffffff', 'pointer-events': 'none' }));
+          });
+        }
+      } catch (eExJL) { }
       /* 11-20 14:21 用户拍板方案A: 线尾实时活点 — 现在正在走的这根分时点"真实到过的高/低"(被收盘价连线吞掉的影线) + 最新快照现价, 每帧重画;
          14:32 用户抓到事故: 最后一根的 h 被脏数据污染(冒出昨收20.62当分钟高的怪线直冲图顶) → 影线一律以 1分K(LIVE.bars 同分钟)为准,
          并加 ±3% 硬闸: 单分钟高/低离收盘价超 3% 的数据当脏数据丢弃不画; 现价黄点同样设防; 只丢显示, 不动算法/判定; 分时页专属 */
@@ -1179,8 +1199,8 @@ else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.pus
             var hhJL = lpJL.h > 0 ? lpJL.h : 0, llJL = lpJL.l > 0 ? lpJL.l : 0;
             var bTailJL = null; (LIVE.bars || []).forEach(function (b) { if (b && b.hm === lpJL.hm && b.h > 0 && b.l > 0) bTailJL = b; });
             if (bTailJL) { hhJL = bTailJL.h; llJL = bTailJL.l; }   /* 1分K同分钟为准(11-20 04:02 起真实高低口径就用它) */
-            var hyJL = hhJL > 0 && hhJL >= lpJL.p && hhJL <= lpJL.p * 1.03 ? Y(Math.max(PY0, Math.min(PY0 + PH, Y(hhJL)))) : null;
-            var lyJL = llJL > 0 && llJL <= lpJL.p && llJL >= lpJL.p * 0.97 ? Y(Math.max(PY0, Math.min(PY0 + PH, Y(llJL)))) : null;
+            var hyJL = hhJL > 0 && hhJL >= lpJL.p && hhJL <= lpJL.p * 1.03 ? Math.max(PY0, Math.min(PY0 + PH, Y(hhJL))) : null;   /* 11-20 现象B: 原双重Y(Y(clamp(Y(h)))把像素再当价格喂进Y → 影线恒定窜出图顶=天线杆本体) 改为钳像素值 */
+            var lyJL = llJL > 0 && llJL <= lpJL.p && llJL >= lpJL.p * 0.97 ? Math.max(PY0, Math.min(PY0 + PH, Y(llJL))) : null;   /* 同上 */
             if (hyJL != null) { gh.appendChild(el('line', { x1: lxJL, y1: cy2JL, x2: lxJL, y2: hyJL, stroke: '#ffffff', 'stroke-width': 1, opacity: 0.8, 'pointer-events': 'none' })); gh.appendChild(el('circle', { cx: lxJL, cy: hyJL, r: 2, fill: '#ffffff', 'pointer-events': 'none' })); }
             if (lyJL != null) { gh.appendChild(el('line', { x1: lxJL, y1: cy2JL, x2: lxJL, y2: lyJL, stroke: '#ffffff', 'stroke-width': 1, opacity: 0.8, 'pointer-events': 'none' })); gh.appendChild(el('circle', { cx: lxJL, cy: lyJL, r: 2, fill: '#ffffff', 'pointer-events': 'none' })); }
             if (LIVE.last > 0 && Math.abs(LIVE.last / lpJL.p - 1) <= 0.03) gh.appendChild(el('circle', { cx: lxJL, cy: Y(Math.max(YLO, Math.min(YHI, LIVE.last))), r: 2.4, fill: '#ffd21f', stroke: 'rgba(5,10,16,.6)', 'stroke-width': 0.8, 'pointer-events': 'none' }));   /* 黄点=腾讯快照现价, 超±3%当脏数据不画 */
