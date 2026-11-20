@@ -1167,6 +1167,25 @@ else if (dirH <= 0 && q.p < ext.p) { if (dirH === -1 && ix - ext.ix >= 3) FL.pus
       /* 11-18 用户截图「虚线0.8倍为什么出现了俩个」: 分时页 gh 挪到 svg 顶层后(11-06), 每次重画旧的 #hlmk 没删 → 越叠越多(实测重画1次=2层, 2次=3层). 先删旧的 */
       try { Array.prototype.forEach.call(document.querySelectorAll('[id=hlmk]'), function (n) { n.remove(); }); } catch (eRm) { }
       var gh = el('g', { id: 'hlmk' }), LB = [], MKJL = [], MKSP = [];
+      /* 11-20 14:21 用户拍板方案A: 线尾实时活点 — 现在正在走的这根分时点"真实到过的高/低"(被收盘价连线吞掉的影线) + 最新快照现价, 每帧重画;
+         14:32 用户抓到事故: 最后一根的 h 被脏数据污染(冒出昨收20.62当分钟高的怪线直冲图顶) → 影线一律以 1分K(LIVE.bars 同分钟)为准,
+         并加 ±3% 硬闸: 单分钟高/低离收盘价超 3% 的数据当脏数据丢弃不画; 现价黄点同样设防; 只丢显示, 不动算法/判定; 分时页专属 */
+      try {
+        if (perNowJL() === 0 && LIVE.pts.length) {
+          var lpJL = LIVE.pts[LIVE.pts.length - 1], lxJL = xOfHmJL(lpJL.hm);
+          if (lxJL != null && lxJL >= PX0 && lxJL <= LX && lpJL.p > 0) {
+            var cy2JL = Y(Math.max(YLO, Math.min(YHI, lpJL.p)));
+            var hhJL = lpJL.h > 0 ? lpJL.h : 0, llJL = lpJL.l > 0 ? lpJL.l : 0;
+            var bTailJL = null; (LIVE.bars || []).forEach(function (b) { if (b && b.hm === lpJL.hm && b.h > 0 && b.l > 0) bTailJL = b; });
+            if (bTailJL) { hhJL = bTailJL.h; llJL = bTailJL.l; }   /* 1分K同分钟为准(11-20 04:02 起真实高低口径就用它) */
+            var hyJL = hhJL > 0 && hhJL >= lpJL.p && hhJL <= lpJL.p * 1.03 ? Y(Math.max(PY0, Math.min(PY0 + PH, Y(hhJL)))) : null;
+            var lyJL = llJL > 0 && llJL <= lpJL.p && llJL >= lpJL.p * 0.97 ? Y(Math.max(PY0, Math.min(PY0 + PH, Y(llJL)))) : null;
+            if (hyJL != null) { gh.appendChild(el('line', { x1: lxJL, y1: cy2JL, x2: lxJL, y2: hyJL, stroke: '#ffffff', 'stroke-width': 1, opacity: 0.8, 'pointer-events': 'none' })); gh.appendChild(el('circle', { cx: lxJL, cy: hyJL, r: 2, fill: '#ffffff', 'pointer-events': 'none' })); }
+            if (lyJL != null) { gh.appendChild(el('line', { x1: lxJL, y1: cy2JL, x2: lxJL, y2: lyJL, stroke: '#ffffff', 'stroke-width': 1, opacity: 0.8, 'pointer-events': 'none' })); gh.appendChild(el('circle', { cx: lxJL, cy: lyJL, r: 2, fill: '#ffffff', 'pointer-events': 'none' })); }
+            if (LIVE.last > 0 && Math.abs(LIVE.last / lpJL.p - 1) <= 0.03) gh.appendChild(el('circle', { cx: lxJL, cy: Y(Math.max(YLO, Math.min(YHI, LIVE.last))), r: 2.4, fill: '#ffd21f', stroke: 'rgba(5,10,16,.6)', 'stroke-width': 0.8, 'pointer-events': 'none' }));   /* 黄点=腾讯快照现价, 超±3%当脏数据不画 */
+          }
+        }
+      } catch (eLt) { }
       /* jl-hl3: 实时候选极值，独立于正式确认标记 */
 FL.forEach(function (f) {  if (localStorage.getItem('jl_zp_x_v1') !== '1') return;
 
@@ -1208,7 +1227,14 @@ var legLabJL = function (x, y, isH, p, ref, pcOn, pend) {   /* pcOn: 第二行�
   var by1 = by0 + bh;
   /* 11-13晚 用户「22.45 的高和振幅要靠着这个点」: 原来右边硬留70px给价签, 靠右的点标签被推到左边很远. 改同持仓卡: 以点为中心, 只在图边夹住(右边最多到点右侧, 不离开点) */
   var x0c = x - tw / 2; if (x0c + tw > LX - 2) x0c = Math.max(x - tw + 6, LX - 2 - tw); if (x0c < PX0) x0c = PX0; var x1c = x0c + tw;
-  for (var kq = 0; kq < LB.length; kq++) if (x0c < LB[kq].x1 && x1c > LB[kq].x0 && by0 < LB[kq].y1 && by1 > LB[kq].y0) return false;
+  /* 11-20 14:56 用户拍板「都和你说呀, 不要把振幅遮挡住, 现在根本看不到了」: 原来和其他标签相撞直接 return false 整条不画 = 标签静悄悄消失(这就是"看不到") → 改成先往离开点的方向挪(13px一步, 再对侧, 最多4步), 挪完还撞也照画(轻微相叠好过看不见); 球标签/跟随标签上一帧的位置也算障碍, 三方互相避让 */
+  var lbHit2JL = function () { for (var q2 = 0; q2 < LB.length; q2++) if (x0c < LB[q2].x1 && x1c > LB[q2].x0 && by0 < LB[q2].y1 && by1 > LB[q2].y0) return true; var TB2 = window.__tailBoxesJL || []; for (var q3 = 0; q3 < TB2.length; q3++) if (x0c < TB2[q3].x1 && x1c > TB2[q3].x0 && by0 < TB2[q3].y1 && by1 > TB2[q3].y0) return true; return false; };
+  if (lbHit2JL()) {
+    var dirsJL = isH ? [-13, 13, -26, 26] : [13, -13, 26, -26], by0svJL = by0, okN = false;
+    for (var kq = 0; kq < dirsJL.length; kq++) { var nb2 = by0svJL + dirsJL[kq]; if (nb2 < PY0 + 1 || nb2 + bh > PY0 + PH - YRES) continue; by0 = nb2; by1 = by0 + bh; if (!lbHit2JL()) { okN = true; break; } }
+    if (!okN) by0 = by0svJL;   /* 全撞 → 回原位照画, 绝不静悄悄消失 */
+  }
+  var by1 = by0 + bh;
   LB.push({ x0: x0c, x1: x1c, y0: by0, y1: by1, px: x, h: isH ? 1 : 0 });
   window.__LBLASTJL = LB.slice();   /* 11-20 02:37: 实时振幅标签防压用(上一帧标签框位置) */
   if (pend) {   /* 待确认: 小方块改成虚线空框, 整个标签半透明; 反向走够阈值后这一点进入确认列表, 自动换成实心那套 */
@@ -1319,7 +1345,7 @@ try {
             gh.appendChild(t1JL);
             try {
               var LBgJL = window.__LBLASTJL || [];
-              var hitJL = function (b) { for (var qi = 0; qi < LBgJL.length; qi++) { var q = LBgJL[qi]; if (b.x < q.x1 - 3 && b.x + b.width > q.x0 + 3 && b.y < q.y1 - 2 && b.y + b.height > q.y0 + 2) return true; } return false; };   /* 3px净空: 不贴死也不夸张远离 */
+              var hitJL = function (b) { for (var qi = 0; qi < LBgJL.length; qi++) { var q = LBgJL[qi]; if (b.x < q.x1 - 3 && b.x + b.width > q.x0 + 3 && b.y < q.y1 - 2 && b.y + b.height > q.y0 + 2) return true; } var TB4 = window.__tailBoxesJL || []; for (var qj = 0; qj < TB4.length; qj++) { if (TB4[qj].who === 'follow') continue; if (b.x < TB4[qj].x1 - 3 && b.x + b.width > TB4[qj].x0 + 3 && b.y < TB4[qj].y1 - 2 && b.y + b.height > TB4[qj].y0 + 2) return true; } return false; };   /* 3px净空: 不贴死也不夸张远离; 11-20 14:56 用户: 球标签的箱子也算障碍(谁≠自己) */
               var yy0 = pyC + (pjU ? -13 : 20), yOpJL = pyC + (pjU ? 20 : -13), b0JL = t1JL.getBBox();
               var inVJL = function (b) { return b.y >= PY0 + 1 && b.y + b.height <= PY0 + PH - 1; };   /* 11-20 12:53 用户: 不许被图缘切一半 */
               if (b0JL.x < PX0 + 2) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); }
@@ -1333,13 +1359,25 @@ try {
                   t1JL.setAttribute('y', yy0);
                   var okJL = false, dJL = [-11, 11, -22, 22];
                   for (var di = 0; di < dJL.length; di++) { t1JL.setAttribute('y', yy0 + dJL[di]); var b2JL = t1JL.getBBox(); if (b2JL.x >= PX0 + 2 && inVJL(b2JL) && !hitJL(b2JL)) { okJL = true; break; } }
-                  if (!okJL) { if (t1JL.getAttribute('text-anchor') !== 'start' && pjX + 8 + b0JL.width < LX - 4) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); t1JL.setAttribute('y', yy0 + (pjU ? 14 : -14)); var b3JL = t1JL.getBBox(); if (b3JL.x < PX0 + 2 || hitJL(b3JL)) t1JL.setAttribute('y', yy0); } else t1JL.setAttribute('y', yy0); }   /* 11-20 04:02 用户: 右缘放不下就不换边, 不切字 */
+                  if (!okJL) { if (t1JL.getAttribute('text-anchor') !== 'start' && pjX + 8 + b0JL.width < LX - 4) { t1JL.setAttribute('text-anchor', 'start'); t1JL.setAttribute('x', pjX + 8); t1JL.setAttribute('y', yy0 + (pjU ? 14 : -14)); var b3JL = t1JL.getBBox(); if (b3JL.x < PX0 + 2 || b3JL.x + b3JL.width > LX - 4 || hitJL(b3JL)) { t1JL.setAttribute('text-anchor', 'end'); t1JL.setAttribute('x', pjX - 12); t1JL.setAttribute('y', yy0); } } else t1JL.setAttribute('y', yy0); }   /* 11-20 04:02 用户: 右缘放不下就不换边, 不切字; 11-20 15:17 用户抓到换边后右溢出裁字 → 换边验货补上右溢出检查, 不合格连锚带x整个撤回 */
                 }
               }
               var bFJL = t1JL.getBBox();   /* 兜底: 上下都不干净 → 垂直方向最小位移夹回图内, 保证不被切一半 */
               if (bFJL.y < PY0 + 1) t1JL.setAttribute('y', +t1JL.getAttribute('y') + (PY0 + 1 - bFJL.y));
               else if (bFJL.y + bFJL.height > PY0 + PH - 1) t1JL.setAttribute('y', +t1JL.getAttribute('y') - (bFJL.y + bFJL.height - (PY0 + PH - 1)));
             } catch (eB1) { }   /* 11-20 02:37 用户: 防压不防爹 — 压着就小步挪开(一次一个字身位), 不离太远也不压线截断 */
+            try {   /* 11-20 15:17 用户「你确定是修好了?」右缘硬夹兜底: 不管前面哪条路把标签弄出去了, 只要右溢出就收回: 锚end贴pjX-12且夹在图内, 还撞就原侧上下小步挪, 绝不越右缘也不消失 */
+              var bRJL = t1JL.getBBox();
+              if (bRJL.x + bRJL.width > LX - 2) {
+                t1JL.setAttribute('text-anchor', 'end');
+                var xrJL = Math.min(pjX - 12, LX - 6); if (xrJL - bRJL.width < PX0 + 2) xrJL = PX0 + 2 + bRJL.width;
+                t1JL.setAttribute('x', xrJL);
+                for (var rq = 0; rq < 3; rq++) { var br2JL = t1JL.getBBox(); if (br2JL.x >= PX0 + 2 && br2JL.y >= PY0 + 1 && br2JL.y + br2JL.height <= PY0 + PH - 1 && !hitJL(br2JL)) break; t1JL.setAttribute('y', +t1JL.getAttribute('y') + (pjU ? -13 : 13)); }
+                var br3JL = t1JL.getBBox();
+                if (br3JL.y < PY0 + 1) t1JL.setAttribute('y', PY0 + 11); else if (br3JL.y + br3JL.height > PY0 + PH - 1) t1JL.setAttribute('y', PY0 + PH - 11);
+              }
+            } catch (eRJ) { }
+            try { var bf2JL = t1JL.getBBox(), fk2 = ((STK && STK.code) || '') + '|' + (LIVE.sessDate || ''); var FA = window.__tailBoxesJL || (window.__tailBoxesJL = []); for (var fi = FA.length - 1; fi >= 0; fi--) if (FA[fi].who === 'follow' || FA[fi].k !== fk2) FA.splice(fi, 1); FA.push({ who: 'follow', k: fk2, x0: bf2JL.x, x1: bf2JL.x + bf2JL.width, y0: bf2JL.y, y1: bf2JL.y + bf2JL.height }); } catch (eFb) { }   /* 11-20 14:56 用户: 跟随标签入共享避让箱, 高低/球标签主动避开它 */
           }
         }
       } catch (ePj) { }
@@ -1498,14 +1536,26 @@ if (ext && SP[ext.ix]) {
         var tMainJL = THJL.s, tPriceJL = THJL.sp || '';   /* 11-20 12:53 用户定案: 主字7.5→11px(放大1.5倍, 不是很大, 清晰亮, 仍细体), 价格小一号9px */
         var tw2 = (tMainJL.length + tPriceJL.length) * 6.7, hit = null, ty2, tx2, an2 = 'start';
         LB.forEach(function (b) { if (b.h === THJL.h && Math.abs(b.px - THJL.x) <= 10) hit = b; });
-        if (hit) { ty2 = hit.y0 + 10.5; if (hit.x1 + 3 + tw2 <= LX - 4) tx2 = hit.x1 + 3; else { tx2 = hit.x0 - 3; an2 = 'end'; } }
+        /* 11-20 15:17 用户二截图抓到: 球标签和同点的待确认低/高标签挤成一行伸进刻度区 → 定死不同侧: 同点(±10px)有高低标签时, 球标签放它对面(低标签占下→球上/高标签占上→球下), 不再碰运气挪 */
+        var oppJL = null; LB.forEach(function (b) { if (Math.abs((b.px || 0) - THJL.x) <= 10) oppJL = b; });
+        if (oppJL) {
+          tx2 = Math.max(PX0 + 2, Math.min(THJL.x - tw2 / 2, LX - 4 - tw2)); an2 = 'start';
+          ty2 = oppJL.h ? oppJL.y1 + 12 : oppJL.y0 - 13;
+          if (ty2 < PY0 + 11) ty2 = oppJL.y1 + 12; else if (ty2 > PY0 + PH - 11) ty2 = oppJL.y0 - 13;
+        }
+        else if (hit) { ty2 = hit.y0 + 10.5; if (hit.x1 + 3 + tw2 <= LX - 4) tx2 = hit.x1 + 3; else { tx2 = hit.x0 - 3; an2 = 'end'; } }
         else {
           tx2 = Math.max(PX0 + 2, Math.min(THJL.x - tw2 / 2, LX - 4 - tw2)); ty2 = THJL.h ? THJL.y - 19 : THJL.y + 22;
-          for (var tg2 = 0; tg2 < 4; tg2++) { var bad = LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 9 < b.y1 && ty2 + 2 > b.y0; }); if (!bad) break; ty2 += THJL.h ? -12 : 12; }
+          /* 11-20 14:56 用户「不要把振幅遮挡住」: 障碍箱加上跟随标签/上一帧球标签(谁≠自己都算), 上下躲完改左右躲 */
+          var badXJL = function (qx, qy) { var TB3 = window.__tailBoxesJL || []; for (var q4 = 0; q4 < TB3.length; q4++) { if (TB3[q4].who === 'ball') continue; if (qx < TB3[q4].x1 && qx + tw2 > TB3[q4].x0 && qy - 9 < TB3[q4].y1 && qy + 2 > TB3[q4].y0) return true; } return false; };
+          for (var tg2 = 0; tg2 < 4; tg2++) { var bad = LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 9 < b.y1 && ty2 + 2 > b.y0; }) || badXJL(tx2, ty2); if (!bad) break; ty2 += THJL.h ? -12 : 12; }
+          if (bad) { var txsv = tx2; for (var tg3 = 0; tg3 < 4; tg3++) { tx2 = txsv + (tg3 % 2 ? 1 : -1) * 14 * (tg3 >= 2 ? 2 : 1); if (tx2 < PX0 + 2 || tx2 + tw2 > LX - 4) continue; if (!(LB.some(function (b) { return tx2 < b.x1 && tx2 + tw2 > b.x0 && ty2 - 9 < b.y1 && ty2 + 2 > b.y0; }) || badXJL(tx2, ty2))) break; } }
         }
         var tth = tx(tx2, ty2, tMainJL, THJL.c, 11, an2, 400); tth.setAttribute('data-fix', '1'); tth.setAttribute('stroke', 'rgba(5,10,16,.85)'); tth.setAttribute('stroke-width', 0.9);   /* 去3px粗描边 */
         if (tPriceJL) { var tspJL = document.createElementNS('http://www.w3.org/2000/svg', 'tspan'); tspJL.textContent = tPriceJL; tspJL.setAttribute('font-size', 9); tth.appendChild(tspJL); }   /* 11-20 12:53 用户: 后面价格比前面小一号, 同档位色 */
         gh.appendChild(tth);
+        try { var bthC = tth.getBBox(); if (bthC.x + bthC.width > LX - 2) tth.setAttribute('x', Math.max(PX0 + 2, LX - 6 - bthC.width)); } catch (eTc) { }   /* 11-20 15:17 用户: 球标签同样右缘硬夹(估算宽可能小于实际宽) */
+        try { var bthJL = tth.getBBox(), tbk = ((STK && STK.code) || '') + '|' + (LIVE.sessDate || ''); var TA = window.__tailBoxesJL || (window.__tailBoxesJL = []); for (var ti = TA.length - 1; ti >= 0; ti--) if (TA[ti].who === 'ball' || TA[ti].k !== tbk) TA.splice(ti, 1); TA.push({ who: 'ball', k: tbk, x0: bthJL.x, x1: bthJL.x + bthJL.width, y0: bthJL.y, y1: bthJL.y + bthJL.height }); } catch (eTb) { }   /* 11-20 14:56 用户: 球标签入共享避让箱, 高低/跟随标签主动避开它 */
       } } catch (eTh) { }
       if (g) g.appendChild(gh);
       var chOnJL = localStorage.getItem('zp_lv_v1') !== '0';   /* 11-17晚 用户「通道 隐藏的时候也能隐藏」: ═ 关时干草叉整套不画、浪的蓝通道线不画(浪折线/abc 照画) */
