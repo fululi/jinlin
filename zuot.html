@@ -1,16 +1,15 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>做T面板 设计稿 11-22 · 三角已接</title>
 <script>
-/* 11-23 嵌入模式: ?emb=1 或已被iframe嵌 → 整页透明+点击穿透, 只有浮球/浮窗可点; 主机页一行iframe即可挂球 */
-(function(){ try{
-  if(!/[?&]emb=1/.test(location.search) && window.self===window.top) return;
-  document.documentElement.style.background='transparent';
-  var s=document.createElement('style');
-  s.textContent='html,body{background:transparent!important;pointer-events:none!important;overflow:hidden!important;padding:0!important;min-height:0!important}#fw,#fball{pointer-events:auto}';
-  var put=function(){ document.head.appendChild(s); };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',put); else put();
-}catch(e){}})();
+/* 11-23 桥模式引导: ?emb=1 或已在iframe → html加ztEmb类(整页透明+点击只留给球/窗; 主机页其余区域零遮挡) */
+(function(){try{ if(/[\?&]emb=1/.test(location.search)||(function(){try{return window.self!==window.top}catch(e){return false}})()){ document.documentElement.classList.add('ztEmb'); } }catch(e){}})();
 </script>
+<style>
+html.ztEmb,body.ztEmb{background:transparent!important;pointer-events:none!important;overflow:hidden!important;padding:0!important;min-height:0!important}
+html.ztEmb #fw,html.ztEmb #fball{pointer-events:auto}
+html.ztEmb #fwbody{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+html.ztEmb #fw{box-shadow:0 8px 40px rgba(0,0,0,.55)}
+</style>
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0}
@@ -637,7 +636,7 @@ function drawTop(){
 
 /* ---- 五日卡（搬自 五日页_买卖价格_设计稿_1122 v6.1；线/清单点价→data-fill 进算账，来源＝五日图斐波） ---- */
 const W5_REVS=[{lab:'五日 卖①',px:'19.44',t:'✓ 13:26'},{lab:'五日 卖②',px:'19.58',t:'✓ 14:04'},{lab:'五日 卖③',px:'20.00',t:'✓ 11:20'}];
-const W5_ALL=[{k:'卖①',p:19.44,w:2,d:true,src:'尺A0.236 · 5分△量幅',t:'13:26'},{k:'卖②',p:19.58,w:2,d:true,src:'5分△平底 · 尺A0.382',t:'14:04'},{k:'卖③',p:20.00,w:2,d:true,src:'IV下沿(11-20) · 尺A0.786',t:'11:20'},{k:'卖④',p:20.02,w:3,d:false,src:'斐波0.786 · S1 · 日S1'},{k:'卖⑤',p:22.20,w:2,d:false,src:'日尺0.5 · IV上沿(11-16)'},{k:'接①',p:19.20,w:2,d:false,src:'尺A1.0（19.20 整）'},{k:'下拉0点',p:20.20,w:1,d:false,src:'下拉图 0 起点'}];   // 价位带用：w=五日卡内部来源数，d=已发生沉底，src=来源名（五日卡清单同款）
+const W5_ALL=[{k:'卖①',p:19.44,w:2,d:true,src:'尺A0.236 · 5分△量幅',t:'13:26'},{k:'卖②',p:19.58,w:2,d:true,src:'5分△平底 · 尺A0.382',t:'14:04'},{k:'卖③',p:20.00,w:2,d:true,src:'IV下沿(11-20) · 尺A0.786',t:'11:20'},{k:'卖④',p:20.02,w:3,d:false,src:'斐波0.786 · S1 · 日S1'},{k:'卖⑤',p:22.20,w:2,d:false,src:'日尺0.5 · IV上沿(11-16)'},{k:'接①',p:19.20,w:3,d:false,src:'尺A1.0（19.20 整） · 大腿低点(11-20) · 日线低点(11-20)'},{k:'下拉0点',p:20.20,w:1,d:false,src:'下拉图 0 起点'}];   // 价位带用：w=五日卡内部来源数，d=已发生沉底，src=来源名（五日卡清单同款）
 let w5built=false;
 function draw5d(){
   if(w5built) return; w5built=true;
@@ -683,7 +682,7 @@ function draw5d(){
       '【明天 '+NXD+' 开盘要买卖的价】',
       '卖① 20.02 ×3 没到','卖② 22.20 ×2 没到','接① 19.20 ×2 没到','',
       '【已发生（15:00 后不挂图，进复盘）】',
-      '【已发生（15:00 后不挂图，进复盘）】',
+      
       ...W5_REVS.map(x=>x.lab.replace('五日 ','')+' '+x.px+' '+x.t)].join('\n');
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
@@ -982,40 +981,175 @@ all();
   document.getElementById('fwbody').appendChild(wrap);
   const ball=document.createElement('div'); ball.id='fball'; ball.innerHTML='<span>做T</span>';
   document.body.appendChild(ball);
+  const EMB=/[?&]emb=1/.test(location.search)||(function(){try{return window.self!==window.top}catch(e){return false}})();
   let open=true; try{ open=JSON.parse(localStorage.getItem('tpanel_fwf')||'true')!==false; }catch(e){}
   const num=(v,d)=>isNaN(parseInt(v))?d:parseInt(v);
   let bp=null,wp=null; try{ bp=JSON.parse(localStorage.getItem('tpanel_ball')||'null'); wp=JSON.parse(localStorage.getItem('tpanel_fwpos')||'null'); }catch(e){}
-  /* 11-23 修复「收球后找不到」: 存的是像素坐标, 换窗口尺寸/嵌 iframe 后可能跑出屏外; 恢复/收球/resize 一律钳回当前可视区 */
-  const clampBall=(x,y)=>{ x=Math.max(2,Math.min(isFinite(x)?x:innerWidth-74,innerWidth-58)); y=Math.max(2,Math.min(isFinite(y)?y:innerHeight-82,innerHeight-58)); return [x,y]; };
+  /* 11-23 修复「收球后找不到」+ 桥模式(EMB): iframe只占球/窗矩形, 主页其余区域零遮挡; 逻辑坐标=整屏坐标, 拖拽用screenX/Y免疫iframe移动; 拖拽期间主机页把iframe临时放到全屏, 松手即缩回 */
+  let dragging=false;
+  /* 逻辑屏=主机页(顶层窗口)可视区: 同源可直读; 拖拽中iframe已全屏,innerWidth即主机视口 */
+  const TVW=()=>{ try{ return window.top.innerWidth||innerWidth }catch(e){ return innerWidth } };
+  const TVH=()=>{ try{ return window.top.innerHeight||innerHeight }catch(e){ return innerHeight } };
+  const VW=()=> EMB?TVW():innerWidth;
+  const VH=()=> EMB?TVH():innerHeight;
+  const clampBall=(x,y)=>{ x=Math.max(2,Math.min(isFinite(x)?x:VW()-74,VW()-58)); y=Math.max(2,Math.min(isFinite(y)?y:VH()-82,VH()-58)); return [x,y]; };
   const clampFw=(x,y)=>{ const w=fw.offsetWidth||452, h=fw.offsetHeight||320;
-    x=Math.max(2,Math.min(isFinite(x)?x:6,Math.max(2,innerWidth-w-2))); y=Math.max(2,Math.min(isFinite(y)?y:6,Math.max(2,innerHeight-h-2))); return [x,y]; };
-  { const [x,y]=clampBall(num(bp&&bp.x,innerWidth-74),num(bp&&bp.y,innerHeight-82)); ball.style.left=x+'px'; ball.style.top=y+'px'; }
-  { const [x,y]=clampFw(num(wp&&wp.x,6),num(wp&&wp.y,6)); fw.style.left=x+'px'; fw.style.top=y+'px'; }
-  addEventListener('resize',()=>{ try{ const [bx,by]=clampBall(parseInt(ball.style.left),parseInt(ball.style.top)); const [fx,fy]=clampFw(parseInt(fw.style.left),parseInt(fw.style.top));
-    ball.style.left=bx+'px'; ball.style.top=by+'px'; fw.style.left=fx+'px'; fw.style.top=fy+'px'; save(); }catch(e){} });
+    x=Math.max(2,Math.min(isFinite(x)?x:6,Math.max(2,VW()-w-2))); y=Math.max(2,Math.min(isFinite(y)?y:6,Math.max(2,VH()-h-2))); return [x,y]; };
+  let bX,bY,wX,wY;
+  { const [x,y]=clampBall(num(bp&&bp.x,VW()-74),num(bp&&bp.y,VH()-82)); bX=x; bY=y; }
+  { const [x,y]=clampFw(num(wp&&wp.x,6),num(wp&&wp.y,6)); wX=x; wY=y; }
+  function render(){ if(!EMB){ ball.style.left=bX+'px'; ball.style.top=bY+'px'; fw.style.left=wX+'px'; fw.style.top=wY+'px'; return; }
+    if(dragging){ ball.style.left=bX+'px'; ball.style.top=bY+'px'; fw.style.left=wX+'px'; fw.style.top=wY+'px'; }
+    else { ball.style.left='0px'; ball.style.top='0px'; fw.style.left='0px'; fw.style.top='0px'; } }
+  function sizeWin(){ if(!EMB||!open) return; const fb=document.getElementById('fwbody');
+    fw.style.width=Math.min(320,Math.max(260,TVW()-8))+'px'; fw.style.maxHeight='none'; fw.style.height='auto'; if(fb) fb.style.maxHeight='none';
+    const nat=fw.offsetHeight, cap=Math.round(TVH()*0.82), h=Math.min(nat,cap);
+    fw.style.height=h+'px'; if(fb) fb.style.maxHeight=(h-30)+'px'; }
+  function geom(drag){ return {open:open, x:open?wX:bX, y:open?wY:bY, w:open?(fw.offsetWidth||452):56, h:open?(fw.offsetHeight||320):56, dragging:drag?1:0}; }
+  /* 11-23 v3: 同源直控主机iframe #zuotJL —— index.html只需一次性放一行iframe, 以后改面板只传zuot.html */
+  function pushGeom(drag){ if(!EMB) return;
+    let f=null; try{ f=window.parent&&window.parent.document.getElementById('zuotJL'); }catch(e){}
+    if(!f) return; const g=geom(drag);
+    f.style.cssText='position:fixed;left:'+g.x+'px;top:'+g.y+'px;width:'+g.w+'px;height:'+g.h+'px;border:0;z-index:2147483000;background:transparent'; }
+  window.__ztGeom=pushGeom;
   function save(){ try{ localStorage.setItem('tpanel_fwf',JSON.stringify(open));
-    localStorage.setItem('tpanel_ball',JSON.stringify({x:parseInt(ball.style.left),y:parseInt(ball.style.top)}));
-    localStorage.setItem('tpanel_fwpos',JSON.stringify({x:parseInt(fw.style.left),y:parseInt(fw.style.top)})); }catch(e){} }
-  function apply(){ fw.style.display=open?'':'none'; ball.style.display=open?'none':''; }
-  function toggle(){ open=!open; if(!open){ const [x,y]=clampBall(parseInt(ball.style.left),parseInt(ball.style.top)); ball.style.left=x+'px'; ball.style.top=y+'px'; } save(); apply(); }
+    localStorage.setItem('tpanel_ball',JSON.stringify({x:bX,y:bY}));
+    localStorage.setItem('tpanel_fwpos',JSON.stringify({x:wX,y:wY})); }catch(e){} pushGeom(false); }
+  function apply(){ fw.style.display=open?'':'none'; ball.style.display=open?'none':''; render(); pushGeom(false); }
+  function toggle(){ open=!open; if(open) sizeWin(); if(!open){ const [x,y]=clampBall(bX,bY); bX=x; bY=y; } save(); apply(); }
   function drag(el,target,tapToggle){
     el.style.touchAction='none';
     el.addEventListener('pointerdown',e=>{
       if(e.target.closest('button')||e.target.closest('[data-fill],[data-role],.pb,.pr,input,select,button')) return;
       e.preventDefault();
-      const sx=e.clientX, sy=e.clientY, r=target.getBoundingClientRect(); const ox=r.left, oy=r.top;
-      let moved=false;
-      const mv=ev=>{ const dx=ev.clientX-sx, dy=ev.clientY-sy;
+      const sx=e.screenX, sy=e.screenY; const isFw=(target===fw);
+      const ox=isFw?wX:bX, oy=isFw?wY:bY; let moved=false;
+      if(EMB){ dragging=true; pushGeom(true); }
+      const mv=ev=>{ const dx=ev.screenX-sx, dy=ev.screenY-sy;
         if(Math.abs(dx)+Math.abs(dy)>6) moved=true;
-        if(moved){ target.style.left=Math.max(2,Math.min(innerWidth-(target.offsetWidth||56)-2,ox+dx))+'px';
-          target.style.top=Math.max(2,Math.min(innerHeight-(target.offsetHeight||56)-2,oy+dy))+'px'; } };
+        if(moved){ const nx=Math.max(2,Math.min(VW()-(target.offsetWidth||56)-2,ox+dx));
+          const ny=Math.max(2,Math.min(VH()-(target.offsetHeight||56)-2,oy+dy));
+          if(isFw){wX=nx;wY=ny}else{bX=nx;bY=ny}
+          target.style.left=nx+'px'; target.style.top=ny+'px';
+          if(EMB) pushGeom(true); } };
       const up=()=>{ removeEventListener('pointermove',mv); removeEventListener('pointerup',up);
+        if(EMB){ dragging=false;
+          if(isFw){ const [x,y]=clampFw(wX,wY); wX=x; wY=y; } else { const [x,y]=clampBall(bX,bY); bX=x; bY=y; }
+          render(); save(); }
         if(moved) save(); else if(tapToggle) toggle(); };
       addEventListener('pointermove',mv); addEventListener('pointerup',up); });
   }
   drag(ball,ball,true);                       /* 球：拖动换位，单击开/关 */
   drag(document.getElementById('fwhd'),fw,false);  /* 窗头：拖动换位 */
   document.getElementById('fwmin').onclick=toggle;
+  addEventListener('resize',()=>{ try{ const [bx,by]=clampBall(bX,bY); const [fx,fy]=clampFw(wX,wY); bX=bx; bY=by; wX=fx; wY=fy;
+    if(EMB&&open) sizeWin(); render(); save(); }catch(e){} });
+  if(EMB&&open) sizeWin();
   apply();
 })();
+</script><script>
+/* ================= 11-23 v3 功能包(运行时层, 不动原渲染) ================= */
+/* 1撤灰线(已发生不挂图,标签保留) 2右缘只留结构标 3复盘自动记录(价×来源×时间,持久) 4共振各归各卡(W5视图画线+全卡行价命中高亮) 5BOLL三轨(15分BOLL20±2σ实算) 6窗宽三档 7日共振实时(jl_reso_near_v1) 8日波段实时钩子(jl_wave_near_v1) */
+(function(){
+'use strict';
+var $w=function(s){return document.querySelector(s)}, $$w=function(s){return [].slice.call(document.querySelectorAll(s))};
+var f2=function(x){return (Math.round(parseFloat(x)*100)/100).toFixed(2)};
+var nowHM=function(){var d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)};
+function gW(){ try{ return (typeof W5_ALL!=='undefined')?W5_ALL:[] }catch(e){ return [] } }
+function gR(){ try{ return (typeof W5_REVS!=='undefined')?W5_REVS:[] }catch(e){ return [] } }
+var MAPS_FB={五日:[179.4815,18.78,16.5185,21.92,210],尺A:[200.9091,19.20,19.0909,20.20,230],尺B:[200.9091,19.20,19.0909,20.92,230],下拉:[200.9091,19.00,19.0909,20.20,230],BOLL:[202.5926,19.11,17.4074,21.27,230]};
+function gM(){ try{ if(typeof MAPS!=='undefined'&&MAPS&&MAPS.BOLL) return MAPS }catch(e){} return MAPS_FB; }
+function gKL(){ try{ return (typeof TRI_D!=='undefined'&&TRI_D['15分'])?TRI_D['15分'].kl:[] }catch(e){ return [] } }
+
+/* 1 撤灰线 */
+function doneSet(){ var s={}; try{(JSON.parse(localStorage.getItem('tpanel_rev_v1')||'[]')).forEach(function(r){s[f2(r.px)]=1})}catch(e){}
+  gW().forEach(function(it){ if(it.d) s[f2(it.p)]=1 }); return s; }
+function hideDoneLines(){ var ds=doneSet();
+  $$w('.w5 .ov').forEach(function(g){ var px=f2(parseFloat(g.getAttribute('data-fill')));
+    if(ds[px]){ [].slice.call(g.querySelectorAll('line')).forEach(function(l){ if((l.getAttribute('stroke')||'').indexOf('rgba(0,0,0,0)')<0) l.style.display='none'; }); } }); }
+
+/* 2 右缘只留结构标 */
+function pruneRightEdge(){ $$w('.w5 svg text').forEach(function(t){ var x=parseFloat(t.getAttribute('x')||'0'); if(x<300) return;
+  var txt=(t.textContent||'').trim(); if(/^\d+\.\d+$/.test(txt)) t.remove(); }); }
+
+/* 3 复盘自动记录 */
+function revArr(){ try{ return JSON.parse(localStorage.getItem('tpanel_rev_v1')||'[]') }catch(e){ return [] } }
+function renderRev(){ var box=$w('#w5rev'); if(!box) return; var arr=revArr();
+  var rows=arr.map(function(r){ return '<div style="display:flex;gap:8px;align-items:baseline;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.07)"><b style="font-size:13px;color:'+(r.side==='接'?'#4dffb4':'#ff5459')+'">'+r.px+'</b><span style="font-size:10px;color:#9aa7b3;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.src||'')+'</span><i style="font-size:10px;color:#ffb763;font-style:normal">'+(r.t||'')+'</i></div>' }).join('');
+  box.innerHTML='<div style="font-size:11px;color:#8a97a3;padding:6px 6px 2px">已发生 · 价格 × 来源卡 × 出现时间（自动记录，本地持久）</div>'+(rows||'<div style="padding:8px;color:#8a97a3">暂无自动记录（盘中价触线即记）</div>'); }
+function checkHits(){ var p=0; try{ p=NOW() }catch(e){ return } if(!p) return;
+  var arr=revArr(), ch=false;
+  gW().forEach(function(it){ if(it.d) return;
+    var hit = (it.k.indexOf('卖')===0) ? p>=it.p : p<=it.p;
+    if(hit && !arr.some(function(a){return f2(a.px)===f2(it.p)})){ it.d=true;
+      arr.unshift({lab:'五日 '+it.k, px:f2(it.p), t:nowHM(), src:it.src, side:it.k.indexOf('卖')===0?'卖':'接'}); ch=true; } });
+  if(ch){ try{ localStorage.setItem('tpanel_rev_v1',JSON.stringify(arr.slice(0,200))) }catch(e){} }
+  renderRev(); hideDoneLines(); }
+
+/* 4 共振各归各卡: W5 视图内画线 + 全卡行价命中高亮 */
+function priceToY(m,p){ var y0=m[0],p0=m[1],y1=m[2],p1=m[3]; return y0+(p0-p)/(p0-p1)*(y1-y0); }
+function curView(){ var b=$w('#w5chips button.on'); return b?b.getAttribute('data-c'):'五日'; }
+function drawViewOv(){ var svg=$w('.w5 svg'), M=gM(); if(!svg||!M) return;
+  $$w('.w5 svg .xov').forEach(function(g){g.remove()});
+  var c=curView(); var m=M[c]; if(!m) return;
+  gW().filter(function(it){ return !it.d && (it.src||'').indexOf(c)>=0 }).forEach(function(it){
+    var y=priceToY(m,it.p), sell=it.k.indexOf('卖')===0;
+    var g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','xov');
+    g.innerHTML='<line x1="40" x2="316" y1="'+y+'" y2="'+y+'" stroke="'+(sell?'#ff5459':'#4dffb4')+'" stroke-width="1.1" stroke-dasharray="5 3" opacity=".92"/><text x="43" y="'+(y-3)+'" font-size="8.5" font-weight="600" fill="'+(sell?'#ffb3b6':'#b8ffd9')+'">'+it.k+' ×'+it.w+'</text>';
+    svg.appendChild(g); }); }
+function markRows(){ var want={}; gW().forEach(function(it){ want[f2(it.p)]=it; });
+  $$w('#fwbody *').forEach(function(el){
+    if(el.children.length||el.getAttribute('data-xw')) return; var t=f2(el.textContent); if(!/\d/.test(t)) return; var it=want[t]; if(!it) return;
+    el.setAttribute('data-xw','1'); var sell=it.k.indexOf('卖')===0;
+    el.style.boxShadow='inset 3px 0 0 '+(sell?'#ff5459':'#4dffb4'); el.style.paddingLeft='5px';
+    el.setAttribute('title','共振 '+it.k+'×'+it.w+' · '+it.src); }); }
+
+/* 5 BOLL 三轨: 15分 BOLL(20,2σ) 由K线实算, 画进 BOLL 视图 + 尾标 */
+function drawBoll(){ var M=gM(), m=M&&M.BOLL, svg=$w('.w5 svg'), kl=gKL(); if(!m||!svg||kl.length<21) return;
+  var up=[],mid=[],lo=[],LU,LM,LL,n=kl.length;
+  for(var i=19;i<n;i++){ var s=0,s2=0; for(var k=i-19;k<=i;k++){ var c=kl[k][4]; s+=c; s2+=c*c; }
+    var mu=s/20, sd=Math.sqrt(Math.max(0,s2/20-mu*mu)), u=mu+2*sd, l=mu-2*sd;
+    var X=40+(i-19)/(n-20)*276; up.push(X+','+priceToY(m,u)); mid.push(X+','+priceToY(m,mu)); lo.push(X+','+priceToY(m,l));
+    if(i===n-1){ LU=u; LM=mu; LL=l; } }
+  var g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','xov xb');
+  g.innerHTML='<polyline points="'+up.join(' ')+'" fill="none" stroke="#ff5459" stroke-width=".9" opacity=".8"/>'+
+   '<polyline points="'+mid.join(' ')+'" fill="none" stroke="#ffb763" stroke-width=".9" opacity=".8"/>'+
+   '<polyline points="'+lo.join(' ')+'" fill="none" stroke="#4dffb4" stroke-width=".9" opacity=".8"/>'+
+   '<text x="316" y="'+priceToY(m,LU)+'" font-size="8.5" fill="#ff9ea2" text-anchor="end">上轨 '+f2(LU)+'</text>'+
+   '<text x="316" y="'+(priceToY(m,LM)+9)+'" font-size="8.5" fill="#ffd9a0" text-anchor="end">中轨 '+f2(LM)+'</text>'+
+   '<text x="316" y="'+priceToY(m,LL)+'" font-size="8.5" fill="#9effcf" text-anchor="end">下轨 '+f2(LL)+'</text>';
+  svg.appendChild(g); }
+
+/* 6 窗宽三档 280/340/全宽 */
+function addWidthBtn(){ var hd=$w('#fwhd'); if(!hd||$w('#fww')) return;
+  var fw=$w('#fw'); if(!fw) return;
+  var W=[280,340,Math.min(430,(window.top&&window.top.innerWidth||window.innerWidth||390)-8)], wi=0;
+  var b=document.createElement('button'); b.id='fww'; b.textContent='宽';
+  b.style.cssText='margin-left:auto;background:none;border:1px solid rgba(255,255,255,.3);color:#eaf0f8;border-radius:7px;font-size:10px;padding:2px 7px';
+  b.onclick=function(ev){ ev.stopPropagation(); wi=(wi+1)%W.length; fw.style.width=W[wi]+'px'; b.textContent='宽·'+W[wi];
+    try{ window.__ztGeom&&window.__ztGeom(false) }catch(e){} };
+  hd.appendChild(b); }
+
+/* 7 日共振实时(作战屏 jl_reso.js 写 jl_reso_near_v1) 8 日波段实时钩子 */
+function resoFresh(r){ if(!r||!r.levels||!r.levels.length) return false; try{
+  var d=new Date(), ymd=''+d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  if(r.pd && String(r.pd).indexOf(ymd)<0 && String(r.pd).indexOf('-')<0) return false; }catch(e){}
+  return true; }
+function resoLive(){ var r=null; try{ r=JSON.parse(localStorage.getItem('jl_reso_near_v1')||'null') }catch(e){}
+  if(!resoFresh(r)) return;
+  (r.levels||[]).forEach(function(L){ gW().forEach(function(it){ if(f2(it.p)===f2(L.p)){ it.w=L.n||it.w; if(L.srcs&&L.srcs.length) it.src=L.srcs.join(' · '); if(L.hit) it.d=true; } }); });
+  checkHits(); drawViewOv(); markRows(); }
+function waveLive(){ var w=null; try{ w=JSON.parse(localStorage.getItem('jl_wave_near_v1')||'null') }catch(e){}
+  if(w&&w.rows&&w.rows.length&&typeof console!=='undefined') console.log('[做T球] 日波段实时行:',w.rows.length); }
+
+function boot(){ var errs=[];
+  [[hideDoneLines,'灰线'],[pruneRightEdge,'右缘'],[renderRev,'复盘'],[checkHits,'触线'],[drawViewOv,'视图线'],[markRows,'行标'],[drawBoll,'BOLL'],[addWidthBtn,'宽钮'],[resoLive,'共振实时'],[waveLive,'波段钩子']].forEach(function(p){
+    try{ p[0]() }catch(e){ errs.push(p[1]+':'+(e&&e.message||e)) } });
+  if(errs.length&&typeof console!=='undefined') console.warn('[做T球v3] 部分功能未启:',errs.join(' | ')); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+try{ $w('#w5chips').addEventListener('click',function(){ setTimeout(function(){ try{ drawViewOv(); markRows(); }catch(e){} },0) }); }catch(e){}
+window.addEventListener('storage',function(ev){ if(!ev.key) return; if(ev.key==='jl_reso_near_v1') resoLive(); if(ev.key==='jl_wave_near_v1') waveLive(); });
+setInterval(function(){ try{ checkHits() }catch(e){} }, 15000);
+})();
+
 </script></body></html>
