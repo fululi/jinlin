@@ -152,10 +152,11 @@
   function gridLines(g, T, Bt, yv, lv, D, i0, N, xF) {
     for (var k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + xF(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
   }
+    function bigOn() { try { return localStorage.getItem('zp_huo_big_v1') === '1'; } catch (e) { return false; } }
   function drawSec1(el, R, bars, lv, cap) {
     var N = Math.min(90, R.n), i0 = R.n - N, D = labels(bars, lv);
     var peak = Math.max(12, pct95(R.J2.concat(R.J1)) * 1.25);
-    var T = 5, Bt = 88, Hh = 100, cw = (WD - PL - PR) / N;
+    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N;
     var X = function (k) { return PL + cw * (k + 0.5); };
     var Y = function (v) { return T + (peak - Math.min(v, peak)) / peak * (Bt - T); };
     var g = [];
@@ -181,7 +182,7 @@
   }
   function drawSec2(el, R, bars, lv) {
     var N = Math.min(90, R.n), i0 = R.n - N, D = labels(bars, lv);
-    var T = 5, Bt = 88, Hh = 100, cw = (WD - PL - PR) / N, vmax = 135, vmin = -5;
+    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N, vmax = 135, vmin = -5;
     var X = function (k) { return PL + cw * (k + 0.5); };
     var Y = function (v) { return T + (vmax - Math.min(Math.max(v, vmin), vmax)) / (vmax - vmin) * (Bt - T); };
     var g = [];
@@ -241,7 +242,7 @@
     if (!st || !st.R || i < 0 || i >= st.R.n) return;
     var N = Math.min(90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
     var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
-    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="93" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
     ['s1', 's2'].forEach(function (sk) {
       var sv = st[sk] && st[sk].querySelector('svg'); if (!sv) return;
       var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln;
@@ -380,5 +381,5 @@
     return host;
   }
 
-  W.JLSx = { version: 'v1.2', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
+  W.JLSx = { version: 'v1.3', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
 })(window);
