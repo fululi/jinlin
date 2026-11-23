@@ -10,7 +10,7 @@
 (function (g) {
   var NS = 'http://www.w3.org/2000/svg';
   function E(n, a, t) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; }
-  var NAME = { hst: '头肩顶', hsb: '头肩底', tra: '上升三角', trd: '下降三角', trs: '对称三角', gar: 'Gartley', bat: 'Bat', bfl: 'Butterfly', crb: 'Crab', cup: '杯柄', icp: '倒杯柄', rwg: '上升楔形', fwg: '下降楔形', chu: '上升通道', chd: '下降通道', dtp: '双顶', dbm: '双底' };
+  var NAME = { hst: '头肩顶', hsb: '头肩底', tra: '上升三角', trd: '下降三角', trs: '对称三角', gar: 'Gartley', bat: 'Bat', bfl: 'Butterfly', crb: 'Crab', jtri: '三角', box: '箱体', flg: '旗形', bi: '笔', cup: '杯柄', icp: '倒杯柄', rwg: '上升楔形', fwg: '下降楔形', chu: '上升通道', chd: '下降通道', dtp: '双顶', dbm: '双底' };
   var UP = '#ff4757', DN = '#1ee3a0', NE = '#ffe58f';   /* 红=预期往上(涨) 绿=预期往下 黄=中性 */
 
   function within(v, a, b, tol) { return v >= a - tol && v <= b + tol; }
@@ -89,6 +89,7 @@
       if (n >= 4) { var tl = twoLine(sub.slice(-4), Q); if (tl) got.push(tl); }
       if (n >= 3) { var db = dbl(sub.slice(-3)); if (db) got.push(db); }
       got.forEach(function (r) {
+        if (/^(tra|trd|trs|chu|chd)$/.test(r.k)) return;   /* 11-23d 旧三角换 jl_tri.js(extra); 通道和「═」干草叉/浪通道重复, 删 */
         var xs = (r.pts ? r.pts.map(function (m) { return m.x; }) : r.H.concat(r.L).map(function (m) { return m.x; }));
         var span = (Math.max.apply(null, xs) - Math.min.apply(null, xs)) / slot / bpd, cap = { gar: 8, bat: 8, bfl: 8, crb: 8, cup: 10, icp: 10, rwg: 8, fwg: 8, chu: 8, chd: 8, dtp: 8, dbm: 8 }[r.k];
         if (cap && span > cap) return;
@@ -136,6 +137,26 @@
       poly([P[0], P[1], P[2]], col, .16); poly([P[2], P[3], P[4]], col, .16);
       path(P, .8);
       line(P[0][0], P[0][1], P[2][0], P[2][1], .5, .6); line(P[1][0], P[1][1], P[3][0], P[3][1], .5, .6); line(P[1][0], P[1][1], P[4][0], P[4][1], .5, .6);
+    } else if (r.k === 'jtri') {   /* 11-23d 三角(K线表同款): 斜边橙 + 平底/平顶绿 + 碰点小圈 + 破了 BOS 小字 */
+      var T = r.T, CC = r.C, xi = function (i) { return CC[Math.max(0, Math.min(CC.length - 1, i))].x; }, sp = function (i) { return T.top[1] + T.slope * (i - T.a); };
+      var OR = '#ff9a3c', GR = '#2fe39b', i0 = T.touch && T.touch.length ? Math.min(T.a, T.touch[0]) : T.a;
+      grp.setAttribute('opacity', 1);
+      poly([[xi(T.a), Y(sp(T.a))], [xi(r.iE), Y(sp(r.iE))], [xi(r.iE), Y(T.flat)], [xi(i0), Y(T.flat)]], OR, .08);
+      grp.appendChild(E('line', { x1: xi(T.a), y1: Y(sp(T.a)), x2: xi(r.iE), y2: Y(sp(r.iE)), stroke: OR, 'stroke-width': .9 }));
+      grp.appendChild(E('line', { x1: xi(i0), y1: Y(T.flat), x2: xi(r.iE), y2: Y(T.flat), stroke: GR, 'stroke-width': .9 }));
+      (T.touch || []).forEach(function (i) { grp.appendChild(E('circle', { cx: xi(i), cy: Y(T.flat), r: 2, fill: 'none', stroke: GR, 'stroke-width': .8 })); });
+      if (T.brkDir && T.at >= 0) { var yb = Y(T.brkDir > 0 ? sp(T.at) : T.flat); grp.appendChild(E('text', { x: xi(T.at) + 3, y: T.brkDir > 0 ? yb - 3 : yb + 9, fill: '#ffe14d', 'font-size': 7.5, 'font-weight': 400 }, 'BOS')); }
+    } else if (r.k === 'box') {   /* 11-23d 箱体: 黄虚线框 */
+      grp.setAttribute('opacity', 1);
+      grp.appendChild(E('rect', { x: r.x0, y: Y(r.top), width: Math.max(1, r.x1 - r.x0), height: Math.max(1, Y(r.bot) - Y(r.top)), fill: '#ffe14d', 'fill-opacity': .06, stroke: '#ffe14d', 'stroke-width': .8, 'stroke-dasharray': '3 2' }));
+    } else if (r.k === 'flg') {   /* 11-23d 旗形: 旗杆白虚线 + 上下沿白细线 */
+      grp.setAttribute('opacity', 1);
+      grp.appendChild(E('line', { x1: r.a.x, y1: Y(r.a.p), x2: r.b.x, y2: Y(r.b.p), stroke: '#fff', 'stroke-width': .7, opacity: .6, 'stroke-dasharray': '2 2' }));
+      grp.appendChild(E('line', { x1: r.b.x, y1: Y(r.uH(r.b.x)), x2: r.x1, y2: Y(r.uH(r.x1)), stroke: '#fff', 'stroke-width': .8, opacity: .85 }));
+      grp.appendChild(E('line', { x1: r.b.x, y1: Y(r.uL(r.b.x)), x2: r.x1, y2: Y(r.uL(r.x1)), stroke: '#fff', 'stroke-width': .8, opacity: .85 }));
+    } else if (r.k === 'bi') {   /* 11-23d 笔: 青细折线 */
+      grp.setAttribute('opacity', .7);
+      path(r.pts.map(function (m) { return [m.x, Y(m.p)]; }), .7); grp.lastChild.setAttribute('stroke', '#4ff0ff');
     } else if (r.k === 'cup' || r.k === 'icp') {
       var L = r.pts[0], C = r.pts[1], R = r.pts[2], H = r.pts[3];
       var cy = 2 * Y(C.p) - (Y(L.p) + Y(R.p)) / 2;   /* 二次曲线控制点: 曲线正好过杯底 */
@@ -157,7 +178,8 @@
     var W = C[2] - C[0], spanOf = function (r) { var xs = (r.pts ? r.pts : r.H.concat(r.L)).map(function (m) { return m.x; }); return [Math.min.apply(null, xs), Math.max.apply(null, xs)]; };
     var keep = [], hist = 0;
     list.slice().sort(function (a, b) { return (b.live ? 1 : 0) - (a.live ? 1 : 0) || b.n - a.n; }).forEach(function (r) {
-      var sp = spanOf(r); if (sp[1] - sp[0] > W * 0.45) return;
+      if (r.k === 'bi') { keep.push(r); return; }   /* 11-23d 笔贯穿全图, 不受宽度限制 */
+      var sp = spanOf(r); if (sp[1] - sp[0] > W * (/^(jtri|box|flg)$/.test(r.k) ? 0.95 : 0.45)) return;   /* 11-23d 三角(96根窗口)/箱体/旗形 放宽到整图宽 */
       if (sp[1] < C[0]) return;
       if (!r.live) { if (o.hist === false || hist >= 3) return; if (keep.some(function (q) { var s2 = spanOf(q); return q.k === r.k && Math.min(sp[1], s2[1]) - Math.max(sp[0], s2[0]) > 0.5 * (sp[1] - sp[0]); })) return; hist++; }
       keep.push(r);
@@ -167,5 +189,101 @@
     if (o.before && o.before.parentNode === svg) svg.insertBefore(g, o.before); else svg.appendChild(g);
     return list;
   }
-  g.ZpShapes = { scan: scan, draw: draw, NAME: NAME, harmonic: harmonic, cup: cup };
+
+  /* ===== 11-23d 用户「三角换K线表那套 / 加笔·旗形·箱体 / 通道重复的删 / 图上不写名字」 =====
+     三角 = jl_tri.js 平底/平顶(口径B, 和K线表 triDetect 同一个函数同窗口: 1/5分 96根·8根, 15/30/60分 64根·6根, 日 30根·4根)
+     箱体 = 最近4~8个转折点, 高点都在顶部1/4、低点都在底部1/4, 期间收盘不出框; 高度 0.4%~8%
+     旗形 = 一段急涨/急跌(≥2.2倍近30段中位幅, 且≥1.2%)当旗杆, 之后≥3个转折点回撤≤一半、上下沿逆势或走平且大致平行
+     笔   = 缠论简化: 包含K线合并 → 顶/底分型 → 顶底交替且中间≥4根(合并后) 才成一笔
+     只画线不写字, 不进买卖算法, 没回测 */
+  function triJ(C, per) {
+    if (!g.JLTri || !C || C.length < 20) return null;
+    var W = 96, mb = 8; if (per >= 15 && per <= 60) { W = 64; mb = 6; } else if (per > 60) { W = 30; mb = 4; }
+    var r = g.JLTri(C.map(function (c) { return [c.key || '', c.o, c.h, c.l, c.c]; }), W, { minBars: mb });
+    if (!r || r.kind === 'none' || !C[r.a]) return null;
+    var iE = r.at >= 0 ? r.at : C.length - 1;
+    return { k: 'jtri', T: r, C: C, iE: iE, pts: [{ x: C[r.a].x, p: r.top[1] }, { x: C[iE].x, p: r.flat }], live: true, n: 1e6 };
+  }
+  function boxF(S, C) {
+    if (!S || S.length < 4 || !C || C.length < 12) return null;
+    var lastX = C[C.length - 1].x;
+    for (var k = Math.min(8, S.length); k >= 4; k--) {
+      var R = S.slice(-k), H = R.filter(function (m) { return m.h === 1; }), L = R.filter(function (m) { return m.h === 0; });
+      if (H.length < 2 || L.length < 2) continue;
+      var top = Math.max.apply(null, H.map(function (m) { return m.p; })), bot = Math.min.apply(null, L.map(function (m) { return m.p; })), hg = top - bot;
+      if (!(hg > 0) || hg / bot < 0.004 || hg / bot > 0.08) continue;
+      if (H.some(function (m) { return m.p < top - 0.15 * hg; }) || L.some(function (m) { return m.p > bot + 0.15 * hg; })) continue;
+      if (Math.abs(H[H.length - 1].p - H[0].p) > 0.15 * hg || Math.abs(L[L.length - 1].p - L[0].p) > 0.15 * hg) continue;   /* 上下沿要走平, 斜的算通道/旗形 */
+      var x0 = R[0].x, x1 = R[R.length - 1].x, inC = C.filter(function (c) { return c.x >= x0 && c.x <= x1; });
+      if (inC.length < 12 || inC.some(function (c) { return c.c > top + 0.08 * hg || c.c < bot - 0.08 * hg; })) continue;
+      var brk = null; C.some(function (c) { if (c.x <= x1) return false; if (c.c > top * 1.001) { brk = { x: c.x, d: 1 }; return true; } if (c.c < bot * 0.999) { brk = { x: c.x, d: -1 }; return true; } return false; });
+      var xe = brk ? brk.x : lastX;
+      return { k: 'box', top: top, bot: bot, x0: x0, x1: xe, brk: brk, pts: [{ x: x0, p: top }, { x: xe, p: bot }], live: true, n: 1e6 };
+    }
+    return null;
+  }
+  function flagF(S, C) {
+    if (!S || S.length < 6 || !C || !C.length) return null;
+    var lastX = C[C.length - 1].x, lg = [];
+    for (var i0 = Math.max(1, S.length - 30); i0 < S.length; i0++) lg.push(Math.abs(S[i0].p - S[i0 - 1].p) / S[i0 - 1].p);
+    lg.sort(function (u, v) { return u - v; }); var md = lg[lg.length >> 1] || 0;
+    for (var i = S.length - 4; i >= Math.max(1, S.length - 8); i--) {
+      var a = S[i - 1], b = S[i], up = b.p > a.p, pole = Math.abs(b.p - a.p);
+      if (!(pole / a.p >= Math.max(2.2 * md, 0.012))) continue;
+      var R = S.slice(i); if (R.length < 4) continue;
+      var ps = R.map(function (m) { return m.p; }), ext = up ? Math.min.apply(null, ps) : Math.max.apply(null, ps);
+      if (Math.abs(b.p - ext) > 0.5 * pole) continue;
+      if (R.some(function (m) { return up ? m.p > b.p + 0.15 * pole : m.p < b.p - 0.15 * pole; })) continue;
+      var H = R.filter(function (m) { return m.h === 1; }), L = R.filter(function (m) { return m.h === 0; }); if (H.length < 2 || L.length < 2) continue;
+      var dx = function (u, v) { return (v.x - u.x) || 1e-9; }, kH = (H[H.length - 1].p - H[0].p) / dx(H[0], H[H.length - 1]), kL = (L[L.length - 1].p - L[0].p) / dx(L[0], L[L.length - 1]);
+      var eps = 0.15 * pole / Math.max(1, R[R.length - 1].x - b.x);
+      if (up ? (kH > eps || kL > eps) : (kH < -eps || kL < -eps)) continue;
+      if (up ? !(kH < -0.5 * eps || kL < -0.5 * eps) : !(kH > 0.5 * eps || kL > 0.5 * eps)) continue;   /* 至少一条沿逆势倾斜, 全平的归箱体 */
+      var uH = function (x) { return H[0].p + kH * (x - H[0].x); }, uL = function (x) { return L[0].p + kL * (x - L[0].x); }, w0 = uH(b.x) - uL(b.x), w1 = uH(lastX) - uL(lastX);
+      if (!(w0 > 0 && w1 > 0) || w1 / w0 < 0.5 || w1 / w0 > 2) continue;
+      return { k: 'flg', up: up, a: a, b: b, uH: uH, uL: uL, x1: lastX, pts: [{ x: a.x, p: a.p }, { x: lastX, p: b.p }], live: true, n: 1e6 };
+    }
+    return null;
+  }
+  function biF(C) {
+    if (!C || C.length < 12) return null;
+    var M = [];
+    C.slice(-400).forEach(function (c) {
+      var m = { h: c.h, l: c.l, xh: c.x, xl: c.x }, p = M[M.length - 1];
+      if (p && ((m.h <= p.h && m.l >= p.l) || (m.h >= p.h && m.l <= p.l))) {
+        var pp = M[M.length - 2], upD = !pp || p.h >= pp.h;
+        if (upD) { if (m.h >= p.h) { p.h = m.h; p.xh = m.xh; } if (m.l > p.l) { p.l = m.l; p.xl = m.xl; } }
+        else { if (m.l <= p.l) { p.l = m.l; p.xl = m.xl; } if (m.h < p.h) { p.h = m.h; p.xh = m.xh; } }
+        return;
+      }
+      M.push(m);
+    });
+    var F = [];
+    for (var i = 1; i < M.length - 1; i++) {
+      if (M[i].h > M[i - 1].h && M[i].h > M[i + 1].h) F.push({ t: 1, i: i, p: M[i].h, x: M[i].xh });
+      else if (M[i].l < M[i - 1].l && M[i].l < M[i + 1].l) F.push({ t: 0, i: i, p: M[i].l, x: M[i].xl });
+    }
+    var B = [];
+    F.forEach(function (f) {
+      var q = B[B.length - 1];
+      if (!q) { B.push(f); return; }
+      if (f.t === q.t) { if (f.t ? f.p > q.p : f.p < q.p) B[B.length - 1] = f; return; }
+      if (f.i - q.i < 4) return;
+      if (f.t ? f.p <= q.p : f.p >= q.p) return;
+      B.push(f);
+    });
+    if (B.length < 3) return null;
+    return { k: 'bi', pts: B.map(function (f) { return { x: f.x, p: f.p }; }), live: true, n: 1e6 };
+  }
+  /* extra(C=[{o,h,l,c,x,key}], S=转折点[{p,h,x}], {per}) → 新形态列表, 和 scan 的结果合并后交给 draw */
+  function extra(C, S, o) {
+    var out = []; o = o || {};
+    [function () { return boxF(S, C); }, function () { return triJ(C, o.per || 0); }, function () { return flagF(S, C); }, function () { return biF(C); }].forEach(function (f) { try { var r = f(); if (r) out.push(r); } catch (e) { } });
+    /* 去重(用户「有重复的删掉」): 同一段走势 箱体 > 三角 > 旗形, 后面的和前面的横向重叠过半就不画 */
+    var spn = function (r) { return [Math.min(r.pts[0].x, r.pts[r.pts.length - 1].x), Math.max(r.pts[0].x, r.pts[r.pts.length - 1].x)]; }, kept = [];
+    out.forEach(function (r) { if (r.k === 'bi') { kept.push(r); return; } var a = spn(r), w = Math.max(1e-9, a[1] - a[0]);
+      if (kept.some(function (q) { if (q.k === 'bi') return false; var b = spn(q); return Math.min(a[1], b[1]) - Math.max(a[0], b[0]) > 0.5 * w; })) return; kept.push(r); });
+    return kept;
+  }
+  g.ZpShapes = { extra: extra, scan: scan, draw: draw, NAME: NAME, harmonic: harmonic, cup: cup };
 })(window);
