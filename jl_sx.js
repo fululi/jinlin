@@ -154,7 +154,7 @@
   }
     function bigOn() { try { return localStorage.getItem('zp_huo_big_v1') === '1'; } catch (e) { return false; } }
   function drawSec1(el, R, bars, lv, cap) {
-    var N = Math.min(90, R.n), i0 = R.n - N, D = labels(bars, lv);
+    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
     var peak = Math.max(12, pct95(R.J2.concat(R.J1)) * 1.25);
     var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N;
     var X = function (k) { return PL + cw * (k + 0.5); };
@@ -181,7 +181,7 @@
     el.__g = { N: N, i0: i0, cw: cw, PL: PL, W: WD, T: T, Bt: Bt, R: R, D: D, sec: 1 };
   }
   function drawSec2(el, R, bars, lv) {
-    var N = Math.min(90, R.n), i0 = R.n - N, D = labels(bars, lv);
+    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
     var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N, vmax = 135, vmin = -5;
     var X = function (k) { return PL + cw * (k + 0.5); };
     var Y = function (v) { return T + (vmax - Math.min(Math.max(v, vmin), vmax)) / (vmax - vmin) * (Bt - T); };
@@ -240,9 +240,18 @@
   }
   function xhDraw(st, i) {
     if (!st || !st.R || i < 0 || i >= st.R.n) return;
-    var N = Math.min(90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
+    var N = Math.min(W.__zpHuoN || 90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
     var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
-    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
+    /* v1.5: 完整十字线 —— 竖线 + 各窗指标值高度横线 + 右缘值标签 */
+    var pk1 = Math.max(12, pct95(R.J2.concat(R.J1)) * 1.25);
+    var y1 = 5 + (pk1 - Math.min(R.J2[i0 + k], pk1)) / pk1 * (88 - 5);
+    var y2v = 5 + (135 - Math.min(Math.max(R.中[i0 + k], -5), 135)) / 140 * (88 - 5);
+    var lab1 = R.J2[i0 + k].toFixed(1), lab2 = R.中[i0 + k].toFixed(1);
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
+      + '<line x1="24" x2="356" y1="' + y1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="rgba(0,255,0,.45)" stroke-width=".7"/>'
+      + '<text x="354" y="' + (y1 - 2).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#7dff7d">' + lab1 + '</text>'
+      + '<line x1="24" x2="356" y1="' + y2v.toFixed(1) + '" y2="' + y2v.toFixed(1) + '" stroke="rgba(255,204,0,.45)" stroke-width=".7"/>'
+      + '<text x="354" y="' + (y2v + 8).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#ffd66e">' + lab2 + '</text>';
     ['s1', 's2'].forEach(function (sk) {
       var sv = st[sk] && st[sk].querySelector('svg'); if (!sv) return;
       var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln;
@@ -277,7 +286,7 @@
         if (!st.R) return;
         var sv = el.querySelector('svg'); if (!sv) return;
         var r = sv.getBoundingClientRect(); if (!r.width) return;
-        var N = Math.min(90, st.R.n), i0 = st.R.n - N, cw = (380 - 24 - 3) / N;
+        var N = Math.min(W.__zpHuoN || 90, st.R.n), i0 = st.R.n - N, cw = (380 - 24 - 3) / N;
         var x = (e.clientX - r.left) / r.width * 380;
         var k = Math.max(0, Math.min(N - 1, Math.floor((x - 24) / cw)));
         xhDraw(st, i0 + k);
@@ -381,5 +390,5 @@
     return host;
   }
 
-  W.JLSx = { version: 'v1.3', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
+  W.JLSx = { version: 'v1.5', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
 })(window);

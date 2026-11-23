@@ -1,4 +1,5 @@
-/* jl_huo.js v6.4 (11-24) 乖离+筹码穿越+三线金坑 三合一副图: 头部指标切换【乖离|穿越|三线】+ 多周期(日/30分/15分/5分/1分)切换 + 十字线。
+/* jl_huo.js v6.5 (11-24) 乖离+筹码穿越+三线金坑 三合一副图: 头部指标切换【乖离|穿越|三线】+ 多周期(日/30分/15分/5分/1分)切换 + 十字线。
+   v6.5 新增: 指标钮再扩【阴阳|DK】 —— 阴阳=jl_hy.js v1(公式C-1 HUO/YIN柱线: YIN1±100红线+YIN2绿线+火焰红块8.8/9.8+跌停蓝块, 11-24评审版), DK=jl_dk.js v1(公式D DK能量柱: 锚昨收三重染色+SK/SD/SJ×400细线), 动态加载同目录; 两公式只依赖C/H/L不用量/股本, 喂什么周期算什么周期, 与主图K线逐根对齐(同cw同时间刻度);
    v6.4 新增: 指标钮扩展【乖离|穿越|三线|趋势|庄控】, 趋势/庄控=jl_zd.js(v1) 动态加载同目录, 公式=B公式精选(趋势+入场/准备中+庄控, 砍泛滥启明星); v6.3 ⤢放大缩小整排副图; v6.2 十字线跨图联动 —— 主图拖十字线时广播 zpSubXH(key), 本模块接住: 乖离画竖线+读数, 并转发给 jl_sx(穿越/三线跟随); v6.1 跟随作战屏分时/K线页 —— 读 window.zpPerOf()(1/5/15/30分钟), K线页自动切对应周期(含新增30分), 分时页用头部手选;
    手点头部周期钮后30秒内以手选为准。周期/指标一份存储, 切一次全联动。
    v6 改动(不动乖离公式 calc/state/画法一个数): ①头部加指标切换, 选「穿越/三线」时显示 jl_sx.js 的副图(动态加载同目录 jl_sx.js);
@@ -119,8 +120,9 @@
   }
   function chips(lv) { return '<span class="hps">' + LVS.map(function (l) { return '<button class="hp' + (l === lv ? ' on' : '') + '" data-lv="' + l + '" type="button">' + (l === '日' ? '日' : l.replace('分', '')) + '</button>'; }).join('') + '</span>'; }
   /* v6: 指标切换 【乖离|穿越|三线】 */
-  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控'], INDK = 'zp_huo_ind_v1', SXV = '?v=12', ZDV = '?v=11';
+  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK'], INDK = 'zp_huo_ind_v1', SXV = '?v=12', ZDV = '?v=15', HYV = '?v=1', DKV = '?v=1';
   function indOf() { try { var v = localStorage.getItem(INDK); if (INDS.indexOf(v) >= 0) return v; } catch (e) { } return '乖离'; }
+  function GRPOF(x) { return x === '穿越' || x === '三线' ? { m: 'JLSx', k: '__sxSt', f: 'jl_sx.js' } : x === '趋势' || x === '庄控' ? { m: 'JLZd', k: '__zdSt', f: 'jl_zd.js' } : x === '阴阳' ? { m: 'JLHy', k: '__hySt', f: 'jl_hy.js' } : { m: 'JLDk', k: '__dkSt', f: 'jl_dk.js' }; }   /* v6.5: 指标→副图模块查表 */
   function indChips(ind) { return '<span class="hps">' + INDS.map(function (t) { return '<button class="hp hi' + (t === ind ? ' on' : '') + '" data-ind="' + t + '" type="button">' + t + '</button>'; }).join('') + '</span>'; }
   var CSS = '#zpHuoJL{margin:0 0 3px;padding:4px 6px 2px;color:#fff;font:400 11px/1.35 -apple-system,"PingFang SC",ui-rounded,sans-serif;font-variant-numeric:tabular-nums}' +
     '#zpHuoJL .hh{display:flex;align-items:center;gap:7px;height:19px;white-space:nowrap;overflow:hidden}#zpHuoJL .ht{font-weight:500}' +
@@ -128,7 +130,8 @@
     '#zpHuoJL .hl{display:flex;gap:8px;font-size:10px;white-space:nowrap;overflow:hidden}#zpHuoJL svg{display:block;width:100%;height:auto;touch-action:pan-y}' +
     '#zpHuoJL.fold .hb,#zpHuoJL.fold .hl{display:none}body.injlin .chartbox>#zpHuoJL{order:1}' +
     '#zpHuoJL .hps{display:inline-flex;gap:3px;flex:none}' +
-    '#zpHuoJL .hp{background:none;border:1px solid rgba(255,255,255,.25);border-radius:6px;color:rgba(255,255,255,.7);font:400 9.5px/1.5 -apple-system,sans-serif;padding:0 5px;cursor:pointer}' +
+    '#zpHuoJL .hp{background:none;border:1px solid rgba(255,255,255,.25);border-radius:6px;color:rgba(255,255,255,.7);font:400 9.5px/1.5 -apple-system,sans-serif;padding:0 3px;cursor:pointer}' +
+    /* v6.5: 7个指标钮+5个周期钮, padding 5→3px 防头部溢出 */
     '#zpHuoJL .hp.on{border-color:#2fd17a;color:#2fd17a}' +
     /* v6: 指标钮 + sx 容器 */
     '#zpHuoJL .hi{border-color:rgba(120,200,255,.45)}#zpHuoJL .hi.on{border-color:#3d8bff;color:#7ab8ff}' +
@@ -176,6 +179,8 @@
           }
           if (W.JLSx && W.JLSx.xhKey) W.JLSx.xhKey(key);
           if (W.JLZd && W.JLZd.xhKey) W.JLZd.xhKey(key);   /* v6.4: 竖线也转发给趋势/庄控 */
+          if (W.JLHy && W.JLHy.xhKey) W.JLHy.xhKey(key);   /* v6.5: 阴阳/DK 副图跟随十字线 */
+          if (W.JLDk && W.JLDk.xhKey) W.JLDk.xhKey(key);
         } catch (e) { }
       };
     }
@@ -183,6 +188,8 @@
     if (!host.__sxSt) {
       host.__sxSt = { node: null, s1: null, s2: null, ready: false, code: '', cap: 0, which: '穿越', bars: null, lv: null };
       host.__zdSt = { node: null, s1: null, s2: null, ready: false, code: '', cap: 0, which: '趋势', bars: null, lv: null };
+      host.__hySt = { node: null, s1: null, s2: null, ready: false, code: '', cap: 0, which: '阴阳', bars: null, lv: null };   /* v6.5 */
+      host.__dkSt = { node: null, s1: null, s2: null, ready: false, code: '', cap: 0, which: 'DK', bars: null, lv: null };    /* v6.5 */
       host.__ind = indOf();
       var sx = document.createElement('script');
       sx.src = 'jl_sx.js' + SXV;
@@ -197,11 +204,29 @@
       zd.src = 'jl_zd.js' + ZDV;
       zd.onload = function () {
         try { if (!W.JLZd) return; var nd = W.JLZd.embedNode({ code: codeOf() });
-          host.__zdSt.node = nd.node; host.__zdSt.s1 = nd.s1; host.__zdSt.s2 = nd.s2; host.__zdSt.ready = true; host.__zdSt.code = nd.code;
+          host.__zdSt.node = nd.node; host.__zdSt.s1 = nd.s1; host.__zdSt.s2 = nd.s2; host.__zdSt.s3 = nd.s3; host.__zdSt.ready = true; host.__zdSt.code = nd.code;   /* v1.2: +s3 多空窗 */
         } catch (ez) { }
       };
       zd.onerror = function () { host.__zdSt = { node: null, ready: false }; };
       document.head.appendChild(zd);
+      var hy = document.createElement('script');   /* v6.5: 阴阳(jl_hy.js 公式C-1 HUO/YIN柱线) */
+      hy.src = 'jl_hy.js' + HYV;
+      hy.onload = function () {
+        try { if (!W.JLHy) return; var nd = W.JLHy.embedNode({ code: codeOf() });
+          host.__hySt.node = nd.node; host.__hySt.s1 = nd.s1; host.__hySt.s2 = nd.s2; host.__hySt.ready = true; host.__hySt.code = nd.code;
+        } catch (eh) { }
+      };
+      hy.onerror = function () { host.__hySt = { node: null, ready: false }; };
+      document.head.appendChild(hy);
+      var dk = document.createElement('script');   /* v6.5: DK能量柱(jl_dk.js 公式D) */
+      dk.src = 'jl_dk.js' + DKV;
+      dk.onload = function () {
+        try { if (!W.JLDk) return; var nd = W.JLDk.embedNode({ code: codeOf() });
+          host.__dkSt.node = nd.node; host.__dkSt.s1 = nd.s1; host.__dkSt.s2 = nd.s2; host.__dkSt.ready = true; host.__dkSt.code = nd.code;
+        } catch (ed) { }
+      };
+      dk.onerror = function () { host.__dkSt = { node: null, ready: false }; };
+      document.head.appendChild(dk);
     }
     return host;
   }
@@ -229,15 +254,15 @@
         var indM = host.__ind || indOf(); host.__ind = indM;
         host.innerHTML = '<div class="hh"><span class="ht">' + (indM === '乖离' ? '乖离 · ' + lv : indM + ' · ' + lv) + '</span>' + indChips(indM) + chips(lv) + '<button class="hf xz" type="button" aria-label="放大缩小">⤢</button><button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hh"><span class="hs">' + mb.msg + '</span></div><div class="sxbox"></div>';
         var sxbM = host.querySelector('.sxbox');
-        if (host.__sxSt && host.__sxSt.node) sxbM.appendChild(host.__sxSt.node);
-        if (indM !== '乖离') { var modM = (indM === '穿越' || indM === '三线') ? W.JLSx : W.JLZd, sttM = (indM === '穿越' || indM === '三线') ? host.__sxSt : host.__zdSt; if (modM && sttM && sttM.ready) { try { modM.feed(sttM, mb.bars || sttM.bars, lv, indM, codeOf()); } catch (e6) { } } }
+        ['sxSt', 'zdSt', 'hySt', 'dkSt'].forEach(function (kn) { if (host['__' + kn] && host['__' + kn].node) sxbM.appendChild(host['__' + kn].node); });
+        if (indM !== '乖离') { var gm = GRPOF(indM), modM = W[gm.m], sttM = host[gm.k]; if (modM && sttM && sttM.ready) { try { modM.feed(sttM, mb.bars || sttM.bars, lv, indM, codeOf()); } catch (e6) { } } }
         return;
       }
       CB = mb.bars;
     }
     var key = lv + '|' + (CB && CB.length ? CB.length + '@' + CB[CB.length - 1].t + '@' + CB[CB.length - 1].c : '0') + '|' + sess + '|' + (B && B.length ? B.length + '@' + B[B.length - 1].c : '');
     if (host.__key === key) return; host.__key = key;
-    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">' + ((host.__ind || indOf()) === '乖离' ? '日线乖离' : (host.__ind || indOf()) + ' · ' + lv) + '</span>' + indChips(host.__ind || indOf()) + chips(lv) + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div><div class="sxbox"></div>'; var sxbK = host.querySelector('.sxbox'); if (host.__sxSt && host.__sxSt.node) sxbK.appendChild(host.__sxSt.node); return; }
+    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">' + ((host.__ind || indOf()) === '乖离' ? '日线乖离' : (host.__ind || indOf()) + ' · ' + lv) + '</span>' + indChips(host.__ind || indOf()) + chips(lv) + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div><div class="sxbox"></div>'; var sxbK = host.querySelector('.sxbox'); ['sxSt', 'zdSt', 'hySt', 'dkSt'].forEach(function (kn) { if (host['__' + kn] && host['__' + kn].node) sxbK.appendChild(host['__' + kn].node); }); return; }
     host.__CB = CB;   /* v6.2: 供 zpSubXH 十字线匹配 */
     var R = calc(CB), N = Math.min(90, R.n), i0 = R.n - N, D = labels(CB, lv);
     var bigJL = (function () { try { return localStorage.getItem('zp_huo_big_v1') === '1'; } catch (eB) { return false; } })();
@@ -267,14 +292,13 @@
     host.innerHTML = '<div class="hh"><span class="ht">' + (indIsHu ? (lv === '日' ? '日线乖离' : '乖离 · ' + lv) : (ind + ' · ' + lv)) + '</span>' + (indIsHu && S ? '<span>20日线 ' + S.m20.toFixed(2) + '</span>' : '') + indChips(ind) + chips(lv) + '<span class="hs">' + st + '</span><button class="hf xz" type="button" aria-label="放大缩小">' + (bigJL ? '⤡' : '⤢') + '</button><button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hl" style="display:' + (indIsHu ? '' : 'none') + '"></div><div class="hb" style="display:' + (indIsHu ? '' : 'none') + '"><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g.join('') + '</svg></div><div class="sxbox"></div>';
     /* v6: 指标切换 —— 穿越/三线 显示 sx 区域, 与周期联动; sx 节点常驻内存, 每次重绘挪回 */
     var sxb = host.querySelector('.sxbox');
-    var isZd = ind === '趋势' || ind === '庄控';
-    if (host.__sxSt && host.__sxSt.node) sxb.appendChild(host.__sxSt.node);
-    if (host.__zdSt && host.__zdSt.node) sxb.appendChild(host.__zdSt.node);
-    if (host.__sxSt && host.__sxSt.node) host.__sxSt.node.style.display = isZd ? 'none' : '';
-    if (host.__zdSt && host.__zdSt.node) host.__zdSt.node.style.display = isZd ? '' : 'none';
+    var grp = GRPOF(ind);   /* v6.5: 查表 {m:模块全局名, k:st键名, f:文件名} —— sx/zd/hy/dk 四组常驻节点, 选中组显示其余隐藏 */
+    ['sxSt', 'zdSt', 'hySt', 'dkSt'].forEach(function (kn) {
+      if (host['__' + kn] && host['__' + kn].node) { sxb.appendChild(host['__' + kn].node); host['__' + kn].node.style.display = (kn === grp.k.slice(2)) ? '' : 'none'; }
+    });
     if (!indIsHu) {
-      var modJL = isZd ? W.JLZd : W.JLSx, sttJL = isZd ? host.__zdSt : host.__sxSt;
-      if (!modJL || !sttJL || !sttJL.ready) sxb.innerHTML += '<div style="color:#8fb8ff;font-size:10.5px;padding:2px 2px">' + (isZd ? 'jl_zd.js' : 'jl_sx.js') + ' 还没加载好…（检查同目录文件）</div>';
+      var modJL = W[grp.m], sttJL = host[grp.k];
+      if (!modJL || !sttJL || !sttJL.ready) sxb.innerHTML += '<div style="color:#8fb8ff;font-size:10.5px;padding:2px 2px">' + grp.f + ' 还没加载好…（检查同目录文件）</div>';
       else if (CB && CB.length >= 40) { try { modJL.feed(sttJL, CB, lv, ind, codeOf()); } catch (e5) { } }
     }
     host.__g = { W: Wd, PL: PL, PR: PR, cw: cw, N: N, i0: i0, R: R, D: D, vmax: vmax, vmin: vmin, T: T, Bt: Bt }; if (!(host.__hov >= 0)) host.__hov = -1; legend(host);
