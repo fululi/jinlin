@@ -983,7 +983,7 @@ function d5Load(force){ const code=st.code; if(!/^\d{6}$/.test(code)) return; if
   lkGet('/appstock/app/day/query?code='+sy,j=>{ const n=j&&j.data&&j.data[sy]; return n&&n.data&&n.data.length?n.data:null; })
     .then(a=>{ D5.busy=0; if(st.code!==code) return;
       D5.days=a.slice().reverse().map(d=>({date:String(d.date),prec:+d.prec,pts:(d.data||[]).map(s=>{ const q=String(s).split(' '); return {hm:q[0],p:+q[1]}; }).filter(p=>p.p>0&&p.hm<='1500')})).filter(d=>d.pts.length);
-      D5.err=''; D5.ts=Date.now(); try{ w5Chart(); }catch(e){ console.warn('[做T面板] 五日图',e&&e.message); } })
+      D5.err=''; D5.ts=Date.now(); try{ drawBand(); }catch(e){ console.warn('[做T面板] 五日图',e&&e.message); } })
     .catch(e=>{ D5.busy=0; D5.err='五日分时没取到'; D5.ts=Date.now()-40000; try{ w5Chart(); }catch(x){} }); }
 const w5Slot=hm=>{ const m=+String(hm).slice(0,2)*60+ +String(hm).slice(2,4); return m<=690?Math.max(0,m-570):Math.min(241,m-780+121); };
 /* 三角反抽：下降三角跌破平底后，收盘又站上(延长的)上沿 = BOS↑；上升三角升破平顶后又跌破下沿 = BOS↓。只认收盘；最后一根还在走的标「盘中」 */
@@ -1257,7 +1257,7 @@ function realTouch(p,role,N){
     if(b[2]>rec[0])rec[0]=b[2]; if(b[3]<rec[1])rec[1]=b[3];
   });
   { const T0=T(), td=TODAY; if(T0.dh>0||T0.dl>0){ const r=days[td]||(days[td]=[0,1e9]); if(T0.dh>r[0]) r[0]=T0.dh; if(T0.dl>0&&T0.dl<r[1]) r[1]=T0.dl; } }   /* 今日最高最低(行情)也算 */
-  const ds=Object.keys(days).sort().slice(-TOUCH_DAYS);
+  const ds0=Object.keys(days).sort(), ds=(ds0.indexOf(TODAY)>-1?ds0:ds0.concat([TODAY])).slice(-TOUCH_DAYS).filter(d=>days[d]);   /* 11-23s 今天还没K时不拿昨天的碰价算到过 */
   return ds.some(d=> role==='卖' ? days[d][0]>=p-1e-9 : days[d][1]<=p+1e-9 );
 }
 /* 11-23 交接：五日图买卖价 tierSB 同源（jl_card5d.js L354-365）——只读 localStorage jinlin_tier_memo_v1[code]：
@@ -1357,6 +1357,18 @@ function m15Groups(){
   return out;
 }
 function inSessJL(){ const td=TODAY, hm=new Date().getHours()*100+new Date().getMinutes(); return hm<1500&&(LK.m15||[]).some(r=>String(r[0]).slice(0,10)===td); }
+/* 11-23r 五日开盘前的价：五日卡同一份腾讯五日分时(D5)，取「今天之前最后一个交易日」整天 1 分钟价跑 jl_card5d autoCalc —— 和五日卡尺A/尺B/下拉同一算法，
+   只是不用今天盘中的分时(盘中会跟着变)，所以全天不动。useToday=1：收盘后/盘前，最后一天已走完，直接用最后一天。卖/接按那天收盘价分上下。没回测 */
+const W5L={key:'',v:[]};
+function w5Lv(useToday){ if(D5.code!==st.code||!D5.days.length) return [];
+  const td=TODAY.replace(/-/g,''), ds=useToday?D5.days:D5.days.filter(d=>d.date<td), LD=ds[ds.length-1]; if(!LD||LD.pts.length<4) return [];
+  const key=st.code+'|'+LD.date+'|'+LD.pts.length; if(W5L.key===key) return W5L.v;
+  let au=null; try{ au=autoCalc(LD.pts.map(p=>p.p)); }catch(e){}
+  const pc=LD.pts[LD.pts.length-1].p, dd=LD.date.slice(4,6)+'-'+LD.date.slice(6), out=[];
+  const add=(nm,p)=>{ if(p>0) out.push({c:'五日',k:(p>=pc?'卖':'接')+' '+nm,p:Math.round(p*100)/100,w:1,src:nm+'('+dd+'分时)'}); };
+  if(au){ add('尺A 0',au.A.a.p); add('尺A 1',au.A.b.p); AR.forEach(q=>add('尺A '+q,au.A.at(q)));
+    if(au.B) AB.forEach(q=>add('尺B '+q,au.B.at(q))); if(au.D) AD.forEach(q=>add('下拉 '+q,au.D.at(q))); }
+  W5L.key=key; W5L.v=out; return out; }
 function drawBand(){
   if(window.__ztSnap) return;
   const el=$('pband'), N=NOW(); if(!el) return;
@@ -1365,7 +1377,8 @@ function drawBand(){
   const LIST=SESS?SS.list.filter(x=>x.c!=='15分').concat(BAND.list.filter(x=>x.c==='15分')):BAND.list, TRIR=SESS?SS.tri:(BAND.triRows||[]), SWL=SESS?SS.sw:(BAND.sw||[]);
   // 统一汇总：fib卡(BAND.list) + 三角(triRows) + 五日(W5_ALL) + 明日(MR_DATA) + 波段(BAND.sw)
   // 计数＝各卡内部来源数合计（五日④ 20.02×3 这种真来源要写出来），每个来源卡带名字；排序：没发生在上、已发生沉底
-  const W5P=(T().fib&&TODAY<='2026-11-23')?W5_ALL.map(x=>({c:'五日',k:x.k,p:x.p,w:x.w,done:false,src:x.src,t:x.t})):[];
+  const W5OLD=T().fib&&TODAY<='2026-11-23';   /* 写死的 11-20 五日表只用到 11-23；之后走 w5Lv */
+  const W5P=W5OLD?W5_ALL.map(x=>({c:'五日',k:x.k,p:x.p,w:x.w,done:false,src:x.src,t:x.t})):w5Lv(!SESS), W5S=W5OLD?W5P:w5Lv(false);
   const MRP=(BAND.mr||[]).map(x=>({c:'明日',k:x.no,p:x.p,w:x.n,done:!!x.hit,src:x.src+'×'+x.n}));
   /* 11-23 交接：五日图买卖价=tierSB（做t面板以这个为准）；dk 旧于五日末 → 不挂线 */
   const tsb=T().fib?tierSB(st.code,W5_DAY_END):null;
@@ -1381,14 +1394,14 @@ function drawBand(){
   LIST.concat(TRIR).concat(W5P).concat(MRP).concat(TSBP).concat(SWL).forEach(x=>addTo(map,x));
   /* 11-23p 用户「五日卡的实时要在他的页面显示」: 盘中另合一份实时的，给五日卡清单/共振线用；价位带/成绩仍用开盘前 */
   const mapL={}; if(SESS) BAND.list.concat(BAND.triRows||[]).concat(W5P).concat(MRP).concat(TSBP).concat(BAND.sw||[]).forEach(x=>addTo(mapL,x));
-  const roleOf=k=>/卖|压力|反弹|上沿|清仓|S\d|①减|②减|最高|起点|高点/.test(k)?'卖':(/接|低点|终点|下沿|买回|目标|量幅|B\d|再接|接回|最低|0点/.test(k)?'接':'');
+  const roleOf=k=>/卖|压力|反弹|上沿|清仓|S\d|①减|②减|最高|起点|高点/.test(k)?'卖':(/接|低点|终点|下沿|买回|B\d|再接|接回|最低|0点/.test(k)?'接':'');   /* 11-23s 目标/量幅 有涨有跌，不在这里定，按现价上下分 */
   const all0=Object.values(map); const all=all0.filter(m=>m.t>=2||m.force);   // 来源合计≥2；波段价强制上榜
   const A=all.filter(m=>!m.done).sort((a,b)=>b.t-a.t||a.p-b.p);   // 没发生：×N多的在前，同×N价低的在前（11-23 口径）
   const Bn=all.filter(m=>m.done).sort((a,b)=>b.t-a.t||a.p-b.p);                            // 已发生：沉底
   const show=A.concat(Bn);
   const meta={};
   const metaOf=m=>{
-    const role=roleOf(Object.values(m.ks)[0][0])||roleOf(Object.keys(m.ks).map(c=>m.ks[c][0]).join(' '));
+    const role=roleOf(Object.values(m.ks)[0][0])||roleOf(Object.keys(m.ks).map(c=>m.ks[c][0]).join(' '))||(m.p>=N?'卖':'接');
     const isStopBuy0=/买回|清仓/.test(Object.keys(m.ks).map(c=>m.ks[c].join('/')).join('/'));
     const gray=!m.done&&(role==='卖'?m.p<N:(m.p>N&&!isStopBuy0));   // 涨透/跌破=不对了→灰（买回/清仓是上方触发线不算跌破）
     const dn=m.done||(!m.force&&Math.abs(m.p-N)>1e-9&&realTouch(m.p,role,N));   // 真数据判定：已发生＝K线真实触及过
@@ -1437,7 +1450,7 @@ function drawBand(){
   try{ const SN=snapPre(), it=[], td=TODAY, m5t=(LK.m5||[]).filter(b=>String(b[0]).slice(0,10)===td), o0=m5t.length?m5t[0][1]:0;
     const isT=k=>/买回|清仓/.test(String(k));
     if(SN.key&&o0>0){
-      SN.list.concat(SN.tri).concat(W5P).concat(MRP.map(x=>Object.assign({},x,{c:'明日'}))).concat(TSBP).concat(SN.sw).forEach(x=>{ if(!(x.p>0)||isT(x.k)) return; it.push({c:x.c,k:String(x.k),p:+x.p,s:'09:30',ref:o0}); });
+      SN.list.concat(SN.tri).concat(W5S).concat(MRP.map(x=>Object.assign({},x,{c:'明日'}))).concat(TSBP).concat(SN.sw).forEach(x=>{ if(!(x.p>0)||isT(x.k)) return; it.push({c:x.c,k:String(x.k),p:+x.p,s:'09:30',ref:o0}); });
       m15Groups().forEach(g=>g.rows.forEach(r=>it.push({c:'15分',k:r[0],p:Math.round(r[1]*100)/100,s:g.s,ref:g.ref}))); }
     scoreToday(it); }catch(e){ console.warn('[做T面板] 今日成绩',e&&e.message); }
   if(SESS){ [['20天大腿','f1'],['三角','f3']].forEach(([c,id])=>{ const a=BAND.list.concat(BAND.triRows||[]).filter(x=>x.c===c).map(x=>(+x.p).toFixed(2)).sort().join(), b=SS.list.concat(SS.tri).filter(x=>x.c===c).map(x=>(+x.p).toFixed(2)).sort().join();
