@@ -361,7 +361,12 @@ const pctS=(v,base)=>{ if(!base) return ''; const d=v/base-1; return Math.abs(d)
 const hm=ts=>ts.slice(5,10)+' '+ts.slice(11,16);
 /* 价位带收集器：各卡把自己的买卖价 push 进来，drawBand 按「跨卡出现张数」排序渲染 */
 const BAND={list:[],triRows:[],triBrk:null,sw:[]};
-const save=()=>localStorage.setItem(K,JSON.stringify(st));
+/* 11-23t 用户「保存的也没保存上」: 原来整包覆盖且不接错误。现在存前先读本机已存的——哪只票的记录版本(rev)更新就用它(防另一个开着的面板拿旧数据盖掉)；存不进去不再抛错，记一笔时读回核对 */
+function syncS(){ try{ const o=JSON.parse(localStorage.getItem(K)||'null'); if(!o||!o.s) return; Object.keys(o.s).forEach(c=>{ const a=o.s[c], b=st.s[c]; if(!a) return; if(!b){ st.s[c]=a; return; } if((a.rev||0)>(b.rev||0)){ b.log=a.log||[]; b.seq=Math.max(a.seq||0,b.seq||0); b.rev=a.rev; b.target=a.target||0; } }); }catch(e){} }
+const mutS=()=>{ syncS(); const s=S(); s.rev=(s.rev||0)+1; return s; };
+const save=()=>{ syncS(); try{ localStorage.setItem(K,JSON.stringify(st)); return true; }catch(e){ window.__ztSaveErr=(e&&e.name)||'err'; return false; } };
+const savedOK=id=>{ try{ const o=JSON.parse(localStorage.getItem(K)||'null'); return !!(o&&o.s&&o.s[st.code]&&(o.s[st.code].log||[]).some(x=>x.id===id)); }catch(e){ return false; } };
+addEventListener('storage',e=>{ if(e.key===K){ syncS(); try{ drawLog(); }catch(x){} } });
 
 /* ---- 自选股：点开下拉选「＋ 添加自选」→ 输 6 位代码+名称 → 进下拉并切换（自定义股存 localStorage） ---- */
 let MYSTK={}; try{ MYSTK=JSON.parse(localStorage.getItem('tpanel_stk')||'{}'); }catch(e){}
@@ -862,7 +867,9 @@ function buildCalc(){
    +'<div class="done"><button class="s" id="dS">卖出成交了</button><button class="b" id="dB">买回成交了</button></div>'
    +'<div class="msg" id="msg"></div>'
    +'<div class="undo"><span id="lastT"></span><button id="undo" title="撤销最近一笔">↩️</button></div>';
-  const d=new Date(); $('wd').value=d.toLocaleDateString('sv-SE'); $('wt').value=d.toTimeString().slice(0,5);
+  /* 11-23u 用户「几点挂的不再被重置」: 重建算账区(切先卖/先接、改底仓、手动配)时保留已填的日期/时间，只有第一次才填现在 */
+  const d=new Date(); $('wd').value=buildCalc._d||d.toLocaleDateString('sv-SE'); $('wt').value=buildCalc._t||d.toTimeString().slice(0,5);
+  $('wd').onchange=()=>{ buildCalc._d=$('wd').value; }; $('wt').onchange=()=>{ buildCalc._t=$('wt').value; };
 }
 function drawCalc(skip){
   const s=S(); $('holdI').value=HOLD(); $('mS').className='chip'+(s.mode==='s'?' on':''); $('mB').className='chip'+(s.mode==='b'?' on':'');
@@ -888,18 +895,18 @@ function drawLog(){
   if(s.target&&!P.open.some(o=>o.id===s.target)) s.target=0;
   $('tg').innerHTML='<option value="0">自动：最近几天的挂账</option>'+P.open.map(o=>'<option value="'+o.id+'"'+(s.target===o.id?' selected':'')+'>'+lab(o)+'</option>').join('');
   const last=s.log.slice().sort((a,b)=>b.id-a.id)[0];
-  $('lastT').textContent=last?'最近一笔 '+hm(last.ts)+' '+(last.side==='s'?'卖':'买')+' '+last.q+'股 @'+f(last.p)+(last.target?' · 手动配':''):'还没记过';
+  $('lastT').textContent=last?T().name+' 最近一笔 '+hm(last.ts)+' '+(last.side==='s'?'卖':'买')+' '+last.q+'股 @'+f(last.p)+(last.target?' · 手动配':''):'还没记过';
   // 挂账
   $('k1').innerHTML='<div class="stamp">'+(P.open.length?'「现在接回」按 '+f(N)+'（'+AT()+'）算，不是实时价':'')+'</div>'
     +(P.open.length?P.open.slice().sort((a,b)=>a.ts<b.ts?1:-1).map(o=>{const sd=o.side==='s', dd=tdays(o.ts,TODAY), old=dd>STALE;
       const v=sd?(o.p-N)*o.left-(o.fu+fee(N*o.left,0)/o.left)*o.left:(N-o.p)*o.left-(o.fu+fee(N*o.left,1)/o.left)*o.left;
-      return '<div class="it'+(old?' old':'')+'"><div>'+hm(o.ts)+' '+(sd?'卖':'买')+' '+o.left+(o.left<o.q?'/'+o.q:'')+' 股 @'+f(o.p)+(old?'<span class="bd">超5天 · 不自动配</span>':'')
+      return '<div class="it'+(old?' old':'')+'"><div>'+T().name+' '+hm(o.ts)+' '+(sd?'卖':'买')+' '+o.left+(o.left<o.q?'/'+o.q:'')+' 股 @'+f(o.p)+(old?'<span class="bd">超5天 · 不自动配</span>':'')
         +'<span class="sm">'+o.meth+' · 挂了 '+dd+' 个交易日'+(o.left<o.q?' · 已配 '+(o.q-o.left)+' 股':'')+'</span></div>'
         +'<div class="r"><b class="'+(v>=0?'u':'d')+'">'+yuan(v)+'</b><span class="sm">现在'+(sd?'接回':'卖出')+'</span>'+(old?'<button class="mini" data-pick="'+o.id+'">手动配这笔</button>':'')+'</div></div>';}).join('')
       :'<div class="empty">没有挂账。</div>');
   // 已配
   const R=P.rounds.slice().sort((a,b)=>a.closeTs<b.closeTs?1:-1).slice(0,12);
-  $('k2').innerHTML=R.length?R.map(x=>'<div class="it"><div>'+x.n+' 股 · '+(x.openSide==='s'?'卖 ':'买 ')+f(x.openP)+' → '+(x.openSide==='s'?'接 ':'卖 ')+f(x.closeP)+(x.manual?'<span class="bd w">手动配</span>':'')
+  $('k2').innerHTML=R.length?R.map(x=>'<div class="it"><div>'+T().name+' '+x.n+' 股 · '+(x.openSide==='s'?'卖 ':'买 ')+f(x.openP)+' → '+(x.openSide==='s'?'接 ':'卖 ')+f(x.closeP)+(x.manual?'<span class="bd w">手动配</span>':'')
       +'<span class="sm">配的是 '+hm(x.openTs)+' 那笔'+(x.openSide==='s'?'卖':'买')+'（'+x.openQ+'股）→ '+hm(x.closeTs)+' · '+x.meth+'</span></div><div class="r"><b class="'+(x.net>=0?'u':'d')+'">'+yuan(x.net)+'</b></div></div>').join('')
     :'<div class="empty">还没有配好的轮。</div>';
   // 统计
@@ -916,10 +923,11 @@ function drawLog(){
   CT.tabs.children[1].textContent='挂账 '+P.open.length;
   save();
 }
-function add(side){ const s=S(), sd=side==='s'; s.seq++;
+function add(side){ const s=mutS(), sd=side==='s'; s.seq++;
   const e={id:s.seq,side,p:sd?s.sp:s.bp,q:sd?s.sq:s.bq,ts:($('wd').value||TODAY)+' '+($('wt').value||'00:00'),meth:s.meth};
   if(s.target) e.target=s.target; s.log.push(e); s.target=0;
-  $('msg').textContent='已记：'+hm(e.ts)+' '+(sd?'卖 ':'买 ')+e.q+' 股 @'+f(e.p)+(e.target?'（手动配）':''); drawLog(); }
+  drawLog(); const ok=savedOK(e.id);
+  $('msg').textContent=(ok?'已记✓ ':'⚠ 没存上(本机存储'+(window.__ztSaveErr==='QuotaExceededError'?'满了':'写不进')+')，关掉重开会丢 · ')+T().name+' '+hm(e.ts)+' '+(sd?'卖 ':'买 ')+e.q+' 股 @'+f(e.p)+(e.target?'（手动配）':''); }
 function drawTop(){
   $('code').value=st.code; $('px').textContent=f(NOW()); $('ts').textContent=AT();
   /* 11-23 用户「左上角放个实时价，小一点，不然拉上拉下看不到」: 浮动窗标题条左边常显 名称·现价·涨跌% */
@@ -1501,10 +1509,10 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,[data-n],
     $('msg').textContent='已填入'+(sell?'卖价 ':'接价 ')+f(v)+'（'+t.dataset.lab+'）'; return; }
   if(t.id==='mS'||t.id==='mB'){ s.mode=t.id==='mS'?'s':'b'; buildCalc(); drawCalc(); drawLog(); return; }
   if(t.id==='dS'){ add('s'); return; } if(t.id==='dB'){ add('b'); return; }
-  if(t.id==='undo'){ if(!s.log.length) return; const mx=Math.max(...s.log.map(x=>x.id)), x=s.log.find(y=>y.id===mx); s.log=s.log.filter(y=>y.id!==mx);
+  if(t.id==='undo'){ mutS(); if(!s.log.length) return; const mx=Math.max(...s.log.map(x=>x.id)), x=s.log.find(y=>y.id===mx); s.log=s.log.filter(y=>y.id!==mx);
     $('msg').textContent='已撤销：'+hm(x.ts)+' '+(x.side==='s'?'卖 ':'买 ')+x.q+' 股 @'+f(x.p)+' · 配对已重算'; drawLog(); return; }
-  if(t.id==='clr'){ s.log=[]; s.demo=0; s.target=0; drawLog(); return; }
-  if(t.id==='demo'&&st.code==='600105'){ s.demo=1; s.seq=20; s.target=0; s.log=[
+  if(t.id==='clr'){ mutS(); s.log=[]; s.demo=0; s.target=0; drawLog(); return; }
+  if(t.id==='demo'&&st.code==='600105'){ mutS(); s.demo=1; s.seq=20; s.target=0; s.log=[
      {id:1,side:'s',p:22.95,q:1000,ts:'2026-11-09 10:02',meth:'尺子'},{id:2,side:'b',p:22.58,q:1000,ts:'2026-11-09 10:28',meth:'尺子'},
      {id:3,side:'s',p:24.90,q:300,ts:'2026-11-12 10:16',meth:'今日共振'},
      {id:4,side:'s',p:20.20,q:1000,ts:'2026-11-20 09:45',meth:'15分斐波'},{id:5,side:'s',p:20.00,q:500,ts:'2026-11-20 14:00',meth:'15分斐波'},
@@ -1617,7 +1625,8 @@ all();
   drag(ball,ball,true);                       /* 球：拖动换位，单击开/关 */
   drag(document.getElementById('fwhd'),fw,false);  /* 窗头：拖动换位 */
   document.getElementById('fwmin').onclick=toggle;
-  addEventListener('resize',()=>{ try{ const [bx,by]=clampBall(bX,bY); const [fx,fy]=clampFw(wX,wY); bX=bx; bY=by; wX=fx; wY=fy;
+  let lastTV='';   /* 11-23t: 只在主机屏真变了才重排；自己改 iframe 高度引起的 resize 跳过(断开闪烁回路) */
+  addEventListener('resize',()=>{ try{ const tv=TVW()+'x'+TVH(); if(EMB&&tv===lastTV) return; lastTV=tv; const [bx,by]=clampBall(bX,bY); const [fx,fy]=clampFw(wX,wY); bX=bx; bY=by; wX=fx; wY=fy;
     if(EMB&&open) sizeWin(); render(); save(); }catch(e){} });
   if(EMB&&open) sizeWin();
   apply();
@@ -1761,7 +1770,9 @@ function refitHeight(){
        改取主机顶层视口(与 v3 sizeWin 同源), cap 变成固定外部值, 循环断开。 */
     try{ var h=fw.offsetHeight; var vh=window.innerHeight||700;
       try{ if(window.self!==window.top&&window.top.innerHeight) vh=window.top.innerHeight; }catch(e2){}
-      var cap=Math.round(vh*0.9);
+      /* 11-23t 用户「尾部一直闪烁」: sizeWin 拖过柄时上限0.96屏, 这里0.9屏 → 两边来回改高(每次改高又触发 resize)。改成同一上限 */
+      var uh=0; try{ uh=parseInt(localStorage.getItem('tpanel_fwh_v1'))||0 }catch(e3){}
+      var cap=Math.round(vh*(uh?0.96:0.9));
       var nh=Math.min(h,cap); if(Math.abs((parseFloat(fw.style.height)||0)-nh)>4){ fw.style.height=nh+'px'; var fb=document.getElementById('fwbody'); if(fb) fb.style.maxHeight=(nh-34)+'px'; }
       if(typeof window.__ztGeom==='function') window.__ztGeom(false); }catch(e){}
   });
@@ -1829,7 +1840,7 @@ function boot2(){
     if(blk) blk.addEventListener('click',function(e){ if(sug&&!sug.contains(e.target)) closeSug(); });
   }catch(e){}
   try{ document.addEventListener('change',function(e){ if(e.target&&e.target.id==='code'&&e.target.value!=='__add'){ setTimeout(function(){ try{ pollQuote(); applyZoom(); window.__ztSize&&window.__ztSize(); refitHeight(); }catch(x){} },80); } }); }catch(e){}
-  try{ window.addEventListener('resize',function(){ setTimeout(function(){ try{ applyZoom(); refitHeight(); }catch(e){} },120) }); }catch(e){}
+  try{ var __tv0=''; window.addEventListener('resize',function(){ var tv=''; try{ tv=window.top.innerWidth+'x'+window.top.innerHeight }catch(e){} if(window.self!==window.top&&tv&&tv===__tv0) return; __tv0=tv; setTimeout(function(){ try{ applyZoom(); refitHeight(); }catch(e){} },120) }); }catch(e){}   /* 11-23t 同上: 主机屏没变不重排 */
 }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot2); else boot2();
 })();

@@ -831,7 +831,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
   g.Elliott = { swingsFrom: swingsFrom, detect: detect, drawSVG: drawSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
-<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=13"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script>
+<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=13"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script src="jl_huo.js?v=1"></script>
 <script>/* jl_macd.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
 /*! jl_macd.js — 分时 MACD 副图（MACDFS 12,26,9），仿同花顺：红绿柱 + DIF(白) + DEA(橙)
  * 做成独立的一块 SVG，插在走势图下面，不画在图上，所以不会压住任何字。
@@ -9366,4 +9366,15 @@ function zpGaugeJL(A) {
 try { var vb = document.createElement('div'); vb.textContent = 'v11-20\u00b71605 \u4fee\u590d\u7248'; vb.style.cssText = 'position:fixed;left:4px;bottom:3px;font:9px/1 monospace;color:#7f93a8;opacity:.85;pointer-events:none;z-index:99999;letter-spacing:.5px'; (document.body || document.documentElement).appendChild(vb); } catch (eVs) { }
 </script>
 <!-- 11-23 用户「分时资金这个副图删掉」: 分单资金图(zpMainFlowJL, 11-21c 加的四条线分时/日线) 整段删; 资金数据 zpFFDJL/__FFCUMJL 照旧 -->
+<script>
+/* 11-23 用户「今天删掉了一个副图 可以把这个线搬上去吧」: 通达信 HUO 日线乖离副图(jl_huo.js) 放回原分单资金图的位置(#zpSub 上面);
+   只读已载入的 LIVE.hist.day(慢通道日K), 不另拉数据; 页面看不见时不画 */
+(function () {
+  function tick() {
+    if (document.hidden || !window.JLHuo) return;
+    try { var h = JLHuo.mount(document.getElementById('zpSub')); if (h) JLHuo.render(h, (LIVE.hist && LIVE.hist.day) || [], LIVE.sessDate || ''); } catch (e) { }
+  }
+  tick(); setInterval(tick, 2000);
+})();
+</script>
 </html>
