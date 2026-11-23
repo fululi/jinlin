@@ -6042,20 +6042,8 @@ body.injlin #metaLine select{height:26px}
 /* jl-zpsub (11-04): 副图区 = 成交量(常驻) + MACD/控盘/主力 三选一 */
 #macdfs{display:none!important}
 #zpSub{margin-top:2px;user-select:none;-webkit-user-select:none}
-/* 11-21 用户「四条线一张图看粘合/分叉; 线细; 不要灰小字; 能折叠; 高度照Codex版」 */
-#zpMainFlowJL{margin:0 0 3px;padding:5px 7px 3px;background:var(--card);border:1px solid var(--line);border-radius:6px;color:#fff;font-size:11px;line-height:1.35;font-variant-numeric:tabular-nums;font-weight:400}
-#zpMainFlowJL .mfHead{display:flex;align-items:center;gap:6px;height:20px;white-space:nowrap;overflow:hidden}
-#zpMainFlowJL .mfTitle{font-weight:500}#zpMainFlowJL .mfNet{margin-left:auto;font-weight:500}
-#zpMainFlowJL .mfState{font-size:10.5px;overflow:hidden;text-overflow:ellipsis}
-#zpMainFlowJL .mfModes{display:inline-flex;gap:3px;flex:none}
-#zpMainFlowJL .mfModes button{height:18px;padding:0 7px;border:1px solid rgba(255,255,255,.22);border-radius:9px;background:transparent;color:#fff;font:inherit;font-size:10.5px;line-height:16px}
-#zpMainFlowJL .mfModes button.on{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 22%,transparent)}
-#zpMainFlowJL .mfFold{flex:none;width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:#fff;font-size:10px;line-height:16px;padding:0;text-align:center}
-#zpMainFlowJL .mfLeg{display:flex;gap:9px;font-size:10.5px;margin:1px 0 0;white-space:nowrap;overflow:hidden}
-#zpMainFlowJL .mfBody{position:relative}#zpMainFlowJL svg{display:block;width:100%;height:auto;max-height:150px;touch-action:pan-y}
-#zpMainFlowJL.fold .mfBody{display:none}
-#zpMainFlowJL.stale svg{opacity:.55}
-body.injlin .chartbox>#zpMainFlowJL{order:1}body.injlin .chartbox>#zpSub{order:2}
+/* 11-23 用户「分时资金这个副图删掉」: 分单资金图(#zpMainFlowJL) CSS 删 */
+body.injlin .chartbox>#zpSub{order:2}
 #zpSub svg{display:block;width:100%;touch-action:pan-y}
 #zpSub .zpIw{position:relative}#zpSub .zpIc{position:absolute;top:3px;right:4px;display:flex;gap:4px;z-index:2}#zpSub .zpIcP{top:4px}
 #zpSub .zpIc button{width:18px;height:18px;padding:0;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(18,26,36,.38);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:rgba(207,214,223,.55);font-size:9px;line-height:16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -9145,103 +9133,5 @@ function zpGaugeJL(A) {
 /* 11-20 16:05 版本戳: 左下角小字, 一眼确认跑的是不是今天的修复版(旧副本没有它) */
 try { var vb = document.createElement('div'); vb.textContent = 'v11-20\u00b71605 \u4fee\u590d\u7248'; vb.style.cssText = 'position:fixed;left:4px;bottom:3px;font:9px/1 monospace;color:#7f93a8;opacity:.85;pointer-events:none;z-index:99999;letter-spacing:.5px'; (document.body || document.documentElement).appendChild(vb); } catch (eVs) { }
 </script>
-<script>
-/* 主力分单图：分时/日线都只读页面已载入的内存数据，不主动拉取数据。
-   11-21 用户「超大要上去就往上走、主力跑路小单慢慢往上；四条线太粗粘合看不出；日线累计要能看时间；不要灰小字；能折叠」:
-   Codex 版每类一排小柱 → 改成一张图同一根0轴四条细线(累计净额；日线=近60天逐日累加)，左轴金额、底下时间刻度、按住/悬停读数，头部小圆钮折叠(存 zp_mf_fold_v1) */
-(function () {
-  var host = null, period = 'intraday', fold = false, hov = -1, cache = null;
-  try { fold = localStorage.getItem('zp_mf_fold_v1') === '1'; } catch (e) { }
-  var LN = [['x', '超大', '#ff5fd2', 1.1], ['l', '大单', '#ffb347', .9], ['m', '中单', '#6fb6ff', .9], ['s', '小单', '#3fe0a0', 1.1]];
-  function money(v) { if (v == null || !isFinite(v)) return '—'; var a = Math.abs(v); return (v > 0 ? '+' : v < 0 ? '−' : '') + (a >= 1e8 ? (a / 1e8).toFixed(2) + '亿' : a >= 1e4 ? (a / 1e4).toFixed(0) + '万' : Math.round(a)); }
-  function ensure() {
-    var sub = document.getElementById('zpSub'); if (!sub || !sub.parentNode) return false;
-    if (!host) {
-      host = document.createElement('section'); host.id = 'zpMainFlowJL'; host.setAttribute('aria-label', '分单资金走势图');
-      host.addEventListener('click', function (e) {
-        var b = e.target && e.target.closest && e.target.closest('[data-mfmode],[data-mffold]'); if (!b) return;
-        if (b.hasAttribute('data-mffold')) { fold = !fold; try { localStorage.setItem('zp_mf_fold_v1', fold ? '1' : '0'); } catch (e2) { } }
-        else period = b.getAttribute('data-mfmode');
-        host.__key = ''; render();
-      });
-      var mv = function (e) { if (!cache) return; var sv = host.querySelector('svg'); if (!sv) return; var r = sv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e, x = (t.clientX - r.left) / r.width * cache.W;
-        var i = Math.round((x - cache.L) / (cache.R - cache.L) * (cache.n - 1)); hov = Math.max(0, Math.min(cache.n - 1, i)); draw(); };
-      host.addEventListener('mousemove', mv); host.addEventListener('touchstart', mv, { passive: true }); host.addEventListener('touchmove', mv, { passive: true });
-      host.addEventListener('mouseleave', function () { hov = -1; draw(); }); host.addEventListener('touchend', function () { setTimeout(function () { hov = -1; draw(); }, 1500); });
-    }
-    if (host.parentNode !== sub.parentNode || host.nextSibling !== sub) sub.parentNode.insertBefore(host, sub);
-    return true;
-  }
-  function draw() {
-    var body = host && host.querySelector('.mfBody'); if (!body || !cache) return;
-    var c = cache, W = c.W, L = c.L, R = c.R, H = 118, top = 6, bot = H - 14, n = c.n;
-    if (!n) { body.innerHTML = '<div style="padding:30px 0;text-align:center">' + c.empty + '</div>'; return; }
-    var all = [0]; c.cum.forEach(function (a) { a.forEach(function (v) { if (v != null) all.push(v); }); });
-    var mx = Math.max.apply(null, all), mn = Math.min.apply(null, all); if (mx === mn) { mx += 1; mn -= 1; }
-    var X = function (i) { return L + (n > 1 ? i * (R - L) / (n - 1) : 0); }, Y = function (v) { return top + (mx - v) / (mx - mn) * (bot - top); };
-    var sv = '<svg viewBox="0 0 ' + W + ' ' + H + '">';
-    var st = Math.pow(10, Math.floor(Math.log10((mx - mn) / 3))), g = Math.ceil((mx - mn) / 3 / st) * st;
-    for (var v = Math.ceil(mn / g) * g; v <= mx; v += g) {
-      var z = Math.abs(v) < g / 2;
-      sv += '<line x1="' + L + '" x2="' + R + '" y1="' + Y(v).toFixed(1) + '" y2="' + Y(v).toFixed(1) + '" stroke="#fff" stroke-opacity="' + (z ? .32 : .07) + '"' + (z ? ' stroke-dasharray="3 3"' : '') + ' vector-effect="non-scaling-stroke"/>';
-      sv += '<text x="' + (L - 3) + '" y="' + (Y(v) + 3.5).toFixed(1) + '" font-size="9.5" fill="#fff" text-anchor="end">' + (z ? '0' : money(v).replace('+', '')) + '</text>';
-    }
-    c.cum.forEach(function (a, k) {
-      var pts = []; a.forEach(function (v, i) { if (v != null) pts.push(X(i).toFixed(1) + ',' + Y(v).toFixed(1)); });
-      sv += '<polyline fill="none" stroke="' + LN[k][2] + '" stroke-width="' + LN[k][3] + '" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="' + pts.join(' ') + '"/>';
-    });
-    // 右端数值：按高低排开不叠
-    var ends = c.cum.map(function (a, k) { var v = a[n - 1]; return { k: k, v: v, y: Y(v == null ? 0 : v) }; }).sort(function (p, q) { return p.y - q.y; }), prev = -99;
-    ends.forEach(function (e) { e.t = Math.max(e.y + 3.5, prev + 11); prev = e.t; });
-    var over = prev - (bot + 3); if (over > 0) ends.forEach(function (e) { e.t -= over; });
-    ends.forEach(function (e) { sv += '<text x="' + (R + 3) + '" y="' + e.t.toFixed(1) + '" font-size="9.5" fill="' + LN[e.k][2] + '">' + money(e.v) + '</text>'; });
-    // 时间刻度(白字)
-    var tk = c.ticks; tk.forEach(function (t) { sv += '<text x="' + X(t[0]).toFixed(1) + '" y="' + (H - 2) + '" font-size="9.5" fill="#fff" text-anchor="' + (t[0] === 0 ? 'start' : t[0] >= n - 1 ? 'end' : 'middle') + '">' + t[1] + '</text>'; });
-    if (hov >= 0) {
-      var hx = X(hov); sv += '<line x1="' + hx + '" x2="' + hx + '" y1="' + top + '" y2="' + bot + '" stroke="#fff" stroke-opacity=".55" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>';
-      c.cum.forEach(function (a, k) { if (a[hov] != null) sv += '<circle cx="' + hx + '" cy="' + Y(a[hov]).toFixed(1) + '" r="2" fill="' + LN[k][2] + '"/>'; });
-    }
-    sv += '</svg>';
-    var j = hov >= 0 ? hov : n - 1;
-    body.innerHTML = '<div class="mfLeg"><span>' + c.lab[j] + '</span>' + LN.map(function (l, k) { return '<span style="color:' + l[2] + '">' + l[1] + ' ' + money(c.cum[k][j]) + '</span>'; }).join('') + '</div>' + sv;
-  }
-  function render() {
-    if (!ensure()) return;
-    var live = window.LIVE, stk = window.STK; if (!live || !stk || !stk.code) { host.textContent = '分单资金 · 等待标的'; return; }
-    var session = String(live.sessDate || '').replace(/\D/g, '').slice(-8), rows = [], stale = false;
-    if (period === 'intraday') {
-      var snap = window.__FFCUMJL, code = String(stk.code).replace(/\D/g, ''), mins = snap && String(snap.code) === code && Array.isArray(snap.rows) ? snap.rows : [];
-      rows = mins.slice(-240); var lastHm = snap && snap.sourceHm ? String(snap.sourceHm).slice(-4) : '';
-      var now = new Date(), nowHm = now.getHours() * 100 + now.getMinutes(), lag = 0;
-      /* 11-23 用户「zp html 分时资金都没动静」: 午休 12:38 被算成落后68分钟→一直「暂停判读」。午休按11:30算(和 fundingLagJL 同口径扣90分钟)；东财分钟资金常慢1–2分钟，落后>2分钟才标；午休时不看拉取时间 */
-      var lunch = nowHm > 1130 && nowHm < 1300;
-      if (lastHm && nowHm >= 930 && nowHm <= 1500) { var mm = function (h) { var n = Math.floor(h / 100) * 60 + h % 100; return n >= 780 ? n - 90 : Math.min(n, 690); }; lag = Math.max(0, mm(nowHm) - mm(+lastHm)); }
-      stale = !!(!window.RPL && rows.length && ((snap.date && String(snap.date).replace(/\D/g, '').slice(-8) !== session) || liveToday && liveToday() && (lag > 2 || (!lunch && Date.now() - (+snap.t || 0) > 180000))));
-    } else {
-      var fundRows = window.zpFFDJL ? window.zpFFDJL() : (window.zpFFDMemJL ? window.zpFFDMemJL() : null);   /* 11-21: 点了「日线」才去拉(5分钟内用缓存), 没点不拉 */
-      rows = (Array.isArray(fundRows) ? fundRows.filter(function (r) { return r && r.d && String(r.d) <= session; }) : []).slice(-60);
-      stale = !!(!window.RPL && session && rows.length && String(rows[rows.length - 1].d) !== session);
-    }
-    var last = rows.length ? rows[rows.length - 1] : null, net = last && last.main != null ? +last.main : null;
-    var state = stale ? (period === 'intraday' ? '分钟资金落后·暂停判读' : '日级资金落后·暂停判读') : net == null ? (period === 'intraday' ? '分时资金还没拉到' : '日级资金加载中') : live.last > 0 && live.pc > 0 ? (net >= 0 ? (live.last >= live.pc ? '流入推价' : '托底吸筹?') : (live.last >= live.pc ? '拉高出货?' : '流出杀跌')) : '价格数据不足';
-    var key = String(stk.code) + '|' + period + '|' + session + '|' + (last && (last.hm || last.d) || '') + '|' + net + '|' + stale + '|' + rows.length + '|' + fold;
-    if (host.__key === key) return; host.__key = key;
-    var lab = rows.map(function (r) { return period === 'intraday' ? String(r.hm || '').slice(-4).replace(/^(\d\d)(\d\d)$/, '$1:$2') : String(r.d || '').slice(4, 6) + '/' + String(r.d || '').slice(6, 8); });
-    var cum = LN.map(function (l) {
-      if (period === 'intraday') return rows.map(function (r) { return r[l[0]] != null && isFinite(+r[l[0]]) ? +r[l[0]] : null; });
-      var s0 = 0; return rows.map(function (r) { s0 += +r[l[0]] || 0; return s0; });   /* 日线: 逐日净额累加 */
-    });
-    var n = rows.length, ticks = [];
-    if (n) { if (period === 'intraday') { var mid = lab.indexOf('11:30'); ticks = [[0, lab[0]], [mid > 0 ? mid : Math.floor(n / 2), mid > 0 ? '11:30/13:00' : lab[Math.floor(n / 2)]], [n - 1, lab[n - 1]]]; }
-      else for (var q = 0; q < 5; q++) { var ii = Math.round(q * (n - 1) / 4); ticks.push([ii, lab[ii]]); } }
-    cache = { W: 300, L: 34, R: 254, n: n, cum: cum, lab: lab, ticks: ticks, empty: state };
-    host.classList.toggle('stale', stale); host.classList.toggle('fold', fold);
-    host.innerHTML = '<div class="mfHead"><b class="mfTitle">分单资金</b><span class="mfModes"><button type="button" data-mfmode="intraday" class="' + (period === 'intraday' ? 'on' : '') + '">分时</button><button type="button" data-mfmode="daily" class="' + (period === 'daily' ? 'on' : '') + '">日线' + (period === 'daily' && n ? n + '天' : '') + '</button></span><span class="mfState">' + state + '</span>'
-      + '<span class="mfNet" style="color:' + (net == null ? '#fff' : net >= 0 ? 'var(--red)' : 'var(--green)') + '">主力 ' + money(net) + '</span><button type="button" class="mfFold" data-mffold="1" aria-label="' + (fold ? '展开' : '折叠') + '">' + (fold ? '▸' : '▾') + '</button></div><div class="mfBody"></div>';
-    if (!fold) draw();
-  }
-  window.zpMainFlowRenderJL = render;
-  render(); setInterval(render, 2000);
-})();
-</script>
+<!-- 11-23 用户「分时资金这个副图删掉」: 分单资金图(zpMainFlowJL, 11-21c 加的四条线分时/日线) 整段删; 资金数据 zpFFDJL/__FFCUMJL 照旧 -->
 </html>
