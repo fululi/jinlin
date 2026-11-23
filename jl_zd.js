@@ -89,12 +89,39 @@
     var sh6 = dma(sh5, V.map(function (v) { return v / cap; })).map(function (v) { return v * 60; });
     var SHUI7 = [];
     for (i = 0; i < n; i++) SHUI7.push(sh6[i] > 0 && i > 0 && sh6[i] > sh6[i - 1] && sh3[i] <= 88 ? sh6[i] : 0);
-    return { n: n, 趋势: 趋势, 庄控: 庄控, 入场: 入场, 入场柱: 入场柱, 准备: 准备, SHUI7: SHUI7, 顶柱: 顶柱, W: Wd };
+    /* v1.2: 多空四线 (B公式 JIU体系: 多=JIU12 空=JIU13 多均/空均=EMA4) */
+    function maN(x, nn) { var r = [], s = 0; for (var k = 0; k < x.length; k++) { s += x[k]; if (k >= nn) s -= x[k - nn]; r.push(s / Math.min(nn, k + 1)); } return r; }
+    var m34 = maN(C, 34), m42 = maN(C, 42), m67 = maN(C, 67), J3b = [];
+    for (i = 0; i < n; i++) J3b.push(((C[i] - m34[i]) / m34[i] * 500 + (C[i] - m42[i]) / m42[i] * 500) / 2 - (C[i] - m67[i]) / m67[i] * 500);
+    function wrN(nn) { var r = []; for (var k = 0; k < n; k++) { var hh = -1e18, ll = 1e18; for (var j = Math.max(0, k - nn + 1); j <= k; j++) { hh = Math.max(hh, H[j]); ll = Math.min(ll, L[j]); } r.push(hh > ll ? -100 * (hh - C[k]) / (hh - ll) : 0); } return r; }
+    var w34 = wrN(34), w42 = wrN(42), w72 = wrN(72), J7raw = [];
+    for (i = 0; i < n; i++) J7raw.push((w34[i] + w42[i]) / 2 - w72[i]);
+    var J7e = ema(J7raw, 6);
+    var up = [0], ab = [0];
+    for (i = 1; i < n; i++) { var d0 = C[i] - C[i - 1]; up.push(Math.max(d0, 0)); ab.push(Math.abs(d0)); }
+    var r9 = sma(up, 19, 1), a9 = sma(ab, 19, 1), r34b = sma(up, 34, 1), a34b = sma(ab, 34, 1), r72 = sma(up, 72, 1), a72 = sma(ab, 72, 1);
+    var duoRaw5 = [];
+    for (i = 0; i < n; i++) {
+      var j9 = (r9[i] / Math.max(a9[i], 1e-9) * 100 - 50) * 1.25, j10 = (r34b[i] / Math.max(a34b[i], 1e-9) * 100 - 50) * 1.25, j11 = (r72[i] / Math.max(a72[i], 1e-9) * 100 - 50) * 1.25;
+      duoRaw5.push(((j9 + j10) / 2 - j11) * 5);
+    }
+    var duo = ema(duoRaw5, 6), kong = [], duoAvg, kongAvg, 穿 = [false], 穿空 = [false];
+    for (i = 0; i < n; i++) kong.push(-((J7e[i] + J3b[i] + duo[i]) / 3) * 1.5);
+    duoAvg = ema(duo, 4); kongAvg = ema(kong, 4);
+    for (i = 1; i < n; i++) {
+      穿.push(duo[i] > kongAvg[i] && duo[i - 1] <= kongAvg[i - 1]);            /* 多上穿空均=多方攻击(红) */
+      穿空.push(kong[i] > duoAvg[i] && kong[i - 1] <= duoAvg[i - 1]);          /* 空上穿多均=空头攻击(绿) */
+    }
+    return { n: n, 趋势: 趋势, 庄控: 庄控, 入场: 入场, 入场柱: 入场柱, 准备: 准备, SHUI7: SHUI7, 顶柱: 顶柱, W: Wd,
+      多: duo, 空: kong, 多均: duoAvg, 空均: kongAvg, 穿: 穿, 穿空: 穿空 };
   }
 
   /* ---------- 绘制 ---------- */
   var WD = 380, PL = 24, PR = 3;
   function bigOn() { try { return localStorage.getItem('zp_huo_big_v1') === '1'; } catch (e) { return false; } }
+  function gridLines(g, T, Bt, yv, lv, D, i0, N, xF) {
+    for (var k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + xF(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
+  }
   function drawSec1(el, R, bars, lv) {
     var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
     var big = bigOn(), T = 5, Bt = big ? 148 : 88, Hh = big ? 160 : 100, cw = (WD - PL - PR) / N;
@@ -184,13 +211,34 @@
   }
 
   /* ---------- 嵌入 + feed (jl_huo v6.4 用) ---------- */
+    function drawSec3(el, R, bars, lv) {
+    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
+    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (380 - 24 - 3) / N;
+    var X = function (k) { return 24 + cw * (k + 0.5); };
+    var pk = 10;
+    for (var k2 = 0; k2 < N; k2++) { var i2 = i0 + k2; pk = Math.max(pk, Math.abs(R.多[i2]), Math.abs(R.空[i2]), Math.abs(R.多均[i2]), Math.abs(R.空均[i2])); }
+    pk *= 1.15;
+    var Y = function (v) { return T + (pk - Math.min(Math.max(v, -pk), pk)) / (2 * pk) * (Bt - T); };
+    var g = ['<line x1="24" x2="356" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="rgba(255,255,255,.35)" stroke-width=".8" stroke-dasharray="3 3"/>'];
+    for (var k = 0; k < N; k++) {
+      var i = i0 + k;
+      if (R.穿[i]) g.push('<line x1="' + X(k).toFixed(1) + '" x2="' + X(k).toFixed(1) + '" y1="' + T + '" y2="' + Bt + '" stroke="rgba(255,60,60,.75)" stroke-width="1.2"/>');
+      if (R.穿空[i]) g.push('<line x1="' + X(k).toFixed(1) + '" x2="' + X(k).toFixed(1) + '" y1="' + T + '" y2="' + Bt + '" stroke="rgba(40,220,110,.75)" stroke-width="1.2"/>');
+    }
+    function pt(a, col, w2) { var s2 = []; for (var k3 = 0; k3 < N; k3++) s2.push(X(k3).toFixed(1) + ',' + Y(a[i0 + k3]).toFixed(1)); return '<polyline fill="none" stroke="' + col + '" stroke-width="' + w2 + '" points="' + s2.join(' ') + '"/>'; }
+    g.push(pt(R.空均, '#cc88ff', 1.3)); g.push(pt(R.多均, '#ffcc00', 1.3)); g.push(pt(R.空, tdc('00FF00'), 1.5)); g.push(pt(R.多, '#ff4444', 1.5));
+    gridLines(g, T, Bt, null, lv, D, i0, N, X);
+    g.push('<g class="hx"></g>');
+    var stTxt = R.多[R.n - 1] > R.空均[R.n - 1] ? '<span style="color:#ff4444">多方控场</span>' : '<span style="color:#33ff77">空方控场</span>';
+    el.innerHTML = '<div class="ssl"><span style="color:#ff4444">多 ' + R.多[R.n - 1].toFixed(1) + '</span><span style="color:#33ff77">空 ' + R.空[R.n - 1].toFixed(1) + '</span><span style="color:#ffcc00">多均 ' + R.多均[R.n - 1].toFixed(1) + '</span><span style="color:#cc88ff">空均 ' + R.空均[R.n - 1].toFixed(1) + '</span>' + stTxt + '</div><svg viewBox="0 0 380 ' + Hh + '">' + g.join('') + '</svg>';
+  }
   function embedNode(opts) {
     var node = document.createElement('div'); node.className = 'sxIn';
-    node.innerHTML = '<div class="sec sec3" style="display:none"></div><div class="sec sec4" style="display:none"></div>';
-    var st = { node: node, s1: node.querySelector('.sec3'), s2: node.querySelector('.sec4'), opt: opts || {}, code: (opts && opts.code) || '', cap: (opts && opts.cap) || 0, bars: null, lv: null, which: '趋势', R: null, at: 0 };
+    node.innerHTML = '<div class="sec sec3" style="display:none"></div><div class="sec sec4" style="display:none"></div><div class="sec sec5" style="display:none"></div>';
+    var st = { node: node, s1: node.querySelector('.sec3'), s2: node.querySelector('.sec4'), s3: node.querySelector('.sec5'), opt: opts || {}, code: (opts && opts.code) || '', cap: (opts && opts.cap) || 0, bars: null, lv: null, which: '趋势', R: null, at: 0 };
     return st;
   }
-  function showWhich(st) { st.s1.style.display = st.which === '趋势' ? '' : 'none'; st.s2.style.display = st.which === '庄控' ? '' : 'none'; }
+  function showWhich(st) { st.s1.style.display = (st.which === '趋势' || st.which === '庄控') ? (st.which === '趋势' ? '' : 'none') : (st.which === '多空' ? 'none' : 'none'); st.s2.style.display = st.which === '庄控' ? '' : 'none'; st.s3.style.display = (st.which === '趋势' || st.which === '多空') ? '' : 'none'; }
   function feed(st, bars, lv, which, code) {
     if (!st) return;
     st.bars = bars; st.lv = lv; if (which) st.which = which; if (code) st.code = code;
@@ -201,6 +249,7 @@
         st.R = calc(st.bars, st.cap);
         drawSec1(st.s1, st.R, st.bars, st.lv);
         drawSec2(st.s2, st.R, st.bars, st.lv);
+        drawSec3(st.s3, st.R, st.bars, st.lv);
       } catch (e) { st.s1.innerHTML = '<div class="ssl"><span style="color:#ff8888">计算出错: ' + e.message + '</span></div>'; }
     }
     if (!st.cap && st.code) { fetchCap(st.code, function (c) { st.cap = c; draw(); }); }
@@ -229,14 +278,22 @@
     if (!st || !st.R || i < 0 || i >= st.R.n) return;
     var N = Math.min(W.__zpHuoN || 90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
     var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
-    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
-    ['s1', 's2'].forEach(function (sk) { var sv = st[sk] && st[sk].querySelector('svg'); if (sv) { var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln; } });
+    /* v1.3: 完整十字线 —— 趋势窗/庄控窗 各自值高度横线 + 右缘标签 */
+    var qv = Math.min(Math.max(R.趋势[i0 + k], -20), 110), yq = 5 + (110 - qv) / 130 * (88 - 5);
+    var zv = R.庄控[i0 + k], zc = Math.max(-50, Math.min(50, zv)), yz = 46.5 - zc / 50 * 40;
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
+      + '<line x1="24" x2="356" y1="' + yq.toFixed(1) + '" y2="' + yq.toFixed(1) + '" stroke="rgba(255,92,92,.45)" stroke-width=".7"/>'
+      + '<text x="354" y="' + (yq - 2).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#ffb3b3">' + R.趋势[i0 + k].toFixed(1) + '</text>'
+      + '<line x1="24" x2="356" y1="' + yz.toFixed(1) + '" y2="' + yz.toFixed(1) + '" stroke="rgba(51,255,119,.45)" stroke-width=".7"/>'
+      + '<text x="354" y="' + (yz + 8).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#aaffcc">' + zv.toFixed(1) + '</text>';
+    ['s1', 's2', 's3'].forEach(function (sk) { var sv = st[sk] && st[sk].querySelector('svg'); if (sv) { var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln; } });
     var j = i0 + k;
     if (st.s1 && st.s1.style.display !== 'none' && st.s1.querySelector('.ssl')) st.s1.querySelector('.ssl').innerHTML = '<span style="color:#ff5c5c">趋势 ' + st.R.趋势[j].toFixed(1) + '</span><span style="color:#09f">入场' + (st.R.入场[j] ? '●' : '') + '</span><span style="color:#dd0">抄底' + (st.R.SHUI7[j] > 0 ? '●' : '') + '</span>';
     if (st.s2 && st.s2.style.display !== 'none' && st.s2.querySelector('.ssl')) st.s2.querySelector('.ssl').innerHTML = '<span style="color:#ff4444">庄控 ' + st.R.庄控[j].toFixed(1) + '</span><span style="color:#8aa">红=控盘 绿=出货</span>';
+    if (st.s3 && st.s3.style.display !== 'none' && st.s3.querySelector('.ssl')) st.s3.querySelector('.ssl').innerHTML = '<span style="color:#ff4444">多 ' + st.R.多[j].toFixed(1) + '</span><span style="color:#33ff77">空 ' + st.R.空[j].toFixed(1) + '</span>' + (st.R.多[j] > st.R.空均[j] ? '<span style="color:#ff4444">多方控场</span>' : '<span style="color:#33ff77">空方控场</span>');
     clearTimeout(st.__xhT); st.__xhT = setTimeout(function () { xhClear(st); }, 8000);
   }
-  function xhClear(st) { ['s1', 's2'].forEach(function (sk) { var sv = st[sk] && st[sk].querySelector('svg'); if (sv) { var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ''; } }); }
+  function xhClear(st) { ['s1', 's2', 's3'].forEach(function (sk) { var sv = st[sk] && st[sk].querySelector('svg'); if (sv) { var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ''; } }); }
   function xhKey(key) {
     ACT = ACT.filter(function (st) { return st.node && st.node.isConnected; });
     ACT.forEach(function (st) { if (!st.R || !st.bars) return; var i = idxFromKey(st.bars, key, st.__tnC || (st.__tnC = {})); if (i >= 0) xhDraw(st, i); });
@@ -296,5 +353,5 @@
     document.head.appendChild(st);
   }
 
-  W.JLZd = { version: 'v1.1', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
+  W.JLZd = { version: 'v1.4', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
 })(window);
