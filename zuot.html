@@ -157,6 +157,31 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:8px;bac
 .stamp{font-size:11.5px;color:#ffd66e;margin-bottom:4px}
 .empty{font-size:12px;padding:6px 0}
 .subh{font-size:11.5px;margin:8px 0 0}
+/* 11-24 效果图1123 1:1: 记一笔=买入/卖出+价股时间直打+记下；今天流水=券商成交单样子，每条能删 */
+.jzForm{margin:2px 0 8px;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:6px}
+.jzSeg{display:inline-flex;border:1px solid rgba(255,255,255,.3);border-radius:9px;overflow:hidden}
+.jzSeg button{background:none;border:none;color:#fff;font:400 12.5px -apple-system;padding:5px 16px}
+.jzSeg button[data-side="b"]{color:#ff6b70}
+.jzSeg button[data-side="s"]{color:#4dffb4}
+.jzSeg button.on[data-side="b"]{background:rgba(255,84,89,.25);font-weight:500}
+.jzSeg button.on[data-side="s"]{background:rgba(77,255,180,.14);font-weight:500}
+.frow{display:flex;gap:5px;align-items:center;margin:7px 0 0;font-size:12.5px;flex-wrap:wrap;row-gap:4px}
+.frow input{width:52px;background:none;border:none;border-bottom:1px solid rgba(255,255,255,.4);color:#fff;font:500 14px -apple-system;text-align:center;font-variant-numeric:tabular-nums;padding:2px}
+#jzQ{width:46px}
+#wt{width:58px}
+#recBtn{margin-left:auto;border:1px solid #fff;border-radius:9px;padding:5px 14px;background:rgba(255,255,255,.06);color:#fff;font:500 13px -apple-system}
+#jzPct{font-size:10.5px}
+.m2{font-size:10.5px;opacity:.8;margin-top:5px}
+.jzr{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12.5px;font-variant-numeric:tabular-nums}
+.jzsd{width:30px;font-weight:400}
+.jzsd.b{color:#ff6b70}.jzsd.s{color:#4dffb4}
+.jzp{width:44px}
+.jzq{width:38px;text-align:right}
+.jzt{opacity:.85}
+.jzx{margin-left:auto;font-size:11px;border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:1px 8px;background:none;color:#fff}
+.fhh{font-size:11px;color:#8fc7ff;margin:10px 0 3px}
+.jzsum{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:600;margin-top:6px}
+.jzback{font-size:12px;margin-top:6px;line-height:1.5}
 .stat td{font-size:12.5px;border-top:1px solid rgba(255,255,255,.08)}
 .foot{font-size:11.5px;margin:2px 2px;line-height:1.65}
 
@@ -314,7 +339,7 @@ b,strong{font-weight:500!important}
 <div class="tabs" id="ftab"></div>
 <div class="rail" id="frail"><div class="slide" id="f0"></div><div class="slide" id="f1"></div><div class="slide" id="f2"></div><div class="slide" id="f3"></div><div class="slide" id="f4"></div><div class="slide" id="f5"></div><div class="slide" id="f6"></div><div class="slide" id="f7"></div></div>
 <div class="tabs" id="ctab"></div>
-<div class="rail" id="crail"><div class="slide" id="k0"></div><div class="slide" id="k1"></div><div class="slide" id="k2"></div><div class="slide" id="k3"></div></div>
+<div class="rail" id="crail"><div class="slide" id="k0"></div><div class="slide" id="kf"></div><div class="slide" id="k2"></div><div class="slide" id="k3"></div></div>
 
 </div>
 <script>
@@ -859,28 +884,41 @@ function drawTri(){
 /* ---- 算账 ---- */
 function buildCalc(){
   const s=S(), order=s.mode==='s'?['s','b']:['b','s'];
-  $('k0').innerHTML='<div class="hold">底仓 <button class="rb" data-h="-">−</button><input id="holdI" inputmode="numeric"><button class="rb" data-h="+">+</button> 股<span style="margin-left:auto"></span><button class="chip" id="mS">先卖后接</button><button class="chip" id="mB">先接后卖</button></div>'
-   +order.map(side=>'<div class="leg"><div class="row1"><span class="side '+side+'">'+(side==='s'?'卖出':'买回')+'</span><button class="rb" data-a="'+side+'-">−</button><input class="pin" data-p="'+side+'" inputmode="decimal"><button class="rb" data-a="'+side+'+">+</button><span class="pct" data-pct="'+side+'"></span><span class="qn" data-qn="'+side+'"></span></div><input type="range" data-q="'+side+'" min="100" max="'+HOLD()+'" step="1"></div>').join('')
+  /* 11-24 效果图1123: 记一笔=买入/卖出+价股时间直打+记下（去掉 先卖后接/先接后卖 和 卖出成交了/买回成交了）。
+     11-24 用户「之前滑动的不能取消呀，就是买卖对照的，来回拉价格再切换股数就能知道差价很方便」: 双腿+价格±+股数滑条加回来，
+     和记一笔共用同一份 sp/bp/sq/bq——滑条拉的、±点的、直打的，三处随时同步。 */
+  window.__jzSide=window.__jzSide||'b';
+  $('k0').innerHTML='<div class="hold">底仓 <button class="rb" data-h="-">−</button><input id="holdI" inputmode="numeric"><button class="rb" data-h="+">+</button> 股</div>'
+   +'<div class="jzForm"><div class="jzSeg" id="jzSeg"><button data-side="b" class="on">买入</button><button data-side="s">卖出</button></div>'
+   +'<div class="frow">价 <input id="jzP" inputmode="decimal"> 股 <input id="jzQ" inputmode="numeric"> 时间 <input type="time" id="wt"><span id="jzPct"></span><button id="recBtn">记下</button></div>'
+   +'<div class="kv"><input type="date" id="wd"><select id="tg" style="flex:1;min-width:0"></select></div>'
+   +'<div class="m2" id="jzHint">记下就存，不用凑成一对 · 配对按时间自动算，股数不用一样，多的拆开配</div>'
+   +'<div class="msg" id="msg"></div></div>'
+   +order.map(side=>'<div class="leg"><div class="row1"><span class="side '+side+'">'+(side==='s'?'卖出':'买回')+'</span><button class="rb" data-a="'+side+'-">−</button><input class="pin" data-p="'+side+'" inputmode="decimal"><button class="rb" data-a="'+side+'+">+</button><span class="pct" data-pct="'+side+'"></span><span class="qn" data-qn="'+side+'"></span></div><input type="range" data-q="'+side+'" min="100" max="'+Math.max(HOLD(),100)+'" step="1"></div>').join('')
    +'<div class="res"><span class="big" id="net"></span><span class="how" id="how"></span></div><div class="pos" id="pos"></div>'
    +'<div class="chips" id="chips"></div>'
-   +'<div class="kv"><input type="date" id="wd"><input type="time" id="wt"><select id="tg" style="flex:1;min-width:0"></select></div>'
-   +'<div class="done"><button class="s" id="dS">卖出成交了</button><button class="b" id="dB">买回成交了</button></div>'
-   +'<div class="msg" id="msg"></div>'
    +'<div class="undo"><span id="lastT"></span><button id="undo" title="撤销最近一笔">↩️</button></div>';
-  /* 11-23u 用户「几点挂的不再被重置」: 重建算账区(切先卖/先接、改底仓、手动配)时保留已填的日期/时间，只有第一次才填现在 */
+  /* 11-23u 用户「几点挂的不再被重置」: 重建记账区(改底仓、手动配)时保留已填的日期/时间，只有第一次才填现在 */
   const d=new Date(); $('wd').value=buildCalc._d||d.toLocaleDateString('sv-SE'); $('wt').value=buildCalc._t||d.toTimeString().slice(0,5);
   $('wd').onchange=()=>{ buildCalc._d=$('wd').value; }; $('wt').onchange=()=>{ buildCalc._t=$('wt').value; };
 }
-function drawCalc(skip){
-  const s=S(); $('holdI').value=HOLD(); $('mS').className='chip'+(s.mode==='s'?' on':''); $('mB').className='chip'+(s.mode==='b'?' on':'');
-  ['s','b'].forEach(side=>{ document.querySelector('[data-p="'+side+'"]').value=f(s[side+'p']);
-    document.querySelector('[data-qn="'+side+'"]').innerHTML=s[side+'q']+'<small> 股</small>';
-    if(skip!==side) document.querySelector('[data-q="'+side+'"]').value=s[side+'q']; });
+function drawCalc(){
+  const s=S(); $('holdI').value=HOLD();
+  /* 双腿（买卖对照）：价/股数滑条，和记一笔同步 */
+  ['s','b'].forEach(side=>{ const pe=document.querySelector('[data-p="'+side+'"]'); if(pe&&document.activeElement!==pe) pe.value=f(s[side+'p']);
+    const qn=document.querySelector('[data-qn="'+side+'"]'); if(qn) qn.innerHTML=s[side+'q']+'<small> 股</small>';
+    const sl=document.querySelector('[data-q="'+side+'"]'); if(sl&&document.activeElement!==sl) sl.value=s[side+'q']; });
+  const side=window.__jzSide||'b', pk=side==='s'?'sp':'bp', qk=side==='s'?'sq':'bq';
+  const pj=$('jzP'), qj=$('jzQ');
+  if(document.activeElement!==pj) pj.value=s[pk]>0?f(s[pk]):'';
+  if(document.activeElement!==qj) qj.value=s[qk]||'';
+  [...$('jzSeg').children].forEach(b=>b.className=b.dataset.side===side?'on':'');
   const r=calc(s.sp,s.bp,s.sq,s.bq);
   /* % 小字：算账差%＝(卖−买回)/买回，动态算；挂双行（卖出价旁 + 差旁）。买回价为0不显示。 */
   const dp=s.bp>0?(s.sp/s.bp-1):null, dps=dp==null?'':((dp>=0?'+':'−')+Math.abs(dp*100).toFixed(1)+'%'), dpc=dp==null?'':(dp>=0?'u':'d');
-  ['s','b'].forEach(side=>{ const pe=document.querySelector('[data-pct="'+side+'"]');
-    pe.innerHTML=(dp!=null&&side==='s'&&s.sp>0&&s.bp>0)?'<span class="'+dpc+'">'+dps+'</span>':''; });
+  const se=document.querySelector('[data-pct="s"]'); if(se) se.innerHTML=(dp!=null&&s.sp>0&&s.bp>0)?'<span class="'+dpc+'">'+dps+'</span>':'';
+  const be=document.querySelector('[data-pct="b"]'); if(be) be.innerHTML='';
+  $('jzPct').innerHTML=(side==='s'&&dp!=null&&s.sp>0&&s.bp>0)?'<span class="'+dpc+'">'+dps+'</span>':'';
   $('net').textContent=yuan(r.net); $('net').className='big '+(r.net>=0?'u':'d');
   $('how').innerHTML='差 '+(s.sp-s.bp).toFixed(2)+(dps?' <span class="'+dpc+'" style="font-size:10px">'+dps+'</span>':'')+' × <span class="q">'+r.n+' 股</span> ＝ <span class="'+(r.gross>=0?'u':'d')+'">'+yuan(r.gross)+'</span> · 费用 <span class="d">−'+Math.round(r.fee)+' 元</span>';
   const rest=Math.abs(s.sq-s.bq);
@@ -889,6 +927,18 @@ function drawCalc(skip){
   $('chips').innerHTML=[300,700,1000,1500,HOLD()].filter((v,i,a)=>v<=HOLD()&&a.indexOf(v)===i).map(n=>{const c=calc(s.sp,s.bp,n,n);return '<div class="'+(s.sq===n&&s.bq===n?'on':'')+'" data-n="'+n+'"><span>'+n+'股</span><b class="'+(c.net>=0?'u':'d')+'">'+yuan(c.net,0)+'</b></div>';}).join('');
   drawFib(); save();
 }
+/* 11-24 效果图1123: 今天流水=券商成交单样子（新在上），每条能删；删了配对自动重算 */
+let flowMsg='';
+function drawFlow(P){
+  const s=S();
+  const td=s.log.filter(e=>(e.ts||'').slice(0,10)===TODAY).sort((a,b)=>a.ts<b.ts?1:-1);
+  $('kf').innerHTML=(flowMsg?'<div class="stamp">'+flowMsg+'</div>':'')
+    +'<div class="fhh">今天流水 · '+T().name+' '+td.length+' 笔（和券商成交单一样排）</div>'
+    +(td.length?td.map(e=>{const b=e.side==='b';
+      return '<div class="jzr"><span class="jzsd '+(b?'b':'s')+'">'+(b?'买入':'卖出')+'</span><span class="jzp">'+f(e.p)+'</span><span class="jzq">'+e.q+'</span><span class="jzt">'+(e.ts||'').slice(11,16)+'</span><button class="jzx" data-del="'+e.id+'">删</button></div>';}).join('')
+      :'<div class="empty">今天还没记 · 去「记账」页记一笔就进来。</div>');
+  flowMsg='';
+}
 function drawLog(){
   const s=S(), N=NOW(), P=pair(s.log);
   const lab=o=>hm(o.ts)+' '+(o.side==='s'?'卖':'买')+' '+o.left+'股 @'+f(o.p)+(tdays(o.ts,TODAY)>STALE?' · 超5天':'');
@@ -896,19 +946,29 @@ function drawLog(){
   $('tg').innerHTML='<option value="0">自动：最近几天的挂账</option>'+P.open.map(o=>'<option value="'+o.id+'"'+(s.target===o.id?' selected':'')+'>'+lab(o)+'</option>').join('');
   const last=s.log.slice().sort((a,b)=>b.id-a.id)[0];
   $('lastT').textContent=last?T().name+' 最近一笔 '+hm(last.ts)+' '+(last.side==='s'?'卖':'买')+' '+last.q+'股 @'+f(last.p)+(last.target?' · 手动配':''):'还没记过';
-  // 挂账
-  $('k1').innerHTML='<div class="stamp">'+(P.open.length?'「现在接回」按 '+f(N)+'（'+AT()+'）算，不是实时价':'')+'</div>'
+  drawFlow(P);
+  /* 11-24 效果图1123: 配好的页 = 自动配好的轮 + 今天做T赚 + 还没接回；挂账明细保留在下面（手动配还在） */
+  const R=P.rounds.slice().sort((a,b)=>a.closeTs<b.closeTs?1:-1).slice(0,12);
+  const tdR=P.rounds.filter(x=>(x.closeTs||'').slice(0,10)===TODAY), tdSum=tdR.reduce((ax,x)=>ax+x.net,0);
+  const dets=sd=>P.open.filter(o=>o.side===sd).sort((a,b)=>a.ts<b.ts?-1:1)
+    .map(o=>((o.ts.slice(0,10)===TODAY?'':o.ts.slice(5,10)+' ')+o.ts.slice(11,16))+' '+o.left+'@'+f(o.p)).join(' · ');
+  const so=P.open.filter(o=>o.side==='s'), soq=so.reduce((ax,o)=>ax+o.left,0);
+  const bo=P.open.filter(o=>o.side==='b'), boq=bo.reduce((ax,o)=>ax+o.left,0);
+  $('k2').innerHTML='<div class="fhh">自动配好的（按时间先后 · 股数不用一样，多的拆开配）</div>'
+    +(R.length?R.map(x=>'<div class="it"><div>'+T().name+' '+x.n+' 股 · '+(x.openSide==='s'?'卖 ':'买 ')+f(x.openP)+' → '+(x.openSide==='s'?'接 ':'卖 ')+f(x.closeP)+(x.manual?'<span class="bd w">手动配</span>':'')
+      +'<span class="sm">配的是 '+hm(x.openTs)+' 那笔'+(x.openSide==='s'?'卖':'买')+'（'+x.openQ+'股）→ '+hm(x.closeTs)+' · '+x.meth+'</span></div><div class="r"><b class="'+(x.net>=0?'u':'d')+'">'+yuan(x.net)+'</b></div></div>').join('')
+      :'<div class="empty">还没有配好的轮。</div>')
+    +(tdR.length?'<div class="jzsum"><b>今天做T赚</b><b class="'+(tdSum>=0?'u':'d')+'">'+yuan(tdSum)+'</b></div>':'')
+    +(!so.length&&!bo.length?'<div class="m2">没有挂账，底仓完整 '+HOLD()+' 股。</div>'
+      :(so.length?'<div class="jzback">还没接回：卖出 '+soq+' 股（'+dets('s')+'）· 底仓少 '+soq+'</div>':'')
+      +(bo.length?'<div class="jzback">还没卖出：买入 '+boq+' 股（'+dets('b')+'）· 底仓多 '+boq+'</div>':''))
+    +'<div class="fhh">挂账明细（值按现价 '+f(N)+'（'+AT()+'）算，不是实时价）</div>'
     +(P.open.length?P.open.slice().sort((a,b)=>a.ts<b.ts?1:-1).map(o=>{const sd=o.side==='s', dd=tdays(o.ts,TODAY), old=dd>STALE;
       const v=sd?(o.p-N)*o.left-(o.fu+fee(N*o.left,0)/o.left)*o.left:(N-o.p)*o.left-(o.fu+fee(N*o.left,1)/o.left)*o.left;
       return '<div class="it'+(old?' old':'')+'"><div>'+T().name+' '+hm(o.ts)+' '+(sd?'卖':'买')+' '+o.left+(o.left<o.q?'/'+o.q:'')+' 股 @'+f(o.p)+(old?'<span class="bd">超5天 · 不自动配</span>':'')
         +'<span class="sm">'+o.meth+' · 挂了 '+dd+' 个交易日'+(o.left<o.q?' · 已配 '+(o.q-o.left)+' 股':'')+'</span></div>'
         +'<div class="r"><b class="'+(v>=0?'u':'d')+'">'+yuan(v)+'</b><span class="sm">现在'+(sd?'接回':'卖出')+'</span>'+(old?'<button class="mini" data-pick="'+o.id+'">手动配这笔</button>':'')+'</div></div>';}).join('')
       :'<div class="empty">没有挂账。</div>');
-  // 已配
-  const R=P.rounds.slice().sort((a,b)=>a.closeTs<b.closeTs?1:-1).slice(0,12);
-  $('k2').innerHTML=R.length?R.map(x=>'<div class="it"><div>'+T().name+' '+x.n+' 股 · '+(x.openSide==='s'?'卖 ':'买 ')+f(x.openP)+' → '+(x.openSide==='s'?'接 ':'卖 ')+f(x.closeP)+(x.manual?'<span class="bd w">手动配</span>':'')
-      +'<span class="sm">配的是 '+hm(x.openTs)+' 那笔'+(x.openSide==='s'?'卖':'买')+'（'+x.openQ+'股）→ '+hm(x.closeTs)+' · '+x.meth+'</span></div><div class="r"><b class="'+(x.net>=0?'u':'d')+'">'+yuan(x.net)+'</b></div></div>').join('')
-    :'<div class="empty">还没有配好的轮。</div>';
   // 统计
   const G={}; P.rounds.forEach(x=>{const g=G[x.meth]||(G[x.meth]={n:0,w:0,sum:0,op:0}); g.n++; if(x.net>0) g.w++; g.sum+=x.net;});
   P.open.forEach(o=>{(G[o.meth]||(G[o.meth]={n:0,w:0,sum:0,op:0})).op++;});
@@ -920,7 +980,7 @@ function drawLog(){
       :(big.length?'<table class="stat">'+head+big.map(row).join('')+'</table>':'<div class="empty">还没有哪种做法满 10 轮，暂不排名。</div>')
        +(small.length?'<div class="subh">样本不足（不排名）</div><table class="stat">'+head+small.map(row).join('')+'</table>':''))
     +'<div class="undo" style="margin-top:10px"><button id="demo">放示例</button><button id="clr">清空记录</button></div>';
-  CT.tabs.children[1].textContent='挂账 '+P.open.length;
+  CT.tabs.children[1].textContent='今天流水'+(s.log.filter(e=>(e.ts||'').slice(0,10)===TODAY).length?' '+s.log.filter(e=>(e.ts||'').slice(0,10)===TODAY).length:'');
   save();
 }
 function add(side){ const s=mutS(), sd=side==='s'; s.seq++;
@@ -1493,22 +1553,33 @@ document.addEventListener('click',e=>{ const t=e.target;
     $('msg').textContent='已加入自选 '+r.name+'（'+r.code+'）· 行情接上后各卡同款显示'; return; } });
 function all(){ drawTop(); buildCalc(); drawCalc(); drawLog(); draw5d(); drawNext(); drawSW(); drawBand(); }
 
-document.addEventListener('input',e=>{const t=e.target; if(t.dataset.q){const k=t.dataset.q+'q', v=Math.max(100,Math.round(+t.value/100)*100); if(v!==S()[k]){S()[k]=v; drawCalc(t.dataset.q);}}});
+document.addEventListener('input',e=>{const t=e.target; if(t.dataset.q){window.__jzSide=t.dataset.q; const k=t.dataset.q+'q', v=Math.max(100,Math.round(+t.value/100)*100); if(v!==S()[k]){S()[k]=v; drawCalc(t.dataset.q);}}
+  if(t.id==='jzP'){const v=Math.round(+t.value*100)/100; if(v>0) S()[(window.__jzSide||'b')==='s'?'sp':'bp']=v; drawCalc();}   /* 11-24: 价直打 */
+  if(t.id==='jzQ'){const v=Math.round(+(t.value||0)/100)*100; if(v>=100) S()[(window.__jzSide||'b')==='s'?'sq':'bq']=v; drawCalc();}});   /* 11-24: 股直打；11-24b 动哪条腿，记一笔自动跟到那边 */
 document.addEventListener('change',e=>{const t=e.target, s=S();
   if(t.id==='code'){ if(t.value==='__add'){ $('addstk').style.display='flex'; $('addc').focus(); }
     else { $('addstk').style.display='none'; st.code=t.value; if(!st.s[st.code]) st.s[st.code]=blank(st.code); all(); }
     return; }
   if(t.id==='tg'){ s.target=+t.value; save(); return; }
   if(t.id==='holdI'){ setHold(+t.value); return; }
-  if(t.dataset.p){const v=+t.value; if(v>0) s[t.dataset.p+'p']=Math.round(v*100)/100; drawCalc();}
+  if(t.dataset.p){window.__jzSide=t.dataset.p; const v=+t.value; if(v>0) s[t.dataset.p+'p']=Math.round(v*100)/100; drawCalc();}
   if(t.dataset.q) t.value=s[t.dataset.q+'q'];});
 document.addEventListener('click',e=>{const t=e.target.closest('button,[data-n],[data-fill],[data-tnm]'); if(!t) return; const s=S();
 
   if(t.dataset.tnm){ triNm=t.dataset.tnm; drawTri(); return; }
-  if(t.dataset.fill){ const v=+t.dataset.fill; let sell=v>NOW(); const lb=t.dataset.lab||''; if(lb.indexOf('卖')>-1)sell=true; else if(lb.indexOf('接')>-1)sell=false; s[sell?'sp':'bp']=Math.round(v*100)/100; const lab=t.dataset.lab||''; if(lab.indexOf('三角')===0)s.meth='三角'; else if(lab.indexOf('15分')===0||lab.indexOf('20天')===0)s.meth='15分斐波'; else if(lab.indexOf('日线')===0)s.meth='尺子'; else if(lab.indexOf('五日')===0)s.meth='五日图斐波'; else if(lab.indexOf('明日')===0)s.meth='明日共振'; drawCalc(); CR.go(0);
+  if(t.dataset.fill){ const v=+t.dataset.fill; let sell=v>NOW(); const lb=t.dataset.lab||''; if(lb.indexOf('卖')>-1)sell=true; else if(lb.indexOf('接')>-1)sell=false; s[sell?'sp':'bp']=Math.round(v*100)/100; window.__jzSide=sell?'s':'b'; const lab=t.dataset.lab||''; if(lab.indexOf('三角')===0)s.meth='三角'; else if(lab.indexOf('15分')===0||lab.indexOf('20天')===0)s.meth='15分斐波'; else if(lab.indexOf('日线')===0)s.meth='尺子'; else if(lab.indexOf('五日')===0)s.meth='五日图斐波'; else if(lab.indexOf('明日')===0)s.meth='明日共振'; drawCalc(); CR.go(0);
     $('msg').textContent='已填入'+(sell?'卖价 ':'接价 ')+f(v)+'（'+t.dataset.lab+'）'; return; }
-  if(t.id==='mS'||t.id==='mB'){ s.mode=t.id==='mS'?'s':'b'; buildCalc(); drawCalc(); drawLog(); return; }
-  if(t.id==='dS'){ add('s'); return; } if(t.id==='dB'){ add('b'); return; }
+  if(t.dataset.side&&t.closest('#jzSeg')){ window.__jzSide=t.dataset.side; drawCalc(); return; }   /* 11-24 效果图: 买入/卖出段选 */
+  if(t.id==='recBtn'){ const sd=window.__jzSide||'b'; const p=Math.round(+$('jzP').value*100)/100, q=Math.round(+$('jzQ').value/100)*100;
+    const say=m=>{ $('msg').textContent=m; try{ $('msg').scrollIntoView({block:'nearest'}); }catch(e){} };
+    if(!(p>0)){ say('价没填对：先填成交价再记下（或先在下面腿里点±/拉滑条）'); return; }
+    if(!(q>=100)){ say('股数没填对：最少 100 股（按 100 的倍数记）'); return; }
+    if(sd==='s'&&q>HOLD()){ say('卖出 '+q+' 股超过底仓 '+HOLD()+' 股 · 先改底仓或股数'); return; }
+    S()[sd==='s'?'sp':'bp']=p; S()[sd==='s'?'sq':'bq']=q; add(sd); try{ $('msg').scrollIntoView({block:'nearest'}); }catch(e){} return; }   /* 11-24 效果图: 记下就存 */
+  if(t.dataset.del){ const id=+t.dataset.del, s0=mutS(), x=s0.log.find(y=>y.id===id);
+    s0.log=s0.log.filter(y=>y.id!==id); if(s0.target===id) s0.target=0;
+    flowMsg='已删：'+hm(x.ts)+' '+(x.side==='s'?'卖 ':'买 ')+x.q+' 股 @'+f(x.p)+' · 配对已重算';
+    drawLog(); drawCalc(); return; }
   if(t.id==='undo'){ mutS(); if(!s.log.length) return; const mx=Math.max(...s.log.map(x=>x.id)), x=s.log.find(y=>y.id===mx); s.log=s.log.filter(y=>y.id!==mx);
     $('msg').textContent='已撤销：'+hm(x.ts)+' '+(x.side==='s'?'卖 ':'买 ')+x.q+' 股 @'+f(x.p)+' · 配对已重算'; drawLog(); return; }
   if(t.id==='clr'){ mutS(); s.log=[]; s.demo=0; s.target=0; drawLog(); return; }
@@ -1517,16 +1588,16 @@ document.addEventListener('click',e=>{const t=e.target.closest('button,[data-n],
      {id:3,side:'s',p:24.90,q:300,ts:'2026-11-12 10:16',meth:'今日共振'},
      {id:4,side:'s',p:20.20,q:1000,ts:'2026-11-20 09:45',meth:'15分斐波'},{id:5,side:'s',p:20.00,q:500,ts:'2026-11-20 14:00',meth:'15分斐波'},
      {id:6,side:'b',p:19.30,q:1200,ts:'2026-11-21 10:00',meth:'15分斐波'}]; drawLog(); return; }
-  if(t.dataset.pick){ const id=+t.dataset.pick, o=pair(s.log).open.find(x=>x.id===id); s.target=id; s.mode=o.side==='s'?'s':'b'; buildCalc(); drawCalc(); drawLog(); CR.go(0);
+  if(t.dataset.pick){ const id=+t.dataset.pick, o=pair(s.log).open.find(x=>x.id===id); s.target=id; window.__jzSide=o.side==='s'?'b':'s'; buildCalc(); drawCalc(); drawLog(); CR.go(0);
     $('msg').textContent='下一笔'+(o.side==='s'?'买回':'卖出')+'会先配给 '+hm(o.ts)+' 那笔'; return; }
   if(t.dataset.m){ s.meth=t.dataset.m; drawLog(); return; }
-  if(t.dataset.a){ const k=t.dataset.a[0]+'p', tick=T().p<10?0.01:0.01; s[k]=Math.round((s[k]+(t.dataset.a[1]==='+'?tick:-tick))*100)/100; drawCalc(); return; }
+  if(t.dataset.a){ window.__jzSide=t.dataset.a[0]; const k=t.dataset.a[0]+'p', tick=T().p<10?0.01:0.01; s[k]=Math.round((s[k]+(t.dataset.a[1]==='+'?tick:-tick))*100)/100; drawCalc(); return; }
   if(t.dataset.h){ setHold(HOLD()+(t.dataset.h==='+'?100:-100)); return; }
   if(t.dataset.n){ s.sq=s.bq=+t.dataset.n; drawCalc(); }
 });
 function setHold(v){ const s=S(); v=Math.max(100,Math.round((v||0)/100)*100); s.hold=v; s.sq=Math.min(s.sq,v); s.bq=Math.min(s.bq,v); buildCalc(); drawCalc(); drawLog(); }
 const FR=rail('frail','ftab',['15分本段','20天大腿','日线','△三角','五日','明日','日线波段','今日成绩'],{grid:1});   /* 11-23h 4格×2排分段 */
-const CR=rail('crail','ctab',['算账','挂账','已配','统计']), CT=CR;
+const CR=rail('crail','ctab',['记账','今天流水','配好的','统计']), CT=CR;
 all();
 
 /* ===== 浮动球小窗：整个面板收进一个可随意拖动的球，点开=全面板小窗；做T作战屏/持仓卡/任何状态页面都能打开（嵌入即用）===== */
