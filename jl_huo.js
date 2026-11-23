@@ -1,4 +1,10 @@
-/* jl_huo.js v5.1 (11-24) 乖离副图: 多周期(日/15分/5分/1分)切换 + 十字线。公式 calc/state 与 v4 逐字一致, 一个数没改。
+/* jl_huo.js v6.1 (11-24) 乖离+筹码穿越+三线金坑 三合一副图: 头部指标切换【乖离|穿越|三线】+ 多周期(日/30分/15分/5分/1分)切换 + 十字线。
+   v6.1 新增: 跟随作战屏分时/K线页 —— 读 window.zpPerOf()(1/5/15/30分钟), K线页自动切对应周期(含新增30分), 分时页用头部手选;
+   手点头部周期钮后30秒内以手选为准。周期/指标一份存储, 切一次全联动。
+   v6 改动(不动乖离公式 calc/state/画法一个数): ①头部加指标切换, 选「穿越/三线」时显示 jl_sx.js 的副图(动态加载同目录 jl_sx.js);
+   ②周期/指标一份存储(zp_huo_lv_v1/zp_huo_ind_v1) —— 切一次, 乖离和 sx 全联动(修复"切周期乖离不跟"的体验);
+   ③「穿越/三线」标签下分钟级阈值说明见 jl_sx.js 头注释(−2/−5 是日线标定, 分钟级参考意义有限)。
+   公式 calc/state 与 v4/v5.1 逐字一致, 一个数没改。
    v5.1 修复(不动公式/画法/结构): ①分钟K拉取全失败时死循环 —— 原来没拉到数据时每次render都立刻重拉, 失败回调又触发redraw,
            三个域名全不通时无限循环刷请求; 改为: 失败后15秒节流 + 16秒兜底自动重试一次(与「自动重试」文案相符)。
            ②悬停后切周期, 残留的越界 hover 索引让图例显示 undefined/−NaN —— legend 里钳位, 越界按未悬停处理。
@@ -43,7 +49,18 @@
     var m = s / 20, pc = +B[k - 1].c; return { below: pc < m, pc: pc, m20: m, wait: 0.5 * dr * 100 };
   }
   /* ---- 11-24 新增: 周期切换 / 分钟K来源 / 十字线 (不动上面的公式) ---- */
-  var LVS = ['日', '15分', '5分', '1分'], LVK = 'zp_huo_lv_v1', MK = { '15分': 'm15', '5分': 'm5', '1分': 'm1' };
+  var LVS = ['日', '30分', '15分', '5分', '1分'], LVK = 'zp_huo_lv_v1', MK = { '30分': 'm30', '15分': 'm15', '5分': 'm5', '1分': 'm1' };
+  /* v6.1: 跟随作战屏分时/K线页 —— window.zpPerOf() 返回当前K线页周期分钟数(1/5/15/30), 分时页=0(跟'日'或手选);
+     K线页时自动覆盖本地周期选择, 头部周期钮在分时页仍可手选 */
+  function autoLvOf(host) {
+    try {
+      if (typeof W.zpPerOf !== 'function') return null;
+      var p = +W.zpPerOf();
+      if (!(p > 0)) return null;                       /* 分时页: 不自动切, 尊重头部手选 */
+      var map = { 1: '1分', 5: '5分', 15: '15分', 30: '30分' };
+      return map[p] || null;
+    } catch (e) { return null; }
+  }
   function loadLv() { try { var v = localStorage.getItem(LVK); if (LVS.indexOf(v) >= 0) return v; } catch (e) { } return '日'; }
   function codeOf() { try { if (W.LIVE && W.LIVE.sym) return String(W.LIVE.sym); if (W.STK && W.STK.code) return String(W.STK.code); } catch (e) { } return ''; }
   function redraw(host) { var a = host.__args; if (a) render(host, a.B, a.sess, a.opt); }
@@ -101,6 +118,10 @@
       + '<text x="' + (G.W - G.PR - 2) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#2fd17a" stroke="#000" stroke-width=".5" paint-order="stroke">' + f2(G.R.H1[i]) + '</text>';
   }
   function chips(lv) { return '<span class="hps">' + LVS.map(function (l) { return '<button class="hp' + (l === lv ? ' on' : '') + '" data-lv="' + l + '" type="button">' + (l === '日' ? '日' : l.replace('分', '')) + '</button>'; }).join('') + '</span>'; }
+  /* v6: 指标切换 【乖离|穿越|三线】 */
+  var INDS = ['乖离', '穿越', '三线'], INDK = 'zp_huo_ind_v1', SXV = '?v=11';
+  function indOf() { try { var v = localStorage.getItem(INDK); if (INDS.indexOf(v) >= 0) return v; } catch (e) { } return '乖离'; }
+  function indChips(ind) { return '<span class="hps">' + INDS.map(function (t) { return '<button class="hp hi' + (t === ind ? ' on' : '') + '" data-ind="' + t + '" type="button">' + t + '</button>'; }).join('') + '</span>'; }
   var CSS = '#zpHuoJL{margin:0 0 3px;padding:4px 6px 2px;color:#fff;font:400 11px/1.35 -apple-system,"PingFang SC",ui-rounded,sans-serif;font-variant-numeric:tabular-nums}' +
     '#zpHuoJL .hh{display:flex;align-items:center;gap:7px;height:19px;white-space:nowrap;overflow:hidden}#zpHuoJL .ht{font-weight:500}' +
     '#zpHuoJL .hs{margin-left:auto;font-size:10.5px}#zpHuoJL .hf{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;font-size:9px;line-height:14px;padding:0;text-align:center}' +
@@ -108,7 +129,10 @@
     '#zpHuoJL.fold .hb,#zpHuoJL.fold .hl{display:none}body.injlin .chartbox>#zpHuoJL{order:1}' +
     '#zpHuoJL .hps{display:inline-flex;gap:3px;flex:none}' +
     '#zpHuoJL .hp{background:none;border:1px solid rgba(255,255,255,.25);border-radius:6px;color:rgba(255,255,255,.7);font:400 9.5px/1.5 -apple-system,sans-serif;padding:0 5px;cursor:pointer}' +
-    '#zpHuoJL .hp.on{border-color:#2fd17a;color:#2fd17a}';
+    '#zpHuoJL .hp.on{border-color:#2fd17a;color:#2fd17a}' +
+    /* v6: 指标钮 + sx 容器 */
+    '#zpHuoJL .hi{border-color:rgba(120,200,255,.45)}#zpHuoJL .hi.on{border-color:#3d8bff;color:#7ab8ff}' +
+    '#zpHuoJL .sxbox{display:block}#zpHuoJL.fold .sxbox{display:none}#zpHuoJL .sxbox .ssx{background:rgba(255,255,255,.03);border-radius:6px;padding:3px 4px 2px;margin:0 0 3px}';
   var FK = 'zp_huo_fold_v1';
   function mount(before) {
     if (!before || !before.parentNode) return null;
@@ -121,13 +145,28 @@
         var b = e.target && e.target.closest && e.target.closest('.hf');
         if (b) { host.classList.toggle('fold'); try { localStorage.setItem(FK, host.classList.contains('fold') ? '1' : '0'); } catch (e2) { } b.textContent = host.classList.contains('fold') ? '+' : '−'; return; }
         var p = e.target && e.target.closest && e.target.closest('.hp');
-        if (p) { var lv = p.getAttribute('data-lv'); if (LVS.indexOf(lv) < 0) return; host.__lv = lv; try { localStorage.setItem(LVK, lv); } catch (e3) { } host.__key = ''; redraw(host); }
+        if (p && p.getAttribute('data-ind')) { var ind = p.getAttribute('data-ind'); if (INDS.indexOf(ind) < 0) return; host.__ind = ind; try { localStorage.setItem(INDK, ind); } catch (e4) { } host.__key = ''; redraw(host); return; }   /* v6 指标切换 */
+        if (p) { var lv = p.getAttribute('data-lv'); if (LVS.indexOf(lv) < 0) return; host.__lv = lv; host.__manualUntil = Date.now() + 30000; try { localStorage.setItem(LVK, lv); } catch (e3) { } host.__key = ''; redraw(host); }
       });
       var mv = function (e) { var G = host.__g; if (!G) return; var sv = host.querySelector('svg'); if (!sv) return; var r = sv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e, x = (t.clientX - r.left) / r.width * G.W; host.__hov = Math.max(0, Math.min(G.N - 1, Math.floor((x - G.PL) / G.cw))); legend(host); };
       host.addEventListener('mousemove', mv); host.addEventListener('touchstart', mv, { passive: true }); host.addEventListener('touchmove', mv, { passive: true });
       host.addEventListener('mouseleave', function () { host.__hov = -1; legend(host); }); host.addEventListener('touchend', function () { setTimeout(function () { host.__hov = -1; legend(host); }, 1500); });
     }
     if (host.parentNode !== before.parentNode || host.nextSibling !== before) before.parentNode.insertBefore(host, before);
+    /* v6: 动态加载 jl_sx.js(同目录), 建常驻 sx 节点 —— 失败时指标钮点了会提示 */
+    if (!host.__sxSt) {
+      host.__sxSt = { node: null, s1: null, s2: null, ready: false, code: '', cap: 0, which: '穿越', bars: null, lv: null };
+      host.__ind = indOf();
+      var sx = document.createElement('script');
+      sx.src = 'jl_sx.js' + SXV;
+      sx.onload = function () {
+        try { if (!W.JLSx) return; var nd = W.JLSx.embedNode({ code: codeOf(host) });
+          host.__sxSt.node = nd.node; host.__sxSt.s1 = nd.s1; host.__sxSt.s2 = nd.s2; host.__sxSt.ready = true; host.__sxSt.code = nd.code;
+        } catch (e) { }
+      };
+      sx.onerror = function () { host.__sxSt = { node: null, ready: false }; };
+      document.head.appendChild(sx);
+    }
     return host;
   }
   function f2(v) { return (v >= 0 ? '' : '−') + Math.abs(v).toFixed(2); }
@@ -141,7 +180,9 @@
     if (!host) return;
     opt = opt || {};
     host.__args = { B: B, sess: sess, opt: opt };
-    var lv = host.__lv || loadLv(); host.__lv = lv;
+    /* v6.1: 作战屏K线页周期联动 —— 手点头部周期钮后30秒内以手选为准, 其余时候跟随 zpPerOf() */
+    var lv = (Date.now() < (host.__manualUntil || 0)) ? (host.__lv || loadLv()) : (autoLvOf(host) || host.__lv || loadLv());
+    host.__lv = lv;
     var fd = host.classList.contains('fold');
     var S = (B && B.length >= 20) ? state(B, sess) : null;   /* 头部永远日K口径 */
     var CB = B;
@@ -149,14 +190,18 @@
       var mb = minBars(host, lv, opt);
       if (!mb.bars || mb.bars.length < 40) {
         host.__key = ''; host.__g = null;
-        host.innerHTML = '<div class="hh"><span class="ht">乖离 · ' + lv + '</span>' + chips(lv) + '<button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hh"><span class="hs">' + mb.msg + '</span></div>';
+        var indM = host.__ind || indOf(); host.__ind = indM;
+        host.innerHTML = '<div class="hh"><span class="ht">' + (indM === '乖离' ? '乖离 · ' + lv : indM + ' · ' + lv) + '</span>' + indChips(indM) + chips(lv) + '<button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hh"><span class="hs">' + mb.msg + '</span></div><div class="sxbox"></div>';
+        var sxbM = host.querySelector('.sxbox');
+        if (host.__sxSt && host.__sxSt.node) sxbM.appendChild(host.__sxSt.node);
+        if (indM !== '乖离' && host.__sxSt.ready && W.JLSx) { try { W.JLSx.feed(host.__sxSt, mb.bars || host.__sxSt.bars, lv, indM, codeOf()); } catch (e6) { } }
         return;
       }
       CB = mb.bars;
     }
     var key = lv + '|' + (CB && CB.length ? CB.length + '@' + CB[CB.length - 1].t + '@' + CB[CB.length - 1].c : '0') + '|' + sess + '|' + (B && B.length ? B.length + '@' + B[B.length - 1].c : '');
     if (host.__key === key) return; host.__key = key;
-    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">日线乖离</span>' + chips(lv) + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div>'; return; }
+    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">' + ((host.__ind || indOf()) === '乖离' ? '日线乖离' : (host.__ind || indOf()) + ' · ' + lv) + '</span>' + indChips(host.__ind || indOf()) + chips(lv) + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div><div class="sxbox"></div>'; var sxbK = host.querySelector('.sxbox'); if (host.__sxSt && host.__sxSt.node) sxbK.appendChild(host.__sxSt.node); return; }
     var R = calc(CB), N = Math.min(90, R.n), i0 = R.n - N, D = labels(CB, lv);
     var Wd = 380, PL = 24, PR = 3, T = 6, Bt = 100, Hh = 114, cw = (Wd - PL - PR) / N,   /* viewBox 宽380≈手机屏宽, 字不被缩小 */
         X = function (k) { return PL + cw * (k + 0.5); };
@@ -179,7 +224,16 @@
     for (k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Hh - 3) + '" text-anchor="middle" font-size="10" fill="#fff">' + D[i0 + k] + '</text>');
     g.push('<g class="hx"></g>');   /* 十字线覆盖层, legend() 里填 */
     var st = !S ? '' : S.below ? '<span style="color:#8fb8ff">线下 · 卖后多等≈' + S.wait.toFixed(1) + '%</span>' : '<span>线上 · 照常接</span>';   /* 依据 tools/bt/huo2_adaptive_1123.js / 1114总账 11-23c; 参考, 不改尺子 */
-    host.innerHTML = '<div class="hh"><span class="ht">' + (lv === '日' ? '日线乖离' : '乖离 · ' + lv) + '</span>' + (S ? '<span>20日线 ' + S.m20.toFixed(2) + '</span>' : '') + chips(lv) + '<span class="hs">' + st + '</span><button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hl"></div><div class="hb"><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g.join('') + '</svg></div>';
+    var ind = host.__ind || indOf(); host.__ind = ind;
+    var indIsHu = ind === '乖离';
+    host.innerHTML = '<div class="hh"><span class="ht">' + (indIsHu ? (lv === '日' ? '日线乖离' : '乖离 · ' + lv) : (ind + ' · ' + lv)) + '</span>' + (indIsHu && S ? '<span>20日线 ' + S.m20.toFixed(2) + '</span>' : '') + indChips(ind) + chips(lv) + '<span class="hs">' + st + '</span><button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hl" style="display:' + (indIsHu ? '' : 'none') + '"></div><div class="hb" style="display:' + (indIsHu ? '' : 'none') + '"><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g.join('') + '</svg></div><div class="sxbox"></div>';
+    /* v6: 指标切换 —— 穿越/三线 显示 sx 区域, 与周期联动; sx 节点常驻内存, 每次重绘挪回 */
+    var sxb = host.querySelector('.sxbox');
+    if (host.__sxSt && host.__sxSt.node) sxb.appendChild(host.__sxSt.node);
+    if (!indIsHu) {
+      if (!host.__sxSt.ready) sxb.innerHTML += '<div style="color:#8fb8ff;font-size:10.5px;padding:2px 2px">jl_sx.js 还没加载好…（检查同目录文件）</div>';
+      else if (W.JLSx && CB && CB.length >= 40) { try { W.JLSx.feed(host.__sxSt, CB, lv, ind, codeOf()); } catch (e5) { } }
+    }
     host.__g = { W: Wd, PL: PL, PR: PR, cw: cw, N: N, i0: i0, R: R, D: D, vmax: vmax, vmin: vmin, T: T, Bt: Bt }; if (!(host.__hov >= 0)) host.__hov = -1; legend(host);
   }
   W.JLHuo = { calc: calc, state: state, mount: mount, render: render, _labels: labels, _hx: hxSVG };
