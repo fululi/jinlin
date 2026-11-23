@@ -1,4 +1,10 @@
-/* jl_gapiv.js v3 (2026-11-14, 缺口重点跟进版式——1:1 复刻用户效果图「缺口重点跟进_效果图.html」)
+/* jl_gapiv.js v4 (2026-11-24, 整根跳空修正——基于 v3 2026-11-14; 仅改 scan 判定与缺口带沿, 渲染层/输出字段/RTD/OGT/回补判定全不动)
+   ① scan 分钟级不再排除整根跳空: 原 bull/bear 追加 (daily || c0.l <= p0.h)/(daily || c0.h >= p0.l), 「整根K线都跳进上根区间之外」的强缺口直接不进 out——而整根跳空=缺口区从未被成交=未补确定性最高, 与「缺口重点跟进」用途正好相反。现与日线口径统一(只看 |开-前收|>0.05%)。典型场景: 13:00 午后开盘整根跳空、盘中急拉/急杀脉冲根。日线口径未动。
+   ② 整根跳空的缺口带沿收紧到本根影线(bull: hi=c0.l / bear: lo=c0.h): 原取 c0.o 会把本根已成交区算进带内(例: 上根 10.00/9.98、本根开 10.10 低 10.05 → 带上沿应为 10.05 而非 10.10, 10.05–10.10 本根成交过); 只影响「当时缺口x%」展示、touch 检测、归组与距离过滤的精度; 补满价 fe=前收、rem 剩余带口径(从本根影线起算, jl-1201)均不变。
+   ③ 遗留: MT 分钟缺口回补率表(1104c)按旧 scan 口径统计(不含整根跳空), 放开后「今日形成」分钟组引用的仍是旧口径数字, 偏差方向=旧表漏了最强样本; 下次重算 MT 时按新口径统一重跑。RTD/OGT 为日线/开盘口径, 不受影响。
+   回滚: git revert 本文件, index.html 引用 jl_gapiv.js?v=12→11。
+   ===== 以下为 v3 原注释(相对 v2 的差异说明, 仍有效) =====
+   jl_gapiv.js v3 (2026-11-14, 缺口重点跟进版式——1:1 复刻用户效果图「缺口重点跟进_效果图.html」)
    持仓卡「缺口/iv」整版重排: 重点跟进(红框脉冲, 上/下各取距现价最近的未补) + 今日iv宫格(分钟级当日事件: 出现/已补/未补+补回时刻) + ↑iv(现价上方·按补满价降序·最近4行+远的折叠) + 现价分割线 + ↓iv(镜像)。
    =S2/=S1/=B1/=B2 白标: 链作战屏 jl_zp_war.html 的固定价位表 ATRB_TAB(台账口径: 中心=当日收盘, S2=带上沿, S1=中心与上沿中间, B1=中心与下沿中间, B2=带下沿);
    取法=同源 fetch 作战屏页抽出 var ATRB_TAB={...}, localStorage jl_atrb_v1 缓存12h, 失败静默不标(不影响主功能); 作战屏表一更新这里自动跟。原 v2 的 jlTierPxJL(持仓卡动态档)口径不再使用(11-14 用户指正: 必须链作战屏真值)。
@@ -103,7 +109,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
     for (let i = 1; i < b.length; i++) {
       const p0 = b[i - 1], c0 = b[i], d0 = dg(c0.t).slice(0, 8);
       if (!daily && (dg(p0.t).slice(0, 8) !== d0 || keep.indexOf(d0) < 0)) continue;   /* 分钟级只看同一天内、近5个交易日 */
-      const vm = p0.c * 0.0005, bull = c0.o - p0.c > vm && (daily || c0.l <= p0.h), bear = p0.c - c0.o > vm && (daily || c0.h >= p0.l);
+      const vm = p0.c * 0.0005, bull = c0.o - p0.c > vm, bear = p0.c - c0.o > vm;   /* v4: 去掉分钟级整根跳空排除(原 &&(daily || c0.l <= p0.h)/(daily || c0.h >= p0.l)), 与日线口径统一——整根跳空=缺口区从未成交, 恰是未补确定性最高的形态, 不该排除 */
       if (!bull && !bear) continue;
       let ft = "", ext = c0.o;
       if (bull ? c0.l <= p0.c : c0.h >= p0.c) ft = daily && d0 === today ? "今日" : c0.t;   /* 今天这根日K已碰昨收 = 今天补了(时刻取开盘缺口的); jl-1199: 分钟级/往日同理, 形成那根自己影线碰前收 = 当根已补 */
@@ -112,7 +118,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
         ext = bull ? Math.min(ext, b[j].l) : Math.max(ext, b[j].h);
         if (bull ? b[j].l <= p0.c : b[j].h >= p0.c) { ft = b[j].t; break; }
       }
-      const lo = bull ? p0.c : c0.o, hi = bull ? c0.o : p0.c;
+      const lo = bull ? p0.c : (c0.h < p0.l ? c0.h : c0.o), hi = bull ? (c0.l > p0.h ? c0.l : c0.o) : p0.c;   /* v4: 整根跳空时带沿收紧到本根影线(向上: hi 取本根低 c0.l; 向下: lo 取本根高 c0.h), 原取 c0.o 把本根已成交区也算进带; 补满价 fe(=前收)不受影响 */
       if (ft && ft !== "今日" && dg(ft).slice(0, 8) !== today) continue;   /* 以前就补掉的不要 */
       const rem = ft ? null : (bull ? [p0.c, Math.min(c0.o, ext)] : [Math.max(c0.o, ext), p0.c]);
       out.push({ lv, bull, lo, hi, rem, t: c0.t, ft, d: daily ? dg(c0.t).slice(0, 8) : d0 });
