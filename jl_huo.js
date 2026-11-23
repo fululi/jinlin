@@ -1,4 +1,7 @@
-/* jl_huo.js v5 (11-24) 乖离副图: 多周期(日/15分/5分/1分)切换 + 十字线。公式 calc/state 与 v4 逐字一致, 一个数没改。
+/* jl_huo.js v5.1 (11-24) 乖离副图: 多周期(日/15分/5分/1分)切换 + 十字线。公式 calc/state 与 v4 逐字一致, 一个数没改。
+   v5.1 修复(不动公式/画法/结构): ①分钟K拉取全失败时死循环 —— 原来没拉到数据时每次render都立刻重拉, 失败回调又触发redraw,
+           三个域名全不通时无限循环刷请求; 改为: 失败后15秒节流 + 16秒兜底自动重试一次(与「自动重试」文案相符)。
+           ②悬停后切周期, 残留的越界 hover 索引让图例显示 undefined/−NaN —— legend 里钳位, 越界按未悬停处理。
    多周期: 周期按钮存 zp_huo_lv_v1; 分钟K优先读作战屏 LIVE.hist.m15/m5/m1(慢通道已载入, 不另拉);
            独立打开/慢通道没有时自拉腾讯 mkline 320根(55秒节流, 三域名轮询)。
    头部「20日线 / 线下·卖后多等」永远用日K口径(调用方喂的B), 不随周期变 —— 该口径按日线回测标定(tools/bt/huo2_adaptive_1123.js)。
@@ -51,7 +54,9 @@
     var sym = /^(sh|sz)\d{6}$/i.test(code) ? code.toLowerCase() : (/^[569]/.test(String(code).replace(/\D/g, '')) ? 'sh' : 'sz') + String(code).replace(/\D/g, '');
     var k = MK[lv], hosts = ['proxy.finance.qq.com/ifzqgtimg', 'web.ifzq.gtimg.cn', 'ifzq.gtimg.cn'], i = 0;
     (function nx() {
-      if (i >= hosts.length) { e.fly = 0; e.err = '几个域名都没通'; e.at = Date.now() - 40000; redraw(host); return; }
+      if (i >= hosts.length) { e.fly = 0; e.err = '几个域名都没通'; e.at = Date.now(); redraw(host);
+        if (!e.tmr) e.tmr = setTimeout(function () { e.tmr = 0; if (!e.bars && !e.fly && host.isConnected && e.code === code) redraw(host); }, 16000);   /* 兜底自动重试: 一轮失败后16秒再试一次, 不叠发 */
+        return; }
       var h = hosts[i++];
       fetch('https://' + h + '/appstock/app/kline/mkline?param=' + sym + ',' + k + ',,320&_t=' + Date.now(), { cache: 'no-store', signal: W.AbortSignal && AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined })
         .then(function (r) { if (!r.ok) throw Error('HTTP ' + r.status); return r.json(); })
@@ -71,8 +76,111 @@
     if (!code) return { bars: null, msg: lv + 'K：拿不到股票代码（从作战屏打开或传opt.code）' };
     var C = host.__min = host.__min || {}, e = C[lv] = C[lv] || {};
     if (e.code !== code) { e.bars = null; e.err = ''; e.at = 0; }
-    if (!e.bars || Date.now() - (e.at || 0) > 55000) fetchMin(host, code, lv);
+    var due = e.bars ? 55000 : 15000;   /* 有数据55秒刷新; 没拉到时15秒一档重试 —— 修复: 原来没数据时每次render都立刻重拉, 全失败会无限循环 */
+    if (Date.now() - (e.at || 0) > due) fetchMin(host, code, lv);
     if (e.bars) return { bars: e.bars };
     return { bars: null, msg: e.err ? lv + 'K取不到：' + e.err + '（自动重试）' : '正在取' + lv + 'K…' };
   }
-  /* 横轴标签: 日K=月-日; 分钟=时:分, 每天第一根标月-日 (纯函数, �
+  /* 横轴标签: 日K=月-日; 分钟=时:分, 每天第一根标月-日 (纯函数, 可单测) */
+  function labels(B, lv) {
+    var out = [], pd = '';
+    for (var i = 0; i < B.length; i++) {
+      var d = String(B[i].t).replace(/\D/g, '');
+      if (lv === '日') out.push(d.slice(4, 6) + '-' + d.slice(6, 8));
+      else { var day = d.slice(0, 8); out.push(day !== pd ? d.slice(4, 6) + '-' + d.slice(6, 8) : d.slice(8, 10) + ':' + d.slice(10, 12)); pd = day; }
+    }
+    return out;
+  }
+  /* 十字线覆盖层: 竖线+时针横线+取值点+数值 (纯函数, 可单测); k<0 返回空 */
+  function hxSVG(G, k) {
+    if (!G || !(k >= 0) || k >= G.N) return '';
+    var i = G.i0 + k, x = G.PL + G.cw * (k + 0.5), y = G.T + (G.vmax - G.R.H1[i]) / (G.vmax - G.vmin) * (G.Bt - G.T);
+    return '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + G.T + '" y2="' + G.Bt + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
+      + '<line x1="' + G.PL + '" x2="' + (G.W - G.PR) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="rgba(47,209,122,.7)" stroke-width=".8" stroke-dasharray="2 2"/>'
+      + '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.6" fill="#0b131d" stroke="#2fd17a" stroke-width="1.2"/>'
+      + '<text x="' + (G.W - G.PR - 2) + '" y="' + (y - 3).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#2fd17a" stroke="#000" stroke-width=".5" paint-order="stroke">' + f2(G.R.H1[i]) + '</text>';
+  }
+  function chips(lv) { return '<span class="hps">' + LVS.map(function (l) { return '<button class="hp' + (l === lv ? ' on' : '') + '" data-lv="' + l + '" type="button">' + (l === '日' ? '日' : l.replace('分', '')) + '</button>'; }).join('') + '</span>'; }
+  var CSS = '#zpHuoJL{margin:0 0 3px;padding:4px 6px 2px;color:#fff;font:400 11px/1.35 -apple-system,"PingFang SC",ui-rounded,sans-serif;font-variant-numeric:tabular-nums}' +
+    '#zpHuoJL .hh{display:flex;align-items:center;gap:7px;height:19px;white-space:nowrap;overflow:hidden}#zpHuoJL .ht{font-weight:500}' +
+    '#zpHuoJL .hs{margin-left:auto;font-size:10.5px}#zpHuoJL .hf{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;font-size:9px;line-height:14px;padding:0;text-align:center}' +
+    '#zpHuoJL .hl{display:flex;gap:8px;font-size:10px;white-space:nowrap;overflow:hidden}#zpHuoJL svg{display:block;width:100%;height:auto;touch-action:pan-y}' +
+    '#zpHuoJL.fold .hb,#zpHuoJL.fold .hl{display:none}body.injlin .chartbox>#zpHuoJL{order:1}' +
+    '#zpHuoJL .hps{display:inline-flex;gap:3px;flex:none}' +
+    '#zpHuoJL .hp{background:none;border:1px solid rgba(255,255,255,.25);border-radius:6px;color:rgba(255,255,255,.7);font:400 9.5px/1.5 -apple-system,sans-serif;padding:0 5px;cursor:pointer}' +
+    '#zpHuoJL .hp.on{border-color:#2fd17a;color:#2fd17a}';
+  var FK = 'zp_huo_fold_v1';
+  function mount(before) {
+    if (!before || !before.parentNode) return null;
+    var host = document.getElementById('zpHuoJL');
+    if (!host) {
+      if (!document.getElementById('zpHuoCss')) { var st = document.createElement('style'); st.id = 'zpHuoCss'; st.textContent = CSS; document.head.appendChild(st); }
+      host = document.createElement('section'); host.id = 'zpHuoJL'; host.setAttribute('aria-label', '乖离副图');
+      try { if (localStorage.getItem(FK) === '1') host.classList.add('fold'); } catch (e) { }
+      host.addEventListener('click', function (e) {
+        var b = e.target && e.target.closest && e.target.closest('.hf');
+        if (b) { host.classList.toggle('fold'); try { localStorage.setItem(FK, host.classList.contains('fold') ? '1' : '0'); } catch (e2) { } b.textContent = host.classList.contains('fold') ? '+' : '−'; return; }
+        var p = e.target && e.target.closest && e.target.closest('.hp');
+        if (p) { var lv = p.getAttribute('data-lv'); if (LVS.indexOf(lv) < 0) return; host.__lv = lv; try { localStorage.setItem(LVK, lv); } catch (e3) { } host.__key = ''; redraw(host); }
+      });
+      var mv = function (e) { var G = host.__g; if (!G) return; var sv = host.querySelector('svg'); if (!sv) return; var r = sv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e, x = (t.clientX - r.left) / r.width * G.W; host.__hov = Math.max(0, Math.min(G.N - 1, Math.floor((x - G.PL) / G.cw))); legend(host); };
+      host.addEventListener('mousemove', mv); host.addEventListener('touchstart', mv, { passive: true }); host.addEventListener('touchmove', mv, { passive: true });
+      host.addEventListener('mouseleave', function () { host.__hov = -1; legend(host); }); host.addEventListener('touchend', function () { setTimeout(function () { host.__hov = -1; legend(host); }, 1500); });
+    }
+    if (host.parentNode !== before.parentNode || host.nextSibling !== before) before.parentNode.insertBefore(host, before);
+    return host;
+  }
+  function f2(v) { return (v >= 0 ? '' : '−') + Math.abs(v).toFixed(2); }
+  function legend(host) {
+    var G = host.__g, el = host.querySelector('.hl'); if (!G || !el) return;
+    var hv = (host.__hov >= 0 && host.__hov < G.N) ? host.__hov : -1, k = hv >= 0 ? hv : G.N - 1, i = G.i0 + k, R = G.R;   /* 钳位: 切周期后残留越界hover按未悬停处理 */
+    el.innerHTML = '<span>' + G.D[i] + '</span><span style="color:#2fd17a">时针 ' + f2(R.H1[i]) + '</span><span style="color:#99eeee">分针 ' + f2(R.H6[i]) + '</span><span style="color:#ffcc17">辅线 ' + f2(R.FU[i]) + '</span><span style="color:#ff5cff">底撑 ' + f2(R.D4[i]) + '</span><span style="color:#ffff3a">二撑 ' + f2(R.ER[i]) + '</span>';
+    var hx = host.querySelector('.hx'); if (hx) hx.innerHTML = hxSVG(G, hv);   /* 十字线只在悬停/触摸时画 */
+  }
+  function render(host, B, sess, opt) {
+    if (!host) return;
+    opt = opt || {};
+    host.__args = { B: B, sess: sess, opt: opt };
+    var lv = host.__lv || loadLv(); host.__lv = lv;
+    var fd = host.classList.contains('fold');
+    var S = (B && B.length >= 20) ? state(B, sess) : null;   /* 头部永远日K口径 */
+    var CB = B;
+    if (lv !== '日') {
+      var mb = minBars(host, lv, opt);
+      if (!mb.bars || mb.bars.length < 40) {
+        host.__key = ''; host.__g = null;
+        host.innerHTML = '<div class="hh"><span class="ht">乖离 · ' + lv + '</span>' + chips(lv) + '<button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hh"><span class="hs">' + mb.msg + '</span></div>';
+        return;
+      }
+      CB = mb.bars;
+    }
+    var key = lv + '|' + (CB && CB.length ? CB.length + '@' + CB[CB.length - 1].t + '@' + CB[CB.length - 1].c : '0') + '|' + sess + '|' + (B && B.length ? B.length + '@' + B[B.length - 1].c : '');
+    if (host.__key === key) return; host.__key = key;
+    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">日线乖离</span>' + chips(lv) + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div>'; return; }
+    var R = calc(CB), N = Math.min(90, R.n), i0 = R.n - N, D = labels(CB, lv);
+    var Wd = 380, PL = 24, PR = 3, T = 6, Bt = 100, Hh = 114, cw = (Wd - PL - PR) / N,   /* viewBox 宽380≈手机屏宽, 字不被缩小 */
+        X = function (k) { return PL + cw * (k + 0.5); };
+    var vs = [3, -5]; for (var k = 0; k < N; k++) { var i = i0 + k; vs.push(R.H1[i], R.H6[i], R.FU[i], R.D4[i], R.ER[i]); }
+    var vmax = Math.max.apply(null, vs), vmin = Math.min.apply(null, vs), Y = function (v) { return T + (vmax - v) / (vmax - vmin) * (Bt - T); };
+    var g = [], pt = function (a) { var s = []; for (var k = 0; k < N; k++) s.push(X(k).toFixed(1) + ',' + Y(a[i0 + k]).toFixed(1)); return s.join(' '); };
+    for (k = 0; k < N; k++) { i = i0 + k; if (i > 0 && R.C[i - 1] < R.M20[i - 1]) g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + T + '" width="' + cw.toFixed(2) + '" height="' + (Bt - T) + '" fill="rgba(80,140,255,.09)"/>'); }   /* 蓝底 = 那根开盘前(上一根收盘)在20均线下 */
+    [[-2, '−2', '#3d7bff', 1.3, ''], [-5, '−5', '#8a8a8a', .8, '']].forEach(function (a) { g.push('<line x1="' + PL + '" x2="' + (Wd - PR) + '" y1="' + Y(a[0]).toFixed(1) + '" y2="' + Y(a[0]).toFixed(1) + '" stroke="' + a[2] + '" stroke-width="' + a[3] + '"' + (a[4] ? ' stroke-dasharray="' + a[4] + '"' : '') + '/><text x="' + (PL - 4) + '" y="' + (Y(a[0]) + 3.5).toFixed(1) + '" text-anchor="end" font-size="10" fill="#fff">' + a[1] + '</text>'); });
+    g.push('<text x="' + (PL - 4) + '" y="' + (Y(vmax) + 8) + '" text-anchor="end" font-size="10" fill="#fff">' + vmax.toFixed(0) + '</text><text x="' + (PL - 4) + '" y="' + (Y(vmin) - 1) + '" text-anchor="end" font-size="10" fill="#fff">' + vmin.toFixed(0) + '</text>');
+    for (k = 0; k < N; k++) {
+      i = i0 + k; var a = R.H6[i], y1 = Math.min(Y(a), Y(-2)), y2 = Math.max(Y(a), Y(-2));
+      g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + (y2 - y1).toFixed(1) + '" fill="' + (a > -2 ? 'rgba(255,60,60,.2)' : 'rgba(0,128,255,.22)') + '"/>');
+      var f = R.FU[i], z1 = Math.min(Y(a), Y(f)), z2 = Math.max(Y(a), Y(f));   /* 蓝带: DRAWBAND(HUO6,红,辅线,蓝) */
+      g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + z1.toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + (z2 - z1).toFixed(1) + '" fill="' + (a > f ? 'rgba(255,60,60,.35)' : 'rgba(0,128,255,.38)') + '"/>');
+      if (R.H1[i] > R.H6[i]) g.push('<line x1="' + X(k).toFixed(1) + '" x2="' + X(k).toFixed(1) + '" y1="' + Y(R.H1[i]).toFixed(1) + '" y2="' + Y(R.H6[i]).toFixed(1) + '" stroke="#ff5459" stroke-width="' + Math.max(1, cw * .45).toFixed(1) + '"/>');
+    }
+    g.push('<polyline fill="none" stroke="#ffcc17" stroke-width="1" points="' + pt(R.FU) + '"/><polyline fill="none" stroke="#99eeee" stroke-width="1" points="' + pt(R.H6) + '"/>');
+    g.push('<polyline fill="none" stroke="#ffff3a" stroke-width="1" stroke-dasharray="2 3" points="' + pt(R.ER) + '"/><polyline fill="none" stroke="#ff5cff" stroke-width="1.4" points="' + pt(R.D4) + '"/><polyline fill="none" stroke="#2fd17a" stroke-width="1.5" points="' + pt(R.H1) + '"/>');
+    for (k = 0; k < N; k++) { i = i0 + k; if (R.DZ[i]) g.push('<line x1="' + X(k).toFixed(1) + '" x2="' + X(k).toFixed(1) + '" y1="' + Y(3).toFixed(1) + '" y2="' + Y(-2).toFixed(1) + '" stroke="#ff80ff" stroke-width="3"/><text x="' + X(k).toFixed(1) + '" y="' + (Y(0.35) - 2).toFixed(1) + '" text-anchor="start" font-size="10" fill="#3d8bff" stroke="#000" stroke-width=".6" paint-order="stroke">...升</text>'); }
+    for (k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Hh - 3) + '" text-anchor="middle" font-size="10" fill="#fff">' + D[i0 + k] + '</text>');
+    g.push('<g class="hx"></g>');   /* 十字线覆盖层, legend() 里填 */
+    var st = !S ? '' : S.below ? '<span style="color:#8fb8ff">线下 · 卖后多等≈' + S.wait.toFixed(1) + '%</span>' : '<span>线上 · 照常接</span>';   /* 依据 tools/bt/huo2_adaptive_1123.js / 1114总账 11-23c; 参考, 不改尺子 */
+    host.innerHTML = '<div class="hh"><span class="ht">' + (lv === '日' ? '日线乖离' : '乖离 · ' + lv) + '</span>' + (S ? '<span>20日线 ' + S.m20.toFixed(2) + '</span>' : '') + chips(lv) + '<span class="hs">' + st + '</span><button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hl"></div><div class="hb"><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g.join('') + '</svg></div>';
+    host.__g = { W: Wd, PL: PL, PR: PR, cw: cw, N: N, i0: i0, R: R, D: D, vmax: vmax, vmin: vmin, T: T, Bt: Bt }; if (!(host.__hov >= 0)) host.__hov = -1; legend(host);
+  }
+  W.JLHuo = { calc: calc, state: state, mount: mount, render: render, _labels: labels, _hx: hxSVG };
+})(window);
