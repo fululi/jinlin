@@ -1323,4 +1323,176 @@ function boot2(){
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot2); else boot2();
 })();
 
+</script><script>
+/* ============ v5: 右下角拖拽手柄(苹果分屏式缩放) + 五日卡净化 ============ */
+(function(){
+'use strict';
+var $w=function(s){return document.querySelector(s)}, $$w=function(s){return [].slice.call(document.querySelectorAll(s))};
+var f2=function(x){return (Math.round(parseFloat(x)*100)/100).toFixed(2)};
+function gM(){ try{ if(typeof MAPS!=='undefined'&&MAPS&&MAPS['五日']) return MAPS }catch(e){} return {五日:[179.4815,18.78,16.5185,21.92,210]}; }
+function curCode(){ try{ var el=document.getElementById('code'); if(el&&el.value&&el.value!=='__add') return el.value; }catch(e){} return null; }
+
+/* 1) 右下角手柄: 拖=改窗口宽, 内容zoom跟着缩放, 永不挤压 */
+function addHandle(){
+  var fw=document.getElementById('fw'); if(!fw||document.getElementById('zthd')) return;
+  var h=document.createElement('div'); h.id='zthd';
+  h.style.cssText='position:absolute;right:0;bottom:0;width:26px;height:26px;cursor:nwse-resize;touch-action:none;z-index:9;border-radius:0 0 14px 0;';
+  h.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" style="position:absolute;right:4px;bottom:4px;opacity:.5"><path d="M22 22 L14 22 M22 22 L22 14 M22 16 L16 22" stroke="#9fc3e0" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
+  h.addEventListener('pointerdown',function(e){
+    e.preventDefault(); e.stopPropagation();
+    var sx=e.screenX, w0=fw.offsetWidth||320; var moved=false;
+    var mv=function(ev){ moved=true;
+      var nw=Math.max(240,Math.min(Math.min(430,(window.innerWidth||390)-8), Math.round(w0+(ev.screenX-sx))));
+      fw.style.width=nw+'px';
+      try{ applyZoom(); refitHeight(); }catch(err){}
+      try{ if(typeof window.__ztGeom==='function') window.__ztGeom(false); }catch(err){} };
+    var up=function(){ removeEventListener('pointermove',mv); removeEventListener('pointerup',up);
+      try{ if(typeof window.__ztGeom==='function') window.__ztGeom(false); }catch(e){} };
+    addEventListener('pointermove',mv); addEventListener('pointerup',up); });
+  fw.appendChild(h);
+}
+
+/* 2) 五日净化: 黄色色块隐藏 + 右缘白名单 + 多余灰虚线按坐标抹掉 */
+function cleanW5(){
+  var svg=$w('.w5 svg'); if(!svg) return;
+  /* 黄/橄榄色块(IV区高亮) 隐藏 */
+  svg.querySelectorAll('rect').forEach(function(r){
+    var f=(r.getAttribute('fill')||'').toLowerCase();
+    if(f.indexOf('ffe600')>-1||f.indexOf('ffd66e')>-1) r.style.display='none';
+  });
+  /* 右缘白名单: 21.88(IV顶) 20.61 19.43(5分量幅) 15.38(日量幅) 19.20(现价) 其余藏 */
+  var keep={'21.88':1,'20.61':1,'19.43':1,'15.38':1,'19.20':1};
+  svg.querySelectorAll('text').forEach(function(t){
+    var x=parseFloat(t.getAttribute('x')||'0'); if(x<300) return;
+    var c=(t.textContent||'').trim(); var m=c.match(/(\d+\.\d+)/); var px=m?m[1]:'';
+    if(!keep[px]) t.style.display='none';
+    else if(!t.getAttribute('data-kc')){ t.setAttribute('data-kc','1'); t.setAttribute('font-weight','700'); }
+  });
+  /* 多余灰虚线: 21.51/20.29/20.20/19.02/19.44 按五日坐标抹线 */
+  var m=gM()['五日']; if(m){
+    var y0=m[0],p0=m[1],y1=m[2],p1=m[3];
+    ['21.51','20.29','20.20','19.02','19.44'].forEach(function(px){
+      var y=Math.round(y0+(p0-parseFloat(px))/(p0-p1)*(y1-y0));
+      svg.querySelectorAll('line').forEach(function(l){
+        var a=parseFloat(l.getAttribute('y1')),b=parseFloat(l.getAttribute('y2'));
+        if(isFinite(a)&&isFinite(b)&&Math.abs(a-b)<1&&Math.abs(a-y)<1.5&&l.getAttribute('stroke')!=='rgba(0,0,0,0)') l.style.display='none';
+      });
+    });
+  }
+  /* 水平价条(绝对定位)若压到列表, 改回流 */
+  var lv=[]; try{ (typeof W5_ALL!=='undefined')&&(lv=W5_ALL.map(function(x){return f2(x.p)})) }catch(e){}
+  $$w('.w5 div').forEach(function(el){
+    if((el.style.position||getComputedStyle(el).position)!=='absolute') return;
+    var t=el.textContent||''; var hit=0; lv.forEach(function(px){ if(t.indexOf(px)>-1) hit++; });
+    if(hit>=4){ el.style.position='relative'; el.style.top='auto'; el.style.left='auto'; }
+  });
+}
+
+function boot3(){ try{ cleanW5(); }catch(e){} try{ addHandle(); }catch(e){} }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot3); else boot3();
+try{ if(typeof all==='function'){ var _a3=all; all=function(){ _a3(); try{cleanW5()}catch(e){} }; window.all=all; } }catch(e){}
+})();
+
+</script><script>
+/* ============ v5b: 三块结构卡自动测算(任意股票, 东财K线JSONP) ============ */
+(function(){
+'use strict';
+var $w=function(s){return document.querySelector(s)};
+var f2=function(x){return (Math.round(parseFloat(x)*100)/100).toFixed(2)};
+var fpc=function(a,b){ return b?((a-b)/b*100).toFixed(1)+'%':'—'; };
+var nowHM2=function(){var d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)};
+function mktE(c){ c=String(c); return c.charAt(0)==='6'?'1.':(c.charAt(0)==='0'||c.charAt(0)==='3')?'0.':'1.'; }
+function hasFib(){ try{ return !!(STK[st.code]&&STK[st.code].fib) }catch(e){ return false } }
+function fetchEM(code, klt, lmt, cb){
+  var cbn='ztK'+(Math.random()*1e9|0);
+  var s=document.createElement('script');
+  var done=false;
+  window[cbn]=function(json){ if(done) return; done=true; delete window[cbn]; try{s.remove()}catch(e){} cb(json); };
+  s.src='https://push2his.eastmoney.com/api/qt/stock/kline/get?secid='+mktE(code)+'&fields1=f1,f2,f3&fields2=f51,f52,f53,f54,f55,f56&klt='+klt+'&fqt=1&lmt='+lmt+'&end=20500101&cb='+cbn;
+  s.onerror=function(){ if(!done){ done=true; delete window[cbn]; try{s.remove()}catch(e){} cb(null); } };
+  document.head.appendChild(s);
+  setTimeout(function(){ if(!done){ done=true; try{delete window[cbn]}catch(e){} try{s.remove()}catch(e){} cb(null); } }, 8000);
+}
+function parseK(json){
+  try{ var ks=(json&&json.data&&json.data.klines)||[]; return ks.map(function(r){ var p=String(r).split(','); return {d:p[0].slice(5,10),o:+p[1],c:+p[2],h:+p[3],l:+p[4]}; }); }catch(e){ return null; }
+}
+/* 摆动段: 窗口内 最高点→其后的最低点 (下跌段); 若最低点在最高点前 → 上涨段(取其后最高回撤) */
+function legOf(bars, win){
+  var w=bars.slice(-win); if(w.length<6) return null;
+  var hi={i:0,v:-1}, lo={i:0,v:1e9};
+  w.forEach(function(b,i){ if(b.h>hi.v) hi={i:i,v:b.h,d:b.d}; if(b.l<lo.v) lo={i:i,v:b.l,d:b.d}; });
+  if(lo.i>hi.i){ return {dir:'down',A:hi.v,Ad:hi.d,B:lo.v,Bd:lo.d,w:w}; }
+  return {dir:'up',A:lo.v,Ad:lo.d,B:hi.v,Bd:hi.d,w:w};
+}
+function legRows(lg, last){
+  var R=Math.abs(lg.A-lg.B); if(!(R>0)) return '';
+  var hi=Math.max(lg.A,lg.B), lo=Math.min(lg.A,lg.B);
+  var rows='';
+  if(lg.dir==='down'){
+    [['反弹 0.786',.786],['反弹 0.618',.618],['反弹 0.5',.5],['反弹 0.382',.382]].forEach(function(k){
+      var v=lo+R*k[1]; rows+=row('反弹',k[0].slice(3),v,hi); });
+    rows+=row('段顶','—',lg.A,hi)+row('段底','—',lg.B,hi);
+    rows+=row('再跌 1.618','自'+f2(hi),hi-R*1.618,hi);
+  } else {
+    [['回撤 0.382',.382],['回撤 0.5',.5],['回撤 0.618',.618],['回撤 0.786',.786]].forEach(function(k){
+      var v=hi-R*k[1]; rows+=row('回撤',k[0].slice(3),v,hi); });
+    rows+=row('段底','—',lg.A,hi)+row('段顶','—',lg.B,hi);
+    rows+=row('再涨 1.618','自'+f2(lo),lo+R*1.618,hi);
+  }
+  return rows;
+  function row(tag,k,v,base){ return '<div class="zr"><span>'+tag+' '+k+'</span><b>'+f2(v)+'</b><i>'+fpc(v,base)+'</i></div>'; }
+}
+function card(title, sub, body){
+  return '<div class="ztcard"><div class="ztch"><b>'+title+'</b><small>'+sub+'</small></div>'+body+
+    '<div class="ztf">自动测算 '+nowHM2()+' · 东财K线 · 数值仅供对照，实盘以作战屏核数为准</div></div>';
+}
+function renderCard(id, html){
+  var el=document.getElementById(id); if(!el) return;
+  el.className='slide'; el.innerHTML=html;
+}
+function renderAll(code, dayK, m15K){
+  var t=nowHM2();
+  var lg60=legOf(dayK,60), lg25=legOf(dayK,25), lg15=legOf(m15K,96);
+  /* 15分·本段: A=最近显著高点 → B=其后低点 → C=再后回抽高点, 目标=C-k×(A-B) */
+  var f0body='';
+  if(lg15&&lg15.dir==='down'){
+    var w=lg15.w, bi=w.length-1;
+    for(var i=w.length-1;i>=0;i--){ if(w[i].h>lg15.B+0.02){ bi=i; break; } }
+    var C=w[bi]?w[bi].h:lg15.A;
+    var R2=Math.abs(lg15.A-lg15.B);
+    f0body='<div class="zr"><span>本段 A</span><b>'+f2(lg15.A)+'</b><i>'+lg15.Ad+'</i></div>'+
+           '<div class="zr"><span>破位 B</span><b>'+f2(lg15.B)+'</b><i>'+lg15.Bd+'</i></div>'+
+           '<div class="zr"><span>回抽 C</span><b>'+f2(C)+'</b><i>—</i></div>'+
+           [['目标 1.0',1],['目标 1.618',1.618],['目标 2.618',2.618]].map(function(k){
+             var v=C-R2*k[1]; return '<div class="zr"><span>'+k[0]+'</span><b>'+f2(v)+'</b><i>'+fpc(v,C)+'</i></div>'; }).join('');
+    renderCard('f0', card('15分 · 本段(自动)', code+' · '+t, f0body));
+  } else if(lg15){ renderCard('f0', card('15分 · 本段(自动)', code+' · '+t, '<div class="zr"><span>上涨段</span><b>'+f2(Math.min(lg15.A,lg15.B))+'</b><i>→'+f2(Math.max(lg15.A,lg15.B))+'</i></div>')); }
+  if(lg60) renderCard('f1', card('20天大腿(自动)', '段'+(lg60.dir==='down'?'顶 ':'底 ')+f2(Math.max(lg60.A,lg60.B))+' ('+lg60.Ad+') → '+f2(Math.min(lg60.A,lg60.B))+' ('+lg60.Bd+')', legRows(lg60)));
+  if(lg25) renderCard('f2', card('日线 · 最近一段(自动)', '数据截至 '+t, legRows(lg25)));
+}
+function loadCards(){
+  try{
+    if(hasFib()) return;                 /* 永鼎: 保留人工核数卡, 不覆盖 */
+    var c=curCode2(); if(!c) return;
+    renderCard('f0', card('15分 · 本段(自动)','加载中…','<div class="zr"><span>—</span></div>'));
+    fetchEM(c,101,90,function(dayJ){
+      var dayK=parseK(dayJ);
+      if(!dayK||!dayK.length){ ['f0','f1','f2'].forEach(function(id){ renderCard(id, card('自动测算','数据源连不上 · 稍后切一次自选重试','')); }); return; }
+      fetchEM(c,15,110,function(m15J){
+        var m15K=parseK(m15J)||dayK;
+        renderAll(c, dayK, m15K);
+      });
+    });
+  }catch(e){}
+}
+function curCode2(){ try{ var el=document.getElementById('code'); if(el&&el.value&&el.value!=='__add') return el.value; }catch(e){}
+  try{ if(typeof st!=='undefined'&&st&&st.code) return st.code }catch(e){} return null; }
+function boot4(){
+  try{ loadCards(); }catch(e){}
+  try{ document.addEventListener('change',function(e){ if(e.target&&e.target.id==='code') setTimeout(loadCards,120); }); }catch(e){}
+  try{ document.addEventListener('click',function(e){ if(e.target&&e.target.id==='addok') setTimeout(loadCards,200); }); }catch(e){}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot4); else boot4();
+})();
+
 </script></body></html>
