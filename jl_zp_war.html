@@ -204,6 +204,7 @@ body.injlin .ctl{margin:6px 10px 0}body.injlin .pbtn{height:32px;width:76px}body
 #duoJL .dr .d1{flex:none;font-size:8px;line-height:10px;color:#ffd66e;border:1px solid rgba(255,214,110,.75);border-radius:6px;padding:0 3px;margin-left:2px}   /* 11-17 口径表 Z3 */
 #duoJL .dr .tg{font-size:8.5px;color:#fff;opacity:1;overflow:hidden;text-overflow:ellipsis;max-width:62px}
 #duoJL .duo:not(.wide) .dr .tg{display:none}#duoJL .duo.wide .dr{font-size:11px;height:20px;min-height:20px}#duoJL .duo.wide .dr .tg{max-width:none;font-size:9.5px}
+#duoJL .dr.hz{opacity:.5}#duoJL .dr.hz b{text-decoration:line-through}#duoJL .dr.hz .pc{flex-basis:34px;color:#fff}
 #duoJL .dr.on{outline:1px solid var(--c);border-radius:4px;padding:0 2px;margin:0 -3px}#duoJL .dr.now .ln{opacity:1;border-top-width:1px}#duoJL .dr.now b{background:#fff;color:#0d1730;border-radius:3px;padding:2px 3px;line-height:1}
 #duoJL .df{font-size:8.5px;line-height:1.35;margin-top:2px;color:#fff;opacity:1}
 body.injlin #hSub .hk.swg{display:none!important}
@@ -2161,7 +2162,7 @@ function renderHead() {
      横贯虚线按涨跌着色(昨收上=红 #ff4757 / 下=绿 #1ee3a0), 右轴无底色细字现价, 线尾圆点照旧; 只显示不进引擎 */
   try {
     var oldLn = document.getElementById('zpNowLn'), oldTg = document.getElementById('zpNowTg');
-    if (oldLn) oldLn.remove(); if (oldTg) oldTg.remove();
+    if (oldLn) oldLn.remove(); if (oldTg) oldTg.remove(); var oldC0 = document.getElementById('zpNowCorner'); if (oldC0) oldC0.remove();
     /* 11-18 用户「分时实时没有那个价格线…数字价格不要很大很粗, 背景透明 但是字要清楚亮白」: 分时也出现价线+右轴价签; 价签为无底框、无描边的亮白400字；保留相邻价位 */
     if (MODE === 'live' && p > 0) {
       var pcN = LIVE.pc || 0, upN = pcN > 0 ? p >= pcN : true, cN = upN ? '#ff4757' : '#1ee3a0';
@@ -2178,6 +2179,11 @@ function renderHead() {
       ttN.setAttribute('stroke', 'none'); ttN.setAttribute('stroke-width', 0);
       tgN.appendChild(ttN);
       svg.appendChild(tgN);
+      /* 11-23 用户「引擎图左上角加一个实时价格，小一点」: 主图左上角(绘图区上方空档)常显 现价 涨跌%，红涨绿跌，400 细字、无底框；不跟鼠标隐藏 */
+      var oldC = document.getElementById('zpNowCorner'); if (oldC) oldC.remove();
+      var pctC = pcN > 0 ? (p / pcN - 1) * 100 : null, cC = pcN > 0 ? (p > pcN ? '#ff4757' : p < pcN ? '#1ee3a0' : '#ffffff') : '#ffffff';
+      var tC = tx(PX0 + 2, PY0 - 3, p.toFixed(2) + (pctC == null ? '' : '  ' + (pctC >= 0 ? '+' : '−') + Math.abs(pctC).toFixed(2) + '%'), cC, 9, 'start', 400);
+      tC.setAttribute('id', 'zpNowCorner'); tC.setAttribute('stroke', 'none'); tC.setAttribute('pointer-events', 'none'); svg.appendChild(tC);
       /* 11-19 用户「实时盘中的实时价格线也要有…点了才出现我指的是盘后」: 今天 09:15–15:00 现价线+价签+线尾常显(内联 visibility 压过 :not(:hover) 隐藏); 收盘后/回放照旧鼠标移上/点了才显示 */
       var hmN = new Date().getHours() * 100 + new Date().getMinutes(), onN = !RPL && liveToday() && hmN >= 915 && hmN < 1500;
       ['zpNowLn', 'zpNowTg', 'cnow'].forEach(function (id) { var eN = document.getElementById(id); if (eN) eN.style.visibility = onN ? 'visible' : ''; });
@@ -3552,7 +3558,9 @@ function resoMiniJL(P) {
   var hiT = !nxR && liveToday() && LIVE.dhi > 0 ? LIVE.dhi : 0, loT = !nxR && liveToday() && LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : 0;
   /* 11-20 13:31 用户拍板「放开」: 点开的大卡显示碰过、迷你卡显示没碰 = 两套口径打架 → 迷你卡换成和大卡统计口径同一把尺: S档=今日最高≥价−0.05×ATR5容差, B档=今日最低≤价+0.05×ATR5容差, 去掉"须在开盘价那一侧"的限制(暴跌穿过开盘后 S 档也能点亮✓); S看最高/B看最低, 不互相串 */
   var hitT = function (x, sideJL) { var tolJL = (e && +e.atr > 0 ? +e.atr : 0) * 0.05; return sideJL ? !!(hiT && x.p <= hiT + tolJL + 1e-6) : !!(loT && x.p >= loT - tolJL - 1e-6); };
-  var rw = function (x, i, side) { return duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (hitT(x, side) ? ' ✓' : ''), x.n >= 3).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); };
+  /* 11-23 用户「做T作战屏也没标记」: ✓ 原来拼在来源小字(.tg)后面，而窄卡(手机默认)把 .tg 整个藏了 → 永远看不到。
+     改成到过的行: 涨跌%位置直接写「✓到过」、价划线、整行变淡；判定(hitT)口径不变 */
+  var rw = function (x, i, side) { var hz = hitT(x, side); var r0 = duoRowJL((side ? 'S' : 'B') + (i + 1), x.p.toFixed(2), side ? '#ff5459' : '#1fdc93', '×' + x.n, hz ? '✓到过' : duoPcJL(x.p), x.srcs.map(function (s) { return AB[s] || s; }).join('·') + (hz ? ' ✓' : ''), x.n >= 3 && !hz).replace(/<\/div>$/, d1Tag(x.p) + '</div>'); return hz ? r0.replace('class="dr', 'class="dr hz') : r0; };
   var RLJL = []; try { var DRL = window.__resoLiveJL || []; if (DRL.k === ((STK && STK.code) || '') + '|' + (LIVE.sessDate || '')) RLJL = DRL.slice(-4).reverse(); } catch (eR2) { }   /* 11-20 13:31 用户: 盘中共振价=今天盘中触发共振类提醒那一刻的现价, 实时出现在卡上, 只取最近4条 */
   var rlHtml = RLJL.length ? '<div class="df"><b style="color:#ffd21f;font-weight:400">盘中共振</b> ' + RLJL.map(function (q) { return '<span style="color:' + (q.dir < 0 ? '#6fe6ff' : '#ff9a4e') + '">' + q.hm + ' ' + q.p.toFixed(2) + ' ' + q.lbl + '</span>'; }).join(' · ') + '</div>' : '';
   h.innerHTML = up.map(function (x, i) { return rw(x, up.length - 1 - i, 1); }).join('') + duoRowJL('现价', cur ? cur.toFixed(2) : '—', '#fff', '', '', '', 0).replace('class="dr', 'class="dr now') + dn.map(function (x, i) { return rw(x, i, 0); }).join('') +
@@ -6766,26 +6774,27 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     var bars=E('g',{'data-series':'main-net','shape-rendering':'crispEdges',opacity:.5});   /* 11-19晚2批 用户「成交量颜色可以淡一点」: 0.9→0.5; 资金柱=真实主力进出, 柱高压到半格0.6不盖线 */
     var bw=Math.max(.55,barW(R)*.8);
     R.forEach(function(r){if(r.d==null || !moneyMax) return;var y=mid-r.d/moneyMax*half*.6;
-      bars.appendChild(E('rect',{x:r.x-bw/2,y:Math.min(mid,y),width:bw,height:Math.abs(y-mid),fill:r.est?'#ffcf70':r.d>=0 ? UP : DN}));});
+      bars.appendChild(E('rect',{x:r.x-bw/2,y:Math.min(mid,y),width:bw,height:Math.abs(y-mid),fill:r.d>=0 ? UP : DN}));});   /* 11-23 用户「颜色恢复红绿」: 估算段不再染黄 */
     s.appendChild(bars);
     var last=R[R.length-1], ref=last.ma;
     /* 11-19 用户「高低总有个平均, 一条平的2.3不对」: MA10 画成跟着走的细线(白, 半透明, 不抢DDX线) */
     var mp='';R.forEach(function(r){if(r.ma==null || r.n<20){if(mp && mp.slice(-1)!=='|') mp+='|';return;}mp+=(mp && mp.slice(-1)!=='|' ? 'L' : 'M')+r.x.toFixed(1)+' '+YV(r.ma).toFixed(1);});
     mp=mp.replace(/\|/g,'');if(mp) s.appendChild(E('path',{'data-series':'ma10',d:mp,fill:'none',stroke:'#ffffff','stroke-opacity':.9,'stroke-width':.55,'stroke-dasharray':'3 2','stroke-linejoin':'round'}));   /* 11-19晚2批 用户「均线横的虚线细一点 但是要亮白清晰」: 金半透0.4/0.9 → 亮白0.9/0.55细虚线 */
     var estCount=R.filter(function(r){return r.est;}).length;
-    s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},fundingStatusJL()+' · 红涨绿跌=净额比 · 黄虚线=分母估算仅观察 · 白虚线=MA10'+(estCount?' · 估算'+estCount+'段':'')+(ZVV>1 ? ' · 放大'+ZVV.toFixed(1)+'x' : '')+(ref!=null ? ' '+ref.toFixed(2)+'%' : '')));
+    /* 11-23 用户「副图DDX字太大乱七八糟, 手机上删掉没用的」: 删图内整行说明(东财时间/图例/估算段数)，只在放大时留个小标 */
+    if (ZVV > 1) s.appendChild(E('text',{x:X0()+1,y:23,fill:'#ffffff','font-size':7,'font-weight':400},'放大'+ZVV.toFixed(1)+'x'));
     s.appendChild(E('title',{},'自算净额比20=近20分钟东财主力净额/同分钟真实成交额；缺分钟额时用当日分钟额中位数/当日额÷240估(标「分母估」)；非东财原版DDX。淡柱为周期主力净额，独立金额轴；成交量VOL在主图底部。'));
     /* 与截图同类：仅一条连续走势，每段按两端净额比相对各自MA10的均值染红/绿。 */
     /* 11-19 用户: 线细但清楚; 涨的一段淡粉、跌的一段青绿, 和红绿资金柱分开; 开盘不满20分钟不画 */
     var lag=fundingLagJL(FF.rows[FF.rows.length-1].hm), curve=E('g',{'data-series':'ratio20',fill:'none','stroke-width':1,'stroke-linecap':'round','stroke-linejoin':'round'});
     for(var ci=1;ci<R.length;ci++){
       var p=R[ci-1], r=R[ci];if(p.v==null || r.v==null || r.n<20 || p.n<20) continue;
-      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:r.est?'#ffcf70':r.v>=p.v ? UP : DN,'stroke-dasharray':r.est?'2 2':null,opacity:lag>0?.3:r.est?.75:1}));   /* 估算段虚线标记；陈旧时降透明并暂停判读 */
+      curve.appendChild(E('line',{x1:p.x,y1:YV(p.v),x2:r.x,y2:YV(r.v),stroke:r.v>=p.v ? UP : DN,opacity:lag>0?.3:r.est?.8:1}));   /* 11-23 用户「颜色恢复红绿」: 去黄虚线 */   /* 估算段虚线标记；陈旧时降透明并暂停判读 */
     }curve.setAttribute('stroke-width',1.6);s.appendChild(curve);
     var f1 = function (v) { return (v >= 0 ? '+' : '') + v.toFixed(1); };
     var lg = function (k) {
-      var r = R[k], o = [[r.n < 20 ? '净额比 ' + r.n + '/20预热' : '净额比20' + (r.est ? '(分母估·观察)' : '(自算)'), TXT]];
-      if(lag>0)o.push(['资金落后'+lag+'分钟 · 暂停判读','#ffcf70']); else if(r.est)o.push(['估算分母 · 仅作观察','#ffcf70']);
+      var r = R[k], o = [[r.n < 20 ? '净额比 ' + r.n + '/20' : '净额比20', TXT]];   /* 11-23 用户「删掉没用的」: 图例只留 名字·值·MA10·净额 */
+      if(lag>2)o.push(['落后'+lag+'分','#ffcf70']);
       if (r.v == null) o.push(['缺同分钟真实成交额/资金', TXT]);
       else { var pv = null; for (var q = k - 1; q >= 0; q--) if (R[q].v != null) { pv = R[q].v; break; } o.push([f1(r.v) + '%' + (pv == null ? '' : r.v > pv ? '↑' : r.v < pv ? '↓' : '→'), pv == null ? TXT : r.v >= pv ? UP : DN]); if (r.ma != null) o.push(['MA10 ' + f1(r.ma) + '%', TXT]); }
       if(r.d!=null) o.push(['净额 '+fM(r.d),r.d>=0 ? UP : DN]);
@@ -9204,8 +9213,10 @@ try { var vb = document.createElement('div'); vb.textContent = 'v11-20\u00b71605
       var snap = window.__FFCUMJL, code = String(stk.code).replace(/\D/g, ''), mins = snap && String(snap.code) === code && Array.isArray(snap.rows) ? snap.rows : [];
       rows = mins.slice(-240); var lastHm = snap && snap.sourceHm ? String(snap.sourceHm).slice(-4) : '';
       var now = new Date(), nowHm = now.getHours() * 100 + now.getMinutes(), lag = 0;
-      if (lastHm && nowHm >= 930 && nowHm <= 1500) { var a = +lastHm.slice(0, 2) * 60 + +lastHm.slice(2), b = Math.floor(nowHm / 100) * 60 + nowHm % 100; lag = a <= 690 && b >= 780 ? b - 780 + 690 - a : Math.max(0, b - a); }
-      stale = !!(!window.RPL && rows.length && ((snap.date && String(snap.date).replace(/\D/g, '').slice(-8) !== session) || liveToday && liveToday() && (lag > 1 || Date.now() - (+snap.t || 0) > 180000)));
+      /* 11-23 用户「zp html 分时资金都没动静」: 午休 12:38 被算成落后68分钟→一直「暂停判读」。午休按11:30算(和 fundingLagJL 同口径扣90分钟)；东财分钟资金常慢1–2分钟，落后>2分钟才标；午休时不看拉取时间 */
+      var lunch = nowHm > 1130 && nowHm < 1300;
+      if (lastHm && nowHm >= 930 && nowHm <= 1500) { var mm = function (h) { var n = Math.floor(h / 100) * 60 + h % 100; return n >= 780 ? n - 90 : Math.min(n, 690); }; lag = Math.max(0, mm(nowHm) - mm(+lastHm)); }
+      stale = !!(!window.RPL && rows.length && ((snap.date && String(snap.date).replace(/\D/g, '').slice(-8) !== session) || liveToday && liveToday() && (lag > 2 || (!lunch && Date.now() - (+snap.t || 0) > 180000))));
     } else {
       var fundRows = window.zpFFDJL ? window.zpFFDJL() : (window.zpFFDMemJL ? window.zpFFDMemJL() : null);   /* 11-21: 点了「日线」才去拉(5分钟内用缓存), 没点不拉 */
       rows = (Array.isArray(fundRows) ? fundRows.filter(function (r) { return r && r.d && String(r.d) <= session; }) : []).slice(-60);

@@ -342,6 +342,7 @@
 <script src="jl_absorb.js?v=3"></script>
 <script src="jl_chart_cache.js?v=1"></script>
 <script src="jl_markets.js?v=7"></script>
+<script src="jl_tri.js?v=1"></script>
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 
@@ -4784,25 +4785,15 @@ function ictCalc(kl) {
   }).slice(-3);
   return out;
 }
-function triDetect(kl) {
-  var n = kl.length;
-  var sw = swingsOf(kl);
-  var sh = [], sl = [];
-  for (var i = 0; i < sw.sh.length; i++) if (sw.sh[i] >= n - 50) sh.push(sw.sh[i]);
-  for (i = 0; i < sw.sl.length; i++) if (sw.sl[i] >= n - 50) sl.push(sw.sl[i]);
-  if (sh.length < 2 || sl.length < 2) return null;
-  var h1 = sh[sh.length - 2], h2 = sh[sh.length - 1];
-  var l1 = sl[sl.length - 2], l2 = sl[sl.length - 1];
-  if (h2 <= h1 || l2 <= l1) return null;
-  var mh = (kl[h2][2] - kl[h1][2]) / (h2 - h1);
-  var ml = (kl[l2][3] - kl[l1][3]) / (l2 - l1);
-  if (mh >= 0 || ml <= 0) return null;
-  var bh = kl[h1][2] - mh * h1, bl = kl[l1][3] - ml * l1;
-  var apex = (bl - bh) / (mh - ml);
-  if (apex <= Math.max(h2, l2) || apex > n + 30) return null;
-  var last = n - 1;
-  var brk = kl[last][4] > mh * last + bh ? 1 : (kl[last][4] < ml * last + bl ? -1 : 0);
-  return { h1: h1, h2: h2, l1: l1, l2: l2, mh: mh, bh: bh, ml: ml, bl: bl, apex: apex, brk: brk };
+/* 11-21 用户定「三角按口径B」「BOS只当位置提醒」: 原对称收敛三角(两条斜线)换成 jl_tri.js 平底/平顶三角
+   (影线刺出平底不到容差、收盘收回不算破)。窗口: 1/5分 96根·最少8根, 15/30/60分 64根·6根, 日及以上 30根·4根(同 tools/bt/tri_1121 回测/小图) */
+function triDetect(kl) { return triOfKltJL(kl, S.klt); }
+function triOfKltJL(kl, klt) {
+  if (!window.JLTri || !kl || kl.length < 20) return null;
+  var k = String(klt), W = 30, mb = 4;
+  if (k === "1" || k === "5") { W = 96; mb = 8; } else if (k === "15" || k === "30" || k === "60") { W = 64; mb = 6; }
+  var r = window.JLTri(kl, W, { minBars: mb });
+  return r && r.kind !== "none" ? r : null;
 }
 function klMemoJL(fn, tag, keyFn) {
   var c = {};
@@ -4977,33 +4968,33 @@ function renderAutoTri(ctx, v) {
       ctx.fillStyle = "#e8c568"; ctx.fillText("扩1.618 " + ext.toFixed(dec()), right2 + 2, yX);
     }
   }
+  /* 11-21 三角改平底/平顶(口径B, jl_tri.js): 上沿斜线(橙) + 平底/平顶(绿) + 碰点小圈 + BOS 位置提醒 + 量幅目标虚线; 字 11px 400 白亮 */
   var tr = triDetect(kl);
   if (!tr) return;
-  var xA = v.X(Math.min(tr.apex, n + 25));
-  var yHu = v.Y(tr.mh * tr.apex + tr.bh);
-  ctx.fillStyle = "rgba(183,140,255,0.06)";
-  ctx.beginPath();
-  ctx.moveTo(v.X(tr.h1), v.Y(tr.mh * tr.h1 + tr.bh));
-  ctx.lineTo(xA, yHu);
-  ctx.lineTo(v.X(tr.l1), v.Y(tr.ml * tr.l1 + tr.bl));
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = "#b78cff"; ctx.lineWidth = 1.2;
-  ctx.setLineDash(S.ind.solid ? [] : [6, 4]);
-  ctx.beginPath(); ctx.moveTo(v.X(tr.h1), v.Y(tr.mh * tr.h1 + tr.bh)); ctx.lineTo(xA, yHu); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(v.X(tr.l1), v.Y(tr.ml * tr.l1 + tr.bl)); ctx.lineTo(xA, v.Y(tr.ml * tr.apex + tr.bl)); ctx.stroke();
-  ctx.setLineDash([]);
-  if (tr.brk) {
-    var _up = tr.brk > 0;
-    var _ay = _up ? v.Y(tr.mh * tr.apex + tr.bh) - 9 : v.Y(tr.ml * tr.apex + tr.bl) + 9;
-    _ay = Math.max(v.pTop + 9, Math.min(_ay, v.pTop + v.priceH - 9));
-    var _ax = Math.min(Math.max(xA, v.padL + 6), v.padL + v.plotW - 6);
-    ctx.fillStyle = _up ? "#ffd21f" : "#f4655f";
-    ctx.beginPath();
-    if (_up) { ctx.moveTo(_ax, _ay - 4); ctx.lineTo(_ax - 4, _ay + 3); ctx.lineTo(_ax + 4, _ay + 3); }
-    else { ctx.moveTo(_ax, _ay + 4); ctx.lineTo(_ax - 4, _ay - 3); ctx.lineTo(_ax + 4, _ay - 3); }
-    ctx.closePath(); ctx.fill();
-    ctx.font = "8px Menlo, monospace"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("BOS", _ax + 5, _ay);
+  var dnT = tr.dir < 0, Ut = function (i) { return tr.top[1] + tr.slope * (i - tr.a); }, endT = tr.at >= 0 ? tr.at + 1 : Math.min(n - 1 + 3, iEnd);
+  var fx = function (vv) { return vv.toFixed(dec()); };
+  ctx.lineWidth = 1.3; ctx.setLineDash([]);
+  ctx.strokeStyle = "#ff9a5c"; ctx.beginPath(); ctx.moveTo(v.X(tr.a), v.Y(tr.top[1])); ctx.lineTo(v.X(endT), v.Y(Ut(endT))); ctx.stroke();
+  ctx.strokeStyle = "#60d6a4"; ctx.beginPath(); ctx.moveTo(v.X(Math.min(tr.touch[0], tr.a + 1)), v.Y(tr.flat)); ctx.lineTo(v.X(endT), v.Y(tr.flat)); ctx.stroke();
+  ctx.lineWidth = 1.1;
+  tr.touch.forEach(function (i) { ctx.beginPath(); ctx.arc(v.X(i), v.Y(dnT ? kl[i][3] : kl[i][2]), 2.4, 0, 6.3); ctx.stroke(); });
+  ctx.font = "400 11px -apple-system, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  ctx.fillStyle = "#60d6a4"; ctx.fillText((dnT ? "平底 " : "平顶 ") + fx(tr.flat), v.X(endT) + 5, v.Y(tr.flat));
+  ctx.fillStyle = "#ff9a5c"; ctx.textAlign = "center"; ctx.fillText(fx(tr.top[1]), v.X(tr.a), v.Y(tr.top[1]) + (dnT ? -9 : 9));
+  if (tr.at >= 0) {
+    var cB = kl[tr.at][4], dB = tr.brkDir < 0;
+    /* 11-21 用户「BOS 绿字画到绿柱子上」: 放到那根K线影线外(跌破放最低价下方/升破放最高价上方)，底下垫深色底块，不和柱子混在一起 */
+    var tB = (dB ? "BOS↓ " : "BOS↑ ") + fx(cB), wB = ctx.measureText(tB).width, xB = v.X(tr.at) - wB / 2, yB = dB ? v.Y(kl[tr.at][3]) + 11 : v.Y(kl[tr.at][2]) - 11;
+    ctx.fillStyle = "rgba(11,19,29,0.88)"; ctx.fillRect(xB - 3, yB - 7, wB + 6, 14);
+    ctx.fillStyle = dB ? "#4fd79b" : "#ff8a80"; ctx.textAlign = "left";
+    ctx.fillText(tB, xB, yB);
+  }
+  if (tr.target) {
+    var yT = v.Y(tr.target);
+    if (yT > v.pTop + 4 && yT < v.pTop + v.priceH - 4) {
+      ctx.strokeStyle = "#4fd79b"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(v.X(tr.at >= 0 ? tr.at : n - 1), yT); ctx.lineTo(right2, yT); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#4fd79b"; ctx.textAlign = "right"; ctx.fillText("量幅 " + fx(tr.target), right2 - 2, yT - 8);
+    }
   }
 }
 function renderGapsJL(ctx, v) {
@@ -7891,14 +7882,27 @@ function renderMonitor(ctx, v) {
     if (L.side === "B" && L.p < last && (!ssl || L.p > ssl)) ssl = L.p;
   });
   if (bsl || ssl) rows.push(["流动性 " + (bsl ? "上方压力S " + bsl.toFixed(dec()) + " +" + (bsl / last * 100 - 100).toFixed(1) + "%" : "") + (bsl && ssl ? " · " : "") + (ssl ? "下方支撑B " + ssl.toFixed(dec()) + " -" + (100 - ssl / last * 100).toFixed(1) + "%" : ""), "#b78cff"]);
-  // 6. 收敛三角形态（近50根摆动点：突破计入评分，末端未破只提示）
+  // 6. 三角(11-21 改平底/平顶 口径B; 用户「BOS只当位置提醒」→ 不计分、不写做多/空头信号)
   var tr2 = triDetect(kl);
   if (tr2) {
-    if (tr2.brk > 0) { total++; score++; rows.push(["▲ 三角向上突破 · 做多信号", UP]); }
-    else if (tr2.brk < 0) { total++; rows.push(["▼ 三角向下跌破 · 空头信号", DN]); }
-    else rows.push(["收敛三角末端 · 等突破方向", "#b78cff"]);
+    var fx2 = function (vv) { return vv.toFixed(dec()); };
+    if (tr2.brkDir) rows.push([tr2.kind + " BOS" + (tr2.brkDir > 0 ? "↑ " : "↓ ") + fx2(kl[tr2.at][4]) + " · " + (tr2.dir < 0 ? "平底 " : "平顶 ") + fx2(tr2.flat) + (tr2.target ? " · 量幅 " + fx2(tr2.target) : "") + " · 位置提醒", tr2.brkDir > 0 ? UP : DN]);
+    else rows.push([tr2.kind + " 收敛中 · " + (tr2.dir < 0 ? "平底 " : "平顶 ") + fx2(tr2.flat) + " · 上沿 " + fx2(tr2.top[1]), "#b78cff"]);
   }
   // 7. 多周期三角扫描（异步陆续补上；▲突破 ▼跌破 收敛=末端等方向 —=无形态 …=加载中）
+  /* 11-21 多周期三角行接上(原来 S.triScan 没人赋值): 换票时后台拉 周/日/60/30/15/5分 各算一次口径B三角, 拉完重画; 失败的周期不显示 */
+  if (window.JLTri && S.active && (!S.triScan || S.triScan.code !== S.active)) {
+    var scan = S.triScan = { code: S.active, res: {} }, todo = [["周", "102"], ["日", "101"], ["60分", "60"], ["30分", "30"], ["15分", "15"], ["5分", "5"]], left = todo.length;
+    todo.forEach(function (pp) {
+      try {
+        fetchKline(scan.code, pp[1], function (e, kl2) {
+          if (S.triScan !== scan) return;
+          if (!e && kl2 && kl2.length) { var t2 = triOfKltJL(kl2, pp[1]); scan.res[pp[0]] = t2 ? t2.brkDir : null; }
+          if (--left === 0) scheduleDraw();
+        });
+      } catch (eS) { left--; }
+    });
+  }
   if (S.triScan && S.triScan.code === S.active) {
     var parts = [], upN = 0, dnN = 0;
     ["周", "日", "60分", "30分", "15分", "5分"].forEach(function (nm) {
@@ -7907,7 +7911,7 @@ function renderMonitor(ctx, v) {
       else if (b > 0) { parts.push(nm + "·▲"); upN++; }
       else if (b < 0) { parts.push(nm + "·▼"); dnN++; }
     });
-    if (parts.length) rows.push(["多周期三角 " + parts.join(" ") + ((upN + dnN) ? " · " + (upN + dnN) + "周期已突破" : " · 预判等方向"), upN ? UP : (dnN ? DN : "#b78cff")]);
+    if (parts.length) rows.push(["多周期三角 " + parts.join(" ") + ((upN + dnN) ? " · " + (upN + dnN) + "个周期已出线·位置提醒" : " · 收敛中"), upN ? UP : (dnN ? DN : "#b78cff")]);
   }
   // (旧话术"派发=反抽减仓"回测证伪: 派后10日两票照涨; "强势"也要分位置——低位才是真超额, 高位=对倒风险)
   if (S.fflow && S.fflow.length >= 21) {

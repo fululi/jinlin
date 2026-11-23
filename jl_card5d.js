@@ -226,7 +226,7 @@ function card5DdxAmounts(raw) {
       const L = S.days[S.days.length - 1], last = L.pts[L.pts.length - 1].p, ch = (last / L.prec - 1) * 100, cl = ch >= 0 ? "up" : "dn";
       $("nm").textContent = NAME; $("cd").textContent = code;
       $("px").textContent = f2(last); $("px").className = "px " + cl; $("pc").textContent = sg(ch); $("pc").className = "pc " + cl;
-      $("info").innerHTML = (autoOn && L._auto ? '<span style="color:' + L._auto.st.col + '">' + L._auto.st.txt + "</span>" : "") + "<span>%以 " + L.date.slice(4, 6) + "-" + L.date.slice(6) + " 昨收 " + f2(L.prec) + " 为 0</span>";
+      $("info").innerHTML = (autoOn && L._auto ? '<span style="color:' + L._auto.st.col + '">' + L._auto.st.txt + "</span>" : "") + "<span style=\"opacity:.55\">左轴%=比昨收" + f2(L.prec) + "</span>";   /* 11-20: 刻度说明单独一句、调暗, 不再跟状态句连成一句 */
     }
 
     /* 布局: 主图 + 量 + 日期轴; 右价格 左% */
@@ -421,11 +421,16 @@ function card5DdxAmounts(raw) {
       x.strokeStyle = "rgba(255,255,255,.7)"; x.setLineDash([4, 3]); line(x, xa, s.Y(f.a.v), xb, s.Y(f.b.v)); x.setLineDash([]);
       x.font = "400 9.5px ui-monospace,Menlo"; x.textAlign = "left";
       const lxF = fibLabX(f, s);   /* 11-14 用户「斐波太靠右, 能不能左右滑」: 档位字整列可左右拖(f.lx), 放不下自动往左收; 线和价都不动 */
+      /* 11-21 用户「左侧 0.618 / 0.5 两行字叠在一起」: 原来每档字直接写在自己线上方, 两档靠近(0.5/0.618 只差 11.8%)就压在一起 → 先画线, 字按上下顺序排, 相邻至少 11px; 线和价都不动 */
+      const LL = [];
       FL.forEach((r) => {
         const v = f.b.v - d * r, y = Math.round(s.Y(v)) + 0.5; if (y < 2 || y > G.mainB) return;
         x.strokeStyle = FC[r]; x.lineWidth = sel ? 1.4 : 1; line(x, xL, y, xR, y);
-        x.fillStyle = FC[r]; x.fillText(r + " (" + f2(v) + ")", lxF, y - 2);
+        LL.push({ r, v, y });
       });
+      LL.sort((p, q) => p.y - q.y); LL.forEach((o, k) => { o.t = Math.max(o.y - 2, k ? LL[k - 1].t + 11 : -1e9); });   /* 往下排开 */
+      for (let k = LL.length - 1; k >= 0; k--) { const cap = k === LL.length - 1 ? G.mainB - 2 : LL[k + 1].t - 11; if (LL[k].t > cap) LL[k].t = cap; }   /* 底下出图了就整列往上收 */
+      LL.forEach((o) => { x.fillStyle = FC[o.r]; x.fillText(o.r + " (" + f2(o.v) + ")", lxF, o.t); });
       [f.a, f.b].forEach((p) => { x.fillStyle = "#fff"; x.strokeStyle = "#2962ff"; x.lineWidth = 2; x.beginPath(); x.arc(s.X(p.g), s.Y(p.v), sel ? 4.5 : 3.5, 0, 7); x.fill(); x.stroke(); });
       x.restore(); x.lineWidth = 1;
     }
@@ -469,9 +474,11 @@ function card5DdxAmounts(raw) {
       if (kind === "反弹" && rebR >= 0.382 && P < A.at(0.236)) D = { a: { k: iH, p: H }, b: { k: i0, p: L0 }, at: (r) => H - g * r };
       const hitR = rebR == null ? null : [0.886, 0.786, 0.618, 0.5, 0.382].find((r) => rebR >= r - 0.015);
       let st;
-      if (D) st = { txt: "反弹到 " + hitR + " 后回落 → 看下拉尺", col: "#3fe6ab" };
-      else if (kind === "反弹") st = hitR ? { txt: "反弹到过 " + hitR + (P < A.at(hitR) ? " · 回落中" : ""), col: hitR >= 0.786 ? "#ffd84a" : "#fff" } : { txt: "反弹未到 0.382", col: "#fff" };
-      else st = { txt: "冲过开盘 · 回撤看 0.382 / 0.618", col: "#fff" };
+      /* 11-20 用户「反弹未到 0.382 %以 11-20 昨收 20.62 为 0 字序乱了，从本质修」: 状态句自带尺子两端价+目标价, 不再靠图上的线去猜"0.382是多少" */
+      const q = (v) => v.toFixed(2), seg = kind === "反弹" ? "高" + q(H) + "→低" + q(L0) : "低" + q(L0) + "→高" + q(H);
+      if (D) st = { txt: seg + " · 反弹到过" + hitR + "又跌回 → 下拉尺看 1.272(" + q(D.at(1.272)) + ")", col: "#3fe6ab" };
+      else if (kind === "反弹") st = hitR ? { txt: seg + " · 反弹到过" + hitR + "(" + q(A.at(hitR)) + ")" + (P < A.at(hitR) ? " · 回落中" : ""), col: hitR >= 0.786 ? "#ffd84a" : "#fff" } : { txt: seg + " · 还没反弹到0.382(" + q(A.at(0.382)) + ")", col: "#fff" };
+      else st = { txt: seg + " · 回撤先看0.382(" + q(A.at(0.382)) + ")/0.618(" + q(A.at(0.618)) + ")", col: "#fff" };
       return { P, A, B, D, kind, st };
     }
     function bb(cl) { if (cl.length < 20) return null; const c = cl.slice(-20), m = c.reduce((a, b) => a + b, 0) / 20, sd = Math.sqrt(c.reduce((a, b) => a + (b - m) * (b - m), 0) / 20); return { up: m + 2 * sd, dn: m - 2 * sd }; }
