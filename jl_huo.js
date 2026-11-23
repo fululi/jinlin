@@ -1,5 +1,5 @@
-/* jl_huo.js v6.1 (11-24) 乖离+筹码穿越+三线金坑 三合一副图: 头部指标切换【乖离|穿越|三线】+ 多周期(日/30分/15分/5分/1分)切换 + 十字线。
-   v6.1 新增: 跟随作战屏分时/K线页 —— 读 window.zpPerOf()(1/5/15/30分钟), K线页自动切对应周期(含新增30分), 分时页用头部手选;
+/* jl_huo.js v6.2 (11-24) 乖离+筹码穿越+三线金坑 三合一副图: 头部指标切换【乖离|穿越|三线】+ 多周期(日/30分/15分/5分/1分)切换 + 十字线。
+   v6.2 新增: 十字线跨图联动 —— 主图拖十字线时广播 zpSubXH(key), 本模块接住: 乖离画竖线+读数, 并转发给 jl_sx(穿越/三线跟随); v6.1 跟随作战屏分时/K线页 —— 读 window.zpPerOf()(1/5/15/30分钟), K线页自动切对应周期(含新增30分), 分时页用头部手选;
    手点头部周期钮后30秒内以手选为准。周期/指标一份存储, 切一次全联动。
    v6 改动(不动乖离公式 calc/state/画法一个数): ①头部加指标切换, 选「穿越/三线」时显示 jl_sx.js 的副图(动态加载同目录 jl_sx.js);
    ②周期/指标一份存储(zp_huo_lv_v1/zp_huo_ind_v1) —— 切一次, 乖离和 sx 全联动(修复"切周期乖离不跟"的体验);
@@ -153,6 +153,29 @@
       host.addEventListener('mouseleave', function () { host.__hov = -1; legend(host); }); host.addEventListener('touchend', function () { setTimeout(function () { host.__hov = -1; legend(host); }, 1500); });
     }
     if (host.parentNode !== before.parentNode || host.nextSibling !== before) before.parentNode.insertBefore(host, before);
+    /* v6.2: 接住主图十字线广播 —— 主图/量MACD副图已有 zpSubXH 链(参数可能是 k.key 或 4位hm), 这里**链式追加**不覆盖: 乖离竖线+读数 → 转发 jl_sx */
+    if (!W.__zpHuoXhHooked) {
+      W.__zpHuoXhHooked = true;
+      var z0JL = W.zpSubXH;
+      W.zpSubXH = function (key) {
+        try { if (z0JL) z0JL(key); } catch (e0) { }
+        try {
+          var h = document.getElementById('zpHuoJL');
+          if (h && h.__g && h.__CB) {
+            var kk = String(key || '').replace(/\D/g, '');
+            if (h.__tnBars !== h.__CB) { h.__tn = h.__CB.map(function (b) { return String(b && b.t || '').replace(/\D/g, ''); }); h.__tnBars = h.__CB; }
+            var tn = h.__tn || [], i = -1, j;
+            for (j = tn.length - 1; j >= 0; j--) if (tn[j] === kk) { i = j; break; }
+            if (i < 0 && kk.length >= 10) for (j = tn.length - 1; j >= 0; j--) if (tn[j] && tn[j] <= kk) { i = j; break; }
+            if (i < 0 && kk.length === 8) for (j = tn.length - 1; j >= 0; j--) if (tn[j].slice(0, 8) === kk) { i = j; break; }
+            if (i < 0 && kk.length === 4) { var ld = tn.length ? tn[tn.length - 1].slice(0, 8) : ''; for (j = tn.length - 1; j >= 0; j--) if (tn[j].slice(0, 8) === ld && tn[j].slice(8, 12) <= kk) { i = j; break; } }
+            var G = h.__g;
+            if (i >= 0 && G) { h.__hov = Math.max(0, Math.min(G.N - 1, i - G.i0)); legend(h); clearTimeout(h.__xhT); h.__xhT = setTimeout(function () { h.__hov = -1; legend(h); }, 8000); }
+          }
+          if (W.JLSx && W.JLSx.xhKey) W.JLSx.xhKey(key);
+        } catch (e) { }
+      };
+    }
     /* v6: 动态加载 jl_sx.js(同目录), 建常驻 sx 节点 —— 失败时指标钮点了会提示 */
     if (!host.__sxSt) {
       host.__sxSt = { node: null, s1: null, s2: null, ready: false, code: '', cap: 0, which: '穿越', bars: null, lv: null };
@@ -202,6 +225,7 @@
     var key = lv + '|' + (CB && CB.length ? CB.length + '@' + CB[CB.length - 1].t + '@' + CB[CB.length - 1].c : '0') + '|' + sess + '|' + (B && B.length ? B.length + '@' + B[B.length - 1].c : '');
     if (host.__key === key) return; host.__key = key;
     if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">' + ((host.__ind || indOf()) === '乖离' ? '日线乖离' : (host.__ind || indOf()) + ' · ' + lv) + '</span>' + indChips(host.__ind || indOf()) + chips(lv) + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div><div class="sxbox"></div>'; var sxbK = host.querySelector('.sxbox'); if (host.__sxSt && host.__sxSt.node) sxbK.appendChild(host.__sxSt.node); return; }
+    host.__CB = CB;   /* v6.2: 供 zpSubXH 十字线匹配 */
     var R = calc(CB), N = Math.min(90, R.n), i0 = R.n - N, D = labels(CB, lv);
     var Wd = 380, PL = 24, PR = 3, T = 6, Bt = 100, Hh = 114, cw = (Wd - PL - PR) / N,   /* viewBox 宽380≈手机屏宽, 字不被缩小 */
         X = function (k) { return PL + cw * (k + 0.5); };

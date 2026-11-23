@@ -222,6 +222,69 @@
   }
 
   /* ---------- 嵌入模式 (jl_huo v6 调用) ---------- */
+  
+  /* ---------- v1.2: 十字线 —— 主图拖动广播 zpSubXH(key) 跟随 + 本图按住拖动, 8秒自动收 ---------- */
+  var ACT = [];
+  function tnOf(bars) { return bars.map(function (b) { return String(b && b.t || '').replace(/\D/g, ''); }); }
+  function idxFromKey(bars, key, cache) {
+    var kk = String(key || '').replace(/\D/g, ''); if (!kk) return -1;
+    var tn = (cache && cache.tn) || tnOf(bars); if (cache) cache.tn = tn;
+    var i;
+    for (i = tn.length - 1; i >= 0; i--) if (tn[i] === kk) return i;
+    if (kk.length >= 10) { for (i = tn.length - 1; i >= 0; i--) if (tn[i] && tn[i] <= kk) return i; return -1; }
+    if (kk.length === 8) { for (i = tn.length - 1; i >= 0; i--) if (tn[i].slice(0, 8) === kk) return i; return -1; }
+    var ld = tn.length ? tn[tn.length - 1].slice(0, 8) : '';
+    for (i = tn.length - 1; i >= 0; i--) if (tn[i].slice(0, 8) === ld && tn[i].slice(8, 12) <= kk) return i;
+    return tn.length - 1;
+  }
+  function xhDraw(st, i) {
+    if (!st || !st.R || i < 0 || i >= st.R.n) return;
+    var N = Math.min(90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
+    var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="93" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
+    ['s1', 's2'].forEach(function (sk) {
+      var sv = st[sk] && st[sk].querySelector('svg'); if (!sv) return;
+      var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln;
+    });
+    var j = i0 + k;
+    if (st.s1 && st.s1.style.display !== 'none' && st.s1.querySelector('.ssl')) {
+      st.s1.querySelector('.ssl').innerHTML = '<span style="color:' + tdc('00FF00') + '">JIU1 ' + st.R.J1[j].toFixed(1) + '</span><span style="color:' + tdc('FF00FF') + '">JIU2 ' + st.R.J2[j].toFixed(1) + '</span><span style="color:#ddd">穿越 ' + st.R.穿越[j].toFixed(1) + '</span><span style="color:#ddd">换手 ' + st.R.换手[j].toFixed(2) + '%</span><span style="color:#fff">穿透 ' + st.R.穿透率[j].toFixed(1) + '</span>';
+    }
+    if (st.s2 && st.s2.style.display !== 'none' && st.s2.querySelector('.ssl')) {
+      var stTxt = st.R.keng[j] ? '<span style="color:#ffcc00">黄金坑中</span>' : (st.R.中[j] > 80 ? '<span style="color:#00f0ff">看顶区</span>' : '');
+      st.s2.querySelector('.ssl').innerHTML = '<span style="color:#00ff00">短 ' + st.R.短[j].toFixed(1) + '</span><span style="color:#ff4444">中 ' + st.R.中[j].toFixed(1) + '</span><span style="color:' + tdc('FF00FF') + '">长 ' + st.R.长[j].toFixed(1) + '</span>' + stTxt;
+    }
+    clearTimeout(st.__xhT); st.__xhT = setTimeout(function () { xhClear(st); }, 8000);
+  }
+  function xhClear(st) {
+    ['s1', 's2'].forEach(function (sk) { var sv = st[sk] && st[sk].querySelector('svg'); if (sv) { var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ''; } });
+  }
+  function xhKey(key) {
+    ACT = ACT.filter(function (st) { return st.node && st.node.isConnected; });
+    ACT.forEach(function (st) {
+      if (!st.R || !st.bars) return;
+      var i = idxFromKey(st.bars, key, st.__tnC || (st.__tnC = {}));
+      if (i >= 0) xhDraw(st, i);
+    });
+  }
+  function bindCross(st) {
+    if (st.__bound) return; st.__bound = 1;
+    [['s1', st.s1], ['s2', st.s2]].forEach(function (p) {
+      var el = p[1]; if (!el) return;
+      el.style.touchAction = 'pan-y';
+      var hit = function (e) {
+        if (!st.R) return;
+        var sv = el.querySelector('svg'); if (!sv) return;
+        var r = sv.getBoundingClientRect(); if (!r.width) return;
+        var N = Math.min(90, st.R.n), i0 = st.R.n - N, cw = (380 - 24 - 3) / N;
+        var x = (e.clientX - r.left) / r.width * 380;
+        var k = Math.max(0, Math.min(N - 1, Math.floor((x - 24) / cw)));
+        xhDraw(st, i0 + k);
+      };
+      el.addEventListener('pointerdown', hit);
+      el.addEventListener('pointermove', function (e) { if (e.buttons || e.pointerType === 'touch') hit(e); });
+    });
+  }
   function embedNode(opts) {
     injectCSS();
     var node = document.createElement('div'); node.className = 'sxIn';
@@ -246,6 +309,8 @@
     draw();
     showWhich(st);
     st.at = Date.now();
+    if (ACT.indexOf(st) < 0) ACT.push(st);
+    bindCross(st);
   }
   function showWhich(st) {
     st.s1.style.display = st.which === '穿越' ? '' : 'none';
@@ -315,5 +380,5 @@
     return host;
   }
 
-  W.JLSx = { version: 'v1.1', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels };
+  W.JLSx = { version: 'v1.2', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
 })(window);
