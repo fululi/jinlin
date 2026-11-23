@@ -246,6 +246,30 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
 #ampCardJL .acRow.t3 .lg{font-size:8.5px}#ampCardJL .acRow.t3 .lq{font-size:7.5px}#ampCardJL .acRow.t3{gap:1px}#ampCardJL .acRow.t3 .lg i{font-size:7.5px}#ampCardJL .acRow.t3 .lg b{letter-spacing:-.3px}
 </style>
 <!-- jl_absorb.js inline source-md5: 59f8bccae9f9d08fc55d71522ae29dbb -->
+<script>/* 11-23h 用户选A(审计: 常驻定时器约20个, 只2个后台停手 → 发热卡顿): 看不见时停画面类定时器.
+   看不见 = App 在后台(document.hidden) 或 作战屏 iframe 本身不显示(浮球收起, 面板 hidden). ≤3秒的 setInterval 在看不见时跳过回调, 再看见时每个补跑一次;
+   拉行情/尾点合并/主力资金轮询/台账提醒 用 window.__zpSIraw 注册, 不受影响. 关: localStorage zp_sigate_v1='0' */
+(function () {
+  var raw = window.setInterval; window.__zpSIraw = raw;
+  var on = true; try { on = localStorage.getItem('zp_sigate_v1') !== '0'; } catch (e) { }
+  if (!on) return;
+  var vis = function () {
+    try { if (document.hidden) return false; var fe = window.frameElement; if (fe && !fe.getClientRects().length) return false; } catch (e) { }
+    return true;
+  };
+  var P = [], last = true;
+  window.zpVisJL = vis;
+  window.setInterval = function (fn, ms) {
+    if (typeof fn !== 'function' || !(+ms <= 3000)) return raw.apply(window, arguments);
+    var a = [].slice.call(arguments, 2), rec = { fn: fn, a: a, skip: false };
+    P.push(rec);
+    return raw.call(window, function () { if (!vis()) { rec.skip = true; return; } rec.skip = false; return fn.apply(this, a); }, ms);
+  };
+  var wake = function () { var v = vis(); if (v && !last) P.forEach(function (r) { if (r.skip) { r.skip = false; try { r.fn.apply(window, r.a); } catch (e) { } } }); last = v; };
+  document.addEventListener('visibilitychange', wake);
+  raw.call(window, wake, 1000);   /* 浮球展开/收起没有事件, 1秒看一次(只读一次 getClientRects) */
+})();
+</script>
 <script>
 /* 东财波段走势。
  * 价量条件逐项移植 ~/金粼量化工具/脚本/吸筹资金名单.py (V0 / FILTER15)。
@@ -2786,7 +2810,7 @@ setInterval(function () { try {
 } catch (e) { } }, 60000);
 function jlSigPush(lbl, txt, id) {
   try {
-    if (/^控盘 1分/.test(String(lbl))) return;   /* 11-20 用户「一分关掉的关掉吧」: 控盘 1分 两天47条、不分买卖(台账全「没分」)→ 不弹、不进台账; 5/15分/日线控盘照旧 */
+    if (/(^|[^\d])1分/.test(String(lbl))) return;   /* 11-23i 用户「把一分的提醒停掉吧」: 标签里带 1分 的一律不弹不记(原 /^控盘 1分/ 在改名「价格控盘 1分」后失效) */   /* 11-20 用户「一分关掉的关掉吧」: 控盘 1分 两天47条、不分买卖(台账全「没分」)→ 不弹、不进台账; 5/15分/日线控盘照旧 */
     if (!RPL) { if (!LIVE.ts || !liveToday()) return; var p = phaseNow(); if (p !== 'am' && p !== 'pm') return; }   /* 回放中放行(演练), 文字自动带【回放】前缀 */
     (window.__jlSigKeys = window.__jlSigKeys || []).push({ id: id, lbl: lbl, txt: txt, sub: lbl + '信号' });
     /* 11-20 13:31 用户定案: 「盘中出现的共振价不用非要盘后出」— 共振类提醒(同在高位/低位合成·共振紫·共振字样)触发那一刻, 把现价+时间记进今日共振卡新段「盘中共振」, 实时出现;
@@ -3121,7 +3145,7 @@ LIVE.start = function () {
   if (LIVE.on) return;
   LIVE.on = true; LIVE.keys = {}; LIVE.latch = {}; LIVE.base = true; LIVE.slowN = 0;
   livePoll();
-  LIVE.tickT = setInterval(function () { if (MODE === 'live' && !RPL) { var mT = liveTailMergeJL(); renderBandLive(); if (mT) { clearTimeout(window.__zpTailRrT); window.__zpTailRrT = setTimeout(function () { liveRender(); }, 120); } } }, 1000);   /* 11-20 Bug2: 每秒把实时价并进白线尾点, 合并出变化才重绘(120ms 去抖, liveRender 4057) */
+  LIVE.tickT = (window.__zpSIraw || setInterval)(function () { if (MODE === 'live' && !RPL) { var mT = liveTailMergeJL(); renderBandLive(); if (mT) { clearTimeout(window.__zpTailRrT); window.__zpTailRrT = setTimeout(function () { liveRender(); }, 120); } } }, 1000);   /* 11-20 Bug2: 每秒把实时价并进白线尾点, 合并出变化才重绘(120ms 去抖, liveRender 4057) */
 };
 LIVE.stop = function () {
   LIVE.on = false;
@@ -7169,7 +7193,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
 
   /* 主图每次重画都会调 MacdFS.draw → 借这个点重画副图(旧 MACD 块已隐藏) */
   if (window.MacdFS) { var d0 = MacdFS.draw; MacdFS.draw = function (svg, pts, o) { try { d0.apply(this, arguments); } catch (e) { } render(); }; }
-  setInterval(function () {   /* 周视图隐藏主图时副图一起藏; 主力资金15秒轮询（源数据为分钟级） */
+  (window.__zpSIraw || setInterval)(function () {   /* 周视图隐藏主图时副图一起藏; 主力资金15秒轮询（源数据为分钟级） */   /* 11-23h 不暂停(资金转折提醒要数据) */
     try { var ch = $('ch'); if (box && ch) box.style.display = ch.style.display === 'none' ? 'none' : ''; if ((mode === 'flow' || mode === 'mix' || mode === 'ddx' || yyOn()) && box && box.style.display !== 'none') { var t0 = FF.t; loadFF(); }
       else { var nw = new Date(), hmN = nw.getHours() * 100 + nw.getMinutes(), wdN = nw.getDay(), inT = wdN >= 1 && wdN <= 5 && hmN >= 915 && hmN <= 1505; if (Date.now() - FF.t >= (inT ? 60000 : 150000)) loadFF(); } } catch (e) { }   /* 11-12 HANDOFF①: 副图没选主力资金也后台拉——盘中每分钟一次, 盘外2.5分钟一次(保持顶部格不过期) */
   }, 1000);
@@ -8707,7 +8731,7 @@ window.addEventListener('click', function (e) {
       if (!l.al) return;
       if (a < l.v && b >= l.v) msgs.push(['u' + i + '|' + l.v, 'RSO 上穿 ' + l.v.toFixed(4)]); else if (a > l.v && b <= l.v) msgs.push(['d' + i + '|' + l.v, 'RSO 下穿 ' + l.v.toFixed(4)]);
     });
-    msgs.forEach(function (m) { var id = bk + '|' + m[0]; if (fired[id]) return; fired[id] = 1; if (!silent) {
+    msgs.forEach(function (m) { var id = bk + '|' + m[0]; if (fired[id]) return; fired[id] = 1; if (!silent && per() !== 1) {   /* 11-23i RSO 1分 不提醒 */
       /* 11-13 用户: RSO提醒要写清哪只票、几分钟 → 「永鼎股份 · RSO 5分 上穿信号线」 */
       var pv = per(), pT = pv === 101 ? '日' : pv ? pv + '分' : '分时', nm = (window.STK && STK.name) || code(), tt = nm + ' · ' + m[1].replace(/^RSO /, 'RSO ' + pT + ' ');
       toast(tt); (window.__jlRsoKeys = window.__jlRsoKeys || []).push({ id: id, txt: tt }); } });   /* 11-12 用户: RSO穿越事件同步推主提醒系统(引擎liveKeys排空→横幅闪+浮球金环闪字), toast保留 */
