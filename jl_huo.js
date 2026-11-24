@@ -259,7 +259,7 @@
   }
   function chips(lv) { return '<span class="hps">' + LVS.map(function (l) { return '<button class="hp' + (l === lv ? ' on' : '') + '" data-lv="' + l + '" type="button">' + (l === '日' ? '日' : l.replace('分', '')) + '</button>'; }).join('') + '</span>'; }
   /* v6: 指标切换 【乖离|穿越|三线】 */
-  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK'], INDK = 'zp_huo_ind_v1', SXV = '?v=13', ZDV = '?v=16', HYV = '?v=2', DKV = '?v=2';
+  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK'], INDK = 'zp_huo_ind_v1', SXV = '?v=14', ZDV = '?v=16', HYV = '?v=2', DKV = '?v=2';
   function indOf() { try { var v = localStorage.getItem(INDK); if (INDS.indexOf(v) >= 0) return v; } catch (e) { } return '乖离'; }
   function GRPOF(x) { return x === '穿越' || x === '三线' ? { m: 'JLSx', k: '__sxSt', f: 'jl_sx.js' } : x === '趋势' || x === '庄控' ? { m: 'JLZd', k: '__zdSt', f: 'jl_zd.js' } : x === '阴阳' ? { m: 'JLHy', k: '__hySt', f: 'jl_hy.js' } : { m: 'JLDk', k: '__dkSt', f: 'jl_dk.js' }; }   /* v6.5: 指标→副图模块查表 */
   function indChips(ind) { return '<span class="hps">' + INDS.map(function (t) { return '<button class="hp hi' + (t === ind ? ' on' : '') + '" data-ind="' + t + '" type="button">' + t + '</button>'; }).join('') + '</span>'; }

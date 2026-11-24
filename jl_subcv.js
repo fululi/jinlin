@@ -92,9 +92,10 @@
         if (R.keng[i]) rect(i, Ys(20), Ys(Math.max(R.长[i], R.短[i], R.中[i])), tdc('00CCFF'), 1.3, 0.9);
       }
       line(R.短, Ys, '#00ff00', 1.1); line(R.中, Ys, '#ff4444', 1.2); line(R.长, Ys, tdc('FF00FF'), 1.4);
+      var occ = {}, tl = function (m, j, yv, s, col, fs) { if (!m[j] || m[j - 1]) return; fs = Math.round(fs * 7) / 10; var wd = fs * s.length + 2, xa = X(j) - wd / 2, xb = X(j) + wd / 2, L = occ[yv] || (occ[yv] = []); if (L.some(function (r) { return xa < r[1] && xb > r[0]; })) return; L.push([xa, xb]); txt(j, Ys(yv) - 2, s, col, fs); };
       for (i = i0; i < i1; i++) {
-        if (R.sheng[i]) txt(i, Ys(20) - 2, '升', '#ffdd44', 10); if (R.zd[i]) txt(i, Ys(20) - 2, '筑底中', '#66ddff', 10);
-        if (R.star[i]) txt(i, Ys(90) - 2, '＊', '#fff', 11); if (R.di[i]) txt(i, Ys(0) - 2, '底', tdc('FF00FF'), 10); if (R.icon[i]) txt(i, Ys(R.中[i]) - 2, '▲', '#ffdd44', 10);
+        tl(R.sheng, i, 20, '升', '#ffdd44', 10); tl(R.zd, i, 20, '筑底中', '#66ddff', 10);   /* 11-24t: 同作战屏 jl_sx 写法 */
+        tl(R.star, i, 90, '＊', '#fff', 11); tl(R.di, i, 0, '底', tdc('FF00FF'), 10); if (R.icon[i]) txt(i, Ys(R.中[i]) - 2, '▲', '#ffdd44', 10);
       }
       leg = [{ t: '短 ' + f1(R.短[li]), c: '#00ff00', b: true }, { t: '中 ' + f1(R.中[li]), c: '#ff4444' }, { t: '长 ' + f1(R.长[li]), c: tdc('FF00FF') }];
       if (R.keng[li]) leg.push({ t: '黄金坑中', c: '#ffcc00' }); else if (R.中[li] > 80) leg.push({ t: '看顶区', c: '#00f0ff' });

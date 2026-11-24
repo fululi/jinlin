@@ -201,7 +201,8 @@
     g.push(pt(R.短, '#00ff00', 1.1));
     g.push(pt(R.中, '#ff4444', 1.2));
     g.push(pt(R.长, tdc('FF00FF'), 1.4));
-    function tx(mask, y, s, col, fs) { for (var k2 = 0; k2 < N; k2++) { var i2 = i0 + k2; if (mask[i2]) g.push('<text x="' + X(k2).toFixed(1) + '" y="' + (Y(y) - 2).toFixed(1) + '" text-anchor="middle" font-size="' + (fs || 10) + '" fill="' + col + '" stroke="#000" stroke-width=".5" paint-order="stroke">' + s + '</text>'); } }
+    var occ = {};   /* 11-24t: 连着只写第一根 + 同一行不压字 + 字×0.7 (只改显示) */
+    function tx(mask, y, s, col, fs) { fs = Math.round((fs || 10) * 7) / 10; var wd = fs * s.length + 2, L = occ[y] || (occ[y] = []); for (var k2 = 0; k2 < N; k2++) { var i2 = i0 + k2; if (!mask[i2] || mask[i2 - 1]) continue; var xa = X(k2) - wd / 2, xb = X(k2) + wd / 2; if (L.some(function (r) { return xa < r[1] && xb > r[0]; })) continue; L.push([xa, xb]); g.push('<text x="' + X(k2).toFixed(1) + '" y="' + (Y(y) - 2).toFixed(1) + '" text-anchor="middle" font-size="' + (fs || 10) + '" fill="' + col + '" stroke="#000" stroke-width=".5" paint-order="stroke">' + s + '</text>'); } }
     tx(R.sheng, 20, '升', '#ffdd44'); tx(R.zd, 20, '筑底中', '#66ddff'); tx(R.star, 90, '＊', '#fff', 11); tx(R.di, 0, '底', tdc('FF00FF'), 10);
     for (k = 0; k < N; k++) { i = i0 + k; if (R.icon[i]) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Y(R.中[i]) - 2).toFixed(1) + '" text-anchor="middle" font-size="10" fill="#ffdd44">▲</text>'); }
     if (!AX) gridLines(g, T, Bt, null, lv, D, i0, N, X);

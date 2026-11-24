@@ -831,7 +831,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
   g.Elliott = { swingsFrom: swingsFrom, detect: detect, drawSVG: drawSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
-<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=13"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script src="jl_huo.js?v=2"></script>
+<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=13"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script src="jl_huo.js?v=3"></script>
 <script>/* jl_macd.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
 /*! jl_macd.js — 分时 MACD 副图（MACDFS 12,26,9），仿同花顺：红绿柱 + DIF(白) + DEA(橙)
  * 做成独立的一块 SVG，插在走势图下面，不画在图上，所以不会压住任何字。
@@ -5799,6 +5799,7 @@ function render(){
    每行一轮: 卖/买时间价格原因+净; 另附当天分时高低点(按分时页回落阈值切)、日高低振幅、不动当日盈亏、我的T记录.
    只读: 不改引擎/不发请求/不写存储. 出口: 支持分享就弹系统分享(隔空投送/微信), 否则下载CSV, 再不行弹出文本框可复制. */
 (function(){
+return;   /* 11-24per 用户「既然有了做T面板 导出这个功能也删了」: 「⤓ 导出回测」不再挂 */
 var anchor=document.getElementById('myT2')||document.getElementById('myT');
 if(!anchor||!anchor.parentNode)return;
 var wrap=document.createElement('div');
@@ -6284,7 +6285,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     if (box && box.parentNode) return true;
     var ch = $('ch'); if (!ch || !ch.parentNode) return false;
     box = document.createElement('div'); box.id = 'zpSub';
-    box.innerHTML = '<div class="zpIw"><svg id="zpYyB" viewBox="0 0 360 ' + YH + '" aria-label="主力"></svg><div class="zpIc"><button type="button" data-yi="split" title="主力一条线 / 超大·大·中·小">≋</button><button type="button" data-yi="eye" title="显示 / 隐藏">◉</button></div></div>' +   /* 11-13 用户: 开关=格内右上小透明圆标(效果图定稿) */   /* 11-13 用户圈的位置: 主图时间轴正下方、VOL 上面 */
+    box.innerHTML = /* 11-24per 用户「主力这个副图删掉(不是主力资金)」: #zpYyB 格不建了, ySvg=null 各处已判空 */   /* 11-13 用户: 开关=格内右上小透明圆标(效果图定稿) */   /* 11-13 用户圈的位置: 主图时间轴正下方、VOL 上面 */
       '<svg id="zpVol" viewBox="0 0 360 ' + VH + '" aria-label="成交量"></svg>' +
       '<div class="zb-seg" role="tablist"><button data-m="zz">共振</button><button data-m="ctrl" title="价格控盘（非资金控盘）">价格控盘</button><button data-m="flow">主力资金</button><button data-m="mix" title="价格控盘柱 + 主力资金线">价格控盘+资金</button><button data-m="ddx" title="东财资金自算净额比20，非东财原版DDX">DDX·净额比</button></div>' +
       '<div class="zpIw"><svg id="zpPane" viewBox="0 0 360 ' + PH2 + '" aria-label="副图"></svg><div class="zpIc zpIcP"><button type="button" data-yi="ddx" title="主图DDX转折三角 显示 / 隐藏">△</button><button type="button" data-yi="ff" title="主图资金转折点 显示 / 隐藏">●</button><button type="button" data-yi="zz" title="主图紫点 显示 / 隐藏">●</button><button type="button" data-zm="out" title="DDX副图缩小(净额比线)">−</button><button type="button" data-zm="in" title="DDX副图放大(净额比线)">+</button></div></div>';   /* 11-13b: 主力意愿副图撤掉, 改叠在主图(drawYy) */   /* 11-13 用户: 主力意愿副图(顶部日期行「意愿」图标开关) */
@@ -6324,7 +6325,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     };
     flA.onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_yfold_v1', localStorage.getItem('zp_yfold_v1') === '1' ? '0' : '1'); } catch (e2) { } flApply(); };
     flB.onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_pfold_v1', localStorage.getItem('zp_pfold_v1') === '1' ? '0' : '1'); } catch (e2) { } flApply(); };
-    try { box.querySelector('.zpIc').appendChild(flA); box.querySelector('.zb-seg').appendChild(flB); } catch (eFl) { }
+    try { if (box.querySelector('#zpYyB')) box.querySelector('.zpIc').appendChild(flA); box.querySelector('.zb-seg').appendChild(flB); } catch (eFl) { }
     flApply();
     bindTouch();
     return true;
@@ -9050,7 +9051,7 @@ body.injlin #metaLine .thrw{flex:0 0 auto;color:#fff!important}
       b.querySelector('.ln').onclick = function (e) { e.stopPropagation(); try { localStorage.setItem('zp_lv_v1', localStorage.getItem('zp_lv_v1') === '0' ? '1' : '0'); } catch (e2) { } try { buildStatics(); if (MODE === 'live') liveRender(); } catch (e3) { } };
       b.querySelector('.rp').onclick = function (e) { e.stopPropagation(); rp.click(); }; b.querySelector('.lv').onclick = function (e) { e.stopPropagation(); lv.click(); }; }
     var anchor=document.getElementById('zpAbsViewJL')||ch;if (b.nextElementSibling !== anchor) ch.parentNode.insertBefore(b, anchor);
-    try { b.style.order = getComputedStyle(ch).order; } catch (e) { }
+    if (b.__chCss !== ch.style.cssText || b.__chCls !== ch.className) { b.__chCss = ch.style.cssText; b.__chCls = ch.className; try { b.style.order = getComputedStyle(ch).order; } catch (e) { } }   /* 11-24lag: #ch 没变就不读 getComputedStyle(每800ms整页重算样式) */
     b.style.display = ch.style.display === 'none' ? 'none' : '';   /* 周视图藏 */
     b.querySelector('.ln').classList.toggle('on', localStorage.getItem('zp_lv_v1') !== '0');
     var tB = b.querySelector('.trl'); if (tB) tB.classList.toggle('on', localStorage.getItem('zp_trl_v1') !== '0');
@@ -9375,6 +9376,47 @@ try { var vb = document.createElement('div'); vb.textContent = 'v11-20\u00b71605
     try { var h = JLHuo.mount(document.getElementById('zpSub')); if (h) JLHuo.render(h, (LIVE.hist && LIVE.hist.day) || [], LIVE.sessDate || ''); } catch (e) { }
   }
   tick(); setInterval(tick, 2000);
+})();
+</script>
+<script>
+/* 11-24per 用户「像 TradingView 一样, 切周期不用拉回顶上」: 左下角周期胶囊(效果图 outputs/作战屏周期浮钮_效果图_1124.png).
+   点 → 弹 分时/1分/5分/15分/日 一排, 点哪个=点顶上 .zp-per 同一个按钮(切换逻辑不另写); 按住左右滑 >28px = 上/下一个周期.
+   iOS: touch-action 只在按下那刻读 → touchmove 里 preventDefault. 关: localStorage zp_percap_v1='0' */
+(function () {
+  try { if (localStorage.getItem('zp_percap_v1') === '0') return; } catch (e) { }
+  var PS = [[0, '分时'], [1, '1分'], [5, '5分'], [15, '15分'], [101, '日']];
+  var st = document.createElement('style');
+  st.textContent = '#zpPerCap{position:fixed;left:8px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9990;display:none;align-items:center;gap:5px;height:30px;padding:0 12px;border-radius:15px;background:rgba(10,20,30,.72);border:1px solid rgba(129,230,217,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font:400 13px -apple-system,"PingFang SC",sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.4);touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}'
+    + '#zpPerCap i{font-style:normal;font-size:10px;opacity:.7}'
+    + '#zpPerRow{position:fixed;left:8px;bottom:calc(50px + env(safe-area-inset-bottom));z-index:9991;display:none;gap:6px;padding:6px;border-radius:14px;background:rgba(10,20,30,.86);border:1px solid rgba(129,230,217,.3);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}'
+    + '#zpPerRow.on{display:flex}#zpPerRow button{flex:none;font:400 13px -apple-system,"PingFang SC",sans-serif;color:#dfeff2;padding:6px 12px;border-radius:10px;border:0;background:rgba(255,255,255,.06)}#zpPerRow button.on{background:#81e6d9;color:#05202a}';
+  document.head.appendChild(st);
+  var cap = document.createElement('div'); cap.id = 'zpPerCap'; cap.setAttribute('role', 'button'); cap.setAttribute('aria-label', '切周期');
+  var row = document.createElement('div'); row.id = 'zpPerRow';
+  row.innerHTML = PS.map(function (x) { return '<button type="button" data-p="' + x[0] + '">' + x[1] + '</button>'; }).join('');
+  document.body.appendChild(row); document.body.appendChild(cap);
+  function cur() { try { return window.zpPerOf ? +window.zpPerOf() : 0; } catch (e) { return 0; } }
+  function idx() { var p = cur(); for (var i = 0; i < PS.length; i++) if (PS[i][0] === p) return i; return 0; }
+  function go(p) { var b = document.querySelector('.zp-per button[data-p="' + p + '"]'); if (b) b.click(); row.classList.remove('on'); paint(); }
+  var last = '';
+  function paint() {
+    var seg = document.querySelector('.zp-per'), ch = document.getElementById('ch');
+    var show = !!seg && !(ch && ch.style.display === 'none');   /* 周视图藏主图时不显示 */
+    var k = (show ? 1 : 0) + '|' + idx() + '|' + row.classList.contains('on');
+    if (k === last) return; last = k;
+    cap.style.display = show ? 'flex' : 'none'; if (!show) row.classList.remove('on');
+    cap.innerHTML = PS[idx()][1] + ' <i>' + (row.classList.contains('on') ? '▴' : '▾') + '</i>';
+    [].forEach.call(row.children, function (b) { b.classList.toggle('on', +b.getAttribute('data-p') === cur()); });
+  }
+  row.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('button') : null; if (!b) return; e.stopPropagation(); go(+b.getAttribute('data-p')); });
+  var x0 = null, sw = false;
+  cap.addEventListener('touchmove', function (e) { if (x0 != null) e.preventDefault(); }, { passive: false });
+  cap.addEventListener('pointerdown', function (e) { x0 = e.clientX; sw = false; try { cap.setPointerCapture(e.pointerId); } catch (x) { } });
+  cap.addEventListener('pointermove', function (e) { if (x0 == null || sw) return; var dx = e.clientX - x0; if (Math.abs(dx) > 28) { sw = true; var i = idx() + (dx > 0 ? 1 : -1); if (i >= 0 && i < PS.length) go(PS[i][0]); } });
+  var up = function () { if (x0 != null && !sw) { row.classList.toggle('on'); last = ''; paint(); } x0 = null; };
+  cap.addEventListener('pointerup', up); cap.addEventListener('pointercancel', function () { x0 = null; });
+  document.addEventListener('click', function (e) { if (row.classList.contains('on') && !row.contains(e.target) && !cap.contains(e.target)) { row.classList.remove('on'); last = ''; paint(); } });
+  paint(); (window.__zpSIraw || setInterval).call(window, paint, 1000);   /* 顶上按钮切了周期, 胶囊字跟着变 */
 })();
 </script>
 </html>

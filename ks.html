@@ -245,7 +245,7 @@
   /* === 金粼融合 0913晚(重打在部署版上): 藏青底 + 单行抽屉紧凑条 === */
   html.tvlook, html.tvlook body, html.tvlook body.embed { background: #080a0e !important; } /* 11-18 TV风格: 画布纯黑底(原#0a0e0b偏绿) */
   body.embed { background: rgba(9,22,34,.78); color-scheme: dark; } /* =父级 .plots rgba(11,27,41,.933); transparent会被浏览器填白(0913已踩过) */
-  body.embed .pstrip { background: rgba(6,13,21,.30); border-color: rgba(30,52,66,.55); top: 7px; } /* ks-1012c: 嵌入态淡化+微降7px(放大顶满后左上角不再突兀, 用户反馈); 独立版原样 */
+  body.embed .pstrip { position: absolute; left: 6px; top: auto; bottom: 8px; z-index: 30; background: rgba(6,13,21,.82); border-color: rgba(30,52,66,.8); box-shadow: 0 2px 10px rgba(0,0,0,.35); } /* ks-1124: 周期直选锚定图表视口底边, 滚动/全屏时随手可选 */
   body.embed .yz button { background: rgba(8,18,26,.6); color: #81e6d9; border-color: #21404d; }
   body.embed.drw-periods .row[data-periods], body.embed.drw-tools .row[data-tools], body.embed.drw-inds .row[data-inds], body.embed.drw-favs .row[data-favs] { display: flex; }
   body.embed #ksBarJL { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; overflow-x: auto; padding: 3px 6px; border-bottom: 1px solid #87b7c422; background: rgba(6,13,21,.35); flex: none; scrollbar-width: none; }
@@ -343,7 +343,7 @@
 <script src="jl_chart_cache.js?v=1"></script>
 <script src="jl_markets.js?v=7"></script>
 <script src="jl_tri.js?v=1"></script>
-<script src="jl_huo.js?v=2"></script><script src="jl_sx.js?v=13"></script><script src="jl_zd.js?v=16"></script><script src="jl_hy.js?v=2"></script><script src="jl_dk.js?v=2"></script><script src="jl_subcv.js?v=1"></script>   <!-- 11-24h 指标副图: 公式同作战屏 -->
+<script src="jl_huo.js?v=3"></script><script src="jl_sx.js?v=14"></script><script src="jl_zd.js?v=16"></script><script src="jl_hy.js?v=2"></script><script src="jl_dk.js?v=2"></script><script src="jl_subcv.js?v=2"></script>   <!-- 11-24h 指标副图: 公式同作战屏 -->
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 

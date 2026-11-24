@@ -646,7 +646,8 @@ function lkLoad(force){
     if(rs[2].status==='fulfilled') LK.d=rs[2].value; else bad.push('日K');
     LK.ok=LK.m15.length>=10&&LK.d.length>=20?1:0; LK.err=bad.length?bad.join('/')+'没取到':''; LK.ts=Date.now();
     if(LK.ok){ TRI_D['15分'].kl=LK.m15; TRI_D['5分'].kl=LK.m5.length?LK.m5:TRI_D['5分'].kl; TRI_D['日'].kl=LK.d.slice(-240); }
-    try{ drawFib(); drawSW(); drawBand(); }catch(e){ console.warn('[做T面板] 实时K重画错',e&&e.message); } });
+    /* drawFib→drawTri 已经会在行情就绪时重算价位带；避免每次K线返回后再完整画第二遍。 */
+    try{ drawFib(); drawSW(); if(!lkReady()) drawBand(); }catch(e){ console.warn('[做T面板] 实时K重画错',e&&e.message); } });
 }
 /* 段之后的极值：分钟/日K里 时间>t0 的最高/最低 + 现价；今天的盘中最高最低(行情 f33/f34)只在 t0 早于今天时才算（今天的段不能拿段前的低点去打✓） */
 function lkExt(kl,t0){ let hi=-Infinity, lo=Infinity; kl.forEach(r=>{ if(String(r[0])>String(t0)){ if(r[2]>hi) hi=r[2]; if(r[3]<lo) lo=r[3]; } });
@@ -1507,6 +1508,10 @@ function drawBand(){
     const dn=m.done||(!m.force&&Math.abs(m.p-N)>1e-9&&realTouch(m.p,role,N));   // 真数据判定：已发生＝K线真实触及过
     const col=dn?'#8fa0b3':(role==='接'?'#4dffb4':'#ff5459');   // 蜡烛同款亮红亮绿
     return {col:col,gray:gray,role:role,dn:dn}; };
+  /* 11-24lim 口径表 Q3: 盘中=按昨收、盘外=按现价(收盘后=明天的基准) 算涨跌停；30/68开头20%、8/4/92开头30%、名字带ST 5%、其余10%。只改显示 */
+  const LIMR=/^(30|68)/.test(st.code)?0.2:(/^(8|4|92)/.test(st.code)?0.3:(/ST/i.test(T().name||'')?0.05:0.1)), LIMB=(SESS&&T().pc>0)?T().pc:N;
+  const LUP=Math.round(LIMB*(1+LIMR)*100)/100, LDN=Math.round(LIMB*(1-LIMR)*100)/100;
+  const overL=m=>{ const r=(meta[m.p]||metaOf(m)).role; return r==='卖'?(m.p>LUP+1e-9?'超涨停':''):(r==='接'&&m.p<LDN-1e-9?'超跌停':''); };
   const chip=m=>{   // 11-23 三次拍板：全量算 meta 供右下角徽章；带子里只摆两行小排
     const mm=metaOf(m); meta[m.p]=mm; const role=mm.role, gray=mm.gray, dn=mm.dn, col=mm.col;
     const hot=!dn&&!gray;   // 没发生＝亮红亮绿+辉光；已发生沉底变灰（进复盘那批）
@@ -1516,7 +1521,7 @@ function drawBand(){
     return '<span class="pb'+(hot?' hot':'')+'" style="color:'+col+'" data-role="'+(role==='接'?'b':'s')+'" data-p="'+m.p.toFixed(2)+'" title="'+lab+' '+m.p.toFixed(2)+' · '+srcText+'">'
       +(lab==='卖'||lab==='接'?'':'<span class="rl2">'+lab+'</span>')
       +'<b'+(gray?' style="text-decoration:line-through"':'')+'>'+m.p.toFixed(2)+'</b>'
-      +'<span class="xn2">×'+m.t+'</span></span>';
+      +'<span class="xn2">×'+m.t+'</span>'+(overL(m)?'<span class="xn2">'+overL(m)+'</span>':'')+'</span>';
   };
   show.forEach(m=>chip(m));
   /* 价位带＝小小两行（参考日线波段卡买卖行排版）：卖一行、接一行；已发生(✓)/涨透/跌破不上带（复盘里看） */
@@ -1524,11 +1529,13 @@ function drawBand(){
   /* 11-23 用户「永鼎接只有21.5?」: 21.51 是日线波段「收盘站上才买回」的触发线(在现价上方)，以前被当成「接」。现在接=现价下方、卖=现价上方，到过的不上带 */
   const live=show.filter(m=>!meta[m.p].dn&&!isTrig(m));
   /* 11-23 用户「买卖共振价在哪里汇总，是不是也要整理」: 选 ×N 最多的3个，再按离现价近→远排；全部来源在五日卡下面清单(点「汇总›」跳过去) */
-  let sells=live.filter(m=>meta[m.p].role==='卖'&&m.p>N).sort((a,b)=>b.t-a.t||a.p-b.p).slice(0,3).sort((a,b)=>a.p-b.p);
-  let buys=live.filter(m=>meta[m.p].role==='接'&&m.p<N).sort((a,b)=>b.t-a.t||b.p-a.p).slice(0,3).sort((a,b)=>b.p-a.p);
+  const ov=m=>overL(m)?1:0;   /* 11-24lim: 超涨跌停的排后面 */
+  let sells=live.filter(m=>meta[m.p].role==='卖'&&m.p>N).sort((a,b)=>ov(a)-ov(b)||b.t-a.t||a.p-b.p).slice(0,3).sort((a,b)=>ov(a)-ov(b)||a.p-b.p);
+  let buys=live.filter(m=>meta[m.p].role==='接'&&m.p<N).sort((a,b)=>ov(a)-ov(b)||b.t-a.t||b.p-a.p).slice(0,3).sort((a,b)=>ov(a)-ov(b)||b.p-a.p);
   const one=all0.filter(m=>m.t<2&&!m.force&&!m.done&&!isTrig(m)).map(m=>{ chip(m); return m; }).filter(m=>!meta[m.p].dn);
-  if(sells.length<2) sells=sells.concat(one.filter(m=>m.p>N&&meta[m.p].role==='卖').sort((a,b)=>a.p-b.p).slice(0,2-sells.length));
-  if(buys.length<2) buys=buys.concat(one.filter(m=>m.p<N&&meta[m.p].role==='接').sort((a,b)=>b.p-a.p).slice(0,2-buys.length));
+  if(sells.length<2) sells=sells.concat(one.filter(m=>m.p>N&&meta[m.p].role==='卖').sort((a,b)=>ov(a)-ov(b)||a.p-b.p).slice(0,2-sells.length));
+  if(buys.length<2) buys=buys.concat(one.filter(m=>m.p<N&&meta[m.p].role==='接').sort((a,b)=>ov(a)-ov(b)||b.p-a.p).slice(0,2-buys.length));
+  sells.sort((a,b)=>ov(a)-ov(b)); buys.sort((a,b)=>ov(a)-ov(b));
   BAND.res=show.filter(m=>!meta[m.p].dn&&!isTrig(m)).map(m=>({p:m.p,t:m.t,role:meta[m.p].role})); BAND.done=all0.filter(m=>meta[m.p]&&meta[m.p].dn).map(m=>({p:m.p}));
   if(SESS){ const L=Object.values(mapL).map(m=>Object.assign(m,{mt:metaOf(m)}));   /* 五日图「共振/复盘」线也用实时 */
     BAND.res=L.filter(m=>(m.t>=2||m.force)&&!m.mt.dn&&!isTrig(m)).map(m=>({p:m.p,t:m.t,role:m.mt.role})); BAND.done=L.filter(m=>m.mt.dn).map(m=>({p:m.p})); }
@@ -1578,7 +1585,16 @@ document.addEventListener('click',e=>{ const t=e.target.closest('.pb[data-role]'
   $('msg').textContent='已填到算账 '+(t.dataset.role==='s'?'卖出':'买回')+'价 '+p.toFixed(2)+' · 来源 '+String(t.title||'').replace(/^\S+ [\d.]+ · /,''); });
 document.addEventListener('click',e=>{ const t=e.target;
   if(t.id==='addno'){ $('addstk').style.display='none'; $('code').value=st.code; return; }
-  if(t.id==='addok'){ if(!/^\d{6}$/.test($('addc').value.trim())){ $('msg').textContent='打代码、名称或拼音，从弹出的列表里点一只'; return; }  /* 11-23v */
+  if(t.id==='addok'){ if(!/^\d{6}$/.test($('addc').value.trim())){   /* 11-24add: 名字打在哪个框都认, 对上就直接加 */
+      const q=($('addc').value.trim()||$('addn').value.trim());
+      if(!q){ $('addc').placeholder='先打代码、名称或拼音'; $('addc').focus(); return; }
+      $('addc').value=q; $('addok').textContent='搜…';
+      if(typeof window.__ztSuggest!=='function'){ $('addok').textContent='加入'; $('addc').placeholder='搜索没加载好，刷新再试'; return; }
+      window.__ztSuggest(q,function(list){ $('addok').textContent='加入';
+        const hit=list.filter(x=>x.name===q||x.code===q)[0]||(list.length===1?list[0]:null);
+        if(hit){ $('addc').value=hit.code; $('addn').value=hit.name; $('addok').click(); return; }
+        if(!list.length){ $('addc').value=''; $('addc').placeholder='没搜到「'+q+'」，换个写法'; $('addc').focus(); } });
+      return; }
     const r=addStock($('addc').value,$('addn').value);
     if(r.err){ $('msg').textContent=r.err; return; }
     $('addstk').style.display='none'; $('addc').value=''; $('addn').value='';
@@ -1813,9 +1829,16 @@ function applyQuote(q){
     if(q.name) T0.name=q.name;
     var chg=(T0.p!==q.p)||(q.h>0&&T0.dh!==q.h)||(q.l>0&&T0.dl!==q.l);
     T0.p=q.p; T0.at=q.at||T0.at; if(q.pc) T0.pc=q.pc; if(q.h>0) T0.dh=q.h; if(q.l>0) T0.dl=q.l;
-    drawTop();
     /* 11-23 用户「现价标没跟着动」: 原来来价只刷顶栏 → 现在斐波三卡/三角跟着重画；K线55秒一刷(lkLoad 自己节流)；手指按着面板时先不重画 */
-    try{ drawTop(); if(typeof lkLoad==='function') lkLoad(); if(chg&&!window.__ztPtr&&typeof drawFib==='function'){ drawFib(); drawSW(); drawNext(); } }catch(x){ console.warn('[做T面板] 现价重画错',x&&x.message); }
+    try{
+      drawTop();
+      if(typeof lkLoad==='function') lkLoad();
+      /* 行情仍5秒刷新顶栏；结构卡含多组K线计算，限为每15秒重画一次，避免Safari持续整卡重排。 */
+      var now=Date.now();
+      if(chg&&!window.__ztPtr&&typeof drawFib==='function'&&now-(window.__ztCalcDrawAt||0)>=15000){
+        window.__ztCalcDrawAt=now; drawFib(); drawSW(); drawNext();
+      }
+    }catch(x){ console.warn('[做T面板] 现价重画错',x&&x.message); }
     var b=document.querySelector('#fball span'); if(b&&!window.__ztKeepBall) b.textContent='做T';
     var ts=document.getElementById('ts'); if(ts&&q.at) ts.title='实时 '+q.at;
   }catch(e){}
@@ -1838,7 +1861,7 @@ function renderSug(list,anchor){
     b.style.cssText='display:block;width:100%;text-align:left;background:none;border:none;color:#eaf0f8;font:600 13px -apple-system;padding:8px 10px;border-radius:8px';
     b.onclick=function(ev){ ev.stopPropagation();
       var c=document.getElementById('addc'), n=document.getElementById('addn');
-      if(c) c.value=it.code.replace(/^\w\w/,''); if(n) n.value=it.name;
+      if(c) c.value=it.code.replace(/^[a-z]{2}/i,''); if(n) n.value=it.name;
       closeSug();
       var ok=document.getElementById('addok'); if(ok) ok.click();
     };
@@ -1847,14 +1870,15 @@ function renderSug(list,anchor){
   var r=blk.getBoundingClientRect(); sug.style.left=r.left+10+'px'; sug.style.top=(r.bottom+4)+'px'; sug.style.width=(r.width-20)+'px';
   document.body.appendChild(sug);
 }
-function doSuggest(q){
+window.__ztSuggest=function(q,cb){ return doSuggest(q,cb); };   /* 11-24add: 「加入」在另一个 script 里, 经 window 调 */
+function doSuggest(q,cb){   /* 11-24add: cb(list) 给「加入」用 */
   jsonpVar('https://smartbox.gtimg.cn/s3/?v=2&q='+encodeURIComponent(q)+'&t=all',['v_hint'],function(o){
-    if(!o||!o.v_hint){ renderSug([]); return; }
+    if(!o||!o.v_hint){ renderSug([]); if(cb) cb([]); return; }
     var raw=String(o.v_hint).replace(/^v_hint="/,'').replace(/";?$/,'');
     var list=[]; raw.split('^').forEach(function(row){
-      var f=row.split('~'); if(f.length>=3){ var code=String(f[1]||'').replace(/^\w\w/,''); var nm=String(f[2]||'');
+      var f=row.split('~'); if(f.length>=3){ var code=String(f[1]||'').replace(/^[a-z]{2}/i,'');   /* 11-24add: 原 /^\w\w/ 把 600489 的「60」也剥了 → 4位被丢 → 搜什么都空 */ var nm=String(f[2]||'');
         if(/^\d{6}$/.test(code)&&nm) list.push({code:code,name:nm}); } });
-    renderSug(list.slice(0,6));
+    renderSug(list.slice(0,6)); if(cb) cb(list);
   });
 }
 
