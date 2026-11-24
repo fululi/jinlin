@@ -91,14 +91,13 @@ test('price segments are red up and green down; dated entry and exit labels occu
  const host={classList:{add(){}},querySelector(s){return nodes[s]||(nodes[s]=s==='canvas'?{...node(),clientWidth:296,width:296,height:270,getContext:()=>ctx}:node());}};
  x.c.document.getElementById=()=>true;
  const view=x.A.mount(host);await view.show('600105','测试');
- const marks=labels.filter(l=>/^[▲▼]/.test(l.text));assert.equal(marks.length,2);
- assert.equal(marks[0].text,'▲进 '+b[62].d+' · 开盘 '+b[62].o.toFixed(2)+'元');
- assert.equal(marks[1].text,'▼出 '+b[64].d+' · 开盘 9.00元');
- assert.equal(marks[0].color,'#ffe16b');assert.equal(marks[1].color,'#54d9ee');
- assert.ok(marks[0].y<marks[1].y&&marks[1].y<43);marks.forEach(l=>assert.match(l.font,/10px/));
+ /* 11-24w 用户「进红色箭头直接日期 出亮绿色箭头」: 日期贴在箭头旁 */
+ const marks=labels.filter(l=>l.text===b[62].d.slice(5)||l.text===b[64].d.slice(5));assert.equal(marks.length,2);
+ assert.equal(marks[0].color,'#ff666e');assert.equal(marks[1].color,'#3dffb4');marks.forEach(l=>assert.match(l.font,/9px/));
+ assert.equal(labels.filter(l=>/^[▲▼](进|出|期)/.test(l.text)).length,0);
  assert.deepEqual(segments,b.slice(1).map((r,i)=>r.c>b[i].c?'#ff666e':r.c<b[i].c?'#38d5a3':'#ffffff'));
- assert.match(nodes['.jlAbsRead'].textContent,/价格红涨绿跌/);
- view.select(61);assert.ok(!labels.some(l=>/^[▲▼]/.test(l.text)));view.destroy();
+ assert.equal(nodes['.jlAbsRead'].textContent,'');/* 11-24w 用户删「价格红涨绿跌/白线MA20」整行 */
+ view.select(61);assert.ok(!labels.some(l=>l.text===b[62].d.slice(5)));view.destroy();
 });
 test('Tencent loader uses JSON fetch; concurrent callers retain newly arrived bars/funds and prefer official pct',async()=>{
  const {b,f}=fixture(100),x=networkBrowser(b,f);const first=x.A.load('600105');const newer={...b[99],d:'2025-04-11'};const second=x.A.load('sh600105',{bars:[newer],funds:[{d:b[99].d,mainPct:99,estimated:true}]});await first;const data=await second;assert.equal(x.requests(),1);assert.equal(data.bars.at(-1).d,newer.d);assert.equal(data.funds.at(-1).mainPct,1);assert.equal(data.funds.at(-1).estimated,false);
