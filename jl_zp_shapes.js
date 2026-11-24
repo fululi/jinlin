@@ -145,7 +145,14 @@
       grp.appendChild(E('line', { x1: xi(T.a), y1: Y(sp(T.a)), x2: xi(r.iE), y2: Y(sp(r.iE)), stroke: OR, 'stroke-width': .9 }));
       grp.appendChild(E('line', { x1: xi(i0), y1: Y(T.flat), x2: xi(r.iE), y2: Y(T.flat), stroke: GR, 'stroke-width': .9 }));
       (T.touch || []).forEach(function (i) { grp.appendChild(E('circle', { cx: xi(i), cy: Y(T.flat), r: 2, fill: 'none', stroke: GR, 'stroke-width': .8 })); });
-      if (T.brkDir && T.at >= 0) { var yb = Y(T.brkDir > 0 ? sp(T.at) : T.flat); grp.appendChild(E('text', { x: xi(T.at) + 3, y: T.brkDir > 0 ? yb - 3 : yb + 9, fill: '#ffe14d', 'font-size': 7.5, 'font-weight': 400 }, 'BOS')); }
+      /* 11-24tri 用户「BOS↑ 可以呀」: 照K线表 ks.html renderTri 写字 —— 平底/平顶+价(绿,右端) · 起点价(橙) · BOS↑/↓+那根收盘(垫深色底) */
+      var dnT = T.dir < 0, fx = function (v) { return (+v).toFixed(2); }, xE = xi(r.iE);
+      var tx = function (x, y, s, col, anc) { var t = E('text', { x: x, y: y, fill: col, 'font-size': 8, 'font-weight': 400, 'text-anchor': anc || 'start', stroke: 'rgba(5,10,16,.85)', 'stroke-width': .8, 'paint-order': 'stroke' }, s); grp.appendChild(t); return t; };
+      tx(xi(i0) - 2, Y(T.flat) + (dnT ? 10 : -4), (dnT ? '平底 ' : '平顶 ') + fx(T.flat), GR, 'end');   /* 写在平底线左端外侧(右端挨着现价标签会被挡) */
+      tx(xi(T.a), Y(sp(T.a)) + (dnT ? -4 : 10), fx(T.top[1]), OR, 'middle');
+      if (T.brkDir && T.at >= 0 && CC[T.at]) { var cb = CC[T.at], dB = T.brkDir < 0, sB = (dB ? 'BOS↓ ' : 'BOS↑ ') + fx(cb.c), yB = dB ? Y(cb.l) + 11 : Y(cb.h) - 5, wB = sB.length * 4.6;
+        grp.appendChild(E('rect', { x: xi(T.at) - wB / 2 - 2, y: yB - 8, width: wB + 4, height: 10.5, rx: 2, fill: 'rgba(11,19,29,.88)' }));
+        tx(xi(T.at), yB, sB, dB ? '#4fd79b' : '#ff8a80', 'middle'); }
     } else if (r.k === 'box') {   /* 11-23d 箱体: 黄虚线框 */
       grp.setAttribute('opacity', 1);
       grp.appendChild(E('rect', { x: r.x0, y: Y(r.top), width: Math.max(1, r.x1 - r.x0), height: Math.max(1, Y(r.bot) - Y(r.top)), fill: '#ffe14d', 'fill-opacity': .06, stroke: '#ffe14d', 'stroke-width': .8, 'stroke-dasharray': '3 2' }));

@@ -1487,7 +1487,8 @@ function drawBand(){
     ?tsb.sells.map((p,i)=>({c:'五日图',k:'卖'+(i+1),p:+p,w:1,done:false,src:'tierSB 五日图'+(tsb.dk?' dk'+tsb.dk:'')+'×1'}))
      .concat(tsb.buys.map((p,i)=>({c:'五日图',k:'接'+(i+1),p:+p,w:1,done:false,src:'tierSB 五日图'+(tsb.dk?' dk'+tsb.dk:'')+'×1'})))
     :[];
-  const addTo=(map,x)=>{ if(!(x.p>0)) return; const key=(+x.p).toFixed(2);
+  /* 11-24mrg 口径表 Q4 用户「0.3% 可以」: 差 ≤0.3% 的价并成一个(用先进来那个价)，来源数相加 */
+  const addTo=(map,x)=>{ if(!(x.p>0)) return; const key=Object.keys(map).find(k=>Math.abs(+k/x.p-1)<=0.003)||(+x.p).toFixed(2);
     const m=map[key]||(map[key]={p:+key,cards:{},ks:{},srcs:{},t:0,done:false,force:false});
     m.cards[x.c]=1; m.t+=(x.w||1); if(x.done) m.done=true; if(x.force) m.force=true; if(x.t) m.tt=x.t;
     (m.ks[x.c]=m.ks[x.c]||[]); if(m.ks[x.c].indexOf(x.k)<0) m.ks[x.c].push(x.k);

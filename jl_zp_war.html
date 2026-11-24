@@ -831,7 +831,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
   g.Elliott = { swingsFrom: swingsFrom, detect: detect, drawSVG: drawSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
-<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=13"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script src="jl_huo.js?v=3"></script>
+<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=14"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script src="jl_huo.js?v=3"></script>
 <script>/* jl_macd.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
 /*! jl_macd.js — 分时 MACD 副图（MACDFS 12,26,9），仿同花顺：红绿柱 + DIF(白) + DEA(橙)
  * 做成独立的一块 SVG，插在走势图下面，不画在图上，所以不会压住任何字。
@@ -1955,7 +1955,8 @@ if (ext && SP[ext.ix]) {
   X: function (hm) { return xOfHmJL(hm); }, Y: Y, xEnd: LX - 6,
   clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline') }); } catch (e) {}
   /* jl-zppat: 1-5 浪(Elliott) 11-04 用户要求恢复, 和形态(三角/头肩)一起画 */
-  try { if (window.Elliott && LIVE.pts && LIVE.pts.length) window.__EW = Elliott.drawSVG(svg, perNowJL() > 0 ? (window.__SWX || window.__SWJL || []) : Elliott.swingsFrom(LIVE.pts, 0.008), {   /* 1/5/15分页: 用本周期蜡烛确认的高低点(和红圈同一组), 切周期浪跟着变 */
+  /* 11-24tri 用户「1.2.3.5 橙色的线没一起隐藏」: PAT 关 = 1-5 浪(橙折线+数字)也不画; 干草叉仍归 ═ */
+  try { if (localStorage.getItem('zp_pat_hist_v1') === '0') { var oEw = svg.querySelector('#ell'); if (oEw) oEw.remove(); window.__EW = null; } else if (window.Elliott && LIVE.pts && LIVE.pts.length) window.__EW = Elliott.drawSVG(svg, perNowJL() > 0 ? (window.__SWX || window.__SWJL || []) : Elliott.swingsFrom(LIVE.pts, 0.008), {   /* 1/5/15分页: 用本周期蜡烛确认的高低点(和红圈同一组), 切周期浪跟着变 */
   X: function (hm) { return xOfHmJL(hm); }, Y: Y, xEnd: LX - 6, noChan: localStorage.getItem('zp_lv_v1') === '0',
   clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline') }); } catch (e) {}
   /* 11-05 形态层: 头肩/三角/谐波(Gartley·Bat·Butterfly·Crab)/杯柄(含倒杯柄); 细实线+淡阴影不写字; 5/15分=跨天蜡烛, 分时=今天; 最新一个=实时(常显), 更早的=历史(右上"形"钮可隐藏) */
