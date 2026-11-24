@@ -197,6 +197,7 @@ const fmt = (m) => { const s = bst(m); return md(s) + (hm(s) ? " " + hm(s) : "")
       const t0 = g.born[0].t.padEnd(12, "9").slice(0, 12), segs = []; let on = false;
       m1d.forEach((x) => { if (x.t <= t0) return; const hit = x.l < g.hi - 0.005 && x.h > g.lo + 0.005; if (hit && !on) segs.push(x.t); on = hit; });   /* 真进到缺口里才算碰过 */
       g.touch = segs;
+      g.gapUp = g.bull; g.remLo = g.lo; g.remHi = g.hi;   /* 11-24 用户「补回来吧」: 网页上传的 v4 回到 v3 字段名, 首页 homeHistViJL 还读 11-17 版的 gapUp/remLo/remHi(未补那段) → 补别名, 值同 bull/lo/hi */
     });
     grp.sort((a, b) => b.N - a.N || (b.inG - a.inG) || Math.abs(a.dist) - Math.abs(b.dist));
     const dgp = [];
