@@ -93,7 +93,7 @@ test('price segments are red up and green down; dated entry and exit labels occu
  const view=x.A.mount(host);await view.show('600105','测试');
  /* 11-24w 用户「进红色箭头直接日期 出亮绿色箭头」: 日期贴在箭头旁 */
  const marks=labels.filter(l=>l.text===b[62].d.slice(5)||l.text===b[64].d.slice(5));assert.equal(marks.length,2);
- assert.equal(marks[0].color,'#ff666e');assert.equal(marks[1].color,'#3dffb4');marks.forEach(l=>assert.match(l.font,/9px/));
+ assert.equal(marks[0].color,'#ff666e');assert.equal(marks[1].color,'#3dffb4');marks.forEach(l=>assert.match(l.font,/10px/));/* 11-25 字放大一号更清楚 */
  assert.equal(labels.filter(l=>/^[▲▼](进|出|期)/.test(l.text)).length,0);
  assert.deepEqual(segments,b.slice(1).map((r,i)=>r.c>b[i].c?'#ff666e':r.c<b[i].c?'#38d5a3':'#ffffff'));
  assert.equal(nodes['.jlAbsRead'].textContent,'');/* 11-24w 用户删「价格红涨绿跌/白线MA20」整行 */
