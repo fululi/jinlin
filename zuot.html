@@ -1693,7 +1693,7 @@ all();
   function pushGeom(drag){ if(!EMB) return;
     let f=null; try{ f=window.parent&&window.parent.document.getElementById('zuotJL'); }catch(e){}
     if(!f) return; const g=geom(drag);
-    f.style.cssText='position:fixed;left:'+g.x+'px;top:'+g.y+'px;width:'+g.w+'px;height:'+g.h+'px;border:0;z-index:2147483000;background:transparent'; }
+    f.style.cssText='position:fixed;left:'+g.x+'px;top:'+g.y+'px;width:'+g.w+'px;height:'+g.h+'px;border:0;z-index:2147483000;background:transparent;transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden;color-scheme:dark'; } /* 11-25 用户「手机上做T浮球一会儿隐藏一会儿出现」: 推测 iOS 滚动/重画时 fixed 透明 iframe 掉合成层, 强制单独一层(没在苹果上实测) */
   window.__ztGeom=pushGeom;
   function save(){ try{ localStorage.setItem('tpanel_fwf',JSON.stringify(open));
     localStorage.setItem('tpanel_ball',JSON.stringify({x:bX,y:bY}));
