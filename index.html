@@ -1011,6 +1011,16 @@ html.wLightJL #watchPage{--absFg:#131722;--absGrid:#e0e3eb;--absAxis:#c5cad6;--a
 #watchList .wAbsJL *{opacity:1!important;-webkit-font-smoothing:antialiased}
 #watchList .wAbsJL .jlAbsFact span,#watchList .wAbsJL .jlAbsFact small,#watchList .wAbsJL .jlAbsTime span,#watchList .wAbsJL summary,#watchList .wAbsJL p,#watchList .wAbsJL td,#watchList .wAbsJL th{font-weight:500!important;font-size:12px!important}
 #watchList .wAbsJL .jlAbsFact b{font-weight:600!important}
+/* 11-25 用户「黑色的上面九阳股份的字还是太灰」: 名字/现价加粗放大, 小字500 */
+#watchList .wNmJL b{font-size:15px!important;font-weight:600!important;color:var(--wtx)!important;-webkit-font-smoothing:antialiased}
+#watchList .wNmJL small{font-size:11.5px!important;font-weight:500!important}
+#watchList .wPxJL{font-size:15px!important;font-weight:600!important}
+#watchList .wChgJL{font-weight:600!important}
+#watchList .wHdJL{font-size:11px!important}
+#watchPage .segJL button{opacity:.85}
+#watchList .wAbsJL .jlAbsHead b{font-size:15px!important;font-weight:600!important}
+/* 11-25 做T球点开作战屏后消失: 球(2147483000)与作战屏浮球同层、后者在DOM后面盖住它→球iframe抬高一层并常显 */
+#zuotJL{z-index:2147483001!important;visibility:visible!important;opacity:1!important}
 #watchList .wAbsJL .jlAbsFoot input{accent-color:#2962ff}
 #watchList#watchList .wAbsJL canvas{background:transparent!important}
 #watchList .wAbsJL.jlAbsView{background-image:none!important}
