@@ -1680,12 +1680,14 @@ all();
     if(dragging){ ball.style.left=bX+'px'; ball.style.top=bY+'px'; fw.style.left=wX+'px'; fw.style.top=wY+'px'; }
     else { ball.style.left='0px'; ball.style.top='0px'; fw.style.left='0px'; fw.style.top='0px'; } }
   function sizeWin(){ if(!EMB||!open) return; const fb=document.getElementById('fwbody');
+    /* 11-25d 用户「点球变回面板后就消失」: 原来 toggle 里先量高度再显示, 面板还是 display:none 时 offsetHeight=0 → 高度被设成0px → iframe 只剩2px看不见。先显示再量 */
+    if(fw.style.display==='none') fw.style.display='';
     /* 11-23 放大修: 尊重宽钮选定的宽度(存tpanel_fww_v1), 不再钉死320; 上限=主机屏宽-8 */
     let uw=320; try{ uw=parseInt(localStorage.getItem('tpanel_fww_v1'))||320 }catch(e){}
     fw.style.maxWidth=TVW()+'px'; /* 11-23 放大修: 嵌入时100vw=iframe自身宽(自锁), 改锚主机屏宽 */
     fw.style.width=Math.max(260,Math.min(uw,TVW()-8))+'px'; fw.style.maxHeight='none'; fw.style.height='auto'; if(fb) fb.style.maxHeight='none';
     let uh=0; try{ uh=parseInt(localStorage.getItem('tpanel_fwh_v1'))||0 }catch(e){}   /* 11-23: 用户拖柄拖过高度就用他的 */
-    const nat=fw.offsetHeight, cap=Math.round(TVH()*(uh?0.96:0.82)), h=Math.min(uh||nat,cap);
+    const nat=fw.offsetHeight||320, cap=Math.round(TVH()*(uh?0.96:0.82)), h=Math.min(uh||nat,cap);
     fw.style.height=h+'px'; if(fb) fb.style.maxHeight=(h-30)+'px'; }
   window.__ztSize=function(){ try{ if(EMB&&open) sizeWin(); }catch(e){} };
   function geom(drag){ return {open:open, x:open?wX:bX, y:open?wY:bY, w:open?(fw.offsetWidth||452):56, h:open?(fw.offsetHeight||320):56, dragging:drag?1:0}; }
