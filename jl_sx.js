@@ -149,19 +149,24 @@
 
   /* ---------- SVG 绘制 ---------- */
   var WD = 380, PL = 24, PR = 3;
+  /* 11-24 用户「1/5/15/日各自对齐…十字线打通」: 嵌在作战屏时 jl_huo 把主图横轴(同一批K)挂 W.__zpSubAx —— 有就按主图x画(viewBox 360宽, 刻度挪右边), 没有=原来自己排90根 */
+  function AXg(bars) { var A = W.__zpSubAx; A = A && A.bars === bars && A.N > 0 ? A : null; WD = A ? 360 : 380; PL = A ? A.PL : 24; PR = A ? 360 - A.PR : 3; return A; }
+  function LX4() { return WD === 360 ? 359 : PL - 4; }
+  function axOfSt(st) { var a = ['s1', 's2', 's3']; for (var j = 0; j < 3; j++) { var e = st && st[a[j]]; if (e && e.__ax && e.__ax.on) return e.__ax; } return null; }
+  function ckOf(B) { var n = B.length, a = B[0] || {}, z = B[n - 1] || {}; return n + '|' + a.t + '|' + z.t + '|' + z.o + '|' + z.h + '|' + z.l + '|' + z.c + '|' + z.v; }
   function gridLines(g, T, Bt, yv, lv, D, i0, N, xF) {
     for (var k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + xF(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
   }
     function bigOn() { try { return localStorage.getItem('zp_huo_big_v1') === '1'; } catch (e) { return false; } }
   function drawSec1(el, R, bars, lv, cap) {
-    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
+    var AX = AXg(bars), N = AX ? AX.N : Math.min(W.__zpHuoN || 90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(bars, lv);
     var peak = Math.max(12, pct95(R.J2.concat(R.J1)) * 1.25);
-    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N;
-    var X = function (k) { return PL + cw * (k + 0.5); };
+    var T = 5, Bt = AX ? AX.H - 3 : (bigOn() ? 148 : 88), Hh = AX ? AX.H : (bigOn() ? 160 : 100), cw = AX ? AX.cw : (WD - PL - PR) / N;
+    var X = AX ? function (k) { return AX.x(i0 + k); } : function (k) { return PL + cw * (k + 0.5); };
     var Y = function (v) { return T + (peak - Math.min(v, peak)) / peak * (Bt - T); };
     var g = [];
     [[peak * 0.5, (peak * 0.5).toFixed(0)], [peak, peak.toFixed(0)]].forEach(function (a) {
-      g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(a[0]).toFixed(1) + '" y2="' + Y(a[0]).toFixed(1) + '" stroke="rgba(255,255,255,.14)" stroke-width=".8"/><text x="' + (PL - 4) + '" y="' + (Y(a[0]) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#fff">' + a[1] + '</text>');
+      g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(a[0]).toFixed(1) + '" y2="' + Y(a[0]).toFixed(1) + '" stroke="rgba(255,255,255,.14)" stroke-width=".8"/><text x="' + LX4() + '" y="' + (Y(a[0]) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#fff">' + a[1] + '</text>');
     });
     for (var k = 0; k < N; k++) { var i = i0 + k; g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + Y(R.穿越[i]).toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + (Bt - Y(R.穿越[i])).toFixed(1) + '" fill="' + tdc('DDDDFF') + '" opacity=".5"/>'); }
     for (k = 0; k < N; k++) { i = i0 + k; g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + Y(R.换手[i]).toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + (Bt - Y(R.换手[i])).toFixed(1) + '" fill="' + tdc('FF0099') + '" opacity=".75"/>'); }
@@ -175,19 +180,19 @@
     [[R.sigW, 'rgba(255,255,255,.95)', 0.42], [R.sigP, tdc('FF00FF'), 0.92], [R.sigY, tdc('FFFF33'), 0.36], [R.sigB, '#3b7bff', 0.78]].forEach(function (sg) {
       for (k = 0; k < N; k++) { i = i0 + k; if (sg[0][i]) g.push('<rect x="' + (X(k) - cw * 0.7).toFixed(1) + '" y="' + (Bt - sg[2] * (Bt - T)).toFixed(1) + '" width="' + (cw * 1.4).toFixed(2) + '" height="' + (sg[2] * (Bt - T)).toFixed(1) + '" fill="' + sg[1] + '" stroke="#111" stroke-width=".4"/>'); }
     });
-    gridLines(g, T, Bt, null, lv, D, i0, N, X);
-    g.push('<g class="hx"></g>');
+    if (!AX) gridLines(g, T, Bt, null, lv, D, i0, N, X);
+    g.push('<g class="hx"></g>'); el.__ax = { on: !!AX, X: X, Y: Y, T: T, Bt: Bt, i0: i0, N: N, lo: 0, hi: peak, pv: function (i) { return R.J2[i]; } };   /* 11-24: 给 jl_huo 画十字横线/✎横线用 */
     el.innerHTML = '<div class="ssl"><span style="color:' + tdc('00FF00') + '">JIU1 ' + R.J1[R.n - 1].toFixed(1) + '</span><span style="color:' + tdc('FF00FF') + '">JIU2 ' + R.J2[R.n - 1].toFixed(1) + '</span><span style="color:' + tdc('FFFF99') + '">JIU3</span><span style="color:#ffdc00">JIU4</span><span style="color:#ddd">穿越 ' + R.穿越[R.n - 1].toFixed(1) + '</span><span style="color:#ddd">换手 ' + R.换手[R.n - 1].toFixed(2) + '%</span><span style="color:#fff">穿透 ' + R.穿透率[R.n - 1].toFixed(1) + '</span></div><svg viewBox="0 0 ' + WD + ' ' + Hh + '">' + g.join('') + '</svg>';
     el.__g = { N: N, i0: i0, cw: cw, PL: PL, W: WD, T: T, Bt: Bt, R: R, D: D, sec: 1 };
   }
   function drawSec2(el, R, bars, lv) {
-    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
-    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N, vmax = 135, vmin = -5;
-    var X = function (k) { return PL + cw * (k + 0.5); };
+    var AX = AXg(bars), N = AX ? AX.N : Math.min(W.__zpHuoN || 90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(bars, lv);
+    var T = 5, Bt = AX ? AX.H - 3 : (bigOn() ? 148 : 88), Hh = AX ? AX.H : (bigOn() ? 160 : 100), cw = AX ? AX.cw : (WD - PL - PR) / N, vmax = 135, vmin = -5;
+    var X = AX ? function (k) { return AX.x(i0 + k); } : function (k) { return PL + cw * (k + 0.5); };
     var Y = function (v) { return T + (vmax - Math.min(Math.max(v, vmin), vmax)) / (vmax - vmin) * (Bt - T); };
     var g = [];
     [[20, '20'], [50, '50'], [80, '80']].forEach(function (a) {
-      g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(a[0]).toFixed(1) + '" y2="' + Y(a[0]).toFixed(1) + '" stroke="rgba(255,255,255,.14)" stroke-width=".8"/><text x="' + (PL - 4) + '" y="' + (Y(a[0]) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#fff">' + a[1] + '</text>');
+      g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(a[0]).toFixed(1) + '" y2="' + Y(a[0]).toFixed(1) + '" stroke="rgba(255,255,255,.14)" stroke-width=".8"/><text x="' + LX4() + '" y="' + (Y(a[0]) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9.5" fill="#fff">' + a[1] + '</text>');
     });
     for (var k = 0; k < N; k++) { var i = i0 + k; if (R.中[i] < 15) g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + Y(R.中[i]).toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + (Y(15) - Y(R.中[i])).toFixed(1) + '" fill="' + tdc('FF00FF') + '" opacity=".45"/>'); }
     for (k = 0; k < N; k++) { i = i0 + k; if (R.中[i] > 80) g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + Y(80).toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + (Y(Math.min(R.中[i], 130)) - Y(80)).toFixed(1) + '" fill="' + tdc('FFF000') + '" opacity=".6"/>'); }
@@ -199,8 +204,8 @@
     function tx(mask, y, s, col, fs) { for (var k2 = 0; k2 < N; k2++) { var i2 = i0 + k2; if (mask[i2]) g.push('<text x="' + X(k2).toFixed(1) + '" y="' + (Y(y) - 2).toFixed(1) + '" text-anchor="middle" font-size="' + (fs || 10) + '" fill="' + col + '" stroke="#000" stroke-width=".5" paint-order="stroke">' + s + '</text>'); } }
     tx(R.sheng, 20, '升', '#ffdd44'); tx(R.zd, 20, '筑底中', '#66ddff'); tx(R.star, 90, '＊', '#fff', 11); tx(R.di, 0, '底', tdc('FF00FF'), 10);
     for (k = 0; k < N; k++) { i = i0 + k; if (R.icon[i]) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Y(R.中[i]) - 2).toFixed(1) + '" text-anchor="middle" font-size="10" fill="#ffdd44">▲</text>'); }
-    gridLines(g, T, Bt, null, lv, D, i0, N, X);
-    g.push('<g class="hx"></g>');
+    if (!AX) gridLines(g, T, Bt, null, lv, D, i0, N, X);
+    g.push('<g class="hx"></g>'); el.__ax = { on: !!AX, X: X, Y: Y, T: T, Bt: Bt, i0: i0, N: N, lo: vmin, hi: vmax, pv: function (i) { return R.中[i]; } };   /* 11-24: 给 jl_huo 画十字横线/✎横线用 */
     var stTxt = R.keng[R.n - 1] ? '<span style="color:#ffcc00">黄金坑中</span>' : (R.中[R.n - 1] > 80 ? '<span style="color:#00f0ff">看顶区</span>' : '');
     el.innerHTML = '<div class="ssl"><span style="color:#00ff00">短 ' + R.短[R.n - 1].toFixed(1) + '</span><span style="color:#ff4444">中 ' + R.中[R.n - 1].toFixed(1) + '</span><span style="color:' + tdc('FF00FF') + '">长 ' + R.长[R.n - 1].toFixed(1) + '</span>' + stTxt + '</div><svg viewBox="0 0 ' + WD + ' ' + Hh + '">' + g.join('') + '</svg>';
     el.__g = { N: N, i0: i0, cw: cw, PL: PL, W: WD, T: T, Bt: Bt, R: R, D: D, sec: 2 };
@@ -240,18 +245,20 @@
   }
   function xhDraw(st, i) {
     if (!st || !st.R || i < 0 || i >= st.R.n) return;
-    var N = Math.min(W.__zpHuoN || 90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
-    var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
+    var GA = axOfSt(st), N = GA ? GA.N : Math.min(W.__zpHuoN || 90, st.R.n), i0 = GA ? GA.i0 : st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
+    if (GA && (i < i0 || i >= i0 + N)) { xhClear(st); return; }   /* 11-24: 主图十字线在副图视窗外 → 不画 */
+    var cw = (380 - 24 - 3) / N, x = (GA ? GA.X(k) : 24 + cw * (k + 0.5)).toFixed(1);
     /* v1.5: 完整十字线 —— 竖线 + 各窗指标值高度横线 + 右缘值标签 */
-    var pk1 = Math.max(12, pct95(R.J2.concat(R.J1)) * 1.25);
-    var y1 = 5 + (pk1 - Math.min(R.J2[i0 + k], pk1)) / pk1 * (88 - 5);
-    var y2v = 5 + (135 - Math.min(Math.max(R.中[i0 + k], -5), 135)) / 140 * (88 - 5);
-    var lab1 = R.J2[i0 + k].toFixed(1), lab2 = R.中[i0 + k].toFixed(1);
-    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
+    var pk1 = Math.max(12, pct95(st.R.J2.concat(st.R.J1)) * 1.25);
+    var y1 = 5 + (pk1 - Math.min(st.R.J2[i0 + k], pk1)) / pk1 * (88 - 5);
+    var y2v = 5 + (135 - Math.min(Math.max(st.R.中[i0 + k], -5), 135)) / 140 * (88 - 5);
+    var lab1 = st.R.J2[i0 + k].toFixed(1), lab2 = st.R.中[i0 + k].toFixed(1);
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (GA ? GA.Bt + 2 : (bigOn() ? 155 : 93)) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
       + '<line x1="24" x2="356" y1="' + y1.toFixed(1) + '" y2="' + y1.toFixed(1) + '" stroke="rgba(0,255,0,.45)" stroke-width=".7"/>'
       + '<text x="354" y="' + (y1 - 2).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#7dff7d">' + lab1 + '</text>'
       + '<line x1="24" x2="356" y1="' + y2v.toFixed(1) + '" y2="' + y2v.toFixed(1) + '" stroke="rgba(255,204,0,.45)" stroke-width=".7"/>'
       + '<text x="354" y="' + (y2v + 8).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#ffd66e">' + lab2 + '</text>';
+    if (GA) ln = ln.slice(0, ln.indexOf('/>') + 2);   /* 11-24: 嵌在作战屏时横线由 jl_huo 画(按手指高度/各窗自己的刻度) */
     ['s1', 's2'].forEach(function (sk) {
       var sv = st[sk] && st[sk].querySelector('svg'); if (!sv) return;
       var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln;
@@ -282,7 +289,7 @@
     [['s1', st.s1], ['s2', st.s2]].forEach(function (p) {
       var el = p[1]; if (!el) return;
       el.style.touchAction = 'pan-y';
-      var hit = function (e) {
+      var hit = function (e) { if (axOfSt(st)) return;   /* 11-24: 嵌在作战屏时由 jl_huo 统一接手指(并驱动主图十字线) */
         if (!st.R) return;
         var sv = el.querySelector('svg'); if (!sv) return;
         var r = sv.getBoundingClientRect(); if (!r.width) return;
@@ -310,12 +317,12 @@
     function draw() {
       if (!st.bars || st.bars.length < 40) { st.s1.innerHTML = st.s2.innerHTML = '<div class="ssl"><span style="color:#8fb8ff">K线还没到（≥40根）</span></div>'; return; }
       try {
-        st.R = calc(st.bars, st.cap);
+        var ck0 = ckOf(st.bars) + '|' + (st.cap || 0); if (!st.R || st.__ck !== ck0) { st.R = calc(st.bars, st.cap); st.__ck = ck0; }   /* 11-24: 同一批K不重算(主图拖动时每帧重画) */
         drawSec1(st.s1, st.R, st.bars, st.lv, st.cap);
         drawSec2(st.s2, st.R, st.bars, st.lv);
       } catch (e) { st.s1.innerHTML = '<div class="ssl"><span style="color:#ff8888">计算出错: ' + e.message + '</span></div>'; }
     }
-    if (which === '穿越' && !st.cap && st.code) { fetchCap(st.code, function (c) { st.cap = c; draw(); }); }
+    if (which === '穿越' && !st.cap && st.code && !(st.__capAt && st.__capCode === st.code && Date.now() - st.__capAt < 60000)) { st.__capAt = Date.now(); st.__capCode = st.code; fetchCap(st.code, function (c) { if (c > 0) st.cap = c; draw(); }); }   /* 11-24: 取股本在路上/失败后60秒内不重发(原来每重画一次发一个) */
     draw();
     showWhich(st);
     st.at = Date.now();

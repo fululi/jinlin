@@ -324,11 +324,32 @@ b,strong{font-weight:500!important}
 .w5 .w5chips{flex:1 0 100%!important;order:5;flex-wrap:nowrap!important;gap:14px!important;margin:4px 0 2px;overflow-x:auto}
 .w5 .w5chips button{font-size:11.5px!important;white-space:nowrap;writing-mode:horizontal-tb!important;display:inline-block!important;width:auto!important}
 .w5 .w5chips button.on{font-weight:500!important;border-bottom:1.5px solid #4dffb4!important}
-</style></head><body><div class="wrap">
+</style><style id="zt1124calc">
+/* 11-24 用户「字没这么大吧？还是要清晰切亮」: 只动算账区；数字 500 字重亮白，不发光；iOS 不自动放大字 */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+#k0 *{text-shadow:none!important}
+#k0 .hold{font-size:11.5px!important;flex-wrap:nowrap;white-space:nowrap}
+#k0 .hold input{width:52px;font:500 13px -apple-system!important;color:#eaf4ff!important}
+#k0 .rb{width:18px;height:18px;font-size:12px}
+#k0 .side{font-size:11.5px!important;width:26px}
+#k0 .pin{font:500 14px -apple-system!important;color:#fff!important;width:54px}
+#k0 .qn{font-size:12px!important;font-weight:500!important;color:#eaf4ff!important}
+#k0 .qn small{font-size:10px!important}
+#k0 .pct{font-size:10px!important}
+#k0 .sl{display:flex;align-items:center;gap:6px}
+#k0 .sl i{font-style:normal;font-size:10px;color:#cfe0f2;width:12px;flex:none}
+#k0 .res{flex-wrap:wrap!important;overflow:visible!important;row-gap:2px}
+#k0 .big{font-size:14px!important;font-weight:500!important}
+#k0 .how{font-size:11px!important;white-space:normal!important}
+#k0 .pos{font-size:11px!important}
+#k0 .q{color:#cfe6ff}
+#k0 input.man{border-color:#ffd36b!important;color:#ffd36b!important}
+</style>
+</head><body><div class="wrap">
 
 <div class="top">
   <select id="code"><option value="600105">永鼎股份</option><option value="000892">欢瑞世纪</option></select>
-  <div id="addstk" style="display:none"><input id="addc" inputmode="numeric" placeholder="6位代码"><input id="addn" placeholder="名称(可空)"><button class="chip" id="addok">加入</button><button class="chip" id="addno">取消</button></div>
+  <div id="addstk" style="display:none"><input id="addc" placeholder="代码/名称/拼音 如 ydgf" autocomplete="off" autocapitalize="off" spellcheck="false"><input id="addn" placeholder="名称(可空)"><button class="chip" id="addok">加入</button><button class="chip" id="addno">取消</button></div>
   <span class="px" id="px"></span>
   <span id="tritop"></span>
   <span class="ts" id="ts"></span>
@@ -389,9 +410,9 @@ const BAND={list:[],triRows:[],triBrk:null,sw:[]};
 /* 11-23t 用户「保存的也没保存上」: 原来整包覆盖且不接错误。现在存前先读本机已存的——哪只票的记录版本(rev)更新就用它(防另一个开着的面板拿旧数据盖掉)；存不进去不再抛错，记一笔时读回核对 */
 function syncS(){ try{ const o=JSON.parse(localStorage.getItem(K)||'null'); if(!o||!o.s) return; Object.keys(o.s).forEach(c=>{ const a=o.s[c], b=st.s[c]; if(!a) return; if(!b){ st.s[c]=a; return; } if((a.rev||0)>(b.rev||0)){ b.log=a.log||[]; b.seq=Math.max(a.seq||0,b.seq||0); b.rev=a.rev; b.target=a.target||0; } }); }catch(e){} }
 const mutS=()=>{ syncS(); const s=S(); s.rev=(s.rev||0)+1; return s; };
-const save=()=>{ syncS(); try{ localStorage.setItem(K,JSON.stringify(st)); return true; }catch(e){ window.__ztSaveErr=(e&&e.name)||'err'; return false; } };
+const save=()=>{ if(window.__ztFromSt) return true; syncS(); try{ localStorage.setItem(K,JSON.stringify(st)); return true; }catch(e){ window.__ztSaveErr=(e&&e.name)||'err'; return false; } };
 const savedOK=id=>{ try{ const o=JSON.parse(localStorage.getItem(K)||'null'); return !!(o&&o.s&&o.s[st.code]&&(o.s[st.code].log||[]).some(x=>x.id===id)); }catch(e){ return false; } };
-addEventListener('storage',e=>{ if(e.key===K){ syncS(); try{ drawLog(); }catch(x){} } });
+addEventListener('storage',e=>{ if(e.key===K){ syncS(); window.__ztFromSt=1; try{ drawLog(); }catch(x){} window.__ztFromSt=0; } });   /* 11-24 死机修: 收到别的标签页的存档只重画不回写 */
 
 /* ---- 自选股：点开下拉选「＋ 添加自选」→ 输 6 位代码+名称 → 进下拉并切换（自定义股存 localStorage） ---- */
 let MYSTK={}; try{ MYSTK=JSON.parse(localStorage.getItem('tpanel_stk')||'{}'); }catch(e){}
@@ -613,6 +634,7 @@ function lkReady(){ return LK.ok&&LK.code===st.code; }
 function lkLoad(force){
   const code=st.code; if(!code||!/^\d{6}$/.test(code)) return;
   if(LK.busy&&LK.code===code) return; if(!force&&LK.code===code&&LK.ok&&Date.now()-LK.ts<55000) return;
+  if(!force&&LK.code===code&&!LK.ok&&LK.ts&&Date.now()-LK.ts<60000) return;   /* 11-24 死机修: 失败后1分钟再试(原来失败→重画→立刻再取, 无限循环) */
   if(LK.code!==code){ LK.code=code; LK.ok=0; LK.err=''; LK.m15=[]; LK.m5=[]; LK.d=[]; }
   LK.busy=1; const sy=lkSym(code);
   const mk=sc=>lkGet('/appstock/app/kline/mkline?param='+sy+','+sc+',,320',j=>{ const n=j&&j.data&&j.data[sy]; return n&&n[sc]&&lkMin(n[sc]); });
@@ -894,20 +916,26 @@ function buildCalc(){
    +'<div class="kv"><input type="date" id="wd"><select id="tg" style="flex:1;min-width:0"></select></div>'
    +'<div class="m2" id="jzHint">记下就存，不用凑成一对 · 配对按时间自动算，股数不用一样，多的拆开配</div>'
    +'<div class="msg" id="msg"></div></div>'
-   +order.map(side=>'<div class="leg"><div class="row1"><span class="side '+side+'">'+(side==='s'?'卖出':'买回')+'</span><button class="rb" data-a="'+side+'-">−</button><input class="pin" data-p="'+side+'" inputmode="decimal"><button class="rb" data-a="'+side+'+">+</button><span class="pct" data-pct="'+side+'"></span><span class="qn" data-qn="'+side+'"></span></div><input type="range" data-q="'+side+'" min="100" max="'+Math.max(HOLD(),100)+'" step="1"></div>').join('')
+   +order.map(side=>'<div class="leg"><div class="row1"><span class="side '+side+'">'+(side==='s'?'卖出':'买回')+'</span><button class="rb" data-a="'+side+'-">−</button><input class="pin" data-p="'+side+'" inputmode="decimal"><button class="rb" data-a="'+side+'+">+</button><span class="pct" data-pct="'+side+'"></span><span class="qn" data-qn="'+side+'"></span></div><div class="sl"><i>价</i><input type="range" data-pr="'+side+'" step="0.01"></div><div class="sl"><i>股</i><input type="range" data-q="'+side+'" min="100" max="'+Math.max(HOLD(),100)+'" step="1"></div></div>').join('')
    +'<div class="res"><span class="big" id="net"></span><span class="how" id="how"></span></div><div class="pos" id="pos"></div>'
    +'<div class="chips" id="chips"></div>'
    +'<div class="undo"><span id="lastT"></span><button id="undo" title="撤销最近一笔">↩️</button></div>';
   /* 11-23u 用户「几点挂的不再被重置」: 重建记账区(改底仓、手动配)时保留已填的日期/时间，只有第一次才填现在 */
   const d=new Date(); $('wd').value=buildCalc._d||d.toLocaleDateString('sv-SE'); $('wt').value=buildCalc._t||d.toTimeString().slice(0,5);
-  $('wd').onchange=()=>{ buildCalc._d=$('wd').value; }; $('wt').onchange=()=>{ buildCalc._t=$('wt').value; };
+  $('wd').onchange=()=>{ buildCalc._d=$('wd').value; }; $('wt').onchange=()=>{ buildCalc._t=$('wt').value; $('wt').classList.add('man'); };
+  /* 11-24 用户「这个时间不是实时的时间，还得挑挑时间」: 没手动挑过 → 跟实时走；手动挑过的标黄，记下这笔后回到实时 */
+  $('wt').classList.toggle('man',!!buildCalc._t);
+  if(!buildCalc._tick) buildCalc._tick=setInterval(()=>{ const w=$('wt'); if(!w||buildCalc._t||document.activeElement===w) return; const n=new Date(); w.value=n.toTimeString().slice(0,5); if(!buildCalc._d) $('wd').value=n.toLocaleDateString('sv-SE'); },15000);
 }
 function drawCalc(){
   const s=S(); $('holdI').value=HOLD();
   /* 双腿（买卖对照）：价/股数滑条，和记一笔同步 */
   ['s','b'].forEach(side=>{ const pe=document.querySelector('[data-p="'+side+'"]'); if(pe&&document.activeElement!==pe) pe.value=f(s[side+'p']);
     const qn=document.querySelector('[data-qn="'+side+'"]'); if(qn) qn.innerHTML=s[side+'q']+'<small> 股</small>';
-    const sl=document.querySelector('[data-q="'+side+'"]'); if(sl&&document.activeElement!==sl) sl.value=s[side+'q']; });
+    const sl=document.querySelector('[data-q="'+side+'"]'); if(sl&&document.activeElement!==sl) sl.value=s[side+'q'];
+    /* 11-24 价格滑条: 现价±5%(价跑出范围就放宽)，正在拖的那条不重设 */
+    const pr=document.querySelector('[data-pr="'+side+'"]'); if(pr&&pr!==window.__ztPrDrag){ const c=NOW()>0?NOW():(s[side+'p']||1), v=s[side+'p']||c;
+      pr.min=(Math.min(c*0.95,v)).toFixed(2); pr.max=(Math.max(c*1.05,v)).toFixed(2); pr.value=v.toFixed(2); } });
   const side=window.__jzSide||'b', pk=side==='s'?'sp':'bp', qk=side==='s'?'sq':'bq';
   const pj=$('jzP'), qj=$('jzQ');
   if(document.activeElement!==pj) pj.value=s[pk]>0?f(s[pk]):'';
@@ -984,8 +1012,11 @@ function drawLog(){
   save();
 }
 function add(side){ const s=mutS(), sd=side==='s'; s.seq++;
+  { const n=new Date(); if(!buildCalc._t) $('wt').value=n.toTimeString().slice(0,5); if(!buildCalc._d) $('wd').value=n.toLocaleDateString('sv-SE'); }   /* 11-24 实时时间 */
   const e={id:s.seq,side,p:sd?s.sp:s.bp,q:sd?s.sq:s.bq,ts:($('wd').value||TODAY)+' '+($('wt').value||'00:00'),meth:s.meth};
   if(s.target) e.target=s.target; s.log.push(e); s.target=0;
+  buildCalc._d=buildCalc._t=null; $('wt').classList.remove('man');   /* 11-24 记下后回到实时 */
+  setTimeout(()=>{ const n=new Date(); $('wt').value=n.toTimeString().slice(0,5); $('wd').value=n.toLocaleDateString('sv-SE'); },0);
   drawLog(); const ok=savedOK(e.id);
   $('msg').textContent=(ok?'已记✓ ':'⚠ 没存上(本机存储'+(window.__ztSaveErr==='QuotaExceededError'?'满了':'写不进')+')，关掉重开会丢 · ')+T().name+' '+hm(e.ts)+' '+(sd?'卖 ':'买 ')+e.q+' 股 @'+f(e.p)+(e.target?'（手动配）':''); }
 function drawTop(){
@@ -1047,6 +1078,7 @@ const AR=[0.236,0.382,0.5,0.618,0.786,0.886], AB=[1.272,1.618,2.618,3.618,4.618]
 const D5={code:'',days:[],ts:0,busy:0,err:''};
 function d5Load(force){ const code=st.code; if(!/^\d{6}$/.test(code)) return; if(D5.busy&&D5.code===code) return;
   if(!force&&D5.code===code&&D5.days.length&&Date.now()-D5.ts<55000) return;
+  if(!force&&D5.code===code&&!D5.days.length&&D5.err&&Date.now()-D5.ts<60000) return;   /* 11-24 死机修: 五日分时失败后20秒内不重取(catch 里 ts 记成 现在−40秒) */
   if(D5.code!==code){ D5.code=code; D5.days=[]; D5.err=''; } D5.busy=1; const sy=lkSym(code);
   lkGet('/appstock/app/day/query?code='+sy,j=>{ const n=j&&j.data&&j.data[sy]; return n&&n.data&&n.data.length?n.data:null; })
     .then(a=>{ D5.busy=0; if(st.code!==code) return;
@@ -1546,14 +1578,15 @@ document.addEventListener('click',e=>{ const t=e.target.closest('.pb[data-role]'
   $('msg').textContent='已填到算账 '+(t.dataset.role==='s'?'卖出':'买回')+'价 '+p.toFixed(2)+' · 来源 '+String(t.title||'').replace(/^\S+ [\d.]+ · /,''); });
 document.addEventListener('click',e=>{ const t=e.target;
   if(t.id==='addno'){ $('addstk').style.display='none'; $('code').value=st.code; return; }
-  if(t.id==='addok'){ const r=addStock($('addc').value,$('addn').value);
+  if(t.id==='addok'){ if(!/^\d{6}$/.test($('addc').value.trim())){ $('msg').textContent='打代码、名称或拼音，从弹出的列表里点一只'; return; }  /* 11-23v */
+    const r=addStock($('addc').value,$('addn').value);
     if(r.err){ $('msg').textContent=r.err; return; }
     $('addstk').style.display='none'; $('addc').value=''; $('addn').value='';
     st.code=r.code; if(!st.s[st.code]) st.s[st.code]=blank(st.code); all();
     $('msg').textContent='已加入自选 '+r.name+'（'+r.code+'）· 行情接上后各卡同款显示'; return; } });
 function all(){ drawTop(); buildCalc(); drawCalc(); drawLog(); draw5d(); drawNext(); drawSW(); drawBand(); }
 
-document.addEventListener('input',e=>{const t=e.target; if(t.dataset.q){window.__jzSide=t.dataset.q; const k=t.dataset.q+'q', v=Math.max(100,Math.round(+t.value/100)*100); if(v!==S()[k]){S()[k]=v; drawCalc(t.dataset.q);}}
+document.addEventListener('input',e=>{const t=e.target; if(t.dataset.pr){ window.__jzSide=t.dataset.pr; const v=Math.round(+t.value*100)/100; if(v>0&&v!==S()[t.dataset.pr+'p']){ S()[t.dataset.pr+'p']=v; window.__ztPrDrag=t; try{ drawCalc(); }finally{ window.__ztPrDrag=null; } } return; } if(t.dataset.q){window.__jzSide=t.dataset.q; const k=t.dataset.q+'q', v=Math.max(100,Math.round(+t.value/100)*100); if(v!==S()[k]){S()[k]=v; drawCalc(t.dataset.q);}}
   if(t.id==='jzP'){const v=Math.round(+t.value*100)/100; if(v>0) S()[(window.__jzSide||'b')==='s'?'sp':'bp']=v; drawCalc();}   /* 11-24: 价直打 */
   if(t.id==='jzQ'){const v=Math.round(+(t.value||0)/100)*100; if(v>=100) S()[(window.__jzSide||'b')==='s'?'sq':'bq']=v; drawCalc();}});   /* 11-24: 股直打；11-24b 动哪条腿，记一笔自动跟到那边 */
 document.addEventListener('change',e=>{const t=e.target, s=S();
@@ -1797,7 +1830,8 @@ function renderSug(list,anchor){
   closeSug(); if(!list.length) return;
   var blk=document.getElementById('addstk'); if(!blk) return;
   sug=document.createElement('div');
-  sug.style.cssText='position:absolute;left:10px;right:10px;background:#0d2032f2;border:1px solid #ffffff22;border-radius:12px;padding:4px;z-index:99;box-shadow:0 8px 30px #000a';
+  /* 11-23v 用户「无法搜索股票」: 原 z-index:99 被面板(#fw 9999)盖住看不见 → 置顶 + fixed */
+  sug.style.cssText='position:fixed;left:10px;right:10px;background:#0d2032f2;border:1px solid #ffffff22;border-radius:12px;padding:4px;z-index:2147483001;max-height:50vh;overflow:auto;box-shadow:0 8px 30px #000a';
   list.forEach(function(it){
     var b=document.createElement('button'); b.type='button';
     b.textContent=it.name+' '+it.code;
@@ -1810,7 +1844,6 @@ function renderSug(list,anchor){
     };
     sug.appendChild(b);
   });
-  blk.style.position= blk.style.position||'fixed';
   var r=blk.getBoundingClientRect(); sug.style.left=r.left+10+'px'; sug.style.top=(r.bottom+4)+'px'; sug.style.width=(r.width-20)+'px';
   document.body.appendChild(sug);
 }

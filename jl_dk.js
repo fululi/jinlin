@@ -85,21 +85,26 @@
 
   /* ---------- SVG 绘制 ---------- */
   var WD = 380, PL = 24, PR = 3;
+  /* 11-24 用户「1/5/15/日各自对齐…十字线打通」: 嵌在作战屏时 jl_huo 把主图横轴(同一批K)挂 W.__zpSubAx —— 有就按主图x画(viewBox 360宽, 刻度挪右边), 没有=原来自己排90根 */
+  function AXg(bars) { var A = W.__zpSubAx; A = A && A.bars === bars && A.N > 0 ? A : null; WD = A ? 360 : 380; PL = A ? A.PL : 24; PR = A ? 360 - A.PR : 3; return A; }
+  function LX4() { return WD === 360 ? 359 : PL - 4; }
+  function axOfSt(st) { var a = ['s1', 's2', 's3']; for (var j = 0; j < 3; j++) { var e = st && st[a[j]]; if (e && e.__ax && e.__ax.on) return e.__ax; } return null; }
+  function ckOf(B) { var n = B.length, a = B[0] || {}, z = B[n - 1] || {}; return n + '|' + a.t + '|' + z.t + '|' + z.o + '|' + z.h + '|' + z.l + '|' + z.c + '|' + z.v; }
   function gridLines(g, T, Bt, lv, D, i0, N, X) {
     for (var k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
   }
   function drawSec(el, R, bars, lv) {
-    var N = Math.min(90, R.n), i0 = R.n - N, D = labels(bars, lv);
-    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (WD - PL - PR) / N;
-    var X = function (k) { return PL + cw * (k + 0.5); };
+    var AX = AXg(bars), N = AX ? AX.N : Math.min(90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(bars, lv);
+    var T = 5, Bt = AX ? AX.H - 3 : (bigOn() ? 148 : 88), Hh = AX ? AX.H : (bigOn() ? 160 : 100), cw = AX ? AX.cw : (WD - PL - PR) / N;
+    var X = AX ? function (k) { return AX.x(i0 + k); } : function (k) { return PL + cw * (k + 0.5); };
     var mid = 0, mDK = 1e-9, k, i;
     for (k = 0; k < N; k++) { i = i0 + k; mid += R.RC[i]; if (Math.abs(R.DK[i]) > mDK) mDK = Math.abs(R.DK[i]); }
     mid /= N; var ym = mDK * 1.35, vmax = mid + ym, vmin = mid - ym;
     var Y = function (v) { return T + (vmax - Math.min(Math.max(v, vmin), vmax)) / (vmax - vmin) * (Bt - T); };
     var g = [];
     g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(mid).toFixed(1) + '" y2="' + Y(mid).toFixed(1) + '" stroke="rgba(207,216,230,.45)" stroke-width=".7"/>');
-    g.push('<text x="' + (PL - 4) + '" y="' + (Y(vmax) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9" fill="#fff">' + vmax.toFixed(2) + '</text>');
-    g.push('<text x="' + (PL - 4) + '" y="' + (Y(vmin) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9" fill="#fff">' + vmin.toFixed(2) + '</text>');
+    g.push('<text x="' + LX4() + '" y="' + (Y(vmax) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9" fill="#fff">' + vmax.toFixed(2) + '</text>');
+    g.push('<text x="' + LX4() + '" y="' + (Y(vmin) + 3.5).toFixed(1) + '" text-anchor="end" font-size="9" fill="#fff">' + vmin.toFixed(2) + '</text>');
     /* DK 柱: 细于评审图(lw2.6), 宽随 cw */
     var bw = Math.max(1.1, Math.min(2, cw * 0.55)).toFixed(2);
     for (k = 0; k < N; k++) { i = i0 + k;
@@ -114,8 +119,8 @@
     g.push(pt(R.SK, '#ff4444', 0.8));
     g.push(pt(R.SD, '#00e080', 0.8));
     g.push(pt(R.SJ, 'rgba(255,255,0,.65)', 0.7));
-    gridLines(g, T, Bt, lv, D, i0, N, X);
-    g.push('<g class="hx"></g>');
+    if (!AX) gridLines(g, T, Bt, lv, D, i0, N, X);
+    g.push('<g class="hx"></g>'); el.__ax = { on: !!AX, X: X, Y: Y, T: T, Bt: Bt, i0: i0, N: N, lo: vmin, hi: vmax, pv: function (i) { return R.RC[i] + R.DK[i]; } };   /* 11-24: 给 jl_huo 画十字横线/✎横线用 */
     var last = R.n - 1;
     var duoTxt = '<span style="color:' + (R.duo[last] ? '#ff5459' : '#00cc66') + '">' + (R.duo[last] ? '多' : '空') + '</span>';
     el.innerHTML = '<div class="ssl"><span style="color:#ffd24a">DK ' + R.DK[last].toFixed(2) + '</span><span style="color:' + (R.SKK[last] > R.SDD[last] ? '#ff5459' : '#00cc66') + '">SKK ' + R.SKK[last].toFixed(2) + '</span><span style="color:#00e080">SDD ' + R.SDD[last].toFixed(2) + '</span>' + duoTxt + '<span style="color:#8fb8ff">红=通道上·紫/橙=动能>0·绿=空·黄=多↑</span></div><svg viewBox="0 0 ' + WD + ' ' + Hh + '">' + g.join('') + '</svg>';
@@ -138,9 +143,10 @@
   }
   function xhDraw(st, i) {
     if (!st || !st.R || i < 0 || i >= st.R.n) return;
-    var N = Math.min(90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
-    var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
-    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
+    var GA = axOfSt(st), N = GA ? GA.N : Math.min(90, st.R.n), i0 = GA ? GA.i0 : st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
+    if (GA && (i < i0 || i >= i0 + N)) { xhClear(st); return; }   /* 11-24: 主图十字线在副图视窗外 → 不画 */
+    var cw = (380 - 24 - 3) / N, x = (GA ? GA.X(k) : 24 + cw * (k + 0.5)).toFixed(1);
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (GA ? GA.Bt + 2 : (bigOn() ? 155 : 93)) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>';
     var sv = st.s1 && st.s1.querySelector('svg'); if (!sv) return;
     var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln;
     var j = i0 + k, last = j;
@@ -163,7 +169,7 @@
     if (st.__bound) return; st.__bound = 1;
     var el = st.s1; if (!el) return;
     el.style.touchAction = 'pan-y';
-    var hit = function (e) {
+    var hit = function (e) { if (axOfSt(st)) return;   /* 11-24: 嵌在作战屏时由 jl_huo 统一接手指(并驱动主图十字线) */
       if (!st.R) return;
       var sv = el.querySelector('svg'); if (!sv) return;
       var r = sv.getBoundingClientRect(); if (!r.width) return;
@@ -229,7 +235,7 @@
     if (st.code && symOf(st.code)) st.code = symOf(st.code).slice(2);
     function draw() {
       if (!st.bars || st.bars.length < 40) { st.s1.innerHTML = '<div class="ssl"><span style="color:#8fb8ff">K线还没到（≥40根）</span></div>'; return; }
-      try { st.R = calc(st.bars); drawSec(st.s1, st.R, st.bars, st.lv); }
+      try { var ck0 = ckOf(st.bars) + '|' + (st.cap || 0); if (!st.R || st.__ck !== ck0) { st.R = calc(st.bars); st.__ck = ck0; }   /* 11-24: 同一批K不重算(主图拖动时每帧重画) */ drawSec(st.s1, st.R, st.bars, st.lv); }
       catch (e) { st.s1.innerHTML = '<div class="ssl"><span style="color:#ff8888">计算出错: ' + e.message + '</span></div>'; }
     }
     draw();

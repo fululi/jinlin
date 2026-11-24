@@ -343,6 +343,7 @@
 <script src="jl_chart_cache.js?v=1"></script>
 <script src="jl_markets.js?v=7"></script>
 <script src="jl_tri.js?v=1"></script>
+<script src="jl_huo.js?v=2"></script><script src="jl_sx.js?v=13"></script><script src="jl_zd.js?v=16"></script><script src="jl_hy.js?v=2"></script><script src="jl_dk.js?v=2"></script><script src="jl_subcv.js?v=1"></script>   <!-- 11-24h 指标副图: 公式同作战屏 -->
 </head>
 <body data-page-node-id="HNiVlflFjLy4h9C7kZni9s">
 
@@ -1281,13 +1282,14 @@ function tsLayoutJL(hh) {
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0;
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0;
   var tqsH = S.ind.tqs ? Math.round(avail * 0.12) : 0;
-  var rsoH = S.ind.rso ? Math.round(avail * 0.11) : 0;   /* 11-19晚2批: RSO副图 */
-  var mainH = avail - volH - ddxH - zlyyH - ctrlH - rtH - tqsH - rsoH - 6 * (1 + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0) + (rsoH ? 1 : 0));
-  if (mainH < 120) { rsoH = 0; tqsH = 0; ctrlH = 0; zlyyH = 0; ddxH = 0; rtH = 0; mainH = avail - volH - 6; }
+  var rsoH = S.ind.rso ? Math.round(avail * subHfJL("rso", 0.11)) : 0;   /* 11-19晚2批: RSO副图; 11-24h 高度可 +/− */
+  var huoH = huoIndJL() ? Math.round(avail * subHfJL("huo", 0.14)) : 0;   /* 11-24h 指标副图 */
+  var mainH = avail - volH - ddxH - zlyyH - ctrlH - rtH - tqsH - rsoH - huoH - 6 * (1 + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0) + (rsoH ? 1 : 0) + (huoH ? 1 : 0));
+  if (mainH < 120) { huoH = 0; rsoH = 0; tqsH = 0; ctrlH = 0; zlyyH = 0; ddxH = 0; rtH = 0; mainH = avail - volH - 6; }
   var engineH = Math.max(60, padT + mainH);
-  var volY = engineH + 6, ddxY = volY + volH + 6, rtY = ddxY + (ddxH ? ddxH + 6 : 0), zlyyY = rtY + (rtH ? rtH + 6 : 0), ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0), tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0), rsoY = tqsY + (tqsH ? tqsH + 6 : 0);
-  var bottom = rsoH ? rsoY + rsoH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (rtH ? rtY + rtH : (ddxH ? ddxY + ddxH : volY + volH)))));
-  return { engineH: engineH, mainH: mainH, volH: volH, volY: volY, ddxH: ddxH, ddxY: ddxY, rtH: rtH, rtY: rtY, zlyyH: zlyyH, zlyyY: zlyyY, ctrlH: ctrlH, ctrlY: ctrlY, tqsH: tqsH, tqsY: tqsY, rsoH: rsoH, rsoY: rsoY, bottom: bottom };
+  var volY = engineH + 6, ddxY = volY + volH + 6, rtY = ddxY + (ddxH ? ddxH + 6 : 0), zlyyY = rtY + (rtH ? rtH + 6 : 0), ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0), tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0), rsoY = tqsY + (tqsH ? tqsH + 6 : 0), huoY = rsoY + (rsoH ? rsoH + 6 : 0);
+  var bottom = huoH ? huoY + huoH : rsoH ? rsoY + rsoH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (rtH ? rtY + rtH : (ddxH ? ddxY + ddxH : volY + volH)))));
+  return { engineH: engineH, mainH: mainH, volH: volH, volY: volY, ddxH: ddxH, ddxY: ddxY, rtH: rtH, rtY: rtY, zlyyH: zlyyH, zlyyY: zlyyY, ctrlH: ctrlH, ctrlY: ctrlY, tqsH: tqsH, tqsY: tqsY, rsoH: rsoH, rsoY: rsoY, huoH: huoH, huoY: huoY, bottom: bottom };
 }
 function tsVolJL(ctx, v) {
   var kl = S.kl, i0 = v.i0, i1 = v.i1, bw = Math.max(1, v.step * 0.62), v0 = v.volY;
@@ -1323,7 +1325,7 @@ function tsViewJL(g, lay) {
   var inset = (g.plotBottom < 70) ? 6 : 16, yT = inset, yB = g.plotBottom - inset;
   return { w: g.w, hh: g.h, ts: true, i0: dayStart, i1: n, n: n, step: (g.w - g.l - g.r) / 240, plotW: (n - dayStart) * (g.w - g.l - g.r) / 240, padL: g.l, padR: 48, padT: yT,
     priceH: yB - yT, pTop: yT, bottom: lay.bottom, vMax: 1,
-    volY: lay.volY, volH: lay.volH, macdY: 0, macdH: 0, zzY: 0, zzH: 0, rtY: lay.rtY, rtH: lay.rtH, ddxY: lay.ddxY, ddxH: lay.ddxH, zlyyY: lay.zlyyY, zlyyH: lay.zlyyH, ctrlY: lay.ctrlY, ctrlH: lay.ctrlH, tqsY: lay.tqsY, tqsH: lay.tqsH, rsoY: lay.rsoY, rsoH: lay.rsoH,
+    volY: lay.volY, volH: lay.volH, macdY: 0, macdH: 0, zzY: 0, zzH: 0, rtY: lay.rtY, rtH: lay.rtH, ddxY: lay.ddxY, ddxH: lay.ddxH, zlyyY: lay.zlyyY, zlyyH: lay.zlyyH, ctrlY: lay.ctrlY, ctrlH: lay.ctrlH, tqsY: lay.tqsY, tqsH: lay.tqsH, rsoY: lay.rsoY, rsoH: lay.rsoH, huoY: lay.huoY, huoH: lay.huoH,
     X: function (i) { return i >= dayStart ? g.xOfIdx(i - dayStart) : -1e4; },
     I: function (x) { var i = g.idxAtX(x) + dayStart; return Math.max(dayStart, Math.min(n - 1, i)); },
     Y: function (p) { return g.yOfPrice(p); }, P: function (y) { return g.priceAtY(y); },
@@ -1410,7 +1412,8 @@ function view() {
   var ctrlH = S.ind.ctrl ? Math.round(avail * 0.11) : 0;
   var rtH = S.ind.rtflow && !noFund(S.active) ? (S.rtflowErr ? 22 : Math.round(avail * 0.10)) : 0;
   var tqsH = S.ind.tqs ? Math.round(avail * 0.12) : 0; // 强弱T面板(零轴柱状,全周期可读)
-  var rsoH = S.ind.rso ? Math.round(avail * 0.11) : 0;   /* 11-19晚2批: RSO副图(回归斜率摆动, 算法与作战屏 jl-zprso 同源) */
+  var huoH = huoIndJL() ? Math.round(avail * subHfJL("huo", 0.14)) : 0;   /* 11-24h 指标副图 */
+  var rsoH = S.ind.rso ? Math.round(avail * subHfJL("rso", 0.11)) : 0;   /* 11-24h 高度可 +/−; 11-19晚2批: RSO副图(回归斜率摆动, 算法与作战屏 jl-zprso 同源) */
   if (S.bigPane === "vol") volH = Math.round(avail * 0.32);
   else if (S.bigPane === "macd" && macdH) macdH = Math.round(avail * 0.32);
   else if (S.bigPane === "zz" && zzH) zzH = Math.round(avail * 0.32);
@@ -1420,8 +1423,9 @@ function view() {
   else if (S.bigPane === "rt" && rtH) rtH = Math.round(avail * 0.32);
   else if (S.bigPane === "tqs" && tqsH) tqsH = Math.round(avail * 0.32);
   else if (S.bigPane === "rso" && rsoH) rsoH = Math.round(avail * 0.32);
-  var subN = (volH ? 1 : 0) + (macdH ? 1 : 0) + (zzH ? 1 : 0) + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0) + (rsoH ? 1 : 0);
-  var priceH = avail - volH - macdH - zzH - ddxH - zlyyH - ctrlH - rtH - tqsH - rsoH - 6 * subN;
+  else if (S.bigPane === "huo" && huoH) huoH = Math.round(avail * 0.32);
+  var subN = (volH ? 1 : 0) + (macdH ? 1 : 0) + (zzH ? 1 : 0) + (ddxH ? 1 : 0) + (zlyyH ? 1 : 0) + (ctrlH ? 1 : 0) + (rtH ? 1 : 0) + (tqsH ? 1 : 0) + (rsoH ? 1 : 0) + (huoH ? 1 : 0);
+  var priceH = avail - volH - macdH - zzH - ddxH - zlyyH - ctrlH - rtH - tqsH - rsoH - huoH - 6 * subN;
   if (!S.count) S.count = loadZoom();
   if (!S.count) {
     if (S.klt === "101" || isMultiDayJL(S.klt)) S.count = Math.max(S.klt === "Y" ? 10 : 30, Math.round(plotW / (TVL ? 9 : 6.5))); /* 11-18 TV风格: 日线默认每根≈9px */
@@ -1461,12 +1465,13 @@ function view() {
   var ctrlY = zlyyY + (zlyyH ? zlyyH + 6 : 0);
   var tqsY = ctrlY + (ctrlH ? ctrlH + 6 : 0);
   var rsoY = tqsY + (tqsH ? tqsH + 6 : 0);
-  var bottom = S.ind.paneTop ? pTop + priceH : (rsoH ? rsoY + rsoH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (ddxH ? ddxY + ddxH : (rtH ? rtY + rtH : (zzH ? zzY + zzH : (macdH ? macdY + macdH : (volH ? volY + volH : pTop + priceH)))))))));
+  var huoY = rsoY + (rsoH ? rsoH + 6 : 0);   /* 11-24h */
+  var bottom = S.ind.paneTop ? pTop + priceH : (huoH ? huoY + huoH : rsoH ? rsoY + rsoH : (tqsH ? tqsY + tqsH : (ctrlH ? ctrlY + ctrlH : (zlyyH ? zlyyY + zlyyH : (ddxH ? ddxY + ddxH : (rtH ? rtY + rtH : (zzH ? zzY + zzH : (macdH ? macdY + macdH : (volH ? volY + volH : pTop + priceH)))))))));
   return {
     w: w, hh: hh, i0: i0, i1: i1, n: n, step: step, plotW: plotW, rb: rb, padL: padL, padR: padR, padT: padT,
     priceH: priceH, pTop: pTop, volY: volY, volH: volH, macdY: macdY, macdH: macdH, zzY: zzY, zzH: zzH, vMax: vMax,
     rtY: rtY, rtH: rtH,
-    ddxY: ddxY, ddxH: ddxH, zlyyY: zlyyY, zlyyH: zlyyH, ctrlY: ctrlY, ctrlH: ctrlH, tqsY: tqsY, tqsH: tqsH, rsoY: rsoY, rsoH: rsoH, bottom: bottom,
+    ddxY: ddxY, ddxH: ddxH, zlyyY: zlyyY, zlyyH: zlyyH, ctrlY: ctrlY, ctrlH: ctrlH, tqsY: tqsY, tqsH: tqsH, rsoY: rsoY, rsoH: rsoH, huoY: huoY, huoH: huoH, bottom: bottom,
     X: function (i) { return padL + (i - left + 0.5) * step; },
     I: function (x) { return Math.max(0, Math.min(n - 1, Math.round(left + (x - padL) / step - 0.5))); },
     Y: isLog ? function (p) { return pTop + (hf - Math.log(Math.max(p, 1e-9))) / (hf - lf) * priceH; } : function (p) { return pTop + (hi - p) / (hi - lo) * priceH; },
@@ -1503,6 +1508,8 @@ function paneAt(v, y) {
   if (v.zlyyH && y >= v.zlyyY && y <= v.zlyyY + v.zlyyH) return "zlyy";
   if (v.ctrlH && y >= v.ctrlY && y <= v.ctrlY + v.ctrlH) return "ctrl";
   if (v.tqsH && y >= v.tqsY && y <= v.tqsY + v.tqsH) return "tqs";
+  if (v.rsoH && y >= v.rsoY && y <= v.rsoY + v.rsoH) return "rso";   /* 11-24h 原来漏了 → RSO 点了不放大 */
+  if (v.huoH && y >= v.huoY && y <= v.huoY + v.huoH) return "huo";
   return null;
 }
 function togglePane(p2) {
@@ -2886,6 +2893,7 @@ function drawReal() {
   renderRtflow(ctx, v);
   renderDdxPane(ctx, v);
   renderRsoPane(ctx, v);   /* 11-19晚2批: RSO副图 */
+  try { renderHuoPane(ctx, v); } catch (eHuo) { if (window.console) console.warn("[huo]", eHuo); }   /* 11-24h 指标副图 */
   renderCtrl(ctx, v);
   renderTqs(ctx, v);
   renderExtraPanes(ctx, v);
@@ -4552,7 +4560,7 @@ function ffBoardsJL(b) {
 }
 /* 11-19 定时窗守护: 每分钟看一次时钟(不发任何请求); 窗内每天自动开一轮(断点续传),
    窗外只暂停"自动启动"的任务; 手动启动的运行不受窗外暂停影响; 手动暂停后当天不再强启 */
-var KS_FF_WIN0 = 16, KS_FF_WIN1 = 17;   /* 自动拉取时段 16:00–17:00, 要改时段只动这两个数 */
+/* 11-24 用户「K线表的自动拉取股票的那个不是关了吗」: 自动拉关掉(0,0=没有时段)；手动点⇩资金照常。要开回改成 16, 17 */ var KS_FF_WIN0 = 0, KS_FF_WIN1 = 0;   /* 自动拉取时段 16:00–17:00, 要改时段只动这两个数 */
 function ksFfInWin() { var d = new Date(); return d.getHours() >= KS_FF_WIN0 && d.getHours() < KS_FF_WIN1; }
 setInterval(function () {
   var t = FFEXP.task; if (!t || t.status === "complete" || FFEXP.busy) return;
@@ -5296,8 +5304,9 @@ function renderRollers(ctx, v) {
   btn("yI", ax, v.pTop + 2, aw, 15, "+");
   btn("yO", ax, v.bottom - 17, aw, 15, "−");
   if (v.ddxH >= 22 && v.ddxY >= 0) { btn("dzI:ddx", ax, v.ddxY + 1, aw, 14, "+"); btn("dzO:ddx", ax, Math.min(Math.max(v.ddxY + 17, v.ddxY + v.ddxH - 15), v.bottom - 34), aw, 14, "−"); }   /* 11-19晚: DDX副图右侧轴列 +/− 调高度 */
+  ["rso", "huo"].forEach(function (pk) { var py = v[pk + "Y"], ph = v[pk + "H"]; if (ph >= 22 && py >= 0) { btn("dzI:" + pk, ax, py + 1, aw, 14, "+"); btn("dzO:" + pk, ax, Math.min(Math.max(py + 17, py + ph - 15), v.bottom - 34), aw, 14, "−"); } });   /* 11-24h RSO/指标副图 +/− 调高 */
   var rx = v.w - v.padR - 6;
-  [["macd", "macdY", "macdH"], ["zz", "zzY", "zzH"], ["rt", "rtY", "rtH"], ["ddx", "ddxY", "ddxH"], ["zlyy", "zlyyY", "zlyyH"], ["ctrl", "ctrlY", "ctrlH"], ["tqs", "tqsY", "tqsH"]].forEach(function (pp) {
+  [["macd", "macdY", "macdH"], ["zz", "zzY", "zzH"], ["rt", "rtY", "rtH"], ["ddx", "ddxY", "ddxH"], ["zlyy", "zlyyY", "zlyyH"], ["ctrl", "ctrlY", "ctrlH"], ["tqs", "tqsY", "tqsH"], ["rso", "rsoY", "rsoH"], ["huo", "huoY", "huoH"]].forEach(function (pp) {   /* 11-24h +rso(原来漏了)/huo */
     var py = v[pp[1]], ph = v[pp[2]];
     if (!(ph >= 22) || !(py >= 0)) return;
     (pp[0] === "ddx" ? [["ff:", "↓", rx - 60], ["pe:", "\u2922", rx - 36], ["pc:", "\u2715", rx - 16]] : [["pe:", "\u2922", rx - 36], ["pc:", "\u2715", rx - 16]]).forEach(function (g) {
@@ -5316,7 +5325,8 @@ function rollerHit(pt) {
 function rollerDo(id) {
   if (id === "ff:ddx") { ffOpenJL(); return true; }
   if (id.indexOf("pe:") === 0) return togglePane(id.slice(3));
-  if (id.indexOf("pc:") === 0) { var _pk = { macd: "macd", zz: "zz", rt: "rtflow", ddx: "ddx", zlyy: "zlyy", ctrl: "ctrl", tqs: "tqs" }[id.slice(3)]; if (_pk) { closeIndJL(_pk); return true; } return false; }
+  if (id === "pc:huo") { HUOK.forEach(function (h) { S.ind[h[0]] = false; }); if (S.bigPane === "huo") S.bigPane = null; store(); try { buildInds(); } catch (eB) { } draw(); return true; }   /* 11-24h */
+  if (id.indexOf("pc:") === 0) { var _pk = { macd: "macd", zz: "zz", rt: "rtflow", ddx: "ddx", zlyy: "zlyy", ctrl: "ctrl", tqs: "tqs", rso: "rso" }[id.slice(3)]; if (_pk) { closeIndJL(_pk); return true; } return false; }
   var n = S.kl.length; if (!n) return false;
   var step9 = Math.max(3, Math.round((S.count || 60) * 0.25));
   if (id === "panL") panEndJL(-step9, true);
@@ -5326,6 +5336,7 @@ function rollerDo(id) {
   else if (id === "yI") { S.yZoom = Math.min(6, (S.yZoom || 1) * 1.25); S.yOff = 0; }
   else if (id === "yO") { S.yZoom = Math.max(1, (S.yZoom || 1) / 1.25); if (S.yZoom === 1) S.yOff = 0; }
   else if (id === "dzI:ddx") { S.ddxHf = Math.min(0.42, Math.round((S.ddxHf || 0.12) * 130) / 100); store(); }   /* 11-19晚: DDX副图放大 */
+  else if (id === "dzI:rso" || id === "dzO:rso" || id === "dzI:huo" || id === "dzO:huo") subHfSetJL(id.slice(4), id.charAt(2) === "I");   /* 11-24h */
   else if (id === "dzO:ddx") { S.ddxHf = Math.max(0.07, Math.round((S.ddxHf || 0.12) * 77) / 100); store(); }   /* 11-19晚: DDX副图缩小 */
   else return false;
   draw(); return true;
@@ -6406,6 +6417,7 @@ function drawTSJL(ctx, w, hh) {
   try { tsVolJL(ctx, v); } catch (e9) { if (window.console) console.warn("[ts.vol]", e9); }
   try { renderDdxPane(ctx, v); } catch (e10) { if (window.console) console.warn("[ts.ddx]", e10); }
   try { renderRsoPane(ctx, v); } catch (e11) { if (window.console) console.warn("[ts.rso]", e11); }   /* 11-19晚2批: RSO副图 */
+  try { renderHuoPane(ctx, v); } catch (e12) { if (window.console) console.warn("[ts.huo]", e12); }   /* 11-24h 指标副图 */
   try { renderCtrl(ctx, v); } catch (e11) { if (window.console) console.warn("[ts.ctrl]", e11); }
   try { renderTqs(ctx, v); } catch (e12) { if (window.console) console.warn("[ts.tqs]", e12); }
   try { renderRtflow(ctx, v); } catch (e13) { if (window.console) console.warn("[ts.rt]", e13); }
@@ -8116,6 +8128,23 @@ function rsoSeriesJL(kl, klt) {
   var v = null; try { v = rsoCalcJL(kl, klt); } catch (e0) { }
   _rsoC.key = key; _rsoC.v = v; return v;
 }
+/* ---- 11-24h 用户「K线表里都加上这个副图指标，一定要对齐成交量还有时间」: 「指标」副图格 ----
+   乖离/穿越/三线/趋势/庄控/阴阳/DK 一次开一个(指标行7个钮互斥); 公式=作战屏同一份 jl_huo/jl_sx/jl_zd/jl_hy/jl_dk.js, canvas 画法 jl_subcv.js;
+   x 用 v.X(i) —— 和 VOL 同一根K同一个x, 时间轴共用; 右侧 +/− 调高(ks_subhf_v1), 标题条 ⤢放大 ✕关。只显示, 不进算法, 没有提醒 */
+var HUOK = [["hgl", "乖离"], ["hcy", "穿越"], ["hsx", "三线"], ["hqs", "趋势"], ["hzk", "庄控"], ["hyy", "阴阳"], ["hdk", "DK"]];
+function huoIndJL() { for (var j = 0; j < HUOK.length; j++) if (S.ind[HUOK[j][0]]) return HUOK[j][1]; return ""; }
+function huoKeyJL(k) { for (var j = 0; j < HUOK.length; j++) if (HUOK[j][0] === k) return true; return false; }
+var KS_SUBHF = (function () { try { return JSON.parse(localStorage.getItem("ks_subhf_v1") || "{}") || {}; } catch (e) { return {}; } })();
+function subHfJL(k, d) { var x = +KS_SUBHF[k]; return x >= 0.07 && x <= 0.42 ? x : d; }
+function subHfSetJL(k, up) { var x = subHfJL(k, k === "huo" ? 0.14 : 0.11); x = up ? Math.min(0.42, Math.round(x * 130) / 100) : Math.max(0.07, Math.round(x * 77) / 100); KS_SUBHF[k] = x; try { localStorage.setItem("ks_subhf_v1", JSON.stringify(KS_SUBHF)); } catch (e) { } }
+function renderHuoPane(ctx, v) {
+  var ind = huoIndJL(); if (!ind || !v.huoH) return;
+  var y2 = v.huoY, h2 = v.huoH, right = v.ts ? v.padL + 240 * v.step : v.padL + v.plotW;
+  gridSt(ctx); ctx.beginPath(); ctx.moveTo(v.padL, y2); ctx.lineTo(right, y2); ctx.stroke();
+  if (!window.JLSubCv) { paneLegendJL(ctx, v, y2, ind, [{ t: "jl_subcv.js 没加载", c: "#ff8888" }]); return; }
+  var r = JLSubCv.draw(ctx, { ind: ind, kl: S.kl, code: S.active, X: v.X, i0: v.i0, i1: v.i1, x0: v.padL, x1: right, y: y2, h: h2, li: legIdxJL(v), onCap: function () { draw(); } });
+  paneLegendJL(ctx, v, y2, ind, r.leg);
+}
 function renderRsoPane(ctx, v) {
   if (!S.ind.rso || !v.rsoH) return;
   var kl = S.kl, y2 = v.rsoY, h2 = v.rsoH, right = v.padL + v.plotW;
@@ -8707,7 +8736,7 @@ var JITU_KS = (function () {
   return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
 })();
 /* ================= 指标开关行 ================= */
-var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["rso", "RSO"], ["macd", "MACD"],["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["rso", "RSO"], ["hgl", "乖离"], ["hcy", "穿越"], ["hsx", "三线"], ["hqs", "趋势"], ["hzk", "庄控"], ["hyy", "阴阳"], ["hdk", "DK"], ["macd", "MACD"],["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
   if (kd === "tool") return toolName(ky);
@@ -8740,7 +8769,7 @@ function buildFavs() {
     b.addEventListener("click", function () {
       if (kd === "ind") { // 指标: 直接翻转开关(与指标行原逻辑一致)
         if (ky === "lr") S.ind.lr = S.ind.lr === "view" ? "60" : (S.ind.lr === "60" ? false : "view");
-        else S.ind[ky] = !S.ind[ky];
+        else { var _hOn = !S.ind[ky]; if (huoKeyJL(ky)) HUOK.forEach(function (h) { S.ind[h[0]] = false; }); S.ind[ky] = _hOn; }   /* 11-24h 指标副图互斥 */
         store(); buildInds(); draw();
         if ((ky === "ddx" || ky === "zlyy") && S.ind[ky] && !S.fflow.length) fetchFFlow(S.active, function () { draw(); });
         if (ky === "rtflow" && S.ind.rtflow && !S.rtflow.length) fetchFFlowMin(S.active, function () { draw(); });
@@ -8790,6 +8819,16 @@ function buildInds() {
         S.ind.sixsig = !S.ind.sixsig;
         store(); buildInds(); draw();
         hint("六信号: 转/仓/加=买侧 顶/清/离=卖侧 · 日线本地算 · 提醒非指令");
+      });
+      el.appendChild(b);
+      return;
+    }
+    if (huoKeyJL(t[0])) {   /* 11-24h 指标副图: 7个一次开一个 */
+      b.addEventListener("click", function () {
+        if (S.favPick) { toggleFav("ind:" + t[0]); return; }
+        var on = !S.ind[t[0]]; HUOK.forEach(function (h) { S.ind[h[0]] = false; }); S.ind[t[0]] = on;
+        store(); buildInds(); draw();
+        hint(on ? "「" + t[1] + "」副图 · 公式同作战屏 · 和VOL同一根K对齐 · 右边 +/− 调高, ⤢放大" : "「" + t[1] + "」副图已关");
       });
       el.appendChild(b);
       return;

@@ -201,6 +201,8 @@ function card5DdxAmounts(raw) {
         gaps.push({ di, up, lo: Math.min(d.prec, d.open), hi: Math.max(d.prec, d.open), st, fi, pct: (d.open / d.prec - 1) * 100 });
       });
       const LD = days[days.length - 1]; if (LD) LD._auto = LD.pts.length ? autoCalc(LD.pts.map((p) => p.p)) : null;   /* 自动尺: 首点 09:30 = 开盘竞价价 */
+      /* 11-24 口径表 Q2 用户「偶尔还显示不出来图上之前的要买的线」: 刚开盘今天点不够/振幅<0.4% 算不出 → 先用上一交易日整天的尺A/尺B/下拉(标「昨」)，今天走出来自动换 */
+      if (LD && !LD._auto && days.length >= 2) { const PD = days[days.length - 2], ra = PD.pts.length ? autoCalc(PD.pts.map((p) => p.p)) : null; if (ra) { ra.prev = 1; ra.g0 = PD.pts[0].g; ra.st = { txt: "昨日尺 " + ra.st.txt, col: ra.st.col }; LD._auto = ra; } }
       bollGet(c);   /* 11-17: 重合价顺序也要 BOLL, 自动尺关着也取(60 秒内不重取) */
       const old = S, oldN = old ? old.P.length : 0;
       S = { days, P, gaps, code: c, ddxPts: typeof card5DdxAmounts === "function" ? card5DdxAmounts(raw) : {} };
@@ -208,6 +210,7 @@ function card5DdxAmounts(raw) {
       if (keep && old && old.code === c && view.b > view.a) { const n = view.b - view.a; view = view.b >= oldN ? { a: Math.max(0, P.length - n), b: P.length } : { a: Math.min(view.a, Math.max(0, P.length - n)), b: Math.min(view.b, P.length) }; }
       else { view = { a: 0, b: P.length }; fibLoad(); }
       fibRemap();   /* 11-14 用户: 过一天斐波锚点左偏一天 → 每次取数按「日期+分钟」找回所在位置 */
+      liveApply();   /* 11-24 整份重拉后接回实时价 */
       head._k = "";
       head(); size(); drawBase(); drawOv(); seqRender();
       if (typeof ddxUpdate === "function") ddxUpdate();
@@ -220,6 +223,21 @@ function card5DdxAmounts(raw) {
       } finally { if (ticket === loadTicket) loading = false; }
     }
 
+    /* 11-24 用户「五日图时间晚慢拍」(选A): 首页每次行情更新调 show(code,name,{p,at}) → 今天最后一分钟改成实时价, 新的一分钟先补一个点; 30秒整份重拉照旧核对 */
+    let LIVE = null;
+    function liveHM(at) { const q = String(at || ""), d = /^\d{13}$/.test(q) ? new Date(+q) : /^\d{10}$/.test(q) ? new Date(+q * 1e3) : null;
+      if (d) return { day: d.toLocaleDateString("sv-SE").replace(/-/g, ""), hm: String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0") };
+      const m = q.replace(/\D/g, ""); return m.length >= 12 ? { day: m.slice(0, 8), hm: m.slice(8, 12) } : null; }
+    function liveApply() {
+      if (!S || !LIVE || LIVE.code !== S.code || !(LIVE.p > 0)) return false;
+      const t = liveHM(LIVE.at); if (!t || !((t.hm >= "0930" && t.hm <= "1130") || (t.hm >= "1300" && t.hm <= "1500"))) return false;
+      const L = S.days[S.days.length - 1]; if (!L || String(L.date).replace(/\D/g, "") !== t.day || !L.pts.length) return false;
+      const last = L.pts[L.pts.length - 1];
+      if (t.hm === last.t) { if (last.p === LIVE.p) return false; last.p = LIVE.p; }
+      else if (t.hm > last.t) { const p = { di: last.di, k: idx(t.hm), t: t.hm, p: LIVE.p, v: 0, avg: last.avg, live: 1 }; p.g = S.P.length; L.pts.push(p); S.P.push(p); if (view.b === S.P.length - 1) view.b = S.P.length; }
+      else return false;
+      return true;
+    }
     function head() {
       if (!S) return;
       if (head._k === code + view.a + "|" + (S && S.P.length) && !cross) return; head._k = cross ? "" : code + view.a + "|" + (S && S.P.length);
@@ -492,10 +510,10 @@ function card5DdxAmounts(raw) {
     function drawAuto(x, s) {
       if (!autoOn || !S) return;
       const d = S.days[S.days.length - 1], r = d && d._auto; if (!r) return;
-      const g0 = d.pts[0].g, X = (k) => s.X(g0 + k), xR = G.l + G.pw, bc = BC[S.code] || {}, lv = [];
-      AR.forEach((q) => lv.push({ v: r.A.at(q), t: String(q), c: ACOL[q] || "#c9dfe8", src: "A", xs: X(Math.min(r.A.a.k, r.A.b.k)) }));
-      if (r.B) AB.forEach((q) => lv.push({ v: r.B.at(q), t: "小" + q, c: "#7ff2e0", src: "B", xs: X(r.B.b.k) }));
-      if (r.D) AD.forEach((q) => lv.push({ v: r.D.at(q), t: "↓" + q, c: "#3fe6ab", src: "D", xs: X(r.A.a.k), dash: [6, 4] }));
+      const g0 = r.prev ? r.g0 : d.pts[0].g, X = (k) => s.X(g0 + k), xR = G.l + G.pw, bc = BC[S.code] || {}, lv = [], zq = r.prev ? "昨" : "";   /* 11-24 Q2 */
+      AR.forEach((q) => lv.push({ v: r.A.at(q), t: zq + String(q), c: ACOL[q] || "#c9dfe8", src: "A", xs: X(Math.min(r.A.a.k, r.A.b.k)) }));
+      if (r.B) AB.forEach((q) => lv.push({ v: r.B.at(q), t: zq + "小" + q, c: "#7ff2e0", src: "B", xs: X(r.B.b.k) }));
+      if (r.D) AD.forEach((q) => lv.push({ v: r.D.at(q), t: zq + "↓" + q, c: "#3fe6ab", src: "D", xs: X(r.A.a.k), dash: [6, 4] }));
       [["m15", "15分"], ["m30", "30分"]].forEach(([k, nm]) => { const b = bc[k]; if (!b) return; lv.push({ v: b.up, t: nm + "上沿", c: "#ff8f8f", src: k, xs: X(0), dash: [2, 3] }, { v: b.dn, t: nm + "下沿", c: "#8fe9c4", src: k, xs: X(0), dash: [2, 3] }); });
       let dHi = -Infinity, dLo = Infinity; d.pts.forEach((p) => { dHi = Math.max(dHi, p.p); dLo = Math.min(dLo, p.p); });
       const use = lv.filter((l) => l.v > 0 && !(Math.abs(l.v / dHi - 1) < 0.001 || Math.abs(l.v / dLo - 1) < 0.001));
@@ -789,8 +807,10 @@ function card5DdxAmounts(raw) {
     addEventListener("resize", resize);
     if (typeof ResizeObserver !== "undefined") new ResizeObserver(resize).observe(box);
     return {
-      set(c, n) {
+      set(c, n, live) {
+        if (live && live.p > 0) LIVE = { code: pf(c), p: +live.p, at: live.at };   /* 11-24 实时价 */
         if (c === code) {
+          if (LIVE && !loading && liveApply()) { head._k = ""; head(); drawBase(); drawOv(); }
           if (n && n !== NAME) { NAME = n; head._k = ""; head(); }
           resize();
           if (!S && !loading && Date.now() >= retryAt) load();
@@ -810,6 +830,6 @@ function card5DdxAmounts(raw) {
     };
   }
   window.JLCard5D = {
-    show(code, name) { try { code = String(code || "").replace(/\D/g, ""); if (!code || !mount()) return; api.set(code, name); } catch (e) { if (window.console) console.warn("[card5d]", e); } }
+    show(code, name, live) { try { code = String(code || "").replace(/\D/g, ""); if (!code || !mount()) return; api.set(code, name, live); } catch (e) { if (window.console) console.warn("[card5d]", e); } }
   };
 })();

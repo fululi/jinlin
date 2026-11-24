@@ -118,20 +118,25 @@
 
   /* ---------- 绘制 ---------- */
   var WD = 380, PL = 24, PR = 3;
+  /* 11-24 用户「1/5/15/日各自对齐…十字线打通」: 嵌在作战屏时 jl_huo 把主图横轴(同一批K)挂 W.__zpSubAx —— 有就按主图x画(viewBox 360宽, 刻度挪右边), 没有=原来自己排90根 */
+  function AXg(bars) { var A = W.__zpSubAx; A = A && A.bars === bars && A.N > 0 ? A : null; WD = A ? 360 : 380; PL = A ? A.PL : 24; PR = A ? 360 - A.PR : 3; return A; }
+  function LX4() { return WD === 360 ? 359 : PL - 4; }
+  function axOfSt(st) { var a = ['s1', 's2', 's3']; for (var j = 0; j < 3; j++) { var e = st && st[a[j]]; if (e && e.__ax && e.__ax.on) return e.__ax; } return null; }
+  function ckOf(B) { var n = B.length, a = B[0] || {}, z = B[n - 1] || {}; return n + '|' + a.t + '|' + z.t + '|' + z.o + '|' + z.h + '|' + z.l + '|' + z.c + '|' + z.v; }
   function bigOn() { try { return localStorage.getItem('zp_huo_big_v1') === '1'; } catch (e) { return false; } }
   function gridLines(g, T, Bt, yv, lv, D, i0, N, xF) {
     for (var k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + xF(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
   }
   function drawSec1(el, R, bars, lv) {
-    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
-    var big = bigOn(), T = 5, Bt = big ? 148 : 88, Hh = big ? 160 : 100, cw = (WD - PL - PR) / N;
-    var X = function (k) { return PL + cw * (k + 0.5); };
+    var AX = AXg(bars), N = AX ? AX.N : Math.min(W.__zpHuoN || 90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(bars, lv);
+    var big = bigOn(), T = 5, Bt = AX ? AX.H - 3 : (big ? 148 : 88), Hh = AX ? AX.H : (big ? 160 : 100), cw = AX ? AX.cw : (WD - PL - PR) / N;
+    var X = AX ? function (k) { return AX.x(i0 + k); } : function (k) { return PL + cw * (k + 0.5); };
     var vmax = 115, vmin = -18;
     var Y = function (v) { return T + (vmax - Math.min(Math.max(v, vmin), vmax)) / (vmax - vmin) * (Bt - T); };
     var g = [];
     [[0, '0'], [50, '50'], [90, '90']].forEach(function (a) {
       g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(a[0]).toFixed(1) + '" y2="' + Y(a[0]).toFixed(1) + '" stroke="rgba(255,255,255,.14)" stroke-width=".8"/>');
-      g.push('<text x="' + (PL - 4) + '" y="' + (Y(a[0]) + 3).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#8aa">' + a[1] + '</text>');
+      g.push('<text x="' + LX4() + '" y="' + (Y(a[0]) + 3).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#8aa">' + a[1] + '</text>');
     });
     for (var k = 0; k < N; k++) { var i = i0 + k; if (R.SHUI7[i] > 0) g.push('<rect x="' + (X(k) - cw * 0.6).toFixed(1) + '" y="' + Y(0).toFixed(1) + '" width="' + (cw * 1.2).toFixed(2) + '" height="' + Math.max(1, Y(0) - Y(R.SHUI7[i])).toFixed(1) + '" fill="rgba(255,221,0,.8)"/>'); }
     for (k = 0; k < N; k++) { i = i0 + k; if (R.入场柱[i]) g.push('<rect x="' + (X(k) - cw * 0.7).toFixed(1) + '" y="' + Y(50).toFixed(1) + '" width="' + (cw * 1.4).toFixed(2) + '" height="' + (Y(0) - Y(50)).toFixed(1) + '" fill="' + tdc('0099FF') + '"/>'); }
@@ -140,14 +145,14 @@
     g.push(pt(R.趋势, tdc('FF0000'), 1.4));
     for (k = 0; k < N; k++) { i = i0 + k; if (R.准备[i]) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Y(30) - 2).toFixed(1) + '" text-anchor="middle" font-size="9.5" fill="#c90" stroke="#000" stroke-width=".5" paint-order="stroke">准备中</text>'); }
     for (k = 0; k < N; k++) { i = i0 + k; if (R.入场[i]) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Y(60) - 2).toFixed(1) + '" text-anchor="middle" font-size="9.5" fill="#09f" stroke="#000" stroke-width=".5" paint-order="stroke">入场</text>'); }
-    for (k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
-    g.push('<g class="hx"></g>');
+    for (k = 0; !AX && k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
+    g.push('<g class="hx"></g>'); el.__ax = { on: !!AX, X: X, Y: Y, T: T, Bt: Bt, i0: i0, N: N, lo: vmin, hi: vmax, pv: function (i) { return R.趋势[i]; } };   /* 11-24: 给 jl_huo 画十字横线/✎横线用 */
     el.innerHTML = '<div class="ssl"><span style="color:#ff5c5c">趋势 ' + R.趋势[R.n - 1].toFixed(1) + '</span><span style="color:#09f">入场' + (R.入场[R.n - 1] ? '●' : '') + '</span><span style="color:#dd0">抄底' + (R.SHUI7[R.n - 1] > 0 ? '●' : '') + '</span></div><svg viewBox="0 0 ' + WD + ' ' + Hh + '">' + g.join('') + '</svg>';
   }
   function drawSec2(el, R, bars, lv) {
-    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
-    var big = bigOn(), T = 5, Bt = big ? 148 : 88, Hh = big ? 160 : 100, cw = (WD - PL - PR) / N;
-    var X = function (k) { return PL + cw * (k + 0.5); };
+    var AX = AXg(bars), N = AX ? AX.N : Math.min(W.__zpHuoN || 90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(bars, lv);
+    var big = bigOn(), T = 5, Bt = AX ? AX.H - 3 : (big ? 148 : 88), Hh = AX ? AX.H : (big ? 160 : 100), cw = AX ? AX.cw : (WD - PL - PR) / N;
+    var X = AX ? function (k) { return AX.x(i0 + k); } : function (k) { return PL + cw * (k + 0.5); };
     var pk = 1;
     for (var k = 0; k < N; k++) pk = Math.max(pk, Math.abs(R.庄控[i0 + k]));
     pk = Math.max(10, pk * 1.15);
@@ -155,8 +160,8 @@
     var g = [];
     g.push('<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="rgba(255,255,255,.2)" stroke-width=".8"/>');
     for (k = 0; k < N; k++) { var i = i0 + k; var v = R.庄控[i]; var yv = Y(v), y0 = Y(0); g.push('<rect x="' + (X(k) - cw / 2).toFixed(1) + '" y="' + Math.min(yv, y0).toFixed(1) + '" width="' + cw.toFixed(2) + '" height="' + Math.max(.8, Math.abs(y0 - yv)).toFixed(1) + '" fill="' + (v > 0 ? tdc('FF4444') : tdc('44FF77')) + '" opacity=".85"/>'); }
-    for (k = 0; k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
-    g.push('<g class="hx"></g>');
+    for (k = 0; !AX && k < N; k += Math.ceil(N / 5)) g.push('<text x="' + X(k).toFixed(1) + '" y="' + (Bt + 11) + '" text-anchor="middle" font-size="9.5" fill="#fff">' + D[i0 + k] + '</text>');
+    g.push('<g class="hx"></g>'); el.__ax = { on: !!AX, X: X, Y: Y, T: T, Bt: Bt, i0: i0, N: N, lo: -pk, hi: pk, pv: function (i) { return R.庄控[i]; } };   /* 11-24: 给 jl_huo 画十字横线/✎横线用 */
     el.innerHTML = '<div class="ssl"><span style="color:#ff4444">庄控 ' + R.庄控[R.n - 1].toFixed(1) + '</span><span style="color:#8aa">红=控盘增强 绿=出货</span></div><svg viewBox="0 0 ' + WD + ' ' + Hh + '">' + g.join('') + '</svg>';
   }
 
@@ -212,14 +217,14 @@
 
   /* ---------- 嵌入 + feed (jl_huo v6.4 用) ---------- */
     function drawSec3(el, R, bars, lv) {
-    var N = Math.min(W.__zpHuoN || 90, R.n), i0 = R.n - N, D = labels(bars, lv);
-    var T = 5, Bt = bigOn() ? 148 : 88, Hh = bigOn() ? 160 : 100, cw = (380 - 24 - 3) / N;
-    var X = function (k) { return 24 + cw * (k + 0.5); };
+    var AX = AXg(bars), N = AX ? AX.N : Math.min(W.__zpHuoN || 90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(bars, lv);
+    var T = 5, Bt = AX ? AX.H - 3 : (bigOn() ? 148 : 88), Hh = AX ? AX.H : (bigOn() ? 160 : 100), cw = AX ? AX.cw : (380 - 24 - 3) / N;
+    var X = AX ? function (k) { return AX.x(i0 + k); } : function (k) { return 24 + cw * (k + 0.5); };
     var pk = 10;
     for (var k2 = 0; k2 < N; k2++) { var i2 = i0 + k2; pk = Math.max(pk, Math.abs(R.多[i2]), Math.abs(R.空[i2]), Math.abs(R.多均[i2]), Math.abs(R.空均[i2])); }
     pk *= 1.15;
     var Y = function (v) { return T + (pk - Math.min(Math.max(v, -pk), pk)) / (2 * pk) * (Bt - T); };
-    var g = ['<line x1="24" x2="356" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="rgba(255,255,255,.35)" stroke-width=".8" stroke-dasharray="3 3"/>'];
+    var g = ['<line x1="' + PL + '" x2="' + (WD - PR) + '" y1="' + Y(0).toFixed(1) + '" y2="' + Y(0).toFixed(1) + '" stroke="rgba(255,255,255,.35)" stroke-width=".8" stroke-dasharray="3 3"/>'];
     for (var k = 0; k < N; k++) {
       var i = i0 + k;
       if (R.穿[i]) g.push('<line x1="' + X(k).toFixed(1) + '" x2="' + X(k).toFixed(1) + '" y1="' + T + '" y2="' + Bt + '" stroke="rgba(255,60,60,.75)" stroke-width="1.2"/>');
@@ -227,10 +232,10 @@
     }
     function pt(a, col, w2) { var s2 = []; for (var k3 = 0; k3 < N; k3++) s2.push(X(k3).toFixed(1) + ',' + Y(a[i0 + k3]).toFixed(1)); return '<polyline fill="none" stroke="' + col + '" stroke-width="' + w2 + '" points="' + s2.join(' ') + '"/>'; }
     g.push(pt(R.空均, '#cc88ff', 1.3)); g.push(pt(R.多均, '#ffcc00', 1.3)); g.push(pt(R.空, tdc('00FF00'), 1.5)); g.push(pt(R.多, '#ff4444', 1.5));
-    gridLines(g, T, Bt, null, lv, D, i0, N, X);
-    g.push('<g class="hx"></g>');
+    if (!AX) gridLines(g, T, Bt, null, lv, D, i0, N, X);
+    g.push('<g class="hx"></g>'); el.__ax = { on: !!AX, X: X, Y: Y, T: T, Bt: Bt, i0: i0, N: N, lo: -pk, hi: pk, pv: function (i) { return R.多[i]; } };   /* 11-24: 给 jl_huo 画十字横线/✎横线用 */
     var stTxt = R.多[R.n - 1] > R.空均[R.n - 1] ? '<span style="color:#ff4444">多方控场</span>' : '<span style="color:#33ff77">空方控场</span>';
-    el.innerHTML = '<div class="ssl"><span style="color:#ff4444">多 ' + R.多[R.n - 1].toFixed(1) + '</span><span style="color:#33ff77">空 ' + R.空[R.n - 1].toFixed(1) + '</span><span style="color:#ffcc00">多均 ' + R.多均[R.n - 1].toFixed(1) + '</span><span style="color:#cc88ff">空均 ' + R.空均[R.n - 1].toFixed(1) + '</span>' + stTxt + '</div><svg viewBox="0 0 380 ' + Hh + '">' + g.join('') + '</svg>';
+    el.innerHTML = '<div class="ssl"><span style="color:#ff4444">多 ' + R.多[R.n - 1].toFixed(1) + '</span><span style="color:#33ff77">空 ' + R.空[R.n - 1].toFixed(1) + '</span><span style="color:#ffcc00">多均 ' + R.多均[R.n - 1].toFixed(1) + '</span><span style="color:#cc88ff">空均 ' + R.空均[R.n - 1].toFixed(1) + '</span>' + stTxt + '</div><svg viewBox="0 0 ' + WD + ' ' + Hh + '">' + g.join('') + '</svg>';
   }
   function embedNode(opts) {
     var node = document.createElement('div'); node.className = 'sxIn';
@@ -246,13 +251,13 @@
     function draw() {
       if (!st.bars || st.bars.length < 60) { st.s1.innerHTML = st.s2.innerHTML = '<div class="ssl"><span style="color:#8fb8ff">K线还没到（≥60根，55窗预热）</span></div>'; return; }
       try {
-        st.R = calc(st.bars, st.cap);
+        var ck0 = ckOf(st.bars) + '|' + (st.cap || 0); if (!st.R || st.__ck !== ck0) { st.R = calc(st.bars, st.cap); st.__ck = ck0; }   /* 11-24: 同一批K不重算(主图拖动时每帧重画) */
         drawSec1(st.s1, st.R, st.bars, st.lv);
         drawSec2(st.s2, st.R, st.bars, st.lv);
         drawSec3(st.s3, st.R, st.bars, st.lv);
       } catch (e) { st.s1.innerHTML = '<div class="ssl"><span style="color:#ff8888">计算出错: ' + e.message + '</span></div>'; }
     }
-    if (!st.cap && st.code) { fetchCap(st.code, function (c) { st.cap = c; draw(); }); }
+    if (!st.cap && st.code && !(st.__capAt && st.__capCode === st.code && Date.now() - st.__capAt < 60000)) { st.__capAt = Date.now(); st.__capCode = st.code; fetchCap(st.code, function (c) { if (c > 0) st.cap = c; draw(); }); }   /* 11-24: 取股本在路上/失败后60秒内不重发(原来每重画一次发一个) */
     draw();
     showWhich(st);
     st.at = Date.now();
@@ -276,16 +281,18 @@
   }
   function xhDraw(st, i) {
     if (!st || !st.R || i < 0 || i >= st.R.n) return;
-    var N = Math.min(W.__zpHuoN || 90, st.R.n), i0 = st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
-    var cw = (380 - 24 - 3) / N, x = (24 + cw * (k + 0.5)).toFixed(1);
+    var GA = axOfSt(st), N = GA ? GA.N : Math.min(W.__zpHuoN || 90, st.R.n), i0 = GA ? GA.i0 : st.R.n - N, k = Math.max(0, Math.min(N - 1, i - i0));
+    if (GA && (i < i0 || i >= i0 + N)) { xhClear(st); return; }   /* 11-24: 主图十字线在副图视窗外 → 不画 */
+    var cw = (380 - 24 - 3) / N, x = (GA ? GA.X(k) : 24 + cw * (k + 0.5)).toFixed(1);
     /* v1.3: 完整十字线 —— 趋势窗/庄控窗 各自值高度横线 + 右缘标签 */
-    var qv = Math.min(Math.max(R.趋势[i0 + k], -20), 110), yq = 5 + (110 - qv) / 130 * (88 - 5);
-    var zv = R.庄控[i0 + k], zc = Math.max(-50, Math.min(50, zv)), yz = 46.5 - zc / 50 * 40;
-    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (bigOn() ? 155 : 93) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
+    var qv = Math.min(Math.max(st.R.趋势[i0 + k], -20), 110), yq = 5 + (110 - qv) / 130 * (88 - 5);
+    var zv = st.R.庄控[i0 + k], zc = Math.max(-50, Math.min(50, zv)), yz = 46.5 - zc / 50 * 40;
+    var ln = '<line x1="' + x + '" x2="' + x + '" y1="3" y2="' + (GA ? GA.Bt + 2 : (bigOn() ? 155 : 93)) + '" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-dasharray="2 2"/>'
       + '<line x1="24" x2="356" y1="' + yq.toFixed(1) + '" y2="' + yq.toFixed(1) + '" stroke="rgba(255,92,92,.45)" stroke-width=".7"/>'
-      + '<text x="354" y="' + (yq - 2).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#ffb3b3">' + R.趋势[i0 + k].toFixed(1) + '</text>'
+      + '<text x="354" y="' + (yq - 2).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#ffb3b3">' + st.R.趋势[i0 + k].toFixed(1) + '</text>'
       + '<line x1="24" x2="356" y1="' + yz.toFixed(1) + '" y2="' + yz.toFixed(1) + '" stroke="rgba(51,255,119,.45)" stroke-width=".7"/>'
       + '<text x="354" y="' + (yz + 8).toFixed(1) + '" text-anchor="end" font-size="8.5" fill="#aaffcc">' + zv.toFixed(1) + '</text>';
+    if (GA) ln = ln.slice(0, ln.indexOf('/>') + 2);   /* 11-24: 嵌在作战屏时横线由 jl_huo 画(按手指高度/各窗自己的刻度) */
     ['s1', 's2', 's3'].forEach(function (sk) { var sv = st[sk] && st[sk].querySelector('svg'); if (sv) { var hx = sv.querySelector('.hx'); if (hx) hx.innerHTML = ln; } });
     var j = i0 + k;
     if (st.s1 && st.s1.style.display !== 'none' && st.s1.querySelector('.ssl')) st.s1.querySelector('.ssl').innerHTML = '<span style="color:#ff5c5c">趋势 ' + st.R.趋势[j].toFixed(1) + '</span><span style="color:#09f">入场' + (st.R.入场[j] ? '●' : '') + '</span><span style="color:#dd0">抄底' + (st.R.SHUI7[j] > 0 ? '●' : '') + '</span>';
@@ -303,7 +310,7 @@
     [['s1', st.s1], ['s2', st.s2]].forEach(function (p) {
       var el = p[1]; if (!el) return;
       el.style.touchAction = 'pan-y';
-      var hit = function (e) {
+      var hit = function (e) { if (axOfSt(st)) return;   /* 11-24: 嵌在作战屏时由 jl_huo 统一接手指(并驱动主图十字线) */
         if (!st.R) return;
         var sv = el.querySelector('svg'); if (!sv) return;
         var r = sv.getBoundingClientRect(); if (!r.width) return;
