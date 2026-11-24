@@ -21866,6 +21866,14 @@ body.jlMktOffJL .brandClkJL span.on .bcSt::before{animation:none}
 </script>
 <!-- 11-23 做T球·一次性安装(用户「装回」): 仅一行iframe, 面板(zuot.html)同源直控其几何; 以后改面板只传zuot.html -->
 <iframe id="zuotJL" title="做T面板" src="zuot.html?emb=1" style="position:fixed;left:0;top:0;width:56px;height:56px;border:0;z-index:2147483000;background:transparent;display:none"></iframe>
+<script>
+/* 11-25 做T球保活: 点开作战屏后球一时不见→每0.8秒让面板按自己的状态重推一次位置/显示; 球不在顶层就抬回 */
+(function(){setInterval(function(){try{var f=document.getElementById("zuotJL");if(!f||!f.contentWindow)return;var g=f.contentWindow.__ztGeom;if(typeof g!=="function")return;
+var cs=getComputedStyle(f),r=f.getBoundingClientRect();
+var bad=cs.display==="none"||r.width<20||r.height<20||r.right<0||r.bottom<0||r.left>innerWidth||r.top>innerHeight;
+if(!bad){var e=document.elementFromPoint(Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),Math.min(innerHeight-1,Math.max(0,r.top+r.height/2)));bad=!!e&&e!==f;}
+if(bad){g(false);f.style.zIndex="2147483001";f.style.display="block";f.style.visibility="visible";}}catch(e){}},800);})();
+</script>
 </body>
 </html>
 
