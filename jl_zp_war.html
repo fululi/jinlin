@@ -709,6 +709,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
     };
     // 外轨之间极淡的底色
     inner.appendChild(E('polygon', {
+      'class': 'pfkFill',
       points: [x0, Yl(offs[0], x0), x1, Yl(offs[0], x1), x1, Yl(offs[4], x1), x0, Yl(offs[4], x0)].join(','),
       fill: VIO, opacity: 0.06
     }));
@@ -832,7 +833,7 @@ body #ampCardJL .acNx.acRow{grid-template-columns:11px auto auto minmax(0,1fr);m
   g.Elliott = { swingsFrom: swingsFrom, detect: detect, drawSVG: drawSVG };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
-<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=16"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script>window.ZP_HUO_INDS = ['乖离', '三线', '多空', 'DK', '波段位置'];   /* 11-25 用户删 穿越/趋势/庄控/阴阳, 留多空 */</script><script src="jl_huo.js?v=5"></script>
+<script src="jl_tri.js?v=1"></script><script src="jl_zp_shapes.js?v=17"></script><script src="jl_ledger.js?v=5"></script><script src="jl_tbook.js?v=1"></script><script>window.ZP_HUO_INDS = ['乖离', '三线', '多空', 'DK', '波段位置'];   /* 11-25 用户删 穿越/趋势/庄控/阴阳, 留多空 */</script><script src="jl_huo.js?v=5"></script>
 <script>/* jl_macd.js 内联(11-12): 聊天转存会把本地src替换成临时CDN, 内联绝后患; 源文件仍在仓库 */
 /*! jl_macd.js — 分时 MACD 副图（MACDFS 12,26,9），仿同花顺：红绿柱 + DIF(白) + DEA(橙)
  * 做成独立的一块 SVG，插在走势图下面，不画在图上，所以不会压住任何字。
@@ -1342,7 +1343,7 @@ function staticsLiveJL() {
       for (var pp = Math.ceil((YLO / pc - 1) * 100 / stP) * stP; pp <= (YHI / pc - 1) * 100 + 1e-9; pp += stP) {
         var yP = Y(pc * (1 + pp / 100)); if (yP < PY0 + 6 || yP > PY0 + PH - 4) continue;
         if (LIVE.auc && yP < PY0 + 14) continue;   /* 11-17晚: 最上一行留给「竞 缺口%」 */
-        var tP = tx(1, yP + 2.5, (pp > 0 ? '+' : pp < 0 ? '−' : '') + Math.abs(pp).toFixed(stP < 1 ? 1 : 0) + '%', pp > 0 ? '#ff8f98' : pp < 0 ? '#6fffc2' : '#e8eef8', 6.5, 'start', 400);   /* 11-17晚 用户「左边加减百分之多少轴太往图中靠了, 往左边挪挪, 不用这么大」: x12→1, 8号500→6.5号400 */   /* 11-15 用户: 左刻度让开10px滑带(x1→x12), 字号8、加粗、去描边更亮 */
+        var ltP = document.documentElement.classList.contains('zpLight'), tP = tx(ltP ? PX0 + 4 : 1, yP + 2.5, (pp > 0 ? '+' : pp < 0 ? '−' : '') + Math.abs(pp).toFixed(stP < 1 ? 1 : 0) + '%', ltP ? (pp > 0 ? '#f23645' : pp < 0 ? '#089981' : '#787b86') : (pp > 0 ? '#ff8f98' : pp < 0 ? '#6fffc2' : '#e8eef8'), ltP ? 7.5 : 6.5, 'start', 400);   /* 11-26w 用户「切黑的别把白的搞坏/反之」: 深色还原 11-17 原样(x=1 6.5号 淡红淡绿), 白底=TV红绿 */
         tP.removeAttribute('stroke'); tP.setAttribute('opacity', .95); svg.appendChild(tP);
       }
     }
@@ -1359,6 +1360,9 @@ function labColJL(g, labs) {
   labs.forEach(function (L, k) {
     var y = ys[k];
     var w = wOf(L.t) + 8, x2 = LX - 8;
+    if (!L.bg && Math.abs(y - L.y) >= 9) {
+      g.appendChild(el('line', { x1: x2 - w - 3, y1: L.y, x2: x2 - 2, y2: y - 4, stroke: document.documentElement.classList.contains('zpLight') ? '#787b86' : '#cfd8e6', 'stroke-width': .55, opacity: .62, 'pointer-events': 'none' }));
+    }
     if (L.bg) {   /* 11-14 用户: 高位区粉底白字 / 低位区蓝底白字, 小一号、字清楚不浑(不加黑描边) */
       var wb = L.t.length * 7.4 + 6; g.appendChild(el('rect', { x: x2 - wb, y: y - 8.6, width: wb, height: 10.5, rx: 2, fill: L.bg }));
       var tb = el('text', { x: x2 - wb / 2, y: y - 0.6, fill: '#fff', 'font-size': 7.4, 'text-anchor': 'middle', 'font-weight': 500, 'letter-spacing': '.3' }); tb.textContent = L.t; g.appendChild(tb); return;
@@ -2214,7 +2218,7 @@ function renderHead() {
       var ttN = tx(LX - 6, tyN - 3, p.toFixed(2), '#ffffff', 8.2, 'end', 400);
       ttN.setAttribute('stroke', 'none'); ttN.setAttribute('stroke-width', 0);
       tgN.appendChild(ttN);
-      svg.appendChild(tgN);
+      if (localStorage.getItem('zp_rax_v1') === '0') svg.appendChild(tgN);
       /* 11-23 用户「引擎图左上角加一个实时价格，小一点」: 主图左上角(绘图区上方空档)常显 现价 涨跌%，红涨绿跌，400 细字、无底框；不跟鼠标隐藏 */
       var oldC = document.getElementById('zpNowCorner'); if (oldC) oldC.remove();
       var pctC = pcN > 0 ? (p / pcN - 1) * 100 : null, cC = pcN > 0 ? (p > pcN ? '#ff4757' : p < pcN ? '#1ee3a0' : '#ffffff') : '#ffffff';
@@ -4583,6 +4587,7 @@ function liveRender(fromRpl) {
   var rangeRebuilt = setRange(lo, hi);
   if (INJL && !rangeRebuilt) buildStatics();   /* 台账/IV区每轮可能变, 底图每次重画 */
   renderAll();
+  try { window.zpRaxDrawJL && window.zpRaxDrawJL(); } catch (eAxis) { }
   /* 主图与 VOL/资金副图必须同一轮刷新；09:25 只有竞价量时也要立刻画出黄柱。 */
   try { if (window.zpSubRender) window.zpSubRender(); } catch (eSubLive) { }
 }
@@ -5337,7 +5342,7 @@ body.injlin #metaLine input,body.injlin #metaLine select{height:22px!important;f
 body.injlin.hdFold #hSub,body.injlin.hdFold #zpSearch,body.injlin.hdFold #metaLine{display:none!important}
 .card.head{position:relative}.card.head.hdHJL{overflow:hidden}
 #zpLtJL{flex:none;width:20px;height:20px;padding:0;margin-right:4px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(18,26,36,.38);color:#cfd6df;font-size:11px;line-height:18px;cursor:pointer}
-html.zpLight{color-scheme:light;--bg:#ffffff;--card:#ffffff;--sub:#f0f3fa;--line:#e0e3eb;--txt:#131722;--dim:#787b86;--red:#f23645;--green:#089981;--amber:#f57c00;--gold:#b07d00;--blue:#2962ff;--ink:#131722}
+html.zpLight{color-scheme:light;--bg:#ffffff;--card:#ffffff;--sub:#f0f3fa;--line:#e0e3eb;--txt:#131722;--dim:#787b86;--red:#ff3347;--green:#00a878;--amber:#f57c00;--gold:#b07d00;--blue:#2962ff;--ink:#131722}
 html.zpLight,html.zpLight body{background:#ffffff!important}
 html.zpLight body.injlin .card,html.zpLight .card{background:#ffffff!important;border-color:#e0e3eb!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.zpLight #hdGripJL i{background:#c9ccd6}
@@ -5718,6 +5723,7 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
 (function () {
   function grayish(c) { var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(c || ''); if (!m) return null; var r = +m[1], g = +m[2], b = +m[3], a = m[4] == null ? 1 : +m[4], mx = Math.max(r, g, b), mn = Math.min(r, g, b); return { gray: mx - mn < 46 && mx >= 70, a: a }; }
   function svgPass() {
+    if (document.documentElement.classList.contains('zpLight')) return;
     ['ch', 'zpSub', 'zpHuoJL', 'wkBox'].forEach(function (id) { var R = document.getElementById(id); if (!R) return;
       R.querySelectorAll('text,tspan').forEach(function (t) { try {
         var cs = getComputedStyle(t), g = grayish(cs.fill);
@@ -5727,6 +5733,7 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
     });
   }
   function htmlPass() {
+    if (document.documentElement.classList.contains('zpLight')) return;
     var all = document.body ? document.body.getElementsByTagName('*') : [];
     for (var i = 0; i < all.length; i++) { var el = all[i]; if (el.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue; var own = false;
       for (var k = el.firstChild; k; k = k.nextSibling) if (k.nodeType === 3 && /\S/.test(k.nodeValue)) { own = true; break; }
@@ -5739,18 +5746,31 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
   setTimeout(function () { svgPass(); htmlPass(); }, 800);
   /* 11-25 用户「做T屏线上右边没有价格显示 / 不要很宽」: 主图右侧窄价格轴(TV式) = 4条网格线处的价 + 现价实心块; 占原空白条 LX-6..360, 不改 PX0/PW; localStorage zp_rax_v1=0 关 */
   function raxDraw() { try { if (localStorage.getItem('zp_rax_v1') === '0') return; var sv = document.getElementById('ch'); if (!sv || typeof YHI !== 'number' || !(YHI > YLO)) return;
-    var g = sv.querySelector('#zpRAxJL'); if (!g) { g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.id = 'zpRAxJL'; g.setAttribute('pointer-events', 'none'); } sv.appendChild(g); while (g.firstChild) g.removeChild(g.firstChild);
-    var NS = 'http://www.w3.org/2000/svg', mk = function (t, a) { var e = document.createElementNS(NS, t); for (var k in a) e.setAttribute(k, a[k]); g.appendChild(e); return e; };
-    var x0 = LX - 6, ph = PH - YRES, d = (YHI - YLO) < 2 ? 2 : 1;
-    mk('line', { x1: x0, x2: x0, y1: PY0, y2: PY0 + PH, stroke: '#2a2e39', 'stroke-width': .6 });
-    var ys = []; for (var k = 1; k <= 4; k++) { var gy = PY0 + k * ph / 5, pv = YHI - (gy - PY0) / ph * (YHI - YLO); ys.push(gy); var t = mk('text', { x: 359, y: gy + 2.5, fill: '#d1d4dc', 'font-size': 7, 'font-weight': 400, 'text-anchor': 'end', 'font-variant-numeric': 'tabular-nums' }); t.textContent = pv.toFixed(d); }
-    var p = (window.LIVE && (LIVE.last || LIVE.cur)) || 0; if (p > 0 && p >= YLO && p <= YHI) { var y = Math.max(PY0 + 5, Math.min(PY0 + ph - 5, Y(p))), up = !(LIVE.pc > 0) || p >= LIVE.pc;
-      g.querySelectorAll('text').forEach(function (t) { if (Math.abs(+t.getAttribute('y') - 2.5 - y) < 9) t.setAttribute('display', 'none'); });   /* 现价块盖住的刻度先藏, 不叠字 */
-      mk('rect', { x: x0 + .5, y: y - 5, width: 360 - x0 - .5, height: 10, rx: 1.5, fill: up ? '#f23645' : '#22ab94' });
-      var tc = mk('text', { x: 359, y: y + 2.6, fill: '#fff', 'font-size': 7.2, 'font-weight': 400, 'text-anchor': 'end', 'font-variant-numeric': 'tabular-nums' }); tc.textContent = p.toFixed(2);
-      var old = sv.querySelector('#zpNowTg'); if (old) old.setAttribute('display', 'none'); }   /* 图内那个现价字和轴上块重复 → 藏 */
+    var NS = 'http://www.w3.org/2000/svg', x0 = LX - 6, ph = PH - YRES, d = (YHI - YLO) < 2 ? 2 : 1;
+    var light = document.documentElement.classList.contains('zpLight'), axisText = light ? '#787b86' : '#d1d4dc';
+    var g = sv.querySelector('#zpRAxJL'); if (!g) {
+      g = document.createElementNS(NS, 'g'); g.id = 'zpRAxJL'; g.setAttribute('pointer-events', 'none');
+      var axis = document.createElementNS(NS, 'line'); axis.setAttribute('data-axis', '1'); axis.setAttribute('stroke-width', '.6'); g.appendChild(axis);
+      for (var k = 1; k <= 4; k++) { var t = document.createElementNS(NS, 'text'); t.setAttribute('data-tick', String(k)); t.setAttribute('x', '359'); t.setAttribute('text-anchor', 'end');   /* 11-26w 用户「右侧纵轴价格没了(黑白都没)」: 复用节点版建刻度时漏了 x → 字落到图左外面 */ t.setAttribute('font-variant-numeric', 'tabular-nums'); t.setAttribute('font-size', light ? '7.5' : '7'); t.setAttribute('font-weight', '400'); t.setAttribute('fill', axisText); g.appendChild(t); }
+      var rect = document.createElementNS(NS, 'rect'); rect.setAttribute('data-current-bg', '1'); rect.setAttribute('x', x0 + .5); rect.setAttribute('width', 360 - x0 - .5); rect.setAttribute('height', '10'); rect.setAttribute('rx', '1.5'); g.appendChild(rect);
+      var value = document.createElementNS(NS, 'text'); value.setAttribute('data-current-value', '1'); value.setAttribute('x', '359'); value.setAttribute('text-anchor', 'end'); value.setAttribute('font-variant-numeric', 'tabular-nums'); value.setAttribute('font-size', '7.2'); value.setAttribute('font-weight', '400'); value.setAttribute('fill', '#fff'); g.appendChild(value);
+    }
+    if (g.parentNode !== sv) sv.appendChild(g);
+    var rangeKey = [YLO, YHI, PH, YRES, light ? 1 : 0].join('|');
+    if (g.getAttribute('data-range') !== rangeKey) {
+      var axisLine = g.querySelector('[data-axis]'); axisLine.setAttribute('x1', x0); axisLine.setAttribute('x2', x0); axisLine.setAttribute('y1', PY0); axisLine.setAttribute('y2', PY0 + PH); axisLine.setAttribute('stroke', light ? '#e0e3eb' : '#2a2e39');
+      var rangeTicks = g.querySelectorAll('[data-tick]'); for (var k2 = 0; k2 < rangeTicks.length; k2++) { var gy = PY0 + (k2 + 1) * ph / 5, pv = YHI - (gy - PY0) / ph * (YHI - YLO), tick = rangeTicks[k2]; tick.setAttribute('y', gy + 2.5); tick.setAttribute('fill', axisText); tick.textContent = pv.toFixed(d); tick.removeAttribute('display'); }
+      g.setAttribute('data-range', rangeKey);
+    }
+    var p = (window.LIVE && (LIVE.last || LIVE.cur)) || 0, rect = g.querySelector('[data-current-bg]'), value = g.querySelector('[data-current-value]');
+    if (p > 0 && p >= YLO && p <= YHI) { var y = Math.max(PY0 + 5, Math.min(PY0 + ph - 5, Y(p))), up = !(LIVE.pc > 0) || p >= LIVE.pc;
+      var ticks = g.querySelectorAll('[data-tick]'); for (var k3 = 0; k3 < ticks.length; k3++) { var hideTick = Math.abs(+ticks[k3].getAttribute('y') - 2.5 - y) < 9; if (hideTick && ticks[k3].getAttribute('display') !== 'none') ticks[k3].setAttribute('display', 'none'); else if (!hideTick && ticks[k3].hasAttribute('display')) ticks[k3].removeAttribute('display'); }
+      var currentKey = [p, y, up ? 1 : 0].join('|'); if (g.getAttribute('data-current') !== currentKey) { rect.setAttribute('y', y - 5); rect.setAttribute('fill', light ? (up ? '#ff3347' : '#00a878') : (up ? '#f23645' : '#22ab94')); rect.removeAttribute('display'); value.setAttribute('y', y + 2.6); if (value.textContent !== p.toFixed(2)) value.textContent = p.toFixed(2); value.removeAttribute('display'); g.setAttribute('data-current', currentKey); }
+      var old = sv.querySelector('#zpNowTg'); if (old) old.setAttribute('display', 'none');
+    } else { ticks = g.querySelectorAll('[data-tick]'); for (var k4 = 0; k4 < ticks.length; k4++) if (ticks[k4].hasAttribute('display')) ticks[k4].removeAttribute('display'); if (!rect.hasAttribute('display')) rect.setAttribute('display', 'none'); if (!value.hasAttribute('display')) value.setAttribute('display', 'none'); }
   } catch (eR) { } }
-  document.addEventListener('zp:drawn', function () { requestAnimationFrame(raxDraw); }); setInterval(function () { if (!document.hidden) raxDraw(); }, 3000); setTimeout(raxDraw, 900);
+  window.zpRaxDrawJL = raxDraw;
+  document.addEventListener('zp:drawn', raxDraw); setTimeout(raxDraw, 900);
   /* 11-25 用户「白色的没问题做吧」: 白底 TradingView(配色表 outputs/白底TV_作战屏_效果图_1125.svg).
      做法: 不逐行改写死色; 每次画完(zp:drawn)+2秒兜底, 扫页面上元素的实际颜色按同一张表换: 白/灰字→#131722/#787b86, 深底→白底, 亮黄/亮青/亮蓝→同色深一档, 红绿用TV色; 字描边去掉.
      记 zp_light_v1=1; 顶部「收起」左边 ◐ 切换(切回深色=刷新页面, 不留残色) */
@@ -5761,8 +5781,8 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
   if (LT) {
     document.documentElement.classList.add('zpLight'); document.documentElement.setAttribute('data-theme', 'light');
     /* 11-25lt2 用户「白色切换你自己搞定」+发TV电脑白底截图: 网格=TV淡灰点线; 量柱=半透明红绿; 读数字去描边(原黑团); PAT箱体/三角=TV蓝8%填充; 持仓股数字看不见修 */
-    (function () { var st = document.createElement('style'); st.id = 'zpLtCssJL'; st.textContent = 'html.zpLight #ch line[data-grid],html.zpLight #zpAx line{stroke:#b2b5be!important;stroke-dasharray:1 2.5!important;stroke-width:.6px!important;opacity:1!important;stroke-opacity:1!important}' + 'html.zpLight #zpVolIn rect{fill-opacity:.5!important}' + 'html.zpLight svg text{stroke:none!important}' + 'html.zpLight #zpShp rect[fill-opacity],html.zpLight #zpShp polygon[fill-opacity]{fill:#2962ff!important;fill-opacity:.08!important}' + 'html.zpLight #metaLine input,html.zpLight #metaLine select{color:#131722!important}'; (document.head || document.documentElement).appendChild(st); })();
-    var MAP = { '12b89a': '#089981', 'ff4552': '#f23645', 'f23645': '#f23645', 'ff5459': '#f23645', '22ab94': '#089981', '2fe39b': '#089981', '1fdc93': '#089981', '089981': '#089981', 'ffd66e': '#b07d00', 'ffd21f': '#b07d00', 'ffe14d': '#9c7a00', 'ff9a3c': '#e65100', 'ff9800': '#f57c00', '4ff0ff': '#0097a7', '7ab8ff': '#2962ff', 'e05ae0': '#9c27b0', 'ff5cff': '#9c27b0' };
+    (function () { var st = document.createElement('style'); st.id = 'zpLtCssJL'; st.textContent = 'html.zpLight #ch line[data-grid],html.zpLight #zpAx line{stroke:#e0e3eb!important;stroke-dasharray:1 3!important;stroke-width:.7px!important;opacity:1!important;stroke-opacity:1!important}' + 'html.zpLight #ch,html.zpLight #zpSub,html.zpLight #zpRsoW,html.zpLight #zpSub svg,html.zpLight #zpRsoW svg,html.zpLight .chartbox svg{background:#fff!important}' + 'html.zpLight #zpVolIn rect{fill-opacity:.75!important}' + 'html.zpLight svg text{stroke:none!important}' + 'html.zpLight #pfk .pfkFill{display:none!important}' + 'html.zpLight #zpShp rect[fill-opacity],html.zpLight #zpShp polygon[fill-opacity]{fill:#2962ff!important;fill-opacity:.08!important}' + 'html.zpLight #metaLine input,html.zpLight #metaLine select{color:#131722!important}' + 'html.zpLight #wkSeg .seg,html.zpLight .zp-per{background:#f0f3fa!important;border:1px solid #e0e3eb!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}' + 'html.zpLight #wkSeg .tab,html.zpLight .zp-per button{color:#434651!important;opacity:1!important}' + 'html.zpLight #wkSeg .tab.on,html.zpLight .zp-per button.on{background:#e8efff!important;color:#2962ff!important}' + 'html.zpLight .zp-per .zp-hl.on{color:#f23645!important;background:#fce8e9!important}' + 'html.zpLight .zp-per .zp-pat.on,html.zpLight .zp-per .zp-fib.on{color:#b07d00!important;background:#fff4cc!important}' + 'html.zpLight #tbFoldJL,html.zpLight #zpLtJL,html.zpLight #hdFoldJL{color:#434651!important;background:#f0f3fa!important;border-color:#e0e3eb!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'; (document.head || document.documentElement).appendChild(st); })();
+    var MAP = { '12b89a': '#00a878', 'ff4552': '#ff3347', 'f23645': '#ff3347', 'ff5459': '#ff3347', '22ab94': '#00a878', '2fe39b': '#00a878', '1fdc93': '#00a878', '089981': '#00a878', 'ffd66e': '#b07d00', 'ffd21f': '#b07d00', 'ffe14d': '#9c7a00', 'ff9a3c': '#e65100', 'ff9800': '#f57c00', '4ff0ff': '#0097a7', '7ab8ff': '#2962ff', 'e05ae0': '#9c27b0', 'ff5cff': '#9c27b0' };
     var pr = function (c) { var m = /rgba?\(([^)]+)\)/.exec(c || ''); if (!m) return null; var v = m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1 }; };
     var hx = function (o) { return [o.r, o.g, o.b].map(function (x) { x = Math.round(Math.max(0, Math.min(255, x))).toString(16); return x.length < 2 ? '0' + x : x; }).join(''); };
     function hsl(o) { var r = o.r / 255, g = o.g / 255, b = o.b / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, s = d ? d / (1 - Math.abs(2 * l - 1)) : 0, h = 0; if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, s, l]; }
@@ -5772,8 +5792,8 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
     function lt(c, kind) { var o = pr(c); if (!o || o.a === 0) return null; var k = hx(o); if (MAP[k]) { var mh = MAP[k]; return out({ r: parseInt(mh.substr(1, 2), 16), g: parseInt(mh.substr(3, 2), 16), b: parseInt(mh.substr(5, 2), 16) }, o.a); }
       var H = hsl(o), h = H[0], s = H[1], l = H[2];
       if (s < 0.18) { /* 灰: 前景 亮→深(白→#131722, 灰→#787b86); 底 深→白 */
-        if (kind === 'b') { if (l > 0.6) return out({ r: 19, g: 23, b: 34 }, Math.min(o.a, 0.06)); var lb = 1 - l * 0.35; var g2 = lb * 255; return out({ r: g2, g: g2 + 1, b: Math.min(255, g2 + 4) }, o.a < 0.95 ? Math.max(o.a, 0.5) : 1); }
-        if (l >= 0.85) return out({ r: 19, g: 23, b: 34 }, o.a); if (l >= 0.5) return out({ r: 120, g: 123, b: 134 }, o.a); return out({ r: 209, g: 212, b: 220 }, o.a); }
+        if (kind === 'b') { if (l > 0.92) return out({ r: 255, g: 255, b: 255 }, o.a); return out({ r: 240, g: 243, b: 248 }, o.a < 0.9 ? Math.max(o.a, 0.82) : 1); }
+        if (l >= 0.85) return out({ r: 19, g: 23, b: 34 }, Math.max(o.a, 0.8)); if (l >= 0.5) return out({ r: 120, g: 123, b: 134 }, Math.max(o.a, 0.85)); return out({ r: 209, g: 212, b: 220 }, o.a); }   /* 11-26w: 半透明白字(波段走势面板「距20日线/MA20」等)换深色后太淡看不见 → 透明度兜底 .8 */
       if (kind === 'b') { if (l < 0.3) return out(rgbOf(h, Math.min(s, 0.5), 0.96), o.a < 0.95 ? Math.max(o.a, 0.6) : 1); return null; }
       if (l > 0.55) return out(rgbOf(h, Math.min(1, s), 0.40), o.a);   /* 亮色字/线 → 同色深一档 */
       return null; }
@@ -5794,10 +5814,11 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
     }
     var busy = 0;
     function pass() { if (busy) return; busy = 1; try { var all = document.body ? document.body.getElementsByTagName('*') : [];
-      for (var i = 0; i < all.length; i++) { var e = all[i], tn = e.tagName; if (tn === 'SCRIPT' || tn === 'STYLE' || tn === 'CANVAS' || tn === 'IFRAME' || tn === 'IMG' || tn === 'svg' || tn === 'defs' || tn === 'linearGradient' || tn === 'stop' || tn === 'g' && !e.getAttribute('fill') && !e.getAttribute('stroke')) continue;
+      for (var i = 0; i < all.length; i++) { var e = all[i], tn = e.tagName; if (e.closest && e.closest('#zpRAxJL')) continue; if (tn === 'SCRIPT' || tn === 'STYLE' || tn === 'CANVAS' || tn === 'IFRAME' || tn === 'IMG' || tn === 'svg' || tn === 'defs' || tn === 'linearGradient' || tn === 'stop' || tn === 'g' && !e.getAttribute('fill') && !e.getAttribute('stroke')) continue;
         try { doEl(e, e instanceof SVGElement); } catch (eE) { } } } finally { busy = 0; } }
     var qq = 0; document.addEventListener('zp:drawn', function () { if (qq) return; qq = requestAnimationFrame(function () { qq = 0; pass(); }); });
     setInterval(function () { if (!document.hidden) pass(); }, 2000); setTimeout(pass, 600);
+    document.addEventListener('click', function () { setTimeout(pass, 60); setTimeout(pass, 450); }, true);   /* 11-26w 用户「一点击它背景什么都没了」: 点开的新面板(波段走势等)原要等2秒扫描才换白, 先闪深色 → 点完马上补扫 */
     window.zpLightPassJL = pass;
   }
   /* 副图上下换: #zpSub 页签行加「⇅」, 存 zp_huo_below_v1 */
@@ -5821,6 +5842,21 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
 #myT .mt-c{font-size:11.5px;color:var(--dim);margin:2px 0 0 4px;line-height:1.5}
 #myT button{border:1px solid var(--line);background:none;border-radius:6px;color:var(--dim);padding:2px 8px}
 #myT .up{color:var(--red)}#myT .dn{color:var(--green)}
+html.zpLight #myT{background:#fff!important;border-color:#e0e3eb!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.zpLight #myT summary,html.zpLight #myT summary *{color:#131722!important;background:transparent!important}
+html.zpLight #myT input,html.zpLight #myT select{color:#131722!important;background:#fff!important;border-color:#c9ccd6!important}
+html.zpLight #wkSeg .seg{padding:0!important;border:0!important;border-radius:6px!important;background:transparent!important}
+html.zpLight #wkSeg .tab{height:26px!important;min-width:34px!important;padding:0 9px!important;border-radius:6px!important;background:transparent!important;color:#434651!important;opacity:1!important}
+html.zpLight #wkSeg .tab.on{background:#f0f3fa!important;color:#131722!important}
+html.zpLight .zp-per{padding:0!important;border:0!important;border-radius:6px!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.zpLight .zp-per button,html.zpLight .zp-per button[data-p],html.zpLight .zp-per .zp-hl,html.zpLight .zp-per .zp-pat,html.zpLight .zp-per .zp-bi,html.zpLight .zp-per .zp-fib,html.zpLight .zp-per .zp-liq{color:#434651!important;opacity:1!important}
+html.zpLight .zp-per button.on,html.zpLight .zp-per button[data-p].on{background:#f0f3fa!important;color:#131722!important}
+/* 11-26w 用户「副图上的十字线说了几遍了, 切白色要看得到」: 副图(指标格/VOL/RSO/乖离)十字竖线横线原是写死 #fff, 每次移动重建, 换色扫描追不上 → 白底用样式表直接压成 TV 灰线+深字; 深色不受影响 */
+html.zpLight .zb-xh,html.zpLight .zb-xhh line,html.zpLight .zb-ptr line,html.zpLight .zr-xh line,html.zpLight #zpHuoJL .hx line,html.zpLight #zpHuoJL .hxh line{stroke:#5d606b!important;stroke-opacity:1!important;opacity:1!important}
+html.zpLight .zb-xhh rect,html.zpLight #zpHuoJL .hxh rect{fill:#f0f3fa!important;stroke:#787b86!important}
+html.zpLight .zb-xhh text,html.zpLight .zb-ptr text[fill="#fff"],html.zpLight .zr-xh text[fill="#fff"],html.zpLight .zr-xh tspan[fill="#fff"],html.zpLight #zpHuoJL .hxh text{fill:#131722!important}
+html.zpLight .zb-ptr circle[stroke="#fff"]{stroke:#787b86!important;fill:rgba(120,123,134,.15)!important}html.zpLight #zpHuoJL .hx circle{fill:#fff!important}
+html.zpLight #zpAbsViewJL{background-image:none!important}
 </style>
 <script>
 /* jl-myT: 我的实际做T对照(独立模块, 只读引擎数据, 不改现有逻辑)
@@ -6198,10 +6234,11 @@ function draw(cx,cy){
     hm=String(hm).padStart(4,'0');
     var old=document.getElementById('xh');if(old&&old.parentNode)old.parentNode.removeChild(old);
     var g=el('g',{id:'xh'});
-    g.appendChild(el('line',{x1:x,y1:PY0,x2:x,y2:PY0+PH,stroke:'#fff','stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
-    g.appendChild(el('line',{x1:PX0,y1:y,x2:LX-6,y2:y,stroke:'#fff','stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
+    var light=document.documentElement.classList.contains('zpLight'),xhColor=light?'#787b86':'#fff';
+    g.appendChild(el('line',{x1:x,y1:PY0,x2:x,y2:PY0+PH,stroke:xhColor,'stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
+    g.appendChild(el('line',{x1:PX0,y1:y,x2:LX-6,y2:y,stroke:xhColor,'stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
     if(!snap&&!near.auc)g.appendChild(el('circle',{cx:near.x,cy:near.y,r:2.4,fill:'var(--amber)'}));
-    g.appendChild(el('circle',{cx:x,cy:y,r:snap?5.5:4,fill:snap?'rgba(255,214,110,.25)':'rgba(255,255,255,.18)',stroke:snap?'var(--gold)':'#fff','stroke-width':1.4}));
+    g.appendChild(el('circle',{cx:x,cy:y,r:snap?5.5:4,fill:snap?'rgba(255,214,110,.25)':(light?'rgba(120,123,134,.14)':'rgba(255,255,255,.18)'),stroke:snap?'var(--gold)':xhColor,'stroke-width':1.4}));
     var pp=LIVE.pc>0?(price/LIVE.pc-1)*100:null,df=LIVE.last>0?price-LIVE.last:null;
     var rh=0;P.forEach(function(q){if(String(q.hm).padStart(4,'0')<=hm&&q.p>rh)rh=q.p});
     var dd=rh>0?(rh-price)/rh*100:0;   /* 距高: 相对"截至这一刻的当日最高价"回落了多少(≠相对昨收的涨跌) */
@@ -6209,9 +6246,9 @@ function draw(cx,cy){
     if(near.auc&&!snap){var av=hm==='0925'&&LIVE.auc.v>0?LIVE.auc.v:0;top=hm.slice(0,2)+':'+hm.slice(2)+(hm==='0925'?'  竞价成交 ':'  竞价撮合 ')+price.toFixed(2)+(pp==null?'':'  '+(pp>=0?'+':'')+pp.toFixed(2)+'%')+(av?'  '+(av>=1e4?(av/1e4).toFixed(av>=1e5?0:1)+'万手':Math.round(av)+'手'):'');}
     var w=top.length*5.6+10,x0=Math.max(PX0,Math.min(LX-6-w,x-w/2));   /* 11-06f 用户: 顶部信息条跟着竖线居中, 不再一下跳左一下跳右 */
     /* 11-13 用户「黑色背景重复多次」: 顶部信息条去掉黑底, 只留透明底+细描边字 */   /* jl-zpliq: 挪到图框上沿外, 不被画线工具条盖住 */
-    var t1=el('text',{x:x0+5,y:9.6,fill:'#fff','font-size':9.5,'font-weight':400,stroke:'rgba(5,10,16,.9)','stroke-width':.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);
+    var t1=el('text',{x:x0+5,y:9.6,fill:light?'#131722':'#fff','font-size':9.5,'font-weight':400,stroke:light?'none':'rgba(5,10,16,.9)','stroke-width':light?0:.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);
     var ps=price.toFixed(2),pw=ps.length*6.4+10,px0=LX-8-pw,py=Math.max(PY0+16,Math.min(PY0+PH-2,y));xhPctJL(g,price,py);
-    var t2=el('text',{x:px0+5,y:py-1,fill:snap?'#ffd66e':'#fff','font-size':9,'font-weight':400});t2.textContent=ps;g.appendChild(t2);xhPlusJL(g,px0,py,price);   /* 11-05 用户: 价格字底透明、不加粗 */
+    var t2=el('text',{x:px0+5,y:py-1,fill:snap?'#b07d00':(light?'#131722':'#fff'),'font-size':9,'font-weight':400});t2.textContent=ps;g.appendChild(t2);xhPlusJL(g,px0,py,price);   /* 11-05 用户: 价格字底透明、不加粗 */
     svgEl.appendChild(g);
     try{window.zpGhostJL&&zpGhostJL(price)}catch(_){}   /* 11-13夜: 尺子/价格条同步虚影点 */
     try{window.zpSubXH&&window.zpSubXH(hm)}catch(_){}   /* 副图(量/MACD/控盘/主力)同一时刻竖线+读数 */
@@ -6221,8 +6258,8 @@ function draw(cx,cy){
 /* 11-04: 十字线 左=涨跌%(相对昨收) 右=价格, 跟着横线走 */
 function xhPctJL(g,price,py){
   if(!(LIVE.pc>0))return;var pc=(price/LIVE.pc-1)*100,t=(pc>=0?'+':'')+pc.toFixed(2)+'%',w=t.length*6+10,x0=PX0+30;
-  w=t.length*5+8;g.appendChild(el('rect',{x:x0+1,y:py-10,width:w,height:11,rx:3,fill:'rgba(5,10,16,.55)',stroke:'rgba(255,255,255,.55)','stroke-width':.5}));   /* 11-13晚 用户: 亮白、小、细 */   /* 11-13: 去黑底, 只留细框 */   /* 11-06c 用户: 十字线左边%不和高低点字搅在一起 → 深色底盖住 */
-  var t3=el('text',{x:x0+4,y:py-1.8,fill:'#ffffff','font-size':8.5,'font-weight':300});t3.textContent=t;g.appendChild(t3);
+  var light=document.documentElement.classList.contains('zpLight');w=t.length*5+8;g.appendChild(el('rect',{x:x0+1,y:py-10,width:w,height:11,rx:3,fill:light?'#f0f3fa':'rgba(5,10,16,.55)',stroke:light?'#c9ccd6':'rgba(255,255,255,.55)','stroke-width':.5}));
+  var t3=el('text',{x:x0+4,y:py-1.8,fill:light?'#131722':'#ffffff','font-size':8.5,'font-weight':400});t3.textContent=t;g.appendChild(t3);
 }
 /* jl-zpliq: K线模式十字线——横向吸附到最近一根蜡烛中间, 纵向靠近开/高/低/收(10px内)就吸到那个价; 顶部写这根蜡烛的时段 + 开高低收 */
 function kDraw(K,x,y){
@@ -6238,20 +6275,21 @@ function kDraw(K,x,y){
   var old=document.getElementById('xh');if(old&&old.parentNode)old.parentNode.removeChild(old);
   var g=el('g',{id:'xh'});
   /* 11-16 用户「十字线移动背景跟着跑」: 撤掉跟着十字线走的整根蜡烛底色带(同TradingView只留虚线) */
-  g.appendChild(el('line',{x1:x,y1:PY0,x2:x,y2:PY0+PH,stroke:'#fff','stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
-  g.appendChild(el('line',{x1:PX0,y1:y,x2:LX-6,y2:y,stroke:'#fff','stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
-  g.appendChild(el('circle',{cx:x,cy:y,r:snap?5:3.5,fill:snap?'rgba(255,214,110,.25)':'rgba(255,255,255,.18)',stroke:snap?'var(--gold)':'#fff','stroke-width':1.3}));
+  var light=document.documentElement.classList.contains('zpLight'),xhColor=light?'#787b86':'#fff';
+  g.appendChild(el('line',{x1:x,y1:PY0,x2:x,y2:PY0+PH,stroke:xhColor,'stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
+  g.appendChild(el('line',{x1:PX0,y1:y,x2:LX-6,y2:y,stroke:xhColor,'stroke-width':.8,'stroke-dasharray':'3 3',opacity:.9}));
+  g.appendChild(el('circle',{cx:x,cy:y,r:snap?5:3.5,fill:snap?'rgba(255,214,110,.25)':(light?'rgba(120,123,134,.14)':'rgba(255,255,255,.18)'),stroke:snap?'var(--gold)':xhColor,'stroke-width':1.3}));
   var chg=LIVE.pc>0?(k.c/LIVE.pc-1)*100:null;
   if(k.auc){var aV=LIVE.auc&&LIVE.auc.v>0?LIVE.auc.v:0;var top0='09:25 竞价开盘 '+d2(k.o)+(LIVE.pc>0?'  '+((k.o/LIVE.pc-1)*100>=0?'+':'')+((k.o/LIVE.pc-1)*100).toFixed(2)+'%':'')+(aV?'  '+(aV>=1e4?(aV/1e4).toFixed(aV>=1e5?0:1)+'万手':Math.round(aV)+'手'):'')+(k.c!==k.o?'  现'+d2(k.c):'');}   /* 11-14: 竞价占位K(第一根真K出来前) 读数写竞价 */
   var top=k.auc?top0:(k.d&&k.d!==LIVE.sessDate?k.d.slice(4,6)+'-'+k.d.slice(6)+' ':'')+f(k.s)+'–'+f(k.hm)+'  开'+d2(k.o)+' 高'+d2(k.h)+' 低'+d2(k.l)+' 收'+d2(k.c)+(chg==null?'':'  '+(chg>=0?'+':'')+chg.toFixed(2)+'%');
   var w=0;for(var i=0;i<top.length;i++)w+=/[一-鿿]/.test(top[i])?9.5:5.4;w+=10;
   var x0=Math.max(PX0,Math.min(LX-6-w,x-w/2));   /* 放在图框上沿外(y 0~13), 不被左上角画线工具条盖住 */
   g.appendChild(el('rect',{x:x0,y:-1,width:w,height:14,rx:4,fill:'none',stroke:'none'}));
-  var t1=el('text',{x:x0+5,y:9.6,fill:'#fff','font-size':9.5,'font-weight':400,stroke:'rgba(5,10,16,.9)','stroke-width':.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);   /* 11-16 用户: 十字线读数 细+亮白+清晰(原600粗+2.2描边在iPhone上发胖) */
+  var t1=el('text',{x:x0+5,y:9.6,fill:light?'#131722':'#fff','font-size':9.5,'font-weight':400,stroke:light?'none':'rgba(5,10,16,.9)','stroke-width':light?0:.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);   /* 11-16 用户: 十字线读数 细+亮白+清晰(原600粗+2.2描边在iPhone上发胖) */
   var ps=d2(price),pw=0;   /* 11-05 用户: 右侧价签只写价格(开高低收在顶部那条里, 同TradingView), 不写"低/收"大字压字 */
   for(var j=0;j<ps.length;j++)pw+=/[一-鿿]/.test(ps[j])?10.5:6.4;pw+=10;
   var px0=LX-8-pw,py=Math.max(PY0+14,Math.min(PY0+PH-2,y));xhPctJL(g,price,py);   /* 右=价格, 左=涨跌% */
-  var t2=el('text',{x:px0+5,y:py-1,fill:snap?'#ffd66e':'#fff','font-size':9,'font-weight':400});t2.textContent=ps;g.appendChild(t2);xhPlusJL(g,px0,py,price);
+  var t2=el('text',{x:px0+5,y:py-1,fill:snap?'#b07d00':(light?'#131722':'#fff'),'font-size':9,'font-weight':400});t2.textContent=ps;g.appendChild(t2);xhPlusJL(g,px0,py,price);
   svgEl.appendChild(g);
   try{window.zpGhostJL&&zpGhostJL(price)}catch(_){}
   try{window.zpSubXH&&window.zpSubXH(k.key||k.hm)}catch(_){}
@@ -6947,6 +6985,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
   }
 
   /* ── 主力资金: 东财1分钟 fflow, f52=主力净额(当日累计, 元) ── */
+  window.fundingLagJL = fundingLagJL;   /* 11-26t: 前面脚本的 jlSigCum/pullCheckJL/pullDayWeekJL/yyCalcJL 调它, 原先包在本闭包里外面找不到→报错被try吞→盘中资金提醒不出; 只挂出, 函数本身没改 */
   function fundingLagJL(lastHm) {
     if (!liveToday() || !/^(am|pm)$/.test(phaseNow())) return 0;
     var pts=LIVE.pts||[], current=pts.length?String(pts[pts.length-1].hm).padStart(4,'0'):String(hmNow()).padStart(4,'0');

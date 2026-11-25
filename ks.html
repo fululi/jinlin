@@ -355,6 +355,125 @@
   #ksLookJL p { color: #aeb7c6; font-size: 11px; line-height: 1.6; }
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
+<script>/* 11-26 用户「k线表现在做一比一 trading view 白色的页面! 注意十字线 副图 以及白色字体在黑色页面切换白色的时候情况, 蜡烛颜色亮红亮绿 背景虚线」
+   白底TV(和作战屏 zp_light_v1 同一个开关、同一张配色表 MAP): 不逐行改写死色, 画布在调用那一刻按同一张表换色——
+   字: 白/浅灰→#131722, 中灰→#787b86; 深底→白; 亮彩→同色相深一档; 红绿=作战屏白底同款; 字压在实心深/彩色小牌上(现价牌/十字线价签/高位区牌)→字留白;
+   网格→#e0e3eb 点线; 十字线→#9598a1 虚线, 价签#131722黑底白字; 发光(shadowBlur)去掉; 黑描边字→白描边。HTML 按钮/弹层按算出来的实际色换。
+   深色时整段 return, 不动任何东西。?light=1/0 临时强开/强关(测试用) */
+(function () {
+  var on = false;
+  try { var q = new URLSearchParams(location.search).get('light'); on = q === '1' || (q !== '0' && localStorage.getItem('zp_light_v1') === '1'); if (/[?&]ksT=1/.test(location.search)) on = false; } catch (e) { }
+  window.KS_LIGHT = on; if (!on || typeof CanvasRenderingContext2D === 'undefined') return;
+  var de = document.documentElement; de.classList.add('ksLight'); de.setAttribute('data-ks-light', '1');
+  var UPC = '#ff3347', DNC = '#00a878';   /* 蜡烛红绿: 作战屏白底同款(TV红绿亮一档) */
+  var MAP = { 'f23645': UPC, 'ff6f66': UPC, 'ff4552': UPC, 'ff5459': UPC, 'ff3347': UPC, 'e5453c': UPC, 'ff6b6b': UPC, 'ff5a5a': UPC,
+    '089981': DNC, '35d99a': DNC, '12b89a': DNC, '22ab94': DNC, '2fe39b': DNC, '1fdc93': DNC, '00a878': DNC, '1f9d66': DNC, '26a69a': DNC,
+    '1e222d': '#e0e3eb', '191d24': '#e0e3eb', '141414': '#e0e3eb', '2a2e39': '#e0e3eb', '363a45': '#e0e3eb',
+    'ffd66e': '#b07d00', 'ffd21f': '#b07d00', 'ffe14d': '#9c7a00', 'ffd94a': '#b07d00', 'd9b45c': '#a07800', 'e8c568': '#a07800',
+    'ff9a3c': '#e65100', 'ff9800': '#f57c00', '4ff0ff': '#0097a7', '7ab8ff': '#2962ff', '4a9eff': '#2962ff', 'e05ae0': '#9c27b0', 'ff5cff': '#9c27b0' };
+  var BMAP = { '30433a': '#131722' };   /* 只管「底」: 十字线右价签底(同色的按钮边框不跟着变黑) */
+  var XMAP = { 'rgba(228, 237, 230, 0.45)': '#9598a1' };   /* 十字线 */
+  var P = CanvasRenderingContext2D.prototype, G = window.CanvasGradient && CanvasGradient.prototype;
+  var dFS = Object.getOwnPropertyDescriptor(P, 'fillStyle'), dSS = Object.getOwnPropertyDescriptor(P, 'strokeStyle'), dSC = Object.getOwnPropertyDescriptor(P, 'shadowColor'), dSB = Object.getOwnPropertyDescriptor(P, 'shadowBlur');
+  var sc = document.createElement('canvas').getContext('2d');
+  var NC = new Map(); function norm(c) { var r = NC.get(c); if (r !== undefined) return r; dFS.set.call(sc, '#000'); dFS.set.call(sc, c); r = dFS.get.call(sc); if (NC.size < 5000) NC.set(c, r); return r; }
+  function pr(c) { if (typeof c !== 'string') return null; c = norm(c); var m;
+    if ((m = /^#([0-9a-f]{6})$/i.exec(c))) return { r: parseInt(m[1].substr(0, 2), 16), g: parseInt(m[1].substr(2, 2), 16), b: parseInt(m[1].substr(4, 2), 16), a: 1, n: c };
+    if ((m = /rgba?\(([^)]+)\)/.exec(c))) { var v = m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1, n: c }; } return null; }
+  var hx = function (o) { return [o.r, o.g, o.b].map(function (x) { x = Math.round(Math.max(0, Math.min(255, x))).toString(16); return x.length < 2 ? '0' + x : x; }).join(''); };
+  function hsl(o) { var r = o.r / 255, g = o.g / 255, b = o.b / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn, s = d ? d / (1 - Math.abs(2 * l - 1)) : 0, h = 0; if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; } return [h, s, l]; }
+  function rgbOf(h, s, l) { var c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2, q = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return { r: (q[0] + m) * 255, g: (q[1] + m) * 255, b: (q[2] + m) * 255 }; }
+  function out(o, a) { var k = hx(o); return a >= 0.999 ? '#' + k : 'rgba(' + Math.round(o.r) + ',' + Math.round(o.g) + ',' + Math.round(o.b) + ',' + (+a.toFixed(3)) + ')'; }
+  function hexO(h) { return { r: parseInt(h.substr(1, 2), 16), g: parseInt(h.substr(3, 2), 16), b: parseInt(h.substr(5, 2), 16) }; }
+  /* 和作战屏 lt() 同一套规则; kind: t=字/线 b=底 */
+  function lt(c, kind) { var o = pr(c); if (!o) return null; if (o.a === 0) return null; if (XMAP[o.n]) return XMAP[o.n]; var k = hx(o); if (kind === 'b' && BMAP[k]) return out(hexO(BMAP[k]), o.a); if (MAP[k]) return out(hexO(MAP[k]), o.a);
+    var H = hsl(o), h = H[0], s = H[1], l = H[2];
+    if (s < 0.18) { if (kind === 'b') { if (l > 0.92) return out({ r: 255, g: 255, b: 255 }, o.a); return out({ r: 240, g: 243, b: 248 }, o.a < 0.9 ? Math.max(o.a, 0.82) : 1); }
+      if (l >= 0.85) return out({ r: 19, g: 23, b: 34 }, o.a); if (l >= 0.5) return out({ r: 120, g: 123, b: 134 }, o.a); if (kind === 'x') return out({ r: 149, g: 152, b: 161 }, o.a); return out({ r: 209, g: 212, b: 220 }, o.a); }   /* x=字: 暗灰字→#9598a1(线才用#d1d4dc, 字太淡看不见) */
+    if (kind === 'b') { if (l < 0.3) return out(rgbOf(h, Math.min(s, 0.5), 0.96), o.a < 0.95 ? Math.max(o.a, 0.6) : 1); return null; }
+    if (l > 0.55) return out(rgbOf(h, Math.min(1, s), 0.40), o.a);
+    return null; }
+  window.ksLtColorJL = lt;
+  var MC = new Map(); function mp(c, kind) { if (typeof c !== 'string') return c; var key = kind + c, r = MC.get(key); if (r !== undefined) return r; r = lt(c, kind) || c; if (MC.size < 8000) MC.set(key, r); return r; }
+  function lum(c) { var o = pr(c); if (!o) return 1; return (0.299 * o.r + 0.587 * o.g + 0.114 * o.b) / 255; }
+  function darkOrig(c) { var o = pr(c); if (!o) return false; return hsl(o)[2] < 0.3; }
+  function lightGray(c) { var o = pr(c); if (!o) return false; var H = hsl(o); return H[1] < 0.18 && H[2] > 0.85; }
+  /* 原色记在 __fo/__so; 原生值设成「字/线」映射; 画底时临时换成「底」映射 */
+  function stk(t) { return t.__st || (t.__st = []); }
+  Object.defineProperty(P, 'fillStyle', { configurable: true, get: function () { return this.__fo !== undefined ? this.__fo : dFS.get.call(this); }, set: function (c) { this.__fo = c; dFS.set.call(this, mp(c, 't')); } });
+  Object.defineProperty(P, 'strokeStyle', { configurable: true, get: function () { return this.__so !== undefined ? this.__so : dSS.get.call(this); }, set: function (c) { this.__so = c; dSS.set.call(this, mp(c, 't')); } });
+  if (dSC) Object.defineProperty(P, 'shadowColor', { configurable: true, get: function () { return dSC.get.call(this); }, set: function (c) { dSC.set.call(this, 'rgba(0,0,0,0)'); } });
+  if (dSB) Object.defineProperty(P, 'shadowBlur', { configurable: true, get: function () { return dSB.get.call(this); }, set: function (v) { dSB.set.call(this, 0); } });
+  var nSave = P.save, nRestore = P.restore;
+  P.save = function () { stk(this).push([this.__fo, this.__so, this.__gm]); return nSave.call(this); };
+  P.restore = function () { var s = stk(this).pop(); if (s) { this.__fo = s[0]; this.__so = s[1]; this.__gm = s[2]; } return nRestore.call(this); };
+  if (G) { var nAdd = G.addColorStop; G.addColorStop = function (o, c) { var q = pr(c), H = q && hsl(q); return nAdd.call(this, o, q && H[1] >= 0.18 && q.a < 0.7 && !MAP[hx(q)] ? areaCol(c, 1) : mp(c, darkOrig(c) ? 'b' : 't')); };   /* 渐变面积(分时下方/色带)同样淡 */ }
+  /* 路径外框: 记小牌位置, 判断字是不是压在牌子上 */
+  function bbR(t) { t.__bb = null; }
+  function bbA(t, x0, y0, x1, y1) { var b = t.__bb; if (!b) t.__bb = [Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)]; else { if (x0 < b[0]) b[0] = x0; if (x1 < b[0]) b[0] = x1; if (y0 < b[1]) b[1] = y0; if (y1 < b[1]) b[1] = y1; if (x0 > b[2]) b[2] = x0; if (x1 > b[2]) b[2] = x1; if (y0 > b[3]) b[3] = y0; if (y1 > b[3]) b[3] = y1; } }
+  var nBP = P.beginPath; P.beginPath = function () { bbR(this); return nBP.call(this); };
+  ['moveTo', 'lineTo'].forEach(function (nm) { var n = P[nm]; P[nm] = function (x, y) { bbA(this, x, y, x, y); return n.apply(this, arguments); }; });
+  var nRect = P.rect; P.rect = function (x, y, w, h) { bbA(this, x, y, x + w, y + h); return nRect.apply(this, arguments); };
+  if (P.roundRect) { var nRR = P.roundRect; P.roundRect = function (x, y, w, h) { bbA(this, x, y, x + w, y + h); return nRR.apply(this, arguments); }; }
+  var nArc = P.arc; P.arc = function (x, y, r) { bbA(this, x - r, y - r, x + r, y + r); return nArc.apply(this, arguments); };
+  function badge(t, x, y, w, h, drawn) { if (!(w > 0 && h > 0) || h > 44 || w > 420) return; var o = pr(drawn); if (!o || o.a * (t.globalAlpha == null ? 1 : t.globalAlpha) < 0.72) return; var B = t.__bd || (t.__bd = []); B.push([x, y, x + w, y + h, lum(drawn)]); if (B.length > 60) B.shift(); }
+  /* 11-26 用户「不要压线」: 分时整块底=纯白(原来淡灰蓝); 高位区/低位区/分时面积这种半透明色带 → 同色很淡一层(≤14%), 不再盖住线 */
+  function fillKind(t, w, h) { var c = t.__fo; if (typeof c !== 'string') return 't'; var o = pr(c); if (!o) return 't'; var H = hsl(o);
+    if (H[1] < 0.18 && H[2] < 0.3 && w * h > 60000) return 'W';
+    if (darkOrig(c)) return 'b'; if (lightGray(c) && w * h > 2400) return 'b';
+    var ga = t.globalAlpha == null ? 1 : t.globalAlpha; if (H[1] >= 0.18 && o.a * ga < 0.7 && w >= 14 && h >= 14 && !MAP[hx(o)]) return 'A';
+    return 't'; }
+  function areaCol(c, ga) { var o = pr(c), H = hsl(o), q = rgbOf(H[0], Math.min(H[1], 0.9), 0.55); ga = ga > 0 ? ga : 1; return out(q, Math.min(o.a, 0.14 / ga)); }
+  function withFill(t, kind, fn) { if (kind === 't' || typeof t.__fo !== 'string') return fn(); var cur = dFS.get.call(t), c = t.__fo;
+    dFS.set.call(t, kind === 'W' ? out({ r: 255, g: 255, b: 255 }, pr(c).a) : kind === 'A' ? areaCol(c, t.globalAlpha) : mp(c, kind)); try { return fn(); } finally { dFS.set.call(t, cur); } }
+  var nFR = P.fillRect; P.fillRect = function (x, y, w, h) { var t = this, a = arguments, k = fillKind(t, Math.abs(w), Math.abs(h)); return withFill(t, k, function () { var r = nFR.apply(t, a); if (typeof t.__fo === 'string') badge(t, Math.min(x, x + w), Math.min(y, y + h), Math.abs(w), Math.abs(h), dFS.get.call(t)); return r; }); };
+  var nFill = P.fill; P.fill = function () { var t = this, a = arguments, b = t.__bb, w = b ? b[2] - b[0] : 0, h = b ? b[3] - b[1] : 0, k = fillKind(t, w, h); return withFill(t, k, function () { var r = nFill.apply(t, a); if (b && typeof t.__fo === 'string') badge(t, b[0], b[1], w, h, dFS.get.call(t)); return r; }); };
+  var nCR = P.clearRect; P.clearRect = function (x, y, w, h) { if (w * h > 20000) this.__bd = []; return nCR.apply(this, arguments); };
+  var nDI = P.drawImage; P.drawImage = function () { if (arguments.length <= 3) this.__bd = []; return nDI.apply(this, arguments); };
+  function fsz(t) { var m = /(\d+(?:\.\d+)?)px/.exec(t.font); return m ? +m[1] : 10; }
+  function onBadge(t, s, x, y) { var B = t.__bd; if (!B || !B.length) return null; var w = 0; try { w = P.measureText.call(t, String(s)).width; } catch (e) { } var fz = fsz(t), al = t.textAlign, bl = t.textBaseline;
+    var cx = al === 'center' ? x : (al === 'right' || al === 'end') ? x - w / 2 : x + w / 2, cy = bl === 'middle' ? y : bl === 'top' || bl === 'hanging' ? y + fz * 0.5 : y - fz * 0.35;
+    for (var i = B.length - 1; i >= 0; i--) { var q = B[i]; if (q[2] - q[0] < w * 0.7 || q[3] - q[1] < fz * 0.8) continue; if (cx >= q[0] - 1 && cx <= q[2] + 1 && cy >= q[1] - 1 && cy <= q[3] + 1) return q; } return null; }
+  var nFT = P.fillText; P.fillText = function (s, x, y) { var t = this, c = t.__fo; if (typeof c !== 'string') return nFT.apply(t, arguments); var q = onBadge(t, s, x, y), o = pr(c), ov = null;
+    if (q && q[4] < 0.55) ov = 'rgba(255,255,255,' + (o ? o.a : 1) + ')';   /* 字压在深/彩色小牌上 → 留白 */
+    else if (o && hsl(o)[1] < 0.18 && hsl(o)[2] < 0.5) ov = mp(c, 'x');   /* 暗灰字 → #9598a1 */
+    if (!q && !t.__noHalo) { nSave.call(t); try { dSS.set.call(t, 'rgba(255,255,255,0.92)'); t.lineWidth = 3; t.lineJoin = 'round'; t.setLineDash([]); nST.call(t, s, x, y); } catch (eH) { } nRestore.call(t); }   /* 11-26 用户「不要压线」: 字底下垫一圈白(TV式), 穿过的线不再划在字上 */
+    if (!ov) return nFT.apply(t, arguments);
+    var cur = dFS.get.call(t); dFS.set.call(t, ov); try { return nFT.apply(t, arguments); } finally { dFS.set.call(t, cur); } };
+  var nST = P.strokeText; P.strokeText = function (s, x, y) { var t = this, c = t.__so; if (typeof c === 'string' && darkOrig(c)) { var q = onBadge(t, s, x, y); if (q && q[4] < 0.55) return; var cur = dSS.get.call(t); dSS.set.call(t, mp(c, 'b')); try { return nST.apply(t, arguments); } finally { dSS.set.call(t, cur); } } return nST.apply(t, arguments); };
+  /* 网格点线: gridSt 之后同色的线画成 1/3 点线(作战屏白底同款) */
+  var nStroke = P.stroke; P.stroke = function () { var t = this; if (t.__gm && dSS.get.call(t) === t.__gm && !t.getLineDash().length) { nSave.call(t); t.setLineDash([1, 3]); try { return nStroke.apply(t, arguments); } finally { nRestore.call(t); } } return nStroke.apply(t, arguments); };
+  window.ksLtGridMarkJL = function (ctx) { ctx.__gm = dSS.get.call(ctx); };
+  /* 十字线虚线: TV 大虚线 6/6 */
+  var nSLD = P.setLineDash; P.setLineDash = function (a) { if (a && a.length === 2 && a[0] === 4 && a[1] === 4 && this.__so === 'rgba(228,237,230,0.45)') a = [6, 6]; return nSLD.call(this, a); };
+  /* HTML 部分(按钮/弹层/票头): 按算出来的实际色换, 同作战屏 pass() */
+  var st = document.createElement('style'); st.id = 'ksLtCssJL';
+  st.textContent = 'html.ksLight{color-scheme:light;--ks-chart-bg:#ffffff!important}html.ksLight,html.ksLight body,html.ksLight body.embed,html.ksLight #chartwrap{background:#ffffff!important;color:#131722}html.ksLight [data-chart]{filter:none!important}html.ksLight *{text-shadow:none!important}'
+    + 'html.ksLight body .topbar{background:#ffffff!important;border-bottom:1px solid #e0e3eb!important}html.ksLight body .pstrip{background:#ffffff!important;border-color:#e0e3eb!important;box-shadow:none!important}html.ksLight body .pstrip button{color:#131722!important;background:transparent!important}html.ksLight body .pstrip button.on{color:#2962ff!important;background:#e3effd!important}';
+  (document.head || de).appendChild(st);
+  var HP = ['color', 'backgroundColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'], REC = new WeakMap();
+  function hlt(v, kind) { var m = /rgba?\(([^)]+)\)/.exec(v || ''); if (!m) return null; return lt(v, kind); }
+  function doEl(e, svgEl) { var r = REC.get(e), sig = svgEl ? (e.getAttribute('fill') || '') + '|' + (e.getAttribute('stroke') || '') + '|' + (e.getAttribute('class') || '') : e.className + '';
+    if (r && r.sig === sig && r.done.every(function (q) { return e.style[q[0]] === q[1]; })) return;
+    if (r) r.orig.forEach(function (q) { e.style[q[0]] = q[1]; });
+    var cs = getComputedStyle(e), done = [], orig = [];
+    (svgEl ? ['fill', 'stroke'] : HP).forEach(function (pp) { var v = cs[pp]; if (!v || v === 'none' || /url\(/.test(v)) return;
+      var kind = svgEl ? 't' : (pp === 'backgroundColor' ? 'b' : pp === 'color' ? 'x' : 't');
+      if (!svgEl && pp === 'color') { var bo = pr(cs.backgroundColor), bH = bo && hsl(bo); if (bo && bo.a > 0.8 && bH[1] > 0.35 && bH[2] < 0.7) { if (lightGray(v)) return; } }   /* 彩色实心牌上的白字留白 */
+      var nv = hlt(v, kind); if (!nv) return; orig.push([pp, e.style[pp]]); e.style.setProperty(pp.replace(/[A-Z]/g, function (m) { return '-' + m.toLowerCase(); }), nv, 'important'); done.push([pp, e.style[pp]]); });   /* important: 原样式里 !important 的白字也换得掉 */
+    if (!svgEl && cs.backdropFilter && cs.backdropFilter !== 'none') { orig.push(['backdropFilter', e.style.backdropFilter]); e.style.backdropFilter = 'none'; done.push(['backdropFilter', 'none']); }
+    if (!svgEl && cs.boxShadow && cs.boxShadow !== 'none') { orig.push(['boxShadow', e.style.boxShadow]); e.style.boxShadow = '0 2px 8px rgba(19,23,34,.12)'; done.push(['boxShadow', e.style.boxShadow]); }
+    REC.set(e, { sig: sig, done: done, orig: orig }); }
+  var busy = 0;
+  function pass() { if (busy || !document.body) return; busy = 1; try { var all = document.body.getElementsByTagName('*');
+    for (var i = 0; i < all.length; i++) { var e = all[i], tn = e.tagName; if (e.closest && e.closest('.pstrip')) continue; if (tn === 'SCRIPT' || tn === 'STYLE' || tn === 'CANVAS' || tn === 'IFRAME' || tn === 'IMG' || tn === 'svg' || tn === 'defs' || tn === 'stop' || tn === 'INPUT' && e.type === 'color') continue;
+      try { doEl(e, e instanceof SVGElement); } catch (eE) { } } } finally { busy = 0; } }
+  var qq = 0; function kick() { if (qq) return; qq = requestAnimationFrame(function () { qq = 0; pass(); }); }
+  window.ksLightPassJL = pass;
+  document.addEventListener('DOMContentLoaded', function () { pass(); try { new MutationObserver(kick).observe(document.body, { childList: true, subtree: true }); } catch (e) { } document.addEventListener('click', function () { setTimeout(kick, 30); }, true); });
+  setInterval(function () { if (!document.hidden) pass(); }, 2000);
+})();
+</script>
 <script src="jl_absorb.js?v=7"></script>
 <script src="jl_chart_cache.js?v=1"></script>
 <script src="jl_markets.js?v=7"></script>
@@ -903,9 +1022,9 @@ var S = {
 };
 function applyTheme() {
   var de = document.documentElement;
-  de.classList.toggle("theme-lc", S.theme === "lc");
-  de.classList.toggle("theme-la", S.theme === "la");
-  var tb9 = document.querySelector("[data-theme]"); if (tb9) tb9.textContent = S.theme === "lc" ? "◑" : (S.theme === "la" ? "○" : "◐");
+  /* 11-26 用户「一比一 trading view 白色」: 旧「外黑内白/纯白」是整图反色滤镜(红绿会变色), 停用; 白底改走 KS_LIGHT(zp_light_v1, 和作战屏同一个开关) */
+  de.classList.remove("theme-lc", "theme-la");
+  var tb9 = document.querySelector("[data-theme]"); if (tb9) { tb9.textContent = window.KS_LIGHT ? "○" : "◐"; tb9.title = window.KS_LIGHT ? "现在白底 · 点切回深色" : "切白底(TradingView 白)"; }
 }
 var DRAW = {}; // "code:klt" -> [{type, pts:[{i,p}...]}]
 var ALERTS = {}; try { ALERTS = JSON.parse(localStorage.getItem("ksm_alerts_v1") || "{}"); } catch (e) {}
@@ -1087,7 +1206,7 @@ window.addEventListener("storage", function (e) {
   var panel = document.getElementById("ksLookJL"); if (panel) { panel.remove(); lookPanelJL(); }
 });
 function _embMode() { return typeof document !== "undefined" && document.body && document.body.classList.contains("embed"); }
-function gridSt(ctx) { ctx.strokeStyle = LOOK_JL.gridOn ? LOOK_JL.grid : "rgba(0,0,0,0)"; ctx.lineWidth = 1; }
+function gridSt(ctx) { ctx.strokeStyle = LOOK_JL.gridOn ? LOOK_JL.grid : "rgba(0,0,0,0)"; ctx.lineWidth = 1; if (window.KS_LIGHT && window.ksLtGridMarkJL) ksLtGridMarkJL(ctx); } /* 11-26 白底TV: 网格画成淡灰点线 */
 function installLookFontJL(ctx) {
   if (ctx.__lookTextJL) return; ctx.__lookTextJL = true;
   ["fillText", "strokeText", "measureText"].forEach(function (name) {
@@ -4627,8 +4746,8 @@ document.querySelector("[data-tooltog]").addEventListener("click", function () {
   S.toolsOff = !S.toolsOff; store(); syncCollapse();
 });
 document.querySelector("[data-theme]").addEventListener("click", function () {
-  S.theme = S.theme === "d" ? "lc" : (S.theme === "lc" ? "la" : "d");
-  applyTheme(); store(); hint(S.theme === "lc" ? "外黑内白" : (S.theme === "la" ? "纯白" : "纯黑"));
+  try { localStorage.setItem("zp_light_v1", window.KS_LIGHT ? "0" : "1"); } catch (e) { }   /* 11-26 白底/深色切换=写同一个键再刷新(不留残色), 作战屏跟着一起变 */
+  var u9 = new URL(location.href); u9.searchParams.delete("light"); location.href = u9.toString();
 });
 document.querySelector("[data-collapse]").addEventListener("click", function () {
   S.collapsed = !S.collapsed; store(); syncCollapse();
@@ -5212,7 +5331,7 @@ function renderAmpJL(ctx, v) {
   ctx.setLineDash([]);
   var rc = A.amp >= A.avg * 1.4 ? "#ff8a3d" : A.amp >= A.avg ? "#ffe14d" : "#d8e6ff";
   ctx.fillStyle = rc; ctx.globalAlpha = 1; ctx.textAlign = "left"; ctx.font = "400 9.5px -apple-system, 'Helvetica Neue', sans-serif";
-  ctx.fillText("振 " + A.amp.toFixed(1) + " / 均 " + A.avg.toFixed(1) + (left > 0.05 ? " · 剩 " + left.toFixed(1) + "%" : " · 超均别追"), v.padL + 6, pt + 24);
+  ctx.fillText("振 " + A.amp.toFixed(1) + " / 均 " + A.avg.toFixed(1) + (left > 0.05 ? " · 剩 " + left.toFixed(1) + "%" : " · 超均别追"), v.padL + 6, pt + (TVL && !S.ts.on ? 38 : 24)); /* 11-26 用户「不要压字」: TV式图例第二行(量/额/换手)也在 pt+23, 振/均 挪到第三行 */
   ctx.restore();
 }
 function renderICT(ctx, v) {

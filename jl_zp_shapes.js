@@ -304,13 +304,20 @@
   }
 
   /* ===== 11-25pat 用户「学 TradingView 付费那种画线, 不要乱」(口径表 F-PAT3, 只画线不进算法; 回测 tools/bt/pat_1125/pat_bos_bt_1125.js) =====
-     箱体  = LuxAlgo Range Detector: 连续20根收盘都在 均值±1.5×ATR 内; 重叠合并; 上下沿延到被收盘突破(只看已走过的K, ATR=之前200根); 框高≤6%, 每屏≤2个
+     箱体  = LuxAlgo Range Detector: 连续箱体窗口根收盘都在 均值±1.5×ATR 内; 窗口随周期缩短; 重叠合并; 上下沿延到被收盘突破(只看已走过的K, ATR=之前200根); 框高≤6%, 每屏≤2个
      三角  = Trendoscope Auto Chart Patterns 中度: 最近5/6个转折点, 上沿过首尾高点、其余高点在线下≤1×ATR(不许出线), 下沿同理;
              首尾之间收盘不出线(允许1根), 收敛(末宽<首宽0.7), 同向收敛的楔形也算, 跨≥12根、开口≤12%; 每屏≤2个; 每条线首尾落差≤1.5×开口(太陡的斜带不算)
      趋势线 = Trendoscope Auto Trendlines: 同类转折点两两连线, 中间收盘不穿(允许1根), 碰≥3个转折点, 没破、离现价≤4×ATR, 选碰得最多的; 上下各1条
      破了 = 那根K旁标小「BOS」(6px), 不写价、不画目标 */
   function trA(C) { var t = []; for (var i = 0; i < C.length; i++) { var k = C[i], p = i ? C[i - 1].c : k.c; t.push(Math.max(k.h - k.l, Math.abs(k.h - p), Math.abs(k.l - p))); } return t; }
   function atrAt(T, i, L) { var s = 0, n = 0; for (var j = Math.max(0, i - L + 1); j <= i; j++) { s += T[j]; n++; } return n ? s / n : 0; }
+  /* 周期越大, 根数窗口越短, 避免把不同实际跨度的结构当成同一尺度。 */
+  function patWindow(per) {
+    if (per >= 101) return { boxBars: 6, boxWarmupBars: 30, triangleBars: 6, wedgeBars: 10, trendLookback: 80, trendRecent: 40, trendMinGap: 4 };
+    if (per >= 15) return { boxBars: 8, boxWarmupBars: 30, triangleBars: 8, wedgeBars: 12, trendLookback: 96, trendRecent: 48, trendMinGap: 8 };
+    if (per >= 5) return { boxBars: 12, boxWarmupBars: 30, triangleBars: 10, wedgeBars: 16, trendLookback: 120, trendRecent: 72, trendMinGap: 10 };
+    return { boxBars: 20, boxWarmupBars: 30, triangleBars: 12, wedgeBars: 20, trendLookback: 160, trendRecent: 96, trendMinGap: 10 };
+  }
   function swC(C, thr) {   /* 和作战屏 swingsOfCandlesJL 同口径, 多记 ix(K序号) / cix(确认那根) */
     var SW = [], ext = null, dirH = 0;
     C.forEach(function (k, ix) {
@@ -322,9 +329,9 @@
     return SW;
   }
   function boxR(C, o) {
-    o = o || {}; var N = C ? C.length : 0, out = []; if (N < 40) return out;
-    var T = trA(C), L = o.len || 20, M = o.mult || 1.5, ln = C.every(function (k) { return k.h === k.l; });   /* 分时页: 点当K(高=低=收), 不做一字板过滤 */
-    for (var i = Math.max(L, 30); i < N; i++) {
+    o = o || {}; var N = C ? C.length : 0, out = [], W = patWindow(o.per); if (N < Math.max(40, W.boxWarmupBars + W.boxBars)) return out;
+    var T = trA(C), L = o.len || W.boxBars, M = o.mult || 1.5, ln = C.every(function (k) { return k.h === k.l; });   /* 分时页: 点当K(高=低=收), 不做一字板过滤 */
+    for (var i = Math.max(L, W.boxWarmupBars); i < N; i++) {
       var a = atrAt(T, i, 200) * M, m = 0, mv = 0, j;
       for (j = i - L + 1; j <= i; j++) { m += C[j].c; if (C[j].h > C[j].l) mv++; } m /= L;
       if (!ln && mv < L / 2) continue;   /* 一字板不算 */
@@ -341,8 +348,8 @@
     return out;
   }
   function triT(C, thr, o) {
-    o = o || {}; var N = C ? C.length : 0, out = []; if (N < 30) return out;
-    var T = trA(C), LO = o.loose == null ? 1 : o.loose, MB = o.minBars || 12;
+    o = o || {}; var N = C ? C.length : 0, out = [], W = patWindow(o.per); if (N < 30) return out;
+    var T = trA(C), LO = o.loose == null ? 1 : o.loose, MB = o.minBars || W.triangleBars;
     [thr * 0.5, thr].forEach(function (th) {
       var S = swC(C, th);
       for (var j = S.length - 1; j >= 4; j--) {
@@ -362,7 +369,7 @@
           /* 11-25pat 用户发 TV 下降楔形图(两线同向下、收敛、往上破): 同向收敛的楔形也算, 一样画法; 旧 twoLine 楔形(跨150根)下线 */
           if (Math.abs(up(i1) - up(i0)) > 1.5 * w0 || Math.abs(dn(i1) - dn(i0)) > 1.5 * w0) continue;   /* 太陡的(像一条斜带)不算楔形 */
           var kU = (up(i1) - up(i0)) / ref, kL = (dn(i1) - dn(i0)) / ref, wedge = (kU > 0.003 && kL > 0.003) || (kU < -0.003 && kL < -0.003);
-          if (wedge && (H.length < 3 || Lw.length < 3 || i1 - i0 < 20)) continue;   /* 楔形要上下各碰3次、跨≥20根(用户发的 TV 下降楔形那样), 不然就是一段斜着走的行情 */
+          if (wedge && (H.length < 3 || Lw.length < 3 || i1 - i0 < W.wedgeBars)) continue;   /* 楔形要上下各碰3次, 并达到本周期最小跨度 */
           if (out.some(function (t) { return !(i1 < t.s || i0 > t.e); })) continue;
           var brk = null, xe = Math.min(N - 1, i1 + Math.round((i1 - i0) / 2));
           for (var y = ck + 1; y < N; y++) { if (up(y) <= dn(y)) { xe = y; break; } if (C[y].c > up(y) + tol) { brk = { i: y, d: 1 }; xe = y; break; } if (C[y].c < dn(y) - tol) { brk = { i: y, d: -1 }; xe = y; break; } }
@@ -372,13 +379,13 @@
     });
     return out.sort(function (a, b) { return a.e - b.e; });
   }
-  function trendT(C, thr, BX) {
+  function trendT(C, thr, BX, per) {
     var N = C ? C.length : 0, out = []; if (N < 30) return out;
-    var T = trA(C), at = atrAt(T, N - 1, 200), tol = 0.3 * at, S = swC(C, thr * 0.5), last = C[N - 1].c;
+    var W = patWindow(per), T = trA(C), at = atrAt(T, N - 1, 200), tol = 0.3 * at, S = swC(C, thr * 0.5), last = C[N - 1].c;
     [1, 0].forEach(function (hi) {
-      var pv = S.filter(function (m) { return m.h === hi && m.ix >= N - 160; }), best = null;   /* 11-25pat3 只用最近160根(≈一屏)的点, 不再从屏外拉一条长线进来 */
+      var pv = S.filter(function (m) { return m.h === hi && m.ix >= N - W.trendLookback; }), best = null;
       for (var a = 0; a < pv.length; a++) for (var b = a + 1; b < pv.length; b++) {
-        var A = pv[a], B = pv[b]; if (B.ix - A.ix < 10 || N - 1 - B.ix > 96) continue;
+        var A = pv[a], B = pv[b]; if (B.ix - A.ix < W.trendMinGap || N - 1 - B.ix > W.trendRecent) continue;
         if ((BX || []).some(function (b) { return Math.min(B.ix, b.e) - Math.max(A.ix, b.s) > 0.5 * (B.ix - A.ix); })) continue;   /* 11-25pat3 用户「15分看不懂」: 线一大半落在箱体那段 = 和箱体说同一件事还交叉, 让给箱体 */   /* 11-25pat3 最后一个碰点要在最近96根(原144: 1分早盘的点连下来, 一条线斜穿全天) */
         var f = function (x) { return A.p + (B.p - A.p) * (x - A.ix) / (B.ix - A.ix); }, bad = 0, x;
         for (x = A.ix; x <= B.ix; x++) if (hi ? C[x].c > f(x) + tol : C[x].c < f(x) - tol) bad++;
@@ -395,12 +402,16 @@
   }
   function pat25(C, o) {   /* → 给 draw 的列表(带横坐标) */
     o = o || {}; var thr = o.thr || 0.015, N = C.length, res = [], X = function (i) { return C[Math.max(0, Math.min(N - 1, i))].x; };
-    /* 11-25pat3 用户「1分蜡烛没箱体, 直接两条趋势线下来」: 原来只留最近2个=尾盘两个小框, 早上/午后的大横盘被挤掉 → 改留最长的3个(按根数), 再按时间排 */
-    var BX = boxR(C).filter(function (b) { return (b.top - b.bot) / ((b.top + b.bot) / 2) <= 0.06; }).sort(function (u, v) { return (v.e - v.s) - (u.e - u.s); }).slice(0, 3).sort(function (u, v) { return u.s - v.s; });
+    var visibleStart = C.findIndex(function (k) { return k.vis; }), visibleEnd = -1;
+    for (var vi = C.length - 1; vi >= 0; vi--) if (C[vi].vis) { visibleEnd = vi; break; }
+    var hasVisibleRange = visibleStart >= 0 && visibleEnd >= visibleStart;
+    var overlapsVisible = function (start, end) { return !hasVisibleRange || (start <= visibleEnd && end >= visibleStart); };
+    /* 当前视窗内优先, 同一视窗最多两个箱体, 近期箱体优先于历史长箱体 */
+    var BX = boxR(C, { per: o.per }).filter(function (b) { return (b.top - b.bot) / ((b.top + b.bot) / 2) <= 0.06 && overlapsVisible(b.s, b.brk ? b.brk.i : N - 1); }).sort(function (u, v) { return v.e - u.e; }).slice(0, 2).sort(function (u, v) { return u.s - v.s; });
     BX.forEach(function (b) { res.push({ k: 'box', top: b.top, bot: b.bot, x0: X(b.s), x1: X(b.e), xe: b.brk ? X(b.brk.i) : X(N - 1), brk: b.brk ? { x: X(b.brk.i), d: b.brk.d, y: C[b.brk.i].c, h: C[b.brk.i].h, l: C[b.brk.i].l } : null, pts: [{ x: X(b.s), p: b.top }, { x: X(b.e), p: b.bot }], live: true, n: 1e6 }); });
-    var TR = triT(C, thr).filter(function (t) { return !BX.some(function (b) { return !(t.e < b.s || t.s > b.e); }); }).slice(-2);
+    var TR = triT(C, thr, { per: o.per }).filter(function (t) { return overlapsVisible(t.s, t.xe) && !BX.some(function (b) { return !(t.e < b.s || t.s > b.e); }); }).slice(-2);
     TR.forEach(function (t) { res.push({ k: 'tri2', x0: X(t.s), xe: X(t.xe), y0u: t.up(t.s), y1u: t.up(t.xe), y0d: t.dn(t.s), y1d: t.dn(t.xe), brk: t.brk ? { x: X(t.brk.i), d: t.brk.d, h: C[t.brk.i].h, l: C[t.brk.i].l } : null, pts: [{ x: X(t.s), p: t.up(t.s) }, { x: X(t.xe), p: t.dn(t.xe) }], live: true, n: 1e6 }); });
-    trendT(C, thr, BX).forEach(function (L) { res.push({ k: 'tl', hi: L.hi, x0: X(L.A.ix), p0: L.A.p, x1: X(N - 1), p1: L.f(N - 1), tc: L.tc, pts: [{ x: X(L.A.ix), p: L.A.p }, { x: X(N - 1), p: L.f(N - 1) }], live: true, n: 1e6 }); });
+    trendT(C, thr, BX, o.per).forEach(function (L) { res.push({ k: 'tl', hi: L.hi, x0: X(L.A.ix), p0: L.A.p, x1: X(N - 1), p1: L.f(N - 1), tc: L.tc, pts: [{ x: X(L.A.ix), p: L.A.p }, { x: X(N - 1), p: L.f(N - 1) }], live: true, n: 1e6 }); });
     return res;
   }
   /* extra(C=[{o,h,l,c,x,key}], S=转折点[{p,h,x}], {per}) → 新形态列表, 和 scan 的结果合并后交给 draw */
