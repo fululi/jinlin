@@ -476,7 +476,7 @@
 </script>
 <script src="jl_absorb.js?v=7"></script>
 <script src="jl_chart_cache.js?v=1"></script>
-<script src="jl_markets.js?v=7"></script>
+<script src="jl_markets.js?v=9"></script>
 <script src="jl_tri.js?v=1"></script>
 <script src="jl_huo.js?v=3"></script><script src="jl_sx.js?v=14"></script><script src="jl_zd.js?v=17"></script><script src="jl_hy.js?v=2"></script><script src="jl_dk.js?v=2"></script><script src="jl_subcv.js?v=2"></script>   <!-- 11-24h 指标副图: 公式同作战屏 -->
 </head>
@@ -3832,71 +3832,142 @@ function buildTabs() {
     b.addEventListener("contextmenu", function (e) { e.preventDefault(); });
     el.appendChild(b);
   });
+  /* 11-26 用户「K线页表搜索…更简约像金融一样…点了一个不行必须再点…图标贼大」: 原「代码/名称＋」两步 → 小胶囊搜索框+下拉，点一行直接打开并加页签(ksSrchBindJL) */
   var box = document.createElement("span");
-  box.className = "addbox";
+  box.className = "addbox ksSrchJL";
   var inp = document.createElement("input");
-  inp.placeholder = "代码/名称"; inp.maxLength = 20;
-  var add = document.createElement("button");
-  add.className = "btn"; add.type = "button"; add.textContent = "＋";
-  add.addEventListener("click", function () {
-    var kw = (inp.value || "").trim();
-    if (!kw) return;
-    function addOne(code, name, ty) {
-      for (var i = 0; i < S.codes.length; i++) if (S.codes[i][0] === code) { hint("已在列表里"); return; }
-      S.codes.push([code, name || code, ty || ""]);
-      inp.value = "";
-      store(); buildTabs();
-      hint("已加入 " + (name || code) + " · 长按标签可删除");
-    }
-    function pickList(rows) {
-      var old = document.getElementById("ksCandJL");
-      if (old) old.remove();
-      if (rows.length === 1) { addOne(rows[0].code, rows[0].name, rows[0].type); return; }
-      var tyName = { "GP-A": "A股", "ETF": "ETF", "ZS": "指数", "FJ": "基金", "US": "美股" };
-      var menu = document.createElement("div");
-      menu.id = "ksCandJL";
-      menu.style.cssText = "position:fixed;z-index:9999;background:#0e1a16f5;border:1px solid #2e5a4e;border-radius:10px;padding:6px;min-width:210px;max-width:84vw;box-shadow:0 8px 30px #000c";
-      rows.slice(0, 8).forEach(function (r) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.style.cssText = "display:flex;justify-content:space-between;gap:12px;width:100%;padding:9px 10px;background:transparent;border:0;border-bottom:1px solid #ffffff10;color:#d8efe8;font-size:13px;text-align:left;cursor:pointer";
-        var nm = document.createElement("span"); nm.textContent = r.name;
-        var cd = document.createElement("small"); cd.style.color = "#7fa89d"; cd.textContent = r.code + " · " + (tyName[r.type] || r.type);
-        b.appendChild(nm); b.appendChild(cd);
-        b.addEventListener("click", function () { menu.remove(); addOne(r.code, r.name, r.type); });
-        menu.appendChild(b);
-      });
-      document.body.appendChild(menu);
-      var rc = inp.getBoundingClientRect();
-      menu.style.left = Math.max(6, Math.min(rc.left, window.innerWidth - menu.offsetWidth - 6)) + "px";
-      menu.style.top = (rc.bottom + 6) + "px";
-      setTimeout(function () {
-        document.addEventListener("pointerdown", function cl(e) {
-          if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener("pointerdown", cl); }
-        });
-      }, 0);
-    }
-    if (/^[0-9]{6}$/.test(kw)) {
-      if (!/^[56903]/.test(kw)) { hint("6位代码暂支持沪深；或直接输名称，如 中金黄金 / 英伟达 / 上证指数"); return; }
-      // 联想接口没收到(冷门股/断网)才回退老的报价直加路径
-      hint("搜索「" + kw + "」…");
-      searchCode(kw, function (rows) {
-        if (rows && rows.length) { pickList(rows); return; }
-        fetchQuote(kw, function (err, q) {
-          if (err) { hint("代码无效或暂无数据"); return; }
-          addOne(kw, q.name || kw, "");
-        });
-      });
-      return;
-    }
-    hint("搜索「" + kw + "」…");
-    searchCode(kw, function (rows) {
-      if (!rows || !rows.length) { hint("没找到「" + kw + "」· 换关键词或输6位代码"); return; }
-      pickList(rows);
-    });
-  });
-  box.appendChild(inp); box.appendChild(add);
+  inp.type = "search"; inp.placeholder = "搜索"; inp.maxLength = 20; inp.autocomplete = "off";
+  inp.setAttribute("aria-label", "搜索 股票/黄金/原油/美股/纳指");
+  box.appendChild(inp);
   el.appendChild(box);
+  ksSrchBindJL(inp);
+}
+/* 11-26 搜索下拉: 黄金/白银/原油/美股/纳指/ANT 走 JLMarkets 目录(新浪分钟K)，A股/ETF/指数/其他美股走腾讯联想 searchCode；现价涨跌一次批量 qt.gtimg.cn */
+var KS_SRCH_TY_JL = { "GP-A": "A股", "ETF": "ETF", "ZS": "指数", "FJ": "基金", "US": "美股", commodity: "商品", us: "美股", board: "板块", index: "指数", cn: "A股" };
+var KS_SRCH_SHORT_JL = { "122.XAU": "伦敦金", "122.XAG": "伦敦银", "101.GC00Y": "COMEX黄金", "101.SI00Y": "COMEX白银", "102.CL00Y": "WTI原油", "112.B00Y": "布伦特原油", "102.PL00Y": "铂金" };
+var KS_SRCH_HF_JL = { "122.XAU": "hf_XAU", "122.XAG": "hf_XAG", "101.GC00Y": "hf_GC", "101.SI00Y": "hf_SI", "102.CL00Y": "hf_CL", "112.B00Y": "hf_OIL", "102.PL00Y": "hf_PL" };
+function ksSrchCssJL() {
+  if (document.getElementById("ksSrchCssJL")) return;
+  var st = document.createElement("style"); st.id = "ksSrchCssJL";
+  var mag = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='5' cy='5' r='3.8' fill='none' stroke='%23787b86' stroke-width='1.3'/%3E%3Cpath d='M8 8l3 3' stroke='%23787b86' stroke-width='1.3'/%3E%3C/svg%3E\")";
+  st.textContent = ".addbox.ksSrchJL input{width:92px;border-radius:14px;padding:5px 8px 5px 24px;-webkit-appearance:none;appearance:none;background-image:" + mag + ";background-repeat:no-repeat;background-position:8px 50%;background-size:12px 12px}"
+    + ".addbox.ksSrchJL input::-webkit-search-cancel-button{display:none}"
+    + "#ksSrchDdJL{position:fixed;z-index:9999;width:250px;max-width:92vw;max-height:60vh;overflow:auto;background:#131722;border:1px solid #2a2e39;border-radius:8px;box-shadow:0 6px 24px #0008;padding:2px 0;-webkit-overflow-scrolling:touch}"
+    + ".ksSrchRowJL{display:grid;grid-template-columns:1fr auto;gap:1px 10px;width:100%;padding:7px 10px;background:transparent;border:0;border-bottom:1px solid #ffffff0d;color:#d1d4dc;text-align:left;font:400 13px/1.3 -apple-system,'PingFang SC',sans-serif;cursor:pointer}"
+    + ".ksSrchRowJL:last-child{border-bottom:0}.ksSrchRowJL:active,.ksSrchRowJL.sel{background:#2962ff1f}"
+    + ".ksSrchRowJL .n{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.ksSrchRowJL .p{text-align:right;font-variant-numeric:tabular-nums}"
+    + ".ksSrchRowJL .c,.ksSrchRowJL .q{font-size:10.5px;color:#787b86}.ksSrchRowJL .q{text-align:right;font-variant-numeric:tabular-nums}"
+    + ".ksSrchRowJL .q.up{color:#ff3347}.ksSrchRowJL .q.dn{color:#00a878}"
+    + "html.ksLight #ksSrchDdJL,html.theme-la #ksSrchDdJL{background:#fff;border-color:#e0e3eb;box-shadow:0 6px 24px #0002}"
+    + "html.ksLight .ksSrchRowJL,html.theme-la .ksSrchRowJL{color:#131722;border-bottom-color:#f0f3fa}"
+    + "html.ksLight .addbox.ksSrchJL input,html.theme-la .addbox.ksSrchJL input{background-color:#f0f3fa;border-color:transparent;color:#131722}";
+  document.head.appendChild(st);
+}
+function ksSrchCloseJL() { var m = document.getElementById("ksSrchDdJL"); if (m) m.remove(); }
+document.addEventListener("pointerdown", function (e) {
+  var m = document.getElementById("ksSrchDdJL");
+  if (m && !m.contains(e.target) && !(e.target.closest && e.target.closest(".ksSrchJL"))) m.remove();
+}, true);
+function ksSrchQtJL(r) {
+  if (r.mk) {
+    if (KS_SRCH_HF_JL[r.code]) return KS_SRCH_HF_JL[r.code];
+    var m = window.JLMarkets && JLMarkets.resolve(r.code);
+    return m && m.kind === "us" ? JLMarkets.usTicker(m).replace(/\.(OQ|N|A)$/, "") : "";
+  }
+  return /^(sh|sz)\d{6}$/.test(r.code) ? r.code : /^us/i.test(r.code) ? "us" + r.code.slice(2).split(".")[0].toUpperCase() : "";
+}
+function ksSrchQuotesJL(list) {
+  var map = {}, codes = [];
+  list.forEach(function (r) { var q = ksSrchQtJL(r); if (!q) return; if (!map[q]) { map[q] = []; codes.push(q); } map[q].push(r); });
+  if (!codes.length) return;
+  window.v_us = window.v_us || {}; // 腾讯指数返回 v_us.IXIC="..." 这种写法，先备好对象
+  var sc = document.createElement("script"); sc.charset = "gbk";
+  sc.onload = function () {
+    codes.forEach(function (q) {
+      var s2 = q.indexOf("us.") === 0 ? (window.v_us || {})[q.slice(3)] : window["v_" + q];
+      if (!s2) return;
+      var f, px, pc;
+      if (q.indexOf("hf_") === 0) { f = String(s2).split(","); px = +f[0]; pc = +f[1]; }
+      else { f = String(s2).split("~"); px = +f[3]; pc = +f[32]; }
+      if (!isFinite(px) || !px) return;
+      map[q].forEach(function (r) {
+        if (!r._el || !r._el.isConnected) return;
+        r._el.querySelector(".p").textContent = px.toFixed(px < 10 ? 3 : 2);
+        if (isFinite(pc)) { var e = r._el.querySelector(".q"); e.textContent = (pc > 0 ? "+" : "") + pc.toFixed(2) + "%"; e.className = "q" + (pc > 0 ? " up" : pc < 0 ? " dn" : ""); }
+      });
+    });
+    sc.remove();
+  };
+  sc.onerror = function () { sc.remove(); };
+  sc.src = "https://qt.gtimg.cn/q=" + codes.join(",") + "&_=" + Date.now();
+  document.head.appendChild(sc);
+}
+function ksSrchBindJL(inp) {
+  ksSrchCssJL();
+  var tm = null, seq = 0, shown = [];
+  function openRow(r) {
+    ksSrchCloseJL(); inp.value = ""; inp.blur();
+    var hit = null;
+    for (var i = 0; i < S.codes.length; i++) if (S.codes[i][0] === r.code) { hit = S.codes[i]; break; }
+    if (!hit) S.codes.push([r.code, r.name, r.ty || ""]);
+    if (S.active === r.code) { store(); buildTabs(); return; }
+    if (window.jlSwitchChart && jlSwitchChart(r.code, r.name)) return;
+    store(); buildTabs(); hint("已加入 " + r.name + " · 多图模式下点页签打开"); // 多图(分屏)时 jlSwitchChart 不切
+  }
+  function render(list) {
+    ksSrchCloseJL(); shown = list.slice(0, 12);
+    if (!shown.length) return;
+    var dd = document.createElement("div"); dd.id = "ksSrchDdJL"; dd.setAttribute("role", "listbox");
+    shown.forEach(function (r, k) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "ksSrchRowJL" + (k === 0 ? " sel" : "");
+      ["n", "p", "c", "q"].forEach(function (c) { var sp = document.createElement("span"); sp.className = c; b.appendChild(sp); });
+      b.querySelector(".n").textContent = r.name;
+      b.querySelector(".c").textContent = r.sub + (r.tyName ? " · " + r.tyName : "");
+      b.addEventListener("click", function () { openRow(r); });
+      r._el = b; dd.appendChild(b);
+    });
+    document.body.appendChild(dd);
+    var rc = inp.getBoundingClientRect(), w = dd.offsetWidth;
+    dd.style.left = Math.max(6, Math.min(rc.left, window.innerWidth - w - 6)) + "px";
+    dd.style.top = (rc.bottom + 4) + "px";
+    ksSrchQuotesJL(shown);
+  }
+  function run() {
+    var kw = inp.value.trim(), my = ++seq;
+    if (!kw) { ksSrchCloseJL(); return; }
+    var mk = [];
+    try {
+      if (window.JLMarkets) mk = JLMarkets.merge(kw, []).map(function (m) {
+        return { code: m.id, name: KS_SRCH_SHORT_JL[m.id] || String(m.name).split(/ · | \/ /)[0], sub: String(m.tv || m.code).split(":").pop(), tyName: KS_SRCH_TY_JL[m.kind] || "", mk: 1 }; /* 短名: 页签和下拉都用，如 伦敦金/WTI原油 */
+      });
+    } catch (e) {}
+    if (mk.length) render(mk);
+    searchCode(kw, function (res) {
+      if (my !== seq) return;
+      var have = {};
+      mk.forEach(function (m) { have[m.sub.toUpperCase()] = 1; });
+      var a = (res || []).filter(function (r) { return !(r.type === "US" && have[r.code.slice(2).split(".")[0].toUpperCase()]); }).map(function (r) {
+        return { code: r.code, name: r.name, ty: r.type, sub: r.code.replace(/^(sh|sz|us)/i, "").split(".")[0], tyName: KS_SRCH_TY_JL[r.type] || r.type };
+      });
+      var all = mk.concat(a);
+      if (!all.length && /^[0-9]{6}$/.test(kw)) {
+        fetchQuote(kw, function (err, q) {
+          if (my !== seq) return;
+          if (err) { ksSrchCloseJL(); hint("没找到「" + kw + "」"); return; }
+          render([{ code: kw, name: q.name || kw, sub: kw, tyName: "A股" }]);
+        });
+        return;
+      }
+      if (!all.length) { ksSrchCloseJL(); hint("没找到「" + kw + "」· 换个名称或代码"); return; }
+      render(all);
+    });
+  }
+  inp.addEventListener("input", function () { clearTimeout(tm); tm = setTimeout(run, 220); });
+  inp.addEventListener("focus", function () { if (inp.value.trim()) run(); });
+  inp.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { ksSrchCloseJL(); inp.blur(); }
+    else if (e.key === "Enter") { e.preventDefault(); clearTimeout(tm); if (shown.length && document.getElementById("ksSrchDdJL")) openRow(shown[0]); else run(); }
+  });
 }
 // 视图时间范围预设(随周期自适应),对标 TradingView 的 1M/3M/6M/1Y 快捷键
 function rangesFor(klt) {
@@ -4783,7 +4854,7 @@ setTimeout(function () { checkOtherAlertsJL(true); }, 4000);
 var _klineTick = 0, _klAt = 0;
 function klineTickJL(force) {
   if (document.hidden) return;
-  if (!force && !inSessionFor(S.active) && (++_klineTick % 5)) return; // 非交易时段 5 分钟一次
+  if (!force && !marketJL(S.active) && !inSessionFor(S.active) && (++_klineTick % 5)) return; // 非交易时段 5 分钟一次 /* 11-26 用户「黄金 1分 5 15」: 外盘品种(黄金/原油/美股)不按A股时段, 一直60秒刷 */
   if (T || M || S.tool) return;
   _klAt = Date.now();
   var _rkCode = S.active, _rkKlt = normalizeKlt(S.klt);
