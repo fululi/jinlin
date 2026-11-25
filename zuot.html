@@ -1218,6 +1218,10 @@ function mrLive(){ let P=null; try{ P=window.parent&&window.parent!==window?wind
   const mk=(q,no)=>({no:no,n:q.n,p:+q.p,src:(q.srcs||[]).map(k=>MR_NM[k]||k).join('·'),hit:!!q.hit});
   return {kind:kind,date:String(e.pd||'').slice(5),base:base,atr5:+e.atr||0,stale:e.stale||'',
     levels:S.map((q,i)=>mk(q,'S'+(i+1))).concat(B.map((q,i)=>mk(q,'B'+(i+1))))}; }
+/* 11-25s 今天的共振(白天卡上显示的那套，jl_reso ensure 当天缓存)，给今日成绩用；取不到=null */
+function mrTodayLv(){ let P=null; try{ P=window.parent&&window.parent!==window?window.parent:null; }catch(e){} if(!P||!P.JLReso||!P.JLReso.ensure) return null;
+  let e=null; try{ e=P.JLReso.ensure(st.code); }catch(x){ return null; } if(!e||!e.levels||e.stale) return null;
+  const base=+e.pc; return e.levels.filter(q=>q.n>=2).map(q=>({c:'明日',k:(q.p>base?'S':'B'),p:+q.p,w:q.n})); }
 function drawNext(){
   const el=$('f5'), d=mrLive(), cur=T().p;   /* 11-23: 每次来价都重画(原来只画一次, 现价不动) */
   if(d.err){ el.className='slide'; el.innerHTML='<div class="empty">明日共振：'+d.err+'</div>'; BAND.mr=[]; return; }
@@ -1386,6 +1390,8 @@ function scoreToday(items){
   const bars=(LK.m5||[]).filter(b=>String(b[0]).slice(0,10)===td), N=NOW(), T0=T();
   /* 11-23o: 卖/接按「价给出那一刻」的价分(开盘前的价=今天开盘价，15分新组=确认那根收盘)；上方=卖、下方=接；同价同卡留最早那次 */
   items.forEach(x=>{ x.role=x.p>=x.ref?'卖':'接'; const key=x.c+'|'+x.role+'|'+x.p.toFixed(2); if(day[key]&&x.s<day[key].s){ day[key].s=x.s; ch=true; } if(!day[key]){ day[key]={c:x.c,k:x.k,p:+x.p.toFixed(2),role:x.role,s:x.s}; ch=true; } });
+  /* 11-25s 清掉错记的明日价(不在今天共振里的)：比如 11-25 收盘后进来的 20.24(=今天最高20.25+ATR上沿+斐波，是明天的价) */
+  const okM=window.__ztMrOk; if(okM) Object.keys(day).forEach(k=>{ const r=day[k]; if(r&&r.c==='明日'&&!okM.has(Number(r.p).toFixed(2))){ delete day[k]; ch=true; } });
   if(ch) try{ localStorage.setItem(SC_K,JSON.stringify(db)); }catch(e){}
   const hm=new Date().getHours()*100+new Date().getMinutes(), fin=hm>=1500;
   const rows=Object.values(day).map(r=>{ const sell=r.role==='卖', p=r.p;
@@ -1558,7 +1564,9 @@ function drawBand(){
   try{ const SN=snapPre(), it=[], td=TODAY, m5t=(LK.m5||[]).filter(b=>String(b[0]).slice(0,10)===td), o0=m5t.length?m5t[0][1]:0;
     const isT=k=>/买回|清仓/.test(String(k));
     if(SN.key&&o0>0){
-      SN.list.concat(SN.tri).concat(W5S).concat(MRP.map(x=>Object.assign({},x,{c:'明日'}))).concat(TSBP).concat(SN.sw).forEach(x=>{ if(!(x.p>0)||isT(x.k)) return; it.push({c:x.c,k:String(x.k),p:+x.p,s:'09:30',ref:o0}); });
+      const MRT=mrTodayLv(); window.__ztMrOk=MRT?new Set(MRT.map(x=>x.p.toFixed(2))):null;   /* 11-25s 明日组=今天白天卡上的共振，不用收盘后换出来的明天价 */
+      const fin0=new Date().getHours()*100+new Date().getMinutes()>=1500;
+      SN.list.concat(SN.tri).concat(W5S).concat(MRT||[]).concat(fin0?[]:TSBP).concat(SN.sw).forEach(x=>{ if(!(x.p>0)||isT(x.k)) return; it.push({c:x.c,k:String(x.k),p:+x.p,s:'09:30',ref:o0}); });
       m15Groups().forEach(g=>g.rows.forEach(r=>it.push({c:'15分',k:r[0],p:Math.round(r[1]*100)/100,s:g.s,ref:g.ref}))); }
     scoreToday(it); }catch(e){ console.warn('[做T面板] 今日成绩',e&&e.message); }
   if(SESS){ [['20天大腿','f1'],['三角','f3']].forEach(([c,id])=>{ const a=BAND.list.concat(BAND.triRows||[]).filter(x=>x.c===c).map(x=>(+x.p).toFixed(2)).sort().join(), b=SS.list.concat(SS.tri).filter(x=>x.c===c).map(x=>(+x.p).toFixed(2)).sort().join();

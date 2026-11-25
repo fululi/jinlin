@@ -27,7 +27,7 @@
     var offs = [dC, dC / 2, 0, dB / 2, dB].sort(function (a, b) { return a - b; });
 
     var x0 = A.x, x1 = o.xEnd, c = o.clip || [0, 0, 1e4, 1e4];
-    var VIO = '#b695ff';                                    // 紫色：避开页面里 红=卖 / 绿=买 的语义
+    var VIO = '#6f8fbf';                                    // 紫色：避开页面里 红=卖 / 绿=买 的语义
     var gp = E('g', { id: 'pfk', 'pointer-events': 'none' });
     var cid = 'pfclip' + (svg.id || '');
     var cp = E('clipPath', { id: cid });
@@ -47,9 +47,9 @@
     }));
     line(offs[0], 0.8, 0.55); line(offs[4], 0.8, 0.55);     // 外轨
     line(offs[1], 0.8, 0.5, '3 3'); line(offs[3], 0.8, 0.5, '3 3'); // 0.5 线
-    line(0, 1.2, 0.95);                                     // 中线
+    line(0, 0.9, 0.85);                                     // 中线
     gp.appendChild(inner);
-    [A, B, C].forEach(function (q) { gp.appendChild(E('circle', { cx: q.x, cy: o.Y(q.p), r: 2.2, fill: VIO, opacity: 0.9 })); });
+    [A, B, C].forEach(function (q) { gp.appendChild(E('circle', { cx: q.x, cy: o.Y(q.p), r: 1.6, fill: VIO, opacity: 0.75 })); });
 
     if (o.before && o.before.parentNode === svg) svg.insertBefore(gp, o.before); else svg.appendChild(gp);
     return { A: A, B: B, C: C, slope: s, medAt: med };

@@ -2618,7 +2618,8 @@ function drawReal() {
   var candleBottom = v.pTop + v.priceH;
   if (v.volH && v.volY >= candleBottom) candleBottom = v.volY + v.volH;
   ctx.save();
-  ctx.beginPath(); ctx.rect(0, v.pTop - 2, w, candleBottom - v.pTop + 4); ctx.clip();
+  var cTop = TVL ? 0 : v.pTop - 2;   /* 11-25 用户「K线上面断层的黑色」: TV式时蜡烛往上可画到画布顶(顶上30px空条不再把高的K线切平) */
+  ctx.beginPath(); ctx.rect(0, cTop, w, candleBottom - cTop + 2); ctx.clip();
   var bw = Math.max(1.5, v.step * 0.62);
   if (S.ind.volMain && !v.volH && v.vMax > 0) {
     var ovH = Math.round(v.priceH * 0.18), ovBase = v.pTop + v.priceH;
@@ -3006,11 +3007,14 @@ function xhLayerJL(ctx, v, kl, d2, w) {
       { y: v.ddxY, h: v.ddxH, id: "ddx" },
       { y: v.zlyyY, h: v.zlyyH, id: "zlyy" },
       { y: v.ctrlY, h: v.ctrlH, id: "ctrl" },
-      { y: v.tqsY, h: v.tqsH, id: "tqs" }];
+      { y: v.tqsY, h: v.tqsH, id: "tqs" },
+      { y: v.rsoY, h: v.rsoH, id: "rso" },
+      { y: v.huoY, h: v.huoH, id: "huo" }];   /* 11-25 用户「副图上面都要能显示十字线」: RSO/指标副图也出横线 */
     var curP = null;
     for (var xpi = 0; xpi < xps.length; xpi++) { var xp = xps[xpi]; if (xp.h > 0 && ry >= xp.y && ry <= xp.y + xp.h) { curP = xp; break; } }
     ctx.strokeStyle = "rgba(228,237,230,0.45)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(cx, v.pTop); ctx.lineTo(cx, v.bottom); ctx.stroke();
+    var xhT0 = Math.min(v.pTop, v.volH > 0 ? v.volY : v.pTop), xhB0 = Math.max(v.bottom, v.pTop + v.priceH);   /* 11-25 VOL放顶上时竖线也穿过VOL格, 上下对齐 */
+    ctx.beginPath(); ctx.moveTo(cx, xhT0); ctx.lineTo(cx, xhB0); ctx.stroke();
     if (curP) { ctx.beginPath(); ctx.moveTo(v.padL, ry); ctx.lineTo(v.padL + v.plotW, ry); ctx.stroke(); }
     ctx.setLineDash([]);
     var prevC = ci > 0 ? kl[ci - 1][4] : ck[1];
@@ -3034,7 +3038,7 @@ function xhLayerJL(ctx, v, kl, d2, w) {
       var _lx = v.padL + 4, _ly = v.pTop + 8, _cc = ck[4] >= ck[1] ? UP : DN;
       var _seg = [[String(ck[0]).slice(0, 16) + "  ", "#ffffff"], ["开", "#ffffff"], [ck[1].toFixed(d2) + " ", _cc], ["高", "#ffffff"], [ck[2].toFixed(d2) + " ", _cc], ["低", "#ffffff"], [ck[3].toFixed(d2) + " ", _cc], ["收", "#ffffff"], [ck[4].toFixed(d2) + " ", _cc], [(pct >= 0 ? "+" : "") + pct.toFixed(2) + "%", _cc]];
       var _tw0 = 0; _seg.forEach(function (sg) { _tw0 += ctx.measureText(sg[0]).width + 2; });
-      ctx.fillStyle = "rgba(8,10,14,0.6)"; ctx.fillRect(_lx - 3, _ly - 8, _tw0 + 6, 16);
+      /* 11-25 用户「2026上面黑色有点断层, 背景透明能看到K线」: 读数行黑底删 */
       _seg.forEach(function (sg) { ctx.fillStyle = sg[1]; ctx.fillText(sg[0], _lx, _ly); _lx += ctx.measureText(sg[0]).width + 2; });
       var _l2 = info.slice(4).join("   "); if (_l2) { ctx.fillStyle = "#ffffff"; /* 11-25 用户圈「这行字换亮白」 */ ctx.font = "400 10px -apple-system, \"PingFang SC\", sans-serif"; ctx.fillText(_l2, v.padL + 4, _ly + 15); }
       ctx.restore();
@@ -6503,8 +6507,8 @@ function renderPHVLJL(ctx, v) { /* 区带·底层(画在ICT/昨高低之下) */
       x: function (ix) { return v.X(v.i0 + ix); }, y: v.Y,
       left: v.padL, right: v.w - v.padR, top: v.pTop + 2, bottom: v.pTop + v.priceH - 2,
       lo: lo, hi: hi, band: true, fs: 10,
-      hiLine: "rgba(255,255,255,.65)", loLine: "rgba(138,180,255,.55)",
-      hiFill: "rgba(255,84,89,.2)", loFill: "rgba(63,168,96,.18)"
+      hiLine: "#f06aa8", loLine: "rgba(138,180,255,.55)", hiTagText: "#fff",   /* 11-25 用户「高低区明明正常是粉色细线+粉色底白字」: 原白.65线+白字看不清 */
+      hiFill: "rgba(240,106,168,.12)", loFill: "rgba(63,168,96,.18)"
     });
   } catch (ePHZ) {  }
 }

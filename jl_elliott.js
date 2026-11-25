@@ -62,7 +62,7 @@
     var R = detect(S || []); if (!R) return null;
     var pt = R.P.map(function (q) { return { x: q.x != null ? q.x : o.X(q.hm), p: q.p, h: q.h }; });
     for (var i = 0; i < pt.length; i++) if (pt[i].x == null || !isFinite(pt[i].x)) return null;
-    var ORG = '#ff7a00', BLU = '#4d7cff', c = o.clip || [0, 0, 1e4, 1e4];
+    var ORG = '#ff7a00', BLU = '#6f8fbf', c = o.clip || [0, 0, 1e4, 1e4];
     var gp = E('g', { id: 'ell', 'pointer-events': 'none' });
     var ecid = 'ellclip' + (svg.id || ''), cp = E('clipPath', { id: ecid });
     cp.appendChild(E('rect', { x: c[0], y: c[1], width: c[2] - c[0], height: c[3] - c[1] }));
