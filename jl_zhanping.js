@@ -61,8 +61,11 @@
     '#jlZpSheetJL .zx{position:absolute;right:7px;top:7px;z-index:2;width:26px;height:26px;border-radius:50%;background:rgba(15,24,42,.85);border:1px solid #2a3a55;color:#cfd8e6;font:700 13px/24px -apple-system,sans-serif;text-align:center;cursor:pointer;touch-action:manipulation}' +
     '#jlZpSheetJL .zx:active{background:rgba(42,58,85,.9)}' +
     /* 11-13夜 用户: 作战屏能放大缩小、放大要清楚 → ✕ 左边两个小圆标 − / +; 整个 iframe 按比例矢量放大(布局不变, 字/图不糊) */
-    '#jlZpSheetJL .zz{position:absolute;top:9px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(15,24,42,.55);border:1px solid rgba(255,255,255,.45);color:#fff;font:500 14px/20px ui-rounded,-apple-system,sans-serif;text-align:center;cursor:pointer;user-select:none;touch-action:manipulation}' +
-    '#jlZpSheetJL .zz:active{background:rgba(42,58,85,.9)}' +
+    '#jlZpSheetJL .zz,#jlZpSheetJL .zf{position:absolute;top:9px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(15,24,42,.55);border:1px solid rgba(255,255,255,.45);color:#fff;font:500 14px/20px ui-rounded,-apple-system,sans-serif;text-align:center;cursor:pointer;user-select:none;touch-action:manipulation}' +
+    '#jlZpSheetJL .zz:active,#jlZpSheetJL .zf:active{background:rgba(42,58,85,.9)}' +
+    /* 11-26 用户「打开时一半看别的页面一半看它，放大了恢复现在这样」: 默认上半屏(.half)，⤢ 小圆标切全屏(原86vh)，记在 jl_zp_half_v1 */
+    /* 11-26 用户「手机上看是全屏的 电脑上肯定不是」: 半屏只在手机(窄屏≤600)生效, 电脑照旧右侧 430 宽、不显示 ⤢ */
+    '@media (max-width:600px){#jlZpSheetJL.half{height:48vh}}@media (min-width:601px){#jlZpSheetJL .zf{display:none}}' +
     '#jlZpSheetJL .zzT{position:absolute;top:12px;z-index:2;font:500 10px/16px ui-rounded,-apple-system,sans-serif;color:#fff;pointer-events:none;opacity:0;transition:opacity .3s}' +
     '#jlZpSheetJL .zzT.on{opacity:1}' +
     '#jlZpSheetJL iframe{transform-origin:0 0}' +
@@ -82,7 +85,7 @@
   /* 11-25lt2 用户「白色切换你自己搞定」(效果图v3「作战球→TV浮动工具条式白卡+软阴影」): 作战屏 ◐ 白底(zp_light_v1=1) 时球=白卡+浅阴影/黑字, 面板外框白; 提醒时的红绿金边框照旧 */
   /* 11-26w2c 用户「浮动球不要那种白底黑色的字」: 白底时球本身不换色(深底球+原字, 同深色版), 只留面板外框/小按钮白底 */
   var LTCSS = 'html[data-zpball=lt] #jlZpSheetJL{background:#fff;border-color:#e0e3eb;box-shadow:0 6px 24px rgba(19,23,34,.18)}html[data-zpball=lt] #jlZpSheetJL iframe{color-scheme:light}' +
-    'html[data-zpball=lt] #jlZpSheetJL .zx,html[data-zpball=lt] #jlZpSheetJL .zz,html[data-zpball=lt] #jlZpSheetJL .tdB{background:#f0f3fa;border-color:#e0e3eb;color:#131722}';
+    'html[data-zpball=lt] #jlZpSheetJL .zx,html[data-zpball=lt] #jlZpSheetJL .zz,html[data-zpball=lt] #jlZpSheetJL .zf,html[data-zpball=lt] #jlZpSheetJL .tdB{background:#f0f3fa;border-color:#e0e3eb;color:#131722}';
   function ltSync() { try { var on = localStorage.getItem('zp_light_v1') === '1', h = document.documentElement;
     if (!$('jlZpLtCssJL')) { var s = document.createElement('style'); s.id = 'jlZpLtCssJL'; s.textContent = LTCSS; document.head.appendChild(s); }
     if (on) { if (h.getAttribute('data-zpball') !== 'lt') h.setAttribute('data-zpball', 'lt'); } else if (h.hasAttribute('data-zpball')) h.removeAttribute('data-zpball'); } catch (e) { } }
@@ -307,8 +310,9 @@
     try { styleOnce(); } catch (e) { }
     var b = document.createElement('div'); b.id = 'jlZpBallJL';
     var sh = document.createElement('div'); sh.id = 'jlZpSheetJL'; sh.hidden = true;
+    try { if (localStorage.getItem('jl_zp_half_v1') !== '0') sh.className = 'half'; } catch (e) { sh.className = 'half'; }
     try {
-      sh.innerHTML = '<span class="zx" id="jlZpXJL">✕</span><span class="zz" data-z="1" style="right:38px" title="图上字放大(双击复原)">+</span><span class="zz" data-z="-1" style="right:64px" title="缩小(双击复原)">−</span><span class="zzT" style="right:92px"></span><span class="tdB" id="jlZpTdBJL" title="今日提醒">提醒</span><div id="jlZpTdJL" hidden></div><iframe id="jlZpFrameJL" src="' + SRC + '" referrerpolicy="no-referrer"></iframe>';
+      sh.innerHTML = '<span class="zx" id="jlZpXJL">✕</span><span class="zz" data-z="1" style="right:38px" title="图上字放大(双击复原)">+</span><span class="zz" data-z="-1" style="right:64px" title="缩小(双击复原)">−</span><span class="zf" id="jlZpHfJL" style="right:90px">⤢</span><span class="zzT" style="right:38px;top:34px"></span><span class="tdB" id="jlZpTdBJL" title="今日提醒">提醒</span><div id="jlZpTdJL" hidden></div><iframe id="jlZpFrameJL" src="' + SRC + '" referrerpolicy="no-referrer"></iframe>';
     } catch (e) { }
     document.body.appendChild(sh); document.body.appendChild(b);
     st.ball = b; st.attnT = Date.now() + 8000; /* 首次出现脉冲8秒引人注意 */
@@ -344,6 +348,10 @@
         k.addEventListener('dblclick', function (e) { e.stopPropagation(); localStorage.setItem(zk, '1'); zApply(1, 1); });
       });
       zApply(zNow());
+      /* 11-26 半屏/全屏切换: 默认半屏，下半屏露出首页可照常点 */
+      var hf = $('jlZpHfJL') || sh.querySelector('.zf'), hfPaint = function () { var h = sh.classList.contains('half'); if (hf) { hf.textContent = h ? '⤢' : '⤡'; hf.title = h ? '放大成全屏' : '缩回半屏'; } };
+      hfPaint();
+      if (hf) hf.addEventListener('click', function (e) { e.stopPropagation(); var h = !sh.classList.contains('half'); sh.classList.toggle('half', h); try { localStorage.setItem('jl_zp_half_v1', h ? '1' : '0'); } catch (eH) { } hfPaint(); try { var fr = $('jlZpFrameJL'); fr && fr.contentWindow && fr.contentWindow.dispatchEvent(new Event('resize')); } catch (eR) { } });
       window.addEventListener('resize', function () { try { zApply(zNow()); } catch (eZ) { } });
     } catch (e) { }
     /* ②交互绑定 */
