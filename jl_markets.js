@@ -1,9 +1,10 @@
-/* QuoteIDs verified with Eastmoney suggest on 2026-11-19.
+/* v8 2026-11-26: 加 1 分钟；分钟K先走新浪(外盘期货/美股/纳指)；加纳斯达克综合/纳斯达克100/Anthropic(ANT)。
+   QuoteIDs verified with Eastmoney suggest on 2026-11-19 (100.NDX/100.NDX100/105.ANT 东财未核, 只作兜底).
    TV aliases identify related instruments, not identical CFD/continuous series. */
 (function (root) {
   'use strict';
   const KEY = 'jinlin_markets_v1';
-  const item = (id,name,kind,aliases,tv,note) => ({id,code:id.slice(id.indexOf('.')+1),name,kind,aliases,tv:tv||'',note:note||''});
+  const item = (id,name,kind,aliases,tv,note,ext) => Object.assign({id,code:id.slice(id.indexOf('.')+1),name,kind,aliases,tv:tv||'',note:note||''},ext||{});
   const catalog = [
     item('122.XAU','黄金 / 美元 · 现货','commodity','黄金 伦敦金 GOLD XAUUSD XAU','OANDA:XAUUSD','美元/盎司 · 现货报价商之间可能有价差'),
     item('122.XAG','白银 / 美元 · 现货','commodity','白银 伦敦银 SILVER XAGUSD XAG','OANDA:XAGUSD','美元/盎司 · SILVER 为搜索别名，不代表特定报价商'),
@@ -13,6 +14,10 @@
     item('112.B00Y','布伦特原油 · 当月连续','commodity','石油 原油 布油 布伦特 BRENT UKOIL BRN1! B00Y','TVC:UKOIL','美元/桶 · 东财期货；UKOIL 是 CFD 搜索别名，并非同一合约'),
     item('102.PL00Y','NYMEX 铂金 · 连续','commodity','铂金 白金 PL1! PL00Y','NYMEX:PL1!','美元/盎司 · 连续合约口径以数据源为准'),
     item('105.NVDA','英伟达','us','英伟达 NVDA NVIDIA','NASDAQ:NVDA','美股 · 美元'),
+    /* 11-26 用户「纳斯达克 英伟达等」「你们刚上市的」: 纳指两种都放(综合=IXIC, 100=NDX)；Anthropic 11-19 纳斯达克上市 ANT */
+    item('100.NDX','纳斯达克综合指数','us','纳斯达克 纳指 NASDAQ IXIC 综合','NASDAQ:IXIC','美股指数 · 点',{tx:'us.IXIC',sn:'.ixic'}),
+    item('100.NDX100','纳斯达克100','us','纳斯达克100 纳指100 NDX NASDAQ100 QQQ','NASDAQ:NDX','美股指数 · 点',{tx:'us.NDX',sn:'.ndx'}),
+    item('105.ANT','Anthropic','us','ANTHROPIC ANT CLAUDE 安索罗匹克','NASDAQ:ANT','美股 · 美元 · 2026-11-19 上市'),
     item('106.GLW','康宁','us','康宁 GLW CORNING','NYSE:GLW','美股 · 美元'),
     item('105.TSLA','特斯拉','us','特斯拉 TSLA TESLA TSL','NASDAQ:TSLA','美股 · 美元'),
     item('105.AAPL','苹果','us','苹果 AAPL APPLE PG','NASDAQ:AAPL','美股 · 美元'),
@@ -50,7 +55,7 @@
     }
     return [...seen.values()].sort((a,b)=>a.time.localeCompare(b.time));
   }
-  function usTicker(target){const market=target.id.split('.')[0];return 'us'+target.code+({'105':'.OQ','106':'.N','107':'.A'}[market]||'');}
+  function usTicker(target){const cat=catalog.find(r=>r.id===target.id);if(cat&&cat.tx)return cat.tx;const market=target.id.split('.')[0];return 'us'+target.code+({'105':'.OQ','106':'.N','107':'.A'}[market]||'');}
   const api={catalog,normalize,merge,parseBars,aggregate,usTicker};
   if(typeof module==='object' && module.exports)module.exports=api;
   if(!root.document)return;
@@ -80,7 +85,7 @@
   async function fetchMarket(code,p){
     const target=api.resolve(code);if(!target)throw new Error('未识别的市场代码');
     p=String(p);
-    if(!['5','15','30','60','101','102','103'].includes(p))throw new Error('此品种请使用日/周/月或可用分钟周期');
+    if(!['1','5','15','30','60','101','102','103'].includes(p))throw new Error('此品种请使用日/周/月或可用分钟周期');
     const query='/api/qt/stock/kline/get?secid='+encodeURIComponent(target.id)+'&ut=fa5fd1943c7b386f172d6893dbfba10b&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt='+p+'&fqt=0&end=20500101&lmt=320';
     const em=async(host)=>{
       const d=await jsonp(host+query,6500);
@@ -111,7 +116,18 @@
     rows.forEach(b=>{let key=b.time.slice(0,7);if(p==='102'){const d=new Date(b.time.slice(0,10)+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);key=d.toISOString().slice(0,10);}const prev=groups.get(key);if(prev){prev.high=Math.max(prev.high,b.high);prev.low=Math.min(prev.low,b.low);prev.close=b.close;prev.volume+=b.volume;prev.time=b.time;}else groups.set(key,{...b});});
     return [...groups.values()];
   }
+  const SINA_FT={'122.XAU':'XAU','122.XAG':'XAG','101.GC00Y':'GC','101.SI00Y':'SI','102.CL00Y':'CL','112.B00Y':'OIL','102.PL00Y':'PL'};
+  async function sinaMin(target,p){
+    const cat=catalog.find(r=>r.id===target.id)||{},ft=SINA_FT[target.id];let url,src;
+    if(ft){url='https://gu.sina.cn/ft/api/jsonp.php/{callback}/GlobalService.getMink?symbol='+ft+'&type='+p;src='新浪国际期货 · '+ft+' · 北京时间';}
+    else if(target.kind==='us'){const s=cat.sn||target.code.toLowerCase();url='https://stock.finance.sina.com.cn/usstock/api/jsonp_v2.php/{callback}/US_MinKService.getMinK?symbol='+encodeURIComponent(s)+'&type='+p;src='新浪美股 · '+s+' · 纽约时间';}
+    else return null;
+    const raw=await jsonp(url,8000);if(!Array.isArray(raw))return null;
+    const rows=parseBars({klines:raw.map(r=>[String(r.d).slice(0,16),r.o,r.c,r.h,r.l,r.v].join(','))});
+    return rows.length?{rows:rows.slice(-1000),source:src+' · '+(target.note||'')}:null;
+  }
   async function international(target,p){
+    if(['1','5','15','30','60'].includes(p))return sinaMin(target,p); /* 11-26 分钟K: 新浪(沙箱实测 XAU/XAG/CL/NVDA/.ixic/ANT 1/5/15 都有, 约1000根) */
     if(!['101','102','103'].includes(p))return null;
     if(target.kind==='us'){
       const per={'101':'day','102':'week','103':'month'}[p],ticker=usTicker(target);
