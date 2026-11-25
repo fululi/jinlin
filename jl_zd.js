@@ -249,7 +249,7 @@
     st.bars = bars; st.lv = lv; if (which) st.which = which; if (code) st.code = code;
     if (st.code && symOf(st.code)) st.code = symOf(st.code).slice(2);
     function draw() {
-      if (!st.bars || st.bars.length < 60) { st.s1.innerHTML = st.s2.innerHTML = '<div class="ssl"><span style="color:#8fb8ff">K线还没到（≥60根，55窗预热）</span></div>'; return; }
+      if (!st.bars || st.bars.length < 60) { st.s1.innerHTML = st.s2.innerHTML = '<div class="ssl"><span style="color:#8fb8ff">K线还没到（≥60根，55窗预热）</span></div>'; if (st.s3) st.s3.innerHTML = st.s1.innerHTML; return; }   /* 11-25: 作战屏「多空」单独成钮, 等K时这格也要说一声 */
       try {
         var ck0 = ckOf(st.bars) + '|' + (st.cap || 0); if (!st.R || st.__ck !== ck0) { st.R = calc(st.bars, st.cap); st.__ck = ck0; }   /* 11-24: 同一批K不重算(主图拖动时每帧重画) */
         drawSec1(st.s1, st.R, st.bars, st.lv);
@@ -360,5 +360,5 @@
     document.head.appendChild(st);
   }
 
-  W.JLZd = { version: 'v1.4', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
+  W.JLZd = { version: 'v1.5', calc: calc, mount: mount, embedNode: embedNode, feed: feed, labels: labels, xhKey: xhKey };
 })(window);

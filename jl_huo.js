@@ -1,4 +1,6 @@
-/* jl_huo.js v6.6 (11-24 晚) 用户「1/5/15/日各自对齐 能展开折叠… 十字线图里和副图没打通… 上拖下展… 横线在副图上体现」(选: 跟主图走/一次一个/横线两种都要):
+/* jl_huo.js v6.7 (11-25) 用户「把穿越 趋势庄控 阴阳删掉吧从zp html副图里…多空留着」: 页面设 window.ZP_HUO_INDS 就只出这几个钮(作战屏=乖离|三线|多空|DK), 多空=jl_zd 的多空窗单独成钮; ks/副图体检不设=照旧.
+   以下为 v6.6 ——
+   jl_huo.js v6.6 (11-24 晚) 用户「1/5/15/日各自对齐 能展开折叠… 十字线图里和副图没打通… 上拖下展… 横线在副图上体现」(选: 跟主图走/一次一个/横线两种都要):
    在作战屏里 = 跟主图同一横轴(分时→1分K画在9:30–15:00; K线页1/5/15/日→zpPerAll()同一批K逐根对齐, 跟主图一起拖/缩), 去 日/30/15/5/1 钮;
    头部指标钮一行放不下左右滑; 下沿拖条改高(zp_huo_h_v1, 双击还原); 手指点/长按拖副图 → 主图十字线跟着走(zpMainXH) + 副图十字横线右侧读数;
    ✎水平线工具开着时点副图 = 放一条横线(zp_huo_hl_v1, 按指标数值存, 只在画它的周期显示; 点已有那条=删)。公式 calc 一个数没改(tools/bt/sub_1124/calc_check.js cmp 0差异)
@@ -259,10 +261,11 @@
   }
   function chips(lv) { return '<span class="hps">' + LVS.map(function (l) { return '<button class="hp' + (l === lv ? ' on' : '') + '" data-lv="' + l + '" type="button">' + (l === '日' ? '日' : l.replace('分', '')) + '</button>'; }).join('') + '</span>'; }
   /* v6: 指标切换 【乖离|穿越|三线】 */
-  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK'], INDK = 'zp_huo_ind_v1', SXV = '?v=14', ZDV = '?v=16', HYV = '?v=2', DKV = '?v=2';
-  function indOf() { try { var v = localStorage.getItem(INDK); if (INDS.indexOf(v) >= 0) return v; } catch (e) { } return '乖离'; }
-  function GRPOF(x) { return x === '穿越' || x === '三线' ? { m: 'JLSx', k: '__sxSt', f: 'jl_sx.js' } : x === '趋势' || x === '庄控' ? { m: 'JLZd', k: '__zdSt', f: 'jl_zd.js' } : x === '阴阳' ? { m: 'JLHy', k: '__hySt', f: 'jl_hy.js' } : { m: 'JLDk', k: '__dkSt', f: 'jl_dk.js' }; }   /* v6.5: 指标→副图模块查表 */
-  function indChips(ind) { return '<span class="hps">' + INDS.map(function (t) { return '<button class="hp hi' + (t === ind ? ' on' : '') + '" data-ind="' + t + '" type="button">' + t + '</button>'; }).join('') + '</span>'; }
+  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK'], INDK = 'zp_huo_ind_v1', SXV = '?v=14', ZDV = '?v=17', HYV = '?v=2', DKV = '?v=2';
+  function INDL() { return W.ZP_HUO_INDS && W.ZP_HUO_INDS.length ? W.ZP_HUO_INDS : INDS; }   /* 11-25 v6.7: 页面可指定只显示哪几个钮(作战屏=乖离|三线|多空|DK), 没指定=全7个 */
+  function indOf() { try { var v = localStorage.getItem(INDK); if (v === '趋势' && INDL().indexOf('多空') >= 0) v = '多空'; if (INDL().indexOf(v) >= 0) return v; } catch (e) { } return '乖离'; }
+  function GRPOF(x) { return x === '穿越' || x === '三线' ? { m: 'JLSx', k: '__sxSt', f: 'jl_sx.js' } : x === '趋势' || x === '庄控' || x === '多空' ? { m: 'JLZd', k: '__zdSt', f: 'jl_zd.js' } : x === '阴阳' ? { m: 'JLHy', k: '__hySt', f: 'jl_hy.js' } : { m: 'JLDk', k: '__dkSt', f: 'jl_dk.js' }; }   /* v6.5: 指标→副图模块查表 */
+  function indChips(ind) { return '<span class="hps">' + INDL().map(function (t) { return '<button class="hp hi' + (t === ind ? ' on' : '') + '" data-ind="' + t + '" type="button">' + t + '</button>'; }).join('') + '</span>'; }
   var CSS = '#zpHuoJL{margin:0 0 3px;padding:4px 6px 2px;color:#fff;font:400 11px/1.35 -apple-system,"PingFang SC",ui-rounded,sans-serif;font-variant-numeric:tabular-nums}' +
     '#zpHuoJL .hh{display:flex;align-items:center;gap:7px;height:19px;white-space:nowrap;overflow:hidden}#zpHuoJL .ht{font-weight:500}' +
     '#zpHuoJL .hs{margin-left:auto;font-size:10.5px}#zpHuoJL .hf{flex:none;width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;font-size:9px;line-height:14px;padding:0;text-align:center}' +
@@ -293,7 +296,7 @@
         var b = e.target && e.target.closest && e.target.closest('.hf');
         if (b) { host.classList.toggle('fold'); try { localStorage.setItem(FK, host.classList.contains('fold') ? '1' : '0'); } catch (e2) { } b.textContent = host.classList.contains('fold') ? '+' : '−'; return; }
         var p = e.target && e.target.closest && e.target.closest('.hp');
-        if (p && p.getAttribute('data-ind')) { var ind = p.getAttribute('data-ind'); if (INDS.indexOf(ind) < 0) return; host.__ind = ind; try { localStorage.setItem(INDK, ind); } catch (e4) { } host.__key = ''; redraw(host); return; }   /* v6 指标切换 */
+        if (p && p.getAttribute('data-ind')) { var ind = p.getAttribute('data-ind'); if (INDL().indexOf(ind) < 0) return; host.__ind = ind; try { localStorage.setItem(INDK, ind); } catch (e4) { } host.__key = ''; redraw(host); return; }   /* v6 指标切换 */
         if (p) { var lv = p.getAttribute('data-lv'); if (LVS.indexOf(lv) < 0) return; host.__lv = lv; host.__manualUntil = Date.now() + 30000; try { localStorage.setItem(LVK, lv); } catch (e3) { } host.__key = ''; redraw(host); }
       });
       var mv = function (e) { var G = host.__g; if (!G || G.ax) return; var sv = host.querySelector('svg'); if (!sv) return; var r = sv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e, x = (t.clientX - r.left) / r.width * G.W; host.__hov = Math.max(0, Math.min(G.N - 1, Math.floor((x - G.PL) / G.cw))); legend(host); };
@@ -367,7 +370,7 @@
         } catch (eh) { }
       };
       hy.onerror = function () { host.__hySt = { node: null, ready: false }; };
-      document.head.appendChild(hy);
+      if (INDL().indexOf('阴阳') >= 0) document.head.appendChild(hy);   /* 11-25: 页面不要阴阳就不加载 jl_hy.js */
       var dk = document.createElement('script');   /* v6.5: DK能量柱(jl_dk.js 公式D) */
       dk.src = 'jl_dk.js' + DKV;
       dk.onload = function () {
