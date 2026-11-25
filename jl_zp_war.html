@@ -7017,10 +7017,34 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     if(FF.err) text+=' · 更新失败';
     return text;
   }
+  /* 11-26ff 用户「代理情况下腾讯资金OK也行」(口径表 F-TX1): 东财分钟资金失败才拉腾讯 hsfundtab(走 Cloudflare 中转 jlff, workers.dev 国内要开代理),
+     只给「主力资金」副图画线; 不写 FF.rows / __FFCUMJL → 资金提醒/DDX/转折提醒/台账 照旧只认东财. 腾讯主力=单笔≥20万元或≥6万股, 和东财口径不同, 不混用 */
+  var FFTX_URL = 'https://jlff.enki-li.workers.dev/?code=';
+  function zpFundingParseTxJL(d, date, code) {
+    var T = d && d.data && d.data.todayFundTrend, L = T && T.minList, by = {};
+    if (typeof L === 'string') { try { L = JSON.parse(L.replace(/'/g, '"')); } catch (eJ) { L = null; } }
+    if (!L || !L.length) throw new Error('腾讯无分钟资金');
+    if (T.stockCode && String(T.stockCode).replace(/\D/g, '') !== String(code)) throw new Error('腾讯代码不匹配');
+    function number(v) { return v != null && String(v).trim() !== '' && isFinite(+v) ? +v : null; }
+    L.forEach(function (o) { var t = String(o.time || ''), hm = t.slice(8, 12);
+      if (t.slice(0, 8) !== date || !/^(09[3-5][0-9]|10[0-5][0-9]|11[0-2][0-9]|1130|13[0-5][0-9]|14[0-5][0-9]|1500)$/.test(hm)) return;
+      by[hm] = { hm: hm, main: number(o.MainNetInflow), s: number(o.SmallNetInflow), m: number(o.NormalNetInflow), l: number(o.BigNetInflow), x: number(o.SuperNetInflow) }; });
+    var rows = Object.keys(by).sort().map(function (h) { return by[h]; });
+    if (!rows.length || !rows.some(function (r) { return r.main != null; })) throw new Error('腾讯无同交易日资金');
+    return { d: date, rows: rows };
+  }
+  function loadFFTx(sym, day) {
+    if (FF.txBusy || FF.txAt && Date.now() - FF.txAt < 20000) return; FF.txBusy = true; FF.txAt = Date.now();
+    var mine = function () { return LIVE.sym === sym && LIVE.sessDate === day; };
+    jget(FFTX_URL + String(sym).toLowerCase()).then(function (d) { return zpFundingParseTxJL(d, day, String(sym).replace(/\D/g, '')); })
+      .then(function (r) { if (!mine()) return; FF.tx = { sym: sym, d: r.d, rows: r.rows, t: Date.now() }; FF.txErr = ''; },
+            function (e) { if (mine()) FF.txErr = '腾讯备用也没拉到' + (e && e.message ? '(' + String(e.message).slice(0, 16) + ')' : '') + ' · 开代理试'; })
+      .then(function () { FF.txBusy = false; if (mine() && mode === 'flow') render(); });
+  }
   function loadFF() {
     var sym=LIVE.sym, day=LIVE.sessDate, now=Date.now(); if(!sym || !day || RPL) return;
     if(FF.sym!==sym || FF.day!==day){
-      FF.sym=sym;FF.day=day;FF.rows=null;FF.d='';FF.t=0;FF.attempt=0;FF.busy=false;FF.err='';FF.request++;
+      FF.sym=sym;FF.day=day;FF.rows=null;FF.d='';FF.t=0;FF.attempt=0;FF.busy=false;FF.err='';FF.request++;FF.tx=null;FF.txErr='';FF.txAt=0;
       window.__FFCUMJL=null;
     }
     if(FF.busy || FF.attempt && now-FF.attempt<(FF.err ? 20000 : 60000)) return;   /* 11-25: 失败了20秒再试(成功仍60秒一次) */
@@ -7035,16 +7059,17 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
         var rr=r.rows.filter(function(r){return r.main!=null;}), n=rr.length;
         if(n){var lc=rr[n-1].main;window.__FFCUMJL={code:code,date:r.d,sourceHm:rr[n-1].hm,v:lc,d:n>15 ? lc-rr[n-16].main : 0,t:FF.t,rows:rr};
           try { if(!fundingLagJL(rr[n-1].hm)){if(mode!=='flow') jlSigCum({cum:lc,hm:rr[n-1].hm},fM);window.ffTurnAlertJL && window.ffTurnAlertJL(rr);} } catch(e){} }
-      },function(e){if(owns()) FF.err='分钟资金更新失败'+(e && /冷却|连不上/.test(e.message||'') ? '('+e.message+')' : '');})   /* 11-25: 失败原因上屏 */
+      },function(e){if(owns()) FF.err='分钟资金更新失败'+(e && /冷却|连不上/.test(e.message||'') ? '('+e.message+')' : '');if(owns() && mode==='flow') loadFFTx(sym,day);})   /* 11-25: 失败原因上屏 */ /* 11-26ff 东财失败→腾讯备用(只画, F-TX1) */
       .then(function(){if(!owns()) return;FF.busy=false;if(mode==='flow' || mode==='mix' || mode==='ddx' || yyOn()) render();});
   }
   function drawFlow(P) {
     var s = pSvg; s.innerHTML = ''; loadFF();
     if (LIVE.sessDate && FF.d && FF.d !== LIVE.sessDate) { legend(s, [['主力资金', TXT], ['只有当天的分钟数据 · 回放/非当日不画', TXT]]); D.pane = null; return; }
-    if (!FF.rows) { legend(s, [['主力资金', TXT], [FF.err || '拉取中…', TXT]]); D.pane = null; return; }
+    var FR = FF.rows, TXJL = false; if (!FR && FF.tx && FF.tx.sym === LIVE.sym && FF.tx.d === LIVE.sessDate && FF.tx.rows.length) { FR = FF.tx.rows; TXJL = true; }   /* 11-26ff F-TX1: 东财没数据→腾讯备用, 只画 */
+    if (!FR) { legend(s, [['主力资金', TXT], [(FF.err || '拉取中…') + (FF.txErr ? ' · ' + FF.txErr : ''), TXT]]); D.pane = null; return; }
     var R = [], prev = 0, KK = window.zpKeyOfHm && window.zpPerAll && zpPerAll();
     var CA = {}, caS = 0, caL = 0; (LIVE.pts || []).forEach(function (q) { if (q.p > 0) { caS += q.a > 0 ? q.a : (q.v || 0) * 100 * q.p; CA[hm4(q.hm)] = caS; } });   /* 11-13 转折点: 截至每分钟的累计成交额 */
-    FF.rows.forEach(function (r) {
+    FR.forEach(function (r) {
       var x = xOfHmJL(r.hm); if (x == null) { prev = r.main; return; }
       var ca = CA[hm4(r.hm)]; if (ca > 0) caL = ca;
       var it = { hm: KK ? (zpKeyOfHm(r.hm) || hm4(r.hm)) : hm4(r.hm), x: x, cum: r.main, d: r.main - prev, ca: caL }; prev = r.main;
@@ -7052,7 +7077,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     });
     R = R.filter(function (r) { return r.x > -900 && r.x < 9000; });
     if (!R.length) { legend(s, [['主力资金', TXT], ['还没有数据', TXT]]); D.pane = null; return; }
-    var flowLag=fundingLagJL(FF.rows[FF.rows.length-1].hm), mc = 1, md = 1; R.forEach(function (r) { mc = Math.max(mc, Math.abs(r.cum)); md = Math.max(md, Math.abs(r.d)); });
+    var flowLag=fundingLagJL(FR[FR.length-1].hm), mc = 1, md = 1; R.forEach(function (r) { mc = Math.max(mc, Math.abs(r.cum)); md = Math.max(md, Math.abs(r.d)); });
     var top = 16, bot = PH2 - 4, mid = (top + bot) / 2, half = (bot - top) / 2 - 1;
     var YC = function (v) { return mid - v / mc * half; }, YD = function (v) { return mid - v / md * half * 0.75; };
     s.appendChild(E('line', { x1: X0(), x2: X1(), y1: mid, y2: mid, stroke: 'rgba(255,255,255,.3)', 'stroke-width': .6, 'stroke-dasharray': '3 3' }));
@@ -7075,7 +7100,7 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
     }
     R.forEach(function (r) { if (r.tp) gT.appendChild(E('circle', { cx: r.x.toFixed(1), cy: YC(r.cum).toFixed(1), r: 2.6, fill: r.tp > 0 ? UP : DN, stroke: 'rgba(0,0,0,.55)', 'stroke-width': .6 })); });
     s.appendChild(gT);
-    var lg = function (k) { var r = R[k], o = [['主力净额', TXT], ['累计 ' + fM(r.cum), r.cum >= 0 ? UP : DN], ['本分钟 ' + fM(r.d), r.d >= 0 ? UP : DN]]; if(flowLag>0)o.push(['资金落后'+flowLag+'分钟 · 暂停判读','#ffcf70']); if (r.tp) o.push([r.tp > 0 ? '转入' : '转出', r.tp > 0 ? UP : DN]); return o; };
+    var lg = function (k) { var r = R[k], o = [['主力净额', TXT], ['累计 ' + fM(r.cum), r.cum >= 0 ? UP : DN], ['本分钟 ' + fM(r.d), r.d >= 0 ? UP : DN]]; if(TXJL)o.push(['腾讯口径·东财断了·不进提醒','#ffcf70']); if(flowLag>0)o.push(['资金落后'+flowLag+'分钟 · 暂停判读','#ffcf70']); if (r.tp) o.push([r.tp > 0 ? '转入' : '转出', r.tp > 0 ? UP : DN]); return o; };
     D.pane = { vy: function (y) { return (mid - y) / half * mc; }, fmt: fM, snaps: function (k) { return [['累计', R[k].cum, YC(R[k].cum)], ['本分钟', R[k].d, YD(R[k].d)]]; }, P: R, lg: lg, base: lg(R.length - 1) };
   }
 
