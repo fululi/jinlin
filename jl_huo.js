@@ -1,4 +1,4 @@
-/* jl_huo.js v6.7 (11-25) 用户「把穿越 趋势庄控 阴阳删掉吧从zp html副图里…多空留着」: 页面设 window.ZP_HUO_INDS 就只出这几个钮(作战屏=乖离|三线|多空|DK), 多空=jl_zd 的多空窗单独成钮; ks/副图体检不设=照旧.
+/* jl_huo.js v6.8 (11-25c 用户「做T屏…副图你画到哪里去了」: 指标钮加「波段位置」= jl_bw.js, 口径表 HL3) · v6.7 (11-25) 用户「把穿越 趋势庄控 阴阳删掉吧从zp html副图里…多空留着」: 页面设 window.ZP_HUO_INDS 就只出这几个钮(作战屏=乖离|三线|多空|DK), 多空=jl_zd 的多空窗单独成钮; ks/副图体检不设=照旧.
    以下为 v6.6 ——
    jl_huo.js v6.6 (11-24 晚) 用户「1/5/15/日各自对齐 能展开折叠… 十字线图里和副图没打通… 上拖下展… 横线在副图上体现」(选: 跟主图走/一次一个/横线两种都要):
    在作战屏里 = 跟主图同一横轴(分时→1分K画在9:30–15:00; K线页1/5/15/日→zpPerAll()同一批K逐根对齐, 跟主图一起拖/缩), 去 日/30/15/5/1 钮;
@@ -261,10 +261,10 @@
   }
   function chips(lv) { return '<span class="hps">' + LVS.map(function (l) { return '<button class="hp' + (l === lv ? ' on' : '') + '" data-lv="' + l + '" type="button">' + (l === '日' ? '日' : l.replace('分', '')) + '</button>'; }).join('') + '</span>'; }
   /* v6: 指标切换 【乖离|穿越|三线】 */
-  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK'], INDK = 'zp_huo_ind_v1', SXV = '?v=14', ZDV = '?v=17', HYV = '?v=2', DKV = '?v=2';
+  var INDS = ['乖离', '穿越', '三线', '趋势', '庄控', '阴阳', 'DK', '波段位置'], INDK = 'zp_huo_ind_v1', SXV = '?v=14', ZDV = '?v=17', HYV = '?v=2', DKV = '?v=2';
   function INDL() { return W.ZP_HUO_INDS && W.ZP_HUO_INDS.length ? W.ZP_HUO_INDS : INDS; }   /* 11-25 v6.7: 页面可指定只显示哪几个钮(作战屏=乖离|三线|多空|DK), 没指定=全7个 */
   function indOf() { try { var v = localStorage.getItem(INDK); if (v === '趋势' && INDL().indexOf('多空') >= 0) v = '多空'; if (INDL().indexOf(v) >= 0) return v; } catch (e) { } return '乖离'; }
-  function GRPOF(x) { return x === '穿越' || x === '三线' ? { m: 'JLSx', k: '__sxSt', f: 'jl_sx.js' } : x === '趋势' || x === '庄控' || x === '多空' ? { m: 'JLZd', k: '__zdSt', f: 'jl_zd.js' } : x === '阴阳' ? { m: 'JLHy', k: '__hySt', f: 'jl_hy.js' } : { m: 'JLDk', k: '__dkSt', f: 'jl_dk.js' }; }   /* v6.5: 指标→副图模块查表 */
+  function GRPOF(x) { return x === '穿越' || x === '三线' ? { m: 'JLSx', k: '__sxSt', f: 'jl_sx.js' } : x === '趋势' || x === '庄控' || x === '多空' ? { m: 'JLZd', k: '__zdSt', f: 'jl_zd.js' } : x === '阴阳' ? { m: 'JLHy', k: '__hySt', f: 'jl_hy.js' } : x === '波段位置' ? { m: 'JLBw', k: '__bwSt', f: 'jl_bw.js' } : { m: 'JLDk', k: '__dkSt', f: 'jl_dk.js' }; }   /* v6.5: 指标→副图模块查表 */
   function indChips(ind) { return '<span class="hps">' + INDL().map(function (t) { return '<button class="hp hi' + (t === ind ? ' on' : '') + '" data-ind="' + t + '" type="button">' + t + '</button>'; }).join('') + '</span>'; }
   var CSS = '#zpHuoJL{margin:0 0 3px;padding:4px 6px 2px;color:#fff;font:400 11px/1.35 -apple-system,"PingFang SC",ui-rounded,sans-serif;font-variant-numeric:tabular-nums}' +
     '#zpHuoJL .hh{display:flex;align-items:center;gap:7px;height:19px;white-space:nowrap;overflow:hidden}#zpHuoJL .ht{font-weight:500}' +
@@ -333,6 +333,7 @@
           if (W.JLZd && W.JLZd.xhKey) W.JLZd.xhKey(key);   /* v6.4: 竖线也转发给趋势/庄控 */
           if (W.JLHy && W.JLHy.xhKey) W.JLHy.xhKey(key);   /* v6.5: 阴阳/DK 副图跟随十字线 */
           if (W.JLDk && W.JLDk.xhKey) W.JLDk.xhKey(key);
+          if (W.JLBw && W.JLBw.xhKey) W.JLBw.xhKey(key);
           if (h && h.__ax) { if (key == null) h.__touch = null; paintHx(h, key == null || !(h.__xi >= 0) ? null : h.__xi); }   /* 11-24: 十字横线+读数 */
         } catch (e) { }
       };
@@ -380,6 +381,11 @@
       };
       dk.onerror = function () { host.__dkSt = { node: null, ready: false }; };
       document.head.appendChild(dk);
+      host.__bwSt = { node: null, s1: null, ready: false, code: '', which: '波段位置', bars: null, lv: null };   /* v6.8 */
+      var bw = document.createElement('script'); bw.src = 'jl_bw.js?v=1';
+      bw.onload = function () { try { if (!W.JLBw) return; var nb = W.JLBw.embedNode({ code: codeOf() }); host.__bwSt.node = nb.node; host.__bwSt.s1 = nb.s1; host.__bwSt.ready = true; host.__bwSt.code = nb.code; } catch (eb) { } };
+      bw.onerror = function () { host.__bwSt = { node: null, ready: false }; };
+      document.head.appendChild(bw);
     }
     return host;
   }
@@ -410,7 +416,7 @@
         var indM = host.__ind || indOf(); host.__ind = indM;
         host.innerHTML = '<div class="hh"><span class="ht">' + (indM === '乖离' ? '乖离 · ' + lv : indM + ' · ' + lv) + '</span>' + '<span class="hcs">' + indChips(indM) + CHP + '</span>' + '<button class="hf xz" type="button" aria-label="放大缩小">⤢</button><button class="hf" type="button" aria-label="折叠">' + (fd ? '+' : '−') + '</button></div><div class="hh"><span class="hs">' + mb.msg + '</span></div><div class="sxbox"></div>';
         var sxbM = host.querySelector('.sxbox');
-        ['sxSt', 'zdSt', 'hySt', 'dkSt'].forEach(function (kn) { if (host['__' + kn] && host['__' + kn].node) sxbM.appendChild(host['__' + kn].node); });
+        ['sxSt', 'zdSt', 'hySt', 'dkSt', 'bwSt'].forEach(function (kn) { if (host['__' + kn] && host['__' + kn].node) sxbM.appendChild(host['__' + kn].node); });
         if (indM !== '乖离') { var gm = GRPOF(indM), modM = W[gm.m], sttM = host[gm.k]; if (modM && sttM && sttM.ready) { try { modM.feed(sttM, mb.bars || sttM.bars, lv, indM, codeOf()); } catch (e6) { } } }
         return;
       }
@@ -418,7 +424,7 @@
     }
     var key = (AX ? AX.i0 + ',' + AX.N + ',' + AX.x(AX.i0).toFixed(1) + ',' + AX.x(AX.i0 + AX.N - 1).toFixed(1) + ',' + AX.H + '|' : 'H' + hOf() + '|') + (host.__ind || indOf()) + '|' + lv + '|' + (CB && CB.length ? CB.length + '@' + CB[CB.length - 1].t + '@' + CB[CB.length - 1].c : '0') + '|' + sess + '|' + (B && B.length ? B.length + '@' + B[B.length - 1].c : '');
     if (host.__key === key) return; host.__key = key;
-    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">' + ((host.__ind || indOf()) === '乖离' ? '日线乖离' : (host.__ind || indOf()) + ' · ' + lv) + '</span>' + '<span class="hcs">' + indChips(host.__ind || indOf()) + CHP + '</span>' + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div><div class="sxbox"></div>'; var sxbK = host.querySelector('.sxbox'); ['sxSt', 'zdSt', 'hySt', 'dkSt'].forEach(function (kn) { if (host['__' + kn] && host['__' + kn].node) sxbK.appendChild(host['__' + kn].node); }); return; }
+    if (!CB || CB.length < 40) { host.__g = null; host.innerHTML = '<div class="hh"><span class="ht">' + ((host.__ind || indOf()) === '乖离' ? '日线乖离' : (host.__ind || indOf()) + ' · ' + lv) + '</span>' + '<span class="hcs">' + indChips(host.__ind || indOf()) + CHP + '</span>' + '<span class="hs">日K还没到（一直这样=日K拉不到）</span></div><div class="sxbox"></div>'; var sxbK = host.querySelector('.sxbox'); ['sxSt', 'zdSt', 'hySt', 'dkSt', 'bwSt'].forEach(function (kn) { if (host['__' + kn] && host['__' + kn].node) sxbK.appendChild(host['__' + kn].node); }); return; }
     host.__CB = CB;   /* v6.2: 供 zpSubXH 十字线匹配 */
     var zb = CB[CB.length - 1], rk = CB.length + '|' + CB[0].t + '|' + zb.t + '|' + zb.c + '|' + zb.h + '|' + zb.l, R = host.__rk === rk && host.__R ? host.__R : (host.__R = calc(CB)); host.__rk = rk;   /* 11-24: 同一批K不重算 */
     var N = AX ? AX.N : Math.min(90, R.n), i0 = AX ? AX.i0 : R.n - N, D = labels(CB, lv);
@@ -451,7 +457,7 @@
     /* v6: 指标切换 —— 穿越/三线 显示 sx 区域, 与周期联动; sx 节点常驻内存, 每次重绘挪回 */
     var sxb = host.querySelector('.sxbox');
     var grp = GRPOF(ind);   /* v6.5: 查表 {m:模块全局名, k:st键名, f:文件名} —— sx/zd/hy/dk 四组常驻节点, 选中组显示其余隐藏 */
-    ['sxSt', 'zdSt', 'hySt', 'dkSt'].forEach(function (kn) {
+    ['sxSt', 'zdSt', 'hySt', 'dkSt', 'bwSt'].forEach(function (kn) {
       if (host['__' + kn] && host['__' + kn].node) { sxb.appendChild(host['__' + kn].node); host['__' + kn].node.style.display = (kn === grp.k.slice(2)) ? '' : 'none'; }
     });
     if (!indIsHu) {

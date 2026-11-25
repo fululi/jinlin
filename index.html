@@ -10924,7 +10924,7 @@ function swingMidHTMLJL(st) {
               window.JLHL.draw(g, res, X, geo.yOfPrice, { levels: ["m1"], from: day, font: 9, lw: 0.7 });
               g.restore();
             }
-            var tx = st.res ? window.JLHL.progText(st.res, "m1") : "";
+            var tx = "";   /* 11-25c 用户「这些字可以删除」: 回头进度那行不写, 只断流时写 */
             if (st.err && (!st.ok || Date.now() - st.ok > 30e3)) tx = "⚠ 高低点断流" + (st.ok ? " " + Math.round((Date.now() - st.ok) / 1e3) + "秒" : "") + " · " + st.err;
             if (tx) { g.font = "400 9px -apple-system,PingFang SC,sans-serif"; g.textAlign = "left"; g.fillStyle = st.err ? "rgba(255,179,179,.95)" : "rgba(232,238,245,.8)"; g.fillText(tx, (geo.l || 0) + 3, yBot - 3); }
           } catch (eD) { }
