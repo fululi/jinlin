@@ -296,6 +296,6 @@
     }return sent;
   }
   /* 11-24w 列表小标: 最近一轮 进▲/出▼/到期◷ + 日期 */
-  function marks(code){var res=result(code);if(!res||!res.rows.length||!res.trades.length)return null;var s=at(res,res.rows.length-1),R=res.rows;if(s.ei!=null)return {kind:s.expired?'exp':'out',d:R[s.ei].d};if(s.ex!=null)return {kind:'out',d:R[s.ex].d};if(s.bi!=null)return {kind:'in',d:R[s.bi].d};return null;}
+  function marks(code){var res=result(code);if(!res||!res.rows.length||!res.trades.length)return null;var s=at(res,res.rows.length-1),R=res.rows;var bd=s.bi!=null?R[s.bi].d:null;/* 11-25w 带上进场日 b, 自选行同时画▲进▼出 */if(s.ei!=null)return {kind:s.expired?'exp':'out',d:R[s.ei].d,b:bd};if(s.ex!=null)return {kind:'out',d:R[s.ex].d,b:bd};if(s.bi!=null)return {kind:'in',d:R[s.bi].d};return null;}
   Object.assign(api,{marks:marks,favorites:favorites,isFavorite:isFavorite,toggleFavorite:toggleFavorite,load:load,result:result,mount:mount,mountList:mountList,lamps:lamps,checkClose:checkClose,message:message,css:css});return api;
 });
