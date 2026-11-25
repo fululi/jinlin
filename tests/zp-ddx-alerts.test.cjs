@@ -5,8 +5,8 @@ const html=fs.readFileSync(path.join(__dirname,'../jl_zp_war.html'),'utf8');
 const source=html.slice(html.indexOf('  function ddxLineKey()'),html.indexOf('  function drawDdx(P)'));
 function setup(){
   const saved={},events={},alerts=[];let seq=[],day=true,phase='am',per=0,paints=0;
-  const c={STK:{code:'600105'},LIVE:{sym:'sh600105',sessDate:'20261119',pts:[]},FF:{sym:'sh600105',d:'20261119',rows:[]},window:{addEventListener:(k,f)=>events[k]=f,zpPerOf:()=>per},mode:'ddx',D:{pane:{vy:y=>(65-y)*30/31}},PH2:104,pSvg:{getBoundingClientRect:()=>({top:100,height:208})},
-    localStorage:{getItem:k=>saved[k]||null,setItem:(k,v)=>saved[k]=v},liveToday:()=>day,phaseNow:()=>phase,perNmJL:p=>p?p+'分':'分时',zpDdxCalcJL:()=>seq,zpDdxSeriesJL:s=>s,jlSigPush:(...args)=>alerts.push(args),render:()=>paints++,requestAnimationFrame:()=>1,cancelAnimationFrame(){}};
+  const c={STK:{code:'600105'},LIVE:{sym:'sh600105',sessDate:'20261119',pts:[]},FF:{sym:'sh600105',d:'20261119',rows:[{hm:'1003',main:0}]},window:{addEventListener:(k,f)=>events[k]=f,zpPerOf:()=>per},mode:'ddx',D:{pane:{vy:y=>(65-y)*30/31}},PH2:104,pSvg:{getBoundingClientRect:()=>({top:100,height:208})},
+    localStorage:{getItem:k=>saved[k]||null,setItem:(k,v)=>saved[k]=v},liveToday:()=>day,phaseNow:()=>phase,perNmJL:p=>p?p+'分':'分时',zpDdxCalcJL:()=>seq,fundingLagJL:()=>0,zpDdxSeriesJL:s=>s,jlSigPush:(...args)=>alerts.push(args),render:()=>paints++,requestAnimationFrame:()=>1,cancelAnimationFrame(){}};
   c.zpPerOf=c.window.zpPerOf;vm.createContext(c);vm.runInContext(source,c);
   return {c,saved,alerts,setSeq(x){seq=x;},setDay(x){day=x;},setPhase(x){phase=x;},setPer(x){per=x;},get paints(){return paints;},events};
 }

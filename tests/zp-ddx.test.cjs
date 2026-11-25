@@ -17,7 +17,7 @@ test('DDX uses cumulative differences and the same 20 actual amounts; early valu
 });
 test('missing real amount is never replaced by volume times price, and zero total is not divided',()=>{
   const x=sample([10,20,30]);delete x.pts[1].a;x.pts[1].v=999;x.pts[1].p=100;
-  const r=ctx.zpDdxCalcJL(x.rows,x.pts);assert.equal(r[1].v,null);assert.equal(r[2].v,null);assert.equal(r[2].ca,null);
+  const r=ctx.zpDdxCalcJL(x.rows,x.pts);assert.equal(r[1].a,1000);assert.equal(r[1].est,true);assert.equal(r[2].est,true);assert.equal(r[0].est,false);   // 11-19晚2批: 缺分钟额用当日中位数补并标est(不用量×价)
   assert.equal(ctx.zpDdxCalcJL([{hm:'0930',main:10}],[{hm:'0930',a:0}])[0].v,null);
 });
 test('missing flow minutes do not become one-minute flow; late first cumulative value is rejected',()=>{
@@ -64,18 +64,18 @@ test('main chart DDX markers use the exact confirmed extreme candle and existing
   c.localStorage.getItem=()=> '0';ch.children=[];c.ddxMarks(points);assert.equal(ch.children.length,0);
 });
 test('DDX pane renders one data curve plus a horizontal mean and independent net-amount bars, correct units and reversible alert coordinates',()=>{
-  function E(type,attrs={},text){return {type,attrs,text,children:[],appendChild(n){this.children.push(n);}};}
+  function E(type,attrs={},text){return {type,attrs,text,children:[],appendChild(n){this.children.push(n);},setAttribute(k,v){this.attrs[k]=v;}};}
   const x=sample(Array.from({length:25},(_,i)=>i%2?-20:100)),s=E('svg');
-  const c={...ctx,pSvg:s,loadFF(){},legend(){},FF:{sym:'sh600105',rows:x.rows,d:'20261118'},LIVE:{sym:'sh600105',pts:x.pts,sessDate:'20261118'},window:{},D:{},E,PH2:104,TXT:'#fff',UP:'red',DN:'green',X0:()=>0,X1:()=>360,xOfHmJL:h=>(+h-930)*10,barW:()=>1,fM:v=>v+'元',fundingStatusJL:()=> '东财 09:54',ddxLines:()=>[5]};
-  vm.createContext(c);const start=html.indexOf('  function drawDdx(P)');vm.runInContext(html.slice(start,html.indexOf('  /* ── jl-zpmix',start)),c);c.drawDdx([]);
+  const c={...ctx,fundingLagJL:()=>0,pSvg:s,loadFF(){},legend(){},FF:{sym:'sh600105',rows:x.rows,d:'20261118'},LIVE:{sym:'sh600105',pts:x.pts,sessDate:'20261118'},window:{},D:{},E,PH2:104,TXT:'#fff',UP:'red',DN:'green',X0:()=>0,X1:()=>360,xOfHmJL:h=>(+h-930)*10,barW:()=>1,fM:v=>v+'元',fundingStatusJL:()=> '东财 09:54',ddxLines:()=>[5]};
+  vm.createContext(c);const start=html.indexOf('  function ddxZoomOf()');vm.runInContext(html.slice(start,html.indexOf('  /* ── jl-zpmix',start)),c);c.drawDdx([]);
   const curves=s.children.filter(n=>n.attrs['data-series']==='ratio20');assert.equal(curves.length,1);
-  assert.equal(curves[0].children.length,5);assert.ok(curves[0].children.every(n=>['#ffb3cf','#2ee6d6'].includes(n.attrs.stroke)));   // 11-19: 预热不画; 涨淡粉/跌青绿
+  assert.equal(curves[0].children.length,5);assert.ok(curves[0].children.every(n=>['red','green'].includes(n.attrs.stroke)));   // 11-19: 预热不画; 11-19 f9da538 起涨跌改用 UP/DN
   assert.equal(s.children.some(n=>n.type==='polyline'),false);
   const bars=s.children.find(n=>n.attrs['data-series']==='main-net');assert.equal(bars.children.length,25);
   const ref=s.children.find(n=>n.attrs['data-series']==='ma10');assert.ok(ref && /^M/.test(ref.attrs.d));   // 11-19: MA10 跟着走
   const snap=c.D.pane.snaps(24);assert.equal(snap.length,1);assert.equal(snap[0][0],'净额比20');assert.ok(Math.abs(c.D.pane.vy(snap[0][2])-4)<1e-9);
-  assert.ok(s.children.some(n=>n.type==='text' && /MA10 /.test(n.text)));
-  assert.ok(c.D.pane.lg(24).some(x=>x[0].includes('自算')));
+  assert.ok(c.D.pane.lg(24).some(x=>/MA10 /.test(x[0])));   // 11-23 用户「删掉没用的」: 图内MA10字删了, 只在图例
+  assert.ok(s.children.some(n=>n.type==='title' && /自算/.test(n.text)));   // 11-23 用户「删掉没用的」: 图例不再写「自算」, 说明挪到 title
   assert.ok(c.D.pane.lg(24).some(x=>x[0].includes('净额')));
   assert.deepEqual(s.children.filter(n=>n.type==='text' && /%$/.test(n.text) && !n.attrs['data-ddx-line'] && !/MA10/.test(n.text)).map(n=>n.text),['+10%','0%','-10%']);
 });
