@@ -83,6 +83,9 @@
   var LTCSS = 'html[data-zpball=lt] #jlZpBallJL{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:#e0e3eb}' +
     'html[data-zpball=lt] #jlZpBallJL[data-k=idle],html[data-zpball=lt] #jlZpBallJL:not([data-k]){box-shadow:0 2px 10px rgba(19,23,34,.16)}' +
     'html[data-zpball=lt] #jlZpBallJL .bt b{color:#131722}html[data-zpball=lt] #jlZpBallJL .bt span,html[data-zpball=lt] #jlZpBallJL.wide .bt span{color:#787b86}html[data-zpball=lt] #jlZpBallJL i{border-color:#fff}' +
+    /* 11-26w2 用户「做T 切换成白色的时候字体颜色很丑」: 白底球字 800 特粗纯黑 → TV 式 500 中粗深灰黑 + 细灰副字; 边框细浅灰 */
+    'html[data-zpball=lt] #jlZpBallJL{border-width:1px}html[data-zpball=lt] #jlZpBallJL[data-k=idle],html[data-zpball=lt] #jlZpBallJL:not([data-k]){border-color:#d1d4dc}' +
+    'html[data-zpball=lt] #jlZpBallJL .bt b{font-weight:500;color:#131722;letter-spacing:.3px}html[data-zpball=lt] #jlZpBallJL .bt span,html[data-zpball=lt] #jlZpBallJL.wide .bt span{font-weight:400;color:#787b86}' +
     'html[data-zpball=lt] #jlZpSheetJL{background:#fff;border-color:#e0e3eb;box-shadow:0 6px 24px rgba(19,23,34,.18)}html[data-zpball=lt] #jlZpSheetJL iframe{color-scheme:light}' +
     'html[data-zpball=lt] #jlZpSheetJL .zx,html[data-zpball=lt] #jlZpSheetJL .zz,html[data-zpball=lt] #jlZpSheetJL .tdB{background:#f0f3fa;border-color:#e0e3eb;color:#131722}';
   function ltSync() { try { var on = localStorage.getItem('zp_light_v1') === '1', h = document.documentElement;
