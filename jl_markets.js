@@ -1,4 +1,5 @@
-/* v8 2026-11-26: 加 1 分钟；分钟K先走新浪(外盘期货/美股/纳指)；加纳斯达克综合/纳斯达克100/Anthropic(ANT)。
+/* v9 2026-11-26: JLMarkets.searchBox/addSaved/short(自选页小胶囊搜索)，自选页去 ⌕ 整屏入口。
+   v8 2026-11-26: 加 1 分钟；分钟K先走新浪(外盘期货/美股/纳指)；加纳斯达克综合/纳斯达克100/Anthropic(ANT)。
    QuoteIDs verified with Eastmoney suggest on 2026-11-19 (100.NDX/100.NDX100/105.ANT 东财未核, 只作兜底).
    TV aliases identify related instruments, not identical CFD/continuous series. */
 (function (root) {
@@ -151,8 +152,56 @@
   }
   function open(query){if(!panel)create();previousFocus=doc.activeElement;panel.hidden=false;if(typeof query==='string')input.value=query;input.focus();search();}
   api.open=open;
+  /* v9 11-26 用户「自选页面同样换成这种类型的搜索」: 小胶囊搜索框+下拉(名称/代码·类别/现价/涨跌%)，点一行=onPick(r)。和 ks.html ksSrchBindJL 同款(ks 那份暂没并过来)。
+     r={mk:1,item,name,sub,tyName,qt} 外盘/美股/纳指；或 {cn:'600105',name,sub,tyName,qt} A股/ETF */
+  const SHORT={'122.XAU':'伦敦金','122.XAG':'伦敦银','101.GC00Y':'COMEX黄金','101.SI00Y':'COMEX白银','102.CL00Y':'WTI原油','112.B00Y':'布伦特原油','102.PL00Y':'铂金'};
+  const HF={'122.XAU':'hf_XAU','122.XAG':'hf_XAG','101.GC00Y':'hf_GC','101.SI00Y':'hf_SI','102.CL00Y':'hf_CL','112.B00Y':'hf_OIL','102.PL00Y':'hf_PL'};
+  const TY={commodity:'商品',us:'美股',board:'板块',cn:'A股',index:'指数'};
+  api.short=r=>SHORT[r.id]||String(r.name).split(/ · | \/ /)[0];
+  api.addSaved=r=>{if(saved.some(v=>v.id===r.id))return false;saved.push({id:r.id,code:r.code,name:r.name,kind:r.kind,aliases:r.aliases||'',tv:r.tv||'',note:r.note||''});try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}renderSaved();return true;};
+  const qtOf=m=>HF[m.id]||(m.kind==='us'?usTicker(m).replace(/\.(OQ|N|A)$/,''):'');
+  function smartbox(q){return new Promise(res=>{const s=doc.createElement('script');s.charset='gbk';let done=false;const fin=v=>{if(done)return;done=true;clearTimeout(t);s.remove();res(v);};const t=setTimeout(()=>fin([]),6000);
+    s.onload=()=>{const out=[];String(root.v_hint||'').split('^').forEach(seg=>{const f=seg.split('~');if(f.length<5)return;let nm=f[2];try{nm=JSON.parse('"'+nm+'"');}catch(e){}
+      if(f[0]==='us'){const p=f[1].split('.'),ex={oq:'105',n:'106',am:'107'}[p[1]]||'105',c=p[0].toUpperCase();if(!/^[A-Z0-9_-]+$/.test(c))return;out.push({mk:1,item:item(ex+'.'+c,nm,'us',c,({'106':'NYSE:','107':'AMEX:'}[ex]||'NASDAQ:')+c,'美股 · 美元'),name:nm,sub:c,tyName:'美股',qt:'us'+c});}
+      else if((f[0]==='sh'||f[0]==='sz')&&/^\d{6}$/.test(f[1])&&(f[4]==='GP-A'||f[4]==='ETF'))out.push({cn:f[1],name:nm,sub:f[1],tyName:f[4]==='ETF'?'ETF':'A股',qt:f[0]+f[1]});});fin(out);};
+    s.onerror=()=>fin([]);s.src='https://smartbox.gtimg.cn/s3/?v=2&q='+encodeURIComponent(q)+'&t=all';doc.head.append(s);});}
+  function quotes(list){const map={},codes=[];list.forEach(r=>{if(!r.qt)return;if(!map[r.qt]){map[r.qt]=[];codes.push(r.qt);}map[r.qt].push(r);});if(!codes.length)return;
+    root.v_us=root.v_us||{};/* 腾讯指数回 v_us.IXIC="..." */const s=doc.createElement('script');s.charset='gbk';
+    s.onload=()=>{codes.forEach(q=>{const v=q.indexOf('us.')===0?(root.v_us||{})[q.slice(3)]:root['v_'+q];if(!v)return;let f,px,pc;if(q.indexOf('hf_')===0){f=String(v).split(',');px=+f[0];pc=+f[1];}else{f=String(v).split('~');px=+f[3];pc=+f[32];}if(!isFinite(px)||!px)return;
+      map[q].forEach(r=>{if(!r._el||!r._el.isConnected)return;r._el.querySelector('.p').textContent=px.toFixed(px<10?3:2);if(isFinite(pc)){const e=r._el.querySelector('.q');e.textContent=(pc>0?'+':'')+pc.toFixed(2)+'%';e.className='q'+(pc>0?' up':pc<0?' dn':'');}});});s.remove();};
+    s.onerror=()=>s.remove();s.src='https://qt.gtimg.cn/q='+codes.join(',')+'&_='+Date.now();doc.head.append(s);}
+  function srchCss(){if(doc.getElementById('jlmkSrCss'))return;const st=el('style');st.id='jlmkSrCss';
+    const mag="url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='5' cy='5' r='3.8' fill='none' stroke='%23787b86' stroke-width='1.3'/%3E%3Cpath d='M8 8l3 3' stroke='%23787b86' stroke-width='1.3'/%3E%3C/svg%3E\")";
+    st.textContent='.jlmkSrch{display:inline-flex;align-items:center;flex:0 0 auto}.jlmkSrch input{width:104px;height:30px;box-sizing:border-box;margin:0;font:400 13px -apple-system,"PingFang SC",sans-serif;color:var(--fg,#d1d4dc);background:#ffffff12 '+mag+' no-repeat 9px 50%/12px 12px;border:1px solid #ffffff1f;border-radius:15px;padding:0 10px 0 26px;outline:none;-webkit-appearance:none;appearance:none}.jlmkSrch input::-webkit-search-cancel-button{display:none}'
+      +'#jlmkDd{position:fixed;z-index:100100;width:260px;max-width:92vw;max-height:60vh;overflow:auto;background:#131722;border:1px solid #2a2e39;border-radius:8px;box-shadow:0 6px 24px #0008;padding:2px 0;-webkit-overflow-scrolling:touch}'
+      +'.jlmkSrRow{display:grid;grid-template-columns:1fr auto;gap:1px 10px;width:100%;padding:7px 10px;background:transparent!important;border:0!important;border-bottom:1px solid #ffffff0d!important;border-radius:0!important;box-shadow:none!important;color:#d1d4dc;text-align:left;font:400 13px/1.3 -apple-system,"PingFang SC",sans-serif;cursor:pointer}'
+      +'.jlmkSrRow:last-child{border-bottom:0!important}.jlmkSrRow:active,.jlmkSrRow.sel{background:#2962ff1f!important}.jlmkSrRow .n{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.jlmkSrRow .p{text-align:right;font-variant-numeric:tabular-nums}'
+      +'.jlmkSrRow .c,.jlmkSrRow .q{font-size:10.5px;color:#787b86}.jlmkSrRow .q{text-align:right;font-variant-numeric:tabular-nums}.jlmkSrRow .q.up{color:#ff3347}.jlmkSrRow .q.dn{color:#00a878}#jlmkDd .none{padding:9px 10px;font-size:12px;color:#787b86}'
+      +'html.wLightJL #jlmkDd,html.ksLight #jlmkDd{background:#fff;border-color:#e0e3eb;box-shadow:0 6px 24px #0002}html.wLightJL .jlmkSrRow,html.ksLight .jlmkSrRow{color:#131722;border-bottom-color:#f0f3fa!important}'
+      +'html.wLightJL .jlmkSrch input,html.ksLight .jlmkSrch input{background-color:#f0f3fa;border-color:transparent;color:#131722}';
+    doc.head.append(st);
+    doc.addEventListener('pointerdown',e=>{const d=doc.getElementById('jlmkDd');if(d&&!d.contains(e.target)&&!(e.target.closest&&e.target.closest('.jlmkSrch')))d.remove();},true);}
+  api.searchBox=(inp,onPick)=>{
+    srchCss();let tm=null,seq=0,shown=[];
+    const close=()=>{const d=doc.getElementById('jlmkDd');if(d)d.remove();};
+    const pick=r=>{close();inp.value='';inp.blur();try{onPick(r);}catch(e){console.error(e);}};
+    const place=d=>{const rc=inp.getBoundingClientRect();d.style.left=Math.max(6,Math.min(rc.left,root.innerWidth-d.offsetWidth-6))+'px';d.style.top=(rc.bottom+4)+'px';};
+    const render=(list,kw)=>{close();shown=list.slice(0,12);const d=el('div');d.id='jlmkDd';d.setAttribute('role','listbox');
+      if(!shown.length)d.append(el('div','没找到「'+kw+'」· 换个名称或代码','none'));
+      shown.forEach((r,k)=>{const b=el('button',null,'jlmkSrRow'+(k?'':' sel'));b.type='button';b.append(el('span',r.name,'n'),el('span','','p'),el('span',r.sub+(r.tyName?' · '+r.tyName:''),'c'),el('span','','q'));b.onclick=()=>pick(r);r._el=b;d.append(b);});
+      doc.body.append(d);place(d);quotes(shown);};
+    const run=async()=>{const kw=inp.value.trim(),my=++seq;if(!kw){close();return;}
+      const mk=merge(kw,[]).map(m=>({mk:1,item:m,name:api.short(m),sub:String(m.tv||m.code).split(':').pop(),tyName:TY[m.kind]||'',qt:qtOf(m)}));
+      if(mk.length)render(mk,kw);
+      const sb=await smartbox(kw);if(my!==seq)return;
+      const have=new Set(mk.map(r=>r.sub.toUpperCase()));
+      render(mk.concat(sb.filter(r=>!(r.mk&&have.has(r.sub.toUpperCase())))),kw);};
+    inp.addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,220);});
+    inp.addEventListener('focus',()=>{if(inp.value.trim())run();});
+    inp.addEventListener('keydown',e=>{if(e.key==='Escape'){close();inp.blur();}else if(e.key==='Enter'){e.preventDefault();clearTimeout(tm);if(shown.length&&doc.getElementById('jlmkDd'))pick(shown[0]);else run();}});
+  };
   function mount(){
     if(root.S&&root.buildTabs)return;
-    const compact=el("style");compact.textContent=".jlmk-row{display:flex;gap:4px}.jlmk-result{flex:1}#jlMarketPanel .jlmk-add{width:28px;padding:0;font-size:16px;border:0}body #jlMarketPanel{font-size:12px}body #jlMarketPanel h2{font-size:14px}.jlmk-entry{font-size:12px!important;padding:3px!important}";doc.head.append(compact);const style=el('style');style.textContent='.jlmk-entry{padding:5px 9px;border:1px solid #81e6d966;border-radius:8px;background:#81e6d91a;color:inherit;font:inherit;cursor:pointer}';doc.head.append(style);['#watchPage .watchTabs','#chartPage .chartHeading','#picker .pickerTabs'].forEach(selector=>{const parent=doc.querySelector(selector);if(!parent||parent.querySelector('[data-jl-markets]'))return;const b=el('button','⌕','jlmk-entry');b.type='button';b.dataset.jlMarkets='1';b.setAttribute('aria-label','搜索黄金白银原油美股与A股板块');b.onclick=()=>open('');parent.append(b);});renderSaved();}
+    const compact=el("style");compact.textContent=".jlmk-row{display:flex;gap:4px}.jlmk-result{flex:1}#jlMarketPanel .jlmk-add{width:28px;padding:0;font-size:16px;border:0}body #jlMarketPanel{font-size:12px}body #jlMarketPanel h2{font-size:14px}.jlmk-entry{font-size:12px!important;padding:3px!important}";doc.head.append(compact);const style=el('style');style.textContent='.jlmk-entry{padding:5px 9px;border:1px solid #81e6d966;border-radius:8px;background:#81e6d91a;color:inherit;font:inherit;cursor:pointer}';doc.head.append(style);['#chartPage .chartHeading','#picker .pickerTabs'] /* v9 11-26 自选页改用 searchBox 胶囊框，不再挂 ⌕ */.forEach(selector=>{const parent=doc.querySelector(selector);if(!parent||parent.querySelector('[data-jl-markets]'))return;const b=el('button','⌕','jlmk-entry');b.type='button';b.dataset.jlMarkets='1';b.setAttribute('aria-label','搜索黄金白银原油美股与A股板块');b.onclick=()=>open('');parent.append(b);});renderSaved();}
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',mount);else mount();
 })(typeof window==='object'?window:globalThis);
