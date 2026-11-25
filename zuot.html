@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>做T面板 设计稿 11-22 · 三角已接</title>
+<title>做T面板</title>
 <script>
 /* 11-23 桥模式引导: ?emb=1 或已在iframe → html加ztEmb类(整页透明+点击只留给球/窗; 主机页其余区域零遮挡) */
 (function(){try{ if(/[\?&]emb=1/.test(location.search)||(function(){try{return window.self!==window.top}catch(e){return false}})()){ document.documentElement.classList.add('ztEmb'); } }catch(e){}})();
@@ -1024,7 +1024,7 @@ function drawTop(){
   $('code').value=st.code; $('px').textContent=f(NOW()); $('ts').textContent=AT();
   /* 11-23 用户「左上角放个实时价，小一点，不然拉上拉下看不到」: 浮动窗标题条左边常显 名称·现价·涨跌% */
   { const tt=document.getElementById('fwtt'), pc=T().pc, p=NOW(); if(tt&&p>0){ const d=pc>0?(p/pc-1)*100:0, c=d>0?'#ff4d57':d<0?'#2fe39b':'#fff';
-      tt.innerHTML='<span style="font-weight:400">'+T().name+'</span> <b style="color:'+c+';font-weight:500;font-variant-numeric:tabular-nums">'+f(p)+'</b>'+(pc>0?' <span style="color:'+c+';font-size:10.5px">'+(d>=0?'+':'−')+Math.abs(d).toFixed(2)+'%</span>':''); } }
+      tt.innerHTML='<span style="font-weight:400">'+T().name+'</span> <b style="color:'+c+';font-weight:500;font-variant-numeric:tabular-nums">'+f(p)+'</b>'+(pc>0?' <span style="color:'+c+';font-size:10.5px">'+(d>=0?'+':'−')+Math.abs(d).toFixed(2)+'%</span>':''); if(window.ztStaleMark) window.ztStaleMark();   /* 标题重写后补上断流标(函数在下面 IIFE 里, 挂 window) */ } }
   /* 11-23 用户「实时价格要绿跌红涨」: 按昨收上色，旁边写涨跌% */
   { const pc=T().pc, p=NOW(), el=$('px'); if(pc>0&&p>0){ const d=(p/pc-1)*100, c=d>0?'#ff4d57':d<0?'#2fe39b':'#fff'; el.style.color=c; el.style.borderLeftColor=c;
       el.setAttribute('data-pct',(d>=0?'+':'−')+Math.abs(d).toFixed(2)+'%'); } }
@@ -1373,7 +1373,7 @@ function tierSB(code,dayEnd){
     const all=JSON.parse(localStorage.getItem('jinlin_tier_memo_v1')||'{}');
     const e=all[code]; if(!e||!e.r||!Array.isArray(e.r.sells)||!Array.isArray(e.r.buys)) return null;
     const dk=e.dk||all.d||'';
-    if(dayEnd && dk && String(dk)<String(dayEnd)) return {dk:dk,stale:true,sells:[],buys:[]};
+    if(dayEnd && dk && String(dk).replace(/\D/g,'')<String(dayEnd).replace(/\D/g,'')) return {dk:dk,stale:true,sells:[],buys:[]};   /* 11-26z: 两边都去掉 - 再比(五日图 jl_card5d 同法) */
     return {dk:dk,stale:false,sells:e.r.sells.slice(0,2),buys:e.r.buys.slice(0,2),at:e.at||0};
   }catch(err){ return null; }
 }
@@ -1488,7 +1488,8 @@ function drawBand(){
   const W5P=W5OLD?W5_ALL.map(x=>({c:'五日',k:x.k,p:x.p,w:x.w,done:false,src:x.src,t:x.t})):w5Lv(!SESS), W5S=W5OLD?W5P:w5Lv(false);
   const MRP=(BAND.mr||[]).map(x=>({c:'明日',k:x.no,p:x.p,w:x.n,done:!!x.hit,src:x.src+'×'+x.n}));
   /* 11-23 交接：五日图买卖价=tierSB（做t面板以这个为准）；dk 旧于五日末 → 不挂线 */
-  const tsb=T().fib?tierSB(st.code,W5_DAY_END):null;
+  const w5End=(D5.code===st.code&&D5.days.length)?D5.days[D5.days.length-1].date:'';   /* 11-26z 用户「肯定要修」: 五日末=五日分时最后一天(和五日图 jl_card5d 同源)，原来写死 W5_DAY_END=11-20 → 11-21 以后旧梯子也照挂 */
+  const tsb=(T().fib&&w5End)?tierSB(st.code,w5End):null;
   const TSBP=(tsb&&!tsb.stale)
     ?tsb.sells.map((p,i)=>({c:'五日图',k:'卖'+(i+1),p:+p,w:1,done:false,src:'tierSB 五日图'+(tsb.dk?' dk'+tsb.dk:'')+'×1'}))
      .concat(tsb.buys.map((p,i)=>({c:'五日图',k:'接'+(i+1),p:+p,w:1,done:false,src:'tierSB 五日图'+(tsb.dk?' dk'+tsb.dk:'')+'×1'})))
@@ -1670,6 +1671,7 @@ all();
   document.body.appendChild(ball);
   const EMB=/[?&]emb=1/.test(location.search)||(function(){try{return window.self!==window.top}catch(e){return false}})();
   let open=true; try{ open=JSON.parse(localStorage.getItem('tpanel_fwf')||'true')!==false; }catch(e){}
+  if(EMB) open=false;   /* 11-26z 用户「首页做T面板一打开就是展开的，盖在作战屏上」: 首页里每次打开先收成球，点球再展开；单独开 zuot.html 照旧记住上次 */
   const num=(v,d)=>isNaN(parseInt(v))?d:parseInt(v);
   let bp=null,wp=null; try{ bp=JSON.parse(localStorage.getItem('tpanel_ball')||'null'); wp=JSON.parse(localStorage.getItem('tpanel_fwpos')||'null'); }catch(e){}
   /* 11-23 修复「收球后找不到」+ 桥模式(EMB): iframe只占球/窗矩形, 主页其余区域零遮挡; 逻辑坐标=整屏坐标, 拖拽用screenX/Y免疫iframe移动; 拖拽期间主机页把iframe临时放到全屏, 松手即缩回 */
@@ -1856,7 +1858,14 @@ function applyQuote(q){
   }catch(e){}
 }
 document.addEventListener('pointerdown',function(){ window.__ztPtr=1; },true); document.addEventListener('pointerup',function(){ clearTimeout(window.__ztPtrT); window.__ztPtrT=setTimeout(function(){ window.__ztPtr=0; },800); },true);   /* 11-23h 松手后0.8秒内也先不重画 */ document.addEventListener('pointercancel',function(){ window.__ztPtr=0; },true);
-function pollQuote(){ try{ var c=curCode(); if(c) fetchQuote(c,applyQuote); }catch(e){ console.warn('[做T球] poll异常',e&&e.message); } }
+/* 11-26z 用户「断流的时候屏上没有提示」: 盘中行情连续取不到 ≥30秒 → 标题条现价后面标「⚠ 断流 N秒」(价是旧的)；取到就消失。只提示，不改价 */
+window.__ztQOk=Date.now();
+function ztHrs(){ if(window.__ztHrsT) return window.__ztHrsT(); var d=new Date(), w=d.getDay(), hm=d.getHours()*100+d.getMinutes(); return w>0&&w<6&&((hm>=930&&hm<=1130)||(hm>=1300&&hm<=1500)); }
+function ztStaleMark(){ try{ var tt=document.getElementById('fwtt'); if(!tt) return; var sp=document.getElementById('ztStale'), age=Math.round((Date.now()-window.__ztQOk)/1000);
+  if(ztHrs()&&age>=30){ if(!sp){ sp=document.createElement('span'); sp.id='ztStale'; sp.style.cssText='margin-left:6px;color:#ffb020;font-size:10.5px;font-weight:500'; tt.appendChild(sp); } sp.textContent='⚠ 断流 '+(age<120?age+'秒':Math.round(age/60)+'分')+' · 价是旧的'; }
+  else if(sp) sp.remove(); }catch(e){} }
+window.ztStaleMark=ztStaleMark; window.__ztHrs=ztHrs; setInterval(function(){ if(!document.hidden) ztStaleMark(); },5000);   /* 请求挂住不回调时也能标出来 */
+function pollQuote(){ try{ var c=curCode(); if(c) fetchQuote(c,function(q){ if(q&&q.p>0) window.__ztQOk=Date.now(); applyQuote(q); ztStaleMark(); }); }catch(e){ console.warn('[做T球] poll异常',e&&e.message); } }
 
 /* 搜索: smartbox.gtimg.cn/s3 v_hint="a~sh603986~兆易创新~..^..." */
 var sug=null;

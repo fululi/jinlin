@@ -1315,7 +1315,7 @@ function staticsLiveJL() {
   }
   if (window.zpPerOf && zpPerOf() > 0 && localStorage.getItem('zp_vi_local') === '1') { zu = null; zd = null; }   /* jl-zpliq: K线模式 IV 改用本地蜡烛现算(jl-zpper 模块画黄/蓝), 不画线上五级扫描的红绿带 */
   /* 11-13晚 用户「iv 说过多次」: 同持仓卡(index.html jl-1206) —— 方向按缺口类型不按现价: 向上跳空(要跌回补)=青↓, 向下跳空(要涨回补)=黄↑; 已补的不画 */
-  var ivC = function (dn) { return dn ? '#00f0ff' : '#ffe600'; };
+  var ivC = function (dn) { if (document.documentElement.classList.contains('zpLight')) return dn ? '#0097a7' : '#b07d00'; return dn ? '#00f0ff' : '#ffe600'; };   /* 11-26w2 白底: 亮青/亮黄缺口带在白底几乎看不见 → 深青/深金 */
   if (zu) band(zu.lo, zu.hi, ivC(!!zu.bull), .05, zu.bull ? zu.lo : zu.hi, ivT(zu, !zu.bull), zu.t0);
   if (zd) band(zd.lo, zd.hi, ivC(!!zd.bull), .05, zd.bull ? zd.lo : zd.hi, ivT(zd, !zd.bull), zd.t0);
   var G = cur > 0 ? ledgerGapsJL(cur) : [], ov = function (g, z) { return z && g.lo <= z.hi * 1.0005 && g.hi >= z.lo * 0.9995; };
@@ -1344,7 +1344,7 @@ function staticsLiveJL() {
         var yP = Y(pc * (1 + pp / 100)); if (yP < PY0 + 6 || yP > PY0 + PH - 4) continue;
         if (LIVE.auc && yP < PY0 + 14) continue;   /* 11-17晚: 最上一行留给「竞 缺口%」 */
         var ltP = document.documentElement.classList.contains('zpLight'), tP = tx(ltP ? PX0 + 4 : 1, yP + 2.5, (pp > 0 ? '+' : pp < 0 ? '−' : '') + Math.abs(pp).toFixed(stP < 1 ? 1 : 0) + '%', ltP ? (pp > 0 ? '#f23645' : pp < 0 ? '#089981' : '#787b86') : (pp > 0 ? '#ff8f98' : pp < 0 ? '#6fffc2' : '#e8eef8'), ltP ? 7.5 : 6.5, 'start', 400);   /* 11-26w 用户「切黑的别把白的搞坏/反之」: 深色还原 11-17 原样(x=1 6.5号 淡红淡绿), 白底=TV红绿 */
-        tP.removeAttribute('stroke'); tP.setAttribute('opacity', .95); svg.appendChild(tP);
+        tP.removeAttribute('stroke'); tP.setAttribute('opacity', .95); tP.setAttribute('class', 'zpPctJL'); svg.appendChild(tP);
       }
     }
   } catch (ePc) { }
@@ -2221,7 +2221,7 @@ function renderHead() {
       if (localStorage.getItem('zp_rax_v1') === '0') svg.appendChild(tgN);
       /* 11-23 用户「引擎图左上角加一个实时价格，小一点」: 主图左上角(绘图区上方空档)常显 现价 涨跌%，红涨绿跌，400 细字、无底框；不跟鼠标隐藏 */
       var oldC = document.getElementById('zpNowCorner'); if (oldC) oldC.remove();
-      var pctC = pcN > 0 ? (p / pcN - 1) * 100 : null, cC = pcN > 0 ? (p > pcN ? '#ff4757' : p < pcN ? '#1ee3a0' : '#ffffff') : '#ffffff';
+      var pctC = pcN > 0 ? (p / pcN - 1) * 100 : null, cC = pcN > 0 ? (p > pcN ? '#ff4757' : p < pcN ? '#1ee3a0' : '#ffffff') : '#ffffff'; if (document.documentElement.classList.contains('zpLight')) cC = cC === '#ff4757' ? '#f23645' : cC === '#1ee3a0' ? '#089981' : '#131722';   /* 11-26w2 白底: 薄荷绿在白底太淡 → TV红绿 */
       var tC = tx(PX0 + 2, PY0 - 3, p.toFixed(2) + (pctC == null ? '' : '  ' + (pctC >= 0 ? '+' : '−') + Math.abs(pctC).toFixed(2) + '%'), cC, 9, 'start', 400);
       tC.setAttribute('id', 'zpNowCorner'); tC.setAttribute('stroke', 'none'); tC.setAttribute('pointer-events', 'none'); svg.appendChild(tC);
       /* 11-19 用户「实时盘中的实时价格线也要有…点了才出现我指的是盘后」: 今天 09:15–15:00 现价线+价签+线尾常显(内联 visibility 压过 :not(:hover) 隐藏); 收盘后/回放照旧鼠标移上/点了才显示 */
@@ -5845,6 +5845,11 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
 html.zpLight #myT{background:#fff!important;border-color:#e0e3eb!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html.zpLight #myT summary,html.zpLight #myT summary *{color:#131722!important;background:transparent!important}
 html.zpLight #myT input,html.zpLight #myT select{color:#131722!important;background:#fff!important;border-color:#c9ccd6!important}
+/* 11-26w2 用户「做T切白色字体颜色很丑」(持仓/每轮/我的T 两行, 用户「你改的持仓的我接受」): 输入框原是浏览器默认 2px 凹边+黑字, 回落下拉深蓝边 → TV 式 1px 浅灰细边圆角, 标签深灰常规字 */
+html.zpLight #metaLine,html.zpLight #metaLine span{color:#434651!important;font-weight:400!important}
+html.zpLight #metaLine input,html.zpLight #metaLine select{border:1px solid #d1d4dc!important;border-radius:4px!important;background:#fff!important;color:#131722!important;font-weight:400!important;box-shadow:none!important;outline:none}
+html.zpLight #metaLine input:focus,html.zpLight #metaLine select:focus{border-color:#2962ff!important}
+html.zpLight #myT summary{font-weight:400!important}html.zpLight #myT summary *{color:#434651!important}
 html.zpLight #wkSeg .seg{padding:0!important;border:0!important;border-radius:6px!important;background:transparent!important}
 html.zpLight #wkSeg .tab{height:26px!important;min-width:34px!important;padding:0 9px!important;border-radius:6px!important;background:transparent!important;color:#434651!important;opacity:1!important}
 html.zpLight #wkSeg .tab.on{background:#f0f3fa!important;color:#131722!important}
@@ -5857,6 +5862,10 @@ html.zpLight .zb-xhh rect,html.zpLight #zpHuoJL .hxh rect{fill:#f0f3fa!important
 html.zpLight .zb-xhh text,html.zpLight .zb-ptr text[fill="#fff"],html.zpLight .zr-xh text[fill="#fff"],html.zpLight .zr-xh tspan[fill="#fff"],html.zpLight #zpHuoJL .hxh text{fill:#131722!important}
 html.zpLight .zb-ptr circle[stroke="#fff"]{stroke:#787b86!important;fill:rgba(120,123,134,.15)!important}html.zpLight #zpHuoJL .hx circle{fill:#fff!important}
 html.zpLight #zpAbsViewJL{background-image:none!important}
+/* 11-26w2 用户「绿色太淡/是否压字」: 资金转折高低小点(#ffMkJL 薄荷绿/粉红)白底换 TV 红绿+白圈; 左侧 ±% 刻度、流动性字加白边, 压在K线上也读得出 */
+html.zpLight #ffMkJL circle[fill="#22f0a0"]{fill:#089981!important;stroke:#fff!important;stroke-width:.8px!important}
+html.zpLight #ffMkJL circle[fill="#ff4d5e"]{fill:#f23645!important;stroke:#fff!important;stroke-width:.8px!important}
+html.zpLight #ch text.zpPctJL,html.zpLight #ch text.zpLiqT{stroke:#fff!important;stroke-width:2.4px!important;paint-order:stroke!important;stroke-linejoin:round!important;stroke-opacity:.9!important}
 </style>
 <script>
 /* jl-myT: 我的实际做T对照(独立模块, 只读引擎数据, 不改现有逻辑)
@@ -6095,8 +6104,13 @@ var svgEl=document.getElementById('ch');if(!svgEl)return;
 var active=false,pend=false,timer=null,hideT=null,sx=0,sy=0,raf=0,lx=0,ly=0,SNAP=12;
 svgEl.style.touchAction='pan-y';
 function inSvg(t){if(window.zpDrawOn||window.zpDrawBusy)return false;if(t&&t.closest&&t.closest('#zpGoNew'))return false;if(t&&t.closest&&t.closest('[data-zpplus]'))return false;return t===svgEl||(t&&svgEl.contains(t))}   /* 画线/测量态让出手势 */
+/* 11-26w2 用户截图「13:14–13:15 开…」压在左上角「18.91 −5.02%」上: 读数条先往右让开; 实在放不下(读数太长)才把角上现价暂时藏起, 十字线收起就回来 */
+function xhCornerJL(x0,w){var c=document.getElementById('zpNowCorner');if(!c)return x0;var e=0;try{var b=c.getBBox();e=b.x+b.width+6}catch(_){}
+  if(!(e>0)||x0>=e){c.style.visibility='';return x0}
+  if(e+w<=LX-6){c.style.visibility='';return e}
+  c.style.visibility='hidden';return x0}
 function hide(){
-  var g=document.getElementById('xh');if(g&&g.parentNode)g.parentNode.removeChild(g);
+  var g=document.getElementById('xh');if(g&&g.parentNode)g.parentNode.removeChild(g);try{var cN=document.getElementById('zpNowCorner');if(cN)cN.style.visibility=''}catch(_){}
   active=false;pend=false;clearTimeout(timer);clearTimeout(hideT);svgEl.style.touchAction='pan-y';if(window.__xhOwnJL)delete window.__xhOwnJL.main;
   try{window.zpSubXH&&window.zpSubXH(null)}catch(_){}   /* 副图十字线一起收 */
   try{window.zpGhostJL&&zpGhostJL(null)}catch(_){}
@@ -6244,7 +6258,7 @@ function draw(cx,cy){
     var dd=rh>0?(rh-price)/rh*100:0;   /* 距高: 相对"截至这一刻的当日最高价"回落了多少(≠相对昨收的涨跌) */
     var top=hm.slice(0,2)+':'+hm.slice(2)+(tag?'  '+tag:'')+(pp==null?'':'  '+(pp>=0?'+':'')+pp.toFixed(2)+'%')+(dd>=0.05?'  距高-'+dd.toFixed(1)+'%':'')+(df==null?'':'  距现价'+(df>=0?'+':'')+df.toFixed(2));
     if(near.auc&&!snap){var av=hm==='0925'&&LIVE.auc.v>0?LIVE.auc.v:0;top=hm.slice(0,2)+':'+hm.slice(2)+(hm==='0925'?'  竞价成交 ':'  竞价撮合 ')+price.toFixed(2)+(pp==null?'':'  '+(pp>=0?'+':'')+pp.toFixed(2)+'%')+(av?'  '+(av>=1e4?(av/1e4).toFixed(av>=1e5?0:1)+'万手':Math.round(av)+'手'):'');}
-    var w=top.length*5.6+10,x0=Math.max(PX0,Math.min(LX-6-w,x-w/2));   /* 11-06f 用户: 顶部信息条跟着竖线居中, 不再一下跳左一下跳右 */
+    var w=top.length*5.6+10,x0=xhCornerJL(Math.max(PX0,Math.min(LX-6-w,x-w/2)),w);   /* 11-06f 用户: 顶部信息条跟着竖线居中, 不再一下跳左一下跳右 */
     /* 11-13 用户「黑色背景重复多次」: 顶部信息条去掉黑底, 只留透明底+细描边字 */   /* jl-zpliq: 挪到图框上沿外, 不被画线工具条盖住 */
     var t1=el('text',{x:x0+5,y:9.6,fill:light?'#131722':'#fff','font-size':9.5,'font-weight':400,stroke:light?'none':'rgba(5,10,16,.9)','stroke-width':light?0:.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);
     var ps=price.toFixed(2),pw=ps.length*6.4+10,px0=LX-8-pw,py=Math.max(PY0+16,Math.min(PY0+PH-2,y));xhPctJL(g,price,py);
@@ -6283,7 +6297,7 @@ function kDraw(K,x,y){
   if(k.auc){var aV=LIVE.auc&&LIVE.auc.v>0?LIVE.auc.v:0;var top0='09:25 竞价开盘 '+d2(k.o)+(LIVE.pc>0?'  '+((k.o/LIVE.pc-1)*100>=0?'+':'')+((k.o/LIVE.pc-1)*100).toFixed(2)+'%':'')+(aV?'  '+(aV>=1e4?(aV/1e4).toFixed(aV>=1e5?0:1)+'万手':Math.round(aV)+'手'):'')+(k.c!==k.o?'  现'+d2(k.c):'');}   /* 11-14: 竞价占位K(第一根真K出来前) 读数写竞价 */
   var top=k.auc?top0:(k.d&&k.d!==LIVE.sessDate?k.d.slice(4,6)+'-'+k.d.slice(6)+' ':'')+f(k.s)+'–'+f(k.hm)+'  开'+d2(k.o)+' 高'+d2(k.h)+' 低'+d2(k.l)+' 收'+d2(k.c)+(chg==null?'':'  '+(chg>=0?'+':'')+chg.toFixed(2)+'%');
   var w=0;for(var i=0;i<top.length;i++)w+=/[一-鿿]/.test(top[i])?9.5:5.4;w+=10;
-  var x0=Math.max(PX0,Math.min(LX-6-w,x-w/2));   /* 放在图框上沿外(y 0~13), 不被左上角画线工具条盖住 */
+  var x0=xhCornerJL(Math.max(PX0,Math.min(LX-6-w,x-w/2)),w);   /* 放在图框上沿外(y 0~13), 不被左上角画线工具条盖住 */
   g.appendChild(el('rect',{x:x0,y:-1,width:w,height:14,rx:4,fill:'none',stroke:'none'}));
   var t1=el('text',{x:x0+5,y:9.6,fill:light?'#131722':'#fff','font-size':9.5,'font-weight':400,stroke:light?'none':'rgba(5,10,16,.9)','stroke-width':light?0:.9,'paint-order':'stroke','stroke-linejoin':'round','letter-spacing':.15});t1.textContent=top;g.appendChild(t1);   /* 11-16 用户: 十字线读数 细+亮白+清晰(原600粗+2.2描边在iPhone上发胖) */
   var ps=d2(price),pw=0;   /* 11-05 用户: 右侧价签只写价格(开高低收在顶部那条里, 同TradingView), 不写"低/收"大字压字 */
@@ -8210,15 +8224,16 @@ setRange = function (lo, hi) {
   function paintLiq(svg, K, xOf) {
     var Q = tvLiq(K), g = E('g', { id: 'zpLiq', 'pointer-events': 'none' }), R = LX - 6, slot = K.length > 1 ? Math.abs(xOf(K.length - 1) - xOf(K.length - 2)) || 1 : 1;
     var xi = function (i) { return i < K.length ? xOf(i) : xOf(K.length - 1) + (i - K.length + 1) * slot; };
-    [['B', '#ff7b88', 'Buyside liquidity'], ['S', '#3dffb9', 'Sellside liquidity']].forEach(function (S) {   /* 11-05 用户: 颜色调亮, 已发生(被扫)的淡 */
+    var ltQ = document.documentElement.classList.contains('zpLight');   /* 11-26w2 用户「白色的绿色框太淡不好看」: 白底用 TV 红绿、框底/线/字都加深; 深色照旧 */
+    [['B', ltQ ? '#f23645' : '#ff7b88', 'Buyside liquidity'], ['S', ltQ ? '#089981' : '#3dffb9', 'Sellside liquidity']].forEach(function (S) {   /* 11-05 用户: 颜色调亮, 已发生(被扫)的淡 */
       Q[S[0]].forEach(function (x) {
         var xa = Math.max(PX0, xi(x.l)), xb = Math.min(R, xi(x.r)); if (!(xb > xa + 1)) return;
         var yT = Y(x.top), yB = Y(x.bot); if (yB < PY0 || yT > PY0 + PH) return;
         yT = Math.max(PY0, yT); yB = Math.min(PY0 + PH, yB);
         /* 11-04 用户: 字别粗别挡线 → 细字(400)、不加描边黑边、放框外(Buyside 在框上沿上方 / Sellside 在框下沿下方)靠框右端; 字后带流动性价位。
            被扫过(br)的就停在原处(框截在被扫那根)整组变淡, 不写价 */
-        var swept = !!x.br, op = swept ? .3 : .75;   /* 11-20 02:57 用户: 被扫过的淡下来; 没扫过的亮一点但别太亮 */
-        g.appendChild(E('rect', { x: xa, y: yT, width: xb - xa, height: Math.max(1, yB - yT), fill: S[1], 'fill-opacity': .16 * op, stroke: S[1], 'stroke-width': .8, 'stroke-opacity': .9 * op }));   /* 11-20 02:57 用户: 上下两条细线+中间淡阴影常显, 线细 */
+        var swept = !!x.br, op = swept ? (ltQ ? .8 : .3) : (ltQ ? 1 : .75);   /* 11-20 02:57 用户: 被扫过的淡下来; 没扫过的亮一点但别太亮 */
+        g.appendChild(E('rect', { x: xa, y: yT, width: xb - xa, height: Math.max(1, yB - yT), fill: S[1], 'fill-opacity': (ltQ ? .09 : .16) * op, stroke: S[1], 'stroke-width': .8, 'stroke-opacity': .9 * op }));   /* 11-20 02:57 用户: 上下两条细线+中间淡阴影常显, 线细 */
         var ly = Y(x.lp), la = Math.max(PX0, xi(x.l)), lb = Math.min(R, xi(x.ln ? x.lx2 : x.r));
         if (ly >= PY0 && ly <= PY0 + PH && lb > la) g.appendChild(E('line', { x1: la, x2: lb, y1: ly, y2: ly, stroke: S[1], 'stroke-width': .8, opacity: .9 * op }));   /* 细线同色 */
         var isB = S[0] === 'B', tyL = isB ? yT - 2 : yB + 7.5;
