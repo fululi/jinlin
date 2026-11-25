@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>高低点 · 分时/5分/15分</title>
+<!-- 11-25 用户「分时上5分15分非常清晰的高低点…要准确，不能老是断」：单独页先看，算法在 jl_hlpiv.js（口径表 HL1/HL2） -->
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#0d1117;color:#e8eef5;font:400 13px -apple-system,"PingFang SC",sans-serif;-webkit-text-size-adjust:100%}
+#top{position:sticky;top:0;z-index:3;display:flex;gap:8px;align-items:center;padding:8px 10px;background:rgba(13,17,23,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#code{width:88px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:5px 8px;font:inherit}
+#nm{opacity:.9}#px{margin-left:auto;font-variant-numeric:tabular-nums}
+#warn{display:none;padding:4px 10px;background:rgba(255,92,92,.14);color:#ffb3b3;font-size:12px}
+.pn{position:relative;margin:6px 8px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+.pn h3{margin:0;padding:6px 10px 0;font-weight:400;font-size:12px;opacity:.85;display:flex;gap:10px;align-items:center}
+.pn canvas{display:block;width:100%}
+.tg{display:inline-flex;align-items:center;gap:4px;cursor:pointer;opacity:.9;user-select:none;-webkit-user-select:none}
+.tg i{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.7);display:inline-block}
+.tg.on i{background:rgba(255,255,255,.85)}
+.prog{padding:4px 10px 8px;font-size:12px;opacity:.92;font-variant-numeric:tabular-nums}
+.bar{height:5px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden}
+.bar b{display:block;height:100%;width:0;border-radius:3px}
+#foot{padding:6px 12px 24px;font-size:11px;opacity:.55;line-height:1.6}
+</style></head><body>
+<div id="top"><input id="code" inputmode="numeric" maxlength="6"><span id="nm"></span><span id="px"></span></div>
+<div id="warn"></div>
+<div class="pn" data-k="m1"><h3>分时<span class="tg on" data-l="m1"><i></i>分时点</span><span class="tg on" data-l="m5"><i></i>5分点</span></h3><canvas height="230"></canvas>
+  <div class="prog" id="pg_m1"></div><div class="prog" id="pg_m5" style="padding-top:0"></div></div>
+<div class="pn" data-k="m5"><h3>5分 · 2天<span class="tg on" data-l="m5"><i></i>5分点</span><span class="tg on" data-l="m15"><i></i>15分点</span></h3><canvas height="210"></canvas></div>
+<div class="pn" data-k="m15"><h3>15分 · 5天<span class="tg on" data-l="m15"><i></i>15分点</span></h3><canvas height="210"></canvas><div class="prog" id="pg_m15"></div></div>
+<div id="foot">实心=回头够门槛已锁定，不再改；空心「候」=当前候选，会跟着新高/新低挪。门槛=前14日日波动×(分时0.3/5分0.5/15分0.9)。<br>守住率=16票1分钟历史统计(04-01~11-06)，只是统计不是买卖建议。</div>
+<script src="jl_hlpiv.js?v=1"></script>
+<script>
+(function(){
+var H=window.JLHL, CODE=(new URLSearchParams(location.search).get("code"))||localStorage.getItem("jl_hl_code")||"600105";
+var ON={};try{ON=JSON.parse(localStorage.getItem("jl_hl_on_v1")||"{}")}catch(e){}
+var RES=null,DATA=null,lastOk=0,fails=0,timer=0;
+var $=function(s){return document.querySelector(s)};
+$("#code").value=CODE.replace(/^(sh|sz|bj)/,"");
+$("#code").addEventListener("change",function(){var v=this.value.trim();if(/^\d{6}$/.test(v)){CODE=v;localStorage.setItem("jl_hl_code",v);RES=null;DATA=null;load()}});
+document.querySelectorAll(".pn").forEach(function(pn){pn.querySelectorAll(".tg").forEach(function(t){
+  var key=pn.dataset.k+"_"+t.dataset.l;if(ON[key]===false)t.classList.remove("on");
+  t.onclick=function(){t.classList.toggle("on");ON[key]=t.classList.contains("on");localStorage.setItem("jl_hl_on_v1",JSON.stringify(ON));draw()}})});
+function mins(t){return +t.slice(8,10)*60+ +t.slice(10,12)}
+function bucket(t,n){var m=mins(t);if(m<=570)m=570+n;else m=Math.ceil(m/n)*n;if(m>690&&m<780)m=690;var h=Math.floor(m/60),mm=m%60;return t.slice(0,8)+(h<10?"0":"")+h+(mm<10?"0":"")+mm}
+function agg(bars,n){var out=[],last=null;bars.forEach(function(b){var k=bucket(b.t,n);if(last&&last.t===k){last.h=Math.max(last.h,b.h);last.l=Math.min(last.l,b.l);last.c=b.c}else{last={t:k,d:b.d,o:b.o,h:b.h,l:b.l,c:b.c};out.push(last)}});return out}
+function trade(){var d=new Date(),w=d.getDay(),t=d.getHours()*60+d.getMinutes();return w>=1&&w<=5&&(t>=555&&t<=692||t>=778&&t<=902)}
+function load(){
+  clearTimeout(timer);
+  H.fetchAll(CODE).then(function(D){
+    DATA=D;RES=H.compute(D.code,D.bars,D.days);lastOk=Date.now();fails=0;$("#warn").style.display="none";draw();
+    getName(D.code);
+  }).catch(function(e){fails++;showWarn(e)}).then(function(){timer=setTimeout(load,trade()?(fails?Math.min(60e3,5e3*fails):15e3):60e3)});
+}
+function showWarn(e){var w=$("#warn");w.style.display="block";
+  w.textContent="⚠ 断流 "+(lastOk?Math.round((Date.now()-lastOk)/1e3)+"秒（图停在 "+new Date(lastOk).toTimeString().slice(0,8)+"）":"取不到数据")+"，自动重试中 · "+(e&&e.message||e)}
+setInterval(function(){if($("#warn").style.display==="block"&&lastOk)showWarn("")},1e3);
+var nmOf={};function getName(p){if(nmOf[p]){$("#nm").textContent=nmOf[p];return}
+  fetch("https://qt.gtimg.cn/q="+p).then(function(r){return r.arrayBuffer()}).then(function(b){var s=new TextDecoder("gbk").decode(b).split("~");nmOf[p]=s[1]||"";$("#nm").textContent=nmOf[p]}).catch(function(){})}
+function draw(){
+  if(!RES)return;var D=DATA,last=D.m1[D.m1.length-1],today=last.d;
+  var prev=D.days.filter(function(x){return x.d<today}).slice(-1)[0],pc=prev?prev.c:last.c;
+  $("#px").textContent=last.c.toFixed(2)+"  "+((last.c/pc-1)*100).toFixed(2)+"%";$("#px").style.color=last.c>=pc?"#ff5c5c":"#3ddc84";
+  document.querySelectorAll(".pn").forEach(function(pn){
+    var k=pn.dataset.k,cv=pn.querySelector("canvas"),dpr=window.devicePixelRatio||1,Wd=cv.clientWidth,Ht=+cv.getAttribute("height");
+    cv.width=Wd*dpr;cv.height=Ht*dpr;cv.style.height=Ht+"px";var c=cv.getContext("2d");c.scale(dpr,dpr);
+    var lv=[];pn.querySelectorAll(".tg").forEach(function(t){if(t.classList.contains("on"))lv.push(t.dataset.l)});
+    var bars,days;if(k==="m1"){bars=D.m1.filter(function(b){return b.d===today})}
+    else{var n=k==="m5"?5:15,ds=D.days.map(function(x){return x.d}).filter(function(d){return d<=today}).slice(k==="m5"?-2:-5);
+      bars=agg(D.bars.filter(function(b){return ds.indexOf(b.d)>=0}),n)}
+    if(!bars.length)return;
+    var L=40,R=8,T=16,B=18,iw=Wd-L-R,ih=Ht-T-B,N=k==="m1"?241:bars.length,from=bars[0].t;
+    var lo=1e9,hi=-1e9;bars.forEach(function(b){lo=Math.min(lo,b.l);hi=Math.max(hi,b.h)});
+    lv.forEach(function(l){var r=RES.lv[l];r.piv.concat(r.cand?[r.cand]:[]).forEach(function(p){if(p.t>=from){lo=Math.min(lo,p.p);hi=Math.max(hi,p.p)}})});
+    var pad=(hi-lo)*.12||.01;lo-=pad;hi+=pad;
+    var Y=function(p){return T+(hi-p)/(hi-lo)*ih},xi=function(i){return L+(i+.5)/N*iw};
+    var idx={};bars.forEach(function(b,i){idx[b.t]=i});
+    var X=function(t){if(k!=="m1")t=bucket(t,k==="m5"?5:15);var i=idx[t];if(i==null){if(k==="m1"&&t.slice(8)==="0930")i=0;else return null}return xi(i)};
+    c.font="400 10px -apple-system,PingFang SC,sans-serif";c.fillStyle="rgba(232,238,245,.6)";c.strokeStyle="rgba(255,255,255,.06)";c.lineWidth=1;
+    for(var g=0;g<=4;g++){var pv=lo+(hi-lo)*g/4,yy=Y(pv);c.beginPath();c.moveTo(L,yy);c.lineTo(Wd-R,yy);c.stroke();c.textAlign="right";c.fillText(pv.toFixed(2),L-4,yy+3)}
+    c.textAlign="center";
+    if(k==="m1"){
+      c.strokeStyle="#e8eef5";c.lineWidth=1;c.beginPath();var sv=0,sw=0,vw=[];
+      bars.forEach(function(b,i){var y=Y(b.c);i?c.lineTo(xi(i),y):c.moveTo(xi(i),y);sv+=b.c*(b.v||1);sw+=(b.v||1);vw.push(sv/sw)});c.stroke();
+      c.strokeStyle="rgba(245,197,66,.8)";c.beginPath();vw.forEach(function(v,i){i?c.lineTo(xi(i),Y(v)):c.moveTo(xi(i),Y(v))});c.stroke();
+      c.strokeStyle="rgba(255,255,255,.25)";c.setLineDash([3,3]);c.beginPath();c.moveTo(L,Y(pc));c.lineTo(Wd-R,Y(pc));c.stroke();c.setLineDash([]);
+      [["09:30",0],["10:30",60],["11:30/13:00",120],["14:00",180],["15:00",240]].forEach(function(a){c.fillText(a[0],xi(a[1]),Ht-4)});
+    }else{
+      var bw=Math.max(1,iw/N*.6);
+      bars.forEach(function(b,i){var up=b.c>=b.o,x=xi(i);c.strokeStyle=c.fillStyle=up?"#ff5c5c":"#3ddc84";c.beginPath();c.moveTo(x,Y(b.h));c.lineTo(x,Y(b.l));c.stroke();
+        var y1=Y(Math.max(b.o,b.c)),h1=Math.max(1,Y(Math.min(b.o,b.c))-y1);up?c.strokeRect(x-bw/2,y1,bw,h1):c.fillRect(x-bw/2,y1,bw,h1);
+        if(i===0||bars[i-1].d!==b.d){c.fillStyle="rgba(232,238,245,.6)";c.fillText(b.d.slice(5),x+12,Ht-4)}});
+    }
+    // 小层在上：先画大层(粗黄线)再画本层
+    var order=lv.slice().sort(function(a,b){return b===k?-1:a===k?1:0});
+    order.forEach(function(l){H.draw(c,RES,X,Y,{levels:[l],from:from,font:10,label:l===k||lv.length===1,big:l!==k})});
+  });
+  ["m1","m5","m15"].forEach(function(k){var el=$("#pg_"+k);if(!el)return;var R=RES.lv[k];
+    if(!R.prog){el.innerHTML="";return}var g=R.prog,col=g.shun==null?"#9fb4ff":g.shun?"#f5c542":"rgba(232,238,245,.55)";
+    el.innerHTML=H.progText(RES,k)+'<div class="bar"><b style="width:'+Math.min(100,g.q*100).toFixed(0)+'%;background:'+col+'"></b></div>'});
+}
+window.addEventListener("resize",draw);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)load()});
+load();
+})();
+</script>
+</body></html>
