@@ -43,7 +43,7 @@
     '#jlZpBallJL i{position:absolute;right:1px;top:1px;min-width:13px;height:13px;border-radius:7px;border:2px solid #0f1828;font:700 8px/9px -apple-system,sans-serif;color:#10202a;text-align:center;font-style:normal;display:none}' +
     '#jlZpBallJL.badge i{display:block;background:' + GOLD + '}' +
     '#jlZpBallJL[data-k=idle]{border-color:rgba(143,168,179,.75)}' +
-    '#jlZpBallJL[data-k=done]{border-color:#1fdc93;box-shadow:0 0 0 3px rgba(31,220,147,.22),0 5px 20px rgba(0,0,0,.5)}' +
+    '#jlZpBallJL[data-k=done]{border-color:#f5c542;box-shadow:0 0 0 3px rgba(230,57,70,.42),0 5px 20px rgba(0,0,0,.5)}' +   /* 11-26w2d 用户「收工那个绿圈不要用绿色, 换个喜庆的」: 金边+红晕(区别于 卖=红边 / 提醒=橙边) */
     '#jlZpBallJL[data-k=warn]{border-color:#ffb84d;box-shadow:0 0 0 3px rgba(255,184,77,.22),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL[data-k=trig]{border-color:#ff5459;box-shadow:0 0 0 3px rgba(255,84,89,.28),0 5px 20px rgba(0,0,0,.5)}' +
     '#jlZpBallJL[data-k=trig]:not(.ring):not(.attn){animation:jlZpTrig 1.4s ease-in-out infinite!important}@keyframes jlZpTrig{50%{box-shadow:0 0 0 9px rgba(255,84,89,.30),0 5px 20px rgba(0,0,0,.5)}}' +
