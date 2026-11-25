@@ -79,6 +79,16 @@
     '#jlZpTdJL .em{opacity:.8;font-size:12px;padding:14px 0}' +
     '#jlZpTdJL .tb{display:flex;gap:6px;margin:0 0 8px}#jlZpTdJL .tb button{flex:1;height:26px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:#fff;font:500 12.5px -apple-system,sans-serif}#jlZpTdJL .tb button.on{background:rgba(232,195,122,.22);border-color:#e8c37a}';
   function styleOnce() { if (!$('jlZpCssJL')) { var s = document.createElement('style'); s.id = 'jlZpCssJL'; s.textContent = CSS; document.head.appendChild(s); } }
+  /* 11-25lt2 用户「白色切换你自己搞定」(效果图v3「作战球→TV浮动工具条式白卡+软阴影」): 作战屏 ◐ 白底(zp_light_v1=1) 时球=白卡+浅阴影/黑字, 面板外框白; 提醒时的红绿金边框照旧 */
+  var LTCSS = 'html[data-zpball=lt] #jlZpBallJL{background:#fff;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:#e0e3eb}' +
+    'html[data-zpball=lt] #jlZpBallJL[data-k=idle],html[data-zpball=lt] #jlZpBallJL:not([data-k]){box-shadow:0 2px 10px rgba(19,23,34,.16)}' +
+    'html[data-zpball=lt] #jlZpBallJL .bt b{color:#131722}html[data-zpball=lt] #jlZpBallJL .bt span,html[data-zpball=lt] #jlZpBallJL.wide .bt span{color:#787b86}html[data-zpball=lt] #jlZpBallJL i{border-color:#fff}' +
+    'html[data-zpball=lt] #jlZpSheetJL{background:#fff;border-color:#e0e3eb;box-shadow:0 6px 24px rgba(19,23,34,.18)}html[data-zpball=lt] #jlZpSheetJL iframe{color-scheme:light}' +
+    'html[data-zpball=lt] #jlZpSheetJL .zx,html[data-zpball=lt] #jlZpSheetJL .zz,html[data-zpball=lt] #jlZpSheetJL .tdB{background:#f0f3fa;border-color:#e0e3eb;color:#131722}';
+  function ltSync() { try { var on = localStorage.getItem('zp_light_v1') === '1', h = document.documentElement;
+    if (!$('jlZpLtCssJL')) { var s = document.createElement('style'); s.id = 'jlZpLtCssJL'; s.textContent = LTCSS; document.head.appendChild(s); }
+    if (on) { if (h.getAttribute('data-zpball') !== 'lt') h.setAttribute('data-zpball', 'lt'); } else if (h.hasAttribute('data-zpball')) h.removeAttribute('data-zpball'); } catch (e) { } }
+  setTimeout(ltSync, 200); setInterval(ltSync, 3000);
 
   /* ---------- 浮球 ---------- */
   function place() {

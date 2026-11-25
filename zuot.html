@@ -1509,7 +1509,8 @@ function drawBand(){
   const show=A.concat(Bn);
   const meta={};
   const metaOf=m=>{
-    const role=roleOf(Object.values(m.ks)[0][0])||roleOf(Object.keys(m.ks).map(c=>m.ks[c][0]).join(' '))||(m.p>=N?'卖':'接');
+    const allk0=Object.keys(m.ks).map(c=>m.ks[c].join('/')).join('/'), RB=(SESS&&T().pc>0)?T().pc:N;   /* 11-25ra 口径表 Q5: 按价分卖接(原按字，「下沿」=接 致 20.29×2 判接沉底) */
+    const role=/买回/.test(allk0)?'接':(/清仓/.test(allk0)?'卖':(m.p>=RB?'卖':'接'));
     const isStopBuy0=/买回|清仓/.test(Object.keys(m.ks).map(c=>m.ks[c].join('/')).join('/'));
     const gray=!m.done&&(role==='卖'?m.p<N:(m.p>N&&!isStopBuy0));   // 涨透/跌破=不对了→灰（买回/清仓是上方触发线不算跌破）
     const dn=m.done||(!m.force&&Math.abs(m.p-N)>1e-9&&realTouch(m.p,role,N));   // 真数据判定：已发生＝K线真实触及过
