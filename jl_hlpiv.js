@@ -1,9 +1,10 @@
-/* jl_hlpiv.js ?v=1  分时/5分/15分 高低点（方向变化 DC 法）· 11-25 用户「分时上5分15分非常清晰的高低点，大波段里看小波段要对得上，要准，不能老是断」
+/* jl_hlpiv.js ?v=2  分时/5分/15分 高低点（方向变化 DC 法）· 11-25 用户「分时上5分15分非常清晰的高低点，大波段里看小波段要对得上，要准，不能老是断」
  * 共用：hl.html（单独页）、ks.html（K线表）、index.html（首页持仓卡分时）——三处都 <script src="jl_hlpiv.js?v=1">，口径只在这里（口径表 HL1/HL2）
  * 口径表 HL1：门槛 θ = f × 前14日日线ATR%（分时0.3 / 5分0.5 / 15分0.9）；三层都在同一串 1分(老的用5分) 最高/最低上跑，所以小波段一定嵌在大波段里
  *   上行段跟踪最高价=空心候选（只会往更高挪）；从候选回落 ≥θ → 变实心锁定，不再改；低点对称；跨午休跨日连续
  * 口径表 HL2：回头进度 = 现价离候选的回头幅度 / θ；守住率查表 HOLD（tools/bt/yd_pivot_acc_1125.py，16票 04-01~11-06，2026-11-25 跑）
  *   顺=候选高遇大一级下行 / 候选低遇大一级上行。只是统计，不是买卖建议
+ * v2 11-25 用户看效果图「副图和图上的高低，通过」: dc() 顺带出逐根「波段位置」pos[0~100]（只用当时数据，不重画；上行段=(价-锁定低)/(段内最高-锁定低)，下行段=(价-段内最低)/(锁定高-段内最低)），高位区80/低位区20 没回测（口径表 HL3）
  * 锁定点存 localStorage jl_hlpiv_lock_v1（按 票+层），刷新不丢；取数失败返回 err，宿主屏上一行「⚠ 断流」
  */
 (function (W) {
@@ -29,7 +30,7 @@
 
   // 方向变化状态机。bars: [{t:'202611061459',d:'2026-11-06',h,l,c}]，thr[i] 为小数
   function dc(bars, thr) {
-    var P = [], d = 0, hi = null, lo = null, ih = 0, il = 0, i, j;
+    var P = [], d = 0, hi = null, lo = null, ih = 0, il = 0, i, j, anc = NaN, pos = new Array(bars.length);
     for (i = 0; i < bars.length; i++) {
       var t = thr[i], H = bars[i].h, L = bars[i].l;
       if (!(t > 0)) continue;
@@ -38,18 +39,24 @@
       if (d <= 0 && L < lo) { lo = L; il = i; }
       if (d >= 0 && L <= hi * (1 - t)) {
         if (d === 0 && il < ih && lo <= hi * (1 - t)) P.push({ i: il, k: "L", p: lo, ic: ih });
-        P.push({ i: ih, k: "H", p: hi, ic: i }); d = -1;
+        P.push({ i: ih, k: "H", p: hi, ic: i }); d = -1; anc = hi;
         lo = Infinity; for (j = ih; j <= i; j++) if (bars[j].l < lo) { lo = bars[j].l; il = j; }
+        pos[i] = posAt(bars[i].c, d, anc, hi, lo);
         continue;
       }
       if (d <= 0 && H >= lo * (1 + t)) {
         if (d === 0 && ih < il && hi >= lo * (1 + t)) P.push({ i: ih, k: "H", p: hi, ic: il });
-        P.push({ i: il, k: "L", p: lo, ic: i }); d = 1;
+        P.push({ i: il, k: "L", p: lo, ic: i }); d = 1; anc = lo;
         hi = -Infinity; for (j = il; j <= i; j++) if (bars[j].h > hi) { hi = bars[j].h; ih = j; }
       }
+      pos[i] = posAt(bars[i].c, d, anc, hi, lo);
     }
     var cand = d === 1 ? { i: ih, k: "H", p: hi } : d === -1 ? { i: il, k: "L", p: lo } : null;
-    return { piv: P, cand: cand, dir: d };
+    return { piv: P, cand: cand, dir: d, pos: pos };
+  }
+  function posAt(c, d, anc, hi, lo) {
+    var v = d === 1 ? (c - anc) / Math.max(hi - anc, 1e-9) * 100 : d === -1 ? (c - lo) / Math.max(anc - lo, 1e-9) * 100 : NaN;
+    return v === v ? Math.max(0, Math.min(100, v)) : undefined;
   }
 
   function loadLock() { try { return JSON.parse(localStorage.getItem(LKEY) || "{}"); } catch (e) { return {}; } }
@@ -166,5 +173,12 @@
     return R.name + (c.k === "H" ? " 离候选高回落" : " 离候选低反弹") + (g.pb * 100).toFixed(1) + "%·门槛" + (R.th * 100).toFixed(1) + "% → " + Math.round(Math.min(g.q, 9.99) * 100) + "%"
       + (g.shun == null ? "" : g.shun ? "·顺大级" : "·逆大级") + (g.hold != null ? "·守住≈" + g.hold + "%" : "");
   }
-  W.JLHL = { LV: LV, NAME: NAME, HOLD: HOLD, compute: compute, fetchAll: fetchAll, draw: draw, progText: progText, dc: dc, atrMap: atrMap, pfx: pfx, V: 1 };
+  // 宿主K线(收尾时刻 t 升序, 'YYYYMMDDHHMM') → 每根取 <=t 的最后一根1分的波段位置
+  function posOf(res, k, ts) {
+    var R = res && res.lv[k], B = res && res.bars; if (!R || !B) return [];
+    var out = new Array(ts.length), j = 0;
+    for (var i = 0; i < ts.length; i++) { while (j + 1 < B.length && B[j + 1].t <= ts[i]) j++; out[i] = (B[j] && B[j].t <= ts[i] && B[j].t.slice(0, 8) === String(ts[i]).slice(0, 8)) ? R.pos[j] : undefined; }
+    return out;
+  }
+  W.JLHL = { LV: LV, NAME: NAME, HOLD: HOLD, compute: compute, fetchAll: fetchAll, draw: draw, progText: progText, posOf: posOf, dc: dc, atrMap: atrMap, pfx: pfx, V: 2 };
 })(window);

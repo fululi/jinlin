@@ -25,11 +25,12 @@ body{margin:0;background:#0d1117;color:#e8eef5;font:400 13px -apple-system,"Ping
 <div id="top"><input id="code" inputmode="numeric" maxlength="6"><span id="nm"></span><span id="px"></span></div>
 <div id="warn"></div>
 <div class="pn" data-k="m1"><h3>分时<span class="tg on" data-l="m1"><i></i>分时点</span><span class="tg on" data-l="m5"><i></i>5分点</span></h3><canvas height="230"></canvas>
+  <h3 style="padding-top:2px">波段位置<span class="tg on" data-l="bw"><i></i></span><span id="bwv" style="opacity:.8"></span><span style="opacity:.5">高位区80 / 低位区20（没回测）</span></h3><canvas id="bwcv" height="90"></canvas>
   <div class="prog" id="pg_m1"></div><div class="prog" id="pg_m5" style="padding-top:0"></div></div>
 <div class="pn" data-k="m5"><h3>5分 · 2天<span class="tg on" data-l="m5"><i></i>5分点</span><span class="tg on" data-l="m15"><i></i>15分点</span></h3><canvas height="210"></canvas></div>
 <div class="pn" data-k="m15"><h3>15分 · 5天<span class="tg on" data-l="m15"><i></i>15分点</span></h3><canvas height="210"></canvas><div class="prog" id="pg_m15"></div></div>
 <div id="foot">实心=回头够门槛已锁定，不再改；空心「候」=当前候选，会跟着新高/新低挪。门槛=前14日日波动×(分时0.3/5分0.5/15分0.9)。<br>守住率=16票1分钟历史统计(04-01~11-06)，只是统计不是买卖建议。</div>
-<script src="jl_hlpiv.js?v=1"></script>
+<script src="jl_hlpiv.js?v=2"></script>
 <script>
 (function(){
 var H=window.JLHL, CODE=(new URLSearchParams(location.search).get("code"))||localStorage.getItem("jl_hl_code")||"600105";
@@ -62,13 +63,14 @@ function draw(){
   var prev=D.days.filter(function(x){return x.d<today}).slice(-1)[0],pc=prev?prev.c:last.c;
   $("#px").textContent=last.c.toFixed(2)+"  "+((last.c/pc-1)*100).toFixed(2)+"%";$("#px").style.color=last.c>=pc?"#ff5c5c":"#3ddc84";
   document.querySelectorAll(".pn").forEach(function(pn){
-    var k=pn.dataset.k,cv=pn.querySelector("canvas"),dpr=window.devicePixelRatio||1,Wd=cv.clientWidth,Ht=+cv.getAttribute("height");
+    var k=pn.dataset.k,cv=pn.querySelector("canvas:not(#bwcv)"),dpr=window.devicePixelRatio||1,Wd=cv.clientWidth,Ht=+cv.getAttribute("height");
     cv.width=Wd*dpr;cv.height=Ht*dpr;cv.style.height=Ht+"px";var c=cv.getContext("2d");c.scale(dpr,dpr);
-    var lv=[];pn.querySelectorAll(".tg").forEach(function(t){if(t.classList.contains("on"))lv.push(t.dataset.l)});
+    var lv=[];pn.querySelectorAll(".tg").forEach(function(t){if(t.classList.contains("on")&&t.dataset.l!=="bw")lv.push(t.dataset.l)});
     var bars,days;if(k==="m1"){bars=D.m1.filter(function(b){return b.d===today})}
     else{var n=k==="m5"?5:15,ds=D.days.map(function(x){return x.d}).filter(function(d){return d<=today}).slice(k==="m5"?-2:-5);
       bars=agg(D.bars.filter(function(b){return ds.indexOf(b.d)>=0}),n)}
     if(!bars.length)return;
+    if(k==="m1")drawBw(bars,pn);
     var L=40,R=8,T=16,B=18,iw=Wd-L-R,ih=Ht-T-B,N=k==="m1"?241:bars.length,from=bars[0].t;
     var lo=1e9,hi=-1e9;bars.forEach(function(b){lo=Math.min(lo,b.l);hi=Math.max(hi,b.h)});
     lv.forEach(function(l){var r=RES.lv[l];r.piv.concat(r.cand?[r.cand]:[]).forEach(function(p){if(p.t>=from){lo=Math.min(lo,p.p);hi=Math.max(hi,p.p)}})});
@@ -93,11 +95,25 @@ function draw(){
     }
     // 小层在上：先画大层(粗黄线)再画本层
     var order=lv.slice().sort(function(a,b){return b===k?-1:a===k?1:0});
-    order.forEach(function(l){H.draw(c,RES,X,Y,{levels:[l],from:from,font:10,label:l===k||lv.length===1,big:l!==k})});
+    order.forEach(function(l){H.draw(c,RES,X,Y,{levels:[l],from:from,font:10,label:l===k||lv.length===1,big:l!==k,lw:l!==k?0.6:0.8})});
   });
   ["m1","m5","m15"].forEach(function(k){var el=$("#pg_"+k);if(!el)return;var R=RES.lv[k];
     if(!R.prog){el.innerHTML="";return}var g=R.prog,col=g.shun==null?"#9fb4ff":g.shun?"#f5c542":"rgba(232,238,245,.55)";
     el.innerHTML=H.progText(RES,k)+'<div class="bar"><b style="width:'+Math.min(100,g.q*100).toFixed(0)+'%;background:'+col+'"></b></div>'});
+}
+/* 11-25b 用户「副图和图上的高低，通过」: 分时下面的 波段位置 副图(口径表 HL3), 同一套点 */
+function drawBw(bars,pn){
+  var cv=$("#bwcv"),tg=pn.querySelector('.tg[data-l="bw"]'),on=tg.classList.contains("on");cv.style.display=on?"":"none";if(!on){$("#bwv").textContent="";return}
+  var dpr=window.devicePixelRatio||1,Wd=cv.clientWidth,Ht=90;cv.width=Wd*dpr;cv.height=Ht*dpr;cv.style.height=Ht+"px";var c=cv.getContext("2d");c.scale(dpr,dpr);
+  var L=40,R=8,T=6,B=6,iw=Wd-L-R,ih=Ht-T-B,xi=function(i){return L+(i+.5)/241*iw},Y=function(p){return T+(100-p)/100*ih};
+  var ts=bars.map(function(b){return b.t}),pos=H.posOf(RES,"m1",ts);
+  c.font="400 10px -apple-system,PingFang SC,sans-serif";c.textAlign="right";
+  [[80,"rgba(255,92,92,.55)"],[20,"rgba(61,220,132,.55)"]].forEach(function(a){c.strokeStyle=a[1];c.lineWidth=.7;c.setLineDash([3,3]);c.beginPath();c.moveTo(L,Y(a[0]));c.lineTo(Wd-R,Y(a[0]));c.stroke();c.fillStyle=a[1];c.fillText(a[0],L-4,Y(a[0])+3)});c.setLineDash([]);
+  pos.forEach(function(p,i){if(p==null)return;if(p>=80){c.fillStyle="rgba(255,92,92,.22)";c.fillRect(xi(i)-iw/482,Y(p),iw/241,Y(80)-Y(p))}else if(p<=20){c.fillStyle="rgba(61,220,132,.22)";c.fillRect(xi(i)-iw/482,Y(20),iw/241,Y(p)-Y(20))}});
+  c.strokeStyle="#8ab4ff";c.lineWidth=.9;c.beginPath();var st=false;pos.forEach(function(p,i){if(p==null){st=false;return}st?c.lineTo(xi(i),Y(p)):c.moveTo(xi(i),Y(p));st=true});c.stroke();
+  var Rm=RES.lv.m1,pts=Rm.piv.filter(function(p){return p.t>=ts[0]});if(Rm.cand&&Rm.cand.t>=ts[0])pts=pts.concat([{t:Rm.cand.t,k:Rm.cand.k,cand:1}]);
+  pts.forEach(function(p){var i=ts.indexOf(p.t);if(i<0||pos[i]==null)return;var col=p.k==="H"?"#ff5c5c":"#3ddc84";c.beginPath();c.arc(xi(i),Y(pos[i]),2.6,0,6.2832);if(p.cand){c.strokeStyle=col;c.lineWidth=1;c.stroke()}else{c.fillStyle=col;c.fill()}});
+  var lv=pos[pos.length-1];$("#bwv").textContent=lv==null?"":" "+lv.toFixed(0);
 }
 window.addEventListener("resize",draw);
 document.addEventListener("visibilitychange",function(){if(!document.hidden)load()});
