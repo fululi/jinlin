@@ -1991,9 +1991,9 @@ if (ext && SP[ext.ix]) {
         shQ = LIVE.pts.map(function (q) { return { p: q.p, x: xOfHmJL(q.hm), k: q.hm }; }).filter(function (q) { return q.x != null && q.p > 0; });
       }
       var patOnJL = localStorage.getItem('zp_pat_hist_v1') !== '0';   /* 11-15 用户: PAT关 = 历史+实时全不画(原来实时形态常显, 点隐藏还有) */
-      var exJL = [];   /* 11-23d 三角(jl_tri)/箱体/旗形/笔: 分时页用分时点当K线(高=低=收) */
-      try { if (patOnJL && ZpShapes.extra) exJL = ZpShapes.extra(perNowJL() > 0 && shC ? shC : shQ.map(function (q) { return { o: q.p, h: q.p, l: q.p, c: q.p, x: q.x, key: q.k }; }), shS, { per: perNowJL(), thr: thrOfJL() }); } catch (eEx) { }   /* 11-25pat thr=回落阈值, 箱体/三角/趋势线用 */
-      window.__ZPPAT = ZpShapes.draw(svg, patOnJL ? (shList || ZpShapes.scan(shS, shQ)).concat(exJL) : [], { Y: Y, xEnd: LX - 6, clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline'), hist: patOnJL });
+      var exJL = [], biOnJL = localStorage.getItem('zp_bi_v1') === '1';   /* 11-26pb 用户「修」: 笔只看自己的钮, PAT关也照画 */ /* 11-23d 三角(jl_tri)/箱体/旗形/笔: 分时页用分时点当K线(高=低=收) */
+      try { if ((patOnJL || biOnJL) && ZpShapes.extra) exJL = ZpShapes.extra(perNowJL() > 0 && shC ? shC : shQ.map(function (q) { return { o: q.p, h: q.p, l: q.p, c: q.p, x: q.x, key: q.k }; }), shS, { per: perNowJL(), thr: thrOfJL() }); if (!patOnJL) exJL = exJL.filter(function (r) { return r.k === 'bi'; }); } catch (eEx) { }   /* 11-25pat thr=回落阈值, 箱体/三角/趋势线用 */
+      window.__ZPPAT = ZpShapes.draw(svg, patOnJL ? (shList || ZpShapes.scan(shS, shQ)).concat(exJL) : exJL, { Y: Y, xEnd: LX - 6, clip: [PX0, PY0, LX - 6, PY0 + PH], before: $('pline'), hist: patOnJL });
     }
   } catch (e) { }
   try { zpFibDrawJL(svg); } catch (eFib) { }   /* 11-23d FIB */
@@ -2667,11 +2667,6 @@ function dayGetJL(n, sym) {
 function dayURL(n, sym) { return 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=' + (sym || LIVE.sym) + ',day,,,' + n + ',qfq&_t=' + Date.now(); }
 function mrow(x) { return { t: x[0], o: +x[1], c: +x[2], h: +x[3], l: +x[4], v: +x[5] || 0 }; }   /* 腾讯行序：时间,开,收,高,低,量(手) */
 function tFmt(lb) { return lb === '0925' ? '开盘' : lb.slice(0, 2) + ':' + lb.slice(2); }
-function slotOf(lb) {
-  var hm = +lb, mins = Math.floor(hm / 100) * 60 + hm % 100;
-  var idx = mins <= 690 ? Math.ceil((mins - 570) / 5) - 1 : 24 + Math.ceil((mins - 780) / 5) - 1;
-  return Math.max(0, Math.min(47, idx));
-}
 /* 11-25 口径表 H1: 今天最高/最低 = 腾讯快照日高低(交易所逐笔, 最准) 与 引擎K线高低 取极值; 谁缺用谁. 屏上所有"日高/日低"都走这里 */
 function dayHiJL() { var a = LIVE.dhi > 0 && LIVE.dhi < 1e8 ? LIVE.dhi : 0, b = LIVE.hi > 0 && LIVE.hi < 1e8 ? LIVE.hi : 0; return Math.max(a, b); }
 function dayLoJL() { var a = LIVE.dlo > 0 && LIVE.dlo < 1e8 ? LIVE.dlo : 0, b = LIVE.lo > 0 && LIVE.lo < 1e8 ? LIVE.lo : 0; return a && b ? Math.min(a, b) : (a || b); }
@@ -4909,7 +4904,7 @@ function tbSumJL() {
         var WC = WK.cdl.filter(function (k) { return k.c > 0; }).map(function (k) { k.key = k.d8 + String(k.e).padStart(4, '0'); return k; });
         var WS = swingsOfCandlesJL(WC, thrOfJL(CFG.per || 5)), WO = { Y: Yp, xEnd: X0 + W, clip: [X0, Y0, X0 + W, Y0 + H], before: null };
         if (WS.length >= 3 && window.Pitchfork) Pitchfork.drawSVG(s, WS, { X: function () { return null; }, Y: Yp, xEnd: X0 + W, clip: WO.clip });
-        if (WS.length >= 4 && window.Elliott) Elliott.drawSVG(s, WS, { X: function () { return null; }, Y: Yp, xEnd: X0 + W, clip: WO.clip });
+        if (WS.length >= 4 && window.Elliott && localStorage.getItem('zp_pat_hist_v1') !== '0') /* 11-26pb 用户「修」: 周视图 PAT关=1-5浪也不画, 同主图11-24tri */ Elliott.drawSVG(s, WS, { X: function () { return null; }, Y: Yp, xEnd: X0 + W, clip: WO.clip });
         if (window.ZpShapes) { var wkPatOn = localStorage.getItem('zp_pat_hist_v1') !== '0'; WO.hist = wkPatOn; ZpShapes.draw(s, wkPatOn ? ZpShapes.scan(WS, WC.map(function (k) { return { p: k.c, x: k.x, k: k.key }; })) : [], WO); }   /* 11-15: 周视图 PAT 关=全不画, 和主图同口径 */
       } catch (eWP) { }
       try { wkHL(s, WC, WS, Yp, X0, X0 + W, Y0, Y0 + H); } catch (eHL) { }
@@ -5732,9 +5727,9 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
       } catch (e) { } });
     });
   }
-  function htmlPass() {
+  function htmlPass(root) {
     if (document.documentElement.classList.contains('zpLight')) return;
-    var all = document.body ? document.body.getElementsByTagName('*') : [];
+    var all = root && root.nodeType === 1 ? [root].concat(Array.prototype.slice.call(root.getElementsByTagName('*'))) : document.body ? document.body.getElementsByTagName('*') : [];
     for (var i = 0; i < all.length; i++) { var el = all[i]; if (el.namespaceURI !== 'http://www.w3.org/1999/xhtml') continue; var own = false;
       for (var k = el.firstChild; k; k = k.nextSibling) if (k.nodeType === 3 && /\S/.test(k.nodeValue)) { own = true; break; }
       if (!own) continue;
@@ -5742,7 +5737,16 @@ body.zpAbsOnJL #ch{display:none!important}#zpAbsViewJL{margin:0 0 4px;min-height
     }
   }
   var q = 0; function soon() { if (q) return; q = requestAnimationFrame(function () { q = 0; svgPass(); }); }
-  document.addEventListener('zp:drawn', soon); setInterval(function () { if (document.hidden) return; svgPass(); htmlPass(); }, 2500);
+  document.addEventListener('zp:drawn', soon);
+  /* 11-26 复核: 只扫新增/变化的HTML子树; SVG(图表重画/十字线)不进HTML扫描, 停手0.5秒后补一次svgPass(副图zpHuoJL/wkBox不发zp:drawn) */
+  var hq = 0, changed = [], full = false, svT = 0, XH = 'http://www.w3.org/1999/xhtml';
+  function htmlSoon() { if (hq) return; hq = requestAnimationFrame(function () { hq = 0; var roots = changed, f = full; changed = []; full = false; if (f) { htmlPass(); return; } roots.forEach(function (root) { if (root.isConnected) htmlPass(root); }); }); }
+  function add(n) { if (full || !n || n.nodeType !== 1) return; if (n.namespaceURI !== XH) { clearTimeout(svT); svT = setTimeout(svgPass, 500); return; } if (changed.indexOf(n) < 0) { changed.push(n); if (changed.length > 120) { full = true; changed = []; } } }
+  try { new MutationObserver(function (records) {
+    for (var i = 0; i < records.length; i++) { var r = records[i]; if (r.target && r.target.namespaceURI !== XH) { add(r.target); continue; } var el = false; for (var j = 0; j < r.addedNodes.length; j++) { var an = r.addedNodes[j]; if (an.nodeType === 1) { el = true; add(an); } } if (!el && r.addedNodes.length) add(r.target); }
+    if (full || changed.length) htmlSoon();
+  }).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
+  setInterval(function () { if (document.hidden) return; svgPass(); htmlPass(); }, 15000);
   setTimeout(function () { svgPass(); htmlPass(); }, 800);
   /* 11-25 用户「做T屏线上右边没有价格显示 / 不要很宽」: 主图右侧窄价格轴(TV式) = 4条网格线处的价 + 现价实心块; 占原空白条 LX-6..360, 不改 PX0/PW; localStorage zp_rax_v1=0 关 */
   function raxDraw() { try { if (localStorage.getItem('zp_rax_v1') === '0') return; var sv = document.getElementById('ch'); if (!sv || typeof YHI !== 'number' || !(YHI > YLO)) return;
@@ -6635,7 +6639,6 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
   var YY_N = 2, YY_FL = 0.001, YY_W = 3;   /* YY_W: 主力净占比滚动窗口(分钟); 11-13e 10→3, 用户要高点对得上 */
   var FFD = { sym: '', rows: null, t: 0, busy: false };
   window.zpFFDJL = function () { try { loadFFD(); } catch (e) { } return FFD.sym === LIVE.sym ? FFD.rows : null; };   /* 11-13: 日/周 资金验证读每日主力净额 */
-  window.zpFFDMemJL = function () { return FFD.sym === LIVE.sym ? FFD.rows : null; };   /* 主力日线图只读已在内存的数据，不触发网络加载 */
   function yyOn() { try { return localStorage.getItem('zp_yy_v1') !== '0'; } catch (e) { return true; } }
   function yyTurnsGen(V, TH, i0) {   /* V=累计数组, TH[i]=门槛(可0), 返回 [{dir,turn}] */
     var out = [], dir = 0, hi = null, lo = null, run = 0;
@@ -7377,7 +7380,11 @@ function zpDdxScaleJL(rows) {   /* 11-19 用户「线的高低看不清」: 开�
       legends();
       try { paneGrip(); } catch (eG) { }
       try { window.zpDrawPaint && window.zpDrawPaint(); } catch (e2) { }
-    } catch (e) { }
+      window.__zpSubErr = '';
+    } catch (e) {   /* 11-26se 用户「这个改了吧」: 原来空 catch 吞掉异常→只剩空图; 现在控制台报一次 + 副图上一行字 */
+      try { var em = String((e && e.message) || e).slice(0, 40); if (window.__zpSubErr !== em) { window.__zpSubErr = em; console.error('[zpSub] 副图画图出错', e); }
+        if (pSvg) { var eo = pSvg.querySelector('#zpSubErr'); if (eo) eo.remove(); pSvg.appendChild(E('text', { id: 'zpSubErr', x: 6, y: 22, fill: '#ff8a1f', 'font-size': 9, 'font-weight': 400, 'pointer-events': 'none' }, '⚠ 副图画图出错：' + em)); } } catch (e3) { }
+    }
   }
   /* 11-19 用户「副图拖下沿拉高拉矮, 和主图量柱带一样, 双击复原」: 高度存 zp_ph2_v1(70–320, 默认104) */
   var pgSt = null, pgTap = 0;
@@ -8205,7 +8212,6 @@ setRange = function (lo, hi) {
     return out;
   }
   window.zpTvLiq = tvLiq;
-  window.zpIctOf = function (K) { return { vi: viOf(K), liq: tvLiq(K) }; };   /* 给回归用 */
 
   function paintVI(svg, K, before) {
     if (localStorage.getItem('zp_vi_local') !== '1') return;   /* 11-05 用户: 蜡烛页IV要和持仓卡/分时页同一套(IV区+台账缺口), 不再画本地蜡烛现算的一大堆; 设 '1' 恢复 */
@@ -9089,7 +9095,6 @@ window.addEventListener('click', function (e) {
   }
 
   function toS(e) { var m = svg.getScreenCTM(); if (!m) return null; var p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; p = p.matrixTransform(m.inverse()); return { x: p.x, y: p.y }; }
-  function nearBar(x) { var b = null, d = 1e9; if (!view) return null; view.B.forEach(function (k) { var e = Math.abs(k.x - x); if (e < d) { d = e; b = k; } }); return b; }
   function hitAt(e) {
     if (!view || !svg || wrap.style.display === 'none') return null;
     var q = toS(e); if (!q) return null; var sc = 360 / (svg.getBoundingClientRect().width || 360), R = 12 * sc, RB = 9 * sc, L = lines(), i;
