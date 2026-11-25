@@ -354,7 +354,7 @@
   #ksLookJL input[type=range] { width: 100px; }
   #ksLookJL p { color: #aeb7c6; font-size: 11px; line-height: 1.6; }
 </style>
-  <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
+  <script>try{if(/[?&]ksT=1/.test(location.search)){window.KS_T=1;var _lt9=false;try{_lt9=localStorage.getItem('zp_light_v1')==='1'&&!/[?&]light=0/.test(location.search)}catch(e2){} if(!_lt9)document.documentElement.classList.add('ksTransparent')}}catch(e){}</script><!-- 11-26lt3 首页内嵌K线白底时不加透明深底 -->
 <script>/* 11-26 用户「k线表现在做一比一 trading view 白色的页面! 注意十字线 副图 以及白色字体在黑色页面切换白色的时候情况, 蜡烛颜色亮红亮绿 背景虚线」
    白底TV(和作战屏 zp_light_v1 同一个开关、同一张配色表 MAP): 不逐行改写死色, 画布在调用那一刻按同一张表换色——
    字: 白/浅灰→#131722, 中灰→#787b86; 深底→白; 亮彩→同色相深一档; 红绿=作战屏白底同款; 字压在实心深/彩色小牌上(现价牌/十字线价签/高位区牌)→字留白;
@@ -362,7 +362,7 @@
    深色时整段 return, 不动任何东西。?light=1/0 临时强开/强关(测试用) */
 (function () {
   var on = false;
-  try { var q = new URLSearchParams(location.search).get('light'); on = q === '1' || (q !== '0' && localStorage.getItem('zp_light_v1') === '1'); if (/[?&]ksT=1/.test(location.search)) on = false; } catch (e) { }
+  try { var q = new URLSearchParams(location.search).get('light'); on = q === '1' || (q !== '0' && localStorage.getItem('zp_light_v1') === '1'); } catch (e) { }   /* 11-26lt3 用户「K线表上加个黑白切换小球」: 首页内嵌(ksT=1)也跟 zp_light_v1 走, 不再强制深色 */
   window.KS_LIGHT = on; if (!on || typeof CanvasRenderingContext2D === 'undefined') return;
   var de = document.documentElement; de.classList.add('ksLight'); de.setAttribute('data-ks-light', '1');
   var UPC = '#ff3347', DNC = '#00a878';   /* 蜡烛红绿: 作战屏白底同款(TV红绿亮一档) */
@@ -9335,6 +9335,7 @@ function applyUrl() {
           draw(); hint(S.linesHidden ? "画线已隐藏 · 再点恢复" : "画线已恢复显示");
         }, "隐藏/显示全部画线(只影响显示)");
         mk("外观", lookPanelJL, "背景、网格、文字和蜡烛颜色");
+        mk(window.KS_LIGHT ? "○" : "◐", function () { try { localStorage.setItem("zp_light_v1", window.KS_LIGHT ? "0" : "1"); } catch (e) { } var u9 = new URL(location.href); u9.searchParams.delete("light"); location.href = u9.toString(); }, window.KS_LIGHT ? "现在白底 · 点切回深色" : "切白底"); /* 11-26lt3 内嵌K线表黑白切换(和作战屏同一个键) */
         var ctb = mk("K型▾", function () { ctypePopJL(this); }, "图表类型: 蜡烛/空心/美国线/平均K/面积");
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)");
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
