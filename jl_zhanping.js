@@ -56,7 +56,7 @@
     '#jlZpBallJL.ring{animation:jlZpRing 1s ease-in-out 3!important}@keyframes jlZpRing{50%{box-shadow:0 0 0 6px rgba(232,195,122,.35),0 4px 18px rgba(0,0,0,.45)}}' +
     /* 11-08 用户: 浮动球页面卡面别死黑 → 半透明轻磨砂(同持仓卡), 战屏页面本身透明(jl_zp_war.html body.injlin) */
     /* 11-09晚 用户: 作战屏背景灰蒙蒙 → 恢复用户03:00在线上自己改的深蓝实底 #0d1730→#091024, 不透明不磨砂(半透明会把首页透成灰) */
-    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:linear-gradient(160deg,#0d1730,#091024);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid rgba(120,160,255,.22);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}' +
+    '#jlZpSheetJL{position:fixed;z-index:2147482999;top:52px;right:8px;width:min(96vw,430px);height:min(86vh,720px);background:#131722;-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid #2a2e39;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.55);overflow:hidden}' +
     '#jlZpSheetJL iframe{width:100%;height:100%;border:0;display:block;background:transparent;color-scheme:dark}' +
     '#jlZpSheetJL .zx{position:absolute;right:7px;top:7px;z-index:2;width:26px;height:26px;border-radius:50%;background:rgba(15,24,42,.85);border:1px solid #2a3a55;color:#cfd8e6;font:700 13px/24px -apple-system,sans-serif;text-align:center;cursor:pointer;touch-action:manipulation}' +
     '#jlZpSheetJL .zx:active{background:rgba(42,58,85,.9)}' +

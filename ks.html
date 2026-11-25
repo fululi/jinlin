@@ -241,10 +241,26 @@
   /* ks-0907-01: 内嵌图顶栏+工具行全收(用户指定: 上面全隐藏图撑大), 浮动☰可唤回 */
   body.embed .topbar, body.embed .row { display: none; }
   body.embed.showbars .topbar, body.embed.showbars .row { display: flex; }
+
+  /* 11-25 TV式一条工具栏(独立打开的K线表; 内嵌 embed 用自己的 #ksBarJL 不受影响) */
+  html.tv2 .topbar { flex-wrap: nowrap; gap: 6px; padding: 4px 8px; background: #131722; border-bottom: 1px solid #2a2e39; }
+  html.tv2 .topbar > button:not(.tvK), html.tv2 .topbar .fresh, html.tv2 .topbar .lnkb, html.tv2 .topbar .brand { display: none !important; }
+  html.tv2 .row[data-tabs], html.tv2 .row[data-periods], html.tv2 .row[data-favs] { display: none !important; }
+  html.tv2.tvName .row[data-tabs] { display: flex !important; }
+  html.tv2.tvMore .topbar { flex-wrap: wrap; }
+  html.tv2.tvMore .topbar > button { display: inline-flex !important; }
+  html.tv2.tvMore .row[data-periods], html.tv2.tvMore .row[data-favs] { display: flex !important; }
+  html.tv2 .topbar .name::after { content: " \25BE"; font-size: 11px; }
+  html.tv2 .topbar .name { cursor: pointer; color: #fff; font-weight: 500; font-size: 14px; }
+  html.tv2 .topbar .tvK { flex: none; background: transparent; border: 0; color: #fff; font: 400 13px -apple-system, "PingFang SC", sans-serif; padding: 5px 7px; border-radius: 4px; cursor: pointer; }
+  html.tv2 .topbar .tvK.on { color: #2962ff; background: #2962ff1f; }
+  html.tv2 .topbar .tvK.first { margin-left: auto; }
+  html.tv2 .row { background: #131722; }
+  html.tv2 .row button, html.tv2 .btn, html.tv2 .pstrip button { color: #fff !important; } /* 11-25 用户「灰色小字换亮白色」 */
   body.embed.showbars .row[data-tabs] { display: none; } /* 内嵌单票: 股票切换行仍没意义 */
   /* === 金粼融合 0913晚(重打在部署版上): 藏青底 + 单行抽屉紧凑条 === */
-  html.tvlook, html.tvlook body, html.tvlook body.embed { background: #080a0e !important; } /* 11-18 TV风格: 画布纯黑底(原#0a0e0b偏绿) */
-  body.embed { background: rgba(9,22,34,.78); color-scheme: dark; } /* =父级 .plots rgba(11,27,41,.933); transparent会被浏览器填白(0913已踩过) */
+  html.tvlook, html.tvlook body, html.tvlook body.embed { background: #131722 !important; } /* 11-25 TV灰黑 #131722(原#080a0e) */ /* 11-18 TV风格: 画布纯黑底(原#0a0e0b偏绿) */
+  body.embed { background: rgba(9,22,34,.78); color-scheme: dark; } html.tvlook body.embed { background: #131722 !important; } /* 11-25 TV深色: 内嵌也同一个灰黑 */ /* =父级 .plots rgba(11,27,41,.933); transparent会被浏览器填白(0913已踩过) */
   body.embed .pstrip { position: absolute; left: 6px; top: auto; bottom: 8px; z-index: 30; background: rgba(6,13,21,.82); border-color: rgba(30,52,66,.8); box-shadow: 0 2px 10px rgba(0,0,0,.35); } /* ks-1124: 周期直选锚定图表视口底边, 滚动/全屏时随手可选 */
   body.embed .yz button { background: rgba(8,18,26,.6); color: #81e6d9; border-color: #21404d; }
   body.embed.drw-periods .row[data-periods], body.embed.drw-tools .row[data-tools], body.embed.drw-inds .row[data-inds], body.embed.drw-favs .row[data-favs] { display: flex; }
@@ -339,7 +355,7 @@
   #ksLookJL p { color: #aeb7c6; font-size: 11px; line-height: 1.6; }
 </style>
   <script>try{if(/[?&]ksT=1/.test(location.search)){document.documentElement.classList.add('ksTransparent');window.KS_T=1}}catch(e){}</script>
-<script src="jl_absorb.js?v=6"></script>
+<script src="jl_absorb.js?v=7"></script>
 <script src="jl_chart_cache.js?v=1"></script>
 <script src="jl_markets.js?v=7"></script>
 <script src="jl_tri.js?v=1"></script>
@@ -1032,17 +1048,21 @@ function fwp(v) { var d2 = dec(); return v == null || isNaN(v) ? "—" : v.toFix
 
 var TVL = (function () { try { var q = new URLSearchParams(location.search).get("tv"); if (q === "0" || q === "1") return q === "1"; return localStorage.getItem("ks_tvlook_v1") !== "0"; } catch (e) { return true; } })(); /* 11-18 用户「按你说的试试」: 看盘工作区整理(TV风格)总开关, ?tv=0 看旧版 */
 try { if (TVL) document.documentElement.classList.add("tvlook"); } catch (e) {}
-var UP = TVL ? "#ff4552" : "#ff6f66", DN = TVL ? "#12b89a" : "#35d99a", /* 11-19 亮度验收: 默认红绿提亮, 不改K线比例 */ DIM = "#eef3f0", GRID = "rgba(38,51,44,0.26)", SEL = "#ffd21f";
+var UP = TVL ? "#f23645" : "#ff6f66", DN = TVL ? "#089981" : "#35d99a", /* 11-25 TV红绿(效果图点头) */ /* 11-19 亮度验收: 默认红绿提亮, 不改K线比例 */ DIM = "#eef3f0", GRID = TVL ? "rgba(54,58,69,0.45)" : "rgba(38,51,44,0.26)" /* 11-25 TV网格 #2a2e39 系 */, SEL = "#ffd21f";
 // Chart appearance is independent of indicators and drawings.
 var LOOK_KEY_JL = "ks_appearance_v1";
 function lookPresetJL(original) {
-  return { bg: original ? (TVL ? "#080a0e" : "#0a0e0b") : "#000000", grid: original ? "#191d24" : "#141414", text: "#eef3f0", up: TVL ? (original ? "#f23645" : "#ff4552") : "#ff6f66", down: TVL ? (original ? "#089981" : "#12b89a") : "#35d99a", gridOn: true, fontScale: 1, brightVersion: 1 };
+  return { bg: original ? (TVL ? "#080a0e" : "#0a0e0b") : (TVL ? "#131722" : "#000000"), grid: original ? "#191d24" : (TVL ? "#1e222d" : "#141414"), text: TVL ? "#ffffff" : "#eef3f0", up: TVL ? "#f23645" : "#ff6f66", down: TVL ? "#089981" : "#35d99a", gridOn: true, fontScale: 1, brightVersion: 2 }; /* 11-25 用户「预览和实际不一样」: 外观默认原来纯黑#000+旧红绿, 盖掉了TV色 → TV默认改 #131722/网格#1e222d/白字/TV红绿 */
 }
 function cleanLookJL(raw) {
   var out = lookPresetJL(!TVL); raw = raw || {};
   ["bg", "grid", "text", "up", "down"].forEach(function (k) { if (/^#[0-9a-f]{6}$/i.test(raw[k])) out[k] = raw[k]; });
   // 仅升级旧默认配色; 自选色保留。标记版本后「原版」也能跨刷新保留。
-  if (TVL && raw.brightVersion !== 1) {
+  if (TVL && raw.brightVersion !== 2) { /* 11-25 v2: 没自己改过的旧默认(纯黑/旧红绿/旧网格/旧字色)升到TV色 */
+    if (out.bg.toLowerCase() === "#000000") out.bg = "#131722"; if (out.grid.toLowerCase() === "#141414") out.grid = "#1e222d"; if (out.text.toLowerCase() === "#eef3f0") out.text = "#ffffff";
+    if (out.up.toLowerCase() === "#ff4552") out.up = "#f23645"; if (out.down.toLowerCase() === "#12b89a") out.down = "#089981";
+  }
+  if (false) {
     if (out.up.toLowerCase() === "#f23645") out.up = "#ff4552";
     if (out.down.toLowerCase() === "#089981") out.down = "#12b89a";
   }
@@ -1430,7 +1450,7 @@ function view() {
   if (!S.count) {
     if (S.klt === "101" || isMultiDayJL(S.klt)) S.count = Math.max(S.klt === "Y" ? 10 : 30, Math.round(plotW / (TVL ? 9 : 6.5))); /* 11-18 TV风格: 日线默认每根≈9px */
     else if (S.klt === "5D") S.count = 240;
-    else S.count = Math.max(16, Math.round(240 / (+S.klt || 5)));
+    else S.count = TVL ? Math.max(40, Math.round(plotW / 8)) : Math.max(16, Math.round(240 / (+S.klt || 5))); /* 11-25 用户「切分钟蜡烛突然很大」: 没存过缩放时(8871 和别的端口各存各的) 分钟默认也按宽度≈8px一根, 原来固定 5分48根/15分16根, 宽屏上一根20px+ */
   }
   S.count = Math.max(15, Math.min(KS_COUNT_MAX, S.count));
   var end = Math.max(Math.min(S.end || n, n), Math.min(S.count, n));
@@ -2573,6 +2593,17 @@ function drawReal() {
     ctx.fillStyle = LOOK_JL.text; /* 可调价格轴文字 */
     ctx.fillText(tk.t, v.padL + v.plotW + 4, gy);
   });
+  if (TVL) { /* 11-25 用户「右边价格标签和预览差距」: TV式 价格轴分隔竖线 + 最新价实心色块(轴满宽) */
+    try {
+      var _ax = Math.round(v.padL + v.plotW) + 0.5; ctx.save(); ctx.strokeStyle = "#2a2e39"; ctx.lineWidth = 1; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(_ax, v.pTop - 4); ctx.lineTo(_ax, v.bottom); ctx.stroke();
+      var _lk = kl[kl.length - 1], _pk = kl[kl.length - 2], _lc = _lk && +_lk[4];
+      if (_lc > 0) { var _ly = v.Y(_lc), _cl = _pk && _lc < +_pk[4] ? DN : UP; if (_ly > v.pTop - 2 && _ly < v.pTop + v.priceH + 2) {
+        ctx.strokeStyle = _cl; ctx.globalAlpha = 0.7; ctx.setLineDash([1, 3]); ctx.beginPath(); ctx.moveTo(v.padL, Math.round(_ly) + 0.5); ctx.lineTo(_ax, Math.round(_ly) + 0.5); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+        var _aw = v.w - _ax - 1; ctx.fillStyle = _cl; ctx.fillRect(_ax + 0.5, _ly - 8, _aw, 16);
+        ctx.fillStyle = "#fff"; ctx.font = "500 10px -apple-system, Helvetica, sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(_lc.toFixed(d2), _ax + 4, _ly); } }
+      ctx.restore();
+    } catch (eAx) { }
+  }
   ctx.font = "11px Menlo, monospace";
   ctx.textAlign = "center";
   timeTicksJL(ctx, v, kl).forEach(function (t) {
@@ -2884,6 +2915,7 @@ function drawReal() {
   renderFundStamps(ctx, v);
   renderZzLineJL(ctx, v);
   renderZzMarkJL(ctx, v);
+  try { renderHlpJL(ctx, v); } catch (eHl) { if (window.console) console.warn("[hlp]", eHl); }
   renderSixSigJL(ctx, v);
   try { JITU_KS.render(ctx, v); } catch (eJT) { }
   renderMonitor(ctx, v);
@@ -3000,11 +3032,11 @@ function xhLayerJL(ctx, v, kl, d2, w) {
     if (TVL) { /* 11-18 用户「两个都要」A: 浮框改主图左上一行读数(TradingView式) */
       ctx.save(); ctx.font = "400 11px -apple-system, \"PingFang SC\", sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "middle";
       var _lx = v.padL + 4, _ly = v.pTop + 8, _cc = ck[4] >= ck[1] ? UP : DN;
-      var _seg = [[String(ck[0]).slice(0, 16) + "  ", "rgba(200,210,215,0.7)"], ["开", "rgba(200,210,215,0.7)"], [ck[1].toFixed(d2) + " ", _cc], ["高", "rgba(200,210,215,0.7)"], [ck[2].toFixed(d2) + " ", _cc], ["低", "rgba(200,210,215,0.7)"], [ck[3].toFixed(d2) + " ", _cc], ["收", "rgba(200,210,215,0.7)"], [ck[4].toFixed(d2) + " ", _cc], [(pct >= 0 ? "+" : "") + pct.toFixed(2) + "%", _cc]];
+      var _seg = [[String(ck[0]).slice(0, 16) + "  ", "#ffffff"], ["开", "#ffffff"], [ck[1].toFixed(d2) + " ", _cc], ["高", "#ffffff"], [ck[2].toFixed(d2) + " ", _cc], ["低", "#ffffff"], [ck[3].toFixed(d2) + " ", _cc], ["收", "#ffffff"], [ck[4].toFixed(d2) + " ", _cc], [(pct >= 0 ? "+" : "") + pct.toFixed(2) + "%", _cc]];
       var _tw0 = 0; _seg.forEach(function (sg) { _tw0 += ctx.measureText(sg[0]).width + 2; });
       ctx.fillStyle = "rgba(8,10,14,0.6)"; ctx.fillRect(_lx - 3, _ly - 8, _tw0 + 6, 16);
       _seg.forEach(function (sg) { ctx.fillStyle = sg[1]; ctx.fillText(sg[0], _lx, _ly); _lx += ctx.measureText(sg[0]).width + 2; });
-      var _l2 = info.slice(4).join("   "); if (_l2) { ctx.fillStyle = "rgba(200,210,215,0.6)"; ctx.font = "400 10px -apple-system, \"PingFang SC\", sans-serif"; ctx.fillText(_l2, v.padL + 4, _ly + 15); }
+      var _l2 = info.slice(4).join("   "); if (_l2) { ctx.fillStyle = "#ffffff"; /* 11-25 用户圈「这行字换亮白」 */ ctx.font = "400 10px -apple-system, \"PingFang SC\", sans-serif"; ctx.fillText(_l2, v.padL + 4, _ly + 15); }
       ctx.restore();
     } else {
     ctx.font = "11px -apple-system, sans-serif"; ctx.textAlign = "left";
@@ -3045,7 +3077,7 @@ function xhLayerJL(ctx, v, kl, d2, w) {
         if (ctx.measureText(lab).width + 6 > axW) ctx.font = "9px Menlo, monospace";
         ctx.fillStyle = "#30433a";
         ctx.fillRect(v.padL + v.plotW, ry - 8, axW, 16);
-        ctx.fillStyle = "#e4ede6";
+        ctx.fillStyle = "#ffffff"; ctx.textAlign = "left"; /* 11-25 用户「鼠标➕把价格截断了」: 前面留下的 textAlign=center 让价签一半跑进图里被+盖住 → 固定左对齐 */
         ctx.fillText(lab, v.padL + v.plotW + 3, ry);
         if (curP.id === "main" && !S.tool) xhPlusDrawJL(ctx, v.padL + v.plotW - 17, ry, parseFloat(v.P(ry).toFixed(d2)), ci); /* 11-18 用户「右边小加号画横线」 */
       }
@@ -3919,7 +3951,7 @@ function organizeToolsJL(el) {
 function organizeIndsJL(el) {
   if (!_embMode()) return;
   var buttons = Array.from(el.querySelectorAll("button")); el.replaceChildren(); ksUiHeadJL(el, "图表指标", "亮色圆点表示已开启 · 点选切换");
-  [["主图趋势", ["ma", "hma", "boll", "tsline", "lr", "zzl"]], ["价格与区间", ["pdhl", "phvl", "tdhl", "cost", "amp", "rlm"]], ["资金与动能", ["absorb", "tqs", "rtflow", "ctrl", "zlyy", "ddx", "macd", "zz"]], ["结构与信号", ["sixsig", "jitu", "fvg", "vi", "liq", "ms", "ob", "atri", "vp", "cyq", "monitor"]], ["布局与设置", ["volMain", "paneTop", "parameters", "appearance"]]].forEach(function (g) {
+  [["主图趋势", ["ma", "hma", "boll", "tsline", "lr", "zzl"]], ["价格与区间", ["pdhl", "phvl", "tdhl", "cost", "amp", "rlm"]], ["资金与动能", ["absorb", "tqs", "rtflow", "ctrl", "zlyy", "ddx", "macd", "zz"]], ["结构与信号", ["hlp", "sixsig", "jitu", "fvg", "vi", "liq", "ms", "ob", "atri", "vp", "cyq", "monitor"]], ["布局与设置", ["volMain", "paneTop", "parameters", "appearance"]]].forEach(function (g) {
     var selected = buttons.filter(function (b) { return g[1].indexOf(b.dataset.ind) >= 0; });
     selected.forEach(function (b) { buttons.splice(buttons.indexOf(b), 1); }); ksUiSectionJL(el, g[0], selected);
   });
@@ -6407,6 +6439,7 @@ function drawTSJL(ctx, w, hh) {
   try { renderGapsJL(ctx, v); } catch (eG9) { if (window.console) console.warn("[ts.gaps]", eG9); }
   try { renderBollTSJL(ctx, v); } catch (eB9) { if (window.console) console.warn("[ts.boll]", eB9); }
   try { renderZzLineJL(ctx, v); renderZzMarkJL(ctx, v); } catch (eZz) { if (window.console) console.warn("[ts.zz]", eZz); }
+  try { renderHlpJL(ctx, v); } catch (eHl) { if (window.console) console.warn("[ts.hlp]", eHl); }
   try { renderCostLine(ctx, v); } catch (e3) { if (window.console) console.warn("[ts.cost]", e3); }
   try { renderCYQ(ctx, v); } catch (e6) { if (window.console) console.warn("[ts.cyq]", e6); }
   try { renderVP(ctx, v); } catch (e7) { if (window.console) console.warn("[ts.vp]", e7); }
@@ -8131,16 +8164,48 @@ function rsoSeriesJL(kl, klt) {
 /* ---- 11-24h 用户「K线表里都加上这个副图指标，一定要对齐成交量还有时间」: 「指标」副图格 ----
    乖离/穿越/三线/趋势/庄控/阴阳/DK 一次开一个(指标行7个钮互斥); 公式=作战屏同一份 jl_huo/jl_sx/jl_zd/jl_hy/jl_dk.js, canvas 画法 jl_subcv.js;
    x 用 v.X(i) —— 和 VOL 同一根K同一个x, 时间轴共用; 右侧 +/− 调高(ks_subhf_v1), 标题条 ⤢放大 ✕关。只显示, 不进算法, 没有提醒 */
-var HUOK = [["hgl", "乖离"], ["hcy", "穿越"], ["hsx", "三线"], ["hqs", "趋势"], ["hzk", "庄控"], ["hyy", "阴阳"], ["hdk", "DK"]];
+var HUOK = [["hgl", "乖离"], ["hcy", "穿越"], ["hsx", "三线"], ["hqs", "趋势"], ["hzk", "庄控"], ["hyy", "阴阳"], ["hdk", "DK"], ["hbw", "波段位置"]];   /* 11-25b hbw=高低点副图(口径表 HL3) */
 function huoIndJL() { for (var j = 0; j < HUOK.length; j++) if (S.ind[HUOK[j][0]]) return HUOK[j][1]; return ""; }
 function huoKeyJL(k) { for (var j = 0; j < HUOK.length; j++) if (HUOK[j][0] === k) return true; return false; }
 var KS_SUBHF = (function () { try { return JSON.parse(localStorage.getItem("ks_subhf_v1") || "{}") || {}; } catch (e) { return {}; } })();
 function subHfJL(k, d) { var x = +KS_SUBHF[k]; return x >= 0.07 && x <= 0.42 ? x : d; }
 function subHfSetJL(k, up) { var x = subHfJL(k, k === "huo" ? 0.14 : 0.11); x = up ? Math.min(0.42, Math.round(x * 130) / 100) : Math.max(0.07, Math.round(x * 77) / 100); KS_SUBHF[k] = x; try { localStorage.setItem("ks_subhf_v1", JSON.stringify(KS_SUBHF)); } catch (e) { } }
+/* 11-25b 用户「分时的这个高低幅图…怎么区分」: 主图叫「高低点」(线+价), 副图叫「波段位置」(0~100, 同一套点, 口径表 HL3)
+   100=贴着这段高点 0=贴着这段低点; 80/20 虚线没回测; 每次锁定会跳一下(换新的一段). 只显示, 不进算法 */
+function renderBwPaneJL(ctx, v, y2, h2, right) {
+  var k = String(S.klt), code = String(S.active || "");
+  if (!/^(1|5|15|30|60|TS|5D)$/.test(k)) { paneLegendJL(ctx, v, y2, "波段位置", [{ t: "只在分钟周期(分时/1/5/15/30/60)", c: "rgba(238,243,240,.9)" }]); return; }
+  var st = hlpStateJL(code), res = st.res, own = (k === "5") ? "m5" : (k === "15" || k === "30" || k === "60") ? "m15" : "m1";
+  if (!res) { paneLegendJL(ctx, v, y2, "波段位置", [{ t: st.err ? "⚠ 断流 · " + st.err : "加载中…", c: st.err ? "#ffb3b3" : "rgba(238,243,240,.9)" }]); return; }
+  var kl = S.kl, kt = HLP_ST._kt && HLP_ST._kt.kl === kl && HLP_ST._kt.n === kl.length ? HLP_ST._kt.a : null;
+  if (!kt) { kt = kl.map(function (r) { return String(r[0]).replace(/[-: ]/g, ""); }); HLP_ST._kt = { kl: kl, n: kl.length, a: kt }; }
+  var ck = own + "|" + res.bars.length + "|" + res.bars[res.bars.length - 1].t + "|" + kl.length + "|" + kt[kt.length - 1];
+  if (!HLP_ST._pos || HLP_ST._pos.k !== ck) HLP_ST._pos = { k: ck, a: window.JLHL.posOf(res, own, kt) };
+  var pos = HLP_ST._pos.a, T = y2 + 13, B = y2 + h2 - 3, Y = function (p) { return B - p / 100 * (B - T); }, i;
+  ctx.save(); ctx.beginPath(); ctx.rect(v.padL - 1, y2, right - v.padL + 2, h2); ctx.clip();
+  [[80, "rgba(255,92,92,.55)"], [20, "rgba(61,220,132,.55)"]].forEach(function (a) { ctx.strokeStyle = a[1]; ctx.lineWidth = 0.7; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(v.padL, Y(a[0])); ctx.lineTo(right, Y(a[0])); ctx.stroke(); });
+  ctx.setLineDash([]);
+  for (i = v.i0; i < v.i1; i++) { var p = pos[i]; if (p == null) continue; if (p >= 80) { ctx.fillStyle = "rgba(255,92,92,.22)"; ctx.fillRect(v.X(i) - 0.5 * (v.step || 2), Y(p), v.step || 2, Y(80) - Y(p)); } else if (p <= 20) { ctx.fillStyle = "rgba(61,220,132,.22)"; ctx.fillRect(v.X(i) - 0.5 * (v.step || 2), Y(20), v.step || 2, Y(p) - Y(20)); } }
+  ctx.strokeStyle = "#8ab4ff"; ctx.lineWidth = 0.9; ctx.beginPath(); var on = false;
+  for (i = v.i0; i < v.i1; i++) { var q = pos[i]; if (q == null) { on = false; continue; } if (on) ctx.lineTo(v.X(i), Y(q)); else { ctx.moveTo(v.X(i), Y(q)); on = true; } }
+  ctx.stroke();
+  var R = res.lv[own], from = kt[Math.max(0, v.i0)] || "";
+  var pts = R.piv.filter(function (p) { return p.t >= from; }); if (R.cand && R.cand.t >= from) pts = pts.concat([{ t: R.cand.t, k: R.cand.k, cand: 1 }]);
+  pts.forEach(function (p) {
+    var lo = 0, hi = kt.length - 1; while (lo < hi) { var md = (lo + hi) >> 1; if (kt[md] < p.t) lo = md + 1; else hi = md; }
+    if (lo < v.i0 || lo >= v.i1 || pos[lo] == null) return;
+    var x = v.X(lo), y = Y(p.k === "H" ? 100 : 0), c = p.k === "H" ? "#ff5c5c" : "#3ddc84";   /* 11-25c 用户圈「点不在顶上」: 锁定高/低画在100/0(那根K最高/最低=这段端点), 线按收盘画 */
+    ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.2832); if (p.cand) { ctx.strokeStyle = c; ctx.lineWidth = 1; ctx.stroke(); } else { ctx.fillStyle = c; ctx.fill(); }
+  });
+  ctx.restore();
+  var li = legIdxJL(v), pv = pos[Math.max(v.i0, Math.min(v.i1 - 1, li == null ? v.i1 - 1 : li))];
+  paneLegendJL(ctx, v, y2, "波段位置·" + window.JLHL.NAME[own], [{ t: pv == null ? "—" : pv.toFixed(0), c: "#8ab4ff", b: true }]   /* 11-25c 用户「不要灰色字」「这些字可以删除」 */);
+}
 function renderHuoPane(ctx, v) {
   var ind = huoIndJL(); if (!ind || !v.huoH) return;
   var y2 = v.huoY, h2 = v.huoH, right = v.ts ? v.padL + 240 * v.step : v.padL + v.plotW;
   gridSt(ctx); ctx.beginPath(); ctx.moveTo(v.padL, y2); ctx.lineTo(right, y2); ctx.stroke();
+  if (ind === "波段位置") { renderBwPaneJL(ctx, v, y2, h2, right); return; }
   if (!window.JLSubCv) { paneLegendJL(ctx, v, y2, ind, [{ t: "jl_subcv.js 没加载", c: "#ff8888" }]); return; }
   var r = JLSubCv.draw(ctx, { ind: ind, kl: S.kl, code: S.active, X: v.X, i0: v.i0, i1: v.i1, x0: v.padL, x1: right, y: y2, h: h2, li: legIdxJL(v), onCap: function () { draw(); } });
   paneLegendJL(ctx, v, y2, ind, r.leg);
@@ -8476,6 +8541,52 @@ function sixSigMarksJL() {
   S._sixSigJL = { key: key, marks: marks };
   return marks;
 }
+/* ================= 11-25 用户「分时上5分15分非常清晰的高低点…不能老是断」: 高低点(口径表 HL1/HL2, 算法只在 jl_hlpiv.js) =================
+ * 只在分钟周期画; 1分/分时=分时点+5分大层, 5分=5分点+15分大层, 15/30/60=15分点。数据 jl_hlpiv 自己取(腾讯1分+5分+日K), 和首页/hl.html 同一口径 */
+var HLP_ST = {};
+function hlpStateJL(code) {
+  var st = HLP_ST[code] || (HLP_ST[code] = { res: null, at: 0, ok: 0, err: "", busy: 0 });
+  if (!window.JLHL) {
+    if (!hlpStateJL._ld) { hlpStateJL._ld = 1; var sc = document.createElement("script"); sc.src = "jl_hlpiv.js?v=2"; sc.onload = function () { scheduleDraw(); }; sc.onerror = function () { hlpStateJL._ld = 0; st.err = "jl_hlpiv.js 没加载到"; }; document.head.appendChild(sc); }
+    return st;
+  }
+  var d = new Date(), w = d.getDay(), m = d.getHours() * 60 + d.getMinutes(), live = w >= 1 && w <= 5 && (m >= 555 && m <= 692 || m >= 778 && m <= 902);
+  var gap = st.err ? 8e3 : live ? 15e3 : 6e4;
+  if (!st.busy && Date.now() - st.at > gap) {
+    st.busy = 1; st.at = Date.now();
+    window.JLHL.fetchAll(code).then(function (D) { st.res = window.JLHL.compute(D.code, D.bars, D.days); st.ok = Date.now(); st.err = ""; })
+      .catch(function (e) { st.err = (e && e.message) || "取数失败"; })
+      .then(function () { st.busy = 0; if (S.active === code) scheduleDraw(); });
+  }
+  return st;
+}
+function renderHlpJL(ctx, v) {
+  if (!S.ind || S.ind.hlp === false || !S.kl.length) return;
+  var k = String(S.klt), code = String(S.active || "");
+  if (!/^(1|5|15|30|60|TS|5D)$/.test(k) || !/\d{6}/.test(code)) return;
+  var st = hlpStateJL(code), res = st.res, kl = S.kl;
+  var own = (k === "5") ? "m5" : (k === "15" || k === "30" || k === "60") ? "m15" : "m1", big = own === "m1" ? "m5" : own === "m5" ? "m15" : null;
+  var x0 = v.padL != null ? v.padL : 0, yB = (v.pTop || 0) + (v.priceH || 200);
+  ctx.save();
+  if (v.padL != null && v.plotW) { ctx.beginPath(); ctx.rect(v.padL, v.pTop, v.plotW, v.priceH); ctx.clip(); }
+  if (res) {
+    var kt = HLP_ST._kt && HLP_ST._kt.kl === kl && HLP_ST._kt.n === kl.length ? HLP_ST._kt.a : null;
+    if (!kt) { kt = kl.map(function (r) { return String(r[0]).replace(/[-: ]/g, ""); }); HLP_ST._kt = { kl: kl, n: kl.length, a: kt }; }
+    var X = function (t) { // 腾讯/东财分钟K都是"收尾时刻"记时: 落在第一根 >= t 的K上
+      var lo = 0, hi = kt.length - 1; if (!kt.length || t > kt[hi]) return null;
+      while (lo < hi) { var md = (lo + hi) >> 1; if (kt[md] < t) lo = md + 1; else hi = md; }
+      if (kt[lo].length === 8 && kt[lo] !== t.slice(0, 8)) return null;
+      return (lo >= v.i0 && lo < v.i1) ? v.X(lo) : null;
+    };
+    var from = kt[Math.max(0, v.i0)] || "";
+    if (big) window.JLHL.draw(ctx, res, X, v.Y, { levels: [big], from: from, label: false, big: true, font: 10, lw: 0.6 });   /* 11-25b 用户「太粗了」: 调细 */
+    window.JLHL.draw(ctx, res, X, v.Y, { levels: [own], from: from, font: 10, lw: 0.7 });
+  }
+  ctx.restore();
+  var tx = "";   /* 11-25c 用户「这些字可以删除」: 主图左下回头进度那行不写了, 只在断流时写一行 */
+  if (st.err && (!st.ok || Date.now() - st.ok > 30e3)) tx = "⚠ 高低点断流" + (st.ok ? " " + Math.round((Date.now() - st.ok) / 1e3) + "秒" : "") + " · " + st.err;
+  if (tx) { ctx.save(); ctx.font = "400 10px -apple-system,PingFang SC,sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = st.err ? "rgba(255,179,179,.95)" : "rgba(232,238,245,.82)"; ctx.fillText(tx, x0 + 4, yB - 5); ctx.restore(); }
+}
 var ZZ_WARM = 120; // VAR6 = 三层LLV(最长90+30根)套EMA35, 已加载数据的头120根窗口不满、值不准 → 主图线和紫点都从第120根起画
 function renderZzLineJL(ctx, v) {
   if (!S.ind.zzl || !S.kl.length) return;
@@ -8736,7 +8847,7 @@ var JITU_KS = (function () {
   return { render: render, marks: marksKS, __eng: JtEng }; /* __eng=引擎类仅供回归测试(scripts/test_jitu_port.js)与调试dump, 不参与画图路径 */
 })();
 /* ================= 指标开关行 ================= */
-var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["rso", "RSO"], ["hgl", "乖离"], ["hcy", "穿越"], ["hsx", "三线"], ["hqs", "趋势"], ["hzk", "庄控"], ["hyy", "阴阳"], ["hdk", "DK"], ["macd", "MACD"],["zz", "共振"], ["zzl", "共振线"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
+var INDS = [["absorb", "波段走势"], ["tqs", "强弱T"], ["rtflow", "实时主力"], ["ctrl", "资金控盘"], ["boll", "BOLL"], ["zlyy", "主力净额"], ["ddx", "DDX"], ["rso", "RSO"], ["hgl", "乖离"], ["hcy", "穿越"], ["hsx", "三线"], ["hqs", "趋势"], ["hzk", "庄控"], ["hyy", "阴阳"], ["hdk", "DK"], ["hbw", "波段位置"], ["macd", "MACD"],["zz", "共振"], ["zzl", "共振线"], ["hlp", "高低点"], ["tsline", "分时线"], ["lr", "回归通道"], ["rlm", "反应位"], ["phvl", "高低区"], ["sixsig", "六信号"], ["jitu", "积突"], ["fvg", "FVG"], ["vi", "VI"], ["liq", "BSL·SSL"], ["ms", "BOS"], ["ob", "OB"], ["cost", "成本线"], ["tdhl", "今高低"], ["amp", "振幅"], ["monitor", "监测"], ["atri", "三角形"], ["vp", "量分布"], ["cyq", "筹码"], ["hma", "变色MA"], ["ma", "EMA"], ["volMain", "VOL叠加"]];
 function favName(id) {
   var p2 = id.split(":"), kd = p2[0], ky = p2[1];
   if (kd === "tool") return toolName(ky);
@@ -9034,6 +9145,7 @@ function applyUrl() {
         mk(S.pane != null ? "单图" : "双图", function () { dualToggleJL(); }, S.pane != null ? "回到一个图" : "上下两个图(各自周期, 十字线联动)");
         mk("K/线", function () { if (S.klt === "5D") S._k5d = !S._k5d; else S.lineMode = !S.lineMode; this.classList.toggle("on", lineOnJL()); draw(); hint(lineOnJL() ? "线图模式 · 再点回蜡烛" : "蜡烛K线模式"); }, "蜡烛K线/收盘线图切换");
         var zlb = mk("共振线", function () { S.ind.zzl = !S.ind.zzl; this.classList.toggle("on", !!S.ind.zzl); try { store(); buildInds(); } catch (eZ) { } draw(); hint(S.ind.zzl ? "共振线已显示(红=DEMA在线上方, 绿=在下方)" : "共振线已隐藏"); }, "主图共振线 VAR6: 显示/隐藏"); zlb.classList.toggle("on", !!S.ind.zzl);
+        /* 11-25b 用户「应该直接放到指标里」: 快捷栏「高低点」钮删了, 在 指标 → 结构与信号 里开关 */
         // 导出入口移至 DDX 标题行的 ↓；进度收起后由 ⇩CSV 胶囊展开。
         document.body.insertBefore(bar, document.body.firstChild);
         // 初始化统一在页面启动后执行，独立版与 iframe 相同。
@@ -9135,6 +9247,18 @@ b.onclick=function(){if(window.JLAbsorb){JLAbsorb.toggleFavorite(S.active,S.name
 (document.getElementById('ksBarJL')||document.querySelector('.topbar')||document.body).appendChild(b);update();setInterval(update,1500);})();
 loadAll(true);
 hint("<span class=dim>长按十字线 · 点工具画线 · 轻点图形=设置(换色/锁定) · 右键/长按=挂提醒 ｜ 东财数据有延迟 · 画线存本机 · 非投资建议</span>");
+
+/* 11-25 TV式一条工具栏: 票名▾(点开换票行) · 现价 · 涨跌 · ƒx 指标(=原「工具」) · ⋯(其余按钮/区间/收藏) ; ?tv2=0 可关 */
+(function () { try {
+  if (!TVL || /[?&]embed=1/.test(location.search) || window.KS_T || /[?&]tv2=0/.test(location.search)) return;
+  var de = document.documentElement, tb = document.querySelector(".topbar"); if (!tb) return;
+  de.classList.add("tv2");
+  var mk = function (t, cls, fn, title) { var b = document.createElement("button"); b.type = "button"; b.className = "tvK " + (cls || ""); b.textContent = t; if (title) b.title = title; b.onclick = fn; tb.appendChild(b); return b; };
+  var nm = tb.querySelector("[data-name]"); if (nm) nm.addEventListener("click", function () { de.classList.toggle("tvName"); de.classList.remove("tvMore"); try { draw(); } catch (e) {} });
+  var fx = mk("\u0192x 指标", "first", function () { var t = document.querySelector("[data-tooltog]"); if (t) t.click(); fx.classList.toggle("on", !S.toolsOff); try { draw(); } catch (e) {} }, "指标/画线 行");
+  fx.classList.toggle("on", !S.toolsOff);
+  var mo = mk("\u22EF", "", function () { de.classList.toggle("tvMore"); de.classList.remove("tvName"); mo.classList.toggle("on", de.classList.contains("tvMore")); try { draw(); } catch (e) {} }, "更多: 返回/持仓/截图/刷新/收藏/区间");
+} catch (e) {} })();
 </script>
 <script>/* 调试HUD(ks-1151fix9: URL带?debug=1才开, 正式版默认无) */
 if (/[?&]debug=1/.test(location.search)) setInterval(function(){try{var d=document.getElementById('tsdbgJL');if(!d){d=document.createElement('div');d.id='tsdbgJL';d.style.cssText='position:fixed;right:4px;bottom:2px;z-index:99999;font:9px/1.3 Menlo,monospace;color:#81e6d9;background:rgba(4,16,26,.78);border-radius:5px;padding:2px 5px;max-width:62vw;word-break:break-all;pointer-events:none';document.body.appendChild(d);}var g=(typeof S!=='undefined'&&S._tsEngine&&S._tsEngine.geom)?S._tsEngine.geom():null;d.textContent='dbg klt='+S.klt+' on='+(S.ts&&S.ts.on)+' cvH='+cv.clientHeight+' engH='+S._tsEngineH+' geomH='+(g?g.h:'-')+' pb='+(g?g.plotBottom:'-')+' ds='+(S.ts?S.ts.dayStart:'-')+' P='+(S.ts&&S.ts.P?S.ts.P.length:-1)+' pre='+(S.ts?S.ts.pre:'-');}catch(e){}},1200);</script>
